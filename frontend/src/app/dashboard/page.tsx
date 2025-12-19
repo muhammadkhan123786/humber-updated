@@ -8,6 +8,8 @@ import BranchStatus from "./components/ui/BranchStatus";
 import TopPerfomerTechnicians from "./components/ui/TopPerformerTechnicians";
 import CountriesStatus from "./components/ui/CountriesStatus";
 import TopTechnicians from "./components/ui/TopTechnicians";
+import OrdersTable from "./components/ui/OrdersTable";
+import LatestServices from "./components/ui/LatestServices";
 
 
 export default function Dashboard() {
@@ -61,11 +63,11 @@ export default function Dashboard() {
             </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 justify-between gap-2 pt-4">
-            <div className="w-full h-96 bg-white rounded">
+            <div className="w-full h-full bg-white rounded">
                 <TopTechnicians />
             </div>
-            <div className="bg-white px-2 py-4">
-                <CountriesStatus />
+            <div className="bg-white w-full h-full rounded">
+               <LatestServices />
             </div>
         </div>
     </>
