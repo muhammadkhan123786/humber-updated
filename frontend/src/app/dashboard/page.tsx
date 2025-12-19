@@ -12,7 +12,6 @@ import OrdersTable from "./components/ui/OrdersTable";
 import LatestServices from "./components/ui/LatestServices";
 
 
-
 export default function Dashboard() {
     return <>
         <div className="flex justify-between px-4 py-2">

@@ -16,6 +16,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import google from '../../../assets/google.png';
 import apple from '../../../assets/apple.png';
+import { SignInData } from '@/data/TestData';
+import { redirect } from 'next/navigation';
+
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
@@ -31,6 +35,35 @@ export default function LoginPage() {
     try {
       // Your login logic here
       console.log({ email, password, rememberMe });
+
+      console.log(email);
+      console.log(password);
+
+      const account = SignInData.find((e) => e.emailId === email);
+
+      if (email === '' || password === '') {
+        alert('Please enter credentials.');
+        return;
+      }
+
+      if (account === undefined) {
+        alert('Email not found.');
+        return;
+      }
+      if (!(account.password === password)) {
+        alert('Password Invalid.');
+        return;
+      }
+      localStorage.setItem('email', email as string);
+
+      localStorage.setItem('roleId', account.roleId.toLocaleString())
+
+      console.log(localStorage.getItem('roleId'));
+
+      redirect('/dashboard');
+
+
+
       // redirect('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
@@ -53,73 +86,73 @@ export default function LoginPage() {
         <div className="flex flex-col lg:flex-row">
 
           {/* Left Section - Customer Hub */}
-<div className="hidden md:block relative lg:w-1/2 bg-[#FE6B1D] text-white p-8 lg:p-12 overflow-hidden">
-  
-  {/* Decorative Circle - Top Right (Bada) */}
-  <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#FFFFFF30] rounded-full pointer-events-none" />
+          <div className="hidden md:block relative lg:w-1/2 bg-[#FE6B1D] text-white p-8 lg:p-12 overflow-hidden">
 
-  {/* Decorative Circle - Bottom Left (Chota) */}
-  <div className="absolute -bottom-3 -left-11 w-20 h-14 bg-[#FFFFFF20] rounded-full pointer-events-none" />
-  
-  {/* Content Container */}
-  <div className="relative z-10 mt-16 flex flex-col h-full">
-    {/* Header with Icon */}
-    <div className="flex items-center gap-3 mb-8">
-      <div className="p-2 bg-[#FFFFFF3B] rounded-xl">
-        <User className="w-8 h-8 text-white" />
-      </div>
-      <div>
-        <h1 className="text-[32px] font-semibold">Customer Hub</h1>
-      </div>
-    </div>
+            {/* Decorative Circle - Top Right (Bada) */}
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#FFFFFF30] rounded-full pointer-events-none" />
 
-    {/* Main Content */}
-    <div className="flex-1">
-      <p className="text-[32px] leading-8 font-semibold mb-8">
-        Join Thousands of Satisfied Customers
-      </p>
-      
-      {/* Features List */}
-      <div className="space-y-6">
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-            <ShieldCheck className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white text-lg">Secure & encrypted data protection</h3>
-          </div>
-        </div>
+            {/* Decorative Circle - Bottom Left (Chota) */}
+            <div className="absolute -bottom-3 -left-11 w-20 h-14 bg-[#FFFFFF20] rounded-full pointer-events-none" />
 
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-            <ZapIcon className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white text-lg">Fast onboarding process</h3>
-          </div>
-        </div>
+            {/* Content Container */}
+            <div className="relative z-10 mt-16 flex flex-col h-full">
+              {/* Header with Icon */}
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-[#FFFFFF3B] rounded-xl">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-[32px] font-semibold">Customer Hub</h1>
+                </div>
+              </div>
 
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-            <HeadphonesIcon className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-white text-lg">24/7 dedicated customer support</h3>
-          </div>
-        </div>
+              {/* Main Content */}
+              <div className="flex-1">
+                <p className="text-[32px] leading-8 font-semibold mb-8">
+                  Join Thousands of Satisfied Customers
+                </p>
 
-        <div className="flex items-start gap-4">
-          <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-            <Award className="w-6 h-6 text-white" />
+                {/* Features List */}
+                <div className="space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
+                      <ShieldCheck className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white text-lg">Secure & encrypted data protection</h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
+                      <ZapIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white text-lg">Fast onboarding process</h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
+                      <HeadphonesIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white text-lg">24/7 dedicated customer support</h3>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
+                      <Award className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white text-lg">Exclusive member rewards & offers</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-white text-lg">Exclusive member rewards & offers</h3>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
           {/* Right Section - Login Form */}
           <div className="lg:w-1/2 p-8 lg:p-12">
@@ -147,7 +180,7 @@ export default function LoginPage() {
                       className="block w-full px-4 py-3 placeholder:text-[#A0AEC0A1]  bg-[#F6F6F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
                       placeholder="Please enter email"
                       required
-                      
+
                     />
                   </div>
                 </div>
