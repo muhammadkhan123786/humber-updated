@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+.signHeading{
+  width: 50%; 
+  height: 100%;
+  align-items: center;
+  background: white; 
+  box-shadow: 0px 4px 52px rgba(0, 0, 0, 0.15); 
+  border-radius: 20px;
+}
+
