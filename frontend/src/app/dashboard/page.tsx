@@ -10,7 +10,6 @@ import CountriesStatus from "./components/ui/CountriesStatus";
 import TopTechnicians from "./components/ui/TopTechnicians";
 
 
-
 export default function Dashboard() {
     return <>
         <div className="flex justify-between px-4 py-2">

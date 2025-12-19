@@ -9,6 +9,7 @@ import H1 from '../../../components/ui/H1';
 import Button from '../../../components/ui/Button';
 import { redirect } from 'next/navigation';
 import { useState } from 'react';
+import { SignInData } from '@/data/TestData';
 
 
 export default function Login() {
@@ -18,6 +19,23 @@ export default function Login() {
   function signIn() {
     console.log(email);
     console.log(password);
+
+    const account = SignInData.find((e) => e.emailId === email);
+
+    if (account === undefined) {
+      alert('Email not found.');
+      return;
+    }
+    if (!(account.password === password)) {
+      alert('Password Invalid.');
+      return;
+    }
+    localStorage.setItem('email', email as string);
+
+    localStorage.setItem('roleId', account.roleId.toLocaleString())
+
+    console.log(localStorage.getItem('roleId'));
+
     redirect('/dashboard');
 
   }
