@@ -1,5 +1,6 @@
-// app/auth/login/page.tsx
 "use client";
+// app/auth/login/page.tsx
+
 import { useState } from 'react';
 import {
   Mail,
@@ -17,7 +18,10 @@ import Image from 'next/image';
 import google from '../../../assets/google.png';
 import apple from '../../../assets/apple.png';
 import { SignInData } from '@/data/TestData';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+
+
+
 
 
 
@@ -27,11 +31,11 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       // Your login logic here
       console.log({ email, password, rememberMe });
@@ -54,16 +58,11 @@ export default function LoginPage() {
         alert('Password Invalid.');
         return;
       }
-      localStorage.setItem('email', email as string);
+      localStorage.setItem('email', email);
 
-      localStorage.setItem('roleId', account.roleId.toLocaleString())
+      localStorage.setItem('roleId', JSON.stringify(account.roleId));
 
-      console.log(localStorage.getItem('roleId'));
-
-      redirect('/dashboard');
-
-
-
+      router.push('/dashboard');
       // redirect('/dashboard');
     } catch (error) {
       console.error('Login error:', error);

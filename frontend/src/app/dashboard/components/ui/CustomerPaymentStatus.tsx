@@ -5,7 +5,9 @@ import CustomerPaymentStatusGraph from "./CustomerPaymentStatusGraph";
 export default function CustomerPaymentStatus() {
     return (
         <>
-            <CustomerPaymentStatusGraph />
+            <div className="w-full bg-white rounded">
+                <CustomerPaymentStatusGraph />
+            </div>
         </>
     );
 }
