@@ -1,7 +1,8 @@
+"use client"
 import Login from "./Login";
 
-export default function SignIn(){
+export default function SignIn() {
     return (
-        <Login/>
+        <Login />
     )
 }

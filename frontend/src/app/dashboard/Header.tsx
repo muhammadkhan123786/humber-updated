@@ -5,16 +5,28 @@ import Image from "next/image";
 import logo from '../../assets/logo.png';
 import profilepic from '../../assets/profilepic.png';
 import { Bell, Mail } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Badge from "@/components/ui/Badge";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+
+import { Roles } from "@/data/TestData";
 export default function Header() {
-  const [messageCount, setMessageCount] = useState<number>(1);
-  const [notificationCount, setNotificationCount] = useState<number>(1);
+  const [messageCount] = useState<number>(1);
+  const [notificationCount] = useState<number>(1);
+  const [userRole, setUserRole] = useState<number | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const roleId = localStorage.getItem("roleId");
+    if (roleId) {
+      setTimeout(() => setUserRole(Number(roleId)), 0);
+    }
+  }, []);
   function logout() {
     localStorage.removeItem('email');
     localStorage.removeItem('roleId');
-    redirect('/auth/signIn');
+    router.push('/auth/signIn')
+
   }
   return (
     <header className="bg-white shadow-2xl flex px-6 justify-between items-center py-4">
@@ -51,7 +63,10 @@ export default function Header() {
         <Image src={profilepic} alt="profile-pic" className="h-16 w-16 rounded-full" loading="eager" />
         <div className="flex flex-col gap-2">
           <h1 className="font-bold">Dani</h1>
-          <p className="text-xs text-gray-400">Owner</p>
+
+          <p className="text-xs text-gray-400">{
+            (userRole === null || userRole === undefined) ? 'Loading' : Roles[userRole] ?? 'Customer'
+          }</p>
           <button className="cursor-pointer" onClick={logout}>Log out</button>
         </div>
       </div>

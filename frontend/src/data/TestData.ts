@@ -23,6 +23,12 @@ export const SignInData: ISignInSharedInterface[] = [
 
 ]
 
+export const Roles: Record<number, string> = {
+    1: 'Admin',
+    2: 'Technicians',
+    3: 'Customer'
+}
+
 export const NavBarLinksData: NavLinksInterface[] = [
     { _id: 1, href: "/dashboard", roleId: [1, 2], label: 'Dashboard', index: 1 },
     {
