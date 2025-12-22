@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import AdminDashboard from "./components/admindashboard/AdminDashboard";
+import TechnicianDashboard from "./techniciandashboard/TechnicianDashboard";
 
 export default function Dashboard() {
     const [roleId, setRoleId] = useState<number | null>(null);
@@ -11,10 +12,9 @@ export default function Dashboard() {
     }, []);
 
     if (roleId === null) return <p>Loading...</p>; // wait for client-side load
-
-    return (
-        <>
-            {roleId === 1 ? <AdminDashboard /> : <p>You are not admin</p>}
-        </>
-    );
+    if (roleId === 1) return <AdminDashboard />
+    if (roleId === 2) return <TechnicianDashboard />
+    return <>
+        <h1>Unknow role.</h1>
+    </>
 }

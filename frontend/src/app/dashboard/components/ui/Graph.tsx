@@ -18,7 +18,6 @@ const data = [
   { name: "Sun", value: 80 },
 ];
 
-
 export default function Graph({ graphColor }: { graphColor: string }) {
   return (
     <ResponsiveContainer width="50%" height="50%" className="-mt-10 ml-16">
