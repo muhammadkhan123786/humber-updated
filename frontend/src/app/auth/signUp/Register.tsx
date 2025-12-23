@@ -4,7 +4,6 @@ import H1 from "@/components/ui/H1";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import onyxtech from '../../../assets/onyxtech.png';
-import Button from "@/components/ui/Button";
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
 import { IRegisterSharedInterface } from '../../../../../common/IRegisterSharedInterface';
 import { redirect } from "next/navigation";
@@ -84,47 +83,67 @@ export default function Register() {
         };
     }, [googleMapLoader]);
 
-    function save() {
-        if (data.firstName === '') {
-            window.alert('Please enter first name.');
-            return;
+ async function save() {
+    if (data.firstName === '') {
+        alert('Please enter first name.');
+        return;
+    } else if (data.emailId === '') {
+        alert('Please enter email id.');
+        return;
+    } else if (data.companyName === '') {
+        alert('Please enter shop name.');
+        return;
+    } else if (data.mobileNumber === '') {
+        alert('Please enter mobile number.');
+        return;
+    } else if (data.companyAddress === '') {
+        alert('Please select company address.');
+        return;
+    } else if (data.password === '') {
+        alert('Please enter password.');
+        return;
+    } else if (data.password !== data.confirmPassword) {
+        alert('Password & confirm password must be same.');
+        return;
+    } else if (!data.termsSelected) {
+        alert('Please agree on the terms.');
+        return;
+    }
 
-        }
-        else if (data.emailId === '') {
-            window.alert('Please enter email id.');
-            return;
-        }
-        else if (data.companyName === '') {
-            window.alert('Please enter shop name.');
-            return;
-        }
-        else if (data.mobileNumber === '') {
-            window.alert('Please enter mobile number.');
-            return;
+    try {
+        const formData = new FormData();
 
-        }
-        else if (data.companyAddress === '') {
-            window.alert('Please select company address.');
-            return;
+        Object.entries(data).forEach(([key, value]) => {
+            formData.append(key, String(value));
+        });
 
+        // logo file
+        const logoInput = document.getElementById('logo') as HTMLInputElement;
+        if (logoInput?.files?.[0]) {
+            formData.append('logo', logoInput.files[0]);
         }
-        else if (data.password === '') {
-            window.alert('Please enter password.');
-            return;
-        }
-        else if (data.password !== data.confirmPassword) {
-            window.alert('Password & confirm password must be same.');
-            return;
-        }
-        else if (!data.termsSelected) {
-            window.alert('Please agree on the terms.');
+
+        const res = await fetch('http://127.0.0.1:4000/api/register/shop', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await res.json();
+
+        if (!res.ok) {
+            alert(result.message || 'Registration failed');
             return;
         }
 
+        // success
         openModal(<RegisterSuccess />);
 
-
+    } catch (error) {
+        console.error(error);
+        alert('Something went wrong. Please try again.');
     }
+}
+
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         const { name, value } = e.target;
         console.log('Name: ', name);
