@@ -42,57 +42,9 @@ export const Roles: Record<number, string> = {
   3: 'Customer'
 };
 
-export const NavBarLinksData: NavLinksInterface[] = [
-  { _id: 1, href: "/dashboard", roleId: [1, 2], label: 'Dashboard', index: 1 },
-  {
-    _id: 2,
-    alt: "Inventory",
-    href: "/dashboard/inventory",
-    roleId: [1],
-    label: 'Inventory',
-    iconSrc: box,
-    index: 2,
-  },
-  {
-    _id: 3,
-    alt: 'Repair tracker',
-    href: "/dashboard/repair-tracker",
-    roleId: [1],
-    label: 'Repair tracker',
-    iconSrc: tool,
-    index: 3
-  },
-  {
-    _id: 4,
-    alt: "Customers",
-    href: "/dashboard/customers",
-    roleId: [1],
-    label: 'Customers',
-    iconSrc: usergroup,
-    index: 4
-  },
-  {
-    _id: 5,
-    alt: 'Bookings',
-    href: "/dashboard/bookings",
-    roleId: [1],
-    label: 'Bookings',
-    iconSrc: booking,
-    index: 5
-  },
-  {
-    _id: 6,
-    alt: 'Staff management',
-    href: "/dashboard/staff-management",
-    roleId: [1],
-    label: 'Staff management',
-    iconSrc: staffmanagement,
-    index: 6
-  }
-];
 
-/* =======================
-   MASTER DATA LINKS (COLLAPSIBLE)
+
+  
 export const MasterDataLinks: NavLinksInterface[] = [
   { _id: 101, href: "/dashboard/master-data/categories", label: "Vehicle", index: 1 },
   { _id: 102, href: "/dashboard/master-data/services", label: "Services", index: 2 },
@@ -100,8 +52,7 @@ export const MasterDataLinks: NavLinksInterface[] = [
   { _id: 104, href: "/dashboard/master-data/vehicles", label: "Vehicles", index: 4 },
 ];
 
-/* =======================
-   CUSTOMER DATA
+
 export const AddNewCustomerData: ExtendedCustomerInterface[] = [
   {
     id: 'CUST001',
@@ -317,8 +268,7 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
   }
 ];
 
-/* =======================
-   CUSTOMER HELPERS
+
 let lastCustomerId = 5; // Initial value based on existing customers
 
 export const generateCustomerId = (): string => {
