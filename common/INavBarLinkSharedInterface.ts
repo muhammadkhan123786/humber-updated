@@ -4,7 +4,7 @@ export interface INavBarLinkSharedInterface {
     label: string
     href: string
     alt?: string
-    roleId: number[]
+    roleId?: number[]
     index?: number
     chidren?: INavBarLinkSharedInterface[]
 }
