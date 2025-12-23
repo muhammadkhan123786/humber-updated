@@ -4,13 +4,13 @@ import { hashPassword, comparePassword, generateToken } from '../services/auth.s
 
 //this is middleware. common for register all user.
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {
-    console.log('Body: ', req.body);
+
     try {
-        const { email, password, confirmPassword, role } = req.body;
+        const { emailId, password, confirmPassword, role } = req.body;
 
 
         // Check if user exists
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email: emailId });
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
         // Hash password
@@ -23,7 +23,7 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
 
         // Create user
         const user = await User.create({
-            email,
+            email: emailId,
             password: hashedPassword,
             role: userRole,
             isActive: true,
@@ -31,8 +31,7 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
         });
 
         // Pass _id to next middleware
-        res.locals.userId = user._id;
-
+        req.body.userId = user._id;
         next(); // go to role-specific middleware
     } catch (err) {
         res.status(500).json({ message: 'User Create failed', error: err });
@@ -42,15 +41,40 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
 
 //login 
 export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    try {
+        console.log("Request body: ", req.body);
+        const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials, Email Not Exists.' });
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Email and password are required.' });
+        }
 
-    const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials, Password Invalid.' });
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: `Email ${email} does not exist. Invalid credentials.` });
+        }
 
-    const token = generateToken({ id: user._id, email: user.email });
+        const isMatch = await comparePassword(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid password. Please check.' });
+        }
 
-    res.json({ user: { id: user._id, role: user.role, email }, token });
+        const token = generateToken({ userId: user._id.toString(), email: user.email, role: user.role });
+
+        return res.status(200).json({
+            user: {
+                id: user._id,
+                email: user.email,
+                role: user.role,
+            },
+            token,
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        return res.status(500).json({
+            message: 'Login failed due to server error',
+            error: error instanceof Error ? error.message : error,
+        });
+    }
 };

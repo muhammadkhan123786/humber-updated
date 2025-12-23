@@ -4,8 +4,8 @@ import path from 'path';
 import 'dotenv/config'; // load env variables
 
 // Import routes
-import userRoutes from './routes/user.routes';
 import shopRouter from './routes/shop.routes';
+import authRouter from './routes/auth.routes';
 
 // Create express app
 const app: Application = express();
@@ -19,7 +19,7 @@ app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
-app.use(`${process.env.API_PREFIX}/users`, userRoutes);
+app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
 
 // Health check route
