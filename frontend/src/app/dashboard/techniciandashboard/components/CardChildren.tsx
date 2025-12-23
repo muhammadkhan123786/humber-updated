@@ -13,6 +13,7 @@ export default function CardChildren({ text, number, icon }: { text: string, num
                     <h1 className="text-slate-500 font-bold">{text}</h1>
                     <h1 className="font-bold">{number}</h1>
                 </div>
+
             </div>
         </>
     )
