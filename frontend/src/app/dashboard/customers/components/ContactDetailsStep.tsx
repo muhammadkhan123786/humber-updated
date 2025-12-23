@@ -1,7 +1,7 @@
-// app/dashboard/customers/components/ContactDetailsStep.tsx
 "use client";
 
-import { User, Mail, Phone, Car, Tag, Palette, Calendar } from 'lucide-react';
+import { User, Mail, Phone, Car, Tag, Palette, Calendar, Plus, Trash2, Edit } from 'lucide-react';
+import { VehicleData } from './types';
 
 export type ContactDetailsFields =
     | 'ownerName'
@@ -11,7 +11,8 @@ export type ContactDetailsFields =
     | 'vehicleType'
     | 'vehicleModel'
     | 'vehicleColor'
-    | 'registrationDate';
+    | 'registrationDate'
+    | 'vehicles';
 
 interface ContactDetailsStepProps {
     formData: {
@@ -23,11 +24,29 @@ interface ContactDetailsStepProps {
         vehicleModel: string;
         vehicleColor: string;
         registrationDate: string;
+        vehicles: VehicleData[];
     };
-    onInputChange: (field: ContactDetailsFields, value: string) => void;
+    onInputChange: (field: ContactDetailsFields, value: any) => void;
+    onAddVehicleClick: () => void;
+    onEditVehicleClick: (vehicleId: string) => void;
+    onDeleteVehicleClick: (vehicleId: string) => void;
+    onSetPrimaryVehicle: (vehicleId: string) => void;
+    getVehicleTypeLabel: (type: string) => string;
+    getVehicleModelLabel: (model: string) => string;
+    getVehicleColorLabel: (color: string) => string;
 }
 
-export default function ContactDetailsStep({ formData, onInputChange }: ContactDetailsStepProps) {
+export default function ContactDetailsStep({ 
+    formData, 
+    onInputChange,
+    onAddVehicleClick,
+    onEditVehicleClick,
+    onDeleteVehicleClick,
+    onSetPrimaryVehicle,
+    getVehicleTypeLabel,
+    getVehicleModelLabel,
+    getVehicleColorLabel
+}: ContactDetailsStepProps) {
     const vehicleTypes = [
         { value: 'car', label: 'Car' },
         { value: 'motorcycle', label: 'Motorcycle' },
@@ -62,6 +81,10 @@ export default function ContactDetailsStep({ formData, onInputChange }: ContactD
         { value: 'kia_sportage', label: 'Kia Sportage' },
         { value: 'other', label: 'Other Model' },
     ];
+
+    const vehicles = formData.vehicles || [];
+    const hasVehicles = vehicles.length > 0;
+    const primaryVehicle = hasVehicles ? vehicles.find(v => v.isPrimary) || vehicles[0] : null;
 
     return (
         <div>
@@ -140,145 +163,102 @@ export default function ContactDetailsStep({ formData, onInputChange }: ContactD
 
                 {/* Vehicle Information Section */}
                 <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-                        <Car className="w-4 h-4 text-[#FE6B1D]" />
-                        Vehicle Information
-                    </h4>
-
-                    <div className="space-y-4">
-                        {/* Vehicle Number */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <div className="flex items-center gap-2">
-                                    <Tag className="w-4 h-4 text-[#FE6B1D]" />
-                                    Vehicle Number/Plate <span className="text-red-500">*</span>
-                                </div>
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.vehicleNumber}
-                                onChange={(e) => onInputChange('vehicleNumber', e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                                placeholder="e.g., ABC-1234 or DL-01-AB-1234"
-                                required
-                            />
-                        </div>
-
-                        {/* Vehicle Type & Model */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Car className="w-4 h-4 text-[#FE6B1D]" />
-                                        Vehicle Type <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <select
-                                    value={formData.vehicleType}
-                                    onChange={(e) => onInputChange('vehicleType', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                                    required
-                                >
-                                    <option value="">Select vehicle type</option>
-                                    {vehicleTypes.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Car className="w-4 h-4 text-[#FE6B1D]" />
-                                        Vehicle Model <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <select
-                                    value={formData.vehicleModel}
-                                    onChange={(e) => onInputChange('vehicleModel', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                                    required
-                                >
-                                    <option value="">Select vehicle model</option>
-                                    {vehicleModels.map((model) => (
-                                        <option key={model.value} value={model.value}>
-                                            {model.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Vehicle Color & Registration Date */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Palette className="w-4 h-4 text-[#FE6B1D]" />
-                                        Vehicle Color <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <select
-                                    value={formData.vehicleColor}
-                                    onChange={(e) => onInputChange('vehicleColor', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                                    required
-                                >
-                                    <option value="">Select vehicle color</option>
-                                    {vehicleColors.map((color) => (
-                                        <option key={color.value} value={color.value}>
-                                            {color.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4 text-[#FE6B1D]" />
-                                        Registration Date <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.registrationDate}
-                                    onChange={(e) => onInputChange('registrationDate', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        {/* Optional: Insurance File Upload */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <div className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-[#FE6B1D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Insurance Document (Optional)
-                                </div>
-                            </label>
-                            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                                <div className="space-y-1 text-center">
-                                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                    <div className="flex text-sm text-gray-600">
-                                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-[#FE6B1D] hover:text-[#e55a17] focus-within:outline-none">
-                                            <span>Upload insurance file</span>
-                                            <input type="file" className="sr-only" accept=".pdf,.jpg,.jpeg,.png" />
-                                        </label>
-                                        <p className="pl-1">or drag and drop</p>
-                                    </div>
-                                    <p className="text-xs text-gray-500">PDF, JPG, PNG up to 10MB</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                            <Car className="w-4 h-4 text-[#FE6B1D]" />
+                            Vehicle Information
+                        </h4>
+                        <button
+                            onClick={onAddVehicleClick}
+                            className="flex items-center gap-2 px-4 py-2 bg-[#FE6B1D] text-white rounded-lg hover:bg-[#FE6B1D]/90 transition"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Vehicle
+                        </button>
                     </div>
+
+                    {/* Vehicles List */}
+                    {hasVehicles ? (
+                        <div className="space-y-4 mb-6">
+                            <h5 className="text-sm font-medium text-gray-700">Registered Vehicles ({vehicles.length})</h5>
+                            <div className="space-y-3">
+                                {vehicles.map((vehicle) => (
+                                    <div key={vehicle.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Car className="w-4 h-4 text-gray-500" />
+                                                    <span className="font-medium">{vehicle.vehicleNumber}</span>
+                                                    {vehicle.isPrimary && (
+                                                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                                            Primary
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                                    <div>
+                                                        <span className="font-medium">Type: </span>
+                                                        {getVehicleTypeLabel(vehicle.vehicleType)}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-medium">Model: </span>
+                                                        {getVehicleModelLabel(vehicle.vehicleModel)}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-medium">Color: </span>
+                                                        <div className={`w-3 h-3 rounded-full`} 
+                                                             style={{ backgroundColor: vehicle.vehicleColor === 'other' ? '#6b7280' : vehicle.vehicleColor }} />
+                                                        {getVehicleColorLabel(vehicle.vehicleColor)}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-medium">Reg. Date: </span>
+                                                        {new Date(vehicle.registrationDate).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 ml-4">
+                                                {!vehicle.isPrimary && (
+                                                    <button
+                                                        onClick={() => onSetPrimaryVehicle(vehicle.id)}
+                                                        className="p-2 hover:bg-green-50 rounded-lg text-green-600"
+                                                        title="Set as Primary"
+                                                    >
+                                                        <span className="text-xs font-medium">Set Primary</span>
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={() => onEditVehicleClick(vehicle.id)}
+                                                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                                                    title="Edit Vehicle"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => onDeleteVehicleClick(vehicle.id)}
+                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600"
+                                                    title="Delete Vehicle"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mb-6 p-6 bg-gray-50/50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                            <Car className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                            <p className="text-gray-600 mb-4">No vehicles added yet</p>
+                            <button
+                                onClick={onAddVehicleClick}
+                                className="flex items-center gap-2 px-4 py-2 bg-[#FE6B1D] text-white rounded-lg hover:bg-[#FE6B1D]/90 transition mx-auto"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Your First Vehicle
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -1,8 +1,7 @@
-// app/dashboard/customers/components/CustomerModal/ViewCustomer.tsx
 "use client";
 
-import { User, Mail, Phone, Car, MapPin, Calendar, Edit } from 'lucide-react';
-import type { Customer } from '../types';
+import { User, Mail, Phone, Car, MapPin, Calendar, Edit, List } from 'lucide-react';
+import type { Customer, VehicleData } from '../types';
 
 interface ViewCustomerProps {
     customer: Customer;
@@ -23,6 +22,16 @@ export default function ViewCustomer({
     getVehicleColorLabel,
     getStatusIcon
 }: ViewCustomerProps) {
+    const vehicles = customer.vehicles || [{
+        id: 'default',
+        vehicleNumber: customer.vehicleNumber,
+        vehicleType: customer.vehicleType,
+        vehicleModel: customer.vehicleModel,
+        vehicleColor: customer.vehicleColor,
+        registrationDate: customer.registrationDate,
+        isPrimary: true
+    }];
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -56,35 +65,71 @@ export default function ViewCustomer({
 
                 {/* Vehicle Info Card */}
                 <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Car className="w-5 h-5" />
-                        Vehicle Information
-                    </h3>
-                    <div className="space-y-3">
+    <div className="flex justify-between items-start mb-4">
+        <div>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Car className="w-5 h-5" />
+                Vehicle Information
+            </h3>
+            <p className="text-sm text-gray-600 mt-1">
+                {vehicles.length} vehicle{vehicles.length !== 1 ? 's' : ''}
+            </p>
+        </div>
+        {vehicles.length > 0 && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+                <List className="w-4 h-4" />
+                {vehicles.filter(v => v.isPrimary).length} primary
+            </div>
+        )}
+    </div>
+    
+    {vehicles.length > 0 ? (
+        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+            {vehicles.map((vehicle, index) => (
+                <div key={vehicle.id} className="p-3 bg-white rounded-lg border border-gray-200">
+                    <div className="flex justify-between items-start">
                         <div>
-                            <label className="text-sm text-gray-500">Vehicle Number</label>
-                            <p className="font-medium">{customer.vehicleNumber}</p>
-                        </div>
-                        <div>
-                            <label className="text-sm text-gray-500">Type & Model</label>
-                            <p className="font-medium">{getVehicleTypeLabel(customer.vehicleType)} - {getVehicleModelLabel(customer.vehicleModel)}</p>
-                        </div>
-                        <div>
-                            <label className="text-sm text-gray-500">Color</label>
-                            <div className="flex items-center gap-2">
-                                <div className={`w-4 h-4 rounded-full`} style={{ backgroundColor: customer.vehicleColor === 'other' ? '#6b7280' : customer.vehicleColor }} />
-                                <span className="font-medium">{getVehicleColorLabel(customer.vehicleColor)}</span>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Car className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{vehicle.vehicleNumber}</span>
+                                {vehicle.isPrimary && (
+                                    <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                        Primary
+                                    </span>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                                <div>
+                                    <span className="font-medium">Type: </span>
+                                    {getVehicleTypeLabel(vehicle.vehicleType)}
+                                </div>
+                                <div>
+                                    <span className="font-medium">Model: </span>
+                                    {getVehicleModelLabel(vehicle.vehicleModel)}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-medium">Color: </span>
+                                    <div className={`w-3 h-3 rounded-full`} 
+                                         style={{ backgroundColor: vehicle.vehicleColor === 'other' ? '#6b7280' : vehicle.vehicleColor }} />
+                                    {getVehicleColorLabel(vehicle.vehicleColor)}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    {new Date(vehicle.registrationDate).toLocaleDateString()}
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <label className="text-sm text-gray-500">Registration Date</label>
-                            <p className="font-medium flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                {new Date(customer.registrationDate).toLocaleDateString()}
-                            </p>
+                        <div className="text-xs text-gray-500">
+                            Vehicle {index + 1}
                         </div>
                     </div>
                 </div>
+            ))}
+        </div>
+    ) : (
+        <p className="text-gray-500 text-center py-4">No vehicles registered</p>
+    )}
+</div>
 
                 {/* Owner Info Card */}
                 <div className="bg-gray-50 rounded-xl p-6">

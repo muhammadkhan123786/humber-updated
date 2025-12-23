@@ -7,6 +7,19 @@ import staffmanagement from '../assets/users-alt.svg';
 import { NavLinksInterface } from '@/types/NavLinksInterface';
 import { AddNewCustomerInterface } from '@/types/AddNewCustomer';
 
+// Update the interface to support multiple vehicles
+interface ExtendedCustomerInterface extends AddNewCustomerInterface {
+    vehicles?: Array<{
+        id: string;
+        vehicleNumber: string;
+        vehicleType: string;
+        vehicleModel: string;
+        vehicleColor: string;
+        registrationDate: string;
+        isPrimary?: boolean;
+    }>;
+}
+
 /* =======================
    SIGN IN DATA
 ======================= */
@@ -89,7 +102,7 @@ export const MasterDataLinks: NavLinksInterface[] = [
 /* =======================
    CUSTOMER DATA
 ======================= */
-export const AddNewCustomerData: AddNewCustomerInterface[] = [
+export const AddNewCustomerData: ExtendedCustomerInterface[] = [
   {
     id: 'CUST001',
     firstName: 'John',
@@ -114,7 +127,18 @@ export const AddNewCustomerData: AddNewCustomerInterface[] = [
     termsAccepted: true,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
-    status: 'active'
+    status: 'active',
+    vehicles: [
+      {
+        id: 'veh1',
+        vehicleNumber: 'ABC-1234',
+        vehicleType: 'car',
+        vehicleModel: 'toyota_camry',
+        vehicleColor: 'silver',
+        registrationDate: '2022-05-15',
+        isPrimary: true
+      }
+    ]
   },
   {
     id: 'CUST002',
@@ -140,7 +164,27 @@ export const AddNewCustomerData: AddNewCustomerInterface[] = [
     termsAccepted: true,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-02-10'),
-    status: 'active'
+    status: 'active',
+    vehicles: [
+      {
+        id: 'veh2',
+        vehicleNumber: 'XYZ-5678',
+        vehicleType: 'suv',
+        vehicleModel: 'ford_f150',
+        vehicleColor: 'black',
+        registrationDate: '2023-01-20',
+        isPrimary: true
+      },
+      {
+        id: 'veh3',
+        vehicleNumber: 'LMN-9012',
+        vehicleType: 'car',
+        vehicleModel: 'honda_civic',
+        vehicleColor: 'white',
+        registrationDate: '2022-08-15',
+        isPrimary: false
+      }
+    ]
   },
   {
     id: 'CUST003',
@@ -166,7 +210,18 @@ export const AddNewCustomerData: AddNewCustomerInterface[] = [
     termsAccepted: true,
     createdAt: new Date('2024-03-05'),
     updatedAt: new Date('2024-03-05'),
-    status: 'inactive'
+    status: 'inactive',
+    vehicles: [
+      {
+        id: 'veh4',
+        vehicleNumber: 'LMN-9012',
+        vehicleType: 'motorcycle',
+        vehicleModel: 'honda_civic',
+        vehicleColor: 'red',
+        registrationDate: '2021-08-30',
+        isPrimary: true
+      }
+    ]
   },
   {
     id: 'CUST004',
@@ -192,7 +247,36 @@ export const AddNewCustomerData: AddNewCustomerInterface[] = [
     termsAccepted: true,
     createdAt: new Date('2024-04-20'),
     updatedAt: new Date('2024-04-20'),
-    status: 'pending'
+    status: 'pending',
+    vehicles: [
+      {
+        id: 'veh5',
+        vehicleNumber: 'PQR-3456',
+        vehicleType: 'van',
+        vehicleModel: 'mercedes_cclass',
+        vehicleColor: 'white',
+        registrationDate: '2023-11-15',
+        isPrimary: true
+      },
+      {
+        id: 'veh6',
+        vehicleNumber: 'STU-7890',
+        vehicleType: 'car',
+        vehicleModel: 'bmw_3series',
+        vehicleColor: 'blue',
+        registrationDate: '2022-06-10',
+        isPrimary: false
+      },
+      {
+        id: 'veh7',
+        vehicleNumber: 'VWX-1234',
+        vehicleType: 'suv',
+        vehicleModel: 'audi_a4',
+        vehicleColor: 'black',
+        registrationDate: '2023-03-25',
+        isPrimary: false
+      }
+    ]
   },
   {
     id: 'CUST005',
@@ -218,7 +302,18 @@ export const AddNewCustomerData: AddNewCustomerInterface[] = [
     termsAccepted: true,
     createdAt: new Date('2024-05-15'),
     updatedAt: new Date('2024-05-15'),
-    status: 'active'
+    status: 'active',
+    vehicles: [
+      {
+        id: 'veh8',
+        vehicleNumber: 'STU-7890',
+        vehicleType: 'truck',
+        vehicleModel: 'tesla_model3',
+        vehicleColor: 'blue',
+        registrationDate: '2022-12-01',
+        isPrimary: true
+      }
+    ]
   }
 ];
 
@@ -233,11 +328,11 @@ export const generateCustomerId = (): string => {
 };
 
 export const addNewCustomer = (
-  customerData: Omit<AddNewCustomerInterface, 'id' | 'createdAt' | 'updatedAt' | 'status'>
-): AddNewCustomerInterface => {
+  customerData: Omit<ExtendedCustomerInterface, 'id' | 'createdAt' | 'updatedAt' | 'status'>
+): ExtendedCustomerInterface => {
   const now = new Date();
 
-  const newCustomer: AddNewCustomerInterface = {
+  const newCustomer: ExtendedCustomerInterface = {
     ...customerData,
     id: generateCustomerId(),
     createdAt: now,
@@ -250,7 +345,7 @@ export const addNewCustomer = (
 };
 
 export const updateCustomer = (
-  updatedCustomer: AddNewCustomerInterface
+  updatedCustomer: ExtendedCustomerInterface
 ): boolean => {
   const index = AddNewCustomerData.findIndex(customer => customer.id === updatedCustomer.id);
   
@@ -283,11 +378,11 @@ export const deleteCustomer = (
 
 export const getCustomerById = (
   customerId: string
-): AddNewCustomerInterface | undefined => {
+): ExtendedCustomerInterface | undefined => {
   return AddNewCustomerData.find(customer => customer.id === customerId);
 };
 
-export const getAllCustomers = (): AddNewCustomerInterface[] => {
+export const getAllCustomers = (): ExtendedCustomerInterface[] => {
   return [...AddNewCustomerData]; // Return a copy to prevent direct mutation
 };
 
@@ -298,7 +393,7 @@ export const searchCustomers = (
     vehicleType?: string;
     city?: string;
   }
-): AddNewCustomerInterface[] => {
+): ExtendedCustomerInterface[] => {
   let results = AddNewCustomerData;
   
   // Apply search query
@@ -363,9 +458,23 @@ export const getVehicleTypeDistribution = () => {
   return distribution;
 };
 
-export type Customer = AddNewCustomerInterface;
+// Calculate total vehicles across all customers
+export const getTotalVehicles = (): number => {
+  return AddNewCustomerData.reduce((total, customer) => {
+    return total + (customer.vehicles ? customer.vehicles.length : 1);
+  }, 0);
+};
+
+// Get customers with multiple vehicles
+export const getCustomersWithMultipleVehicles = (): ExtendedCustomerInterface[] => {
+  return AddNewCustomerData.filter(customer => 
+    customer.vehicles ? customer.vehicles.length > 1 : false
+  );
+};
+
+export type Customer = ExtendedCustomerInterface;
 
 // Export all types and interfaces
 export type {
-  AddNewCustomerInterface as CustomerInterface
+  ExtendedCustomerInterface as CustomerInterface
 };

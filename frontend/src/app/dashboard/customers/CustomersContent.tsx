@@ -1,4 +1,3 @@
-// app/dashboard/customers/CustomersContent.tsx
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
@@ -28,7 +27,7 @@ export default function CustomersContent() {
         address: '',
         city: '',
         postCode: '',
-       contactMethod: 'email' as 'email' | 'phone' | 'sms' | 'whatsapp',
+        contactMethod: 'email' as 'email' | 'phone' | 'sms' | 'whatsapp',
         preferredLanguage: 'en',
         receiveUpdates: false,
         termsAccepted: false,
@@ -40,6 +39,7 @@ export default function CustomersContent() {
         vehicleModel: '',
         vehicleColor: '',
         registrationDate: '',
+        vehicles: [] // New: Array for multiple vehicles
     }), []);
 
     const [showModal, setShowModal] = useState(false);
@@ -192,6 +192,7 @@ export default function CustomersContent() {
                 vehicleModel: customer.vehicleModel,
                 vehicleColor: customer.vehicleColor,
                 registrationDate: customer.registrationDate,
+                vehicles: customer.vehicles as any // Load existing vehicles
             });
         } else if (mode === 'view' && customer) {
             setSelectedCustomer(customer);
@@ -241,6 +242,21 @@ export default function CustomersContent() {
         }
     }, [currentStep]);
 
+    // Handle contact details change with vehicles support
+    const handleContactDetailsChange = useCallback((field: string, value: any) => {
+        if (field === 'vehicles') {
+            setFormData(prev => ({ 
+                ...prev, 
+                vehicles: value 
+            }));
+        } else {
+            setFormData(prev => ({ 
+                ...prev, 
+                [field]: value 
+            }));
+        }
+    }, []);
+
     // Submit handler - optimized
     const handleSubmit = useCallback(() => {
         // Quick validation
@@ -249,8 +265,17 @@ export default function CustomersContent() {
             return;
         }
 
+        // Validate vehicles
+        if (!formData.vehicles || formData.vehicles.length === 0) {
+            alert('Please add at least one vehicle');
+            return;
+        }
+
         try {
             if (modalMode === 'add') {
+                // Use first vehicle as primary for backward compatibility
+                const primaryVehicle:any = formData.vehicles[0];
+                
                 const customerData = {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
@@ -266,11 +291,12 @@ export default function CustomersContent() {
                     ownerName: formData.ownerName,
                     ownerEmail: formData.ownerEmail,
                     ownerPhone: formData.ownerPhone,
-                    vehicleNumber: formData.vehicleNumber,
-                    vehicleType: formData.vehicleType,
-                    vehicleModel: formData.vehicleModel,
-                    vehicleColor: formData.vehicleColor,
-                    registrationDate: formData.registrationDate,
+                    vehicleNumber: primaryVehicle.vehicleNumber ,
+                    vehicleType: primaryVehicle.vehicleType,
+                    vehicleModel: primaryVehicle.vehicleModel,
+                    vehicleColor: primaryVehicle.vehicleColor,
+                    registrationDate: primaryVehicle.registrationDate,
+                    vehicles: formData.vehicles // Store all vehicles
                 };
 
                 const newCustomer = addNewCustomer(customerData);
@@ -281,18 +307,27 @@ export default function CustomersContent() {
                 setVehicleTypeFilter('all');
                 setSearchQuery('');
 
-                alert(`Customer ${newCustomer.firstName} ${newCustomer.lastName} added successfully!`);
+                alert(`Customer ${newCustomer.firstName} ${newCustomer.lastName} added successfully with ${formData.vehicles.length} vehicle(s)!`);
 
             } else if (modalMode === 'edit' && selectedCustomer) {
+                // Use first vehicle as primary for backward compatibility
+                const primaryVehicle:any = formData.vehicles[0];
+                
                 const updatedCustomer = {
                     ...selectedCustomer,
                     ...formData,
+                    vehicleNumber: primaryVehicle.vehicleNumber,
+                    vehicleType: primaryVehicle.vehicleType,
+                    vehicleModel: primaryVehicle.vehicleModel,
+                    vehicleColor: primaryVehicle.vehicleColor,
+                    registrationDate: primaryVehicle.registrationDate ,
                     updatedAt: new Date(),
+                    vehicles: formData.vehicles // Update all vehicles
                 };
 
                 updateCustomer(updatedCustomer);
                 setCustomers(prev => prev.map(c => c.id === selectedCustomer.id ? updatedCustomer : c));
-                alert(`Customer updated successfully!`);
+                alert(`Customer updated successfully with ${formData.vehicles.length} vehicle(s)!`);
             }
 
             closeModal();
@@ -419,7 +454,7 @@ export default function CustomersContent() {
                     onPrevStep={prevStep}
                     onSubmit={handleSubmit}
                     onPersonalInfoChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-                    onContactDetailsChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+                    onContactDetailsChange={handleContactDetailsChange}
                     onPreferencesChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
                     onEdit={() => selectedCustomer && openModal('edit', selectedCustomer)}
                 />
