@@ -151,7 +151,7 @@ export default function Register() {
 
     return (
         <Card className="w-full max-w-3xl">
-            <H1>Create your shop</H1>
+            <H1>Create your showroom</H1>
             <div className="flex gap-2 py-2">
                 <div className="w-1/2">
                     <label htmlFor="firstName">First Name <span className="text-red-500">*</span></label>

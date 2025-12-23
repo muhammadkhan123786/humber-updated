@@ -12,7 +12,7 @@ import Graph from "../../components/ui/Graph";
 export default function Cards() {
     return (
         <>
-            <div className='grid grid-cols-4 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
                 <div>
                     <Card gradientClass={"to-indigo-100 w-64 h-28"}>
                         <CardChildren text="Total Services" number={140} icon={tg1} />
