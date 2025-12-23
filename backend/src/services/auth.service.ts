@@ -3,6 +3,11 @@ import bcrypt from 'bcryptjs';
 import { env } from '../config/env';
 import ms from 'ms';
 
+interface JwtPayload {
+    userId: string;
+    email: string;
+    role?: string;
+}
 
 export const hashPassword = async (password: string) => {
     const salt = await bcrypt.genSalt(10);
@@ -12,7 +17,7 @@ export const hashPassword = async (password: string) => {
 export const comparePassword = async (password: string, hash: string) => {
     return await bcrypt.compare(password, hash);
 };
-export const generateToken = (payload: object): string => {
+export const generateToken = (payload: JwtPayload): string => {
     const secret = env.JWT_SECRET;
     if (!secret) throw new Error('JWT_SECRET is not defined');
 

@@ -7,7 +7,6 @@ import { Contact } from '../models/contact.models';
 
 export const registerShopDetails = async (req: Request, res: Response) => {
     try {
-        console.log('Register shop details');
         const {
             userId,
             firstName,
