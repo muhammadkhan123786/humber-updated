@@ -18,4 +18,7 @@ export interface IRegisterSharedInterface<TUserId = string> {
     confirmPassword: string;
     logo: string; // ✅ backend-safe
     termsSelected: boolean;
+    isActive?: boolean;
+    isDeleted?: boolean;
+    isDefault?: boolean;
 }
