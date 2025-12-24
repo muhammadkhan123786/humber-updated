@@ -4,7 +4,6 @@ import { Country } from '../models/country.models';
 import { Address } from '../models/addresses.models';
 import { Person } from '../models/person.models';
 import { Contact } from '../models/contact.models';
-import { IRegisterSharedInterface } from '../../../common/IRegisterSharedInterface';
 import { IShopRegisterBackendInterface } from '../types/shopRegister.type';
 import { Types } from 'mongoose';
 
