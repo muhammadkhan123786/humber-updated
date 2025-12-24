@@ -1,17 +1,12 @@
 "use client";
 
-import { User, Mail, Phone, Car, Tag, Palette, Calendar, Plus, Trash2, Edit } from 'lucide-react';
+import { User, Mail, Phone, Car, Plus, Trash2, Edit } from 'lucide-react';
 import { VehicleData } from './types';
 
 export type ContactDetailsFields =
     | 'ownerName'
     | 'ownerEmail'
     | 'ownerPhone'
-    | 'vehicleNumber'
-    | 'vehicleType'
-    | 'vehicleModel'
-    | 'vehicleColor'
-    | 'registrationDate'
     | 'vehicles';
 
 interface ContactDetailsStepProps {
@@ -19,11 +14,6 @@ interface ContactDetailsStepProps {
         ownerName: string;
         ownerEmail: string;
         ownerPhone: string;
-        vehicleNumber: string;
-        vehicleType: string;
-        vehicleModel: string;
-        vehicleColor: string;
-        registrationDate: string;
         vehicles: VehicleData[];
     };
     onInputChange: (field: ContactDetailsFields, value: any) => void;
@@ -31,9 +21,7 @@ interface ContactDetailsStepProps {
     onEditVehicleClick: (vehicleId: string) => void;
     onDeleteVehicleClick: (vehicleId: string) => void;
     onSetPrimaryVehicle: (vehicleId: string) => void;
-    getVehicleTypeLabel: (type: string) => string;
-    getVehicleModelLabel: (model: string) => string;
-    getVehicleColorLabel: (color: string) => string;
+    getVehicleMakeLabel: (make: string) => string;
 }
 
 export default function ContactDetailsStep({ 
@@ -43,45 +31,9 @@ export default function ContactDetailsStep({
     onEditVehicleClick,
     onDeleteVehicleClick,
     onSetPrimaryVehicle,
-    getVehicleTypeLabel,
-    getVehicleModelLabel,
-    getVehicleColorLabel
+    getVehicleMakeLabel
 }: ContactDetailsStepProps) {
-    const vehicleTypes = [
-        { value: 'car', label: 'Car' },
-        { value: 'motorcycle', label: 'Motorcycle' },
-        { value: 'truck', label: 'Truck' },
-        { value: 'suv', label: 'SUV' },
-        { value: 'van', label: 'Van' },
-        { value: 'bus', label: 'Bus' },
-    ];
-
-    const vehicleColors = [
-        { value: 'white', label: 'White' },
-        { value: 'black', label: 'Black' },
-        { value: 'silver', label: 'Silver' },
-        { value: 'gray', label: 'Gray' },
-        { value: 'red', label: 'Red' },
-        { value: 'blue', label: 'Blue' },
-        { value: 'green', label: 'Green' },
-        { value: 'yellow', label: 'Yellow' },
-        { value: 'brown', label: 'Brown' },
-        { value: 'other', label: 'Other' },
-    ];
-
-    const vehicleModels = [
-        { value: 'toyota_camry', label: 'Toyota Camry' },
-        { value: 'honda_civic', label: 'Honda Civic' },
-        { value: 'ford_f150', label: 'Ford F-150' },
-        { value: 'bmw_3series', label: 'BMW 3 Series' },
-        { value: 'mercedes_cclass', label: 'Mercedes C-Class' },
-        { value: 'audi_a4', label: 'Audi A4' },
-        { value: 'tesla_model3', label: 'Tesla Model 3' },
-        { value: 'hyundai_elantra', label: 'Hyundai Elantra' },
-        { value: 'kia_sportage', label: 'Kia Sportage' },
-        { value: 'other', label: 'Other Model' },
-    ];
-
+   
     const vehicles = formData.vehicles || [];
     const hasVehicles = vehicles.length > 0;
     const primaryVehicle = hasVehicles ? vehicles.find(v => v.isPrimary) || vehicles[0] : null;
@@ -188,7 +140,7 @@ export default function ContactDetailsStep({
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <Car className="w-4 h-4 text-gray-500" />
-                                                    <span className="font-medium">{vehicle.vehicleNumber}</span>
+                                                    <span className="font-medium">{vehicle.vehicleModel}</span>
                                                     {vehicle.isPrimary && (
                                                         <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
                                                             Primary
@@ -197,49 +149,55 @@ export default function ContactDetailsStep({
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
                                                     <div>
-                                                        <span className="font-medium">Type: </span>
-                                                        {getVehicleTypeLabel(vehicle.vehicleType)}
+                                                        <span className="font-medium">Make: </span>
+                                                        {getVehicleMakeLabel(vehicle.vehicleMake)}
                                                     </div>
                                                     <div>
                                                         <span className="font-medium">Model: </span>
-                                                        {getVehicleModelLabel(vehicle.vehicleModel)}
+                                                        {vehicle.vehicleModel}
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="font-medium">Color: </span>
-                                                        <div className={`w-3 h-3 rounded-full`} 
-                                                             style={{ backgroundColor: vehicle.vehicleColor === 'other' ? '#6b7280' : vehicle.vehicleColor }} />
-                                                        {getVehicleColorLabel(vehicle.vehicleColor)}
+                                                    {vehicle.serialNumber && (
+                                                        <div className="col-span-2">
+                                                            <span className="font-medium">Serial Number: </span>
+                                                            {vehicle.serialNumber}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <span className="font-medium">Manufacturing: </span>
+                                                        {vehicle.manufacturing}
                                                     </div>
                                                     <div>
-                                                        <span className="font-medium">Reg. Date: </span>
-                                                        {new Date(vehicle.registrationDate).toLocaleDateString()}
+                                                        <span className="font-medium">Year: </span>
+                                                        {vehicle.yearOfDesign}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex gap-2 ml-4">
+                                            <div className="flex flex-col gap-2 ml-4">
                                                 {!vehicle.isPrimary && (
                                                     <button
                                                         onClick={() => onSetPrimaryVehicle(vehicle.id)}
-                                                        className="p-2 hover:bg-green-50 rounded-lg text-green-600"
+                                                        className="p-2 hover:bg-green-50 rounded-lg text-green-600 text-xs font-medium"
                                                         title="Set as Primary"
                                                     >
-                                                        <span className="text-xs font-medium">Set Primary</span>
+                                                        Set Primary
                                                     </button>
                                                 )}
-                                                <button
-                                                    onClick={() => onEditVehicleClick(vehicle.id)}
-                                                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
-                                                    title="Edit Vehicle"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => onDeleteVehicleClick(vehicle.id)}
-                                                    className="p-2 hover:bg-red-50 rounded-lg text-red-600"
-                                                    title="Delete Vehicle"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
+                                                <div className="flex gap-1">
+                                                    <button
+                                                        onClick={() => onEditVehicleClick(vehicle.id)}
+                                                        className="p-2 hover:bg-blue-50 rounded-lg text-blue-600"
+                                                        title="Edit Vehicle"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => onDeleteVehicleClick(vehicle.id)}
+                                                        className="p-2 hover:bg-red-50 rounded-lg text-red-600"
+                                                        title="Delete Vehicle"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

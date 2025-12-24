@@ -1,5 +1,4 @@
 "use client";
-// app/auth/login/page.tsx
 
 import { useState } from 'react';
 import {
@@ -17,13 +16,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import google from '../../../assets/google.png';
 import apple from '../../../assets/apple.png';
-import { SignInData } from '@/data/TestData';
 import { useRouter } from 'next/navigation';
-
-
-
-
-
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
@@ -33,39 +26,61 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:4000/api';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (email === '' || password === '') {
+      alert('Please enter credentials.');
+      return;
+    }
+
     setIsLoading(true);
+    
     try {
-      // Your login logic here
-      console.log({ email, password, rememberMe });
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email, 
+          password: password,
+        }),
+      });
 
-      console.log(email);
-      console.log(password);
+      const result = await res.json();
+      console.log('Login response:', result);
 
-      const account = SignInData.find((e) => e.emailId === email);
-
-      if (email === '' || password === '') {
-        alert('Please enter credentials.');
+      if (!res.ok) {
+        alert(result.message || 'Login failed. Please check your credentials.');
         return;
       }
 
-      if (account === undefined) {
-        alert('Email not found.');
-        return;
-      }
-      if (!(account.password === password)) {
-        alert('Password Invalid.');
-        return;
-      }
+      // Success Logic
+      console.log('Login successful:', result);
+      
       localStorage.setItem('email', email);
-
-      localStorage.setItem('roleId', JSON.stringify(account.roleId));
+      if (result.user.role) {
+        if(result.user.role === 'Admin'){
+        localStorage.setItem('roleId', JSON.stringify(1));
+      }
+        else if(result.user.role === 'Technician'){
+        localStorage.setItem('roleId', JSON.stringify(2));
+      }
+      else if(result.user.role === 'Customer'){
+        localStorage.setItem('roleId', JSON.stringify(3));
+      }
+     }
+      if (result.token) {
+        localStorage.setItem('token', result.token);
+      }
 
       router.push('/dashboard');
-      // redirect('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
+      alert('Server se connect nahi ho pa raha. Please check if backend is running.');
     } finally {
       setIsLoading(false);
     }
@@ -86,16 +101,10 @@ export default function LoginPage() {
 
           {/* Left Section - Customer Hub */}
           <div className="hidden md:block relative lg:w-1/2 bg-[#FE6B1D] text-white p-8 lg:p-12 overflow-hidden">
-
-            {/* Decorative Circle - Top Right (Bada) */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#FFFFFF30] rounded-full pointer-events-none" />
-
-            {/* Decorative Circle - Bottom Left (Chota) */}
             <div className="absolute -bottom-3 -left-11 w-20 h-14 bg-[#FFFFFF20] rounded-full pointer-events-none" />
 
-            {/* Content Container */}
             <div className="relative z-10 mt-16 flex flex-col h-full">
-              {/* Header with Icon */}
               <div className="flex items-center gap-3 mb-8">
                 <div className="p-2 bg-[#FFFFFF3B] rounded-xl">
                   <User className="w-8 h-8 text-white" />
@@ -105,13 +114,11 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Main Content */}
               <div className="flex-1">
                 <p className="text-[32px] leading-8 font-semibold mb-8">
                   Join Thousands of Satisfied Customers
                 </p>
 
-                {/* Features List */}
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
                     <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
@@ -156,14 +163,11 @@ export default function LoginPage() {
           {/* Right Section - Login Form */}
           <div className="lg:w-1/2 p-8 lg:p-12">
             <div className="max-w-md mx-auto">
-              {/* Form Header */}
               <div className="text-left mb-10">
                 <h2 className="text-2xl font-bold text-gray-900">Login to your account</h2>
               </div>
 
-              {/* Login Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
@@ -179,12 +183,10 @@ export default function LoginPage() {
                       className="block w-full px-4 py-3 placeholder:text-[#A0AEC0A1]  bg-[#F6F6F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
                       placeholder="Please enter email"
                       required
-
                     />
                   </div>
                 </div>
 
-                {/* Password Field */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
@@ -215,7 +217,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <input
@@ -237,7 +238,6 @@ export default function LoginPage() {
                   </Link>
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={isLoading}
@@ -257,7 +257,6 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              {/* Divider */}
               <div className="mt-8">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -268,7 +267,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {/* Social Login Buttons */}
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   <button
                     onClick={handleGoogleLogin}
@@ -287,7 +285,6 @@ export default function LoginPage() {
                   </button>
                 </div>
 
-                {/* Register Link */}
                 <div className="mt-8 text-center">
                   <p className="text-sm text-gray-600">
                     Don&apos;t have an account?{' '}

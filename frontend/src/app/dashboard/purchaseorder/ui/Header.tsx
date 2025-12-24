@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import printer from '../../../../assets/printer.png';
-import save from '../../../../assets/writing.png';
+import save from '../../../../assets/printer.png';
 
 export default function Header() {
     return (

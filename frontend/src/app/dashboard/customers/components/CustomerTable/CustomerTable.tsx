@@ -11,11 +11,11 @@ interface CustomerTableProps {
     filteredCustomers: Customer[];
     searchQuery: string;
     statusFilter: string;
-    vehicleTypeFilter: string;
+    vehicleMakeFilter: string;
     actionMenu: {
         isOpen: boolean;
         customerId: string | null;
-        position?: { x: number; y: number } | null; // ✅ Optional banayein
+        position?: { x: number; y: number } | null;
     };
     onView: (customer: Customer) => void;
     onEdit: (customer: Customer) => void;
@@ -23,9 +23,7 @@ interface CustomerTableProps {
     onActionMenuClick: (event: React.MouseEvent, customerId: string) => void;
     onActionMenuClose: () => void;
     onDelete: (customerId: string) => void;
-    getVehicleTypeLabel: (type: string) => string;
-    getVehicleModelLabel: (model: string) => string;
-    getVehicleColorLabel: (color: string) => string;
+    getVehicleMakeLabel: (make: string) => string;
 }
 
 export default function CustomerTable({
@@ -33,7 +31,7 @@ export default function CustomerTable({
     filteredCustomers,
     searchQuery,
     statusFilter,
-    vehicleTypeFilter,
+    vehicleMakeFilter,
     actionMenu,
     onView,
     onEdit,
@@ -41,9 +39,7 @@ export default function CustomerTable({
     onActionMenuClick,
     onActionMenuClose,
     onDelete,
-    getVehicleTypeLabel,
-    getVehicleModelLabel,
-    getVehicleColorLabel
+    getVehicleMakeLabel
 }: CustomerTableProps) {
     return (
         <>
@@ -69,9 +65,7 @@ export default function CustomerTable({
                                         onView={onView}
                                         onEdit={onEdit}
                                         onActionMenuClick={onActionMenuClick}
-                                        getVehicleTypeLabel={getVehicleTypeLabel}
-                                        getVehicleModelLabel={getVehicleModelLabel}
-                                        getVehicleColorLabel={getVehicleColorLabel}
+                                        getVehicleMakeLabel={getVehicleMakeLabel}
                                     />
                                 ))
                             ) : (
@@ -81,11 +75,11 @@ export default function CustomerTable({
                                             <User className="w-12 h-12 mb-4 text-gray-300" />
                                             <p className="text-lg font-medium mb-2">No customers found</p>
                                             <p className="mb-4">
-                                                {searchQuery || statusFilter !== 'all' || vehicleTypeFilter !== 'all'
+                                                {searchQuery || statusFilter !== 'all' || vehicleMakeFilter !== 'all'
                                                     ? 'Try adjusting your search or filters'
                                                     : 'Start by adding your first customer'}
                                             </p>
-                                            {!searchQuery && statusFilter === 'all' && vehicleTypeFilter === 'all' && (
+                                            {!searchQuery && statusFilter === 'all' && vehicleMakeFilter === 'all' && (
                                                 <button
                                                     onClick={onAdd}
                                                     className="px-4 py-2 bg-[#FE6B1D] text-white rounded-lg hover:bg-[#FE6B1D]/90 transition-colors"

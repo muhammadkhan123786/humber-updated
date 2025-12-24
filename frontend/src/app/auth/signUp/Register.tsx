@@ -15,6 +15,9 @@ export default function Register() {
     const [logo, setLogo] = useState<string | null>(null);
     const { openModal } = useModal();
 
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:4000/api';
+
+
     const [data, setData] = useState<IRegisterSharedInterface<string>>({
         firstName: '',
         middleName: '',
@@ -123,7 +126,7 @@ export default function Register() {
                 formData.append('logo', logoInput.files[0]);
             }
 
-            const res = await fetch('http://127.0.0.1:4000/api/register/shop', {
+            const res = await fetch(`${API_BASE_URL}/register/shop`, {
                 method: 'POST',
                 body: formData
             });

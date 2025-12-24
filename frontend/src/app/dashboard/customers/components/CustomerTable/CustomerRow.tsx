@@ -9,9 +9,7 @@ interface CustomerRowProps {
     onView: (customer: Customer) => void;
     onEdit: (customer: Customer) => void;
     onActionMenuClick: (event: React.MouseEvent, customerId: string) => void;
-    getVehicleTypeLabel: (type: string) => string;
-    getVehicleModelLabel: (model: string) => string;
-    getVehicleColorLabel: (color: string) => string;
+    getVehicleMakeLabel: (make: string) => string;
 }
 
 export default function CustomerRow({
@@ -19,9 +17,7 @@ export default function CustomerRow({
     onView,
     onEdit,
     onActionMenuClick,
-    getVehicleTypeLabel,
-    getVehicleModelLabel,
-    getVehicleColorLabel
+    getVehicleMakeLabel
 }: CustomerRowProps) {
     
     const getStatusIcon = (status: string) => {
@@ -36,6 +32,11 @@ export default function CustomerRow({
                 return null;
         }
     };
+
+    // Get first vehicle data
+    const firstVehicle = customer.vehicles?.[0];
+    const vehicleMake = firstVehicle?.vehicleMake || '';
+    const vehicleModel = firstVehicle?.vehicleModel || '';
 
     return (
         <tr 
@@ -61,20 +62,22 @@ export default function CustomerRow({
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-4 flex">
+            <td className="px-6 py-4">
                 <div className="flex items-center gap-2 mb-1">
                     <Car className="w-4 h-4 text-gray-400" />
                     <div className="text-sm font-medium text-gray-900">
-                        {customer.vehicleNumber}
+                        {vehicleModel || 'No Vehicle'}
                     </div>
                 </div>
                 <div className="text-sm text-gray-600">
-                    {getVehicleTypeLabel(customer.vehicleType)} • {getVehicleModelLabel(customer.vehicleModel)}
+                    {getVehicleMakeLabel(vehicleMake)} {vehicleModel ? `• ${vehicleModel}` : ''}
                 </div>
-                <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                    <div className={`w-3 h-3 rounded-full`} style={{ backgroundColor: customer.vehicleColor === 'other' ? '#6b7280' : customer.vehicleColor }} />
-                    {getVehicleColorLabel(customer.vehicleColor)}
-                </div>
+                {firstVehicle?.yearOfDesign && (
+                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <Calendar className="w-3 h-3" />
+                        Year: {firstVehicle.yearOfDesign}
+                    </div>
+                )}
             </td>
             <td className="px-6 py-4">
                 <div className="text-sm text-gray-900 flex items-center gap-2">
@@ -108,7 +111,7 @@ export default function CustomerRow({
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                     <Calendar className="w-3 h-3 inline mr-1" />
-                    {new Date(customer.registrationDate).toLocaleDateString()}
+                    {customer.createdAt.toLocaleDateString()}
                 </div>
             </td>
             <td className="px-6 py-4">

@@ -40,69 +40,43 @@ export default function AddEditCustomer({
     const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
     const [currentVehicleData, setCurrentVehicleData] = useState<VehicleData>({
         id: '',
-        vehicleNumber: '',
-        vehicleType: '',
+        vehicleMake: '',
         vehicleModel: '',
-        vehicleColor: '',
-        registrationDate: '',
+        serialNumber: '',
+        manufacturing: '',
+        yearOfDesign: '',
         isPrimary: false
     });
 
     const vehicles = formData.vehicles || [];
 
     // Helper functions for vehicle labels
-    const getVehicleTypeLabel = useCallback((type: string): string => {
-        const typeMap: Record<string, string> = {
-            'car': 'Car',
-            'motorcycle': 'Motorcycle',
-            'truck': 'Truck',
-            'suv': 'SUV',
-            'van': 'Van',
-            'bus': 'Bus'
-        };
-        return typeMap[type] || type;
-    }, []);
-
-    const getVehicleModelLabel = useCallback((model: string): string => {
-        const modelMap: Record<string, string> = {
-            'toyota_camry': 'Toyota Camry',
-            'honda_civic': 'Honda Civic',
-            'ford_f150': 'Ford F-150',
-            'bmw_3series': 'BMW 3 Series',
-            'mercedes_cclass': 'Mercedes C-Class',
-            'audi_a4': 'Audi A4',
-            'tesla_model3': 'Tesla Model 3',
-            'hyundai_elantra': 'Hyundai Elantra',
-            'kia_sportage': 'Kia Sportage',
-            'other': 'Other Model'
-        };
-        return modelMap[model] || model;
-    }, []);
-
-    const getVehicleColorLabel = useCallback((color: string): string => {
-        const colorMap: Record<string, string> = {
-            'white': 'White',
-            'black': 'Black',
-            'silver': 'Silver',
-            'gray': 'Gray',
-            'red': 'Red',
-            'blue': 'Blue',
-            'green': 'Green',
-            'yellow': 'Yellow',
-            'brown': 'Brown',
+    const getVehicleMakeLabel = useCallback((make: string): string => {
+        const makeMap: Record<string, string> = {
+            'toyota': 'Toyota',
+            'honda': 'Honda',
+            'ford': 'Ford',
+            'bmw': 'BMW',
+            'mercedes': 'Mercedes-Benz',
+            'audi': 'Audi',
+            'tesla': 'Tesla',
+            'hyundai': 'Hyundai',
+            'kia': 'Kia',
+            'nissan': 'Nissan',
+            'volkswagen': 'Volkswagen',
             'other': 'Other'
         };
-        return colorMap[color] || color;
+        return makeMap[make] || make;
     }, []);
 
     const handleAddVehicleClick = () => {
         setCurrentVehicleData({
             id: Date.now().toString(),
-            vehicleNumber: '',
-            vehicleType: '',
+            vehicleMake: '',
             vehicleModel: '',
-            vehicleColor: '',
-            registrationDate: '',
+            serialNumber: '',
+            manufacturing: '',
+            yearOfDesign: '',
             isPrimary: vehicles.length === 0
         });
         setEditingVehicleId(null);
@@ -146,9 +120,8 @@ export default function AddEditCustomer({
     };
 
     const handleSaveVehicle = () => {
-        if (!currentVehicleData.vehicleNumber || !currentVehicleData.vehicleType || 
-            !currentVehicleData.vehicleModel || !currentVehicleData.registrationDate) {
-            alert('Please fill all required vehicle fields');
+        if (!currentVehicleData.vehicleMake || !currentVehicleData.vehicleModel) {
+            alert('Please fill Make and Model fields');
             return;
         }
 
@@ -171,11 +144,11 @@ export default function AddEditCustomer({
         setShowAddVehicleModal(false);
         setCurrentVehicleData({
             id: '',
-            vehicleNumber: '',
-            vehicleType: '',
+            vehicleMake: '',
             vehicleModel: '',
-            vehicleColor: '',
-            registrationDate: '',
+            serialNumber: '',
+            manufacturing: '',
+            yearOfDesign: '',
             isPrimary: false
         });
         setEditingVehicleId(null);
@@ -194,11 +167,6 @@ export default function AddEditCustomer({
         ownerName: formData.ownerName,
         ownerEmail: formData.ownerEmail,
         ownerPhone: formData.ownerPhone,
-        vehicleNumber: vehicles.length > 0 ? vehicles[0].vehicleNumber : '',
-        vehicleType: vehicles.length > 0 ? vehicles[0].vehicleType : '',
-        vehicleModel: vehicles.length > 0 ? vehicles[0].vehicleModel : '',
-        vehicleColor: vehicles.length > 0 ? vehicles[0].vehicleColor : '',
-        registrationDate: vehicles.length > 0 ? vehicles[0].registrationDate : '',
         vehicles: vehicles
     };
 
@@ -228,9 +196,7 @@ export default function AddEditCustomer({
                         onEditVehicleClick={handleEditVehicleClick}
                         onDeleteVehicleClick={handleDeleteVehicleClick}
                         onSetPrimaryVehicle={handleSetPrimaryVehicle}
-                        getVehicleTypeLabel={getVehicleTypeLabel}
-                        getVehicleModelLabel={getVehicleModelLabel}
-                        getVehicleColorLabel={getVehicleColorLabel}
+                        getVehicleMakeLabel={getVehicleMakeLabel}
                     />
                 );
             case 3:
@@ -315,11 +281,11 @@ export default function AddEditCustomer({
                         setEditingVehicleId(null);
                         setCurrentVehicleData({
                             id: '',
-                            vehicleNumber: '',
-                            vehicleType: '',
+                            vehicleMake: '',
                             vehicleModel: '',
-                            vehicleColor: '',
-                            registrationDate: '',
+                            serialNumber: '',
+                            manufacturing: '',
+                            yearOfDesign: '',
                             isPrimary: false
                         });
                     }}
