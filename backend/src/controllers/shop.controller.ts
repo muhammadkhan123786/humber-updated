@@ -12,11 +12,11 @@ export const registerShopDetails = async (req: Request, res: Response) => {
             firstName,
             middleName,
             lastName,
-            shopName,
+            companyName,
             mobileNumber,
             phoneNumber,
             companyWebsite,
-            address,
+            companyAddress,
             country,
             zipCode,
             latitude,
@@ -42,7 +42,7 @@ export const registerShopDetails = async (req: Request, res: Response) => {
 
         // 3️⃣ Create address document
         const addressDoc = await Address.create({
-            address,
+            address:companyAddress,
             countryId: countryDoc._id,
             zipCode,
             latitude,
@@ -69,7 +69,7 @@ export const registerShopDetails = async (req: Request, res: Response) => {
 
 
         const shop = new Shop({
-            shopName,
+            shopName:companyName,
             mobileNumber,
             phoneNumber,
             companyWebsite,
