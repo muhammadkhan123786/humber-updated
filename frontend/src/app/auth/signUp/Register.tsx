@@ -15,7 +15,7 @@ export default function Register() {
     const [logo, setLogo] = useState<string | null>(null);
     const { openModal } = useModal();
 
-    const [data, setData] = useState<IRegisterSharedInterface>({
+    const [data, setData] = useState<IRegisterSharedInterface<string>>({
         firstName: '',
         middleName: '',
         lastName: '',
@@ -29,7 +29,7 @@ export default function Register() {
         country: '',
         zipCode: '',
         latitude: 0,
-        longtitude: 0,
+        longitude: 0,
         password: '',
         confirmPassword: '',
         logo: '',
@@ -83,66 +83,66 @@ export default function Register() {
         };
     }, [googleMapLoader]);
 
- async function save() {
-    if (data.firstName === '') {
-        alert('Please enter first name.');
-        return;
-    } else if (data.emailId === '') {
-        alert('Please enter email id.');
-        return;
-    } else if (data.companyName === '') {
-        alert('Please enter shop name.');
-        return;
-    } else if (data.mobileNumber === '') {
-        alert('Please enter mobile number.');
-        return;
-    } else if (data.companyAddress === '') {
-        alert('Please select company address.');
-        return;
-    } else if (data.password === '') {
-        alert('Please enter password.');
-        return;
-    } else if (data.password !== data.confirmPassword) {
-        alert('Password & confirm password must be same.');
-        return;
-    } else if (!data.termsSelected) {
-        alert('Please agree on the terms.');
-        return;
-    }
-
-    try {
-        const formData = new FormData();
-
-        Object.entries(data).forEach(([key, value]) => {
-            formData.append(key, String(value));
-        });
-
-        // logo file
-        const logoInput = document.getElementById('logo') as HTMLInputElement;
-        if (logoInput?.files?.[0]) {
-            formData.append('logo', logoInput.files[0]);
-        }
-
-        const res = await fetch('http://127.0.0.1:4000/api/register/shop', {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await res.json();
-
-        if (!res.ok) {
-            alert(result.message || 'Registration failed');
+    async function save() {
+        if (data.firstName === '') {
+            alert('Please enter first name.');
+            return;
+        } else if (data.emailId === '') {
+            alert('Please enter email id.');
+            return;
+        } else if (data.companyName === '') {
+            alert('Please enter shop name.');
+            return;
+        } else if (data.mobileNumber === '') {
+            alert('Please enter mobile number.');
+            return;
+        } else if (data.companyAddress === '') {
+            alert('Please select company address.');
+            return;
+        } else if (data.password === '') {
+            alert('Please enter password.');
+            return;
+        } else if (data.password !== data.confirmPassword) {
+            alert('Password & confirm password must be same.');
+            return;
+        } else if (!data.termsSelected) {
+            alert('Please agree on the terms.');
             return;
         }
 
-        // success
-        openModal(<RegisterSuccess />);
+        try {
+            const formData = new FormData();
 
-    } catch (error) {
-        console.error(error);
-        alert('Something went wrong. Please try again.');
+            Object.entries(data).forEach(([key, value]) => {
+                formData.append(key, String(value));
+            });
+
+            // logo file
+            const logoInput = document.getElementById('logo') as HTMLInputElement;
+            if (logoInput?.files?.[0]) {
+                formData.append('logo', logoInput.files[0]);
+            }
+
+            const res = await fetch('http://127.0.0.1:4000/api/register/shop', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                alert(result.message || 'Registration failed');
+                return;
+            }
+
+            // success
+            openModal(<RegisterSuccess />);
+
+        } catch (error) {
+            console.error(error);
+            alert('Something went wrong. Please try again.');
+        }
     }
-}
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         const { name, value } = e.target;
@@ -325,7 +325,7 @@ export default function Register() {
                         name="longtitude"
                         id="longtitude"
                         onChange={handleChange}
-                        value={data.longtitude}
+                        value={data.longitude}
                         placeholder="Auto fill with address select."
                         readOnly
                     />

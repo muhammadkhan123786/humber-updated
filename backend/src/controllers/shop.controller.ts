@@ -4,6 +4,9 @@ import { Country } from '../models/country.models';
 import { Address } from '../models/addresses.models';
 import { Person } from '../models/person.models';
 import { Contact } from '../models/contact.models';
+import { IRegisterSharedInterface } from '../../../common/IRegisterSharedInterface';
+import { IShopRegisterBackendInterface } from '../types/shopRegister.type';
+import { Types } from 'mongoose';
 
 export const registerShopDetails = async (req: Request, res: Response) => {
     try {
@@ -12,6 +15,7 @@ export const registerShopDetails = async (req: Request, res: Response) => {
             firstName,
             middleName,
             lastName,
+            emailId,
             companyName,
             mobileNumber,
             phoneNumber,
@@ -21,15 +25,34 @@ export const registerShopDetails = async (req: Request, res: Response) => {
             zipCode,
             latitude,
             longitude,
-            email,
-            file
+            password,
+            confirmPassword,
+            termsSelected
         } = req.body;
 
+        const payload: IShopRegisterBackendInterface = {
+            userId: new Types.ObjectId(userId),
+            firstName,
+            middleName,
+            lastName,
+            fullName: `${firstName} ${middleName ?? ""} ${lastName}`.trim(),
+            emailId,
+            companyName,
+            mobileNumber,
+            phoneNumber,
+            companyWebsite,
+            companyAddress,
+            country,
+            zipCode,
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+            password,
+            confirmPassword,
+            logo: req.file?.filename ?? "",
+            termsSelected: Boolean(termsSelected)
+        };
         let logoPath = '';
 
-        if (file) {
-            logoPath = `/uploads/logos/${file.filename}`;
-        }
         if (!userId) return res.status(400).json({ message: 'User ID is missing' });
 
         // 1️⃣ Find country by name
@@ -42,7 +65,7 @@ export const registerShopDetails = async (req: Request, res: Response) => {
 
         // 3️⃣ Create address document
         const addressDoc = await Address.create({
-            address:companyAddress,
+            address: companyAddress,
             countryId: countryDoc._id,
             zipCode,
             latitude,
@@ -63,20 +86,20 @@ export const registerShopDetails = async (req: Request, res: Response) => {
             mobileNumber,
             phoneNumber,
             companyWebsite,
-            emailId: email
+            emailId: payload.emailId
 
         });
 
 
         const shop = new Shop({
-            shopName:companyName,
+            shopName: companyName,
             mobileNumber,
             phoneNumber,
             companyWebsite,
             personId: personDoc._id,
             contactId: contactDoc._id,
             addressId: addressDoc._id,
-            userId: userId,
+            userId: payload.userId,
             isActive: true,
             isDeleted: false,
             logo: logoPath

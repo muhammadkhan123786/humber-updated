@@ -1,4 +1,5 @@
-export interface IRegisterSharedInterface {
+export interface IRegisterSharedInterface<TUserId = string> {
+    userId?: TUserId;
     firstName: string;
     middleName: string;
     lastName: string;
@@ -12,10 +13,9 @@ export interface IRegisterSharedInterface {
     country: string;
     zipCode: string;
     latitude: number;
-    longtitude: number;
+    longitude: number; // ✅ fixed spelling
     password: string;
     confirmPassword: string;
-    logo: File | string;
+    logo: string; // ✅ backend-safe
     termsSelected: boolean;
-
-}  
+}
