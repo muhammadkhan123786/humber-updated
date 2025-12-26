@@ -37,13 +37,16 @@ export class AdvancedGenericController<T extends Document> {
     // GET ALL with filtering, pagination, sorting
     getAll = async (req: Request, res: Response) => {
         try {
-            const { page = 1, limit = 10, sortBy = "createdAt", order = "desc", ...rawFilters } = req.query;
+            const { page = 1, limit = 10, sortBy = "createdAt", order = "desc", search, ...rawFilters } = req.query;
 
             const pageNumber = Number(page);
             const pageSize = Number(limit);
 
             // Convert query params to mongoose filter
             const queryFilters: Record<string, any> = {};
+            if (search) {
+                queryFilters.brandName = { $regex: search, $options: 'i' };
+            }
             Object.keys(rawFilters).forEach((key) => {
                 const value = rawFilters[key];
                 if (typeof value === "string" && Types.ObjectId.isValid(value)) {
