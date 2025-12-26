@@ -9,7 +9,10 @@ import authRouter from './routes/auth.routes';
 import { adminProtecter } from './middleware/auth.middleware';
 import vehicleBrandRouter from './routes/vehicleBrand.routes';
 import modelRouter from './routes/vehicleModel.routes';
-import customerRouter from './routes/customers.routes';
+
+import customerSourceRouter from './routes/customer.source.routes';
+import repairStatusRouter from './routes/repair.status.routes';
+import serviceTypeMasterRouter from './routes/services.types.master.routes';
 
 // Create express app
 const app: Application = express();
@@ -26,8 +29,11 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
 app.use(`${process.env.API_PREFIX}/vehiclebrand`, adminProtecter, vehicleBrandRouter);
-app.use(`${process.env.API_PREFIX}/vechilemodel`, modelRouter)
-app.use(`${process.env.API_PREFIX}/customer`, customerRouter);
+app.use(`${process.env.API_PREFIX}/vechilemodel`, modelRouter);
+app.use(`${process.env.API_PREFIX}/repairstatus`, repairStatusRouter);
+app.use(`${process.env.API_PREFIX}/service-types-master`, serviceTypeMasterRouter);
+app.use(`${process.env.API_PREFIX}/customer-source`, customerSourceRouter);
+
 
 // Health check route
 app.get('/health', (_req, res) => {
