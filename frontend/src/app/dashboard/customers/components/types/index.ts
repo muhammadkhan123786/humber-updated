@@ -1,20 +1,19 @@
+// types/index.ts
 import { AddNewCustomerInterface } from '@/types/AddNewCustomer';
 
-// VehicleData interface define karein
+// VehicleData interface - NEW STRUCTURE
 export interface VehicleData {
     id: string;
-    vehicleNumber: string;
-    vehicleType: string;
+    vehicleMake: string;
     vehicleModel: string;
-    vehicleColor: string;
-    registrationDate: string;
+    serialNumber: string;
+    manufacturing: string;
+    yearOfDesign: string;
     isPrimary?: boolean;
 }
 
-// Customer type ko extend karein
-export type Customer = AddNewCustomerInterface & {
-    vehicles?: VehicleData[];
-};
+// Customer type
+export type Customer = AddNewCustomerInterface;
 
 export type ModalMode = 'add' | 'edit' | 'view';
 
@@ -24,7 +23,7 @@ export type ActionMenuState = {
     position?: { x: number; y: number } | null;
 };
 
-// FormData type mein vehicles ko properly define karein
+// FormData type - REMOVE legacy fields
 export type FormData = {
     firstName: string;
     lastName: string;
@@ -40,14 +39,10 @@ export type FormData = {
     ownerName: string;
     ownerEmail: string;
     ownerPhone: string;
-    // Legacy fields for backward compatibility
-    vehicleNumber: string;
-    vehicleType: string;
-    vehicleModel: string;
-    vehicleColor: string;
-    registrationDate: string;
-    // New field for multiple vehicles
-    vehicles: VehicleData[];  // ✅ Ye line fix hai
+    vehicles: VehicleData[];
+    // ✅ NEW FIELDS FOR STEP 3
+    issues: Array<{ category: string; subIssues: string[] }>;
+    description: string;
 };
 
 export type Step = {

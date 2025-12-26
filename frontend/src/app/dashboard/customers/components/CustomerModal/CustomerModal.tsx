@@ -1,7 +1,5 @@
 // app/dashboard/customers/components/CustomerModal/CustomerModal.tsx
 "use client";
-
-import { useRef, useEffect } from 'react';
 import { UserPlus, Edit, Eye, X } from 'lucide-react';
 import type { ModalMode, Customer, FormData, Step } from '../types';
 import AddEditCustomer from './AddEditCustomer';
@@ -15,18 +13,16 @@ interface CustomerModalProps {
     formData: FormData;
     selectedCustomer: Customer | null;
     steps: Step[];
-      modalRef: React.RefObject<HTMLDivElement | null>;
-    getVehicleTypeLabel: (type: string) => string;
-    getVehicleModelLabel: (model: string) => string;
-    getVehicleColorLabel: (color: string) => string;
+    modalRef: React.RefObject<HTMLDivElement | null>;
+    getVehicleMakeLabel: (make: string) => string; // CHANGE 1: Updated prop name
     getStatusIcon: (status: string) => React.ReactNode;
     onClose: () => void;
     onNextStep: () => void;
     onPrevStep: () => void;
     onSubmit: () => void;
     onPersonalInfoChange: (field: string, value: string) => void;
-    onContactDetailsChange: (field: string, value: string) => void;
-    onPreferencesChange: (field: string, value: string | boolean) => void;
+    onContactDetailsChange: (field: string, value: any) => void; // CHANGE 2: Updated type from string to any
+    onPreferencesChange: (field: string, value: any) => void;
     onEdit: () => void;
 }
 
@@ -39,9 +35,7 @@ export default function CustomerModal({
     selectedCustomer,
     steps,
     modalRef,
-    getVehicleTypeLabel,
-    getVehicleModelLabel,
-    getVehicleColorLabel,
+    getVehicleMakeLabel, // CHANGE 3: Updated prop name
     getStatusIcon,
     onClose,
     onNextStep,
@@ -118,9 +112,7 @@ export default function CustomerModal({
                                 customer={selectedCustomer}
                                 onEdit={onEdit}
                                 onClose={onClose}
-                                getVehicleTypeLabel={getVehicleTypeLabel}
-                                getVehicleModelLabel={getVehicleModelLabel}
-                                getVehicleColorLabel={getVehicleColorLabel}
+                                getVehicleMakeLabel={getVehicleMakeLabel} // CHANGE 4: Updated prop name
                                 getStatusIcon={getStatusIcon}
                             />
                         ) : (
@@ -134,7 +126,7 @@ export default function CustomerModal({
                                 onClose={onClose}
                                 onSubmit={onSubmit}
                                 onPersonalInfoChange={onPersonalInfoChange}
-                                onContactDetailsChange={onContactDetailsChange}
+                                onContactDetailsChange={onContactDetailsChange} // CHANGE 5: Correct prop name
                                 onPreferencesChange={onPreferencesChange}
                             />
                         )}

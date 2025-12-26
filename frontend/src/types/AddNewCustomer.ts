@@ -16,14 +16,28 @@ export interface AddNewCustomerInterface {
   updatedAt: Date;
   status: 'active' | 'inactive' | 'pending';
 
-   // Vehicle & Owner Details
+  // Owner Details
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
-  vehicleNumber: string;
-  vehicleType: string;
-  vehicleModel: string;
-  vehicleColor: string;
-  registrationDate: string;
-  insuranceFile?: string; // URL or path to file
+  
+  // ✅ LEGACY FIELDS - Make them OPTIONAL
+  vehicleNumber?: string;
+  vehicleType?: string;
+  vehicleModel?: string;
+  vehicleColor?: string;
+  registrationDate?: string;
+  
+  insuranceFile?: string;
+  
+  // ✅ NEW FIELD - Vehicles array
+  vehicles?: Array<{
+    id: string;
+    vehicleMake: string;
+    vehicleModel: string;
+    serialNumber: string;
+    manufacturing: string;
+    yearOfDesign: string;
+    isPrimary?: boolean;
+  }>;
 }

@@ -6,17 +6,9 @@ import top2 from '../assets/Top2.png';
 import top3 from '../assets/Top3.png';
 import top4 from '../assets/Top4.png';
 
-// Update the interface to support multiple vehicles
+// Interface matches AddNewCustomerInterface
 interface ExtendedCustomerInterface extends AddNewCustomerInterface {
-  vehicles?: Array<{
-    id: string;
-    vehicleNumber: string;
-    vehicleType: string;
-    vehicleModel: string;
-    vehicleColor: string;
-    registrationDate: string;
-    isPrimary?: boolean;
-  }>;
+  // No need to redefine, inherits from parent
 }
 
 /* =======================
@@ -41,7 +33,6 @@ export const Roles: Record<number, string> = {
 
 
 
-
 export const AddNewCustomerData: ExtendedCustomerInterface[] = [
   {
     id: 'CUST001',
@@ -57,11 +48,12 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     ownerName: 'John Doe',
     ownerEmail: 'john.doe@example.com',
     ownerPhone: '+1234567890',
-    vehicleNumber: 'ABC-1234',
-    vehicleType: 'car',
-    vehicleModel: 'toyota_camry',
-    vehicleColor: 'silver',
-    registrationDate: '2022-05-15',
+    // ✅ Legacy fields - OPTIONAL (remove or keep empty)
+    vehicleNumber: '',
+    vehicleType: '',
+    vehicleModel: '',
+    vehicleColor: '',
+    registrationDate: '',
     insuranceFile: '/insurance/john_doe_insurance.pdf',
     receiveUpdates: true,
     termsAccepted: true,
@@ -71,11 +63,11 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     vehicles: [
       {
         id: 'veh1',
-        vehicleNumber: 'ABC-1234',
-        vehicleType: 'car',
-        vehicleModel: 'toyota_camry',
-        vehicleColor: 'silver',
-        registrationDate: '2022-05-15',
+        vehicleMake: 'toyota',
+        vehicleModel: 'Camry',
+        serialNumber: 'SN123456',
+        manufacturing: 'Toyota Motors',
+        yearOfDesign: '2022',
         isPrimary: true
       }
     ]
@@ -94,11 +86,12 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     ownerName: 'Sarah Smith',
     ownerEmail: 'sarah.smith@example.com',
     ownerPhone: '+1987654321',
-    vehicleNumber: 'XYZ-5678',
-    vehicleType: 'suv',
-    vehicleModel: 'ford_f150',
-    vehicleColor: 'black',
-    registrationDate: '2023-01-20',
+    // ✅ Legacy fields - OPTIONAL
+    vehicleNumber: '',
+    vehicleType: '',
+    vehicleModel: '',
+    vehicleColor: '',
+    registrationDate: '',
     insuranceFile: '/insurance/sarah_smith_insurance.pdf',
     receiveUpdates: true,
     termsAccepted: true,
@@ -108,20 +101,20 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     vehicles: [
       {
         id: 'veh2',
-        vehicleNumber: 'XYZ-5678',
-        vehicleType: 'suv',
-        vehicleModel: 'ford_f150',
-        vehicleColor: 'black',
-        registrationDate: '2023-01-20',
+        vehicleMake: 'ford',
+        vehicleModel: 'F-150',
+        serialNumber: 'SN789012',
+        manufacturing: 'Ford Motors',
+        yearOfDesign: '2023',
         isPrimary: true
       },
       {
         id: 'veh3',
-        vehicleNumber: 'LMN-9012',
-        vehicleType: 'car',
-        vehicleModel: 'honda_civic',
-        vehicleColor: 'white',
-        registrationDate: '2022-08-15',
+        vehicleMake: 'honda',
+        vehicleModel: 'Civic',
+        serialNumber: 'SN345678',
+        manufacturing: 'Honda Motors',
+        yearOfDesign: '2021',
         isPrimary: false
       }
     ]
@@ -140,11 +133,12 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     ownerName: 'Michael Johnson',
     ownerEmail: 'michael.j@example.com',
     ownerPhone: '+1122334455',
-    vehicleNumber: 'LMN-9012',
-    vehicleType: 'motorcycle',
-    vehicleModel: 'honda_civic',
-    vehicleColor: 'red',
-    registrationDate: '2021-08-30',
+    // ✅ Legacy fields - OPTIONAL
+    vehicleNumber: '',
+    vehicleType: '',
+    vehicleModel: '',
+    vehicleColor: '',
+    registrationDate: '',
     insuranceFile: '/insurance/michael_johnson_insurance.pdf',
     receiveUpdates: false,
     termsAccepted: true,
@@ -154,111 +148,18 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     vehicles: [
       {
         id: 'veh4',
-        vehicleNumber: 'LMN-9012',
-        vehicleType: 'motorcycle',
-        vehicleModel: 'honda_civic',
-        vehicleColor: 'red',
-        registrationDate: '2021-08-30',
+        vehicleMake: 'honda',
+        vehicleModel: 'Civic',
+        serialNumber: 'SN901234',
+        manufacturing: 'Honda Motors',
+        yearOfDesign: '2021',
         isPrimary: true
       }
     ]
   },
-  {
-    id: 'CUST004',
-    firstName: 'Emma',
-    lastName: 'Williams',
-    email: 'emma.w@example.com',
-    mobileNumber: '+1443322551',
-    address: '321 Maple Street, Houston',
-    city: 'Houston',
-    postCode: '77001',
-    contactMethod: 'whatsapp',
-    preferredLanguage: 'en',
-    ownerName: 'Emma Williams',
-    ownerEmail: 'emma.w@example.com',
-    ownerPhone: '+1443322551',
-    vehicleNumber: 'PQR-3456',
-    vehicleType: 'van',
-    vehicleModel: 'mercedes_cclass',
-    vehicleColor: 'white',
-    registrationDate: '2023-11-15',
-    insuranceFile: '/insurance/emma_williams_insurance.pdf',
-    receiveUpdates: true,
-    termsAccepted: true,
-    createdAt: new Date('2024-04-20'),
-    updatedAt: new Date('2024-04-20'),
-    status: 'pending',
-    vehicles: [
-      {
-        id: 'veh5',
-        vehicleNumber: 'PQR-3456',
-        vehicleType: 'van',
-        vehicleModel: 'mercedes_cclass',
-        vehicleColor: 'white',
-        registrationDate: '2023-11-15',
-        isPrimary: true
-      },
-      {
-        id: 'veh6',
-        vehicleNumber: 'STU-7890',
-        vehicleType: 'car',
-        vehicleModel: 'bmw_3series',
-        vehicleColor: 'blue',
-        registrationDate: '2022-06-10',
-        isPrimary: false
-      },
-      {
-        id: 'veh7',
-        vehicleNumber: 'VWX-1234',
-        vehicleType: 'suv',
-        vehicleModel: 'audi_a4',
-        vehicleColor: 'black',
-        registrationDate: '2023-03-25',
-        isPrimary: false
-      }
-    ]
-  },
-  {
-    id: 'CUST005',
-    firstName: 'David',
-    lastName: 'Brown',
-    email: 'david.b@example.com',
-    mobileNumber: '+1555666777',
-    address: '654 Cedar Lane, Phoenix',
-    city: 'Phoenix',
-    postCode: '85001',
-    contactMethod: 'email',
-    preferredLanguage: 'en',
-    ownerName: 'David Brown',
-    ownerEmail: 'david.b@example.com',
-    ownerPhone: '+1555666777',
-    vehicleNumber: 'STU-7890',
-    vehicleType: 'truck',
-    vehicleModel: 'tesla_model3',
-    vehicleColor: 'blue',
-    registrationDate: '2022-12-01',
-    insuranceFile: '/insurance/david_brown_insurance.pdf',
-    receiveUpdates: true,
-    termsAccepted: true,
-    createdAt: new Date('2024-05-15'),
-    updatedAt: new Date('2024-05-15'),
-    status: 'active',
-    vehicles: [
-      {
-        id: 'veh8',
-        vehicleNumber: 'STU-7890',
-        vehicleType: 'truck',
-        vehicleModel: 'tesla_model3',
-        vehicleColor: 'blue',
-        registrationDate: '2022-12-01',
-        isPrimary: true
-      }
-    ]
-  }
 ];
 
-
-let lastCustomerId = 5; // Initial value based on existing customers
+let lastCustomerId = 3; // Updated to match existing customers
 
 export const generateCustomerId = (): string => {
   lastCustomerId++;
@@ -288,10 +189,9 @@ export const updateCustomer = (
   const index = AddNewCustomerData.findIndex(customer => customer.id === updatedCustomer.id);
 
   if (index !== -1) {
-    // Update the customer with new data, but keep original createdAt
     AddNewCustomerData[index] = {
       ...updatedCustomer,
-      updatedAt: new Date() // Update the timestamp
+      updatedAt: new Date()
     };
     return true;
   }
@@ -303,11 +203,8 @@ export const deleteCustomer = (
   customerId: string
 ): boolean => {
   const initialLength = AddNewCustomerData.length;
-
-  // Filter out the customer with the given ID
   const filteredCustomers = AddNewCustomerData.filter(customer => customer.id !== customerId);
-
-  // Clear and reassign the array
+  
   AddNewCustomerData.length = 0;
   AddNewCustomerData.push(...filteredCustomers);
 
@@ -321,40 +218,40 @@ export const getCustomerById = (
 };
 
 export const getAllCustomers = (): ExtendedCustomerInterface[] => {
-  return [...AddNewCustomerData]; // Return a copy to prevent direct mutation
+  return [...AddNewCustomerData];
 };
 
 export const searchCustomers = (
   query: string,
   filters?: {
     status?: string;
-    vehicleType?: string;
+    vehicleMake?: string; // ✅ Updated from vehicleType
     city?: string;
   }
 ): ExtendedCustomerInterface[] => {
   let results = AddNewCustomerData;
 
-  // Apply search query
   if (query.trim()) {
     const searchLower = query.toLowerCase();
     results = results.filter(customer =>
       customer.firstName.toLowerCase().includes(searchLower) ||
       customer.lastName.toLowerCase().includes(searchLower) ||
       customer.email.toLowerCase().includes(searchLower) ||
-      customer.vehicleNumber.toLowerCase().includes(searchLower) ||
       customer.ownerPhone.toLowerCase().includes(searchLower) ||
       customer.city.toLowerCase().includes(searchLower)
     );
   }
 
-  // Apply filters
   if (filters) {
     if (filters.status && filters.status !== 'all') {
       results = results.filter(customer => customer.status === filters.status);
     }
-    if (filters.vehicleType && filters.vehicleType !== 'all') {
-      results = results.filter(customer => customer.vehicleType === filters.vehicleType);
-    }
+   if (filters.vehicleMake && filters.vehicleMake !== 'all') {
+    results = results.filter(customer => 
+        // Optional chaining (?) lazmi use karein kyunki vehicles optional hai
+        customer.vehicles?.some(v => v.vehicleMake.toLowerCase() === filters.vehicleMake?.toLowerCase())
+    );
+}
     if (filters.city && filters.city !== 'all') {
       results = results.filter(customer => customer.city === filters.city);
     }
@@ -385,37 +282,37 @@ export const getUniqueCities = (): string[] => {
   return Array.from(new Set(cities)).sort();
 };
 
-export const getVehicleTypeDistribution = () => {
+export const getVehicleMakeDistribution = () => { // ✅ Updated function name
   const distribution: Record<string, number> = {};
 
   AddNewCustomerData.forEach(customer => {
-    const type = customer.vehicleType;
-    distribution[type] = (distribution[type] || 0) + 1;
+    if (customer.vehicles) {
+      customer.vehicles.forEach(vehicle => {
+        const make = vehicle.vehicleMake;
+        distribution[make] = (distribution[make] || 0) + 1;
+      });
+    }
   });
 
   return distribution;
 };
 
-// Calculate total vehicles across all customers
 export const getTotalVehicles = (): number => {
   return AddNewCustomerData.reduce((total, customer) => {
-    return total + (customer.vehicles ? customer.vehicles.length : 1);
+    return total + (customer.vehicles ? customer.vehicles.length : 0);
   }, 0);
 };
 
-// Get customers with multiple vehicles
 export const getCustomersWithMultipleVehicles = (): ExtendedCustomerInterface[] => {
   return AddNewCustomerData.filter(customer =>
-    customer.vehicles ? customer.vehicles.length > 1 : false
+    customer.vehicles && customer.vehicles.length > 1
   );
 };
 
 export type Customer = ExtendedCustomerInterface;
+export type { ExtendedCustomerInterface as CustomerInterface };
 
-// Export all types and interfaces
-export type {
-  ExtendedCustomerInterface as CustomerInterface
-};
+// ... rest of the file remains same (NavBarLinksData, OrderStatuses, etc.)
 
 
 export const OrderStatuses = [

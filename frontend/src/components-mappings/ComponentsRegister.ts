@@ -21,8 +21,8 @@ export const ADMIN_MAIN_DASHBOARDCOMPONENTS: FC[] = [
     WarrantyClaims,
     CustomerPaymentStatus,
     BranchStatus,
-    TopPerfomerTechnicians,
-    CountriesStatus,
+    // TopPerfomerTechnicians,
+    // CountriesStatus,
     TopTechnicians,
     LatestServices
 ]

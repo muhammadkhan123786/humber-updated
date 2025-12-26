@@ -1,9 +1,12 @@
 "use client";
-
 import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
 import { UserPlus } from 'lucide-react';
 import { AddNewCustomerData, addNewCustomer, updateCustomer, deleteCustomer, type Customer } from '@/data/TestData';
+import {
 
+    VehicleData
+
+} from '../customers/components/types';
 // Lazy load heavy components
 const CustomerModal = lazy(() => import('./components/CustomerModal/CustomerModal'));
 const FiltersBar = lazy(() => import('./components/CustomerTable/FiltersBar'));
@@ -34,12 +37,9 @@ export default function CustomersContent() {
         ownerName: '',
         ownerEmail: '',
         ownerPhone: '',
-        vehicleNumber: '',
-        vehicleType: '',
-        vehicleModel: '',
-        vehicleColor: '',
-        registrationDate: '',
-        vehicles: [] // New: Array for multiple vehicles
+        vehicles: [] as VehicleData[], 
+        issues: [] as Array<{ category: string; subIssues: string[] }>, 
+    description: ''
     }), []);
 
     const [showModal, setShowModal] = useState(false);
@@ -52,7 +52,7 @@ export default function CustomersContent() {
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [vehicleTypeFilter, setVehicleTypeFilter] = useState<string>('all');
+    const [vehicleMakeFilter, setVehicleMakeFilter] = useState<string>('all'); // Updated from vehicleTypeFilter
 
     // Simple action menu state
     const [actionMenu, setActionMenu] = useState({
@@ -84,7 +84,7 @@ export default function CustomersContent() {
         console.log('Total customers:', customers.length);
         console.log('Search query:', searchQuery);
         console.log('Status filter:', statusFilter);
-        console.log('Vehicle type filter:', vehicleTypeFilter);
+        console.log('Vehicle make filter:', vehicleMakeFilter);
 
         const result = customers.filter(customer => {
             // Search filter
@@ -93,21 +93,21 @@ export default function CustomersContent() {
                 customer.firstName.toLowerCase().includes(searchLower) ||
                 customer.lastName.toLowerCase().includes(searchLower) ||
                 customer.email.toLowerCase().includes(searchLower) ||
-                customer.vehicleNumber.toLowerCase().includes(searchLower) ||
                 customer.city.toLowerCase().includes(searchLower);
 
             // Status filter
             const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
 
-            // Vehicle type filter
-            const matchesVehicleType = vehicleTypeFilter === 'all' || customer.vehicleType === vehicleTypeFilter;
+            // Vehicle make filter (check in vehicles array)
+            const matchesVehicleMake = vehicleMakeFilter === 'all' ||
+                (customer.vehicles && customer.vehicles.some(v => v.vehicleMake === vehicleMakeFilter));
 
-            return matchesSearch && matchesStatus && matchesVehicleType;
+            return matchesSearch && matchesStatus && matchesVehicleMake;
         });
 
         console.log('Filtered result:', result.length);
         return result;
-    }, [customers, searchQuery, statusFilter, vehicleTypeFilter]);
+    }, [customers, searchQuery, statusFilter, vehicleMakeFilter]);
 
     // Debug: Log when filtered customers change
     useEffect(() => {
@@ -115,48 +115,22 @@ export default function CustomersContent() {
     }, [filteredCustomers]);
 
     // Helper functions with useCallback
-    const getVehicleTypeLabel = useCallback((type: string): string => {
-        const typeMap: Record<string, string> = {
-            'car': 'Car',
-            'motorcycle': 'Motorcycle',
-            'truck': 'Truck',
-            'suv': 'SUV',
-            'van': 'Van',
-            'bus': 'Bus'
-        };
-        return typeMap[type] || type;
-    }, []);
-
-    const getVehicleModelLabel = useCallback((model: string): string => {
-        const modelMap: Record<string, string> = {
-            'toyota_camry': 'Toyota Camry',
-            'honda_civic': 'Honda Civic',
-            'ford_f150': 'Ford F-150',
-            'bmw_3series': 'BMW 3 Series',
-            'mercedes_cclass': 'Mercedes C-Class',
-            'audi_a4': 'Audi A4',
-            'tesla_model3': 'Tesla Model 3',
-            'hyundai_elantra': 'Hyundai Elantra',
-            'kia_sportage': 'Kia Sportage',
-            'other': 'Other Model'
-        };
-        return modelMap[model] || model;
-    }, []);
-
-    const getVehicleColorLabel = useCallback((color: string): string => {
-        const colorMap: Record<string, string> = {
-            'white': 'White',
-            'black': 'Black',
-            'silver': 'Silver',
-            'gray': 'Gray',
-            'red': 'Red',
-            'blue': 'Blue',
-            'green': 'Green',
-            'yellow': 'Yellow',
-            'brown': 'Brown',
+    const getVehicleMakeLabel = useCallback((make: string): string => {
+        const makeMap: Record<string, string> = {
+            'toyota': 'Toyota',
+            'honda': 'Honda',
+            'ford': 'Ford',
+            'bmw': 'BMW',
+            'mercedes': 'Mercedes-Benz',
+            'audi': 'Audi',
+            'tesla': 'Tesla',
+            'hyundai': 'Hyundai',
+            'kia': 'Kia',
+            'nissan': 'Nissan',
+            'volkswagen': 'Volkswagen',
             'other': 'Other'
         };
-        return colorMap[color] || color;
+        return makeMap[make] || make;
     }, []);
 
     const getStatusIcon = useCallback((status: string) => {
@@ -187,12 +161,9 @@ export default function CustomersContent() {
                 ownerName: customer.ownerName,
                 ownerEmail: customer.ownerEmail,
                 ownerPhone: customer.ownerPhone,
-                vehicleNumber: customer.vehicleNumber,
-                vehicleType: customer.vehicleType,
-                vehicleModel: customer.vehicleModel,
-                vehicleColor: customer.vehicleColor,
-                registrationDate: customer.registrationDate,
-                vehicles: customer.vehicles as any // Load existing vehicles
+                vehicles: customer.vehicles || [],
+                issues: (customer as any).issues || [], 
+            description: (customer as any).description || ""
             });
         } else if (mode === 'view' && customer) {
             setSelectedCustomer(customer);
@@ -223,7 +194,7 @@ export default function CustomersContent() {
             // Only reset filters if we were in add mode
             if (modalMode === 'add') {
                 setStatusFilter('all');
-                setVehicleTypeFilter('all');
+                setVehicleMakeFilter('all');
                 setSearchQuery('');
             }
         }, 300);
@@ -245,14 +216,14 @@ export default function CustomersContent() {
     // Handle contact details change with vehicles support
     const handleContactDetailsChange = useCallback((field: string, value: any) => {
         if (field === 'vehicles') {
-            setFormData(prev => ({ 
-                ...prev, 
-                vehicles: value 
+            setFormData(prev => ({
+                ...prev,
+                vehicles: value
             }));
         } else {
-            setFormData(prev => ({ 
-                ...prev, 
-                [field]: value 
+            setFormData(prev => ({
+                ...prev,
+                [field]: value
             }));
         }
     }, []);
@@ -273,9 +244,6 @@ export default function CustomersContent() {
 
         try {
             if (modalMode === 'add') {
-                // Use first vehicle as primary for backward compatibility
-                const primaryVehicle:any = formData.vehicles[0];
-                
                 const customerData = {
                     firstName: formData.firstName,
                     lastName: formData.lastName,
@@ -291,11 +259,12 @@ export default function CustomersContent() {
                     ownerName: formData.ownerName,
                     ownerEmail: formData.ownerEmail,
                     ownerPhone: formData.ownerPhone,
-                    vehicleNumber: primaryVehicle.vehicleNumber ,
-                    vehicleType: primaryVehicle.vehicleType,
-                    vehicleModel: primaryVehicle.vehicleModel,
-                    vehicleColor: primaryVehicle.vehicleColor,
-                    registrationDate: primaryVehicle.registrationDate,
+                    // Legacy fields for backward compatibility (set empty or default values)
+                    vehicleNumber: '',
+                    vehicleType: '',
+                    vehicleModel: '',
+                    vehicleColor: '',
+                    registrationDate: '',
                     vehicles: formData.vehicles // Store all vehicles
                 };
 
@@ -304,23 +273,15 @@ export default function CustomersContent() {
 
                 // ✅ IMPORTANT: Filters reset karo after adding new customer
                 setStatusFilter('all');
-                setVehicleTypeFilter('all');
+                setVehicleMakeFilter('all');
                 setSearchQuery('');
 
                 alert(`Customer ${newCustomer.firstName} ${newCustomer.lastName} added successfully with ${formData.vehicles.length} vehicle(s)!`);
 
             } else if (modalMode === 'edit' && selectedCustomer) {
-                // Use first vehicle as primary for backward compatibility
-                const primaryVehicle:any = formData.vehicles[0];
-                
                 const updatedCustomer = {
                     ...selectedCustomer,
                     ...formData,
-                    vehicleNumber: primaryVehicle.vehicleNumber,
-                    vehicleType: primaryVehicle.vehicleType,
-                    vehicleModel: primaryVehicle.vehicleModel,
-                    vehicleColor: primaryVehicle.vehicleColor,
-                    registrationDate: primaryVehicle.registrationDate ,
                     updatedAt: new Date(),
                     vehicles: formData.vehicles // Update all vehicles
                 };
@@ -393,13 +354,13 @@ export default function CustomersContent() {
                     <FiltersBar
                         searchQuery={searchQuery}
                         statusFilter={statusFilter}
-                        vehicleTypeFilter={vehicleTypeFilter}
+                        vehicleMakeFilter={vehicleMakeFilter} // Updated prop name
                         onSearchChange={setSearchQuery}
                         onStatusFilterChange={setStatusFilter}
-                        onVehicleTypeFilterChange={setVehicleTypeFilter}
+                        onVehicleMakeFilterChange={setVehicleMakeFilter} // Updated prop name
                         onResetFilters={() => {
                             setStatusFilter('all');
-                            setVehicleTypeFilter('all');
+                            setVehicleMakeFilter('all'); // Updated
                             setSearchQuery('');
                         }}
                     />
@@ -410,7 +371,7 @@ export default function CustomersContent() {
                         filteredCustomers={filteredCustomers}
                         searchQuery={searchQuery}
                         statusFilter={statusFilter}
-                        vehicleTypeFilter={vehicleTypeFilter}
+                        vehicleMakeFilter={vehicleMakeFilter} // Updated prop
                         actionMenu={actionMenu}
                         onView={(customer) => openModal('view', customer)}
                         onEdit={(customer) => openModal('edit', customer)}
@@ -418,9 +379,7 @@ export default function CustomersContent() {
                         onActionMenuClick={handleActionMenuClick}
                         onActionMenuClose={() => setActionMenu({ isOpen: false, customerId: null })}
                         onDelete={handleDeleteClick}
-                        getVehicleTypeLabel={getVehicleTypeLabel}
-                        getVehicleModelLabel={getVehicleModelLabel}
-                        getVehicleColorLabel={getVehicleColorLabel}
+                        getVehicleMakeLabel={getVehicleMakeLabel} // Updated prop
                     />
                 </Suspense>
             </div>
@@ -445,9 +404,7 @@ export default function CustomersContent() {
                     selectedCustomer={selectedCustomer}
                     steps={steps}
                     modalRef={modalRef}
-                    getVehicleTypeLabel={getVehicleTypeLabel}
-                    getVehicleModelLabel={getVehicleModelLabel}
-                    getVehicleColorLabel={getVehicleColorLabel}
+                    getVehicleMakeLabel={getVehicleMakeLabel} // Updated prop
                     getStatusIcon={getStatusIcon}
                     onClose={closeModal}
                     onNextStep={nextStep}

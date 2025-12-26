@@ -1,160 +1,143 @@
-// app/dashboard/customers/components/PreferencesStep.tsx
 "use client";
 
-import { Mail, Phone, MessageSquare, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, X, Battery, FileText } from 'lucide-react';
 
-export type PreferencesFields =
-    | 'contactMethod'
-    | 'preferredLanguage'
-    | 'receiveUpdates'
-    | 'termsAccepted';
+export type PreferencesFields = 'issues' | 'description';
 
 interface PreferencesStepProps {
     formData: {
-        contactMethod: string;
-        preferredLanguage: string;
-        receiveUpdates: boolean;
-        termsAccepted: boolean;
+        issues: Array<{ category: string; subIssues: string[] }>;
+        description: string;
     };
-    onInputChange: (field: PreferencesFields, value: boolean | string) => void;
+    onInputChange: (field: PreferencesFields, value: any) => void;
 }
 
 export default function PreferencesStep({ formData, onInputChange }: PreferencesStepProps) {
-    const contactMethods = [
-        { value: 'email', label: 'Email', icon: <Mail className="w-4 h-4" /> },
-        { value: 'phone', label: 'Phone Call', icon: <Phone className="w-4 h-4" /> },
-        { value: 'sms', label: 'SMS', icon: <MessageSquare className="w-4 h-4" /> },
-        { value: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="w-4 h-4" /> },
+    const [selectedCategory, setSelectedCategory] = useState("");
+
+    // Mock data based on your image
+    const issueCategories = [
+        { id: '1', label: 'Battery & Power Issue', items: ['Battery not charging', 'Short battery life', 'Power button unresponsive'] },
+        { id: '2', label: 'Screen & Display', items: ['Cracked screen', 'Flickering display', 'Dead pixels'] },
+        { id: '3', label: 'Software/OS', items: ['Slow performance', 'App crashing', 'Update failed'] }
     ];
 
-    const languages = [
-        { value: 'en', label: 'English' },
-        { value: 'es', label: 'Spanish' },
-        { value: 'fr', label: 'French' },
-        { value: 'de', label: 'German' },
-        { value: 'ar', label: 'Arabic' },
-    ];
+    const handleAddCategory = (catLabel: string) => {
+        if (!catLabel) return;
+        const exists = formData.issues.find(i => i.category === catLabel);
+        if (!exists) {
+            const newIssues = [...formData.issues, { category: catLabel, subIssues: [] }];
+            onInputChange('issues', newIssues);
+        }
+        setSelectedCategory("");
+    };
+
+    const handleToggleSubIssue = (categoryLabel: string, subIssue: string) => {
+        const updatedIssues = formData.issues.map(cat => {
+            if (cat.category === categoryLabel) {
+                const subIssues = cat.subIssues.includes(subIssue)
+                    ? cat.subIssues.filter(si => si !== subIssue)
+                    : [...cat.subIssues, subIssue];
+                return { ...cat, subIssues };
+            }
+            return cat;
+        });
+        onInputChange('issues', updatedIssues);
+    };
+
+    const removeCategory = (catLabel: string) => {
+        onInputChange('issues', formData.issues.filter(i => i.category !== catLabel));
+    };
 
     return (
-        <div>
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900">Step 3: Preferences & Terms</h3>
-                <p className="text-gray-600 mt-1">
-                    Set your communication preferences and accept the terms.
-                </p>
-            </div>
-
-            <div className="space-y-6">
-                {/* Contact Method */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-4">
-                        Preferred Contact Method <span className="text-red-500">*</span>
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {contactMethods.map((method) => (
-                            <button
-                                key={method.value}
-                                type="button"
-                                onClick={() => onInputChange('contactMethod', method.value)}
-                                className={`p-4 rounded-lg border-2 transition-all ${formData.contactMethod === method.value
-                                    ? 'border-[#FE6B1D] bg-[#FE6B1D]/5'
-                                    : 'border-gray-300 hover:border-gray-400'
-                                    }`}
-                            >
-                                <div className="flex flex-col items-center gap-2">
-                                    <div className={`p-2 rounded-full ${formData.contactMethod === method.value ? 'bg-[#FE6B1D]/10' : 'bg-gray-100'}`}>
-                                        {method.icon}
-                                    </div>
-                                    <span className="text-sm font-medium">{method.label}</span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                    {!formData.contactMethod && (
-                        <p className="text-red-500 text-sm mt-2">Please select a contact method</p>
-                    )}
-                </div>
-
-                {/* Preferred Language */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                        <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4 text-[#FE6B1D]" />
-                            Preferred Language <span className="text-red-500">*</span>
-                        </div>
-                    </label>
-                    <select
-                        value={formData.preferredLanguage}
-                        onChange={(e) => onInputChange('preferredLanguage', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                        required
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h2 className="text-2xl font-bold text-gray-900">What Issues Are You Experiencing?</h2>
+                <div className="flex items-center gap-2">
+                    <select 
+                        value={selectedCategory}
+                        onChange={(e) => handleAddCategory(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#FE6B1D] outline-none"
                     >
-                        <option value="">Select preferred language</option>
-                        {languages.map((lang) => (
-                            <option key={lang.value} value={lang.value}>
-                                {lang.label}
-                            </option>
+                        <option value="">Select Issue Type</option>
+                        {issueCategories.map(cat => (
+                            <option key={cat.id} value={cat.label}>{cat.label}</option>
                         ))}
                     </select>
-                    {!formData.preferredLanguage && (
-                        <p className="text-red-500 text-sm mt-2">Please select a language</p>
-                    )}
-                </div>
-
-                {/* Receive Updates */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h4 className="font-medium text-gray-900">Receive Updates & Promotions</h4>
-                            <p className="text-gray-600 text-sm mt-1">
-                                Get notified about new services, promotions, and updates.
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => onInputChange('receiveUpdates', !formData.receiveUpdates)}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.receiveUpdates ? 'bg-[#FE6B1D]' : 'bg-gray-300'
-                                }`}
-                        >
-                            <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.receiveUpdates ? 'translate-x-6' : 'translate-x-1'
-                                    }`}
-                            />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Terms & Conditions */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-start gap-3">
-                        <input
-                            type="checkbox"
-                            id="terms"
-                            checked={formData.termsAccepted}
-                            onChange={(e) => onInputChange('termsAccepted', e.target.checked)}
-                            className="mt-1 h-4 w-4 text-[#FE6B1D] border-gray-300 rounded focus:ring-[#FE6B1D]"
-                            required
-                        />
-                        <div>
-                            <label htmlFor="terms" className="text-sm font-medium text-gray-900">
-                                I agree to the Terms and Conditions <span className="text-red-500">*</span>
-                            </label>
-                            <p className="text-gray-600 text-sm mt-1">
-                                By checking this box, you agree to our Terms of Service and Privacy Policy.
-                            </p>
-                            {!formData.termsAccepted && (
-                                <p className="text-red-500 text-sm mt-2">You must agree to the terms and conditions</p>
-                            )}
-                        </div>
-                    </div>
+                    <button 
+                        type="button"
+                        onClick={() => handleAddCategory(selectedCategory)}
+                        className="flex items-center gap-1 bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
+                    >
+                        <Plus className="w-4 h-4" /> Add New
+                    </button>
                 </div>
             </div>
 
-            {/* Required Fields Note */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-500">
-                    <span className="text-red-500">*</span> Indicates required field
-                </p>
+            {/* Selected Categories Tags */}
+            <div className="flex flex-wrap gap-2">
+                {formData.issues.map((issue, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-[#FE6B1D] text-white px-3 py-1.5 rounded-full text-sm">
+                        <span>{issue.category}</span>
+                        <button onClick={() => removeCategory(issue.category)}>
+                            <X className="w-4 h-4 hover:text-gray-200" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+
+            {/* Sub-issues List (Design match for Battery & Power) */}
+            <div className="space-y-6">
+                {formData.issues.map((catGroup, idx) => {
+                    const template = issueCategories.find(c => c.label === catGroup.category);
+                    return (
+                        <div key={idx} className="space-y-4">
+                            <div className="flex items-center gap-2 text-gray-800 font-semibold">
+                                <Battery className="w-5 h-5 text-[#FE6B1D]" />
+                                <span>{catGroup.category}</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {template?.items.map(item => (
+                                    <label 
+                                        key={item}
+                                        className={`flex items-center gap-3 p-4 border rounded-xl cursor-pointer transition-all ${
+                                            catGroup.subIssues.includes(item) 
+                                            ? 'border-[#FE6B1D] bg-[#FE6B1D]/5' 
+                                            : 'border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <input 
+                                            type="checkbox"
+                                            checked={catGroup.subIssues.includes(item)}
+                                            onChange={() => handleToggleSubIssue(catGroup.category, item)}
+                                            className="w-5 h-5 rounded border-gray-300 text-[#FE6B1D] focus:ring-[#FE6B1D]"
+                                        />
+                                        <span className={`text-base ${catGroup.subIssues.includes(item) ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>
+                                            {item}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Detailed Description */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2 font-semibold text-gray-900">
+                    <FileText className="w-5 h-5 text-[#FE6B1D]" />
+                    <span>Detailed Description of the Issue <span className="text-red-500">*</span></span>
+                </div>
+                <textarea 
+                    value={formData.description}
+                    onChange={(e) => onInputChange('description', e.target.value)}
+                    placeholder="Please describe the issue in detail, including when it started, any error messages, and what you've tried to fix it..."
+                    className="w-full min-h-[150px] p-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-[#FE6B1D] focus:bg-white transition-all outline-none resize-none"
+                    required
+                />
             </div>
         </div>
     );

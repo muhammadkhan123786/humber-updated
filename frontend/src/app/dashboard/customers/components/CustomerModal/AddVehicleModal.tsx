@@ -1,21 +1,21 @@
 "use client";
 
-import { Car, X, Tag, Palette, Calendar } from 'lucide-react';
+import { Car, X, Tag, Calendar, Factory, Wrench } from 'lucide-react';
 
 export type VehicleFields = 
-    | 'vehicleNumber'
-    | 'vehicleType'
+    | 'vehicleMake'
     | 'vehicleModel'
-    | 'vehicleColor'
-    | 'registrationDate';
+    | 'serialNumber'
+    | 'manufacturing'
+    | 'yearOfDesign';
 
 export interface VehicleData {
     id: string;
-    vehicleNumber: string;
-    vehicleType: string;
+    vehicleMake: string;
     vehicleModel: string;
-    vehicleColor: string;
-    registrationDate: string;
+    serialNumber: string;
+    manufacturing: string;
+    yearOfDesign: string;
 }
 
 interface AddVehicleModalProps {
@@ -25,6 +25,7 @@ interface AddVehicleModalProps {
     onVehicleDataChange: (field: VehicleFields, value: string) => void;
     onSave: () => void;
     editingVehicleId?: string | null;
+    isOptional?: boolean; // New prop to make vehicle optional
 }
 
 export default function AddVehicleModal({ 
@@ -33,44 +34,30 @@ export default function AddVehicleModal({
     vehicleData, 
     onVehicleDataChange, 
     onSave,
-    editingVehicleId 
+    editingVehicleId,
+    isOptional = false // Default to false for backward compatibility
 }: AddVehicleModalProps) {
     if (!isOpen) return null;
 
-    const vehicleTypes = [
-        { value: 'car', label: 'Car' },
-        { value: 'motorcycle', label: 'Motorcycle' },
-        { value: 'truck', label: 'Truck' },
-        { value: 'suv', label: 'SUV' },
-        { value: 'van', label: 'Van' },
-        { value: 'bus', label: 'Bus' },
-    ];
-
-    const vehicleColors = [
-        { value: 'white', label: 'White' },
-        { value: 'black', label: 'Black' },
-        { value: 'silver', label: 'Silver' },
-        { value: 'gray', label: 'Gray' },
-        { value: 'red', label: 'Red' },
-        { value: 'blue', label: 'Blue' },
-        { value: 'green', label: 'Green' },
-        { value: 'yellow', label: 'Yellow' },
-        { value: 'brown', label: 'Brown' },
+    const vehicleMakes = [
+        { value: 'toyota', label: 'Toyota' },
+        { value: 'honda', label: 'Honda' },
+        { value: 'ford', label: 'Ford' },
+        { value: 'bmw', label: 'BMW' },
+        { value: 'mercedes', label: 'Mercedes-Benz' },
+        { value: 'audi', label: 'Audi' },
+        { value: 'tesla', label: 'Tesla' },
+        { value: 'hyundai', label: 'Hyundai' },
+        { value: 'kia', label: 'Kia' },
+        { value: 'nissan', label: 'Nissan' },
+        { value: 'volkswagen', label: 'Volkswagen' },
         { value: 'other', label: 'Other' },
     ];
 
-    const vehicleModels = [
-        { value: 'toyota_camry', label: 'Toyota Camry' },
-        { value: 'honda_civic', label: 'Honda Civic' },
-        { value: 'ford_f150', label: 'Ford F-150' },
-        { value: 'bmw_3series', label: 'BMW 3 Series' },
-        { value: 'mercedes_cclass', label: 'Mercedes C-Class' },
-        { value: 'audi_a4', label: 'Audi A4' },
-        { value: 'tesla_model3', label: 'Tesla Model 3' },
-        { value: 'hyundai_elantra', label: 'Hyundai Elantra' },
-        { value: 'kia_sportage', label: 'Kia Sportage' },
-        { value: 'other', label: 'Other Model' },
-    ];
+    const years = Array.from({ length: 30 }, (_, i) => {
+        const year = new Date().getFullYear() - i;
+        return { value: year.toString(), label: year.toString() };
+    });
 
     return (
         <>
@@ -91,7 +78,7 @@ export default function AddVehicleModal({
                                     {editingVehicleId ? 'Edit Vehicle' : 'Add New Vehicle'}
                                 </h2>
                                 <p className="text-gray-600 text-sm">
-                                    Enter vehicle information. All fields marked <span className="text-red-500">*</span> are required.
+                                    {isOptional ? 'Enter vehicle information (Optional)' : 'Enter vehicle information. All fields marked <span className="text-red-500">*</span> are required.'}
                                 </p>
                             </div>
                         </div>
@@ -106,118 +93,113 @@ export default function AddVehicleModal({
 
                     {/* Modal Body */}
                     <div className="p-6 space-y-6">
-                        {/* Vehicle Number */}
+                        {/* Make */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 <div className="flex items-center gap-2">
-                                    <Tag className="w-4 h-4 text-[#FE6B1D]" />
-                                    Vehicle Number/Plate <span className="text-red-500">*</span>
+                                    <Factory className="w-4 h-4 text-[#FE6B1D]" />
+                                    Make {!isOptional && <span className="text-red-500">*</span>}
+                                </div>
+                            </label>
+                            <select
+                                value={vehicleData.vehicleMake}
+                                onChange={(e) => onVehicleDataChange('vehicleMake', e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
+                                required={!isOptional}
+                            >
+                                <option value="">Select brand</option>
+                                {vehicleMakes.map((make) => (
+                                    <option key={make.value} value={make.value}>
+                                        {make.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Model */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Car className="w-4 h-4 text-[#FE6B1D]" />
+                                    Model {!isOptional && <span className="text-red-500">*</span>}
                                 </div>
                             </label>
                             <input
                                 type="text"
-                                value={vehicleData.vehicleNumber}
-                                onChange={(e) => onVehicleDataChange('vehicleNumber', e.target.value)}
+                                value={vehicleData.vehicleModel}
+                                onChange={(e) => onVehicleDataChange('vehicleModel', e.target.value)}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                                placeholder="e.g., ABC-1234 or DL-01-AB-1234"
-                                required
+                                placeholder="e.g., Camry, Civic, Model 3"
+                                required={!isOptional}
                             />
                         </div>
 
-                        {/* Vehicle Type & Model */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Car className="w-4 h-4 text-[#FE6B1D]" />
-                                        Vehicle Type <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <select
-                                    value={vehicleData.vehicleType}
-                                    onChange={(e) => onVehicleDataChange('vehicleType', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                                    required
-                                >
-                                    <option value="">Select vehicle type</option>
-                                    {vehicleTypes.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                            {type.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Car className="w-4 h-4 text-[#FE6B1D]" />
-                                        Vehicle Model <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <select
-                                    value={vehicleData.vehicleModel}
-                                    onChange={(e) => onVehicleDataChange('vehicleModel', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                                    required
-                                >
-                                    <option value="">Select vehicle model</option>
-                                    {vehicleModels.map((model) => (
-                                        <option key={model.value} value={model.value}>
-                                            {model.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                        {/* Serial Number */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Tag className="w-4 h-4 text-[#FE6B1D]" />
+                                    Serial Number (If available)
+                                </div>
+                            </label>
+                            <input
+                                type="text"
+                                value={vehicleData.serialNumber}
+                                onChange={(e) => onVehicleDataChange('serialNumber', e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
+                                placeholder="Enter serial number if available"
+                            />
                         </div>
 
-                        {/* Vehicle Color & Registration Date */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Palette className="w-4 h-4 text-[#FE6B1D]" />
-                                        Vehicle Color <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <select
-                                    value={vehicleData.vehicleColor}
-                                    onChange={(e) => onVehicleDataChange('vehicleColor', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
-                                    required
-                                >
-                                    <option value="">Select vehicle color</option>
-                                    {vehicleColors.map((color) => (
-                                        <option key={color.value} value={color.value}>
-                                            {color.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                        {/* Manufacturing */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Factory className="w-4 h-4 text-[#FE6B1D]" />
+                                    Manufacturing {!isOptional && <span className="text-red-500">*</span>}
+                                </div>
+                            </label>
+                            <input
+                                type="text"
+                                value={vehicleData.manufacturing}
+                                onChange={(e) => onVehicleDataChange('manufacturing', e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
+                                placeholder="e.g., Xiomi"
+                                required={!isOptional}
+                            />
+                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Calendar className="w-4 h-4 text-[#FE6B1D]" />
-                                        Registration Date <span className="text-red-500">*</span>
-                                    </div>
-                                </label>
-                                <input
-                                    type="date"
-                                    value={vehicleData.registrationDate}
-                                    onChange={(e) => onVehicleDataChange('registrationDate', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                                    required
-                                />
-                            </div>
+                        {/* Year of Design */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-[#FE6B1D]" />
+                                    Year of Design {!isOptional && <span className="text-red-500">*</span>}
+                                </div>
+                            </label>
+                            <select
+                                value={vehicleData.yearOfDesign}
+                                onChange={(e) => onVehicleDataChange('yearOfDesign', e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
+                                required={!isOptional}
+                            >
+                                <option value="">Select year</option>
+                                {years.map((year) => (
+                                    <option key={year.value} value={year.value}>
+                                        {year.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         {/* Required Fields Note */}
-                        <div className="pt-4 border-t border-gray-200">
-                            <p className="text-sm text-gray-500">
-                                <span className="text-red-500">*</span> Indicates required field
-                            </p>
-                        </div>
+                        {!isOptional && (
+                            <div className="pt-4 border-t border-gray-200">
+                                <p className="text-sm text-gray-500">
+                                    <span className="text-red-500">*</span> Indicates required field
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Modal Footer */}
