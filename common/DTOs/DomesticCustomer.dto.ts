@@ -10,8 +10,11 @@ export interface CreateBaseCustomerDto {
     phoneNumber?: string;
     emailId?: string;
 
+    // addres 
+    address: string;
+    zipCode: string;
+    city: string;
 
-    //
 
 }
 
