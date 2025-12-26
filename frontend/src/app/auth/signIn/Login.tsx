@@ -60,8 +60,10 @@ export default function LoginPage() {
 
       // Success Logic
       console.log('Login successful:', result);
+      localStorage.setItem('user', JSON.stringify(result.user));
       
       localStorage.setItem('email', email);
+      localStorage.setItem('userId', result.user.id);
       if (result.user.role) {
         if(result.user.role === 'Admin'){
         localStorage.setItem('roleId', JSON.stringify(1));
