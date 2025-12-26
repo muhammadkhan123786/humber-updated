@@ -6,5 +6,5 @@ export interface INavBarLinkSharedInterface {
     alt?: string
     roleId?: number[]
     index?: number
-    chidren?: INavBarLinkSharedInterface[]
+    children?: INavBarLinkSharedInterface[]
 }
