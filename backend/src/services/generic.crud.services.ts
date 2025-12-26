@@ -6,6 +6,18 @@ export interface CRUDOptions<T extends Document> {
     validationSchema?: ZodObject<ZodRawShape>;
 }
 
+function hasIsDefaultField(
+    data: unknown
+): data is { isDefault: boolean } {
+    return (
+        typeof data === "object" &&
+        data !== null &&
+        "isDefault" in data &&
+        typeof (data as any).isDefault === "boolean"
+    );
+}
+
+
 export class GenericService<T extends Document> {
     constructor(protected readonly model: Model<T>) { }
 
@@ -16,9 +28,19 @@ export class GenericService<T extends Document> {
     }
 
     async create(data: Partial<T>): Promise<T> {
+
+        // ✅ If model supports isDefault AND incoming record is default
+        if (hasIsDefaultField(data) && data.isDefault === true) {
+            await this.model.updateMany(
+                {},                         // ✅ filter: all documents
+                { $set: { isDefault: false } }
+            );
+        }
+
         const doc = new this.model(data);
         return doc.save();
     }
+
 
     async getById(id: string, options?: { populate?: string | string[] }): Promise<T | null> {
         let query = this.model.findById(id);
@@ -27,12 +49,33 @@ export class GenericService<T extends Document> {
     }
 
     async updateById(id: string, data: UpdateQuery<T>, options?: { populate?: string | string[] }): Promise<T | null> {
+        // ✅ Check safely
+        if (hasIsDefaultField(data) && data.isDefault === true) {
+            await this.model.updateMany(
+                { _id: { $ne: id } },
+                { $set: { isDefault: false } }
+            );
+        }
+
         let query = this.model.findByIdAndUpdate(id, data, { new: true });
         if (options?.populate) query = query.populate(options.populate);
         return query.exec();
     }
 
     async deleteById(id: string): Promise<T | null> {
+
+        // 1️⃣ Fetch document first
+        const doc = await this.model.findById(id).exec();
+
+        if (!doc) return null;
+
+        // 2️⃣ Prevent delete if default
+        if (hasIsDefaultField(doc) && doc.isDefault === true) {
+            throw new Error("Default record cannot be deleted");
+        }
+
+        // 3️⃣ Safe delete
         return this.model.findByIdAndDelete(id).exec();
     }
+
 }

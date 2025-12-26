@@ -13,8 +13,8 @@ export const adminProtecter = (
     res: Response,
     next: NextFunction
 ) => {
-    let token: string | undefined;
 
+    let token: string | undefined;
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer ")
