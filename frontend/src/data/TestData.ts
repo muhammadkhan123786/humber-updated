@@ -331,7 +331,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
   { _id: 4, alt: "Customers", href: "/dashboard/customers", roleId: [1], label: 'Customers', iconSrc: usergroup, index: 4 },
   { _id: 5, alt: 'Bookings', href: "/dashboard/bookings", roleId: [1], label: 'Bookings', iconSrc: booking, index: 5 },
   { _id: 6, alt: 'Staff management', href: "/dashboard/staff-management", roleId: [1], label: 'Staff management', iconSrc: staffmanagement, index: 6 },
-
+  { _id: 7, href: "/dashboard/master-data", roleId: [1], label: 'Master data',iconSrc:staffmanagement, index: 7 },
 ];
 export const OrderStatuses = [
   { _id: 1, status: "Received", bgcolor: '#D4E1FF', textColor: '#487FFF' },

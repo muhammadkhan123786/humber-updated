@@ -22,7 +22,7 @@ interface CustomerModalProps {
     onSubmit: () => void;
     onPersonalInfoChange: (field: string, value: string) => void;
     onContactDetailsChange: (field: string, value: any) => void; // CHANGE 2: Updated type from string to any
-    onPreferencesChange: (field: string, value: string | boolean) => void;
+    onPreferencesChange: (field: string, value: any) => void;
     onEdit: () => void;
 }
 

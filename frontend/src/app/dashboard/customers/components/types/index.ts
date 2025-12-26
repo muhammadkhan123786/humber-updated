@@ -40,6 +40,9 @@ export type FormData = {
     ownerEmail: string;
     ownerPhone: string;
     vehicles: VehicleData[];
+    // ✅ NEW FIELDS FOR STEP 3
+    issues: Array<{ category: string; subIssues: string[] }>;
+    description: string;
 };
 
 export type Step = {

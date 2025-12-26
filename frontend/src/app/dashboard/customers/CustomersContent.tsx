@@ -37,7 +37,9 @@ export default function CustomersContent() {
         ownerName: '',
         ownerEmail: '',
         ownerPhone: '',
-        vehicles: [] as VehicleData[] // Only this - REMOVE OLD FIELDS
+        vehicles: [] as VehicleData[], 
+        issues: [] as Array<{ category: string; subIssues: string[] }>, 
+    description: ''
     }), []);
 
     const [showModal, setShowModal] = useState(false);
@@ -159,7 +161,9 @@ export default function CustomersContent() {
                 ownerName: customer.ownerName,
                 ownerEmail: customer.ownerEmail,
                 ownerPhone: customer.ownerPhone,
-                vehicles: customer.vehicles || [] // Load existing vehicles
+                vehicles: customer.vehicles || [],
+                issues: (customer as any).issues || [], 
+            description: (customer as any).description || ""
             });
         } else if (mode === 'view' && customer) {
             setSelectedCustomer(customer);
