@@ -12,7 +12,6 @@ interface ControllerOptions<T extends Document> {
 
 export class AdvancedGenericController<T extends Document> {
     constructor(private options: ControllerOptions<T>) { }
-
     // CREATE
     create = async (req: Request, res: Response) => {
         try {

@@ -13,6 +13,9 @@ import modelRouter from './routes/vehicleModel.routes';
 import customerSourceRouter from './routes/customer.source.routes';
 import repairStatusRouter from './routes/repair.status.routes';
 import serviceTypeMasterRouter from './routes/services.types.master.routes';
+import subServiceRouter from './routes/subServices.routes';
+import cityRouter from './routes/city.routes';
+import countryRouter from './routes/country.routes';
 
 // Create express app
 const app: Application = express();
@@ -25,6 +28,7 @@ app.use(cors());
 // Static files (for uploads/public folder)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
@@ -32,6 +36,9 @@ app.use(`${process.env.API_PREFIX}/vehiclebrand`, adminProtecter, vehicleBrandRo
 app.use(`${process.env.API_PREFIX}/vechilemodel`, modelRouter);
 app.use(`${process.env.API_PREFIX}/repairstatus`, repairStatusRouter);
 app.use(`${process.env.API_PREFIX}/service-types-master`, serviceTypeMasterRouter);
+app.use(`${process.env.API_PREFIX}/sub-services`, subServiceRouter);
+app.use(`${process.env.API_PREFIX}/city`, cityRouter);
+app.use(`${process.env.API_PREFIX}/country`, countryRouter);
 app.use(`${process.env.API_PREFIX}/customer-source`, customerSourceRouter);
 
 
