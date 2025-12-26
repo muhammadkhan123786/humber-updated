@@ -1,10 +1,4 @@
 import { ISignInSharedInterface } from '../../../common/ISignInSharedInterface';
-import box from '../assets/box.svg';
-import tool from '../assets/tool.svg';
-import usergroup from '../assets/users-group-alt.svg';
-import booking from '../assets/calendar.svg';
-import staffmanagement from '../assets/users-alt.svg';
-import { NavLinksInterface } from '@/types/NavLinksInterface';
 import { AddNewCustomerInterface } from '@/types/AddNewCustomer';
 import { StaticImageData } from 'next/image';
 import top1 from '../assets/Top1.png';
@@ -34,12 +28,10 @@ export const Roles: Record<number, string> = {
   3: 'Customer'
 };
 
-export const MasterDataLinks: NavLinksInterface[] = [
-  { _id: 101, href: "/dashboard/master-data/categories", label: "Vehicle", index: 1 },
-  { _id: 102, href: "/dashboard/master-data/services", label: "Services", index: 2 },
-  { _id: 103, href: "/dashboard/master-data/brands", label: "Brands", index: 3 },
-  { _id: 104, href: "/dashboard/master-data/vehicles", label: "Vehicles", index: 4 },
-];
+
+
+
+
 
 export const AddNewCustomerData: ExtendedCustomerInterface[] = [
   {
@@ -322,17 +314,7 @@ export type { ExtendedCustomerInterface as CustomerInterface };
 
 // ... rest of the file remains same (NavBarLinksData, OrderStatuses, etc.)
 
-export const NavBarLinksData: NavLinksInterface[] = [
-  { _id: 1, href: "/dashboard", roleId: [1, 2], label: 'Dashboard', index: 1 },
-  {
-    _id: 2, alt: "box", href: "/dashboard/inventory", roleId: [1], label: 'Inventory', iconSrc: box, index: 2,
-  },
-  { _id: 3, alt: 'Repair tracker', href: "/dashboard/repair-tracker", roleId: [1], label: 'Repair tracker', iconSrc: tool, index: 3 },
-  { _id: 4, alt: "Customers", href: "/dashboard/customers", roleId: [1], label: 'Customers', iconSrc: usergroup, index: 4 },
-  { _id: 5, alt: 'Bookings', href: "/dashboard/bookings", roleId: [1], label: 'Bookings', iconSrc: booking, index: 5 },
-  { _id: 6, alt: 'Staff management', href: "/dashboard/staff-management", roleId: [1], label: 'Staff management', iconSrc: staffmanagement, index: 6 },
-  { _id: 7, href: "/dashboard/master-data", roleId: [1], label: 'Master data',iconSrc:staffmanagement, index: 7 },
-];
+
 export const OrderStatuses = [
   { _id: 1, status: "Received", bgcolor: '#D4E1FF', textColor: '#487FFF' },
   { _id: 2, status: "Serviced", bgcolor: '#E2FFF5', textColor: '#2FCA11' },
