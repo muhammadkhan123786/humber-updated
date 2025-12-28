@@ -17,10 +17,10 @@ export const NavBarLinksData: NavLinksInterface[] = [
     { _id: 6, alt: 'Staff management', href: "/dashboard/staff-management", roleId: [1], label: 'Staff management', iconSrc: staffmanagement, index: 6 },
     {
         _id: 7, alt: 'Master data', href: "#", roleId: [1], label: 'Master data', iconSrc: staffmanagement, index: 7, children: [
-            { _id: 101, href: "/dashboard/vehiclebrands", label: "Vehicles Brand", index: 1 },
+            { _id: 101, href: "/dashboard/vehiclebrands", label: "Vehicles Brands", index: 1 },
             { _id: 102, href: "/dashboard/vehiclemodals", label: "Vehicle Modals", index: 2 },
-            { _id: 103, href: "/dashboard/master-data/brands", label: "Brands", index: 3 },
-            { _id: 104, href: "/dashboard/master-data/vehicles", label: "Vehicles", index: 4 },
+            { _id: 103, href: "/dashboard/repairstatus", label: "Repair Status", index: 3 },
+            { _id: 104, href: "/dashboard/services", label: "Services", index: 4 },
         ]
     },
 

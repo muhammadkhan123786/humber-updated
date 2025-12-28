@@ -1,11 +1,15 @@
-import React from 'react'
+// src/app/dashboard/vehiclemodals/page.tsx
+import VehicleModalClient from "./components/VehicleModalClient";
 
-const page = () => {
+export const metadata = {
+  title: "Vehicle Models | Dashboard",
+  description: "Manage your vehicle models inventory",
+};
+
+export default function VehicleModelsPage() {
   return (
-    <div>
-      hi
-    </div>
-  )
+    <main>
+      <VehicleModalClient />
+    </main>
+  );
 }
-
-export default page
