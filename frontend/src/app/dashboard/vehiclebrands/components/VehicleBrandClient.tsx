@@ -9,7 +9,8 @@ import Pagination from "./Pagination"; // Import your Pagination component
 import { IVehicleBrand } from "../types";
 
 const THEME_COLOR = "#FE6B1D";
-const API_URL = "http://localhost:4000/api/vehiclebrand";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = `${BASE_URL}/vehiclebrand`;
 
 export default function VehicleBrandClient() {
   const [brands, setBrands] = useState<IVehicleBrand[]>([]);

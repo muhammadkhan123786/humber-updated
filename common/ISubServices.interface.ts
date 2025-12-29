@@ -7,4 +7,3 @@ export interface ISubServicesInterface<TUserId = string, UMasterServiceId = stri
     cost?: number,
     notes?: string
 }
-
