@@ -4,10 +4,10 @@ import { CityModel } from "../models/city.models";
 import { Person } from "../models/person.models";
 import { Contact } from "../models/contact.models";
 import { Address } from "../models/addresses.models";
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 import { findOrCreate } from "../utils/findOrCreate";
 
-export const domesticCustomerMiddleware = async (
+export const CustomerMiddleware = async (
     req: Request,
     res: Response,
     next: NextFunction
