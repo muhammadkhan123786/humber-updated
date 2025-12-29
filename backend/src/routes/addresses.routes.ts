@@ -10,7 +10,7 @@ const addressServices = new GenericService<IAddress>(Address);
 
 const addressController = new AdvancedGenericController({
     service: addressServices,
-    populate: ["userId", "CountryId", "cityId"],
+    populate: ["userId", "countryId", "cityId"],
     validationSchema: adressCreateSchema,
 });
 

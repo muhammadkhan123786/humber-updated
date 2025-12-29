@@ -1,27 +1,31 @@
-// app/dashboard/customers/components/PersonalInfoStep.tsx
 "use client";
 
-import { User, Mail, Phone, Home, Building, Hash } from 'lucide-react';
+import { User, Mail, Phone, Home, Building, Hash, Users, Globe } from 'lucide-react';
 
-// Define the exact fields that PersonalInfoStep uses
+// Updated fields with customerType and country
 export type PersonalInfoFields =
+    | 'customerType'
     | 'firstName'
     | 'lastName'
     | 'email'
     | 'mobileNumber'
     | 'address'
     | 'city'
+    | 'country'
     | 'postCode';
 
 interface PersonalInfoStepProps {
     formData: {
+        customerType?: string;
         firstName: string;
         lastName: string;
         email: string;
         mobileNumber: string;
         address: string;
         city: string;
+        country? : string;
         postCode: string;
+        
     };
     onInputChange: (field: PersonalInfoFields, value: string) => void;
 }
@@ -37,6 +41,25 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
             </div>
 
             <div className="space-y-6">
+                {/* Customer Type Dropdown */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-[#FE6B1D]" />
+                            Customer Type <span className="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <select
+                        value={formData.customerType || 'domestic'}
+                        onChange={(e) => onInputChange('customerType', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
+                        required
+                    >
+                        <option value="domestic">Domestic</option>
+                        <option value="corporate">Corporate</option>
+                    </select>
+                </div>
+
                 {/* Row 1: First Name & Last Name */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -129,8 +152,30 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                     />
                 </div>
 
-                {/* Row 4: City & Post Code */}
+                {/* Row 4: Country & City */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <div className="flex items-center gap-2">
+                                <Globe className="w-4 h-4 text-[#FE6B1D]" />
+                                Country <span className="text-red-500">*</span>
+                            </div>
+                        </label>
+                        <select
+                            value={formData.country}
+                            onChange={(e) => onInputChange('country', e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition bg-white"
+                            required
+                        >
+                            <option value="">Select Country</option>
+                            <option value="USA">USA</option>
+                            <option value="UK">UK</option>
+                            <option value="Pakistan">Pakistan</option>
+                            <option value="UAE">UAE</option>
+                            <option value="Canada">Canada</option>
+                        </select>
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             <div className="flex items-center gap-2">
@@ -147,28 +192,29 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                             <option value="">Select your City</option>
                             <option value="New York">New York</option>
                             <option value="London">London</option>
-                            <option value="Tokyo">Tokyo</option>
-                            <option value="Sydney">Sydney</option>
+                            <option value="Lahore">Lahore</option>
                             <option value="Dubai">Dubai</option>
+                            <option value="Toronto">Toronto</option>
                         </select>
                     </div>
+                </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <div className="flex items-center gap-2">
-                                <Hash className="w-4 h-4 text-[#FE6B1D]" />
-                                Post Code <span className="text-red-500">*</span>
-                            </div>
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.postCode}
-                            onChange={(e) => onInputChange('postCode', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                            placeholder="00000000"
-                            required
-                        />
-                    </div>
+                {/* Row 5: Post Code */}
+                <div className="w-full md:w-1/2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <div className="flex items-center gap-2">
+                            <Hash className="w-4 h-4 text-[#FE6B1D]" />
+                            Post Code <span className="text-red-500">*</span>
+                        </div>
+                    </label>
+                    <input
+                        type="text"
+                        value={formData.postCode}
+                        onChange={(e) => onInputChange('postCode', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
+                        placeholder="00000000"
+                        required
+                    />
                 </div>
             </div>
 

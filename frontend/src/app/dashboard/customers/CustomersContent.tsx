@@ -23,6 +23,8 @@ const LoadingFallback = () => (
 export default function CustomersContent() {
     // State initialization with useMemo for better performance
     const initialFormData = useMemo(() => ({
+        customerType: 'domestic',
+        country: '',
         firstName: '',
         lastName: '',
         email: '',
@@ -146,25 +148,27 @@ export default function CustomersContent() {
 
         if (mode === 'edit' && customer) {
             setSelectedCustomer(customer);
-            setFormData({
-                firstName: customer.firstName,
-                lastName: customer.lastName,
-                email: customer.email,
-                mobileNumber: customer.mobileNumber,
-                address: customer.address,
-                city: customer.city,
-                postCode: customer.postCode,
-                contactMethod: customer.contactMethod,
-                preferredLanguage: customer.preferredLanguage,
-                receiveUpdates: customer.receiveUpdates,
-                termsAccepted: true,
-                ownerName: customer.ownerName,
-                ownerEmail: customer.ownerEmail,
-                ownerPhone: customer.ownerPhone,
-                vehicles: customer.vehicles || [],
-                issues: (customer as any).issues || [], 
-            description: (customer as any).description || ""
-            });
+           setFormData({
+    customerType: (customer as any).customerType || 'domestic', // Naya field
+    firstName: customer.firstName,
+    lastName: customer.lastName,
+    email: customer.email,
+    mobileNumber: customer.mobileNumber,
+    address: customer.address,
+    city: customer.city,
+    country: (customer as any).country || '', // Naya field
+    postCode: customer.postCode,
+    contactMethod: customer.contactMethod,
+    preferredLanguage: customer.preferredLanguage,
+    receiveUpdates: customer.receiveUpdates,
+    termsAccepted: true,
+    ownerName: customer.ownerName,
+    ownerEmail: customer.ownerEmail,
+    ownerPhone: customer.ownerPhone,
+    vehicles: customer.vehicles || [],
+    issues: (customer as any).issues || [], 
+    description: (customer as any).description || "",
+});
         } else if (mode === 'view' && customer) {
             setSelectedCustomer(customer);
         } else {
@@ -229,75 +233,77 @@ export default function CustomersContent() {
     }, []);
 
     // Submit handler - optimized
-    const handleSubmit = useCallback(() => {
-        // Quick validation
-        if (!formData.firstName || !formData.lastName || !formData.email) {
-            alert('Please fill required fields');
-            return;
+const handleSubmit = useCallback(() => {
+    // Quick validation
+    if (!formData.firstName || !formData.lastName || !formData.email) {
+        alert('Please fill required fields');
+        return;
+    }
+
+    // Validate vehicles
+    if (!formData.vehicles || formData.vehicles.length === 0) {
+        alert('Please add at least one vehicle');
+        return;
+    }
+
+    try {
+        if (modalMode === 'add') {
+            const customerData = {
+                customerType: formData.customerType, // Added
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                mobileNumber: formData.mobileNumber,
+                address: formData.address,
+                city: formData.city,
+                country: formData.country, // Added
+                postCode: formData.postCode,
+                contactMethod: formData.contactMethod as 'email' | 'phone' | 'sms' | 'whatsapp',
+                preferredLanguage: formData.preferredLanguage,
+                receiveUpdates: formData.receiveUpdates,
+                termsAccepted: formData.termsAccepted,
+                ownerName: formData.ownerName,
+                ownerEmail: formData.ownerEmail,
+                ownerPhone: formData.ownerPhone,
+                // Legacy fields for backward compatibility
+                vehicleNumber: '',
+                vehicleType: '',
+                vehicleModel: '',
+                vehicleColor: '',
+                registrationDate: '',
+                vehicles: formData.vehicles 
+            };
+
+            const newCustomer = addNewCustomer(customerData);
+            setCustomers(prev => [...prev, newCustomer]);
+
+            // Reset filters
+            setStatusFilter('all');
+            setVehicleMakeFilter('all');
+            setSearchQuery('');
+
+            alert(`Customer ${newCustomer.firstName} ${newCustomer.lastName} added successfully!`);
+
+        } else if (modalMode === 'edit' && selectedCustomer) {
+            const updatedCustomer = {
+                ...selectedCustomer,
+                ...formData, // Isme already customerType aur country aa jayenge
+                updatedAt: new Date(),
+                vehicles: formData.vehicles 
+            };
+
+            updateCustomer(updatedCustomer);
+            setCustomers(prev => prev.map(c => c.id === selectedCustomer.id ? updatedCustomer : c));
+            alert(`Customer updated successfully!`);
         }
 
-        // Validate vehicles
-        if (!formData.vehicles || formData.vehicles.length === 0) {
-            alert('Please add at least one vehicle');
-            return;
-        }
+        closeModal();
 
-        try {
-            if (modalMode === 'add') {
-                const customerData = {
-                    firstName: formData.firstName,
-                    lastName: formData.lastName,
-                    email: formData.email,
-                    mobileNumber: formData.mobileNumber,
-                    address: formData.address,
-                    city: formData.city,
-                    postCode: formData.postCode,
-                    contactMethod: formData.contactMethod as 'email' | 'phone' | 'sms' | 'whatsapp',
-                    preferredLanguage: formData.preferredLanguage,
-                    receiveUpdates: formData.receiveUpdates,
-                    termsAccepted: formData.termsAccepted,
-                    ownerName: formData.ownerName,
-                    ownerEmail: formData.ownerEmail,
-                    ownerPhone: formData.ownerPhone,
-                    // Legacy fields for backward compatibility (set empty or default values)
-                    vehicleNumber: '',
-                    vehicleType: '',
-                    vehicleModel: '',
-                    vehicleColor: '',
-                    registrationDate: '',
-                    vehicles: formData.vehicles // Store all vehicles
-                };
-
-                const newCustomer = addNewCustomer(customerData);
-                setCustomers(prev => [...prev, newCustomer]);
-
-                // ✅ IMPORTANT: Filters reset karo after adding new customer
-                setStatusFilter('all');
-                setVehicleMakeFilter('all');
-                setSearchQuery('');
-
-                alert(`Customer ${newCustomer.firstName} ${newCustomer.lastName} added successfully with ${formData.vehicles.length} vehicle(s)!`);
-
-            } else if (modalMode === 'edit' && selectedCustomer) {
-                const updatedCustomer = {
-                    ...selectedCustomer,
-                    ...formData,
-                    updatedAt: new Date(),
-                    vehicles: formData.vehicles // Update all vehicles
-                };
-
-                updateCustomer(updatedCustomer);
-                setCustomers(prev => prev.map(c => c.id === selectedCustomer.id ? updatedCustomer : c));
-                alert(`Customer updated successfully with ${formData.vehicles.length} vehicle(s)!`);
-            }
-
-            closeModal();
-
-        } catch (error) {
-            console.error('Error saving customer:', error);
-            alert(`Error ${modalMode === 'add' ? 'adding' : 'updating'} customer.`);
-        }
-    }, [formData, modalMode, selectedCustomer, closeModal]);
+    } catch (error) {
+        console.error('Error saving customer:', error);
+        alert(`Error ${modalMode === 'add' ? 'adding' : 'updating'} customer.`);
+    }
+}, [formData, modalMode, selectedCustomer, closeModal]);
 
     // Action menu handlers
     const handleActionMenuClick = useCallback((event: React.MouseEvent, customerId: string) => {

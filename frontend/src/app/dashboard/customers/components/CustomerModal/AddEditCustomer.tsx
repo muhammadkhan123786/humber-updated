@@ -99,6 +99,8 @@ export default function AddEditCustomer({
                         firstName: formData.firstName, lastName: formData.lastName,
                         email: formData.email, mobileNumber: formData.mobileNumber,
                         address: formData.address, city: formData.city, postCode: formData.postCode,
+                        customerType: formData.customerType, 
+            country: formData.country,
                     }} 
                     onInputChange={onPersonalInfoChange} 
                 />;
