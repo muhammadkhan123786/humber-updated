@@ -1,16 +1,19 @@
 
 import { Document, Model, model, Schema, Types } from "mongoose";
 
-import { ICountry } from "../../../common/Country.interface";
+import { ICustomerBase } from "../../../common/ICustomerSharedInterface";
 
-export type countryDoc = ICountry<Types.ObjectId> & Document;
 
-const countrySchema = new Schema<countryDoc>({
+export type CityModelDoc = ICustomerBase<Types.ObjectId, Types.ObjectId> & Document;
+
+const cityModelSchema = new Schema<CityModelDoc>({
     userId: { type: Types.ObjectId, ref: "User", required: true },
-    countryName: { type: String, required: true },
+    customerType: {},
+
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
 }, { timestamps: true });
 
-export const Country: Model<countryDoc> = model<countryDoc>("Country", countrySchema);
+
+export const CityModel: Model<CityModelDoc> = model<CityModelDoc>("CityModel", cityModelSchema);

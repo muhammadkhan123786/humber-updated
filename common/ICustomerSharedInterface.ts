@@ -1,6 +1,6 @@
 import { IBaseEntity } from './Base.Interface';
 
-interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string> extends IBaseEntity<TUserId> {
+export interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string> extends IBaseEntity<TUserId> {
     personId: TPersonId;
     addressId: TAddressId;
     contactId: TContactId;
@@ -9,15 +9,13 @@ interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = strin
 }
 
 
-interface IDomesticCustomer
+export interface IDomesticCustomer
     <TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string>
     extends ICustomerBase<TUserId, TPersonId, TAddressId, TContactId, TCustomerSourceId> {
     customerType: "domestic";
-
-
 }
 
-interface ICorporateCustomer
+export interface ICorporateCustomer
     <TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string>
     extends ICustomerBase<TUserId, TPersonId, TAddressId, TContactId, TCustomerSourceId> {
     customerType: "corporate";
