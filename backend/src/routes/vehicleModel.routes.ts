@@ -10,7 +10,7 @@ const vehicleModelServices = new GenericService<VehicleModelDoc>(VechicleModel);
 
 const vehicleModelController = new AdvancedGenericController({
     service: vehicleModelServices,
-    populate: "userId",
+    populate: "userId brandId",
     validationSchema: vehicleModelCreateSchema,
 });
 

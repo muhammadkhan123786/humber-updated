@@ -17,8 +17,11 @@ const BrandTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
           <tr>
             <th className="p-4">Brand Name</th>
             <th className="p-4 text-center">Status</th>
+            <th className="p-4 text-center">Total Vehicles</th>
             <th className="p-4 text-center">Default</th>
+            
             <th className="p-4 text-center">Actions</th>
+
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -30,6 +33,7 @@ const BrandTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   {brand.isActive ? "ACTIVE" : "INACTIVE"}
                 </span>
               </td>
+              <td className="p-4 text-center">0</td>
               <td className="p-4 text-center">
                 {brand.isDefault && <Star className="inline text-yellow-500 fill-yellow-500" size={18} />}
               </td>
