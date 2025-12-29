@@ -1,11 +1,12 @@
 import { IBaseEntity } from './Base.Interface';
+import { customerType } from './DTOs/Customer.dto';
 
 export interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string> extends IBaseEntity<TUserId> {
     personId: TPersonId;
     addressId: TAddressId;
     contactId: TContactId;
     sourceId: TCustomerSourceId;
-    customerType: "domestic" | "corporate";
+    customerType: customerType;
 }
 
 
