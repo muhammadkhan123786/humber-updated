@@ -3,13 +3,14 @@ import { Schema, model, Document } from 'mongoose';
 export interface IPerson extends Document {
     firstName: string;
     middleName?: string;
-    lastName: string;
+    lastName?: string;
     isActive: boolean;
     isDeleted: boolean;
     isDefault: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
+
 
 const personSchema = new Schema<IPerson>(
     {

@@ -31,11 +31,11 @@ export interface BaseCustomerDto {
 
 export interface DomesticCustomerDto extends BaseCustomerDto {
     customerType: "domestic",
-
 }
 
 export interface CorporateCutomerDto extends BaseCustomerDto {
     customerType: "corporate",
+
 }
 
 export type Customer = DomesticCustomerDto | CorporateCutomerDto;
