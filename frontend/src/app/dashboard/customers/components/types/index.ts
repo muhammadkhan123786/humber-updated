@@ -43,6 +43,8 @@ export type FormData = {
     // ✅ NEW FIELDS FOR STEP 3
     issues: Array<{ category: string; subIssues: string[] }>;
     description: string;
+    customerType: string; 
+    country: string;
 };
 
 export type Step = {

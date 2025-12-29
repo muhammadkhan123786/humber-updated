@@ -25,6 +25,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
             { _id: 106, href: "/dashboard/country", label: "Country", index: 6 },
             { _id: 107, href: "/dashboard/city", label: "City", index: 7 },
             { _id: 108, href: "/dashboard/source", label: "Customer Sources", index: 8 },
+            { _id: 109, href: "/dashboard/addresses", label: "Addressess", index: 9 },
         ]
     },
 
