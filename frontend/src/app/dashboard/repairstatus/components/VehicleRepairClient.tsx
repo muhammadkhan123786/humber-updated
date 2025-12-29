@@ -8,7 +8,8 @@ import Pagination from "./Pagination"; // Reusing your pagination
 import { IRepairStatus } from "../types";
 
 const THEME_COLOR = "#FE6B1D";
-const API_URL = "http://localhost:4000/api/repairstatus";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = `${BASE_URL}/repairstatus`;
 
 export default function VehicleRepairClient() {
   const [statuses, setStatuses] = useState<IRepairStatus[]>([]);

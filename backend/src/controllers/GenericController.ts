@@ -16,6 +16,7 @@ export class AdvancedGenericController<T extends Document> {
     create = async (req: Request, res: Response) => {
         try {
             let data = req.body;
+            console.log("Creating document with data:", data);
 
             // Validate request body if schema provided
             if (this.options.validationSchema) {

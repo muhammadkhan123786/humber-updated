@@ -8,7 +8,7 @@ export type CityModelDoc = ICityInterface<Types.ObjectId, Types.ObjectId> & Docu
 
 const cityModelSchema = new Schema<CityModelDoc>({
     userId: { type: Types.ObjectId, ref: "User", required: true },
-    CountryId: { type: Types.ObjectId, ref: "Country", required: true },
+    countryId: { type: Types.ObjectId, ref: "Country", required: true },
     cityName: { type: String, required: true },
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },

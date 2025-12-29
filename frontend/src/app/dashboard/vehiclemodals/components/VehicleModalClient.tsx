@@ -8,7 +8,8 @@ import Pagination from "./Pagination";
 import { IVehicleModel } from "../types";
 
 const THEME_COLOR = "#FE6B1D";
-const API_URL = "http://localhost:4000/api/vechilemodel";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_URL = `${BASE_URL}/vechilemodel`;
 
 export default function VehicleModalClient() {
   const [models, setModels] = useState<IVehicleModel[]>([]);

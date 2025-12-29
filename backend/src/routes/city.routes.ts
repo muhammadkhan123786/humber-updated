@@ -10,7 +10,7 @@ const cityServices = new GenericService<CityModelDoc>(CityModel);
 
 const cityController = new AdvancedGenericController({
     service: cityServices,
-    populate: ["userId", "CountryId"],
+    populate: ["userId", "countryId"],
     validationSchema: cityModelCreateSchema,
 });
 
