@@ -28,7 +28,6 @@ export interface BaseCustomerDto {
     customerType: customerType
 }
 
-
 export interface DomesticCustomerDto extends BaseCustomerDto {
     customerType: "domestic",
 }
