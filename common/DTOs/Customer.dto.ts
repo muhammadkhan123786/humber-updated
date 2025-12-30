@@ -41,5 +41,7 @@ export interface CorporateCutomerDto extends BaseCustomerDto {
 
 }
 
+
+
 export type Customer = DomesticCustomerDto | CorporateCutomerDto;
 

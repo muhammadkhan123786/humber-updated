@@ -1,61 +1,71 @@
-import { AdvancedGenericController } from "./GenericController";
 import { GenericService } from "../services/generic.crud.services";
 import { CustomerBaseDoc, domesticCutomerSchema, corporateCustomerSchema } from "../models/customer.models";
 import { domesticCustomerSchema } from "../schemas/domestic.customer.schema";
 import { corporateCustomerValidationSchema } from "../schemas/corporate.customer.schema";
 import { Request, Response, NextFunction } from "express";
-import mongoose from "mongoose";
 
 
 const domesticServices = new GenericService<CustomerBaseDoc>(domesticCutomerSchema);
 
 const corporateServices = new GenericService<CustomerBaseDoc>(corporateCustomerSchema);
 
-const domesticController = new AdvancedGenericController<CustomerBaseDoc>(
-    {
-        service: domesticServices,
-        populate: [],
-        validationSchema: domesticCustomerSchema
-    }
-);
-
-const corporateController = new AdvancedGenericController<CustomerBaseDoc>({
-    service: corporateServices,
-    populate: [],
-    validationSchema: corporateCustomerValidationSchema
-});
-
-export const createCustomer = async (req: Request, res: Response, next: NextFunction) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+export const saveCustomer = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const session = req.mongoSession;
 
     try {
+        const { id } = req.params;
         const { customerType } = req.body;
 
-        let controller: AdvancedGenericController<CustomerBaseDoc>;
+        let service: GenericService<CustomerBaseDoc>;
+        let validationSchema;
 
         if (customerType === "domestic") {
-            controller = domesticController;
+            service = domesticServices;
+            validationSchema = domesticCustomerSchema;
         } else if (customerType === "corporate") {
-            controller = corporateController;
+            service = corporateServices;
+            validationSchema = corporateCustomerValidationSchema;
         } else {
-            throw new Error("Invalid customer type");
+            return res.status(400).json({ message: "Invalid customer type" });
         }
 
-        const customer = await controller.create(req, res);
+        // ✅ Validate input
+        const parseResult = validationSchema.safeParse(req.body);
+        if (!parseResult.success) {
+            return res.status(400).json({
+                message: "Validation failed",
+                errors: parseResult.error.issues
+            });
+        }
+
+        let customer;
+
+        if (id) {
+            // ✅ Update existing customer
+            customer = await service.updateById(id, req.body);
+        } else {
+            // ✅ Create new customer
+            customer = await service.create(req.body);
+        }
 
         await session.commitTransaction();
         session.endSession();
 
-        res.status(201).json({
-            message: "Customer created successfully",
+        res.status(200).json({
+            message: id ? "Customer updated successfully" : "Customer created successfully",
             data: customer
         });
 
-    } catch (error) {
+    } catch (error: any) {
         await session.abortTransaction();
         session.endSession();
         next(error);
     }
 };
 
+
+//update customer 
