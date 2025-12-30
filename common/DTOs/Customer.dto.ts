@@ -34,6 +34,10 @@ export interface DomesticCustomerDto extends BaseCustomerDto {
 
 export interface CorporateCutomerDto extends BaseCustomerDto {
     customerType: "corporate",
+    companyName: string,
+    registrationNo?: string,
+    vatNo?: string,
+    website?: string
 
 }
 
