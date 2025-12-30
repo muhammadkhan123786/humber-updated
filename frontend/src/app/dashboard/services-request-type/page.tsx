@@ -1,11 +1,15 @@
-import React from 'react'
+// src/app/dashboard/service-request-type/page.tsx
+import ServiceRequestClient from "./components/ServicesRequestClient";
 
-const page = () => {
+export const metadata = {
+  title: "Service Request Types | Dashboard",
+  description: "Manage and configure different types of service requests",
+};
+
+export default function ServiceRequestTypePage() {
   return (
-    <div>
-      i am services request type page
-    </div>
-  )
+    <main>
+      <ServiceRequestClient />
+    </main>
+  );
 }
-
-export default page
