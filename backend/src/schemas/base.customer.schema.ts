@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { z } from 'zod';
+
 
 export const baseCustomerSchema = {
     userId: { type: Types.ObjectId, ref: "User", required: true },

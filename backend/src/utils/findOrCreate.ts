@@ -17,14 +17,13 @@ export async function findOrCreate<T>(
     model: Model<any>,
     findQuery: QueryFilter<any>,
     createData: Partial<T>,
-    session: ClientSession
 ): Promise<Document> {
 
-    let doc = await model.findOne(findQuery).session(session);
+    let doc = await model.findOne(findQuery)
 
     if (!doc) {
         doc = new model(createData);
-        await doc.save({ session });
+        await doc.save();
     }
 
     return doc;

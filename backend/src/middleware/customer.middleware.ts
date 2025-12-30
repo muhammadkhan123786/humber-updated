@@ -13,8 +13,7 @@ export const CreateOrUpdateCustomerMiddleware = async (
     res: Response,
     next: NextFunction
 ) => {
-    const session: ClientSession = await mongoose.startSession();
-    session.startTransaction();
+
 
     try {
         const { id } = req.params;
@@ -22,7 +21,7 @@ export const CreateOrUpdateCustomerMiddleware = async (
 
         let customer;
         if (isEdit) {
-            customer = await CustomerBase.findById(id).session(session);
+            customer = await CustomerBase.findById(id);
             if (!customer) throw new Error("Customer not found");
         }
 
@@ -39,14 +38,14 @@ export const CreateOrUpdateCustomerMiddleware = async (
                     middleName: req.body.middleName,
                     lastName: req.body.lastName,
                 },
-                { new: true, session }
+                { new: true }
             );
         } else {
             person = await new Person({
                 firstName: req.body.firstName,
                 middleName: req.body.middleName,
                 lastName: req.body.lastName,
-            }).save({ session });
+            }).save();
         }
 
         /* -------------------------
@@ -62,7 +61,7 @@ export const CreateOrUpdateCustomerMiddleware = async (
                     phoneNumber: req.body.phoneNumber,
                     emailId: req.body.emailId,
                 },
-                { new: true, session }
+                { new: true }
             );
         } else {
             contact = await findOrCreate(
@@ -73,7 +72,7 @@ export const CreateOrUpdateCustomerMiddleware = async (
                     phoneNumber: req.body.phoneNumber,
                     emailId: req.body.emailId,
                 },
-                session
+
             );
         }
 
@@ -82,9 +81,9 @@ export const CreateOrUpdateCustomerMiddleware = async (
         -------------------------- */
         const country = await findOrCreate(
             Country,
-            { countryName: req.body.country },
-            { countryName: req.body.country },
-            session
+            { countryName: req.body.country, userId: req.body.userId },
+            { countryName: req.body.country, userId: req.body.userId },
+
         );
 
         /* -------------------------
@@ -92,9 +91,9 @@ export const CreateOrUpdateCustomerMiddleware = async (
         -------------------------- */
         const city = await findOrCreate(
             CityModel,
-            { cityName: req.body.city, countryId: country._id },
-            { cityName: req.body.city, countryId: country._id },
-            session
+            { cityName: req.body.city, countryId: country._id, userId: req.body.userId },
+            { cityName: req.body.city, countryId: country._id, userId: req.body.userId },
+
         );
 
         /* -------------------------
@@ -112,33 +111,31 @@ export const CreateOrUpdateCustomerMiddleware = async (
                     zipCode: req.body.zipCode,
                     latitude: req.body.latitude,
                     longitude: req.body.longitude,
+
                 },
-                { new: true, session }
+                { new: true }
             );
         } else {
             address = await findOrCreate(
                 Address,
-                { address: req.body.address, countryId: country._id, cityId: city._id, zipCode: req.body.zipCode },
-                { address: req.body.address, countryId: country._id, cityId: city._id, zipCode: req.body.zipCode, latitude: req.body.latitude, longitude: req.body.longitude },
-                session
+                { address: req.body.address, countryId: country._id, cityId: city._id, zipCode: req.body.zipCode, userId: req.body.userId },
+                { address: req.body.address, countryId: country._id, cityId: city._id, zipCode: req.body.zipCode, latitude: req.body.latitude, longitude: req.body.longitude, userId: req.body.userId },
+
             );
         }
 
         /* -------------------------
            Attach IDs
         -------------------------- */
-        req.body.personId = person?._id;
-        req.body.contactId = contact?._id;
-        req.body.addressId = address?._id;
+        req.body.personId = person?._id.toString();
+        req.body.contactId = contact?._id.toString();
+        req.body.addressId = address?._id.toString();
 
         /* Pass session forward */
-        req.mongoSession = session;
+
 
         next(); // Controller will commit
     } catch (error: any) {
-        await session.abortTransaction();
-        session.endSession();
-
         res.status(400).json({
             message: error.message || "Failed to create/update customer",
         });
