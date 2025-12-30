@@ -17,6 +17,9 @@ import subServiceRouter from './routes/subServices.routes';
 import cityRouter from './routes/city.routes';
 import countryRouter from './routes/country.routes';
 import addressRouter from './routes/addresses.routes';
+import TechnicianRoleRouter from './routes/technician.roles.routes';
+import ServiceZoneRouter from './routes/service.zones.routes';
+import ServiceRequestPrioprityRouter from './routes/service.request.prioprity.routes';
 
 // Create express app
 const app: Application = express();
@@ -42,6 +45,11 @@ app.use(`${process.env.API_PREFIX}/city`, cityRouter);
 app.use(`${process.env.API_PREFIX}/country`, countryRouter);
 app.use(`${process.env.API_PREFIX}/customer-source`, customerSourceRouter);
 app.use(`${process.env.API_PREFIX}/addresses`, addressRouter);
+app.use(`${process.env.API_PREFIX}/technician-roles`, TechnicianRoleRouter);
+app.use(`${process.env.API_PREFIX}/services-zones`, ServiceZoneRouter);
+app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, ServiceRequestPrioprityRouter);
+
+
 
 
 
