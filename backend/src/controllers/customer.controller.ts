@@ -5,6 +5,7 @@ import { corporateCustomerValidationSchema } from "../schemas/corporate.customer
 import { Request, Response, NextFunction } from "express";
 
 
+
 const domesticServices = new GenericService<CustomerBaseDoc>(domesticCutomerSchema);
 
 const corporateServices = new GenericService<CustomerBaseDoc>(corporateCustomerSchema);
@@ -14,8 +15,6 @@ export const saveCustomer = async (
     res: Response,
     next: NextFunction
 ) => {
-    const session = req.mongoSession;
-
     try {
         const { id } = req.params;
         const { customerType } = req.body;
@@ -52,8 +51,7 @@ export const saveCustomer = async (
             customer = await service.create(req.body);
         }
 
-        await session.commitTransaction();
-        session.endSession();
+
 
         res.status(200).json({
             message: id ? "Customer updated successfully" : "Customer created successfully",
@@ -61,8 +59,7 @@ export const saveCustomer = async (
         });
 
     } catch (error: any) {
-        await session.abortTransaction();
-        session.endSession();
+
         next(error);
     }
 };

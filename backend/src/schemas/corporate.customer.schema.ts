@@ -10,7 +10,7 @@ export const corporateCustomerValidationSchema = z.object({
     registrationNo: z.string().optional(),
     vatNo: z.string().optional(),
     website: z.string().optional(),
-    customerType: z.literal("domestic"),
+    customerType: z.literal("corporate"),
     isActive: z.boolean().optional(),
     isDeleted: z.boolean().optional(),
     isDefault: z.boolean().optional(),

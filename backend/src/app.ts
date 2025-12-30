@@ -21,6 +21,7 @@ import TechnicianRoleRouter from './routes/technician.roles.routes';
 import ServiceZoneRouter from './routes/service.zones.routes';
 import ServiceRequestPrioprityRouter from './routes/service.request.prioprity.routes';
 import serviceRequestTypeRouter from './routes/service.request.types.routes';
+import CustomerBaseRouter from './routes/customer.routes';
 
 // Create express app
 const app: Application = express();
@@ -50,6 +51,7 @@ app.use(`${process.env.API_PREFIX}/technician-roles`, TechnicianRoleRouter);
 app.use(`${process.env.API_PREFIX}/services-zones`, ServiceZoneRouter);
 app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, ServiceRequestPrioprityRouter);
 app.use(`${process.env.API_PREFIX}/service-request-type`, serviceRequestTypeRouter);
+app.use(`${process.env.API_PREFIX}/customers`, CustomerBaseRouter);
 
 
 
