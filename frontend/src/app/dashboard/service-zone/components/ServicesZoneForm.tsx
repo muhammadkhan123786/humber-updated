@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { X, Save, ShieldCheck } from "lucide-react";
+import { X, Save, Map } from "lucide-react";
 
 interface Props {
     editingData: any | null;
@@ -11,9 +11,9 @@ interface Props {
     apiUrl: string;
 }
 
-const TechnicianRolesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
+const ServiceZoneForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
     const [formData, setFormData] = useState({
-        technicianRole: "", // Matching backend model key
+        serviceZone: "", // Backend model key: serviceZone
         isActive: true,
         isDefault: false,
     });
@@ -21,7 +21,7 @@ const TechnicianRolesForm = ({ editingData, onClose, onRefresh, themeColor, apiU
     useEffect(() => {
         if (editingData) {
             setFormData({
-                technicianRole: editingData.technicianRole || "",
+                serviceZone: editingData.serviceZone || "",
                 isActive: editingData.isActive,
                 isDefault: editingData.isDefault,
             });
@@ -56,21 +56,21 @@ const TechnicianRolesForm = ({ editingData, onClose, onRefresh, themeColor, apiU
             <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
                 <div className="p-6 text-white flex justify-between items-center" style={{ backgroundColor: themeColor }}>
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                        <ShieldCheck size={24} /> {editingData ? "Edit Role" : "Add Technician Role"}
+                        <Map size={24} /> {editingData ? "Edit Service Zone" : "Add Service Zone"}
                     </h2>
                     <button onClick={onClose} className="hover:bg-white/20 p-1 rounded-full"><X size={24} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-5">
                     <div>
-                        <label className="block text-sm font-semibold mb-2 text-gray-700">Role Name *</label>
+                        <label className="block text-sm font-semibold mb-2 text-gray-700">Zone Name *</label>
                         <input
                             required
-                            placeholder="e.g. Senior Mechanic, Electrician"
+                            placeholder="e.g. North Zone, Sector A"
                             className="w-full border rounded-xl p-3 outline-none focus:ring-2 transition-all"
                             style={{ borderColor: '#e5e7eb' }}
-                            value={formData.technicianRole}
-                            onChange={(e) => setFormData({ ...formData, technicianRole: e.target.value })}
+                            value={formData.serviceZone}
+                            onChange={(e) => setFormData({ ...formData, serviceZone: e.target.value })}
                         />
                     </div>
 
@@ -81,12 +81,12 @@ const TechnicianRolesForm = ({ editingData, onClose, onRefresh, themeColor, apiU
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isDefault} onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} />
-                            <span className="text-sm font-medium">Default Role</span>
+                            <span className="text-sm font-medium">Default Zone</span>
                         </label>
                     </div>
 
                     <button type="submit" className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all" style={{ backgroundColor: themeColor }}>
-                        <Save size={20} /> {editingData ? "Update Role" : "Save Role"}
+                        <Save size={20} /> {editingData ? "Update Zone" : "Save Zone"}
                     </button>
                 </form>
             </div>
@@ -94,4 +94,4 @@ const TechnicianRolesForm = ({ editingData, onClose, onRefresh, themeColor, apiU
     );
 };
 
-export default TechnicianRolesForm;
+export default ServiceZoneForm;

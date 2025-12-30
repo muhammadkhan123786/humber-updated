@@ -1,4 +1,4 @@
-import { Edit, Trash2, Star, SignalHigh } from "lucide-react";
+import { Edit, Trash2, Star, LocateFixed } from "lucide-react";
 
 interface Props {
   data: any[];
@@ -7,13 +7,13 @@ interface Props {
   themeColor: string;
 }
 
-const PriorityLevelTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
+const ServiceZoneTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
       <table className="w-full text-left">
         <thead className="text-white" style={{ backgroundColor: themeColor }}>
           <tr>
-            <th className="p-4">Priority Level</th>
+            <th className="p-4">Service Zone</th>
             <th className="p-4 text-center">Status</th>
             <th className="p-4 text-center">Default</th>
             <th className="p-4 text-center">Actions</th>
@@ -24,10 +24,10 @@ const PriorityLevelTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
             <tr key={item._id} className="hover:bg-orange-50 transition-colors">
               <td className="p-4">
                 <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${item.serviceRequestPrioprity.toLowerCase().includes('urgent') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
-                        <SignalHigh size={18} />
+                    <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
+                        <LocateFixed size={18} />
                     </div>
-                    <span className="font-bold text-gray-800">{item.serviceRequestPrioprity}</span>
+                    <span className="font-bold text-gray-800">{item.serviceZone}</span>
                 </div>
               </td>
               <td className="p-4 text-center">
@@ -51,7 +51,7 @@ const PriorityLevelTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
             </tr>
           )) : (
             <tr>
-              <td colSpan={4} className="p-10 text-center text-gray-400 italic">No priority levels found</td>
+              <td colSpan={4} className="p-10 text-center text-gray-400 italic">No service zones found</td>
             </tr>
           )}
         </tbody>
@@ -60,4 +60,4 @@ const PriorityLevelTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
   );
 };
 
-export default PriorityLevelTable;
+export default ServiceZoneTable;
