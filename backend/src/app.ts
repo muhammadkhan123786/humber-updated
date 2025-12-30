@@ -51,9 +51,6 @@ app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, ServiceRequ
 
 
 
-
-
-
 // Health check route
 app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK' });

@@ -15,6 +15,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
     { _id: 4, alt: "Customers", href: "/dashboard/customers", roleId: [1], label: 'Customers', iconSrc: usergroup, index: 4 },
     { _id: 5, alt: 'Bookings', href: "/dashboard/bookings", roleId: [1], label: 'Bookings', iconSrc: booking, index: 5 },
     { _id: 6, alt: 'Staff management', href: "/dashboard/staff-management", roleId: [1], label: 'Staff management', iconSrc: staffmanagement, index: 6 },
+    {_id:8, alt: 'Technicians', href: "/dashboard/technicians-profile", roleId: [1], label: 'Technicians Profile', iconSrc: box, index: 8 },
     {
         _id: 7, alt: 'Master data', href: "#", roleId: [1], label: 'Master data', iconSrc: staffmanagement, index: 7, children: [
             { _id: 101, href: "/dashboard/vehiclebrands", label: "Vehicles Brands", index: 1 },

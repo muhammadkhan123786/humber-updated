@@ -4,6 +4,8 @@ import axios from "axios";
 import { X, Save } from "lucide-react";
 import { IVehicleModel, ModelFormData } from "../types";
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
 interface Props {
     editingModel: IVehicleModel | null;
     onClose: () => void;
@@ -26,7 +28,7 @@ const ModalForm = ({ editingModel, onClose, onRefresh, themeColor, apiUrl }: Pro
         const fetchBrands = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get("http://localhost:4000/api/vehiclebrand", {
+                const res = await axios.get(`${BASE_URL}/vehiclebrand`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data.success) setBrands(res.data.data);
