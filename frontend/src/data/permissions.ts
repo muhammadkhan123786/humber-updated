@@ -26,6 +26,9 @@ export const NavBarLinksData: NavLinksInterface[] = [
             { _id: 107, href: "/dashboard/city", label: "City", index: 7 },
             { _id: 108, href: "/dashboard/source", label: "Customer Sources", index: 8 },
             { _id: 109, href: "/dashboard/addresses", label: "Addressess", index: 9 },
+            { _id: 110, href: "/dashboard/technician-roles", label: "Technician Roles", index: 10 },
+            { _id: 111, href: "/dashboard/services-request-type", label: "Services Request Type", index: 11 },
+            { _id: 112, href: "/dashboard/priority-level", label: "Priority Level", index: 12 },
         ]
     },
 
