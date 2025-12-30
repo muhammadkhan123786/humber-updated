@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { z } from 'zod';
 
 export const baseCustomerSchema = {
     userId: { type: Types.ObjectId, ref: "User", required: true },
@@ -11,3 +12,4 @@ export const baseCustomerSchema = {
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
 }
+
