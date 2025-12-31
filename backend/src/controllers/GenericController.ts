@@ -9,9 +9,6 @@ interface ControllerOptions<T extends Document> {
     populate?: string | string[];
     validationSchema?: ZodObject<ZodRawShape>; // optional Zod validation
 }
-
-
-
 export class AdvancedGenericController<T extends Document> {
     constructor(private options: ControllerOptions<T>) { }
     // CREATE
