@@ -13,8 +13,6 @@ export const CreateOrUpdateCustomerMiddleware = async (
     res: Response,
     next: NextFunction
 ) => {
-
-
     try {
         const { id } = req.params;
         const isEdit = !!id; // edit if _id exists
