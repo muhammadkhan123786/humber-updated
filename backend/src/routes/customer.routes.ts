@@ -21,7 +21,7 @@ const CustomerBaseController = new AdvancedGenericController({
 CustomerBaseRouter.get("/", CustomerBaseController.getAll);
 CustomerBaseRouter.get("/:id", CustomerBaseController.getById);
 CustomerBaseRouter.post("/", CreateOrUpdateCustomerMiddleware, saveCustomer);
-CustomerBaseRouter.put("/:id", CustomerBaseController.update);
+CustomerBaseRouter.put("/:id", CreateOrUpdateCustomerMiddleware, CustomerBaseController.update);
 CustomerBaseRouter.delete("/:id", CustomerBaseController.delete);
 
 export default CustomerBaseRouter;
