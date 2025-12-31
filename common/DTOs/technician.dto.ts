@@ -1,24 +1,11 @@
-export interface technicianProfileDto {
+import { commonProfileDto } from "./profilecommonDto";
+import { ITechnicianZone } from '../ITechnician.interface';
+
+export interface technicianProfileDto extends commonProfileDto {
     userId: string;
-    //personal information.
-    firstName: string;
-    middleName?: string;
-    lastName?: string;
-
-    //contact information
-    mobileNumber: string;
-    phoneNumber?: string;
-    emailId?: string;
-
-    // addres 
-    address: string;
-    zipCode?: string;
-    city?: string;
-    country?: string;
-    latitude?: string;
-    longitude?: string;
-
-    isActive?: boolean;
-    isDeleted?: boolean;
-    isDefault?: boolean;
+    zones: ITechnicianZone[];
+    technicianRoleId: string;
+    skills: string[];
+    profilePic?: string;        // file path / URL
+    documents?: string;
 }

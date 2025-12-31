@@ -4,7 +4,7 @@ import { ITechnicianZone, ITechnicianBaseInformation } from "../../../common/ITe
 
 export type technicianZoneDoc = ITechnicianZone<Types.ObjectId> & Document;
 
-export type technicianInformationDoc = ITechnicianBaseInformation<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId[], Types.ObjectId> & Document;
+export type technicianInformationDoc = ITechnicianBaseInformation<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId[], Types.ObjectId, Types.ObjectId> & Document;
 
 
 const technicianZonesSchema = new Schema<technicianZoneDoc>({
@@ -35,10 +35,11 @@ const technicianProfileSchema = new Schema<technicianInformationDoc>({
     contactId: { type: Types.ObjectId, ref: "Contact", required: true },
     addressId: { type: Types.ObjectId, ref: "Address", required: true },
     roleId: { type: Types.ObjectId, ref: "TechnicianRoleModel", required: true },
+    accountId: { type: Types.ObjectId, ref: "User", required: true },
     skills: [{ type: Types.ObjectId, ref: "ServiceTypeMaster" }],
     zones: [technicianZonesSchema],
     profilePic: { type: String },
-    documents: [String],
+    documents: { type: String },
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
@@ -47,4 +48,4 @@ const technicianProfileSchema = new Schema<technicianInformationDoc>({
 
 
 
-export const TechnicianProfileModel: Model<technicianInformationDoc> = model<technicianInformationDoc>("TechnicianRoleModel", technicianProfileSchema);
+export const TechnicianProfileModel: Model<technicianInformationDoc> = model<technicianInformationDoc>("TechnicianProfileModel", technicianProfileSchema);

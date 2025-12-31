@@ -1,7 +1,6 @@
 
 export type customerType = "domestic" | "corporate";
 export interface BaseCustomerDto {
-
     userId: string;
     //personal information.
     firstName: string;

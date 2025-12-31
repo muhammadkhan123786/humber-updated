@@ -16,16 +16,18 @@ export interface ITechnicianZone<TZoneId = string> {
     endTime: string;   // "16:00"
 }
 
-export interface ITechnicianBaseInformation<TUserId = string, TPersonId = string, TContactId = string, TAddressId = string, TSkillsIds = string[], TRoleId = string>
+export interface ITechnicianBaseInformation<TUserId = string, TPersonId = string, TContactId = string, TAddressId = string, TSkillsIds = string[], TRoleId = string, TAccountId = string>
     extends IBaseEntity<TUserId> {
     personId: TPersonId;
     contactId: TContactId;
     addressId: TAddressId;
     roleId: TRoleId;
+    accountId: TAccountId;
 
     skills: TSkillsIds;           // service IDs
     zones: ITechnicianZone[];
 
     profilePic?: string;        // file path / URL
-    documents?: string[];       // multiple PDFs
+    documents?: string;       // multiple PDFs
 }
+

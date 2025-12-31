@@ -1,30 +1,76 @@
 import { z } from "zod";
 
-export const technicianZoneSchema = z.object({
-    zoneId: z.string(),
-    day: z.enum([
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-    ]),
-    startTime: z.string(),
-    endTime: z.string(),
-});
+/* -----------------------------
+ * Reusable Validators
+ ------------------------------ */
+const objectIdSchema = z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Invalid ObjectId");
 
-export const createTechnicianSchema = z.object({
-    userId: z.string(),
+const timeSchema = z
+    .string()
+    .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:mm)");
 
-    personId: z.string(),
-    contactId: z.string(),
-    addressId: z.string(),
+/* -----------------------------
+ * Technician Zone Schema
+ ------------------------------ */
+export const technicianZoneSchema = z
+    .object({
+        zoneId: objectIdSchema,
+        day: z.enum([
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+        ]),
+        startTime: timeSchema,
+        endTime: timeSchema,
+    })
+    .refine(
+        (data) => data.startTime < data.endTime,
+        {
+            message: "endTime must be after startTime",
+            path: ["endTime"],
+        }
+    );
 
-    skills: z.array(z.string()).optional(),
-    zones: z.array(technicianZoneSchema).min(1),
+/* -----------------------------
+ * Create Technician Schema
+ ------------------------------ */
+export const createTechnicianSchema = z
+    .object({
+        userId: objectIdSchema,
+        personId: objectIdSchema,
+        contactId: objectIdSchema,
+        addressId: objectIdSchema,
+        accountId: objectIdSchema,
 
-    profilePic: z.string().optional(),
-    documents: z.array(z.string()).optional(),
-});
+        skills: z.array(objectIdSchema).optional(),
+
+        zones: z
+            .array(technicianZoneSchema)
+            .min(1, "At least one zone is required"),
+
+        profilePic: z.string().url().optional(),
+        documents: z.array(z.string().url()).optional(),
+    })
+    .refine(
+        (data) => {
+            const unique = new Set<string>();
+
+            for (const zone of data.zones) {
+                const key = `${zone.zoneId}-${zone.day}`;
+                if (unique.has(key)) return false;
+                unique.add(key);
+            }
+
+            return true;
+        },
+        {
+            message: "Duplicate zone/day entries are not allowed",
+            path: ["zones"],
+        }
+    );
