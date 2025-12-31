@@ -1,6 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import { Wrench, Plus, Upload, X, FileText, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Wrench, Plus, Upload, X, FileText, ChevronDown, Loader2 } from "lucide-react";
 
 interface ComponentProps {
   formData: {
@@ -10,16 +11,59 @@ interface ComponentProps {
   setFormData: any;
 }
 
-export default function SpecializationSkills({ formData, setFormData }: ComponentProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [skillInput, setSkillInput] = useState("");
+interface MasterService {
+  _id: string;
+  MasterServiceType: string;
+  isActive: boolean;
+}
 
-  const addSkill = () => {
-    if (skillInput.trim()) {
-      setFormData({ ...formData, skills: [...formData.skills, skillInput] });
-      setSkillInput("");
-      setIsModalOpen(false); // Modal close after adding
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const MASTER_SERVICES_API = `${BASE_URL}/service-types-master`;
+
+export default function SpecializationSkills({ formData, setFormData }: ComponentProps) {
+  const [masterServices, setMasterServices] = useState<MasterService[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // 1. Fetch Master Services for Dropdown
+  useEffect(() => {
+    const fetchMasterData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const userId = savedUser.id || savedUser._id;
+
+        const res = await axios.get(MASTER_SERVICES_API, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { userId, limit: 100 } // Sare active services mangwa lo
+        });
+
+        if (res.data && res.data.data) {
+          // Sirf active services ko dropdown mein dikhana hai
+          const activeServices = res.data.data.filter((s: MasterService) => s.isActive);
+          setMasterServices(activeServices);
+        }
+      } catch (err) {
+        console.error("Master Services Fetch Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMasterData();
+  }, []);
+
+  // 2. Add Skill from Dropdown
+  const handleSelectSkill = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+    if (selectedValue && !formData.skills.includes(selectedValue)) {
+      setFormData({ 
+        ...formData, 
+        skills: [...formData.skills, selectedValue] 
+      });
     }
+    // Reset dropdown to default
+    e.target.value = "";
   };
 
   const removeSkill = (index: number) => {
@@ -32,28 +76,45 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
       
       {/* 1. Skills Section Header */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: "#FE6B1D" }}>
             <Wrench size={22} /> Specialization & Skills
           </h2>
-          <button 
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-orange-50 text-[#FE6B1D] px-4 py-2 rounded-xl font-bold hover:bg-[#FE6B1D] hover:text-white transition-all active:scale-95 border border-orange-100"
-          >
-            <Plus size={18} /> Add New Skill
-          </button>
+          
+          {/* Dropdown Input replaced the Button/Modal */}
+          <div className="relative min-w-[250px]">
+            <select 
+              className="w-full p-3 pr-10 bg-orange-50 border border-orange-100 rounded-xl outline-none focus:ring-2 focus:ring-[#FE6B1D] text-[#FE6B1D] font-bold appearance-none cursor-pointer transition-all"
+              onChange={handleSelectSkill}
+              defaultValue=""
+              disabled={loading}
+            >
+              <option value="" disabled>{loading ? "Loading..." : "+ Select Technical Skill"}</option>
+              {masterServices.map((service) => (
+                <option 
+                  key={service._id} 
+                  value={service.MasterServiceType}
+                  disabled={formData.skills.includes(service.MasterServiceType)}
+                >
+                  {service.MasterServiceType}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-3.5 pointer-events-none text-[#FE6B1D]">
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <ChevronDown size={18} />}
+            </div>
+          </div>
         </div>
 
         {/* Render Skills as Chips */}
         <div className="flex flex-wrap gap-3">
           {formData.skills.map((skill: string, index: number) => (
-            <div key={index} className="group flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl hover:border-[#FE6B1D] transition-all shadow-sm">
-              <span className="text-sm font-semibold text-gray-700">{skill}</span>
+            <div key={index} className="group flex items-center gap-2 bg-orange-50 border border-orange-100 px-4 py-2 rounded-xl hover:bg-[#FE6B1D] hover:text-white transition-all shadow-sm">
+              <span className="text-sm font-bold">{skill}</span>
               <button 
                 type="button" 
                 onClick={() => removeSkill(index)} 
-                className="text-gray-400 hover:text-red-500 transition-colors"
+                className="text-orange-300 group-hover:text-white transition-colors"
               >
                 <X size={14} />
               </button>
@@ -61,7 +122,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           ))}
           {formData.skills.length === 0 && (
             <div className="w-full py-8 border-2 border-dotted border-gray-100 rounded-2xl text-center">
-              <p className="text-gray-400 text-sm italic">No skills added. Click the button above to start.</p>
+              <p className="text-gray-400 text-sm italic">No skills selected. Use the dropdown to add your expertise.</p>
             </div>
           )}
         </div>
@@ -70,7 +131,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
       {/* Divider */}
       <hr className="border-gray-100 mb-8" />
 
-      {/* 2. Certification Section */}
+      {/* 2. Certification Section (Keeping as per your original design) */}
       <div>
         <h2 className="text-xl font-bold flex items-center gap-2 mb-4" style={{ color: "#FE6B1D" }}>
           <FileText size={22} /> Certification & Documents
@@ -94,7 +155,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
             </div>
             
             {formData.certFile && (
-              <div className="mt-2 bg-[#FE6B1D] text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2 animate-bounce-short">
+              <div className="mt-2 bg-[#FE6B1D] text-white px-4 py-2 rounded-xl shadow-lg flex items-center gap-2">
                 <FileText size={16} />
                 <span className="text-sm font-bold truncate max-w-[150px]">{formData.certFile.name}</span>
                 <X size={16} className="cursor-pointer" onClick={(e) => { e.preventDefault(); setFormData({...formData, certFile: null}); }} />
@@ -103,49 +164,6 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           </div>
         </div>
       </div>
-
-      {/* --- ADD SKILL MODAL --- */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-100 p-4 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center bg-gray-50 border-b">
-               <div className="w-16 h-16 bg-orange-100 text-[#FE6B1D] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Sparkles size={32} />
-               </div>
-               <h3 className="text-xl font-bold text-gray-800">Add Technical Skill</h3>
-               <p className="text-sm text-gray-500">Specify your expertise area</p>
-            </div>
-            
-            <div className="p-6">
-              <input 
-                autoFocus
-                type="text" 
-                placeholder="e.g. Engine Diagnostics"
-                className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-[#FE6B1D] transition-all text-center text-lg font-semibold"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addSkill()}
-              />
-              
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                <button 
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-4 rounded-2xl font-bold text-gray-500 hover:bg-gray-100 transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  onClick={addSkill}
-                  className="p-4 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all"
-                  style={{ backgroundColor: "#FE6B1D" }}
-                >
-                  Add Skill
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
