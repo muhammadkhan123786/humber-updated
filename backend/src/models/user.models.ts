@@ -5,10 +5,12 @@ export type Roles = 'Admin' | 'Technician' | 'Customer';
 
 export interface IUser extends Document {
     email: string;
-    password: string;
+    password?: string;
     role: Roles;
     isActive: boolean;
     isDeleted: boolean;
+    emailToken?: string;
+    emailTokenExpires?: Date;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -18,14 +20,16 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>(
     {
         email: { type: String, required: true, unique: true },
-        password: { type: String, required: true },
+        password: { type: String },
         role: {
             type: String,
             enum: ['Admin', 'Technician', 'Customer'],
             required: true,
             default: 'Admin', // optional default
         },
-        isActive: { type: Boolean, default: true },
+        emailToken: { type: String },
+        emailTokenExpires: { type: Date },
+        isActive: { type: Boolean, default: false },
         isDeleted: { type: Boolean, default: false },
     },
     { timestamps: true }

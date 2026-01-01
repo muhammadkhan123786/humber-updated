@@ -47,6 +47,7 @@ export const createTechnicianSchema = z
         contactId: objectIdSchema,
         addressId: objectIdSchema,
         accountId: objectIdSchema,
+        roleId: objectIdSchema,
 
         skills: z.array(objectIdSchema).optional(),
 

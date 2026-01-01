@@ -50,9 +50,6 @@ export const saveCustomer = async (
             // ✅ Create new customer
             customer = await service.create(req.body);
         }
-
-
-
         res.status(200).json({
             message: id ? "Customer updated successfully" : "Customer created successfully",
             data: customer

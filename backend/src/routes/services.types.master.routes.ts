@@ -10,7 +10,7 @@ const serviceTypeMasterServices = new GenericService<ServiceTypeMasterDoc>(Servi
 
 const serviceTypeMasterController = new AdvancedGenericController({
     service: serviceTypeMasterServices,
-    populate: "userId",
+    populate: ["userId"],
     validationSchema: MasterServiceTypeCreateSchema,
 });
 
