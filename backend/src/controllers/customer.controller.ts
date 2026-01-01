@@ -18,7 +18,6 @@ export const saveCustomer = async (
     try {
         const { id } = req.params;
         const { customerType } = req.body;
-
         let targetService: GenericService<CustomerBaseDoc>;
         let validationSchema;
 
