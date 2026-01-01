@@ -30,7 +30,7 @@ const customerProfileMiddleware = genericProfileIdsMiddleware<CustomerBaseDoc>({
 CustomerBaseRouter.get("/", CustomerBaseController.getAll);
 CustomerBaseRouter.get("/:id", CustomerBaseController.getById);
 CustomerBaseRouter.post("/", customerProfileMiddleware, saveCustomer);
-CustomerBaseRouter.put("/:id", customerProfileMiddleware, saveCustomer);
+CustomerBaseRouter.post("/:id", customerProfileMiddleware, saveCustomer);
 CustomerBaseRouter.delete("/:id", CustomerBaseController.delete);
 
 export default CustomerBaseRouter;

@@ -1,13 +1,16 @@
 import { IBaseEntity } from './Base.Interface';
 import { customerType } from './DTOs/Customer.dto';
 
-export interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string, TAccountId = string> extends IBaseEntity<TUserId> {
+export interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string, TAccountId = string, TPreviousCustomerId = string, TconvertedToCustomerId = string> extends IBaseEntity<TUserId> {
     personId: TPersonId;
     addressId: TAddressId;
     contactId: TContactId;
     accountId: TAccountId;
     sourceId: TCustomerSourceId;
+    convertedToCustomerId: TconvertedToCustomerId;
     customerType: customerType;
+    previousCustomerId?: TPreviousCustomerId;
+    convertedAt: Date
 }
 
 
