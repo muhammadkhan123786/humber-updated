@@ -60,10 +60,12 @@ export default function CustomerTable({
                             {filteredCustomers.length > 0 ? (
                                 filteredCustomers.map((customer) => (
                                     <CustomerRow
-                                        key={`${customer.id}-${customer.createdAt.getTime()}`}
+                                        key={customer.id}
                                         customer={customer}
+                                        actionMenu={actionMenu} // Yeh pass karna zaruri hai
                                         onView={onView}
                                         onEdit={onEdit}
+                                        onDelete={onDelete}
                                         onActionMenuClick={onActionMenuClick}
                                         getVehicleMakeLabel={getVehicleMakeLabel}
                                     />

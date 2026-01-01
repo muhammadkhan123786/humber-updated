@@ -2,6 +2,13 @@
 export interface AddNewCustomerInterface {
   id: string;
   firstName: string;
+  customerType:string;
+  companyName:string;
+  registrationNo:string;
+  vatNo:string;
+  website:string;
+  
+  country:string;
   lastName: string;
   email: string;
   mobileNumber: string;
@@ -40,4 +47,8 @@ export interface AddNewCustomerInterface {
     yearOfDesign: string;
     isPrimary?: boolean;
   }>;
+
+  // Additional fields for issues and description
+  issues?: Array<{ category: string; subIssues: string[] }>;
+  description?: string;
 }
