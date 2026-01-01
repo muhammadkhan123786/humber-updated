@@ -2,7 +2,7 @@ import { Document, Model, model, Schema, Types } from "mongoose";
 import { ICustomerBase } from "../../../common/ICustomerSharedInterface";
 import { baseCustomerSchema } from "../schemas/base.customer.schema";
 
-export type CustomerBaseDoc = ICustomerBase<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId> & Document;
+export type CustomerBaseDoc = ICustomerBase<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId> & Document;
 
 const CustomerBaseSchema = new Schema<CustomerBaseDoc>({
     ...baseCustomerSchema,

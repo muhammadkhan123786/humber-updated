@@ -54,7 +54,7 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ message: `Email ${email} does not exist. Invalid credentials.` });
         }
 
-        const isMatch = await comparePassword(password, user.password);
+        const isMatch = await comparePassword(password, user.password!);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid password. Please check.' });
         }
@@ -76,5 +76,28 @@ export const login = async (req: Request, res: Response) => {
             message: 'Login failed due to server error',
             error: error instanceof Error ? error.message : error,
         });
+    }
+};
+
+export const setupPassword = async (req: Request, res: Response) => {
+    try {
+        const { token, password } = req.body;
+
+        const user = await User.findOne({ emailToken: token, emailTokenExpires: { $gt: new Date() } });
+        if (!user) return res.status(400).json({ message: "Invalid or expired token" });
+
+        // Hash password
+        const hashedPassword = await hashPassword(password);
+
+        user.password = hashedPassword;
+        user.isActive = true;
+        user.emailToken = undefined;
+        user.emailTokenExpires = undefined;
+
+        await user.save();
+
+        res.status(200).json({ message: "Account activated successfully" });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
     }
 };

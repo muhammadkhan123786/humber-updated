@@ -28,10 +28,12 @@ const technicianController = new AdvancedGenericController({
     validationSchema: createTechnicianSchema,
 });
 
+const technicianProfileMiddleware = genericProfileIdsMiddleware<technicianInformationDoc>({ targetModel: TechnicianProfileModel })
+
 technicianRouter.get("/", technicianController.getAll);
 technicianRouter.get("/:id", technicianController.getById);
-technicianRouter.post("/", genericProfileIdsMiddleware, technicianUpload, technicianController.create);
-technicianRouter.put("/:id", genericProfileIdsMiddleware, technicianUpload, technicianController.update);
+technicianRouter.post("/", technicianProfileMiddleware, technicianUpload, technicianController.create);
+technicianRouter.put("/:id", technicianProfileMiddleware, technicianUpload, technicianController.update);
 technicianRouter.delete("/:id", technicianController.delete);
 
 export default technicianRouter;

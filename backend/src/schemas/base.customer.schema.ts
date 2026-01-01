@@ -7,6 +7,7 @@ export const baseCustomerSchema = {
     addressId: { type: Types.ObjectId, ref: "Address" },
     contactId: { type: Types.ObjectId, ref: "Contact" },
     sourceId: { type: Types.ObjectId, ref: "CustomerSourceModel" },
+    accountId: { type: Types.ObjectId, ref: "User" },
     customerType: { type: String, required: true, enum: ["domestic", "corporate"] },
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },

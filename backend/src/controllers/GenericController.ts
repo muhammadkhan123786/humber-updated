@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import { GenericService } from "../services/generic.crud.services";
-import { Document, Types } from "mongoose";
+import { Document, PopulateOptions, Types } from "mongoose";
 import { z, ZodObject, ZodRawShape } from "zod";
 
 const queryFilters: Record<string, any> = {}; // <-- new object for mongoose
 interface ControllerOptions<T extends Document> {
     service: GenericService<T>;
-    populate?: string | string[];
+    populate?: (string | PopulateOptions)[];
     validationSchema?: ZodObject<ZodRawShape>; // optional Zod validation
 }
 export class AdvancedGenericController<T extends Document> {

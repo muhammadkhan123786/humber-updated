@@ -10,7 +10,7 @@ const repairStatusServices = new GenericService<RepairStatusDoc>(RepairStatus);
 
 const repairStatusController = new AdvancedGenericController({
     service: repairStatusServices,
-    populate: "userId",
+    populate: ["userId"],
     validationSchema: repairStatusCreateSchema,
 });
 

@@ -1,79 +1,87 @@
-import { Request, Response, NextFunction } from 'express';
-import { Person } from '../models/person.models';
-import { Contact } from '../models/contact.models';
-import { Address } from '../models/addresses.models';
-import { User } from '../models/user.models';
-import { commonProfileDto } from '../../../common/DTOs/profilecommonDto';
+import { Request, Response, NextFunction } from "express";
+import { Model, Document, Types } from "mongoose";
+import { User } from "../models/user.models";
+import { Person } from "../models/person.models";
+import { Contact } from "../models/contact.models";
+import { Address } from "../models/addresses.models";
+import { sendConfirmationEmail } from "../utils/sendEmailUtil";
+import { commonProfileDto } from "../../../common/DTOs/profilecommonDto";
 
-export const genericProfileIdsMiddleware = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    try {
-        const body = req.body as commonProfileDto;
+type GenericModels<T extends Document> = {
+    targetModel: Model<T>; // e.g., TechnicianProfile, CustomerProfile, AdminProfile
+};
 
-        /* -------------------------
-           1. Prevent duplicate user
-        -------------------------- */
-        const existingUser = await User.findOne({
-            email: body.contact.emailId,
-        });
+export const genericProfileIdsMiddleware = <T extends Document & { accountId: Types.ObjectId, personId: Types.ObjectId, contactId: Types.ObjectId, addressId: Types.ObjectId }>(models: GenericModels<T>) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const body = req.body as commonProfileDto;
+            const isUpdate = !!req.params.id;
 
-        if (existingUser) {
-            return res.status(409).json({
-                message: 'User already exists with this email',
+            if (isUpdate) {
+                // -------------------------
+                // UPDATE EXISTING RECORDS
+                // -------------------------
+                const model = await models.targetModel.findById(req.params.id);
+                if (!model) {
+                    return res.status(404).json({ message: "Profile not found" });
+                }
+
+
+                const account = await User.findById(model.accountId);
+                if (!account) return res.status(404).json({ message: "Account  not found" });
+
+                // Prevent duplicate email if changed
+                if (account.email !== body.contact.emailId) {
+                    const emailExists = await User.findOne({ email: body.contact.emailId });
+                    if (emailExists)
+                        return res.status(409).json({ message: "Email already in use" });
+                }
+
+                if (model.personId) await Person.findByIdAndUpdate(model.personId, { ...body.person });
+                if (model.contactId) await Contact.findByIdAndUpdate(model.contactId, { ...body.contact });
+                if (model.addressId) await Address.findByIdAndUpdate(model.addressId, { ...body.address, userId: req.body.userId });
+
+                await User.findByIdAndUpdate(model.accountId, { email: body.contact.emailId });
+                req.body.personId = model.personId.toString();
+                req.body.contactId = model.contactId.toString();
+                req.body.addressId = model.addressId.toString();
+                req.body.accountId = model.accountId.toString();
+
+                next();
+                return;
+            }
+
+            // -------------------------
+            // CREATE NEW RECORDS
+            // -------------------------
+
+            const existingUser = await User.findOne({ email: body.contact.emailId });
+            if (existingUser) return res.status(409).json({ message: "User already exists with this email" });
+
+            // Create Person, Contact, Address
+            const person = await Person.create(body.person);
+            const contact = await Contact.create(body.contact);
+            const address = await Address.create(body.address);
+
+            // Role assignment (backend controlled)
+            const role = body.role ?? (req.originalUrl.includes("Technician") ? "Technician" : req.originalUrl.includes("Admin") ? "Admin" : "Customer");
+
+            const user = await User.create({
+                email: body.contact.emailId,
+                role,
             });
+
+            // Attach IDs to request for controller
+            req.body.personId = person._id.toString();
+            req.body.contactId = contact._id.toString();
+            req.body.addressId = address._id.toString();
+            req.body.accountId = user._id.toString();
+
+            await sendConfirmationEmail(user.email, role);
+
+            next();
+        } catch (error) {
+            next(error);
         }
-
-        /* -------------------------
-           2. Create Person
-        -------------------------- */
-        const person = await Person.create(body.person);
-
-        /* -------------------------
-           3. Create Contact
-        -------------------------- */
-        const contact = await Contact.create({
-            ...body.contact,
-        });
-
-        /* -------------------------
-           4. Create Address
-        -------------------------- */
-        const address = await Address.create({
-            ...body.address
-        });
-
-        /* -------------------------
-           5. Assign Role (Backend Controlled)
-        -------------------------- */
-        const role =
-            body.role ??
-                req.originalUrl.includes('Admin')
-                ? 'Admin'
-                : req.originalUrl.includes('Technician')
-                    ? 'Technician'
-                    : 'Customer';
-
-        /* -------------------------
-           6. Create User
-        -------------------------- */
-        const user = await User.create({
-            email: body.contact.emailId,
-            role,
-        });
-
-        /* -------------------------
-           7. Attach IDs to req.body
-        -------------------------- */
-        req.body.personId = person._id;
-        req.body.contactId = contact._id;
-        req.body.addressId = address._id;
-        req.body.accountId = user._id;
-
-        next();
-    } catch (error) {
-        next(error);
-    }
+    };
 };

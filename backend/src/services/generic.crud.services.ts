@@ -1,4 +1,4 @@
-import { Model, Types, Document, UpdateQuery, QueryFilter } from "mongoose";
+import { Model, Types, Document, UpdateQuery, QueryFilter, PopulateOptions } from "mongoose";
 import { z, ZodObject, ZodRawShape } from "zod";
 
 export interface CRUDOptions<T extends Document> {
@@ -21,7 +21,7 @@ function hasIsDefaultField(
 export class GenericService<T extends Document> {
     constructor(protected readonly model: Model<T>) { }
 
-    getQuery(filter: QueryFilter<T> = {}, options?: { populate?: string | string[] }) {
+    getQuery(filter: QueryFilter<T> = {}, options?: { populate?: (string | PopulateOptions)[] }) {
         let query = this.model.find(filter);
         if (options?.populate) query = query.populate(options.populate);
         return query;
@@ -42,13 +42,13 @@ export class GenericService<T extends Document> {
     }
 
 
-    async getById(id: string, options?: { populate?: string | string[] }): Promise<T | null> {
+    async getById(id: string, options?: { populate?: (string | PopulateOptions)[] }): Promise<T | null> {
         let query = this.model.findById(id);
         if (options?.populate) query = query.populate(options.populate);
         return query.exec();
     }
 
-    async updateById(id: string, data: UpdateQuery<T>, options?: { populate?: string | string[] }): Promise<T | null> {
+    async updateById(id: string, data: UpdateQuery<T>, options?: { populate?: (string | PopulateOptions)[] }): Promise<T | null> {
         // ✅ Check safely
         if (hasIsDefaultField(data) && data.isDefault === true) {
             await this.model.updateMany(

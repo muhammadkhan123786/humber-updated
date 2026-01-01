@@ -10,7 +10,7 @@ const customerSourceServices = new GenericService<customerSourceDoc>(CustomerSou
 
 const customerSourceController = new AdvancedGenericController({
     service: customerSourceServices,
-    populate: "userId",
+    populate: ["userId"],
     validationSchema: customerSourceModelCreateSchema,
 });
 
