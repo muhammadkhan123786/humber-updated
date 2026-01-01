@@ -13,6 +13,7 @@ export default function TechnicianProfileManager() {
     lastName: "", 
     employeeId: "", 
     role: "",
+    
     // Contact Info
     email: "", 
     phone: "", 
@@ -22,7 +23,8 @@ export default function TechnicianProfileManager() {
     certFile: null,
     // Status & Availability (Naya State)
     isActive: true,
-    serviceZones: [] 
+    serviceZones: [] ,
+    profilePhoto: null,
   });
 
   const handleSave = () => {

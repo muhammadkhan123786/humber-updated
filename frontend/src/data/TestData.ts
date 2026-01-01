@@ -8,11 +8,11 @@ import top4 from '../assets/Top4.png';
 
 // Interface matches AddNewCustomerInterface
 interface ExtendedCustomerInterface extends AddNewCustomerInterface {
-  // No need to redefine, inherits from parent
+  // Inherits from parent
 }
 
 /* =======================
-   SIGN IN DATA
+    SIGN IN DATA
 ======================= */
 export const SignInData: ISignInSharedInterface[] = [
   { _id: 1, emailId: 'admin@gmail.com', password: '123', roleId: 1 },
@@ -20,7 +20,7 @@ export const SignInData: ISignInSharedInterface[] = [
 ];
 
 /* =======================
-   ROLES
+    ROLES
 ======================= */
 export const Roles: Record<number, string> = {
   1: 'Admin',
@@ -28,11 +28,9 @@ export const Roles: Record<number, string> = {
   3: 'Customer'
 };
 
-
-
-
-
-
+/* =======================
+    CUSTOMER MOCK DATA (Updated: No Vehicles/Preferences)
+======================= */
 export const AddNewCustomerData: ExtendedCustomerInterface[] = [
   {
     id: 'CUST001',
@@ -44,33 +42,12 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     city: 'New York',
     postCode: '10001',
     contactMethod: 'email',
-    preferredLanguage: 'en',
     ownerName: 'John Doe',
     ownerEmail: 'john.doe@example.com',
     ownerPhone: '+1234567890',
-    // ✅ Legacy fields - OPTIONAL (remove or keep empty)
-    vehicleNumber: '',
-    vehicleType: '',
-    vehicleModel: '',
-    vehicleColor: '',
-    registrationDate: '',
-    insuranceFile: '/insurance/john_doe_insurance.pdf',
-    receiveUpdates: true,
-    termsAccepted: true,
     createdAt: new Date('2024-01-15'),
     updatedAt: new Date('2024-01-15'),
     status: 'active',
-    vehicles: [
-      {
-        id: 'veh1',
-        vehicleMake: 'toyota',
-        vehicleModel: 'Camry',
-        serialNumber: 'SN123456',
-        manufacturing: 'Toyota Motors',
-        yearOfDesign: '2022',
-        isPrimary: true
-      }
-    ]
   },
   {
     id: 'CUST002',
@@ -82,42 +59,12 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     city: 'Los Angeles',
     postCode: '90001',
     contactMethod: 'phone',
-    preferredLanguage: 'en',
     ownerName: 'Sarah Smith',
     ownerEmail: 'sarah.smith@example.com',
     ownerPhone: '+1987654321',
-    // ✅ Legacy fields - OPTIONAL
-    vehicleNumber: '',
-    vehicleType: '',
-    vehicleModel: '',
-    vehicleColor: '',
-    registrationDate: '',
-    insuranceFile: '/insurance/sarah_smith_insurance.pdf',
-    receiveUpdates: true,
-    termsAccepted: true,
     createdAt: new Date('2024-02-10'),
     updatedAt: new Date('2024-02-10'),
     status: 'active',
-    vehicles: [
-      {
-        id: 'veh2',
-        vehicleMake: 'ford',
-        vehicleModel: 'F-150',
-        serialNumber: 'SN789012',
-        manufacturing: 'Ford Motors',
-        yearOfDesign: '2023',
-        isPrimary: true
-      },
-      {
-        id: 'veh3',
-        vehicleMake: 'honda',
-        vehicleModel: 'Civic',
-        serialNumber: 'SN345678',
-        manufacturing: 'Honda Motors',
-        yearOfDesign: '2021',
-        isPrimary: false
-      }
-    ]
   },
   {
     id: 'CUST003',
@@ -129,37 +76,16 @@ export const AddNewCustomerData: ExtendedCustomerInterface[] = [
     city: 'Chicago',
     postCode: '60601',
     contactMethod: 'sms',
-    preferredLanguage: 'en',
     ownerName: 'Michael Johnson',
     ownerEmail: 'michael.j@example.com',
     ownerPhone: '+1122334455',
-    // ✅ Legacy fields - OPTIONAL
-    vehicleNumber: '',
-    vehicleType: '',
-    vehicleModel: '',
-    vehicleColor: '',
-    registrationDate: '',
-    insuranceFile: '/insurance/michael_johnson_insurance.pdf',
-    receiveUpdates: false,
-    termsAccepted: true,
     createdAt: new Date('2024-03-05'),
     updatedAt: new Date('2024-03-05'),
     status: 'inactive',
-    vehicles: [
-      {
-        id: 'veh4',
-        vehicleMake: 'honda',
-        vehicleModel: 'Civic',
-        serialNumber: 'SN901234',
-        manufacturing: 'Honda Motors',
-        yearOfDesign: '2021',
-        isPrimary: true
-      }
-    ]
   },
 ];
 
-let lastCustomerId = 3; // Updated to match existing customers
+let lastCustomerId = 3;
 
 export const generateCustomerId = (): string => {
   lastCustomerId++;
@@ -195,7 +121,6 @@ export const updateCustomer = (
     };
     return true;
   }
-
   return false;
 };
 
@@ -225,7 +150,6 @@ export const searchCustomers = (
   query: string,
   filters?: {
     status?: string;
-    vehicleMake?: string; // ✅ Updated from vehicleType
     city?: string;
   }
 ): ExtendedCustomerInterface[] => {
@@ -246,12 +170,6 @@ export const searchCustomers = (
     if (filters.status && filters.status !== 'all') {
       results = results.filter(customer => customer.status === filters.status);
     }
-   if (filters.vehicleMake && filters.vehicleMake !== 'all') {
-    results = results.filter(customer => 
-        // Optional chaining (?) lazmi use karein kyunki vehicles optional hai
-        customer.vehicles?.some(v => v.vehicleMake.toLowerCase() === filters.vehicleMake?.toLowerCase())
-    );
-}
     if (filters.city && filters.city !== 'all') {
       results = results.filter(customer => customer.city === filters.city);
     }
@@ -282,39 +200,12 @@ export const getUniqueCities = (): string[] => {
   return Array.from(new Set(cities)).sort();
 };
 
-export const getVehicleMakeDistribution = () => { // ✅ Updated function name
-  const distribution: Record<string, number> = {};
-
-  AddNewCustomerData.forEach(customer => {
-    if (customer.vehicles) {
-      customer.vehicles.forEach(vehicle => {
-        const make = vehicle.vehicleMake;
-        distribution[make] = (distribution[make] || 0) + 1;
-      });
-    }
-  });
-
-  return distribution;
-};
-
-export const getTotalVehicles = (): number => {
-  return AddNewCustomerData.reduce((total, customer) => {
-    return total + (customer.vehicles ? customer.vehicles.length : 0);
-  }, 0);
-};
-
-export const getCustomersWithMultipleVehicles = (): ExtendedCustomerInterface[] => {
-  return AddNewCustomerData.filter(customer =>
-    customer.vehicles && customer.vehicles.length > 1
-  );
-};
-
 export type Customer = ExtendedCustomerInterface;
 export type { ExtendedCustomerInterface as CustomerInterface };
 
-// ... rest of the file remains same (NavBarLinksData, OrderStatuses, etc.)
-
-
+/* =======================
+    ORDERS & NOTIFICATIONS
+======================= */
 export const OrderStatuses = [
   { _id: 1, status: "Received", bgcolor: '#D4E1FF', textColor: '#487FFF' },
   { _id: 2, status: "Serviced", bgcolor: '#E2FFF5', textColor: '#2FCA11' },
@@ -348,8 +239,8 @@ export interface NotificationInterface {
 }
 
 export const NotificationData: NotificationInterface[] = [
-  { _id: 1, notification: "Lorem ipsum dolor sit amet consectetur. Est blandit in vitae metus elit. Nunc lectus nam lorem eu in enim felis. Molestie est venenatis condimentum fusce duis vitae risus. ", timePast: "10 mins", notificationStatus: "Accept", image: top1 },
-  { _id: 2, notification: "Lorem ipsum dolor sit amet consectetur. Est blandit in vitae metus elit. Nunc lectus nam lorem eu in enim felis. Molestie est venenatis condimentum fusce duis vitae risus. ", timePast: "10 mins", notificationStatus: "Accepted", image: top2 },
-  { _id: 3, notification: "Lorem ipsum dolor sit amet consectetur. Est blandit in vitae metus elit. Nunc lectus nam lorem eu in enim felis. Molestie est venenatis condimentum fusce duis vitae risus. ", timePast: "10 mins", notificationStatus: "Accept", image: top3 },
-  { _id: 4, notification: "Lorem ipsum dolor sit amet consectetur. Est blandit in vitae metus elit. Nunc lectus nam lorem eu in enim felis. Molestie est venenatis condimentum fusce duis vitae risus. ", timePast: "10 mins", notificationStatus: "Accepted", image: top4 },
+  { _id: 1, notification: "Lorem ipsum...", timePast: "10 mins", notificationStatus: "Accept", image: top1 },
+  { _id: 2, notification: "Lorem ipsum...", timePast: "10 mins", notificationStatus: "Accepted", image: top2 },
+  { _id: 3, notification: "Lorem ipsum...", timePast: "10 mins", notificationStatus: "Accept", image: top3 },
+  { _id: 4, notification: "Lorem ipsum...", timePast: "10 mins", notificationStatus: "Accepted", image: top4 },
 ]

@@ -1,17 +1,29 @@
-// types/AddNewCustomer.ts
 export interface AddNewCustomerInterface {
   id: string;
   firstName: string;
   lastName: string;
+  customerType?: string; // 'domestic' ya 'corporate'
+  
+  // ✅ Optional Fields (Inke aage '?' laga diya hai)
+  companyName?: string;
+  registrationNo?: string;
+  vatNo?: string;
+  website?: string;
+  
   email: string;
   mobileNumber: string;
   address: string;
   city: string;
   postCode: string;
+  country?: string; // Backend se kabhi aata hai kabhi nahi, isliye optional
+  
   contactMethod: 'email' | 'phone' | 'sms' | 'whatsapp';
-  preferredLanguage: string;
-  receiveUpdates: boolean;
-  termsAccepted: boolean;
+  
+  // ✅ Preferences & Flags (Optional)
+  preferredLanguage?: string;
+  receiveUpdates?: boolean;
+  termsAccepted?: boolean;
+  
   createdAt: Date;
   updatedAt: Date;
   status: 'active' | 'inactive' | 'pending';
@@ -20,24 +32,8 @@ export interface AddNewCustomerInterface {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
-  
-  // ✅ LEGACY FIELDS - Make them OPTIONAL
-  vehicleNumber?: string;
-  vehicleType?: string;
-  vehicleModel?: string;
-  vehicleColor?: string;
-  registrationDate?: string;
-  
-  insuranceFile?: string;
-  
-  // ✅ NEW FIELD - Vehicles array
-  vehicles?: Array<{
-    id: string;
-    vehicleMake: string;
-    vehicleModel: string;
-    serialNumber: string;
-    manufacturing: string;
-    yearOfDesign: string;
-    isPrimary?: boolean;
-  }>;
+
+  // Additional fields
+  issues?: Array<{ category: string; subIssues: string[] }>;
+  description?: string;
 }

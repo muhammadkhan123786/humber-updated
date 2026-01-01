@@ -34,7 +34,7 @@ export default function ContactDetails({ formData, setFormData }: ContactProps) 
           />
         </div>
         <div>
-          <label className="text-sm font-medium text-gray-600 block mb-1">Phone Number</label>
+          <label className="text-sm font-medium text-gray-600 block mb-1">Mobile Number</label>
           <div className="relative">
             <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
             <input 

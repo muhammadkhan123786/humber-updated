@@ -1,18 +1,8 @@
-// types/index.ts
 import { AddNewCustomerInterface } from '@/types/AddNewCustomer';
 
-// VehicleData interface - NEW STRUCTURE
-export interface VehicleData {
-    id: string;
-    vehicleMake: string;
-    vehicleModel: string;
-    serialNumber: string;
-    manufacturing: string;
-    yearOfDesign: string;
-    isPrimary?: boolean;
-}
+// ✅ VehicleData ko remove kar diya gaya hai kyunki ab iski zaroorat nahi hai
 
-// Customer type
+// Customer type based on shared interface
 export type Customer = AddNewCustomerInterface;
 
 export type ModalMode = 'add' | 'edit' | 'view';
@@ -23,28 +13,46 @@ export type ActionMenuState = {
     position?: { x: number; y: number } | null;
 };
 
-// FormData type - REMOVE legacy fields
+// ✅ Updated FormData: Vehicles list ko remove kar diya gaya hai
 export type FormData = {
+    // Basic Info
     firstName: string;
     lastName: string;
-    email: string;
+    emailId: string;
     mobileNumber: string;
+    
+    // Identity & Type (Discriminator fields)
+    customerType: 'domestic' | 'corporate';
+    
+    // Corporate Fields (Strictly for corporate discriminator)
+    companyName?: string;
+    registrationNo?: string; 
+    vatNo?: string;          
+    website?: string;
+    
+    // Location
     address: string;
     city: string;
-    postCode: string;
+    zipCode: string;
+    country: string;
+
+    // Preferences & Contact
     contactMethod: 'email' | 'phone' | 'sms' | 'whatsapp';
     preferredLanguage: string;
     receiveUpdates: boolean;
     termsAccepted: boolean;
+    
+    // Owner Details
     ownerName: string;
     ownerEmail: string;
     ownerPhone: string;
-    vehicles: VehicleData[];
-    // ✅ NEW FIELDS FOR STEP 3
+    
+    // Dynamic Data (Vehicles array yahan se remove kar diya gaya hai)
     issues: Array<{ category: string; subIssues: string[] }>;
     description: string;
-    customerType: string; 
-    country: string;
+    
+    // Status
+    status?: 'active' | 'inactive' | 'pending';
 };
 
 export type Step = {
