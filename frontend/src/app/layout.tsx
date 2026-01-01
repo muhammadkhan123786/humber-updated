@@ -14,21 +14,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="bg-[#B4B4B4] antialiased">
         {/* Google Maps Script */}
         <ModalProvider>
-
           {/* Modal MUST be here at top level */}
           <Modal />
 
           {/* Your content */}
 
           {children}
-
-
         </ModalProvider>
       </body>
     </html>
