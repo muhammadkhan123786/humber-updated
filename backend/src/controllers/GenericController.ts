@@ -42,7 +42,7 @@ export class AdvancedGenericController<T extends Document> {
             const pageSize = Number(limit);
 
             // Convert query params to mongoose filter
-            const queryFilters: Record<string, any> = {};
+            const queryFilters: Record<string, any> = { "isActive": true };
             if (search) {
                 queryFilters.brandName = { $regex: search, $options: 'i' };
             }

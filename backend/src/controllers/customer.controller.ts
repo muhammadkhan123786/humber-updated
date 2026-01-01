@@ -19,14 +19,14 @@ export const saveCustomer = async (
         const { id } = req.params;
         const { customerType } = req.body;
 
-        let service: GenericService<CustomerBaseDoc>;
+        let targetService: GenericService<CustomerBaseDoc>;
         let validationSchema;
 
         if (customerType === "domestic") {
-            service = domesticServices;
+            targetService = domesticServices;
             validationSchema = domesticCustomerSchema;
         } else if (customerType === "corporate") {
-            service = corporateServices;
+            targetService = corporateServices;
             validationSchema = corporateCustomerValidationSchema;
         } else {
             return res.status(400).json({ message: "Invalid customer type" });
@@ -41,25 +41,78 @@ export const saveCustomer = async (
             });
         }
 
-        let customer;
-
-        if (id) {
-            // ✅ Update existing customer
-            customer = await service.updateById(id, req.body);
-        } else {
-            // ✅ Create new customer
-            customer = await service.create(req.body);
+        /* =========================
+           CREATE
+        ========================== */
+        if (!id) {
+            const customer = await targetService.create(req.body);
+            return res.status(201).json({
+                message: "Customer created successfully",
+                data: customer
+            });
         }
-        res.status(200).json({
-            message: id ? "Customer updated successfully" : "Customer created successfully",
-            data: customer
+
+        /* =========================
+           UPDATE
+        ========================== */
+
+        // 🔹 Fetch customer from BOTH collections
+        const existingCustomer =
+            (await domesticServices.getById(id)) ||
+            (await corporateServices.getById(id));
+
+        if (!existingCustomer) {
+            return res.status(404).json({ message: "Customer not found" });
+        }
+
+        /* =========================
+           TYPE CONVERSION
+        ========================== */
+        if (existingCustomer.customerType !== customerType) {
+
+            // 1️⃣ Archive old customer
+            const oldService =
+                existingCustomer.customerType === "domestic"
+                    ? domesticServices
+                    : corporateServices;
+
+            await oldService.updateById(existingCustomer._id.toString(), {
+                isActive: false,
+                convertedAt: new Date()
+            });
+
+            // 2️⃣ Create new customer
+            const newCustomer = await targetService.create({
+                ...req.body,
+                previousCustomerId: existingCustomer._id
+            });
+
+            // 3️⃣ Link both
+            await oldService.updateById(existingCustomer._id.toString(), {
+                convertedToCustomerId: newCustomer._id
+            });
+
+            return res.status(201).json({
+                message: "Customer converted successfully",
+                data: newCustomer
+            });
+        }
+
+        /* =========================
+           NORMAL UPDATE
+        ========================== */
+        const updatedCustomer = await targetService.updateById(id, req.body);
+
+        return res.status(200).json({
+            message: "Customer updated successfully",
+            data: updatedCustomer
         });
 
-    } catch (error: any) {
-
+    } catch (error) {
         next(error);
     }
 };
+
 
 
 //update customer 
