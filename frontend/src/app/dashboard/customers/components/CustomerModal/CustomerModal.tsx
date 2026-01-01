@@ -1,6 +1,6 @@
 "use client";
 import { UserPlus, Edit, Eye, X } from 'lucide-react';
-import type { ModalMode, Customer, FormData, Step } from '../types';
+import type { ModalMode, Customer } from '../types';
 import AddEditCustomer from './AddEditCustomer';
 import ViewCustomer from './ViewCustomer';
 
@@ -8,20 +8,12 @@ interface CustomerModalProps {
     isOpen: boolean;
     isClosing: boolean;
     modalMode: ModalMode;
-    currentStep: number;
-    formData: any; // Using any or specific FormData interface
+    formData: any; 
     selectedCustomer: Customer | null;
-    steps: Step[];
     modalRef: React.RefObject<HTMLDivElement | null>;
-    getVehicleMakeLabel: (make: string) => string;
-    getStatusIcon: (status: string) => React.ReactNode;
     onClose: () => void;
-    onNextStep: () => void;
-    onPrevStep: () => void;
     onSubmit: () => void;
     onPersonalInfoChange: (field: string, value: any) => void;
-    onContactDetailsChange: (field: string, value: any) => void;
-    onPreferencesChange: (field: string, value: any) => void;
     onEdit: () => void;
 }
 
@@ -29,20 +21,12 @@ export default function CustomerModal({
     isOpen,
     isClosing,
     modalMode,
-    currentStep,
     formData,
     selectedCustomer,
-    steps,
     modalRef,
-    getVehicleMakeLabel,
-    getStatusIcon,
     onClose,
-    onNextStep,
-    onPrevStep,
     onSubmit,
     onPersonalInfoChange,
-    onContactDetailsChange,
-    onPreferencesChange,
     onEdit
 }: CustomerModalProps) {
     if (!isOpen) return null;
@@ -58,21 +42,24 @@ export default function CustomerModal({
 
     return (
         <>
+            {/* Backdrop */}
             <div
                 className={`fixed inset-0 z-9998 bg-black/50 backdrop-blur-sm transition-all duration-500 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
                 onClick={onClose}
             />
 
+            {/* Modal Container */}
             <div
                 className={`fixed inset-0 z-9999 flex items-end md:items-center justify-center p-4 transition-all duration-500 ease-out ${isClosing ? 'opacity-0 translate-y-10' : 'opacity-100 translate-y-0'}`}
                 style={{ pointerEvents: 'none' }}
             >
                 <div
                     ref={modalRef}
-                    className={`bg-white rounded-t-3xl md:rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] md:h-auto md:max-h-[85vh] overflow-y-auto transition-all duration-500 transform ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} modal-scrollbar`}
+                    className={`bg-white rounded-t-3xl md:rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] md:h-auto md:max-h-[85vh] overflow-y-auto transition-all duration-500 transform ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} modal-scrollbar`}
                     style={{ pointerEvents: 'auto' }}
                 >
-                    <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10">
+                    {/* Header */}
+                    <div className="sticky top-0 bg-white border-b border-gray-100 p-6 flex justify-between items-center z-10">
                         <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-lg ${modalMode === 'add' ? 'bg-[#FE6B1D]' : modalMode === 'edit' ? 'bg-green-600' : 'bg-blue-600'}`}>
                                 {modalMode === 'add' && <UserPlus className="w-5 h-5 text-white" />}
@@ -81,49 +68,44 @@ export default function CustomerModal({
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">{getModalTitle()}</h2>
-                                <p className="text-gray-600 text-sm">
-                                    {modalMode === 'view' ? 'Customer information' : `Step ${currentStep} of ${steps.length}`}
+                                <p className="text-gray-500 text-sm">
+                                    {modalMode === 'view' ? 'Full customer profile information' : 'Fill in the customer details below'}
                                 </p>
                             </div>
                         </div>
 
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                         >
-                            <X className="w-5 h-5 text-gray-500" />
+                            <X className="w-5 h-5 text-gray-400" />
                         </button>
                     </div>
 
+                    {/* Content Area */}
                     <div className="p-6">
                         {modalMode === 'view' && selectedCustomer ? (
                             <ViewCustomer
                                 customer={selectedCustomer}
                                 onEdit={onEdit}
                                 onClose={onClose}
-                                getVehicleMakeLabel={getVehicleMakeLabel}
-                                getStatusIcon={getStatusIcon}
+                                // Vehicle-related props removed here
                             />
                         ) : (
                             <AddEditCustomer
                                 mode={modalMode}
-                                currentStep={currentStep}
                                 formData={formData}
-                                steps={steps}
-                                onNextStep={onNextStep}
-                                onPrevStep={onPrevStep}
-                                onClose={onClose}
-                                onSubmit={onSubmit}
                                 onPersonalInfoChange={onPersonalInfoChange}
-                                onContactDetailsChange={onContactDetailsChange}
-                                onPreferencesChange={onPreferencesChange}
+                                onSubmit={onSubmit}
+                                onClose={onClose}
                             />
                         )}
                     </div>
 
-                    <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 text-center">
-                        <p className="text-sm text-gray-500">
-                            {modalMode === 'view' ? 'Press ESC or click outside to close' : 'Click outside the modal or press ESC to close'}
+                    {/* Footer Hint */}
+                    <div className="bg-gray-50 p-4 text-center border-t border-gray-100">
+                        <p className="text-xs text-gray-400">
+                            Customer Management System &bull; Humber
                         </p>
                     </div>
                 </div>

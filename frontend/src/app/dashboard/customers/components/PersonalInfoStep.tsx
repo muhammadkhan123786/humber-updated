@@ -13,12 +13,12 @@ interface PersonalInfoStepProps {
         sourceId?: string;
         firstName: string;
         lastName: string;
-        email: string;
+        emailId: string;
         mobileNumber: string;
         address: string;
         city: string;
         country?: string;
-        postCode: string;
+        zipCode: string;
         companyName?: string;
         registrationNo?: string;
         vatNo?: string;
@@ -191,7 +191,7 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                         <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                             <Mail className="w-4 h-4 text-[#FE6B1D]" /> Email Address *
                         </label>
-                        <input type="email" value={formData.email} onChange={(e) => onInputChange('email', e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition" required placeholder="email@example.com" />
+                        <input type="email" value={formData.emailId} onChange={(e) => onInputChange('emailId', e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition" required placeholder="email@example.com" />
                     </div>
                     <div>
                         <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -255,7 +255,7 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                     <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                         <Hash className="w-4 h-4 text-[#FE6B1D]" /> Post Code *
                     </label>
-                    <input type="text" value={formData.postCode} onChange={(e) => onInputChange('postCode', e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition" required placeholder="00000" />
+                    <input type="text" value={formData.zipCode} onChange={(e) => onInputChange('zipCode', e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition" required placeholder="00000" />
                 </div>
             </div>
 

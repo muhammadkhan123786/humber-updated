@@ -10,37 +10,36 @@ export const api = axios.create({
   },
 });
 
-// Customer API functions
-// Helper function to flatten populated customer data
 const flattenCustomer = (customer: any): Customer => {
   return {
     id: customer._id || customer.id,
     customerType: customer.customerType,
-    country: customer.addressId?.countryId?.countryName || '',
-    firstName: customer.personId?.firstName || '',
-    lastName: customer.personId?.lastName || '',
-    email: customer.contactId?.emailId || '',
-    mobileNumber: customer.contactId?.mobileNumber || '',
-    address: customer.addressId?.address || '',
-    city: customer.addressId?.cityId?.cityName || '',
-    postCode: customer.addressId?.zipCode || '',
+    country: customer.country || customer.addressId?.countryId?.countryName || customer.address?.country || '',
+    firstName: customer.firstName || customer.personId?.firstName || customer.person?.firstName || '',
+    lastName: customer.lastName || customer.personId?.lastName || customer.person?.lastName || '',
+    email: customer.emailId || customer.contactId?.emailId || customer.contact?.emailId || '',
+    mobileNumber: customer.mobileNumber || customer.contactId?.mobileNumber || customer.contact?.mobileNumber || '',
+    address: customer.address || customer.addressId?.address || customer.address?.address || '',
+    city: customer.city || customer.addressId?.cityId?.cityName || customer.address?.city || '',
+    postCode: customer.zipCode || customer.addressId?.zipCode || customer.address?.zipCode || '',
     companyName: customer.companyName || '',
     registrationNo: customer.registrationNo || '',
     vatNo: customer.vatNo || '',
     website: customer.website || '',
-    contactMethod: customer.contactId?.contactMethod || 'email',
-    preferredLanguage: customer.contactId?.preferredLanguage || 'en',
-    receiveUpdates: customer.contactId?.receiveUpdates || false,
-    termsAccepted: customer.contactId?.termsAccepted || false,
-    ownerName: customer.personId?.firstName || '', 
-    ownerEmail: customer.contactId?.emailId || '',
-    ownerPhone: customer.contactId?.mobileNumber || '',
-    vehicles: customer.vehicles || [],
-    issues: customer.issues || [],
-    description: customer.description || '',
+    contactMethod: customer.contactMethod || 'email',
     status: customer.isActive ? 'active' : 'inactive',
     createdAt: new Date(customer.createdAt || Date.now()),
     updatedAt: new Date(customer.updatedAt || Date.now()),
+    
+    // ✅ Yeh missing fields add karein taake TypeScript error khatam ho jaye
+    preferredLanguage: customer.preferredLanguage || customer.contactId?.preferredLanguage || 'en',
+    receiveUpdates: customer.receiveUpdates || customer.contactId?.receiveUpdates || false,
+    termsAccepted: customer.termsAccepted || customer.contactId?.termsAccepted || false,
+    ownerName: customer.ownerName || customer.personId?.firstName || '',
+    ownerEmail: customer.ownerEmail || customer.contactId?.emailId || '',
+    ownerPhone: customer.ownerPhone || customer.contactId?.mobileNumber || '',
+    issues: customer.issues || [],
+    description: customer.description || ''
   };
 };
 
@@ -56,17 +55,100 @@ export const customerApi = {
     return flattenCustomer(response.data.data || response.data);
   },
 
-  create: async (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Promise<Customer> => {
-    const customerData = { ...customer, userId: '694b8d4d98b65d4ab738b987' };
-    const response = await api.post('/customers', customerData);
+ // ✅ CREATE: Nested Mapping with Corporate Fields
+  create: async (customer: any): Promise<Customer> => {
+    const backendData = {
+      userId: '694b8d4d98b65d4ab738b987',
+      customerType: customer.customerType || 'domestic',
+      sourceId: customer.sourceId,
+      
+      // Personal Info
+      person: {
+        firstName: customer.firstName,
+        middleName: "", 
+        lastName: customer.lastName
+      },
+      
+      // Contact Info
+      contact: {
+        mobileNumber: customer.mobileNumber,
+        phoneNumber: customer.mobileNumber, 
+        emailId: customer.emailId
+      },
+      
+      // Address Info
+      address: {
+        userId: '694b8d4d98b65d4ab738b987',
+        address: customer.address,
+        zipCode: customer.zipCode,
+        city: customer.city,
+        country: customer.country,
+        latitude: "0.0",
+        longitude: "0.0"
+      },
+
+      // ✅ ADDED: Corporate fields (Backend inki wajah se error de raha tha)
+      companyName: customer.companyName || "", 
+      registrationNo: customer.registrationNo || "",
+      vatNo: customer.vatNo || "",
+      website: customer.website || "",
+      
+      isActive: true
+    };
+
+    console.log("Final Payload Check:", backendData);
+
+    const response = await api.post('/customers', backendData);
     return flattenCustomer(response.data.data || response.data);
   },
 
-  update: async (id: string, customer: Partial<Customer>): Promise<Customer> => {
-    const customerData = { ...customer, userId: '694b8d4d98b65d4ab738b987' };
-    const response = await api.put(`/customers/${id}`, customerData);
-    return flattenCustomer(response.data.data || response.data);
-  },
+  // ✅ UPDATE: Nested Mapping
+ // ✅ UPDATE: Nested Mapping with Corporate Fields
+update: async (id: string, customer: any): Promise<Customer> => {
+  const backendData = {
+    userId: '694b8d4d98b65d4ab738b987',
+    customerType: customer.customerType || 'domestic',
+    sourceId: customer.sourceId,
+    
+    // Personal Info
+    person: {
+      firstName: customer.firstName,
+      middleName: "", // Backend expect kar sakta hai
+      lastName: customer.lastName
+    },
+    
+    // Contact Info
+    contact: {
+      emailId: customer.emailId,
+      mobileNumber: customer.mobileNumber,
+      phoneNumber: customer.mobileNumber // Default fallback
+    },
+    
+    // Address Info
+    address: {
+      userId: '694b8d4d98b65d4ab738b987',
+      address: customer.address,
+      zipCode: customer.zipCode,
+      city: customer.city,
+      country: customer.country,
+      latitude: "0.0",
+      longitude: "0.0"
+    },
+
+    // Corporate fields (Validation pass karne ke liye update mein bhi chahiye)
+    companyName: customer.companyName || "", 
+    registrationNo: customer.registrationNo || "",
+    vatNo: customer.vatNo || "",
+    website: customer.website || "",
+
+    isActive: customer.status === 'active' || customer.status === undefined ? true : false
+  };
+
+  console.log("Updating Customer Payload:", backendData);
+
+  const response = await api.put(`/customers/${id}`, backendData);
+  return flattenCustomer(response.data.data || response.data);
+},
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/customers/${id}`);

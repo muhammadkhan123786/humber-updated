@@ -1,17 +1,15 @@
 "use client";
 import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
 import { UserPlus } from 'lucide-react';
-import { customerApi,  } from '@/lib/api';
+import { customerApi } from '@/lib/api';
 import { type Customer } from '../customers/components/types';
-import { VehicleData } from '../customers/components/types';
 
-// Lazy load heavy components
+// Lazy load components
 const CustomerModal = lazy(() => import('./components/CustomerModal/CustomerModal'));
 const FiltersBar = lazy(() => import('./components/CustomerTable/FiltersBar'));
 const CustomerTable = lazy(() => import('./components/CustomerTable/CustomerTable'));
 const DeleteConfirmation = lazy(() => import('./components/CustomerModal/DeleteConfirmation'));
 
-// Simple loading component
 const LoadingFallback = () => (
     <div className="flex items-center justify-center p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FE6B1D]"></div>
@@ -19,36 +17,27 @@ const LoadingFallback = () => (
 );
 
 export default function CustomersContent() {
-    // 1. Initial State for Form
+    // 1. Initial State - Vehicles list khtm kar di gayi hai
     const initialFormData = useMemo(() => ({
         customerType: 'domestic',
-        country: '',
         firstName: '',
         lastName: '',
-        email: '',
+        emailId: '',
         mobileNumber: '',
         address: '',
         city: '',
-        postCode: '',
+        zipCode: '',
+        country: '',
         companyName: '',
         registrationNo: '',
         vatNo: '',
         website: '',
         contactMethod: 'email' as 'email' | 'phone' | 'sms' | 'whatsapp',
-        preferredLanguage: 'en',
-        receiveUpdates: false,
-        termsAccepted: false,
-        ownerName: '',
-        ownerEmail: '',
-        ownerPhone: '',
-        vehicles: [] as VehicleData[], 
-        issues: [] as Array<{ category: string; subIssues: string[] }>, 
-        description: ''
+        status: 'active'
     }), []);
 
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit' | 'view'>('add');
-    const [currentStep, setCurrentStep] = useState(1);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [formData, setFormData] = useState(initialFormData);
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -56,7 +45,6 @@ export default function CustomersContent() {
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [vehicleMakeFilter, setVehicleMakeFilter] = useState<string>('all');
     const [isClosing, setIsClosing] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
@@ -67,12 +55,6 @@ export default function CustomersContent() {
 
     const modalRef = useRef<HTMLDivElement>(null);
 
-    const steps = useMemo(() => [
-        { id: 1, title: 'Personal Info' },
-        { id: 2, title: 'Vehicle Registration' },
-        { id: 3, title: 'Preferences' },
-    ], []);
-
     const fetchCustomers = useCallback(async (showLoading = true) => {
         try {
             if (showLoading) setLoading(true);
@@ -82,7 +64,6 @@ export default function CustomersContent() {
         } catch (err) {
             console.error('Error fetching customers:', err);
             setError('Failed to load customers');
-            // Fallback to empty array
             setCustomers([]);
         } finally {
             if (showLoading) setLoading(false);
@@ -93,6 +74,7 @@ export default function CustomersContent() {
         fetchCustomers();
     }, [fetchCustomers]);
 
+    // Filter Logic - Vehicle Make filter remove kar diya gaya hai
     const filteredCustomers = useMemo(() => {
         return customers.filter(customer => {
             const searchLower = searchQuery.toLowerCase();
@@ -100,116 +82,65 @@ export default function CustomersContent() {
                 customer.firstName.toLowerCase().includes(searchLower) ||
                 customer.lastName.toLowerCase().includes(searchLower) ||
                 customer.email.toLowerCase().includes(searchLower) ||
-                customer.city.toLowerCase().includes(searchLower);
+                (customer.city && customer.city.toLowerCase().includes(searchLower));
 
             const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
-            const matchesVehicleMake = vehicleMakeFilter === 'all' ||
-                (customer.vehicles && customer.vehicles.some(v => v.vehicleMake === vehicleMakeFilter));
 
-            return matchesSearch && matchesStatus && matchesVehicleMake;
+            return matchesSearch && matchesStatus;
         });
-    }, [customers, searchQuery, statusFilter, vehicleMakeFilter]);
-
-    const getVehicleMakeLabel = useCallback((make: string): string => {
-        const makeMap: Record<string, string> = {
-            'toyota': 'Toyota', 'honda': 'Honda', 'ford': 'Ford', 'bmw': 'BMW',
-            'mercedes': 'Mercedes-Benz', 'audi': 'Audi', 'tesla': 'Tesla',
-            'hyundai': 'Hyundai', 'kia': 'Kia', 'nissan': 'Nissan',
-            'volkswagen': 'Volkswagen', 'other': 'Other'
-        };
-        return makeMap[make] || make;
-    }, []);
-
-    const getStatusIcon = useCallback((status: string) => {
-        const color = status === 'active' ? 'green' : status === 'inactive' ? 'red' : status === 'pending' ? 'yellow' : 'gray';
-        return <div className={`w-4 h-4 rounded-full bg-${color}-500`} />;
-    }, []);
+    }, [customers, searchQuery, statusFilter]);
 
     const openModal = useCallback((mode: 'add' | 'edit' | 'view', customer?: Customer) => {
-        if (mode === 'edit' && customer) {
+        if ((mode === 'edit' || mode === 'view') && customer) {
             setSelectedCustomer(customer);
-            setFormData({
-                ...initialFormData,
-                ...customer,
-                customerType: (customer as any).customerType || 'domestic',
-                companyName: (customer as any).companyName || '',
-                registrationNo: (customer as any).registrationNo || '',
-                vatNo: (customer as any).vatNo || '',
-                website: (customer as any).website || '',
-                issues: (customer as any).issues || [],
-                description: (customer as any).description || "",
-            });
-        } else if (mode === 'view' && customer) {
-            setSelectedCustomer(customer);
+            setFormData({ ...initialFormData, ...customer });
         } else {
             setFormData(initialFormData);
+            setSelectedCustomer(null);
         }
-
         setModalMode(mode);
         setShowModal(true);
         setIsClosing(false);
-        setCurrentStep(1);
     }, [initialFormData]);
 
     const closeModal = useCallback(() => {
         setIsClosing(true);
         setTimeout(() => {
             setShowModal(false);
-            setCurrentStep(1);
             setFormData(initialFormData);
             setSelectedCustomer(null);
-            setModalMode('add');
             setIsClosing(false);
         }, 300);
     }, [initialFormData]);
 
-    const nextStep = useCallback(() => {
-        if (currentStep < steps.length) setCurrentStep(currentStep + 1);
-    }, [currentStep, steps.length]);
-
-    const prevStep = useCallback(() => {
-        if (currentStep > 1) setCurrentStep(currentStep - 1);
-    }, [currentStep]);
-
-    // --- UPDATED SUBMIT LOGIC ---
     const handleSubmit = useCallback(async () => {
-        // Sirf basic fields check karein taake data save ho sake
-        if (!formData.firstName) {
-            alert('Please enter at least the First Name');
-            return;
-        }
+        if (!formData.firstName || !formData.emailId || !formData.zipCode) {
+        alert('Please fill in all required fields (Name, Email, and Post Code)');
+        return;
+    }
 
         try {
             if (modalMode === 'add') {
-                const customerData = {
-                    ...formData,
-                    // Default values for missing fields
-                    vehicles: formData.vehicles || [],
-                };
-
-                await customerApi.create(customerData);
-                await fetchCustomers(false);
+                await customerApi.create(formData);
             } else if (modalMode === 'edit' && selectedCustomer) {
-                await customerApi.update(selectedCustomer.id!, formData);
-                await fetchCustomers(false);
+                const { id, ...updateData } = formData as any;
+                await customerApi.update(selectedCustomer.id!, updateData);
             }
+            await fetchCustomers(false);
             closeModal();
         } catch (error) {
             console.error('Error saving customer:', error);
-            alert(`Error saving customer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            alert('Error saving customer.');
         }
-    }, [formData, modalMode, selectedCustomer, closeModal]);
+    }, [formData, modalMode, selectedCustomer, closeModal, fetchCustomers]);
 
-   const handleActionMenuClick = useCallback((event: React.MouseEvent, customerId: string) => {
-    event.stopPropagation();
-    event.preventDefault();
-    
-    setActionMenu(prev => ({
-        // Agar pehle se wahi customer open hai to band kardo, warna naya kholo
-        isOpen: prev.customerId === customerId ? !prev.isOpen : true,
-        customerId: customerId,
-    }));
-}, []);
+    const handleActionMenuClick = useCallback((event: React.MouseEvent, customerId: string) => {
+        event.stopPropagation();
+        setActionMenu(prev => ({
+            isOpen: prev.customerId === customerId ? !prev.isOpen : true,
+            customerId: customerId,
+        }));
+    }, []);
 
     const handleDeleteClick = useCallback((customerId: string) => {
         setCustomerToDelete(customerId);
@@ -223,8 +154,7 @@ export default function CustomersContent() {
                 await customerApi.delete(customerToDelete);
                 await fetchCustomers(false);
             } catch (error) {
-                console.error('Error deleting customer:', error);
-                alert(`Error deleting customer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                console.error('Error:', error);
             }
         }
         setShowDeleteConfirm(false);
@@ -241,7 +171,7 @@ export default function CustomersContent() {
                     </div>
                     <button
                         onClick={() => openModal('add')}
-                        className="flex cursor-pointer items-center justify-center gap-2 px-4 py-2 bg-[#FE6B1D] text-white rounded-lg hover:bg-[#FE6B1D]/90 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#FE6B1D] text-white rounded-lg hover:bg-[#FE6B1D]/90 transition-all shadow-sm"
                         disabled={loading}
                     >
                         <UserPlus className="w-4 h-4" />
@@ -249,37 +179,20 @@ export default function CustomersContent() {
                     </button>
                 </div>
 
-                {loading && (
-                    <div className="flex items-center justify-center p-8">
+                {loading && !customers.length ? (
+                    <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FE6B1D]"></div>
-                        <span className="ml-2 text-gray-600">Loading customers...</span>
+                        <span className="mt-4 text-gray-500 font-medium">Loading customers...</span>
                     </div>
-                )}
-
-                {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                        <p className="text-red-800">{error}</p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-                        >
-                            Retry
-                        </button>
-                    </div>
-                )}
-
-                {!loading && !error && (
+                ) : (
                     <Suspense fallback={<LoadingFallback />}>
                         <FiltersBar
                             searchQuery={searchQuery}
                             statusFilter={statusFilter}
-                            vehicleMakeFilter={vehicleMakeFilter}
                             onSearchChange={setSearchQuery}
                             onStatusFilterChange={setStatusFilter}
-                            onVehicleMakeFilterChange={setVehicleMakeFilter}
                             onResetFilters={() => {
                                 setStatusFilter('all');
-                                setVehicleMakeFilter('all');
                                 setSearchQuery('');
                             }}
                         />
@@ -287,17 +200,12 @@ export default function CustomersContent() {
                         <CustomerTable
                             customers={customers}
                             filteredCustomers={filteredCustomers}
-                            searchQuery={searchQuery}
-                            statusFilter={statusFilter}
-                            vehicleMakeFilter={vehicleMakeFilter}
                             actionMenu={actionMenu}
                             onView={(customer) => openModal('view', customer)}
                             onEdit={(customer) => openModal('edit', customer)}
-                            onAdd={() => openModal('add')}
                             onActionMenuClick={handleActionMenuClick}
-                            onActionMenuClose={() => setActionMenu({ isOpen: false, customerId: null })}
                             onDelete={handleDeleteClick}
-                            getVehicleMakeLabel={getVehicleMakeLabel}
+                            onActionMenuClose={() => setActionMenu({ isOpen: false, customerId: null })}
                         />
                     </Suspense>
                 )}
@@ -309,27 +217,17 @@ export default function CustomersContent() {
                     onClose={() => setShowDeleteConfirm(false)}
                     onConfirm={confirmDelete}
                 />
-            </Suspense>
-
-            <Suspense fallback={null}>
+                
                 <CustomerModal
                     isOpen={showModal}
                     isClosing={isClosing}
                     modalMode={modalMode}
-                    currentStep={currentStep}
                     formData={formData}
                     selectedCustomer={selectedCustomer}
-                    steps={steps}
                     modalRef={modalRef}
-                    getVehicleMakeLabel={getVehicleMakeLabel}
-                    getStatusIcon={getStatusIcon}
                     onClose={closeModal}
-                    onNextStep={nextStep}
-                    onPrevStep={prevStep}
                     onSubmit={handleSubmit}
                     onPersonalInfoChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-                    onContactDetailsChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
-                    onPreferencesChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
                     onEdit={() => selectedCustomer && openModal('edit', selectedCustomer)}
                 />
             </Suspense>

@@ -1,14 +1,6 @@
 import { AddNewCustomerInterface } from '@/types/AddNewCustomer';
 
-// ✅ VehicleData: Backend alignment ke liye update kiya gaya
-export interface VehicleData {
-    id: string;
-    vehicleMake: string;
-    vehicleModel: string;
-    serialNumber: string;
-    manufacturing: string; 
-    isPrimary?: boolean;
-}
+// ✅ VehicleData ko remove kar diya gaya hai kyunki ab iski zaroorat nahi hai
 
 // Customer type based on shared interface
 export type Customer = AddNewCustomerInterface;
@@ -21,12 +13,12 @@ export type ActionMenuState = {
     position?: { x: number; y: number } | null;
 };
 
-// ✅ Updated FormData: Backend Discriminators aur Missing Fields integrate kiye gaye
+// ✅ Updated FormData: Vehicles list ko remove kar diya gaya hai
 export type FormData = {
     // Basic Info
     firstName: string;
     lastName: string;
-    email: string;
+    emailId: string;
     mobileNumber: string;
     
     // Identity & Type (Discriminator fields)
@@ -34,14 +26,14 @@ export type FormData = {
     
     // Corporate Fields (Strictly for corporate discriminator)
     companyName?: string;
-    registrationNo?: string; // Backend naming match: registrationNo
-    vatNo?: string;          // Backend naming match: vatNo
+    registrationNo?: string; 
+    vatNo?: string;          
     website?: string;
     
     // Location
     address: string;
     city: string;
-    postCode: string;
+    zipCode: string;
     country: string;
 
     // Preferences & Contact
@@ -55,12 +47,11 @@ export type FormData = {
     ownerEmail: string;
     ownerPhone: string;
     
-    // Dynamic Data
-    vehicles: VehicleData[];
+    // Dynamic Data (Vehicles array yahan se remove kar diya gaya hai)
     issues: Array<{ category: string; subIssues: string[] }>;
     description: string;
     
-    // Status (Optional for form, but good for type safety)
+    // Status
     status?: 'active' | 'inactive' | 'pending';
 };
 
