@@ -10,7 +10,6 @@ export const api = axios.create({
   },
 });
 
-// ✅ 1. ADDED: Request Interceptor (Har request se pehle token add karega)
 api.interceptors.request.use(
   (config) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -22,13 +21,11 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ 2. ADDED: Response Interceptor (Agar token expire ho jaye toh handle karega)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       console.error("Unauthorized! Redirecting to login...");
-      // window.location.href = '/login'; // Optional: Auto redirect
     }
     return Promise.reject(error);
   }
@@ -38,14 +35,17 @@ const flattenCustomer = (customer: any): Customer => {
   return {
     id: customer._id || customer.id,
     customerType: customer.customerType || 'domestic',
-    country: customer.country || customer.addressId?.countryId?.countryName || customer.address?.country || '',
+    country: customer.addressId?.countryId?.countryName || customer.address?.country || customer.country || '',
     firstName: customer.firstName || customer.personId?.firstName || customer.person?.firstName || '',
     lastName: customer.lastName || customer.personId?.lastName || customer.person?.lastName || '',
+    // ✅ Mapping backend fields to frontend names
     email: customer.emailId || customer.contactId?.emailId || customer.contact?.emailId || '',
     mobileNumber: customer.mobileNumber || customer.contactId?.mobileNumber || customer.contact?.mobileNumber || '',
-    address: customer.address || customer.addressId?.address || customer.address?.address || '',
-    city: customer.city || customer.addressId?.cityId?.cityName || customer.address?.city || '',
+    address: customer.address || customer.addressId?.address || '',
+    city: customer.city || customer.addressId?.cityId?.cityName || '',
+    // ✅ Mapping backend zipCode to frontend postCode & zipCode
     postCode: customer.zipCode || customer.addressId?.zipCode || customer.address?.zipCode || '',
+    zipCode: customer.zipCode || customer.addressId?.zipCode || customer.address?.zipCode || '',
     companyName: customer.companyName || '',
     registrationNo: customer.registrationNo || '',
     vatNo: customer.vatNo || '',
@@ -65,11 +65,10 @@ const flattenCustomer = (customer: any): Customer => {
   };
 };
 
-// Helper function to get current User ID
 const getUserId = () => {
   if (typeof window !== 'undefined') {
     const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-    return savedUser.id || savedUser._id || '694b8d4d98b65d4ab738b987'; // Fallback to hardcoded if not found
+    return savedUser.id || savedUser._id || '694b8d4d98b65d4ab738b987';
   }
   return '694b8d4d98b65d4ab738b987';
 };
@@ -88,9 +87,12 @@ export const customerApi = {
 
   create: async (customer: any): Promise<Customer> => {
     const currentUserId = getUserId();
+    const emailToUse = customer.emailId || customer.email; // ✅ Component sends emailId
+    const zipToUse = customer.zipCode || customer.postCode; // ✅ Component sends zipCode
+
     const backendData = {
       userId: currentUserId,
-      email: customer.email || customer.emailId,
+      email: emailToUse, 
       customerType: customer.customerType || 'domestic',
       sourceId: customer.sourceId,
       person: {
@@ -101,12 +103,12 @@ export const customerApi = {
       contact: {
         mobileNumber: customer.mobileNumber,
         phoneNumber: customer.mobileNumber, 
-        emailId: customer.email || customer.emailId
+        emailId: emailToUse
       },
       address: {
         userId: currentUserId,
         address: customer.address,
-        zipCode: customer.postCode, // zipCode mapped from postCode
+        zipCode: zipToUse, 
         city: customer.city,
         country: customer.country,
         latitude: "0.0",
@@ -125,23 +127,30 @@ export const customerApi = {
 
   update: async (id: string, customer: any): Promise<Customer> => {
     const currentUserId = getUserId();
+    const emailToUse = customer.emailId || customer.email; // ✅ Fix: Get from emailId
+    const zipToUse = customer.zipCode || customer.postCode; // ✅ Fix: Get from zipCode
+
     const backendData = {
       userId: currentUserId,
       customerType: customer.customerType || 'domestic',
+      sourceId: customer.sourceId,
       person: {
         firstName: customer.firstName,
-        lastName: customer.lastName
+        lastName: customer.lastName,
+        middleName: ""
       },
       contact: {
-        emailId: customer.email,
+        emailId: emailToUse,
         mobileNumber: customer.mobileNumber
       },
       address: {
         userId: currentUserId,
         address: customer.address,
-        zipCode: customer.postCode,
+        zipCode: zipToUse, 
         city: customer.city,
-        country: customer.country
+        country: customer.country,
+        latitude: "0.0",
+        longitude: "0.0"
       },
       companyName: customer.companyName || "", 
       registrationNo: customer.registrationNo || "",
@@ -150,7 +159,7 @@ export const customerApi = {
       isActive: customer.status === 'active'
     };
 
-    const response = await api.put(`/customers/${id}`, backendData);
+    const response = await api.post(`/customers/${id}`, backendData);
     return flattenCustomer(response.data.data || response.data);
   },
 
