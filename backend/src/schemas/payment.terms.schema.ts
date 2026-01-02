@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const currencyCreateSchema = z.object({
+export const paymentTermCreateSchema = z.object({
     userId: z.string().min(1, "userId is required"),  // will be converted to ObjectId
     paymentTerm: z.string().min(1, "Payment Term name is required"),
     description: z.string().optional(),
