@@ -26,6 +26,8 @@ export default function VehicleCityClient() {
       const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
       const userId = savedUser.id || savedUser._id;
 
+      if (!token) return;
+
       const res = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${token}` },
         params: { userId, page, limit: 10, search }
@@ -36,8 +38,38 @@ export default function VehicleCityClient() {
         setTotalPages(Math.ceil(res.data.total / 10) || 1);
         setCurrentPage(page);
       }
-    } catch (err) { console.error(err); } 
-    finally { setLoading(false); }
+    } catch (err) { 
+      console.error("Fetch error:", err); 
+    } finally { 
+      setLoading(false); 
+    }
+  };
+
+  // ✅ Fixed Delete Logic
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this city?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = savedUser.id || savedUser._id;
+
+      if (!token) {
+        alert("Session expired. Please login again.");
+        return;
+      }
+
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        data: { userId } // Backend validation ke liye userId zaroori hai
+      });
+
+      alert("City deleted successfully!");
+      fetchData(currentPage, searchTerm); // Refresh current page
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      alert(err.response?.data?.message || "Failed to delete city");
+    }
   };
 
   useEffect(() => {
@@ -54,26 +86,67 @@ export default function VehicleCityClient() {
             </h1>
             <p className="text-gray-500 mt-1">Manage cities linked to countries</p>
           </div>
-          <button onClick={() => { setEditingData(null); setShowForm(true); }} className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition-all" style={{ backgroundColor: THEME_COLOR }}>
+          <button 
+            onClick={() => { setEditingData(null); setShowForm(true); }} 
+            className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition-all" 
+            style={{ backgroundColor: THEME_COLOR }}
+          >
             <Plus size={22} /> Add City
           </button>
         </div>
 
+        {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-500 transition-all">
           <Search className="text-gray-400" size={20} />
-          <input type="text" placeholder="Search city name..." className="w-full outline-none text-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input 
+            type="text" 
+            placeholder="Search city name..." 
+            className="w-full outline-none text-lg" 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+          />
         </div>
 
+        {/* Form Modal */}
         {(showForm || editingData) && (
-          <CityForm editingData={editingData} onClose={() => { setShowForm(false); setEditingData(null); }} onRefresh={() => fetchData(currentPage, searchTerm)} themeColor={THEME_COLOR} apiUrl={API_URL} />
+          <CityForm 
+            editingData={editingData} 
+            onClose={() => { setShowForm(false); setEditingData(null); }} 
+            onRefresh={() => fetchData(currentPage, searchTerm)} 
+            themeColor={THEME_COLOR} 
+            apiUrl={API_URL} 
+          />
         )}
 
         {loading ? (
-           <div className="flex justify-center items-center py-20 animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <div className="flex justify-center items-center py-20">
+             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+          </div>
         ) : (
           <>
-            <CityTable data={dataList} onEdit={(item) => { setEditingData(item); setShowForm(false); }} onDelete={(id) => {/* delete logic */}} themeColor={THEME_COLOR} />
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => fetchData(page, searchTerm)} />
+            <CityTable 
+              data={dataList} 
+              onEdit={(item) => { 
+                setEditingData(item); 
+                setShowForm(true); // Edit click par form open hona chahiye
+              }} 
+              onDelete={handleDelete} // ✅ Delete function pass kar diya
+              themeColor={THEME_COLOR} 
+            />
+            
+            {dataList.length > 0 && (
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={(page) => fetchData(page, searchTerm)} 
+              />
+            )}
+
+            {dataList.length === 0 && !loading && (
+              <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed">
+                <p className="text-gray-400">No cities found.</p>
+              </div>
+            )}
           </>
         )}
       </div>

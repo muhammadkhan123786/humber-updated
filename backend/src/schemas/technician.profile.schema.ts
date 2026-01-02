@@ -56,7 +56,7 @@ export const createTechnicianSchema = z
             .min(1, "At least one zone is required"),
 
         profilePic: z.string().url().optional(),
-        documents: z.array(z.string().url()).optional(),
+        documents: z.string().url().optional(),
     })
     .refine(
         (data) => {
