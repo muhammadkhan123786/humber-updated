@@ -88,7 +88,13 @@ const PaymentTermTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                         <Edit2 size={18} />
                       </button>
                       <button
-                        onClick={() => onDelete(item._id)}
+                        onClick={() => {
+                          if (item.isDefault) {
+                            alert("Default action cannot be deleted.");
+                            return;
+                          }
+                          onDelete(item._id);
+                        }}
                         className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                         title="Delete"
                       >
