@@ -43,6 +43,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         href:"/dashboard/inventory-masterdata/product-channel",
         label:"Product Channel",
         index:4,
+      },
+       {
+        _id:118,
+        href:"/dashboard/inventory-masterdata/product-source",
+        label:"Product Source",
+        index:5,
       }
     ],
   },
