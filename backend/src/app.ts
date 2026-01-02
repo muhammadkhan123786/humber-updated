@@ -24,6 +24,7 @@ import serviceRequestTypeRouter from './routes/service.request.types.routes';
 import CustomerBaseRouter from './routes/customer.routes';
 import technicianRouter from './routes/technician.routes';
 import currecyRouter from './routes/currency.routes';
+import paymentTermRouter from './routes/payment.terms.routes';
 
 // Create express app
 const app: Application = express();
@@ -41,21 +42,23 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
 app.use(`${process.env.API_PREFIX}/vehiclebrand`, adminProtecter, vehicleBrandRouter);
-app.use(`${process.env.API_PREFIX}/vechilemodel`, modelRouter);
-app.use(`${process.env.API_PREFIX}/repairstatus`, repairStatusRouter);
-app.use(`${process.env.API_PREFIX}/service-types-master`, serviceTypeMasterRouter);
-app.use(`${process.env.API_PREFIX}/sub-services`, subServiceRouter);
-app.use(`${process.env.API_PREFIX}/city`, cityRouter);
-app.use(`${process.env.API_PREFIX}/country`, countryRouter);
-app.use(`${process.env.API_PREFIX}/customer-source`, customerSourceRouter);
-app.use(`${process.env.API_PREFIX}/addresses`, addressRouter);
-app.use(`${process.env.API_PREFIX}/technician-roles`, TechnicianRoleRouter);
-app.use(`${process.env.API_PREFIX}/services-zones`, ServiceZoneRouter);
-app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, ServiceRequestPrioprityRouter);
-app.use(`${process.env.API_PREFIX}/service-request-type`, serviceRequestTypeRouter);
-app.use(`${process.env.API_PREFIX}/customers`, CustomerBaseRouter);
-app.use(`${process.env.API_PREFIX}/technicians`, technicianRouter);
-app.use(`${process.env.API_PREFIX}/currencies`, currecyRouter);
+app.use(`${process.env.API_PREFIX}/vechilemodel`, adminProtecter, modelRouter);
+app.use(`${process.env.API_PREFIX}/repairstatus`, adminProtecter, repairStatusRouter);
+app.use(`${process.env.API_PREFIX}/service-types-master`, adminProtecter, serviceTypeMasterRouter);
+app.use(`${process.env.API_PREFIX}/sub-services`, adminProtecter, subServiceRouter);
+app.use(`${process.env.API_PREFIX}/city`, adminProtecter, cityRouter);
+app.use(`${process.env.API_PREFIX}/country`, adminProtecter, countryRouter);
+app.use(`${process.env.API_PREFIX}/customer-source`, adminProtecter, customerSourceRouter);
+app.use(`${process.env.API_PREFIX}/addresses`, adminProtecter, addressRouter);
+app.use(`${process.env.API_PREFIX}/technician-roles`, adminProtecter, TechnicianRoleRouter);
+app.use(`${process.env.API_PREFIX}/services-zones`, adminProtecter, ServiceZoneRouter);
+app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, adminProtecter, ServiceRequestPrioprityRouter);
+app.use(`${process.env.API_PREFIX}/service-request-type`, adminProtecter, serviceRequestTypeRouter);
+app.use(`${process.env.API_PREFIX}/customers`, adminProtecter, CustomerBaseRouter);
+app.use(`${process.env.API_PREFIX}/technicians`, adminProtecter, technicianRouter);
+app.use(`${process.env.API_PREFIX}/currencies`, adminProtecter, currecyRouter);
+app.use(`${process.env.API_PREFIX}/payment-terms`, adminProtecter, paymentTermRouter);
+
 
 
 
