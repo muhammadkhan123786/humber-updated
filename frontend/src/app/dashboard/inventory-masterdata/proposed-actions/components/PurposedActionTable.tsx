@@ -1,31 +1,23 @@
 "use client";
-import {
-  Edit2,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  Star,
-  ListChecks,
-} from "lucide-react";
-import { IOrderStatus } from "../../../../../../../common/order.status.interface";
 
+import { Edit2, Trash2, CheckCircle2, XCircle, Star, Zap } from "lucide-react";
+import { IProposedActions } from "../../../../../../../common/IProposed.actions";
 interface Props {
-  data: IOrderStatus[];
-  onEdit: (item: IOrderStatus) => void;
+  data: IProposedActions[];
+  onEdit: (item: IProposedActions) => void;
   onDelete: (id: string) => void;
   themeColor: string;
 }
-
-const OrderStatusTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
+const PurposedActionTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead className="text-white" style={{ backgroundColor: themeColor }}>
             <tr>
-              <th className="px-6 py-4">Status Name</th>
-              <th className="px-6 py-4 text-center">Current Status</th>
-              <th className="px-6 py-4 text-center">Is Default</th>
+              <th className="px-6 py-4">Action Name</th>
+              <th className="px-6 py-4 text-center">Status</th>
+              <th className="px-6 py-4 text-center">Default</th>
               <th className="px-6 py-4 text-center">Actions</th>
             </tr>
           </thead>
@@ -38,11 +30,11 @@ const OrderStatusTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-50 text-purple-500 rounded-lg">
-                        <ListChecks size={18} />
+                      <div className="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
+                        <Zap size={18} />
                       </div>
                       <span className="font-bold text-gray-800">
-                        {item.orderStatus}
+                        {item.proposedActionName}
                       </span>
                     </div>
                   </td>
@@ -77,20 +69,18 @@ const OrderStatusTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                       <button
                         onClick={() => onEdit(item)}
                         className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                        title="Edit"
                       >
                         <Edit2 size={18} />
                       </button>
                       <button
                         onClick={() => {
                           if (item.isDefault) {
-                            alert("Default status cannot be deleted.");
+                            alert("Default action cannot be deleted.");
                             return;
                           }
                           onDelete((item as { _id: string })._id);
                         }}
                         className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
-                        title="Delete"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -104,7 +94,7 @@ const OrderStatusTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   colSpan={4}
                   className="px-6 py-12 text-center text-gray-400 italic"
                 >
-                  No order statuses found. Click Add Status to create one.
+                  No proposed actions found.
                 </td>
               </tr>
             )}
@@ -115,4 +105,4 @@ const OrderStatusTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
   );
 };
 
-export default OrderStatusTable;
+export default PurposedActionTable;
