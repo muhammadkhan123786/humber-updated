@@ -23,6 +23,7 @@ import ServiceRequestPrioprityRouter from './routes/service.request.prioprity.ro
 import serviceRequestTypeRouter from './routes/service.request.types.routes';
 import CustomerBaseRouter from './routes/customer.routes';
 import technicianRouter from './routes/technician.routes';
+import currecyRouter from './routes/currency.routes';
 
 // Create express app
 const app: Application = express();
@@ -54,6 +55,7 @@ app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, ServiceRequ
 app.use(`${process.env.API_PREFIX}/service-request-type`, serviceRequestTypeRouter);
 app.use(`${process.env.API_PREFIX}/customers`, CustomerBaseRouter);
 app.use(`${process.env.API_PREFIX}/technicians`, technicianRouter);
+app.use(`${process.env.API_PREFIX}/currencies`, currecyRouter);
 
 
 
