@@ -1,11 +1,12 @@
-import React from 'react'
 
-const page = () => {
+import CurrenciesClient from './components/CurrenciesClient';
+
+const Page = () => {
   return (
-    <div>
-      i am currencies
-    </div>
-  )
-}
+    <main>
+      <CurrenciesClient />
+    </main>
+  );
+};
 
-export default page
+export default Page;
