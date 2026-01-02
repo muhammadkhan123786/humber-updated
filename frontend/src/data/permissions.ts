@@ -11,6 +11,16 @@ export const NavBarLinksData: NavLinksInterface[] = [
     {
         _id: 2, alt: "box", href: "/dashboard/inventory", roleId: [1], label: 'Inventory', iconSrc: box, index: 2,
     },
+    //Inventory Master Form
+    {
+        _id: 9, alt: 'Inentory Master Form', href: "#", roleId: [1], label: 'Inentory Master Data', iconSrc: staffmanagement, index: 9, children: [
+            { _id: 114, href: "/dashboard/inventory-masterdata/currencies", label: "currencies", index: 1 },
+            { _id: 115, href: "/dashboard/vehiclebrands", label: "Vehicles Brands", index: 2 },
+            
+          
+           
+        ]
+    },
     { _id: 3, alt: 'Repair tracker', href: "/dashboard/repair-tracker", roleId: [1], label: 'Repair tracker', iconSrc: tool, index: 3 },
     { _id: 4, alt: "Customers", href: "/dashboard/customers", roleId: [1], label: 'Customers', iconSrc: usergroup, index: 4 },
     { _id: 5, alt: 'Bookings', href: "/dashboard/bookings", roleId: [1], label: 'Bookings', iconSrc: booking, index: 5 },
