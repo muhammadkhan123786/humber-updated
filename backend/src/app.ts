@@ -29,6 +29,7 @@ import orderStatusRouter from './routes/order.status.rotues';
 import productChannelsRouter from './routes/product.channel.routes';
 import productSourceRouter from './routes/product.source.routes';
 import proposedActionsRouter from './routes/proposed.actions.routes';
+import ItemsConditionsRouter from './routes/items.conditions.routes';
 
 
 // Create express app
@@ -67,7 +68,7 @@ app.use(`${process.env.API_PREFIX}/order-status`, adminProtecter, orderStatusRou
 app.use(`${process.env.API_PREFIX}/product-channels`, adminProtecter, productChannelsRouter);
 app.use(`${process.env.API_PREFIX}/product-source`, adminProtecter, productSourceRouter);
 app.use(`${process.env.API_PREFIX}/proposed-actions`, adminProtecter, proposedActionsRouter);
-
+app.use(`${process.env.API_PREFIX}/items-conditions`, adminProtecter, ItemsConditionsRouter);
 
 
 // Health check route

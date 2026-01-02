@@ -1,37 +1,21 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Save, Coins } from "lucide-react";
+import { Save, Database } from "lucide-react";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormModal } from "@/app/common-form/FormModal";
-import { ICurrency } from "../../../../../../../common/ICurrency.interface"; // Path adjust karein
+import { IProductSource } from "../../../../../../../common/IProduct.source.interface";
 
-interface FormProps {
-    editingData: ICurrency | null;
-    onClose: () => void;
-    onRefresh: () => void;
-    themeColor: string;
-    apiUrl: string;
-}
-
-export default function CurrenciesForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: FormProps) {
-    const [formData, setFormData] = useState<Partial<ICurrency>>({
-        currencyName: "",
-        currencySymbol: "",
+export default function ProductSourceForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: any) {
+    const [formData, setFormData] = useState<Partial<IProductSource>>({
+        productSource: "",
         isActive: true,
         isDefault: false,
     });
 
     useEffect(() => {
-        if (editingData) {
-            setFormData({
-                currencyName: editingData.currencyName,
-                currencySymbol: editingData.currencySymbol,
-                isActive: editingData.isActive,
-                isDefault: editingData.isDefault,
-            });
-        }
+        if (editingData) setFormData({ ...editingData });
     }, [editingData]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -42,41 +26,28 @@ export default function CurrenciesForm({ editingData, onClose, onRefresh, themeC
             const payload = { ...formData, userId: savedUser.id || savedUser._id };
 
             if (editingData?._id) {
-                await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                await axios.put(`${apiUrl}/${editingData._id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
             } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                await axios.post(apiUrl, payload, { headers: { Authorization: `Bearer ${token}` } });
             }
             onRefresh();
             onClose();
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Operation failed");
-        }
+        } catch (err: any) { alert(err.response?.data?.message || "Action failed"); }
     };
 
     return (
         <FormModal
-            title={editingData ? "Edit Currency" : "Add New Currency"}
-            icon={<Coins size={24} />}
+            title={editingData ? "Edit Source" : "Add Source"}
+            icon={<Database size={24} />}
             onClose={onClose}
             themeColor={themeColor}
         >
             <form onSubmit={handleSubmit} className="space-y-5">
                 <FormInput
-                    label="Currency Name"
-                    placeholder="e.g. US Dollar"
-                    value={formData.currencyName || ""}
-                    onChange={(e) => setFormData({ ...formData, currencyName: e.target.value })}
-                    required
-                />
-                <FormInput
-                    label="Currency Symbol"
-                    placeholder="e.g. $"
-                    value={formData.currencySymbol || ""}
-                    onChange={(e) => setFormData({ ...formData, currencySymbol: e.target.value })}
+                    label="Product Source Name"
+                    placeholder="e.g. Warehouse, Supplier A"
+                    value={formData.productSource || ""}
+                    onChange={(e) => setFormData({ ...formData, productSource: e.target.value })}
                     required
                 />
                 <div className="bg-gray-50">
@@ -87,10 +58,10 @@ export default function CurrenciesForm({ editingData, onClose, onRefresh, themeC
                                 checked={!!formData.isActive}
                                 onChange={(val) => setFormData({ ...formData, isActive: val })}
                             />
-                           
+
                         </div>
                         <div>
-                             <FormToggle
+                            <FormToggle
                                 label="Default"
                                 checked={!!formData.isDefault}
                                 onChange={(val) => setFormData({ ...formData, isDefault: val })}
@@ -103,7 +74,7 @@ export default function CurrenciesForm({ editingData, onClose, onRefresh, themeC
                     className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
                     style={{ backgroundColor: themeColor }}
                 >
-                    <Save size={20} /> {editingData ? "Update Currency" : "Save Currency"}
+                    <Save size={20} /> {editingData ? "Update Source" : "Save Source"}
                 </button>
             </form>
         </FormModal>

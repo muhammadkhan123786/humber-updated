@@ -7,13 +7,15 @@ interface Props {
 }
 
 export const FormToggle = ({ label, checked, onChange }: Props) => (
-  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-3 rounded-xl border border-gray-100 flex-1">
+  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
     <input 
       type="checkbox" 
-      className="w-5 h-5 accent-[#FE6B1D]" 
+      className="w-5 h-5 accent-[#FE6B1D] cursor-pointer" 
       checked={checked} 
       onChange={(e) => onChange(e.target.checked)} 
     />
-    <span className="text-sm font-medium text-gray-700">{label}</span>
+    <span className="text-sm font-semibold text-gray-700 select-none">
+      {label}
+    </span>
   </label>
 );

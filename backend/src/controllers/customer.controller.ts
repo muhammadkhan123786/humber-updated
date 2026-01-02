@@ -76,7 +76,7 @@ export const saveCustomer = async (
                     : corporateServices;
 
             await oldService.updateById(existingCustomer._id.toString(), {
-                isActive: false,
+                isDeleted: true,
                 convertedAt: new Date()
             });
 
