@@ -25,6 +25,8 @@ import CustomerBaseRouter from './routes/customer.routes';
 import technicianRouter from './routes/technician.routes';
 import currecyRouter from './routes/currency.routes';
 import paymentTermRouter from './routes/payment.terms.routes';
+import orderStatusRouter from './routes/order.status.rotues';
+import productChannelsRouter from './routes/product.channel.routes';
 
 // Create express app
 const app: Application = express();
@@ -58,6 +60,8 @@ app.use(`${process.env.API_PREFIX}/customers`, adminProtecter, CustomerBaseRoute
 app.use(`${process.env.API_PREFIX}/technicians`, adminProtecter, technicianRouter);
 app.use(`${process.env.API_PREFIX}/currencies`, adminProtecter, currecyRouter);
 app.use(`${process.env.API_PREFIX}/payment-terms`, adminProtecter, paymentTermRouter);
+app.use(`${process.env.API_PREFIX}/order-status`, adminProtecter, orderStatusRouter);
+app.use(`${process.env.API_PREFIX}/product-channels`, adminProtecter, productChannelsRouter);
 
 
 
