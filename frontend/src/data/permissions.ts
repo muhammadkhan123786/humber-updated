@@ -39,6 +39,11 @@ export const NavBarLinksData: NavLinksInterface[] = [
         index: 2,
       },
       {
+        _id: 116,
+        href: "/dashboard/inventory-masterdata/order-status",
+        label: "order Status",
+        index: 3,
+      },
         _id:117,
         href:"/dashboard/inventory-masterdata/product-channel",
         label:"Product Channel",
