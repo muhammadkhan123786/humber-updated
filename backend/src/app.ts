@@ -30,6 +30,7 @@ import productChannelsRouter from './routes/product.channel.routes';
 import productSourceRouter from './routes/product.source.routes';
 import proposedActionsRouter from './routes/proposed.actions.routes';
 import ItemsConditionsRouter from './routes/items.conditions.routes';
+import taxRouter from './routes/tax.routes';
 
 
 // Create express app
@@ -69,7 +70,7 @@ app.use(`${process.env.API_PREFIX}/product-channels`, adminProtecter, productCha
 app.use(`${process.env.API_PREFIX}/product-source`, adminProtecter, productSourceRouter);
 app.use(`${process.env.API_PREFIX}/proposed-actions`, adminProtecter, proposedActionsRouter);
 app.use(`${process.env.API_PREFIX}/items-conditions`, adminProtecter, ItemsConditionsRouter);
-
+app.use(`${process.env.API_PREFIX}/tax`, adminProtecter, taxRouter);
 
 // Health check route
 app.get('/health', (_req, res) => {
