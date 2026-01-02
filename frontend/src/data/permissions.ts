@@ -56,17 +56,19 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "proposed Actions",
         index: 6,
       },
-        _id:117,
-        href:"/dashboard/inventory-masterdata/product-channel",
-        label:"Product Channel",
-        index:4,
+
+      {
+        _id: 118,
+        href: "/dashboard/inventory-masterdata/product-source",
+        label: "Product Source",
+        index: 5,
       },
-       {
-        _id:118,
-        href:"/dashboard/inventory-masterdata/product-source",
-        label:"Product Source",
-        index:5,
-      }
+      {
+        _id: 121,
+        href: "/dashboard/inventory-masterdata/tax",
+        label: "Tax",
+        index: 8,
+      },
     ],
   },
   {
