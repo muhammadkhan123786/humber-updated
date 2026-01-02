@@ -38,6 +38,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Payment Terms",
         index: 2,
       },
+      {
+        _id: 116,
+        href: "/dashboard/inventory-masterdata/order-status",
+        label: "order Status",
+        index: 3,
+      },
     ],
   },
   {
