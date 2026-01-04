@@ -1,16 +1,9 @@
 "use client";
 
-import {
-  Edit2,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  Receipt,
-  Calendar,
-  Star,
-} from "lucide-react";
+import { Receipt, Calendar, Star } from "lucide-react";
 import { ITax } from "../../../../../../../common/ITax.interface";
-
+import { StatusBadge } from "../../../../common-form/StatusBadge";
+import { TableActionButton } from "../../../../common-form/TableActionButtons";
 interface Props {
   data: ITax[];
   onEdit: (item: ITax) => void;
@@ -59,7 +52,7 @@ const TaxTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="text-[11px] text-gray-500 flex flex-col items-center leading-tight">
+                    <div className="text-[11px] text-gray-500 flex flex-col items-center">
                       <span className="flex items-center gap-1">
                         <Calendar size={10} /> {formatDate(item.startDate)}
                       </span>
@@ -69,64 +62,26 @@ const TaxTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   </td>
                   <td className="px-6 py-4 text-center">
                     {item.isDefault ? (
-                      <div className="flex justify-center">
-                        <Star
-                          size={20}
-                          className="text-yellow-500 fill-yellow-500"
-                        />
-                      </div>
+                      <Star
+                        size={20}
+                        className="text-yellow-500 fill-yellow-500 mx-auto"
+                      />
                     ) : (
                       <span className="text-gray-300">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 ${
-                        item.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {item.isActive ? (
-                        <CheckCircle2 size={12} />
-                      ) : (
-                        <XCircle size={12} />
-                      )}
-                      {item.isActive ? "ACTIVE" : "INACTIVE"}
-                    </span>
+                    <StatusBadge isActive={!!item.isActive} />
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => onEdit(item)}
-                        className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                        title="Edit Tax"
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (item.isDefault) {
-                            alert("Default tax cannot be deleted.");
-                            return;
-                          }
-                          if (item._id) onDelete(item._id);
-                        }}
-                        className={`p-2 rounded-lg transition-colors ${
-                          item.isDefault
-                            ? "text-gray-300 cursor-not-allowed"
-                            : "text-red-600 hover:bg-red-100"
-                        }`}
-                        disabled={item.isDefault}
-                        title={
-                          item.isDefault
-                            ? "Cannot delete default"
-                            : "Delete Tax"
-                        }
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
+                    <TableActionButton
+                      onEdit={() => onEdit(item)}
+                      onDelete={() => {
+                        if (item.isDefault)
+                          return alert("Default tax cannot be deleted.");
+                        if (item._id) onDelete(item._id);
+                      }}
+                    />
                   </td>
                 </tr>
               ))
@@ -146,5 +101,4 @@ const TaxTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
     </div>
   );
 };
-
 export default TaxTable;
