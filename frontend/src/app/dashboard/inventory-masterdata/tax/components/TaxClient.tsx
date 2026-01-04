@@ -1,16 +1,12 @@
 "use client";
-
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Receipt, Plus, Search, Loader2 } from "lucide-react";
 import TaxTable from "./TaxTable";
 import TaxForm from "./TaxForm";
 import Pagination from "@/components/ui/Pagination";
 import { ITax } from "../../../../../../../common/ITax.interface";
-
+import { fetchTaxes, deleteTax } from "@/hooks/useTax";
 const THEME_COLOR = "#FE6B1D";
-const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/tax`;
-
 export default function TaxClient() {
   const [dataList, setDataList] = useState<ITax[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,25 +15,13 @@ export default function TaxClient() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-
   const fetchData = async (page = 1, search = "") => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const res = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          userId: savedUser.id || savedUser._id,
-          page,
-          limit: 10,
-          search,
-        },
-      });
-
-      if (res.data && res.data.data) {
-        setDataList(res.data.data);
-        setTotalPages(Math.ceil(res.data.total / 10) || 1);
+      const res = await fetchTaxes(page, 10, search);
+      if (res?.data) {
+        setDataList(res.data);
+        setTotalPages(Math.ceil(res.total / 10) || 1);
         setCurrentPage(page);
       }
     } catch (err) {
@@ -47,25 +31,19 @@ export default function TaxClient() {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     fetchData(1, searchTerm);
   }, [searchTerm]);
-
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this tax record?")) return;
     try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await deleteTax(id);
       fetchData(currentPage, searchTerm);
     } catch (err) {
+      console.error(err);
       alert("Delete failed");
-      console.error("Delete Error:", err);
     }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
@@ -81,6 +59,7 @@ export default function TaxClient() {
               Manage tax rates and validity periods
             </p>
           </div>
+
           <button
             onClick={() => {
               setEditingData(null);
@@ -92,8 +71,7 @@ export default function TaxClient() {
             <Plus size={22} /> Add Tax
           </button>
         </div>
-
-        <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-500 transition-all">
+        <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100">
           <Search className="text-gray-400" size={20} />
           <input
             type="text"
@@ -103,7 +81,6 @@ export default function TaxClient() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
         {(showForm || editingData) && (
           <TaxForm
             key={editingData ? editingData._id : "new"}
@@ -114,10 +91,9 @@ export default function TaxClient() {
             }}
             onRefresh={() => fetchData(currentPage, searchTerm)}
             themeColor={THEME_COLOR}
-            apiUrl={API_URL}
+            apiUrl=""
           />
         )}
-
         {loading ? (
           <div className="flex flex-col justify-center items-center py-20 gap-3">
             <Loader2 className="animate-spin text-orange-500" size={48} />
@@ -134,6 +110,7 @@ export default function TaxClient() {
               onDelete={handleDelete}
               themeColor={THEME_COLOR}
             />
+
             <div className="mt-6">
               <Pagination
                 currentPage={currentPage}
