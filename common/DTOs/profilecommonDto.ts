@@ -1,5 +1,4 @@
-
-export interface commonProfileDto {
+export interface basicCommonInfoDto {
     //personal information.
     person: {
         firstName: string;
@@ -23,6 +22,9 @@ export interface commonProfileDto {
         longitude?: string;
     }
 
+}
+
+export interface commonProfileDto extends basicCommonInfoDto {
     isActive?: boolean;
     isDeleted?: boolean;
     isDefault?: boolean;
