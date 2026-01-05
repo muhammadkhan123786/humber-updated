@@ -12,7 +12,7 @@ const VenderServices = new GenericService<VenderDoc>(Vender);
 
 const VenderController = new AdvancedGenericController({
     service: VenderServices,
-    populate: ["userId", "personId", "addressId", "contactId", "sourceId"
+    populate: ["userId", "personId", "addressId", "contactId", "sourceId",
         {
             path: "addressId",
             populate: [
@@ -23,12 +23,12 @@ const VenderController = new AdvancedGenericController({
     validationSchema: venderSchemaValidation,
 });
 
-const customerProfileMiddleware = genericProfileIdsMiddleware<VenderDoc>({ targetModel: Vender }, false);
+const venderProfileMiddleware = genericProfileIdsMiddleware<VenderDoc>({ targetModel: Vender }, false);
 
 venderRouter.get("/", VenderController.getAll);
 venderRouter.get("/:id", VenderController.getById);
-venderRouter.post("/", customerProfileMiddleware, saveCustomer);
-venderRouter.post("/:id", customerProfileMiddleware, saveCustomer);
+venderRouter.post("/", venderProfileMiddleware, saveCustomer);
+venderRouter.post("/:id", venderProfileMiddleware, saveCustomer);
 venderRouter.delete("/:id", VenderController.delete);
 
 export default venderRouter;
