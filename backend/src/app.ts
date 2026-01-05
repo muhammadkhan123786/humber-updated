@@ -36,6 +36,8 @@ import venderRouter from './routes/vender.routes';
 import unitRouter from './routes/units.routes';
 import warehouseStatusRouter from './routes/warehouse.status.routes';
 import warehouseRouter from './routes/warehouse.routes';
+import colorRouter from './routes/color.routes';
+import sizeRouter from './routes/size.routes';
 
 
 // Create express app
@@ -81,7 +83,8 @@ app.use(`${process.env.API_PREFIX}/categories`, adminProtecter, categoryRouter);
 app.use(`${process.env.API_PREFIX}/venders`, adminProtecter, venderRouter);
 app.use(`${process.env.API_PREFIX}/warehouse-status`, adminProtecter, warehouseStatusRouter);
 app.use(`${process.env.API_PREFIX}/warehouses`, adminProtecter, warehouseRouter);
-
+app.use(`${process.env.API_PREFIX}/colors`, adminProtecter, colorRouter);
+app.use(`${process.env.API_PREFIX}/sizes`, adminProtecter, sizeRouter);
 
 
 
