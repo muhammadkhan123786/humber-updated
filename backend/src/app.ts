@@ -34,6 +34,7 @@ import taxRouter from './routes/tax.routes';
 import categoryRouter from './routes/category.routes';
 import venderRouter from './routes/vender.routes';
 import unitRouter from './routes/units.routes';
+import warehouseStatusRouter from './routes/warehouse.status.routes';
 
 
 // Create express app
@@ -77,6 +78,7 @@ app.use(`${process.env.API_PREFIX}/tax`, adminProtecter, taxRouter);
 app.use(`${process.env.API_PREFIX}/units`, adminProtecter, unitRouter);
 app.use(`${process.env.API_PREFIX}/categories`, adminProtecter, categoryRouter);
 app.use(`${process.env.API_PREFIX}/venders`, adminProtecter, venderRouter);
+app.use(`${process.env.API_PREFIX}/warehouse-status`, adminProtecter, warehouseStatusRouter);
 
 
 
