@@ -69,6 +69,24 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Tax",
         index: 8,
       },
+      {
+        _id: 122,
+        href: "/dashboard/inventory-masterdata/category",
+        label: "Category",
+        index: 9,
+      },
+      {
+        _id: 123,
+        href: "/dashboard/inventory-masterdata/units",
+        label: "Units",
+        index: 10,
+      },
+      {
+        _id: 124,
+        href: "/dashboard/inventory-masterdata/venders",
+        label: "Venders",
+        index: 11,
+      },
     ],
   },
   {
