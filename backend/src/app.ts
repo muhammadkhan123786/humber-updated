@@ -31,6 +31,8 @@ import productSourceRouter from './routes/product.source.routes';
 import proposedActionsRouter from './routes/proposed.actions.routes';
 import ItemsConditionsRouter from './routes/items.conditions.routes';
 import taxRouter from './routes/tax.routes';
+import categoryRouter from './routes/category.routes';
+import venderRouter from './routes/vender.routes';
 
 
 // Create express app
@@ -71,6 +73,10 @@ app.use(`${process.env.API_PREFIX}/product-source`, adminProtecter, productSourc
 app.use(`${process.env.API_PREFIX}/proposed-actions`, adminProtecter, proposedActionsRouter);
 app.use(`${process.env.API_PREFIX}/items-conditions`, adminProtecter, ItemsConditionsRouter);
 app.use(`${process.env.API_PREFIX}/tax`, adminProtecter, taxRouter);
+app.use(`${process.env.API_PREFIX}/categories`, adminProtecter, categoryRouter);
+app.use(`${process.env.API_PREFIX}/venders`, adminProtecter, venderRouter);
+
+
 
 // Health check route
 app.get('/health', (_req, res) => {
