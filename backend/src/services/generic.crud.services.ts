@@ -78,7 +78,11 @@ export class GenericService<T extends Document> {
         }
 
         // 3️⃣ Safe delete
-        return this.model.findByIdAndUpdate(id, { $isDeleted: true }, { new: true }).exec();
+        return this.model.findByIdAndUpdate(
+            id,
+            { $set: { isDeleted: true } }, // ✅ use $set
+            { new: true }
+        ).exec();
     }
 
 }
