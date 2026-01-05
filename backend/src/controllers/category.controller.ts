@@ -83,3 +83,61 @@ export const updateCategory = async (
         next(error);
     }
 };
+
+export const getAllCategories = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        const { search, ...rawFilters } = req.query;
+
+        // 1️⃣ Base filters
+        const queryFilters: Record<string, any> = { isDeleted: false };
+
+        if (search) {
+            queryFilters.categoryName = { $regex: search, $options: "i" };
+        }
+
+        Object.keys(rawFilters).forEach((key) => {
+            const value = rawFilters[key];
+            if (typeof value === "string" && Types.ObjectId.isValid(value)) {
+                queryFilters[key] = new Types.ObjectId(value);
+            } else {
+                queryFilters[key] = value;
+            }
+        });
+
+        // 2️⃣ Fetch all matching categories
+        const categories = await categoryServices
+            .getQuery(queryFilters)
+            .lean()
+            .exec();
+
+        // 3️⃣ Build tree (nth-level)
+        const buildTree = (parentId: any = null): any[] => {
+            return categories
+                .filter(
+                    cat =>
+                        (cat.parentId?.toString() || null) ===
+                        (parentId?.toString() || null)
+                )
+                .map(cat => ({
+                    ...cat,
+                    children: buildTree(cat._id),
+                }));
+        };
+
+        const tree = buildTree(); // root categories
+
+        // 4️⃣ Send response
+        res.status(200).json({
+            success: true,
+            total: categories.length,
+            data: tree,
+        });
+
+    } catch (err: any) {
+        next(err);
+    }
+};
