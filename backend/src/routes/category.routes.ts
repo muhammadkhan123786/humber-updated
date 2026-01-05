@@ -3,7 +3,7 @@ import { GenericService } from "../services/generic.crud.services";
 import { Category, categoryDoc } from "../models/category.models";
 import { categorySchemaValidation } from "../schemas/category.schema";
 import { AdvancedGenericController } from "../controllers/GenericController";
-import { createCategory, updateCategory } from '../controllers/category.controller';
+import { createCategory, getAllCategories, updateCategory } from '../controllers/category.controller';
 
 const categoryRouter = Router();
 
@@ -15,7 +15,7 @@ const categoryController = new AdvancedGenericController({
     validationSchema: categorySchemaValidation,
 });
 
-categoryRouter.get("/", categoryController.getAll);
+categoryRouter.get("/", getAllCategories);
 categoryRouter.get("/:id", categoryController.getById);
 categoryRouter.post("/", createCategory);
 categoryRouter.put("/:id", updateCategory);
