@@ -7,7 +7,7 @@ services:
       dockerfile: frontend/Dockerfile
     container_name: nextjs_frontend
     ports:
-      - "3000:3000"
+      - "7000:3000"
     depends_on:
       - backend
 
@@ -17,4 +17,4 @@ services:
       dockerfile: backend/Dockerfile
     container_name: node_backend
     ports:
-      - "4000:4000"
+      - "8081:8081"
