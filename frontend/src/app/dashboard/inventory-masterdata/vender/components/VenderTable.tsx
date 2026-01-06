@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import {
   Truck,
   MapPin,
@@ -13,14 +12,93 @@ import {
 import { TableActionButton } from "../../../../common-form/TableActionButtons";
 import { VenderDto } from "../../../../../../../common/DTOs/vender.dto";
 
+interface PopulatedPerson {
+  _id: string;
+  firstName: string;
+  lastName?: string;
+}
+
+interface PopulatedContact {
+  _id: string;
+  mobileNumber: string;
+  emailId: string;
+}
+
+interface PopulatedAddress {
+  _id: string;
+  address: string;
+  zipCode?: string;
+}
+
+type PopulatedVenderDto = VenderDto & {
+  personId?: string | PopulatedPerson;
+  addressId?: string | PopulatedAddress;
+  contactId?: string | PopulatedContact;
+  business_name?: string;
+};
+
 interface Props {
-  data: (VenderDto & { _id: string })[];
-  onEdit: (item: VenderDto & { _id: string }) => void;
+  data: (PopulatedVenderDto & { _id: string })[];
+  onEdit: (item: PopulatedVenderDto & { _id: string }) => void;
   onDelete: (id: string) => void;
   themeColor: string;
 }
 
 const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
+  const getFirstName = (item: PopulatedVenderDto): string => {
+    if (item.person?.firstName) return item.person.firstName;
+    if (item.personId && typeof item.personId === "object") {
+      return item.personId.firstName;
+    }
+    return "";
+  };
+
+  const getLastName = (item: PopulatedVenderDto): string => {
+    if (item.person?.lastName) return item.person.lastName;
+    if (item.personId && typeof item.personId === "object") {
+      return item.personId.lastName || "";
+    }
+    return "";
+  };
+
+  const getMobileNumber = (item: PopulatedVenderDto): string => {
+    if (item.contact?.mobileNumber) return item.contact.mobileNumber;
+    if (item.contactId && typeof item.contactId === "object") {
+      return item.contactId.mobileNumber;
+    }
+    return "";
+  };
+
+  const getEmailId = (item: PopulatedVenderDto): string => {
+    if (item.contact?.emailId) return item.contact.emailId;
+    if (item.contactId && typeof item.contactId === "object") {
+      return item.contactId.emailId;
+    }
+    return "";
+  };
+
+  const getAddress = (item: PopulatedVenderDto): string => {
+    if (item.address?.address) return item.address.address;
+    if (item.addressId && typeof item.addressId === "object") {
+      return item.addressId.address;
+    }
+    return "";
+  };
+
+  const getZipCode = (item: PopulatedVenderDto): string => {
+    if (item.address?.zipCode) return item.address.zipCode;
+    if (item.addressId && typeof item.addressId === "object") {
+      return item.addressId.zipCode || "";
+    }
+    return "";
+  };
+
+  const getBusinessName = (item: PopulatedVenderDto): string => {
+    if (item.business_name) return item.business_name;
+    if (item.business_Name) return item.business_Name;
+    return "No Business Name";
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
       <div className="overflow-x-auto">
@@ -50,15 +128,14 @@ const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-gray-800">
-                            {item.business_name || "No Business Name"}
+                            {getBusinessName(item)}
                           </span>
                           {item.isDefault && (
                             <Star size={14} className="text-yellow-500" />
                           )}
                         </div>
                         <span className="text-xs text-gray-500">
-                          {item.personId?.firstName || item.person?.firstName}{" "}
-                          {item.personId?.lastName || item.person?.lastName}
+                          {getFirstName(item)} {getLastName(item)}
                         </span>
                       </div>
                     </div>
@@ -66,13 +143,10 @@ const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   <td className="px-6 py-4">
                     <div className="flex flex-col text-sm text-gray-600 gap-1">
                       <span className="flex items-center gap-1">
-                        <Phone size={12} />{" "}
-                        {item.contactId?.mobileNumber ||
-                          item.contact?.mobileNumber}
+                        <Phone size={12} /> {getMobileNumber(item)}
                       </span>
                       <span className="flex items-center gap-1 text-xs">
-                        <Globe size={12} />{" "}
-                        {item.contactId?.emailId || item.contact?.emailId}
+                        <Globe size={12} /> {getEmailId(item)}
                       </span>
                     </div>
                   </td>
@@ -80,8 +154,7 @@ const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                     <div className="flex items-start gap-1 text-sm text-gray-600 max-w-[200px]">
                       <MapPin size={14} className="mt-1 text-gray-400" />
                       <span>
-                        {item.addressId?.address || item.address?.address},{" "}
-                        {item.addressId?.zipCode || item.address?.zipCode || ""}
+                        {getAddress(item)}, {getZipCode(item)}
                       </span>
                     </div>
                   </td>
