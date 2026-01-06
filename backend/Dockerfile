@@ -1,22 +1,17 @@
-# Use Node LTS Alpine image
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first (for caching dependencies)
-COPY package*.json ./
-
-# Install dependencies
+COPY backend/package*.json ./backend/
+WORKDIR /app/backend
 RUN npm install
 
+WORKDIR /app
+COPY backend ./backend
+COPY common ./common
+
+WORKDIR /app/backend
 RUN npm run build
 
-# Copy all project files
-COPY . .
-
-# Expose backend port
-EXPOSE 8081
-
-# Start the app
+EXPOSE 4000
 CMD ["node", "dist/server.js"]
