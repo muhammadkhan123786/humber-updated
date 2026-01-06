@@ -10,6 +10,8 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+RUN npm run build
+
 # Copy all project files
 COPY . .
 
@@ -17,4 +19,4 @@ COPY . .
 EXPOSE 8081
 
 # Start the app
-CMD ["npm", "run", "start"]
+CMD ["node", "dist/server.js"]
