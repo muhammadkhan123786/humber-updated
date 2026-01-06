@@ -1,0 +1,16 @@
+import { basicCommonInfoDto } from './profilecommonDto';
+export interface VenderDto extends basicCommonInfoDto {
+    userId: string,
+    isActive?: boolean,
+    isDeleted?: boolean,
+    isDefault?: boolean,
+    venderType: "Supplier" | "Vender" | "Both",
+    paymentTermId: string,
+    currencyId?: string,
+    credit_Limit?: number,
+    bank_name?: string,
+    account_Number?: string,
+    lead_Time_Days?: number,
+    business_Name?: string,
+    website?: string
+}
