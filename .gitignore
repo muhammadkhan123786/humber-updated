@@ -51,3 +51,6 @@ yarn-error.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# uploads (DO NOT push user data)
+backend/uploads/

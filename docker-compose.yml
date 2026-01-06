@@ -1,21 +1,21 @@
-version: "3.9"
-
+# docker-compose.yml
 services:
   frontend:
     build: ./frontend
     container_name: nextjs_frontend
     ports:
-      - "3000:3000"
+      - "7000:3000"
     env_file:
       - ./frontend/.env
-#    depends_on:
-#      - backend
+    depends_on:
+      - backend
 
-#  backend:
-#    build: ./backend
-#    container_name: node_backend
-#    ports:
-#      - "5001:5001"
-#    env_file:
-#      - ./backend/.env
-      
+  backend:
+    build: ./backend
+    container_name: node_backend
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/uploads:/app/uploads  # Persist uploads folder

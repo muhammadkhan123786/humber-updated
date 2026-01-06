@@ -1,30 +1,32 @@
+export interface basicCommonInfoDto {
+  //personal information.
+  person: {
+    firstName: string;
+    middleName?: string;
+    lastName?: string;
+  };
 
-export interface commonProfileDto {
-    //personal information.
-    person: {
-        firstName: string;
-        middleName?: string;
-        lastName?: string;
-    }
+  //contact information
+  contact: {
+    mobileNumber: string;
+    phoneNumber?: string;
+    emailId: string;
+  };
+  // addres
+  address: {
+    address: string;
+    zipCode?: string;
+    city?: string;
+    country?: string;
+    latitude?: string;
+    longitude?: string;
+    userId?: string;
+  };
+}
 
-    //contact information
-    contact: {
-        mobileNumber: string;
-        phoneNumber?: string;
-        emailId: string;
-    }
-    // addres 
-    address: {
-        address: string;
-        zipCode?: string;
-        city?: string;
-        country?: string;
-        latitude?: string;
-        longitude?: string;
-    }
-
-    isActive?: boolean;
-    isDeleted?: boolean;
-    isDefault?: boolean;
-    role?: 'Admin' | 'Technician' | 'Customer';
+export interface commonProfileDto extends basicCommonInfoDto {
+  isActive?: boolean;
+  isDeleted?: boolean;
+  isDefault?: boolean;
+  role?: "Admin" | "Technician" | "Customer";
 }

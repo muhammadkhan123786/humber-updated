@@ -1,5 +1,6 @@
 import { Types } from 'mongoose';
 import { z } from 'zod';
+import { commonSchema, commonSchemaValidation } from './shared/common.schema';
 
 export const venderSchema = {
     // userId: { type: Types.ObjectId, ref: "User", required: true },
@@ -14,7 +15,8 @@ export const venderSchema = {
     account_Number: { type: String },
     lead_Time_Days: { type: Number },
     business_name: { type: String },
-    website: { type: String }
+    website: { type: String },
+    ...commonSchema
 };
 
 
@@ -32,4 +34,5 @@ export const venderSchemaValidation = z.object({
     lead_Time_Days: z.string().optional(),
     business_name: z.string().optional(),
     website: z.string().optional(),
+    ...commonSchemaValidation
 });
