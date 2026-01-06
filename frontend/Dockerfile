@@ -11,7 +11,9 @@ COPY package*.json ./
 RUN npm install --legacy-peer-deps
 
 # Copy project files
-COPY . .
+# Step 5: Copy frontend code + common folder
+COPY frontend ./frontend
+COPY common ./common   # <<< important, ye hona chahiye
 
 # Build Next.js app using webpack (Turbopack workaround)
 RUN npm run build --webpack
