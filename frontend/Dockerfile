@@ -1,10 +1,10 @@
-# Use Node LTS Alpine image
+# Use Node LTS
 FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first (for caching dependencies)
+# Copy package files first
 COPY package*.json ./
 
 # Install dependencies
@@ -13,11 +13,11 @@ RUN npm install --legacy-peer-deps
 # Copy project files
 COPY . .
 
-# Build Next.js app
-RUN npm run build
+# Build Next.js app using webpack (Turbopack workaround)
+RUN npm run build --webpack
 
-# Expose frontend port
-EXPOSE 7000
+# Expose port
+EXPOSE 3000
 
-# Start the app
-CMD ["npm", "start"]
+# Start app
+CMD ["npm", "run", "start"]
