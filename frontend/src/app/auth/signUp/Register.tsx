@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import onyxtech from '../../../assets/onyxtech.png';
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
-import { IRegisterSharedInterface } from '../../../../../common/IRegisterSharedInterface';
+import { IRegisterSharedInterface } from '@/../../common/IRegisterSharedInterface';
 import { redirect } from "next/navigation";
 import { useModal } from "@/hooks/useModal";
 import RegisterSuccess from "@/components/RegisterSuccess";

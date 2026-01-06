@@ -51,11 +51,7 @@ export const saveCustomer = async (
             });
         }
 
-        /* =========================
-           UPDATE
-        ========================== */
-
-        // 🔹 Fetch customer from BOTH collections
+        // Fetch customer from BOTH collections
         const existingCustomer =
             (await domesticServices.getById(id)) ||
             (await corporateServices.getById(id));

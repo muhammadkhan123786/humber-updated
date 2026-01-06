@@ -1,5 +1,4 @@
-
-import CurrenciesClient from './components/CurrenciesClient';
+import CurrenciesClient from "./components/CurrenciesClient";
 
 const Page = () => {
   return (

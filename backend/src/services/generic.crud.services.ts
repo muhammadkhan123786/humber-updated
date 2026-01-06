@@ -8,7 +8,7 @@ export interface CRUDOptions<T extends Document> {
 
 function hasIsDefaultField(
     data: unknown
-): data is { isDefault: boolean } {
+): data is { isDefault: boolean, userId: Types.ObjectId } {
     return (
         typeof data === "object" &&
         data !== null &&
@@ -32,7 +32,7 @@ export class GenericService<T extends Document> {
         // ✅ If model supports isDefault AND incoming record is default
         if (hasIsDefaultField(data) && data.isDefault === true) {
             await this.model.updateMany(
-                {},                         // ✅ filter: all documents
+                { userId: data.userId },                         // ✅ filter: all documents
                 { $set: { isDefault: false } }
             );
         }
@@ -52,7 +52,10 @@ export class GenericService<T extends Document> {
         // ✅ Check safely
         if (hasIsDefaultField(data) && data.isDefault === true) {
             await this.model.updateMany(
-                { _id: { $ne: id } },
+                {
+                    _id: { $ne: id },
+                    userId: data.userId
+                },
                 { $set: { isDefault: false } }
             );
         }
@@ -75,7 +78,11 @@ export class GenericService<T extends Document> {
         }
 
         // 3️⃣ Safe delete
-        return this.model.findByIdAndDelete(id).exec();
+        return this.model.findByIdAndUpdate(
+            id,
+            { $set: { isDeleted: true } }, // ✅ use $set
+            { new: true }
+        ).exec();
     }
 
 }
