@@ -1,7 +1,7 @@
-import { Types } from "mongoose";
+import { SchemaDefinition, Types } from "mongoose";
 
 
-export const baseCustomerSchema = {
+export const baseCustomerSchema: SchemaDefinition = {
     userId: { type: Types.ObjectId, ref: "User", required: true },
     personId: { type: Types.ObjectId, ref: "Person" },
     addressId: { type: Types.ObjectId, ref: "Address" },
