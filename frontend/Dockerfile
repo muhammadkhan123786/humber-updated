@@ -1,23 +1,23 @@
-# Use Node LTS
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first
-COPY package*.json ./
+# Copy package files
+COPY frontend/package*.json ./frontend/
 
-# Install dependencies
+# Install deps
+WORKDIR /app/frontend
 RUN npm install --legacy-peer-deps
 
-# Copy project files
-COPY . .
+# Copy source code
+WORKDIR /app
+COPY frontend ./frontend
+COPY common ./common
 
-# Build Next.js app using webpack (Turbopack workaround)
-RUN npm run build
+# Build Next.js
+WORKDIR /app/frontend
+RUN npm run build --webpack
 
-# Expose port
 EXPOSE 3000
 
-# Start app
 CMD ["npm", "run", "start"]
