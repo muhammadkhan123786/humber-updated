@@ -1,23 +1,23 @@
-# Use Node LTS Alpine image
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first (for caching dependencies)
-COPY package*.json ./
+# Copy package files
+COPY frontend/package*.json ./frontend/
 
-# Install dependencies
+# Install deps
+WORKDIR /app/frontend
 RUN npm install --legacy-peer-deps
 
-# Copy project files
-COPY . .
+# Copy source code
+WORKDIR /app
+COPY frontend ./frontend
+COPY common ./common
 
-# Build Next.js app
-RUN npm run build
+# Build Next.js
+WORKDIR /app/frontend
+RUN npm run build --webpack
 
-# Expose frontend port
-EXPOSE 7000
+EXPOSE 3000
 
-# Start the app
-CMD ["npm", "start"]
+CMD ["npm", "run", "start"]

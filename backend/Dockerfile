@@ -1,20 +1,22 @@
-# Use Node LTS Alpine image
+# Base image
 FROM node:20-alpine
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app/backend
 
-# Copy package files first (for caching dependencies)
-COPY package*.json ./
+# Copy package files and install dependencies
+COPY backend/package*.json ./
+RUN npm install --legacy-peer-deps
 
-# Install dependencies
-RUN npm install
+# Copy backend code + common folder
+COPY backend ./ 
+COPY common ../common
 
-# Copy all project files
-COPY . .
+# Build backend (TypeScript)
+RUN npm run build
 
 # Expose backend port
 EXPOSE 8081
 
-# Start the app
-CMD ["npm", "run", "start"]
+# Start backend
+CMD ["node", "dist/server.js"]
