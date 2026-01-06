@@ -1,17 +1,22 @@
+# Base image
 FROM node:20-alpine
 
-WORKDIR /app
-
-COPY backend/package*.json ./backend/
+# Set working directory
 WORKDIR /app/backend
-RUN npm install
 
-WORKDIR /app
-COPY backend ./backend
-COPY common ./common
+# Copy package files and install dependencies
+COPY backend/package*.json ./
+RUN npm install --legacy-peer-deps
 
-WORKDIR /app/backend
+# Copy backend code + common folder
+COPY backend ./ 
+COPY common ../common
+
+# Build backend (TypeScript)
 RUN npm run build
 
-EXPOSE 4000
+# Expose backend port
+EXPOSE 8081
+
+# Start backend
 CMD ["node", "dist/server.js"]
