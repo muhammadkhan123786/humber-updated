@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ThemeProvider from '@/components/theme/ThemeProvider';
 
 import "./globals.css";
 import Modal from "@/components/ui/Modal";
@@ -24,7 +25,7 @@ export default function RootLayout({
 
           {/* Your content */}
 
-          {children}
+          <ThemeProvider>{children}</ThemeProvider>
         </ModalProvider>
       </body>
     </html>

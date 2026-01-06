@@ -7,14 +7,83 @@ import staffmanagement from "../assets/users-alt.svg";
 
 export const NavBarLinksData: NavLinksInterface[] = [
   { _id: 1, href: "/dashboard", roleId: [1, 2], label: "Dashboard", index: 1 },
+   // Inventory (Dropdown)
   {
     _id: 2,
-    alt: "box",
-    href: "/dashboard/inventory",
+    alt: "Inventory",
+    href: "#",
     roleId: [1],
     label: "Inventory",
     iconSrc: box,
     index: 2,
+    children: [
+      {
+        _id: 201,
+        href: "/dashboard/inventory-dashboard/dashboard",
+        label: "Inventory Dashboard",
+        index: 1,
+      },
+      {
+        _id: 202,
+        href: "/dashboard/inventory-dashboard/purchase-order",
+        label: "PurchaseOrder",
+        index: 2,
+      },
+      {
+        _id: 203,
+        href: "/dashboard/inventory-dashboard/inventory-overview",
+        label: "Inventory Overview",
+        index: 3,
+      },
+      {
+        _id: 204,
+        href: "/dashboard/inventory-dashboard/orders-management",
+        label: "Orders Management",
+        index: 4,
+      },
+      {
+        _id: 205,
+        href: "/dashboard/inventory-dashboard/product-catalog",
+        label: "Product Catalog",
+        index: 5,
+      },
+      {
+        _id: 206,
+        href: "/dashboard/inventory-dashboard/product",
+        label: "Product",
+        index: 6,
+      },
+      {
+        _id: 207,
+        href: "/dashboard/inventory-dashboard/create-purchase-order",
+        label: "Purchase Order",
+        index: 7,
+      },
+      {
+        _id: 208,
+        href: "/dashboard/inventory-dashboard/reporting-analytics",
+        label: "Reporting & Analytics",
+        index: 8,
+      },
+      {
+        _id: 209,
+        href: "/dashboard/inventory-dashboard/rma",
+        label: "Process New RMA",
+        index: 9,
+      },
+      {
+        _id: 210,
+        href: "/dashboard/inventory-dashboard/stock",
+        label: "Stock Adjustment",
+        index: 10,
+      },
+      {
+        _id: 211,
+        href: "/dashboard/inventory-dashboard/supplier",
+        label: "Supplier Management",
+        index: 11,
+      },
+    ],
   },
   //Inventory Master Form
   {
@@ -56,61 +125,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "proposed Actions",
         index: 6,
       },
-
-      {
-        _id: 118,
-        href: "/dashboard/inventory-masterdata/product-source",
-        label: "Product Source",
-        index: 5,
-      },
-      {
-        _id: 121,
-        href: "/dashboard/inventory-masterdata/tax",
-        label: "Tax",
-        index: 8,
-      },
-      {
-        _id: 122,
-        href: "/dashboard/inventory-masterdata/category",
-        label: "Category",
-        index: 9,
-      },
-      {
-        _id: 123,
-        href: "/dashboard/inventory-masterdata/units",
-        label: "Units",
-        index: 10,
-      },
-      {
-        _id: 124,
-        href: "/dashboard/inventory-masterdata/vender",
-        label: "Venders",
-        index: 11,
-      },
-      {
-        _id: 125,
-        href: "/dashboard/inventory-masterdata/warehouse-status",
-        label: "Warehouse Status",
-        index: 11,
-      },
-      {
-        _id: 126,
-        href: "/dashboard/inventory-masterdata/colors",
-        label: "Colors",
-        index: 12,
-      },
-      {
-        _id: 127,
-        href: "/dashboard/inventory-masterdata/sizes",
-        label: "Sizes",
-        index: 12,
-      },
-      {
-        _id: 128,
-        href: "/dashboard/inventory-masterdata/warehouses",
-        label: "warehouses",
-        index: 13,
-      },
+       {
+        _id:118,
+        href:"/dashboard/inventory-masterdata/product-source",
+        label:"Product Source",
+        index:5,
+      }
     ],
   },
   {
