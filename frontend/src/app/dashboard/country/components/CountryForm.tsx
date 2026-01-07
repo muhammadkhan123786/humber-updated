@@ -76,7 +76,7 @@ const CountryForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Pr
 
                     <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <label className="flex items-center gap-2 cursor-pointer group">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500 cursor-pointer" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                            <input type="checkbox" className="w-5 h-5 accent-orange-500 cursor-pointer" checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
                             <span className="text-sm font-medium text-gray-700 group-hover:text-black">Active</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer group">

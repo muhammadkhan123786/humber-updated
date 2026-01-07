@@ -301,6 +301,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Ticket Actions",
         index: 3,
       },
+      {
           _id: 306,
         href: "/dashboard/ticket-masterdata/ticket-type",
         label: "Ticket Type",
