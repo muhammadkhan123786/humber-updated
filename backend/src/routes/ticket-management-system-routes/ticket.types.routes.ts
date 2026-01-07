@@ -10,7 +10,7 @@ const ticketTypesServices = new GenericService<ticketTypeDoc>(TicketTypes);
 
 const ticketTypesController = new AdvancedGenericController({
     service: ticketTypesServices,
-    populate: ["userId"],
+    populate: ["userId", "departmentId"],
     validationSchema: ticketTypeSchemaValidation,
 });
 
