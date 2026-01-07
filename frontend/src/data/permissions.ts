@@ -301,6 +301,11 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Ticket Actions",
         index: 3,
       },
+          _id: 306,
+        href: "/dashboard/ticket-masterdata/ticket-type",
+        label: "Ticket Type",
+        index: 4,
+      }
     ],
   },
   {
@@ -315,13 +320,13 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 101,
         href: "/dashboard/vehiclebrands",
-        label: "Vehicles Brands",
+        label: "Vehicle Brands",
         index: 1,
       },
       {
         _id: 102,
         href: "/dashboard/vehiclemodals",
-        label: "Vehicle Modals",
+        label: "Vehicle Models",
         index: 2,
       },
       {

@@ -43,6 +43,7 @@ import productBaseRouter from "./routes/product.base.routes"
 import departmentRouter from './routes/ticket-management-system-routes/department.routes';
 import ticketTypesRouter from './routes/ticket-management-system-routes/ticket.types.routes';
 import ticketActionsRouter from './routes/ticket-management-system-routes/ticket.actions.routes';
+import ticketStatusTransitionRouter from './routes/ticket-management-system-routes/ticket.status.transition.routes';
 
 
 // Create express app
@@ -99,6 +100,9 @@ app.use(`${process.env.API_PREFIX}/ticket-status`, adminProtecter, ticketStatusR
 app.use(`${process.env.API_PREFIX}/departments`, adminProtecter, departmentRouter);
 app.use(`${process.env.API_PREFIX}/ticket-types`, adminProtecter, ticketTypesRouter);
 app.use(`${process.env.API_PREFIX}/ticket-actions`, adminProtecter, ticketActionsRouter);
+
+//transition forms 01-07-2026
+app.use(`${process.env.API_PREFIX}/ticket-transition-setup`, adminProtecter, ticketStatusTransitionRouter);
 
 
 
