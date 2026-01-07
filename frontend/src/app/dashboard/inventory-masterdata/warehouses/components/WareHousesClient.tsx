@@ -19,12 +19,14 @@ export interface WarehouseWithPopulated
   extends Omit<IWarehouse, "personId" | "contactId" | "addressId"> {
   person: basicCommonInfoDto["person"];
   contact: basicCommonInfoDto["contact"];
-  address: Omit<
-    basicCommonInfoDto["address"],
-    "latitude" | "longitude" | "city" | "country"
-  > & { userId: string };
+  address: basicCommonInfoDto["address"] & {
+    userId: string;
+    city?: string;
+    country?: string;
+    address?: string;
+    zipCode?: string;
+  };
 }
-
 export default function WareHousesClient() {
   const [dataList, setDataList] = useState<WarehouseWithPopulated[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,30 +40,44 @@ export default function WareHousesClient() {
 
   const mapToWarehouseWithPopulated = (
     item: IWarehouse
-  ): WarehouseWithPopulated => ({
-    _id: item._id || "",
-    userId: item.userId,
-    wareHouseStatusId: item.wareHouseStatusId,
-    openTime: item.openTime,
-    closeTime: item.closeTime,
-    capacity: item.capacity,
-    availableCapacity: item.availableCapacity,
-    isActive: item.isActive ?? true,
-    isDeleted: item.isDeleted ?? false,
-    isDefault: item.isDefault ?? false,
-    person:
-      typeof item.personId === "object"
-        ? item.personId
-        : { firstName: "", lastName: "" },
-    contact:
-      typeof item.contactId === "object"
-        ? item.contactId
-        : { mobileNumber: "", phoneNumber: "", emailId: "" },
-    address:
-      typeof item.addressId === "object"
-        ? item.addressId
-        : { address: "", zipCode: "", userId: item.userId },
-  });
+  ): WarehouseWithPopulated => {
+    const resolvedUserId =
+      typeof item.userId === "object" ? (item.userId as any)._id : item.userId;
+
+    return {
+      _id: item._id || "",
+      userId: item.userId,
+      wareHouseStatusId: item.wareHouseStatusId,
+      openTime: item.openTime,
+      closeTime: item.closeTime,
+      capacity: item.capacity,
+      availableCapacity: item.availableCapacity,
+      isActive: item.isActive ?? true,
+      isDeleted: item.isDeleted ?? false,
+      isDefault: item.isDefault ?? false,
+      person:
+        item.personId && typeof item.personId === "object"
+          ? (item.personId as any)
+          : { firstName: "", lastName: "" },
+      contact:
+        item.contactId && typeof item.contactId === "object"
+          ? (item.contactId as any)
+          : { mobileNumber: "", phoneNumber: "", emailId: "" },
+      address:
+        item.addressId && typeof item.addressId === "object"
+          ? {
+              ...(item.addressId as any),
+              userId: resolvedUserId,
+            }
+          : {
+              address: "",
+              city: "",
+              country: "",
+              zipCode: "",
+              userId: resolvedUserId,
+            },
+    };
+  };
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);

@@ -70,23 +70,8 @@ const WareHousesForm = ({
 
   useEffect(() => {
     if (!editingData) return;
-    const person = editingData.person || {
-      firstName: "",
-      middleName: "",
-      lastName: "",
-    };
-    const contact = editingData.contact || {
-      mobileNumber: "",
-      phoneNumber: "",
-      emailId: "",
-    };
-    const address = editingData.address || {
-      address: "",
-      zipCode: "",
-      city: "",
-      country: "",
-      userId: "",
-    };
+
+    const addressObj = editingData.address || {};
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : { id: "" };
     setFormData({
@@ -98,26 +83,22 @@ const WareHousesForm = ({
       closeTime: editingData.closeTime
         ? new Date(editingData.closeTime)
         : new Date("2000-01-01T18:00:00"),
-      capacity: editingData.capacity || 0,
-      availableCapacity: editingData.availableCapacity || 0,
-      isActive: editingData.isActive ?? true,
-      isDefault: editingData.isDefault ?? false,
       person: {
-        firstName: person.firstName || "",
-        middleName: person.middleName || "",
-        lastName: person.lastName || "",
+        firstName: editingData.person?.firstName || "",
+        middleName: editingData.person?.middleName || "",
+        lastName: editingData.person?.lastName || "",
       },
       contact: {
-        mobileNumber: contact.mobileNumber || "",
-        phoneNumber: contact.phoneNumber || "",
-        emailId: contact.emailId || "",
+        mobileNumber: editingData.contact?.mobileNumber || "",
+        phoneNumber: editingData.contact?.phoneNumber || "",
+        emailId: editingData.contact?.emailId || "",
       },
       address: {
-        address: address.address || "",
-        zipCode: address.zipCode || "",
-        city: address.city || "",
-        country: address.country || "",
-        userId: address.userId || user.id || "",
+        address: addressObj.address || "",
+        zipCode: addressObj.zipCode || "",
+        city: addressObj.city || "",
+        country: addressObj.country || "",
+        userId: addressObj.userId || user.id || user._id || "",
       },
     });
   }, [editingData]);
@@ -159,12 +140,12 @@ const WareHousesForm = ({
       const userId = user.id || user._id;
 
       if (!userId) throw new Error("User ID not found");
-      const payload: any = {
+      const payload: warehouseDto & { userId: string } = {
         userId: userId,
         wareHouseStatusId:
           formData.wareHouseStatusId || warehouseStatuses[0]?._id,
-        openTime: formData.openTime.toISOString(),
-        closeTime: formData.closeTime.toISOString(),
+        openTime: formData.openTime,
+        closeTime: formData.closeTime,
         capacity: Number(formData.capacity) || 0,
         availableCapacity: Number(formData.availableCapacity) || 0,
         isActive: formData.isActive,
@@ -187,38 +168,33 @@ const WareHousesForm = ({
           userId: userId,
         },
       };
-      if (!payload.person.firstName) {
-        throw new Error("First Name is required");
-      }
-      if (!payload.contact.mobileNumber) {
+
+      if (!payload.person.firstName) throw new Error("First Name is required");
+      if (!payload.contact.mobileNumber)
         throw new Error("Mobile Number is required");
-      }
-      if (!payload.contact.emailId) {
-        throw new Error("Email ID is required");
-      }
-      if (!payload.address.address) {
-        throw new Error("Address is required");
-      }
+      if (!payload.contact.emailId) throw new Error("Email ID is required");
+      if (!payload.address.address) throw new Error("Address is required");
+
       if (editingData?._id) {
         await updateItem("/warehouses", editingData._id, payload);
       } else {
         await createItem("/warehouses", payload);
       }
+
       onRefresh();
       onClose();
     } catch (error: unknown) {
       console.error("Submit error:", error);
-      if (error instanceof Error) {
-        alert(`Error: ${error.message}`);
-      } else if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.response?.data);
-        if (error.response?.data?.message) {
-          alert(`Server error: ${error.response.data.message}`);
-        } else {
-          alert(`Server error: ${error.response?.status}`);
-        }
+      if (axios.isAxiosError(error)) {
+        alert(
+          `Server Error: ${error.response?.data?.message || error.message}`
+        );
       } else {
-        alert("Unexpected error");
+        alert(
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred"
+        );
       }
     } finally {
       setLoading(false);
