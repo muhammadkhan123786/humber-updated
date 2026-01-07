@@ -3,6 +3,8 @@ import { z } from "zod";
 import { commonSchema } from "./shared/common.schema";
 
 export const warehouseSchema = {
+  // userId: { type: Types.ObjectId, ref: "User", required: true },
+  // userId: { type: Types.ObjectId, ref: "User", required: true },
 
   personId: { type: Types.ObjectId, ref: "Person" },
   addressId: { type: Types.ObjectId, ref: "Address" },

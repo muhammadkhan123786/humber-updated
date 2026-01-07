@@ -18,7 +18,7 @@ export const FormModal = ({
   onClose,
   themeColor,
   children,
-  width = "max-w-md",
+  width = "max-w-lg",
   className = "",
 }: ModalProps) => (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">

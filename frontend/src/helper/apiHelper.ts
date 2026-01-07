@@ -36,16 +36,49 @@ const getAuthConfig = (): AxiosRequestConfig => {
 
 export const getAll = async <T>(
   endpoint: string,
-  params?: Record<string, any>
+  params?: Record<string, unknown>
 ): Promise<PaginatedResponse<T>> => {
   try {
     const response = await api.get<PaginatedResponse<T>>(endpoint, {
       ...getAuthConfig(),
       params,
     });
+    console.log("res", response);
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
+      throw error.response?.data || { message: error.message };
+    }
+    throw { message: "Unknown error occurred" };
+  }
+};
+
+export const getAlls = async <T>(
+  endpoint: string,
+  params?: Record<string, unknown>
+): Promise<PaginatedResponse<T>> => {
+  try {
+    const rawToken = localStorage.getItem("token");
+    
+    // Clean the token: remove quotes and whitespace
+    const cleanToken = rawToken ? rawToken.replace(/"/g, '').trim() : "";
+
+    const response = await api.get<PaginatedResponse<T>>(endpoint, {
+      params,
+      headers: {
+        // Only attach if token exists to avoid sending "Bearer "
+        ...(cleanToken && { Authorization: `Bearer ${cleanToken}` }),
+      },
+    });
+
+    return response.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        console.warn("Session expired. Redirecting to login...");
+        // optional: localStorage.clear(); 
+        // optional: window.location.href = "/login";
+      }
       throw error.response?.data || { message: error.message };
     }
     throw { message: "Unknown error occurred" };

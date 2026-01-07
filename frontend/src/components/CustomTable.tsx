@@ -36,11 +36,11 @@ export default function CustomTable<T>({
   hideRowBorders = false
 }: CustomTableProps<T>) {
   return (
-    <div className="w-full rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+    <div className="w-full rounded-2xl  bg-card shadow-sm overflow-hidden">
       
       {/* 1. Header Section: Bottom Border as per Image */}
       {(title || headerAction) && (
-        <div className="flex items-center justify-between p-6 border-b border-border bg-card">
+        <div className="flex items-center justify-between p-6 bg-card">
           {title && <h2 className="text-xl font-bold text-foreground">{title}</h2>}
           {headerAction && <div className="flex gap-2">{headerAction}</div>}
         </div>
@@ -48,9 +48,9 @@ export default function CustomTable<T>({
 
       {/* 2. Table Section */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left ">
           <thead>
-            <tr className="border-b border-border bg-card">
+            <tr className="border-b ">
               {columns.map((col, idx) => (
                 <th key={idx} className={`px-6 py-5 text-[13px] font-semibold text-muted-foreground uppercase tracking-wider ${col.className}`}>
                   {col.header}
@@ -63,7 +63,7 @@ export default function CustomTable<T>({
             {data.map((item, rowIdx) => (
               <tr 
                 key={rowIdx} 
-                className={`transition-colors hover:bg-muted/30 ${hideRowBorders ? '' : 'border-b border-border/50 last:border-0'}`}
+                className={`transition-colors hover:bg-muted/30'}`}
               >
                 {columns.map((col, colIdx) => (
                   <td key={colIdx} className="px-6 py-5 text-sm font-medium text-foreground/90">
