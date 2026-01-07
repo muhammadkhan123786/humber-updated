@@ -7,13 +7,15 @@ import { FormInput } from "../../../../common-form/FormInput";
 import { FormToggle } from "../../../../common-form/FormToggle";
 import { createTax, updateTax } from "@/hooks/useTax";
 import axios from "axios";
+
 interface Props {
   editingData: ITax | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
-  apiUrl: string;
+  apiUrl?: string;
 }
+
 interface TaxFormState {
   taxName: string;
   percentage: number;
@@ -22,6 +24,7 @@ interface TaxFormState {
   isActive: boolean;
   isDefault: boolean;
 }
+
 const TaxForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   const [formData, setFormData] = useState<TaxFormState>(() => ({
     taxName: editingData?.taxName || "",
@@ -35,8 +38,25 @@ const TaxForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     isActive: editingData?.isActive ?? true,
     isDefault: editingData?.isDefault ?? false,
   }));
+
+  const [dateError, setDateError] = useState<string>("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Reset previous error
+    setDateError("");
+
+    // Date validation
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
+      if (end < start) {
+        setDateError("End Date cannot be before Start Date.");
+        return;
+      }
+    }
+
     try {
       const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
       const payload = {
@@ -64,6 +84,7 @@ const TaxForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
       }
     }
   };
+
   return (
     <FormModal
       title={editingData ? "Edit Tax" : "Add New Tax"}
@@ -111,6 +132,8 @@ const TaxForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
             }
           />
         </div>
+        {dateError && <p className="text-red-500 text-sm">{dateError}</p>}{" "}
+        {/* <-- show error */}
         <div className="flex gap-4">
           <FormToggle
             label="Active"
@@ -135,4 +158,5 @@ const TaxForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     </FormModal>
   );
 };
+
 export default TaxForm;

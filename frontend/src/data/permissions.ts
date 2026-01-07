@@ -135,7 +135,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
 
       {
         _id: 114,
-        href: "/dashboard/inventory-masterdata/currencies",
+        href: "/dashboard/inventory-masterdata/Currencies",
         label: "currencies",
         index: 1,
       },
@@ -148,7 +148,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 116,
         href: "/dashboard/inventory-masterdata/order-status",
-        label: "order Status",
+        label: "Order Status",
         index: 3,
       },
       {
@@ -160,18 +160,16 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 119,
         href: "/dashboard/inventory-masterdata/proposed-actions",
-        label: "proposed Actions",
+        label: "Proposed Actions",
         index: 6,
       },
 
-       {
-        _id:120,
-        href:"/dashboard/inventory-masterdata/item-conditions",
-        label:"Item Conditions",
-        index:7,
+      {
+        _id: 120,
+        href: "/dashboard/inventory-masterdata/item-conditions",
+        label: "Item Conditions",
+        index: 7,
       },
-
-
 
       {
         _id: 118,
@@ -224,10 +222,9 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 128,
         href: "/dashboard/inventory-masterdata/warehouses",
-        label: "warehouses",
+        label: "Warehouses",
         index: 13,
-      }
-
+      },
     ],
   },
   {
@@ -293,11 +290,17 @@ export const NavBarLinksData: NavLinksInterface[] = [
         index: 1,
       },
       {
-         _id: 204,
+        _id: 204,
         href: "/dashboard/ticket-masterdata/department",
         label: "Department",
         index: 2,
-      }
+      },
+      {
+        _id: 205,
+        href: "/dashboard/ticket-masterdata/ticket-actions",
+        label: "Ticket Actions",
+        index: 3,
+      },
     ],
   },
   {
