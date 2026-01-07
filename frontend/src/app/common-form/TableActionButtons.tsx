@@ -1,9 +1,10 @@
 
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 
 interface ActionProps {
   onEdit: () => void;
   onDelete: () => void;
+  isDefault?:boolean;
 }
 
 export const TableActionButton = ({ onEdit, onDelete }: ActionProps) => (
@@ -13,7 +14,7 @@ export const TableActionButton = ({ onEdit, onDelete }: ActionProps) => (
       className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
       title="Edit"
     >
-      <Edit2 size={18} />
+      <Edit size={18} />
     </button>
     <button 
       onClick={onDelete} 
