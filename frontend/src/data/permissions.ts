@@ -292,6 +292,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Ticket Status",
         index: 1,
       },
+      {
+         _id: 204,
+        href: "/dashboard/ticket-masterdata/department",
+        label: "Department",
+        index: 2,
+      }
     ],
   },
   {
