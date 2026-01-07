@@ -12,8 +12,9 @@ interface ChannelDataItem {
   value: number;
   percentage: number;
   color: string;
-   [key: string]: string | number;
+  [key: string]: string | number;
 }
+
 
 // Sales vs Inventory Forecast Data
 const forecastData: ForecastDataItem[] = [
@@ -80,7 +81,7 @@ interface CustomLegendProps {
 // Custom Legend - Fixed to show correct data
 const CustomLegend = ({ payload }: CustomLegendProps) => {
   if (!payload) return null;
-  
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
       {payload.map((entry, index) => (

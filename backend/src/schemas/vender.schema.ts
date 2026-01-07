@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { commonSchema, commonSchemaValidation } from './shared/common.schema';
 
 export const venderSchema = {
+    // userId: { type: Types.ObjectId, ref: "User", required: true },
 
     personId: { type: Types.ObjectId, ref: "Person" },
     addressId: { type: Types.ObjectId, ref: "Address" },
@@ -21,6 +22,7 @@ export const venderSchema = {
 
 
 export const venderSchemaValidation = z.object({
+    // userId: z.string().min(1, "userId is required."),
 
     personId: z.string().min(1, "PersonId is required."),
     addressId: z.string().min(1, "addressId is required."),

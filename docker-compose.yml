@@ -1,21 +1,36 @@
-# docker-compose.yml
+version: "3.9"
+
 services:
-  frontend:
-    build: ./frontend
-    container_name: nextjs_frontend
+  mongo:
+    image: mongo:6
+    container_name: humber_mongo
     ports:
-      - "7000:3000"
-    env_file:
-      - ./frontend/.env
-    depends_on:
-      - backend
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
 
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: node_backend
     ports:
       - "8081:8081"
-    env_file:
-      - ./backend/.env
-    volumes:
-      - ./backend/uploads:/app/uploads  # Persist uploads folder
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/humber
+      - NODE_ENV=production
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: nextjs_frontend
+    ports:
+      - "7000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:
