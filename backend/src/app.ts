@@ -40,6 +40,8 @@ import colorRouter from './routes/color.routes';
 import sizeRouter from './routes/size.routes';
 import ticketStatusRouter from './routes/ticket-management-system-routes/ticket.status.routes';
 import productBaseRouter from "./routes/product.base.routes"
+import departmentRouter from './routes/ticket-management-system-routes/department.routes';
+import ticketTypesRouter from './routes/ticket-management-system-routes/ticket.types.routes';
 
 
 // Create express app
@@ -92,6 +94,10 @@ app.use(`${process.env.API_PREFIX}/product-base`, adminProtecter, productBaseRou
 //ticket management system by Muhammad Imran 
 
 app.use(`${process.env.API_PREFIX}/ticket-status`, adminProtecter, ticketStatusRouter);
+app.use(`${process.env.API_PREFIX}/departments`, adminProtecter, departmentRouter);
+app.use(`${process.env.API_PREFIX}/ticket-types`, adminProtecter, ticketTypesRouter);
+
+
 
 
 // Health check route
