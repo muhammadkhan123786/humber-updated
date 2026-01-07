@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 export const commonSchemaValidation = {
     userId: z.string().min(1, "userId is required"),
-
     isActive: z.boolean().optional(),
     isDeleted: z.boolean().optional(),
     isDefault: z.boolean().optional(),
