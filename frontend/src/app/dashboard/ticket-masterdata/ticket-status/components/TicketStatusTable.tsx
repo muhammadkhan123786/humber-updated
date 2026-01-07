@@ -7,7 +7,7 @@ import { Star } from "lucide-react";
 
 interface Props {
   data: (ITicketStatus & { _id: string })[];
-  onEdit: (item: any) => void;
+  onEdit: (item: ITicketStatus & { _id: string }) => void;
   onDelete: (id: string) => void;
   themeColor: string;
 }
@@ -60,7 +60,11 @@ const TicketStatusTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   onEdit={() => onEdit(item)}
-                  onDelete={() => !item.isDefault && onDelete(item._id)}
+                  onDelete={() => {
+                    if (item.isDefault)
+                      return alert("Default Ticket Status cannot be deleted.");
+                    if (item._id) onDelete(item._id);
+                  }}
                 />
               </td>
             </tr>
