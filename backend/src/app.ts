@@ -38,6 +38,7 @@ import warehouseStatusRouter from './routes/warehouse.status.routes';
 import warehouseRouter from './routes/warehouse.routes';
 import colorRouter from './routes/color.routes';
 import sizeRouter from './routes/size.routes';
+import ticketStatusRouter from './routes/ticket-management-system-routes/ticket.status.routes';
 
 
 // Create express app
@@ -86,6 +87,9 @@ app.use(`${process.env.API_PREFIX}/warehouses`, adminProtecter, warehouseRouter)
 app.use(`${process.env.API_PREFIX}/colors`, adminProtecter, colorRouter);
 app.use(`${process.env.API_PREFIX}/sizes`, adminProtecter, sizeRouter);
 
+//ticket management system by Muhammad Imran 
+
+app.use(`${process.env.API_PREFIX}/ticket-status`, adminProtecter, ticketStatusRouter);
 
 
 // Health check route
