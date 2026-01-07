@@ -7,7 +7,7 @@ import staffmanagement from "../assets/users-alt.svg";
 
 export const NavBarLinksData: NavLinksInterface[] = [
   { _id: 1, href: "/dashboard", roleId: [1, 2], label: "Dashboard", index: 1 },
-   // Inventory (Dropdown)
+  // Inventory (Dropdown)
   {
     _id: 2,
     alt: "Inventory",
@@ -85,6 +85,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
       },
     ],
   },
+
   //Inventory Master Form
   {
     _id: 9,
@@ -132,7 +133,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
       //   index:5,
       // }
 
-       {
+      {
         _id: 114,
         href: "/dashboard/inventory-masterdata/currencies",
         label: "currencies",
@@ -273,6 +274,25 @@ export const NavBarLinksData: NavLinksInterface[] = [
     label: "Technicians Profile",
     iconSrc: box,
     index: 8,
+  },
+  //ticket master data
+
+  {
+    _id: 10,
+    alt: "Ticket Master Data",
+    href: "#",
+    roleId: [1],
+    label: "Ticket Master Data",
+    iconSrc: staffmanagement,
+    index: 9,
+    children: [
+      {
+        _id: 203,
+        href: "/dashboard/ticket-masterdata/ticket-status",
+        label: "Ticket Status",
+        index: 1,
+      },
+    ],
   },
   {
     _id: 7,
