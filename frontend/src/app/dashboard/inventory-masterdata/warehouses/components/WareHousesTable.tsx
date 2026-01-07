@@ -88,9 +88,11 @@ const WareHousesTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                       </span>
 
                       <span className="flex items-start gap-1 text-xs max-w-[200px]">
-                        <MapPin size={12} className="mt-0.5" />{" "}
-                        {item.address?.address ?? "N/A"},{" "}
-                        {item.address?.zipCode ?? ""}
+                        <MapPin size={12} className="mt-0.5" />
+                        <span>
+                          {item.address?.address}, {item.address?.city},{" "}
+                          {item.address?.country}
+                        </span>
                       </span>
                     </div>
                   </td>
@@ -134,7 +136,15 @@ const WareHousesTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   <td className="px-6 py-4 text-center">
                     <TableActionButton
                       onEdit={() => onEdit(item)}
-                      onDelete={() => item._id && onDelete(item._id)}
+                      onDelete={() => {
+                        if (item.isDefault) {
+                          alert("Default item cannot be deleted.");
+                          return;
+                        }
+                        if (item._id) {
+                          onDelete(item._id);
+                        }
+                      }}
                     />
                   </td>
                 </tr>

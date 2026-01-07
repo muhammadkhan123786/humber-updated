@@ -18,6 +18,7 @@ interface SearchableDropdownProps {
   label?: string;
   className?: string;
   disabled?: boolean;
+  error?: string;
 }
 
 /* =======================
@@ -32,6 +33,7 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
   label,
   className = "",
   disabled = false,
+  error
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -43,8 +45,8 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
      Filter Options
   ======================= */
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredOptions = options?.filter((option) =>
+    option?.label?.toLowerCase()?.includes(searchTerm.toLowerCase())
   );
 
   /* =======================
@@ -204,11 +206,19 @@ const SearchableDropdown: React.FC<SearchableDropdownProps> = ({
                 <div className="px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400">
                   No results found
                 </div>
+                
               )}
+              
             </div>
           </div>
         )}
       </div>
+
+      {error && (
+        <p className="mt-1 text-xs text-red-500 font-medium">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

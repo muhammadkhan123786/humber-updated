@@ -95,7 +95,44 @@ export const NavBarLinksData: NavLinksInterface[] = [
     iconSrc: staffmanagement,
     index: 9,
     children: [
-      {
+      // {
+      //   _id: 114,
+      //   href: "/dashboard/inventory-masterdata/currencies",
+      //   label: "currencies",
+      //   index: 1,
+      // },
+      // {
+      //   _id: 115,
+      //   href: "/dashboard/inventory-masterdata/payment-terms",
+      //   label: "Payment Terms",
+      //   index: 2,
+      // },
+      // {
+      //   _id: 116,
+      //   href: "/dashboard/inventory-masterdata/order-status",
+      //   label: "order Status",
+      //   index: 3,
+      // },
+      // {
+      //   _id: 117,
+      //   href: "/dashboard/inventory-masterdata/product-channel",
+      //   label: "Product Channel",
+      //   index: 4,
+      // },
+      // {
+      //   _id: 119,
+      //   href: "/dashboard/inventory-masterdata/proposed-actions",
+      //   label: "proposed Actions",
+      //   index: 6,
+      // },
+      //  {
+      //   _id:118,
+      //   href:"/dashboard/inventory-masterdata/product-source",
+      //   label:"Product Source",
+      //   index:5,
+      // }
+
+       {
         _id: 114,
         href: "/dashboard/inventory-masterdata/currencies",
         label: "currencies",
@@ -125,12 +162,71 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "proposed Actions",
         index: 6,
       },
+
        {
-        _id:118,
-        href:"/dashboard/inventory-masterdata/product-source",
-        label:"Product Source",
-        index:5,
+        _id:120,
+        href:"/dashboard/inventory-masterdata/item-conditions",
+        label:"Item Conditions",
+        index:7,
+      },
+
+
+
+      {
+        _id: 118,
+        href: "/dashboard/inventory-masterdata/product-source",
+        label: "Product Source",
+        index: 5,
+      },
+      {
+        _id: 121,
+        href: "/dashboard/inventory-masterdata/tax",
+        label: "Tax",
+        index: 8,
+      },
+      {
+        _id: 122,
+        href: "/dashboard/inventory-masterdata/category",
+        label: "Category",
+        index: 9,
+      },
+      {
+        _id: 123,
+        href: "/dashboard/inventory-masterdata/units",
+        label: "Units",
+        index: 10,
+      },
+      {
+        _id: 124,
+        href: "/dashboard/inventory-masterdata/vender",
+        label: "Venders",
+        index: 11,
+      },
+      {
+        _id: 125,
+        href: "/dashboard/inventory-masterdata/warehouse-status",
+        label: "Warehouse Status",
+        index: 11,
+      },
+      {
+        _id: 126,
+        href: "/dashboard/inventory-masterdata/colors",
+        label: "Colors",
+        index: 12,
+      },
+      {
+        _id: 127,
+        href: "/dashboard/inventory-masterdata/sizes",
+        label: "Sizes",
+        index: 12,
+      },
+      {
+        _id: 128,
+        href: "/dashboard/inventory-masterdata/warehouses",
+        label: "warehouses",
+        index: 13,
       }
+
     ],
   },
   {
