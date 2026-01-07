@@ -301,11 +301,18 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Ticket Actions",
         index: 3,
       },
-          _id: 306,
+      {
+        _id: 306,
         href: "/dashboard/ticket-masterdata/ticket-type",
         label: "Ticket Type",
         index: 4,
-      }
+      },
+      {
+        _id: 307,
+        href: "/dashboard/ticket-masterdata/ticket-transition",
+        label: "Ticket Transition",
+        index: 5,
+      },
     ],
   },
   {
