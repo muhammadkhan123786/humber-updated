@@ -10,7 +10,7 @@ import { FormToggle } from "@/app/common-form/FormToggle";
 import { createItem, updateItem } from "../../../../../helper/apiHelper";
 import { ITicketStatus } from "../../../../../../../common/Ticket-management-system/ITicketStatus.interface";
 const ticketStatusFormSchema = z.object({
-  code: z.string().trim().optional(),
+  code: z.string().trim().min(1, "Status code is required"),
   label: z.string().trim().min(1, "Display label is required"),
   is_Terminal: z.boolean(),
   isActive: z.boolean(),
