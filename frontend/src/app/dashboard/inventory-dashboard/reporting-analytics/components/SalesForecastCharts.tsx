@@ -12,6 +12,7 @@ interface ChannelDataItem {
   value: number;
   percentage: number;
   color: string;
+   [key: string]: string | number;
 }
 
 // Sales vs Inventory Forecast Data
