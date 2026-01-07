@@ -1,4 +1,4 @@
-import { z, ZodObject } from "zod";
+import { z } from "zod";
 import { SchemaDefinition, Types } from "mongoose";
 import { ITicketStatus } from "../../../../common/Ticket-management-system/ITicketStatus.interface";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
