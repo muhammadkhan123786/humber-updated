@@ -8,6 +8,7 @@ export const ticketTypeSchema: SchemaDefinition<ITicketType<Types.ObjectId, Type
     ...commonSchema,
     code: { type: String, required: true, unique: true },
     label: { type: String },
+    departmentId: { type: Types.ObjectId, ref: "Department" }
 }
 
 export const ticketTypeSchemaValidation = z.object({
@@ -18,6 +19,7 @@ export const ticketTypeSchemaValidation = z.object({
         .min(1, "Enter code please")
         .transform(v => v.toUpperCase()),
     label: z.string().optional(),
+    departmentId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Department ID"),
 });
 
 
