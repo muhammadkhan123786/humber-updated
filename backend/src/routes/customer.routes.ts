@@ -1,9 +1,7 @@
-
-
 import { Router } from "express";
 import { GenericService } from "../services/generic.crud.services";
 import { CustomerBaseDoc, CustomerBase } from "../models/customer.models";
-import { technicianRoleCreateSchema } from "../schemas/technician.roles.schema";
+import { baseCustomerZodSchema } from "../schemas/base.customer.schema";
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { saveCustomer } from "../controllers/customer.controller";
 import { genericProfileIdsMiddleware } from "../middleware/generic.profile.middleware";
@@ -22,7 +20,7 @@ const CustomerBaseController = new AdvancedGenericController({
                 { path: "countryId" }
             ]
         }],
-    validationSchema: technicianRoleCreateSchema,
+    validationSchema: baseCustomerZodSchema,
 
 });
 
