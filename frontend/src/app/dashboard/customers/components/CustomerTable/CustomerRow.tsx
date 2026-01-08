@@ -74,7 +74,7 @@ export default function CustomerRow({
             <td className="px-6 py-4">
                 <div className="text-sm text-gray-700 flex items-center gap-2">
                     <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                    {customer.city || 'Not set'}
+                    {customer.address || 'Not set'}
                 </div>
             </td>
 
