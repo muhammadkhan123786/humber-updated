@@ -12,6 +12,7 @@ const vehicleBrandController = new AdvancedGenericController({
     service: vehicleBrandServices,
     populate: ["userId"],
     validationSchema: vehicleBrandCreateSchema,
+    searchFields: ["brandName"]
 });
 
 router.get("/", vehicleBrandController.getAll);

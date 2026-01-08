@@ -12,6 +12,7 @@ const sizeController = new AdvancedGenericController({
     service: sizeServices,
     populate: ["userId"],
     validationSchema: sizeSchemaValidation,
+    searchFields: ["size"]
 });
 
 sizeRouter.get("/", sizeController.getAll);

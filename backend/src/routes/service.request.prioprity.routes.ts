@@ -12,6 +12,7 @@ const serviceRequestPrioprityController = new AdvancedGenericController({
     service: ServiceRequestPrioprityRouterServices,
     populate: ["userId"],
     validationSchema: serviceRequestPrioprityCreateSchema,
+    searchFields: ["serviceRequestPrioprity"]
 });
 
 ServiceRequestPrioprityRouter.get("/", serviceRequestPrioprityController.getAll);

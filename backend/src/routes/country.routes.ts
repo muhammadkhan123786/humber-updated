@@ -12,6 +12,7 @@ const countryController = new AdvancedGenericController({
     service: countryServices,
     populate: ["userId"],
     validationSchema: countryCreateSchema,
+    searchFields: ["countryName"]
 });
 
 countryRouter.get("/", countryController.getAll);

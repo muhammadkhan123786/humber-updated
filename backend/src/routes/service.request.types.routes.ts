@@ -12,6 +12,7 @@ const serviceRequestTypeController = new AdvancedGenericController({
     service: ServiceRequestTypeServices,
     populate: ["userId"],
     validationSchema: serviceRequestTypeCreateSchema,
+    searchFields: ["serviceRequestType"]
 });
 
 serviceRequestTypeRouter.get("/", serviceRequestTypeController.getAll);

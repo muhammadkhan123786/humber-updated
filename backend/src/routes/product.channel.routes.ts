@@ -6,12 +6,13 @@ import { AdvancedGenericController } from "../controllers/GenericController";
 
 const productChannelsRouter = Router();
 
-const currencyServices = new GenericService<channelDoc>(Channels);
+const productChannelServices = new GenericService<channelDoc>(Channels);
 
 const productChannelsController = new AdvancedGenericController({
-    service: currencyServices,
+    service: productChannelServices,
     populate: ["userId"],
     validationSchema: channelSchemaValidation,
+    searchFields: ["channelName"]
 });
 
 productChannelsRouter.get("/", productChannelsController.getAll);

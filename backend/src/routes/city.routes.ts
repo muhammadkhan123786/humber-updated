@@ -12,6 +12,7 @@ const cityController = new AdvancedGenericController({
     service: cityServices,
     populate: ["userId", "countryId"],
     validationSchema: cityModelCreateSchema,
+    searchFields: ["cityName"]
 });
 
 cityRouter.get("/", cityController.getAll);
