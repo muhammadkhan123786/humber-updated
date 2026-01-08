@@ -9,11 +9,17 @@ import { getAll } from "./apiHelper";
 
 export interface DropdownData {
   categories: DropdownOption[];
-//   brands: DropdownOption[];
+  brands: DropdownOption[];
   taxes: DropdownOption[];
   currencies: DropdownOption[];
   vendors: DropdownOption[];
   channels: DropdownOption[];
+  sizes: DropdownOption[];
+  colors: DropdownOption[];
+  status: DropdownOption[];
+  units: DropdownOption[];
+  fetchWherehouesStatus: DropdownOption[];
+  fetchWherehoues: DropdownOption[];
 }
 
 export class DropdownService {
@@ -21,35 +27,54 @@ export class DropdownService {
 
   static async fetchAll(): Promise<DropdownData> {
     try {
-      const [
-        categories,
-        // brands,
-        taxes,
-        currencies,
-        vendors,
-        channels
-      ] = await Promise.all([
-        this.fetchCategories(),
-        // this.fetchBrands(),
-        this.fetchTaxes(),
-        this.fetchCurrencies(),
-        this.fetchVendors(),
-        this.fetchChannels(),
-      ]);
+    const [
+      categories,
+      brands,
+      taxes,
+      currencies,
+      vendors,
+      channels,
+      sizes,
+      colors,
+      status,
+      units,
+      warehouses,
+      warehouseStatus
+    ] = await Promise.all([
+      this.fetchCategories(),
+      this.fetchBrands(),
+      this.fetchTaxes(),
+      this.fetchCurrencies(),
+      this.fetchVendors(),
+      this.fetchChannels(),
+      this.fetchSizes(), 
+      this.fetchColors(), 
+      this.fetchStatus(),
+      this.fetchUnits(),
+      this.fetchWherehoues(),
+      this.fetchWherehouesStatus(),
+    ]);
 
-      return {
-        categories,
-        // brands,
-        taxes,
-        currencies,
-        vendors,
-        channels,
-      };
-    } catch (error) {
-      console.error("Error fetching dropdown data:", error);
-      throw error;
-    }
+    return {
+      categories,
+      brands,
+      taxes,
+      currencies,
+      vendors,
+      channels,
+      sizes,
+      colors,
+      status,
+      units,
+      fetchWherehoues: warehouses,
+      fetchWherehouesStatus: warehouseStatus,
+    };
+  } catch (error) {
+    console.error("Error fetching dropdown data:", error);
+    throw error;
   }
+}
+
 
 //   private static async fetchCategories(): Promise<DropdownOption[]> {
 //     try {
@@ -69,21 +94,21 @@ export class DropdownService {
 //     }
 //   }
 
-//   private static async fetchBrands(): Promise<DropdownOption[]> {
-//     try {
-//       const response = await getAll<{ _id: string; brandName: string }>(
-//         "/brands", // Adjust endpoint as needed
-//         { limit: 100 }
-//       );
-//       return response.data.map(item => ({
-//         value: item._id,
-//         label: item.brandName,
-//       }));
-//     } catch (error) {
-//       console.error("Error fetching brands:", error);
-//       return [];
-//     }
-//   }
+  private static async fetchBrands(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; brandName: string }>(
+        "/vehiclebrand", // Adjust endpoint as needed
+        { limit: 100 }
+      );
+      return response.data.map(item => ({
+        value: item._id,
+        label: item.brandName,
+      }));
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+      return [];
+    }
+  }
 
 private static async fetchCategories(): Promise<DropdownOption[]> {
   try {
@@ -175,6 +200,153 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
       }));
     } catch (error) {
       console.error("Error fetching channels:", error);
+      return [];
+    }
+  }
+
+   private static async fetchColors(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; colorName: string }>(
+        "/colors",
+        { limit: 100 }
+      );
+       console.log("colors", response);
+      return response.data.map(item => ({
+        value: item._id,
+        label: item.colorName,
+      }));
+    } catch (error) {
+      console.error("Error fetching colors:", error);
+      return [];
+    }
+  }
+
+   private static async fetchSizes(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; size: string }>(
+        "/sizes",
+        { limit: 100 }
+      );
+       console.log("sizes", response);
+      return response.data.map(item => ({
+        value: item._id,
+        label: item.size,
+      }));
+    } catch (error) {
+      console.error("Error fetching sizes:", error);
+      return [];
+    }
+  }
+  
+
+     private static async fetchStatus(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; orderStatus: string }>(
+        "/order-status",
+        { limit: 100 }
+      );
+       console.log("order-status", response);
+      return response.data.map(item => ({
+        value: item._id,
+        label: item.orderStatus,
+      }));
+    } catch (error) {
+      console.error("Error fetching sizes:", error);
+      return [];
+    }
+  }
+
+//   private static async fetchStatus(): Promise<DropdownOption[]> {
+//   try {
+//     console.log("Starting fetchStatus...");
+    
+//     const response = await getAll<{ _id: string; orderStatus: string }>(
+//       "/order-status",
+//       { limit: 100 }
+//     );
+    
+//     console.log("Raw API response:", response);
+//     console.log("Response data:", response.data);
+//     console.log("First item:", response.data[0]);
+//     console.log("First item orderStatus:", response.data[0]?.orderStatus);
+    
+//     // Make sure we have data
+//     if (!response.data || !Array.isArray(response.data)) {
+//       console.error("Invalid response data format:", response.data);
+//       return [];
+//     }
+    
+//     // Map the data
+//     const options = response.data.map(item => {
+//       // Validate each item
+//       if (!item._id || !item.orderStatus) {
+//         console.warn("Invalid item found:", item);
+//         return null;
+//       }
+//       return {
+//         value: item._id,
+//         label: item.orderStatus,
+//       };
+//     }).filter(Boolean); // Remove null items
+    
+//     console.log("Mapped options:", options);
+    
+//     return options;
+    
+//   } catch (error) {
+//     console.error("Error in fetchStatus:", error);
+//     return []; // Always return array even on error
+//   }
+// }
+
+       private static async fetchUnits(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; unitName: string }>(
+        "/units",
+        { limit: 100 }
+      );
+       console.log("units", response);
+      return response.data.map(item => ({
+        value: item._id,
+        label: item.unitName,
+      }));
+    } catch (error) {
+      console.error("Error fetching sizes:", error);
+      return [];
+    }
+  }
+
+  
+       private static async fetchWherehoues(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; addressId: { address: string} }>(
+        "/warehouses",
+        { limit: 100 }
+      );
+       console.log("warehouses", response);
+      return response.data.map(item => ({
+        value: item._id,
+        label: item?.addressId?.address,
+      }));
+    } catch (error) {
+      console.error("Error fetching sizes:", error);
+      return [];
+    }
+  }
+
+   private static async fetchWherehouesStatus(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; wareHouseStatus: string }>(
+        "/warehouse-status",
+        { limit: 100 }
+      );
+       console.log("warehouses status", response);
+      return response.data.map(item => ({
+        value: item._id,
+        label: item.wareHouseStatus,
+      }));
+    } catch (error) {
+      console.error("Error fetching sizes:", error);
       return [];
     }
   }
