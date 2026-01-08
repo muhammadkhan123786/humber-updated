@@ -12,6 +12,7 @@ const serviceZoneController = new AdvancedGenericController({
     service: ServiceZoneRouterServices,
     populate: ["userId"],
     validationSchema: serviceZoneCreateSchema,
+    searchFields: ["serviceZone"]
 });
 
 ServiceZoneRouter.get("/", serviceZoneController.getAll);

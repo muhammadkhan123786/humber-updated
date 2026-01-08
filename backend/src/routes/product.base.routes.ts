@@ -12,6 +12,7 @@ const productSourceController = new AdvancedGenericController({
     service: productBaseService,
     populate: ["userId"],
     validationSchema: productBasicSchemaValidation,
+    searchFields: ["productName"]
 });
 
 

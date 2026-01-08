@@ -12,6 +12,7 @@ const unitController = new AdvancedGenericController({
     service: unitServices,
     populate: ["userId"],
     validationSchema: unitSchemaSchemaValidation,
+    searchFields: ["unitName"]
 });
 
 

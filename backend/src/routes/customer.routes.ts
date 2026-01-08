@@ -23,6 +23,7 @@ const CustomerBaseController = new AdvancedGenericController({
             ]
         }],
     validationSchema: technicianRoleCreateSchema,
+
 });
 
 const customerProfileMiddleware = genericProfileIdsMiddleware<CustomerBaseDoc>({ targetModel: CustomerBase });

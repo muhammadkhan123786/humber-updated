@@ -14,6 +14,7 @@ const warehouseController = new AdvancedGenericController({
   service: warehouseServices,
   populate: ["userId", "personId", "addressId", "contactId"],
   validationSchema: wareHouseSchemaValidation,
+  searchFields: [""]
 });
 
 const warehouseProfileMiddleware = genericProfileIdsMiddleware<warehouseDoc>(

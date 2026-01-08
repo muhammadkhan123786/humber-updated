@@ -12,6 +12,7 @@ const orderStatusController = new AdvancedGenericController({
     service: currencyServices,
     populate: ["userId"],
     validationSchema: orderStatusSchemaValidation,
+    searchFields: ["orderStatus"]
 });
 
 orderStatusRouter.get("/", orderStatusController.getAll);

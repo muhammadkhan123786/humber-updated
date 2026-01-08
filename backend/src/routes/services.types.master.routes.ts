@@ -12,6 +12,7 @@ const serviceTypeMasterController = new AdvancedGenericController({
     service: serviceTypeMasterServices,
     populate: ["userId"],
     validationSchema: MasterServiceTypeCreateSchema,
+    searchFields: ["MasterServiceType"]
 });
 
 serviceTypeMasterRouter.get("/", serviceTypeMasterController.getAll);

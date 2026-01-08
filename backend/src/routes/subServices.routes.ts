@@ -12,6 +12,7 @@ const subServicesController = new AdvancedGenericController({
     service: subServicesServices,
     populate: ["userId", "masterServiceId"],
     validationSchema: subServiceCreateSchema,
+    searchFields: ["subServiceName"]
 });
 
 subServiceRouter.get("/", subServicesController.getAll);

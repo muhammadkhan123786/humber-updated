@@ -12,6 +12,7 @@ const productSourceController = new AdvancedGenericController({
     service: productSourceServices,
     populate: ["userId"],
     validationSchema: productSourceSchemaValidation,
+    searchFields: ["productSource"]
 });
 
 productSourceRouter.get("/", productSourceController.getAll);

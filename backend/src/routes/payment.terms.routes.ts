@@ -12,6 +12,7 @@ const paymentTermController = new AdvancedGenericController({
     service: paymentTermServices,
     populate: ["userId"],
     validationSchema: paymentTermCreateSchema,
+    searchFields: ["paymentTerm"]
 });
 
 paymentTermRouter.get("/", paymentTermController.getAll);
