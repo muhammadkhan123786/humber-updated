@@ -291,17 +291,17 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
         alert("User not found. Please login again.");
         return;
       }
-      const payload = {
+      const payload: VenderDto = {
         userId: userId,
         venderType: formData.venderType,
-        business_name: formData.business_name,
+        business_Name: formData.business_name,
         website: formData.website || undefined,
         paymentTermId: formData.paymentTermId,
         currencyId: formData.currencyId || undefined,
-        credit_Limit: formData.credit_Limit || undefined,
+        credit_Limit: formData.credit_Limit ? Number(formData.credit_Limit) : 0,
         bank_name: formData.bank_name || undefined,
         account_Number: formData.account_Number || undefined,
-        lead_Time_Days: formData.lead_Time_Days || undefined,
+        lead_Time_Days: formData.lead_Time_Days ? Number(formData.lead_Time_Days) : 0,
         isActive: formData.isActive,
         isDefault: formData.isDefault,
         person: {
@@ -656,8 +656,8 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
           {loading
             ? "Processing..."
             : editingData
-            ? "Update Vender"
-            : "Save Vender"}
+              ? "Update Vender"
+              : "Save Vender"}
         </button>
       </form>
     </FormModal>
