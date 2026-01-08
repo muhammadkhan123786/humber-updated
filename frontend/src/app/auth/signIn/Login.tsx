@@ -82,7 +82,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      alert('Server se connect nahi ho pa raha. Please check if backend is running.');
+      alert('Did Not Connect the Server');
     } finally {
       setIsLoading(false);
     }

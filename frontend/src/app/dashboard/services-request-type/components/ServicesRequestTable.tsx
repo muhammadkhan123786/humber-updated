@@ -24,10 +24,10 @@ const ServiceRequestTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
             <tr key={item._id} className="hover:bg-orange-50 transition-colors">
               <td className="p-4">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
-                        <ClipboardList size={18} />
-                    </div>
-                    <span className="font-bold text-gray-800">{item.serviceRequestType}</span>
+                  <div className="p-2 bg-gray-100 rounded-lg text-gray-500">
+                    <ClipboardList size={18} />
+                  </div>
+                  <span className="font-bold text-gray-800">{item.serviceRequestType}</span>
                 </div>
               </td>
               <td className="p-4 text-center">
@@ -45,8 +45,19 @@ const ServiceRequestTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
               <td className="p-4 text-center">
                 <div className="flex justify-center gap-2">
                   <button onClick={() => onEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit size={18} /></button>
-                  <button onClick={() => onDelete(item._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
-                </div>
+                  <button
+                    onClick={() => {
+                      if (item.isDefault) {
+                        alert("Default record cannot be deleted.");
+                      } else {
+                        onDelete(item._id);
+                      }
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title={item.isDefault ? "Default record cannot be deleted" : "Delete"}
+                  >
+                    <Trash2 size={18} />
+                  </button>                </div>
               </td>
             </tr>
           )) : (

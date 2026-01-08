@@ -17,7 +17,7 @@ const SubServicesTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
             <th className="p-4">Category (Master)</th>
             <th className="p-4 text-center">Cost</th>
             <th className="p-4 text-center">Status</th>
-            <th className="p-4 text-center">Default</th> 
+            <th className="p-4 text-center">Default</th>
             <th className="p-4 text-center">Actions</th>
           </tr>
         </thead>
@@ -52,7 +52,17 @@ const SubServicesTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   <button onClick={() => onEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                     <Edit size={18} />
                   </button>
-                  <button onClick={() => onDelete(item._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                  <button
+                    onClick={() => {
+                      if (item.isDefault) {
+                        alert("Default record cannot be deleted.");
+                      } else {
+                        onDelete(item._id);
+                      }
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title={item.isDefault ? "Default record cannot be deleted" : "Delete"}
+                  >
                     <Trash2 size={18} />
                   </button>
                 </div>

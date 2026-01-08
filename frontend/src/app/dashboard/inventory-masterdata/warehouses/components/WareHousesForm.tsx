@@ -283,9 +283,14 @@ const WareHousesForm = ({
             type="number"
             min="0"
             value={formData.availableCapacity || 0}
-            onChange={(e) =>
-              handleFormChange("availableCapacity", Number(e.target.value) || 0)
-            }
+            onChange={(e) => {
+              const value = Number(e.target.value) || 0;
+
+              handleFormChange(
+                "availableCapacity",
+                value > formData.capacity ? formData.capacity : value
+              );
+            }}
             required
           />
         </div>
@@ -318,18 +323,33 @@ const WareHousesForm = ({
           <FormInput
             label="Mobile Number *"
             value={formData.contact.mobileNumber || ""}
-            onChange={(e) =>
-              updateNested("contact", "mobileNumber", e.target.value)
-            }
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9+]/g, "");
+              if (value.indexOf("+") > 0) {
+                value = value.replace(/\+/g, "");
+              }
+
+              updateNested("contact", "mobileNumber", value);
+            }}
+            inputMode="tel"
+            placeholder="+923001234567"
             required
           />
+
           <FormInput
             label="Phone Number"
             value={formData.contact.phoneNumber || ""}
-            onChange={(e) =>
-              updateNested("contact", "phoneNumber", e.target.value)
-            }
+            onChange={(e) => {
+              let value = e.target.value.replace(/[^0-9+]/g, "");
+              if (value.indexOf("+") > 0) {
+                value = value.replace(/\+/g, "");
+              }
+              updateNested("contact", "phoneNumber", value);
+            }}
+            inputMode="tel"
+            placeholder="+922112345678"
           />
+
           <FormInput
             label="Email ID *"
             type="email"
@@ -338,20 +358,27 @@ const WareHousesForm = ({
             required
           />
         </div>
-
         <FormInput
           label="Address *"
           value={formData.address.address || ""}
           onChange={(e) => updateNested("address", "address", e.target.value)}
           required
         />
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           <FormInput
             label="Zip Code"
             value={formData.address.zipCode || ""}
-            onChange={(e) => updateNested("address", "zipCode", e.target.value)}
+            onChange={(e) =>
+              updateNested(
+                "address",
+                "zipCode",
+                e.target.value.replace(/\D/g, "")
+              )
+            }
+            inputMode="numeric"
+            placeholder="e.g. 54000"
           />
+
           <FormInput
             label="City"
             value={formData.address.city || ""}
@@ -365,7 +392,7 @@ const WareHousesForm = ({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormToggle
-            label="Active Status"
+            label="Active"
             checked={formData.isActive ?? true}
             onChange={(val) => handleFormChange("isActive", val)}
           />

@@ -30,7 +30,7 @@ const RepairTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   {item.isActive ? "ACTIVE" : "INACTIVE"}
                 </span>
               </td>
-                <td className="p-4 text-center">0</td>
+              <td className="p-4 text-center">0</td>
               <td className="p-4 text-center">
                 {item.isDefault && <Star className="inline text-yellow-500 fill-yellow-500" size={18} />}
               </td>
@@ -39,7 +39,17 @@ const RepairTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   <button onClick={() => onEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg">
                     <Edit size={18} />
                   </button>
-                  <button onClick={() => onDelete(item._id)} disabled={item.isDefault} className={`p-2 ${item.isDefault ? 'text-gray-300' : 'text-red-600 hover:bg-red-50'} rounded-lg`}>
+                  <button
+                    onClick={() => {
+                      if (item.isDefault) {
+                        alert("Default record cannot be deleted.");
+                      } else {
+                        onDelete(item._id);
+                      }
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title={item.isDefault ? "Default record cannot be deleted" : "Delete"}
+                  >
                     <Trash2 size={18} />
                   </button>
                 </div>

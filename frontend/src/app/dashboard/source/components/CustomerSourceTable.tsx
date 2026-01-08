@@ -38,8 +38,19 @@ const CustomerSourceTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
               <td className="p-4 text-center">
                 <div className="flex justify-center gap-2">
                   <button onClick={() => onEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit size={18} /></button>
-                  <button onClick={() => onDelete(item._id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 size={18} /></button>
-                </div>
+                  <button
+                    onClick={() => {
+                      if (item.isDefault) {
+                        alert("Default record cannot be deleted.");
+                      } else {
+                        onDelete(item._id);
+                      }
+                    }}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title={item.isDefault ? "Default record cannot be deleted" : "Delete"}
+                  >
+                    <Trash2 size={18} />
+                  </button>                </div>
               </td>
             </tr>
           )) : (

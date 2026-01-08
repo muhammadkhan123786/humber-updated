@@ -14,6 +14,7 @@ export interface AddNewCustomerInterface {
   mobileNumber: string;
   address: string;
   city: string;
+  zipCode:string;
   postCode: string;
   country?: string; // Backend se kabhi aata hai kabhi nahi, isliye optional
   

@@ -74,7 +74,7 @@ export default function VehicleRepairClient() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-extrabold flex items-center gap-3" style={{ color: THEME_COLOR }}>
-              <Wrench size={36} /> Repair Statuses
+              <Wrench size={36} /> Repair Status
             </h1>
             <p className="text-gray-500 mt-1">Manage repair workflow stages</p>
           </div>

@@ -30,7 +30,11 @@ const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }
         const token = localStorage.getItem("token");
         // Hardcoded URL ki jagah dynamic URL:
         const res = await axios.get(`${BASE_URL}/service-types-master`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
+            params:{
+                isActive:true,
+                isDeleted:false
+            }
         });
         setMasterServices(res.data.data || []);
     } catch (err) { 
@@ -131,7 +135,7 @@ const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }
 
                     <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl">
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
                             <span className="text-sm font-medium">Active</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">

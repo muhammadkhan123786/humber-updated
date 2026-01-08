@@ -7,7 +7,7 @@ import staffmanagement from "../assets/users-alt.svg";
 
 export const NavBarLinksData: NavLinksInterface[] = [
   { _id: 1, href: "/dashboard", roleId: [1, 2], label: "Dashboard", index: 1 },
-   // Inventory (Dropdown)
+  // Inventory (Dropdown)
   {
     _id: 2,
     alt: "Inventory",
@@ -85,6 +85,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
       },
     ],
   },
+
   //Inventory Master Form
   {
     _id: 9,
@@ -132,9 +133,9 @@ export const NavBarLinksData: NavLinksInterface[] = [
       //   index:5,
       // }
 
-       {
+      {
         _id: 114,
-        href: "/dashboard/inventory-masterdata/currencies",
+        href: "/dashboard/inventory-masterdata/Currencies",
         label: "currencies",
         index: 1,
       },
@@ -147,7 +148,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 116,
         href: "/dashboard/inventory-masterdata/order-status",
-        label: "order Status",
+        label: "Order Status",
         index: 3,
       },
       {
@@ -159,8 +160,15 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 119,
         href: "/dashboard/inventory-masterdata/proposed-actions",
-        label: "proposed Actions",
+        label: "Proposed Actions",
         index: 6,
+      },
+
+      {
+        _id: 120,
+        href: "/dashboard/inventory-masterdata/item-conditions",
+        label: "Item Conditions",
+        index: 7,
       },
 
       {
@@ -214,9 +222,9 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 128,
         href: "/dashboard/inventory-masterdata/warehouses",
-        label: "warehouses",
+        label: "Warehouses",
         index: 13,
-      }
+      },
     ],
   },
   {
@@ -264,6 +272,49 @@ export const NavBarLinksData: NavLinksInterface[] = [
     iconSrc: box,
     index: 8,
   },
+  //ticket master data
+
+  {
+    _id: 10,
+    alt: "Ticket Master Data",
+    href: "#",
+    roleId: [1],
+    label: "Ticket Master Data",
+    iconSrc: staffmanagement,
+    index: 9,
+    children: [
+      {
+        _id: 203,
+        href: "/dashboard/ticket-masterdata/ticket-status",
+        label: "Ticket Status",
+        index: 1,
+      },
+      {
+        _id: 204,
+        href: "/dashboard/ticket-masterdata/department",
+        label: "Department",
+        index: 2,
+      },
+      {
+        _id: 205,
+        href: "/dashboard/ticket-masterdata/ticket-actions",
+        label: "Ticket Actions",
+        index: 3,
+      },
+      {
+        _id: 306,
+        href: "/dashboard/ticket-masterdata/ticket-type",
+        label: "Ticket Type",
+        index: 4,
+      },
+      {
+        _id: 307,
+        href: "/dashboard/ticket-masterdata/ticket-transition",
+        label: "Ticket Transition",
+        index: 5,
+      },
+    ],
+  },
   {
     _id: 7,
     alt: "Master data",
@@ -276,13 +327,13 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 101,
         href: "/dashboard/vehiclebrands",
-        label: "Vehicles Brands",
+        label: "Vehicle Brands",
         index: 1,
       },
       {
         _id: 102,
         href: "/dashboard/vehiclemodals",
-        label: "Vehicle Modals",
+        label: "Vehicle Models",
         index: 2,
       },
       {
