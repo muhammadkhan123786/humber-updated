@@ -19,5 +19,7 @@ const corporateCustomer = new Schema({
     website: String,
 });
 
+
+
 export const domesticCutomerSchema = CustomerBase.discriminator("domestic", domesticCutomer);
 export const corporateCustomerSchema = CustomerBase.discriminator("corporate", corporateCustomer);
