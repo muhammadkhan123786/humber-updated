@@ -13,6 +13,7 @@ const categoryController = new AdvancedGenericController({
     service: categoryServices,
     populate: ["userId", "parentId"],
     validationSchema: categorySchemaValidation,
+    searchFields: ["categoryName"]
 });
 
 categoryRouter.get("/", getAllCategories);

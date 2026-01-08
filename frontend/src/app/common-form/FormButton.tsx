@@ -8,7 +8,13 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   themeColor: string;
 }
 
-export const FormButton = ({ label, icon, loading, themeColor, ...props }: ButtonProps) => (
+export const FormButton = ({
+  label,
+  icon,
+  loading,
+  themeColor,
+  ...props
+}: ButtonProps) => (
   <button
     {...props}
     disabled={loading || props.disabled}
