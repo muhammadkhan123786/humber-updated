@@ -28,7 +28,11 @@ const CityForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props
             try {
                 const token = localStorage.getItem("token");
                 const res = await axios.get(`${BASE_URL}/country`, {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: { Authorization: `Bearer ${token}` },
+                    params:{
+                        isActive:true,
+                        isDeleted:false
+                    }
                 });
                 setCountries(res.data.data || []);
             } catch (err) { console.error("Country fetch error", err); }
@@ -108,11 +112,11 @@ const CityForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props
 
                     <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl">
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
                             <span className="text-sm font-medium">Active</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isDefault} onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} />
+                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isDefault}  onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} />
                             <span className="text-sm font-medium">Default</span>
                         </label>
                     </div>
