@@ -8,120 +8,141 @@ import { Country } from "../../models/country.models";
 import { CityModel } from "../../models/city.models";
 
 export class VenderDomainService {
+  // ================= CREATE =================
+  async createVender(venderData: VenderDto) {
+    try {
+      const { countryId, cityId } = await this.resolveCountryAndCity(
+        venderData.address
+      );
 
-    async createVender(venderData: VenderDto) {
+      const [person] = await Person.create([venderData.person]);
+      const [contact] = await Contact.create([venderData.contact]);
 
+      const [address] = await Address.create([
+        {
+          ...venderData.address,
+          countryId,
+          cityId,
+          userId: venderData.userId,
+        },
+      ]);
 
-        try {
-            // 1️⃣ Resolve country & city
-            const { countryId, cityId } =
-                await this.resolveCountryAndCity(venderData.address);
+      const [vender] = await Vender.create([
+        {
+          personId: person._id,
+          contactId: contact._id,
+          addressId: address._id,
+          ...this.mapVendorFields(venderData),
+        },
+      ]);
 
-            // 2️⃣ Create person
-            const [person] = await Person.create(
-                [venderData.person],
+      return vender;
+    } catch (err) {
+      throw err;
+    }
+  }
 
-            );
+  // ================= UPDATE =================
+  async updateVender(venderId: string, venderData: VenderDto) {
+    try {
+      const vender = await Vender.findById(venderId);
+      if (!vender) {
+        throw new Error("Vendor not found");
+      }
 
-            // 3️⃣ Create contact
-            const [contact] = await Contact.create(
-                [venderData.contact],
+      // 1️⃣ Resolve country & city again
+      const { countryId, cityId } = await this.resolveCountryAndCity(
+        venderData.address
+      );
 
-            );
+      // 2️⃣ Update person
+      await Person.findByIdAndUpdate(vender.personId, venderData.person, {
+        new: true,
+        runValidators: true,
+      });
 
-            // 4️⃣ Create address
-            const [address] = await Address.create(
-                [{
-                    ...venderData.address,
-                    countryId,
-                    cityId,
-                    userId: venderData.userId
-                }],
+      // 3️⃣ Update contact
+      await Contact.findByIdAndUpdate(vender.contactId, venderData.contact, {
+        new: true,
+        runValidators: true,
+      });
 
-            );
+      // 4️⃣ Update address
+      await Address.findByIdAndUpdate(
+        vender.addressId,
+        {
+          ...venderData.address,
+          countryId,
+          cityId,
+          userId: venderData.userId,
+        },
+        { new: true, runValidators: true }
+      );
 
-            // 5️⃣ Create vendor
-            const [vender] = await Vender.create(
-                [{
-                    personId: person._id,
-                    contactId: contact._id,
-                    addressId: address._id,
-                    ...this.mapVendorFields(venderData)
-                }],
+      // 5️⃣ Update vendor main record
+      const updatedVender = await Vender.findByIdAndUpdate(
+        venderId,
+        this.mapVendorFields(venderData),
+        { new: true, runValidators: true }
+      );
 
-            );
+      return updatedVender;
+    } catch (err) {
+      throw err;
+    }
+  }
 
-
-            return vender;
-
-        } catch (err) {
-
-            throw err;
-        } finally {
-            console.log('Finally.');
-        }
+  // ---------------------------------------
+  private async resolveCountryAndCity(
+    address: any
+  ): Promise<{ countryId: Types.ObjectId; cityId: Types.ObjectId }> {
+    if (!address?.country || !address?.city) {
+      throw new Error("Country and city are required");
     }
 
-    // ---------------------------------------
-
-    private async resolveCountryAndCity(
-        address: any,
-
-    ): Promise<{ countryId: Types.ObjectId; cityId: Types.ObjectId }> {
-
-        if (!address?.country || !address?.city) {
-            throw new Error("Country and city are required");
-        }
-
-        let country = await Country.findOne(
-            { countryName: address.country },
-            null,
-
-        );
-
-        if (!country) {
-            [country] = await Country.create(
-                [{ countryName: address.country }],
-
-            );
-        }
-
-        let city = await CityModel.findOne(
-            { cityName: address.city, countryId: country._id },
-            null,
-
-        );
-
-        if (!city) {
-            [city] = await CityModel.create(
-                [{ cityName: address.city, countryId: country._id }],
-
-            );
-        }
-
-        return {
-            countryId: country._id,
-            cityId: city._id
-        };
+    let country = await Country.findOne({ countryName: address.country });
+    if (!country) {
+      [country] = await Country.create([
+        { countryName: address.country, userId: address.userId },
+      ]);
     }
 
-    // ---------------------------------------
+    let city = await CityModel.findOne({
+      cityName: address.city,
+      countryId: country._id,
+    });
 
-    private mapVendorFields(venderData: VenderDto) {
-        return {
-            userId: venderData.userId,
-            venderType: venderData.venderType,
-            business_Name: venderData.business_Name,
-            website: venderData.website,
-            paymentTermId: venderData.paymentTermId,
-            currencyId: venderData.currencyId,
-            credit_Limit: venderData.credit_Limit,
-            bank_name: venderData.bank_name,
-            account_Number: venderData.account_Number,
-            lead_Time_Days: venderData.lead_Time_Days,
-            isActive: venderData.isActive ?? true,
-            isDefault: venderData.isDefault ?? false
-        };
+    if (!city) {
+      [city] = await CityModel.create([
+        {
+          cityName: address.city,
+          countryId: country._id,
+          userId: address.userId,
+        },
+      ]);
     }
+
+    return {
+      countryId: country._id,
+      cityId: city._id,
+    };
+  }
+
+  // ---------------------------------------
+  private mapVendorFields(venderData: VenderDto) {
+    return {
+      userId: venderData.userId,
+      venderType: venderData.venderType,
+      business_name: venderData.business_name,
+      website: venderData.website,
+      paymentTermId: venderData.paymentTermId,
+      currencyId: venderData.currencyId,
+      credit_Limit: venderData.credit_Limit,
+      bank_name: venderData.bank_name,
+      account_Number: venderData.account_Number,
+      lead_Time_Days: venderData.lead_Time_Days,
+      isActive: venderData.isActive ?? true,
+      isDefault: venderData.isDefault ?? false,
+    };
+  }
 }
-
