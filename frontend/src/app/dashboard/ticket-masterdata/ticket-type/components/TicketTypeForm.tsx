@@ -26,13 +26,23 @@ type TicketTypeFormData = z.infer<typeof ticketTypeFormSchema>;
 export default function TicketTypeForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: any) {
   const [departments, setDepartments] = useState<{label: string, value: string}[]>([]);
 
-  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm<TicketTypeFormData>({
+  const { 
+    register, 
+    handleSubmit, 
+    reset, 
+    control, 
+    watch, // Added watch
+    setValue, // Added setValue
+    formState: { errors, isSubmitting } 
+  } = useForm<TicketTypeFormData>({
     resolver: zodResolver(ticketTypeFormSchema),
     defaultValues: { code: "", label: "", departmentId: "", isActive: true, isDefault: false }
   });
 
+  // isDefault ki value monitor karne ke liye
+  const isDefaultValue = watch("isDefault");
+
   useEffect(() => {
-    // Fetch Departments for Dropdown
     const loadDeps = async () => {
       const res = await getAlls<IDepartments>("/departments");
       const formatted = res.data.map(d => ({ label: d.departmentName, value: d._id! }));
@@ -84,10 +94,22 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
 
         <div className="grid grid-cols-2 gap-4 border-t pt-4">
           <Controller control={control} name="isActive" render={({ field }) => (
-            <FormToggle label="Active" checked={field.value} onChange={field.onChange} />
+            <FormToggle 
+              label="Active" 
+              checked={field.value} 
+              onChange={field.onChange}
+              disabled={isDefaultValue} // Lock active toggle if default is true
+            />
           )} />
           <Controller control={control} name="isDefault" render={({ field }) => (
-            <FormToggle label="Default" checked={field.value} onChange={field.onChange} />
+            <FormToggle 
+              label="Default" 
+              checked={field.value} 
+              onChange={(val) => {
+                field.onChange(val);
+                if (val) setValue("isActive", true); // Auto check Active when Default is selected
+              }} 
+            />
           )} />
         </div>
 

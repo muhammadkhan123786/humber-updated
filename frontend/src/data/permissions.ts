@@ -135,7 +135,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
 
       {
         _id: 114,
-        href: "/dashboard/inventory-masterdata/Currencies",
+        href: "/dashboard/inventory-masterdata/currencies",
         label: "currencies",
         index: 1,
       },

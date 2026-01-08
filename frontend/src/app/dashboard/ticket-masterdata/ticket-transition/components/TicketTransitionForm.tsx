@@ -64,11 +64,14 @@ const TicketTransitionForm = ({
     actions: [],
     types: [],
   });
+
   const {
     register,
     handleSubmit,
     reset,
     control,
+    watch, // Added watch
+    setValue, // Added setValue
     formState: { errors, isSubmitting },
   } = useForm<TransitionFormData>({
     resolver: zodResolver(transitionSchema),
@@ -82,6 +85,10 @@ const TicketTransitionForm = ({
       isDefault: false,
     },
   });
+
+  // Watch isDefault to disable isActive toggle
+  const isDefaultValue = watch("isDefault");
+
   useEffect(() => {
     const loadOptions = async () => {
       try {
@@ -218,6 +225,8 @@ const TicketTransitionForm = ({
                     label="Active"
                     checked={field.value}
                     onChange={field.onChange}
+                    // Locked if default
+                    disabled={isDefaultValue}
                   />
                 )}
               />
@@ -228,7 +237,12 @@ const TicketTransitionForm = ({
                   <FormToggle
                     label="Default Transition"
                     checked={field.value}
-                    onChange={field.onChange}
+                    onChange={(val) => {
+                      field.onChange(val);
+                      if (val) {
+                        setValue("isActive", true);
+                      }
+                    }}
                   />
                 )}
               />

@@ -19,7 +19,6 @@ const departmentFormSchema = z.object({
   userId: z.string().optional(),
 });
 
-// 2. Type Inference (Solving the Type Mismatch error)
 type DepartmentFormData = z.infer<typeof departmentFormSchema>;
 
 interface Props {
@@ -37,12 +36,14 @@ const DepartmentForm = ({
   themeColor,
   apiUrl,
 }: Props) => {
-  // 3. React Hook Form Setup
+  // 3. React Hook Form Setup (Added watch & setValue)
   const {
     register,
     handleSubmit,
     reset,
     control,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<DepartmentFormData>({
     resolver: zodResolver(departmentFormSchema),
@@ -53,6 +54,9 @@ const DepartmentForm = ({
       userId: "",
     },
   });
+
+  // isDefault ki value ko watch karein
+  const isDefaultValue = watch("isDefault");
 
   // 4. Sync editingData with reset
   useEffect(() => {
@@ -66,7 +70,7 @@ const DepartmentForm = ({
     }
   }, [editingData, reset]);
 
-  // 5. Submit Handler using apiHelper
+  // 5. Submit Handler
   const onSubmit = async (values: DepartmentFormData) => {
     try {
       const userStr = localStorage.getItem("user");
@@ -107,7 +111,6 @@ const DepartmentForm = ({
           />
         </div>
 
-        {/* Updated Toggle Section using md:grid-cols-2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
           <Controller
             control={control}
@@ -117,6 +120,8 @@ const DepartmentForm = ({
                 label="Active Status"
                 checked={field.value}
                 onChange={field.onChange}
+                // FIXED: Agar Default true hai to isActive disable ho jaye
+                disabled={isDefaultValue}
               />
             )}
           />
@@ -127,7 +132,13 @@ const DepartmentForm = ({
               <FormToggle
                 label="Set as Default"
                 checked={field.value}
-                onChange={field.onChange}
+                onChange={(val) => {
+                  field.onChange(val);
+                  // LOGIC: Agar isko default banaya jaye to isActive khud ba khud true ho jaye
+                  if (val) {
+                    setValue("isActive", true);
+                  }
+                }}
               />
             )}
           />
