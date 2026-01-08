@@ -62,9 +62,10 @@ const UnitsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
         />
         <div className="flex gap-4 p-1">
           <FormToggle
-            label="Active Status"
+            label="Active"
             checked={formData.isActive}
             onChange={(val) => setFormData({ ...formData, isActive: val })}
+            disabled={formData.isDefault}
           />
           <FormToggle
             label="Set as Default"

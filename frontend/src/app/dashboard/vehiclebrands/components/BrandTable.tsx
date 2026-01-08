@@ -44,8 +44,8 @@ const BrandTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   </button>
                   <button 
                     onClick={() => onDelete(brand._id)} 
-                    disabled={brand.isDefault}
-                    className={`p-2 ${brand.isDefault ? 'text-gray-300' : 'text-red-600 hover:bg-red-50'} rounded-lg`}
+                   
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                   >
                     <Trash2 size={18} />
                   </button>

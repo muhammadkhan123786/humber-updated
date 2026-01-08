@@ -1,7 +1,7 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import path from 'path';
-import 'dotenv/config'; // load env variables
+import express, { Application } from "express";
+import cors from "cors";
+import path from "path";
+import "dotenv/config"; // load env variables
 
 // Import routes
 import shopRouter from './routes/shop.routes';
@@ -56,51 +56,146 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded
 app.use(cors());
 
 // Static files (for uploads/public folder)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
-app.use(`${process.env.API_PREFIX}/vehiclebrand`, adminProtecter, vehicleBrandRouter);
+app.use(
+  `${process.env.API_PREFIX}/vehiclebrand`,
+  adminProtecter,
+  vehicleBrandRouter
+);
 app.use(`${process.env.API_PREFIX}/vechilemodel`, adminProtecter, modelRouter);
-app.use(`${process.env.API_PREFIX}/repairstatus`, adminProtecter, repairStatusRouter);
-app.use(`${process.env.API_PREFIX}/service-types-master`, adminProtecter, serviceTypeMasterRouter);
-app.use(`${process.env.API_PREFIX}/sub-services`, adminProtecter, subServiceRouter);
+app.use(
+  `${process.env.API_PREFIX}/repairstatus`,
+  adminProtecter,
+  repairStatusRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/service-types-master`,
+  adminProtecter,
+  serviceTypeMasterRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/sub-services`,
+  adminProtecter,
+  subServiceRouter
+);
 app.use(`${process.env.API_PREFIX}/city`, adminProtecter, cityRouter);
 app.use(`${process.env.API_PREFIX}/country`, adminProtecter, countryRouter);
-app.use(`${process.env.API_PREFIX}/customer-source`, adminProtecter, customerSourceRouter);
+app.use(
+  `${process.env.API_PREFIX}/customer-source`,
+  adminProtecter,
+  customerSourceRouter
+);
 app.use(`${process.env.API_PREFIX}/addresses`, adminProtecter, addressRouter);
-app.use(`${process.env.API_PREFIX}/technician-roles`, adminProtecter, TechnicianRoleRouter);
-app.use(`${process.env.API_PREFIX}/services-zones`, adminProtecter, ServiceZoneRouter);
-app.use(`${process.env.API_PREFIX}/service-request-prioprity-level`, adminProtecter, ServiceRequestPrioprityRouter);
-app.use(`${process.env.API_PREFIX}/service-request-type`, adminProtecter, serviceRequestTypeRouter);
-app.use(`${process.env.API_PREFIX}/customers`, adminProtecter, CustomerBaseRouter);
-app.use(`${process.env.API_PREFIX}/technicians`, adminProtecter, technicianRouter);
+app.use(
+  `${process.env.API_PREFIX}/technician-roles`,
+  adminProtecter,
+  TechnicianRoleRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/services-zones`,
+  adminProtecter,
+  ServiceZoneRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/service-request-prioprity-level`,
+  adminProtecter,
+  ServiceRequestPrioprityRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/service-request-type`,
+  adminProtecter,
+  serviceRequestTypeRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/customers`,
+  adminProtecter,
+  CustomerBaseRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/technicians`,
+  adminProtecter,
+  technicianRouter
+);
 app.use(`${process.env.API_PREFIX}/currencies`, adminProtecter, currecyRouter);
-app.use(`${process.env.API_PREFIX}/payment-terms`, adminProtecter, paymentTermRouter);
-app.use(`${process.env.API_PREFIX}/order-status`, adminProtecter, orderStatusRouter);
-app.use(`${process.env.API_PREFIX}/product-channels`, adminProtecter, productChannelsRouter);
-app.use(`${process.env.API_PREFIX}/product-source`, adminProtecter, productSourceRouter);
-app.use(`${process.env.API_PREFIX}/proposed-actions`, adminProtecter, proposedActionsRouter);
-app.use(`${process.env.API_PREFIX}/items-conditions`, adminProtecter, ItemsConditionsRouter);
+app.use(
+  `${process.env.API_PREFIX}/payment-terms`,
+  adminProtecter,
+  paymentTermRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/order-status`,
+  adminProtecter,
+  orderStatusRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/product-channels`,
+  adminProtecter,
+  productChannelsRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/product-source`,
+  adminProtecter,
+  productSourceRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/proposed-actions`,
+  adminProtecter,
+  proposedActionsRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/items-conditions`,
+  adminProtecter,
+  ItemsConditionsRouter
+);
 app.use(`${process.env.API_PREFIX}/tax`, adminProtecter, taxRouter);
 app.use(`${process.env.API_PREFIX}/units`, adminProtecter, unitRouter);
 app.use(`${process.env.API_PREFIX}/categories`, adminProtecter, categoryRouter);
 app.use(`${process.env.API_PREFIX}/venders`, adminProtecter, venderRouter);
-app.use(`${process.env.API_PREFIX}/warehouse-status`, adminProtecter, warehouseStatusRouter);
-app.use(`${process.env.API_PREFIX}/warehouses`, adminProtecter, warehouseRouter);
+app.use(
+  `${process.env.API_PREFIX}/warehouse-status`,
+  adminProtecter,
+  warehouseStatusRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/warehouses`,
+  adminProtecter,
+  warehouseRouter
+);
 app.use(`${process.env.API_PREFIX}/colors`, adminProtecter, colorRouter);
 app.use(`${process.env.API_PREFIX}/sizes`, adminProtecter, sizeRouter);
-app.use(`${process.env.API_PREFIX}/product-base`, adminProtecter, productBaseRouter);
+app.use(
+  `${process.env.API_PREFIX}/product-base`,
+  adminProtecter,
+  productBaseRouter
+);
 
 //ticket management system by Muhammad Imran 01-07-2026
 
 //mast data routes.
-app.use(`${process.env.API_PREFIX}/ticket-status`, adminProtecter, ticketStatusRouter);
-app.use(`${process.env.API_PREFIX}/departments`, adminProtecter, departmentRouter);
-app.use(`${process.env.API_PREFIX}/ticket-types`, adminProtecter, ticketTypesRouter);
-app.use(`${process.env.API_PREFIX}/ticket-actions`, adminProtecter, ticketActionsRouter);
+app.use(
+  `${process.env.API_PREFIX}/ticket-status`,
+  adminProtecter,
+  ticketStatusRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/departments`,
+  adminProtecter,
+  departmentRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/ticket-types`,
+  adminProtecter,
+  ticketTypesRouter
+);
+app.use(
+  `${process.env.API_PREFIX}/ticket-actions`,
+  adminProtecter,
+  ticketActionsRouter
+);
 
 //transition forms 01-07-2026
 app.use(`${process.env.API_PREFIX}/ticket-transition-setup`, adminProtecter, ticketStatusTransitionRouter);
@@ -113,11 +208,9 @@ app.use(`${process.env.API_PREFIX}/ticket-reference-types`, adminProtecter, tick
 
 //Muhammad Imran code ended here.
 
-
-
 // Health check route
-app.get('/health', (_req, res) => {
-    res.status(200).json({ status: 'OK' });
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "OK" });
 });
 
 export default app;

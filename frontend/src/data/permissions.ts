@@ -148,7 +148,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 116,
         href: "/dashboard/inventory-masterdata/order-status",
-        label: "order Status",
+        label: "Order Status",
         index: 3,
       },
       {
@@ -160,18 +160,16 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 119,
         href: "/dashboard/inventory-masterdata/proposed-actions",
-        label: "proposed Actions",
+        label: "Proposed Actions",
         index: 6,
       },
 
-       {
-        _id:120,
-        href:"/dashboard/inventory-masterdata/item-conditions",
-        label:"Item Conditions",
-        index:7,
+      {
+        _id: 120,
+        href: "/dashboard/inventory-masterdata/item-conditions",
+        label: "Item Conditions",
+        index: 7,
       },
-
-
 
       {
         _id: 118,
@@ -224,10 +222,9 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 128,
         href: "/dashboard/inventory-masterdata/warehouses",
-        label: "warehouses",
+        label: "Warehouses",
         index: 13,
-      }
-
+      },
     ],
   },
   {
@@ -293,11 +290,29 @@ export const NavBarLinksData: NavLinksInterface[] = [
         index: 1,
       },
       {
-         _id: 204,
+        _id: 204,
         href: "/dashboard/ticket-masterdata/department",
         label: "Department",
         index: 2,
-      }
+      },
+      {
+        _id: 205,
+        href: "/dashboard/ticket-masterdata/ticket-actions",
+        label: "Ticket Actions",
+        index: 3,
+      },
+      {
+        _id: 306,
+        href: "/dashboard/ticket-masterdata/ticket-type",
+        label: "Ticket Type",
+        index: 4,
+      },
+      {
+        _id: 307,
+        href: "/dashboard/ticket-masterdata/ticket-transition",
+        label: "Ticket Transition",
+        index: 5,
+      },
     ],
   },
   {
@@ -312,13 +327,13 @@ export const NavBarLinksData: NavLinksInterface[] = [
       {
         _id: 101,
         href: "/dashboard/vehiclebrands",
-        label: "Vehicles Brands",
+        label: "Vehicle Brands",
         index: 1,
       },
       {
         _id: 102,
         href: "/dashboard/vehiclemodals",
-        label: "Vehicle Modals",
+        label: "Vehicle Models",
         index: 2,
       },
       {

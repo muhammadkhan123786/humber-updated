@@ -93,7 +93,11 @@ export default function CustomersContent() {
     const openModal = useCallback((mode: 'add' | 'edit' | 'view', customer?: Customer) => {
         if ((mode === 'edit' || mode === 'view') && customer) {
             setSelectedCustomer(customer);
-            setFormData({ ...initialFormData, ...customer });
+            setFormData({ 
+                ...initialFormData, 
+                ...customer,
+                emailId: customer.email, // Map email to emailId for form
+            });
         } else {
             setFormData(initialFormData);
             setSelectedCustomer(null);

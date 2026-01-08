@@ -31,7 +31,7 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
     const [sources, setSources] = useState<any[]>([]);
     const [countries, setCountries] = useState<any[]>([]);
     const [cities, setCities] = useState<any[]>([]);
-    
+
     const [isLoadingSources, setIsLoadingSources] = useState(false);
     const [isLoadingCountries, setIsLoadingCountries] = useState(false);
     const [isLoadingCities, setIsLoadingCities] = useState(false);
@@ -95,13 +95,13 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
 
                 // Find country ID from name to filter cities
                 const selectedCountryObj = countries.find(c => c.countryName === formData.country);
-                
+
                 const res = await axios.get(`${BASE_URL}/city`, {
                     headers: { Authorization: `Bearer ${token}` },
-                    params: { 
+                    params: {
                         userId,
                         // Agar aapka backend country filter support karta hai to:
-                        countryId: selectedCountryObj?._id 
+                        countryId: selectedCountryObj?._id
                     }
                 });
 
@@ -109,7 +109,7 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                     // Only show active cities
                     const activeCities = res.data.data.filter((city: any) => city.isActive);
                     setCities(activeCities);
-                    
+
                     // Auto-select default city if exists and current city is empty
                     if (!formData.city) {
                         const defCity = activeCities.find((city: any) => city.isDefault);
@@ -162,7 +162,14 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                             required
                         >
                             <option value="">{isLoadingSources ? "Loading..." : "Select Source"}</option>
-                            {sources.map(s => <option key={s._id} value={s._id}>{s.customerSource}</option>)}
+                            {sources
+                                .filter(s => s.isActive === true)
+                                .map(s => (
+                                    <option key={s._id} value={s._id}>
+                                        {s.customerSource}
+                                    </option>
+                                ))}
+
                         </select>
                     </div>
                 </div>
@@ -197,7 +204,17 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                         <label className=" text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                             <Phone className="w-4 h-4 text-[#FE6B1D]" /> Mobile Number *
                         </label>
-                        <input type="tel" value={formData.mobileNumber} onChange={(e) => onInputChange('mobileNumber', e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition" required placeholder="+1234567890" />
+                        <input
+                            type="tel"
+                            value={formData.mobileNumber}
+                            onChange={(e) => {
+                                const numericValue = e.target.value.replace(/[^0-9]/g, "");
+                                onInputChange("mobileNumber", numericValue);
+                            }}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition"
+                            required
+                            placeholder="1234567890"
+                        />
                     </div>
                 </div>
 
@@ -257,10 +274,6 @@ export default function PersonalInfoStep({ formData, onInputChange }: PersonalIn
                     </label>
                     <input type="text" value={formData.zipCode} onChange={(e) => onInputChange('zipCode', e.target.value)} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FE6B1D] transition" required placeholder="00000" />
                 </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-sm text-gray-500"><span className="text-red-500">*</span> Indicates required field</p>
             </div>
         </div>
     );

@@ -430,10 +430,21 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
 
         <FormInput
           label="Website"
-          value={formData.website}
-          onChange={(e) => handleFormChange("website", e.target.value)}
           type="url"
           placeholder="https://example.com"
+          value={formData.website}
+          onChange={(e) =>
+            setFormData({ ...formData, website: e.target.value })
+          }
+          onBlur={(e) => {
+            const value = e.target.value.trim();
+            if (value && !/^https?:\/\//i.test(value)) {
+              setFormData({
+                ...formData,
+                website: "https://" + value,
+              });
+            }
+          }}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -450,11 +461,13 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
               required
             >
               <option value="">Select Payment Term</option>
-              {paymentTerms.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.paymentTerm}
-                </option>
-              ))}
+              {paymentTerms
+                .filter((p) => p.isActive)
+                .map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.paymentTerm}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -468,11 +481,13 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
               onChange={(e) => handleFormChange("currencyId", e.target.value)}
             >
               <option value="">Select Currency</option>
-              {currencies.map((c) => (
-                <option key={c._id} value={c._id}>
-                  {c.currencySymbol} - {c.currencyName}
-                </option>
-              ))}
+              {currencies
+                .filter((c) => c.isActive)
+                .map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.currencySymbol} - {c.currencyName}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -559,17 +574,31 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
             <FormInput
               label="Mobile Number *"
               value={formData.contact.mobileNumber}
-              onChange={(e) =>
-                updateNestedObject("contact", "mobileNumber", e.target.value)
-              }
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9+]/g, "");
+                const formatted = value.startsWith("+")
+                  ? "+" + value.slice(1).replace(/\+/g, "")
+                  : value.replace(/\+/g, "");
+
+                updateNestedObject("contact", "mobileNumber", formatted);
+              }}
+              inputMode="tel"
+              placeholder="+923001234567"
               required
             />
+
             <FormInput
               label="Phone Number"
               value={formData.contact.phoneNumber}
-              onChange={(e) =>
-                updateNestedObject("contact", "phoneNumber", e.target.value)
-              }
+              onChange={(e) => {
+                let value = e.target.value.replace(/[^0-9+]/g, "");
+                if (value.indexOf("+") > 0) {
+                  value = value.replace(/\+/g, "");
+                }
+                updateNestedObject("contact", "phoneNumber", value);
+              }}
+              inputMode="tel"
+              placeholder="+923001234567"
             />
             <FormInput
               label="Email ID *"
@@ -604,9 +633,16 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
               label="Zip Code"
               value={formData.address.zipCode}
               onChange={(e) =>
-                updateNestedObject("address", "zipCode", e.target.value)
+                updateNestedObject(
+                  "address",
+                  "zipCode",
+                  e.target.value.replace(/\D/g, "")
+                )
               }
+              inputMode="numeric"
+              placeholder="e.g. 54000"
             />
+
             <FormInput
               label="City"
               value={formData.address.city}
@@ -637,6 +673,7 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
               label="Active Status"
               checked={formData.isActive}
               onChange={(val) => handleFormChange("isActive", val)}
+              disabled={formData.isDefault}
             />
             <FormToggle
               label="Set as Default"

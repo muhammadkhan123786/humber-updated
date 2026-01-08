@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Car, Plus, Search } from "lucide-react";
+import { Car, Plus, Search,Loader2 } from "lucide-react";
 import BrandTable from "./BrandTable";
 import BrandForm from "./BrandForm";
 import Pagination from "./Pagination"; // Import your Pagination component
@@ -135,9 +135,8 @@ export default function VehicleBrandClient() {
 
         {/* Table and Pagination */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-          </div>
+                  <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-orange-500" size={48} /></div>
+
         ) : (
           <>
             <BrandTable
