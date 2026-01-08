@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { CarFront, Plus, Search } from "lucide-react";
+import { CarFront, Loader2, Plus, Search } from "lucide-react";
 import ModalTable from "./ModalTable";
 import ModalForm from "./ModalForm";
 import Pagination from "./Pagination";
@@ -81,7 +81,8 @@ export default function VehicleModalClient() {
           <ModalForm editingModel={editingModel} onClose={() => { setShowForm(false); setEditingModel(null); }} onRefresh={() => fetchModels(currentPage, searchTerm)} themeColor={THEME_COLOR} apiUrl={API_URL} />
         ) : null}
 
-        {loading ? <div className="text-center py-20 animate-spin">🌀</div> : (
+        {loading ?         <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-orange-500" size={48} /></div>
+ : (
           <>
             <ModalTable data={models} onEdit={setEditingModel} onDelete={handleDelete} themeColor={THEME_COLOR} />
             <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => fetchModels(page, searchTerm)} />

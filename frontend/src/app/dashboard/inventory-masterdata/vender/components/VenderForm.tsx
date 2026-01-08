@@ -673,6 +673,7 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
               label="Active Status"
               checked={formData.isActive}
               onChange={(val) => handleFormChange("isActive", val)}
+              disabled={formData.isDefault}
             />
             <FormToggle
               label="Set as Default"

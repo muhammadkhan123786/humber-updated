@@ -67,6 +67,7 @@ export default function ItemConditionForm({ editingData, onClose, onRefresh, the
                                 label="Active"
                                 checked={!!formData.isActive}
                                 onChange={(val) => setFormData({ ...formData, isActive: val })}
+                                disabled={formData.isDefault}
                             />
 
                         </div>

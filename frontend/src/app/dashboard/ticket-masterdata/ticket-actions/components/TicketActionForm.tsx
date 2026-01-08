@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Settings } from "lucide-react";
@@ -20,7 +20,9 @@ const ticketActionFormSchema = z.object({
   isActive: z.boolean(),
   isDefault: z.boolean(),
 });
+
 type TicketActionFormData = z.infer<typeof ticketActionFormSchema>;
+
 interface Props {
   editingData: (ITicketActions & { _id?: string }) | null;
   onClose: () => void;
@@ -39,6 +41,8 @@ const TicketActionForm = ({
     handleSubmit,
     reset,
     control,
+    watch, // Added watch
+    setValue, // Added setValue
     formState: { errors, isSubmitting },
   } = useForm<TicketActionFormData>({
     resolver: zodResolver(ticketActionFormSchema),
@@ -49,6 +53,9 @@ const TicketActionForm = ({
       isDefault: false,
     },
   });
+
+  // isDefault ki current value ko monitor karein
+  const isDefaultValue = watch("isDefault");
 
   useEffect(() => {
     if (editingData) {
@@ -75,9 +82,7 @@ const TicketActionForm = ({
       onRefresh();
       onClose();
     } catch (error: any) {
-      alert(
-        error.response?.data?.message || error.message || "Error saving action"
-      );
+      alert(error.response?.data?.message || error.message || "Error saving action");
     }
   };
 
@@ -112,6 +117,8 @@ const TicketActionForm = ({
                 label="Active"
                 checked={field.value}
                 onChange={field.onChange}
+               
+                disabled={isDefaultValue}
               />
             )}
           />
@@ -122,7 +129,13 @@ const TicketActionForm = ({
               <FormToggle
                 label="Default Action"
                 checked={field.value}
-                onChange={field.onChange}
+                onChange={(val) => {
+                  field.onChange(val);
+                  // Jab default select ho, toh active ko true kar dein
+                  if (val) {
+                    setValue("isActive", true);
+                  }
+                }}
               />
             )}
           />
@@ -130,7 +143,7 @@ const TicketActionForm = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90"
+          className="w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
           style={{ backgroundColor: themeColor }}
         >
           <Save size={20} />
