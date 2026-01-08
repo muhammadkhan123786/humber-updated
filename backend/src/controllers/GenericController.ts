@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import { GenericService } from "../services/generic.crud.services";
 import { Document, PopulateOptions, Types } from "mongoose";
-import { z, ZodObject, ZodRawShape } from "zod";
+import { ZodObject, ZodRawShape } from "zod";
 
 const queryFilters: Record<string, any> = {}; // <-- new object for mongoose
 interface ControllerOptions<T extends Document> {
     service: GenericService<T>;
     populate?: (string | PopulateOptions)[];
     validationSchema?: ZodObject<ZodRawShape>; // optional Zod validation
+    searchFields?: string[]
 }
 export class AdvancedGenericController<T extends Document> {
     constructor(private options: ControllerOptions<T>) { }
@@ -36,16 +37,28 @@ export class AdvancedGenericController<T extends Document> {
     // GET ALL with filtering, pagination, sorting
     getAll = async (req: Request, res: Response) => {
         try {
-            const { page = 1, limit = 10, sortBy = "createdAt", order = "desc", search, ...rawFilters } = req.query;
+            const {
+                page = 1,
+                limit = 10,
+                sortBy = "createdAt",
+                order = "desc",
+                search,
+                ...rawFilters
+            } = req.query;
 
             const pageNumber = Number(page);
             const pageSize = Number(limit);
 
-            // Convert query params to mongoose filter
-            const queryFilters: Record<string, any> = { "isDeleted": false };
-            if (search) {
-                queryFilters.brandName = { $regex: search, $options: 'i' };
+            const queryFilters: Record<string, any> = { isDeleted: false };
+
+            // ✅ GENERIC SEARCH
+            if (search && this.options.searchFields?.length) {
+                queryFilters.$or = this.options.searchFields.map(field => ({
+                    [field]: { $regex: search, $options: "i" }
+                }));
             }
+
+            // ✅ Dynamic filters
             Object.keys(rawFilters).forEach((key) => {
                 const value = rawFilters[key];
                 if (typeof value === "string" && Types.ObjectId.isValid(value)) {
@@ -55,16 +68,22 @@ export class AdvancedGenericController<T extends Document> {
                 }
             });
 
-            // Total count
-            const total = await this.options.service.getQuery(queryFilters).countDocuments();
+            const total = await this.options.service
+                .getQuery(queryFilters)
+                .countDocuments();
 
-            // Query with populate, sort, pagination
-            let query = this.options.service.getQuery(queryFilters, { populate: this.options.populate });
+            let query = this.options.service.getQuery(queryFilters, {
+                populate: this.options.populate,
+            });
+
             const sortOption: any = {};
             sortOption[sortBy as string] = order === "asc" ? 1 : -1;
 
-            query = query.sort(sortOption).skip((pageNumber - 1) * pageSize).limit(pageSize);
-            const data = await query.exec();
+            const data = await query
+                .sort(sortOption)
+                .skip((pageNumber - 1) * pageSize)
+                .limit(pageSize)
+                .exec();
 
             res.status(200).json({
                 success: true,
@@ -73,6 +92,20 @@ export class AdvancedGenericController<T extends Document> {
                 limit: pageSize,
                 data,
             });
+        } catch (err: any) {
+            res.status(500).json({
+                success: false,
+                message: err.message || "Failed to fetch documents",
+            });
+        }
+    };
+
+
+    //get for drop down 
+    getAllForDropDown = async (req: Request, res: Response) => {
+        try {
+            const { sortBy = "createdAt", order = "desc", search, ...rawFilters } = req.query;
+
         } catch (err: any) {
             res.status(500).json({ success: false, message: err.message || "Failed to fetch documents" });
         }
