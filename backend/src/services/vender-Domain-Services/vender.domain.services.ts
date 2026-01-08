@@ -1,4 +1,4 @@
-import mongoose, { ClientSession, Types } from "mongoose";
+import { Types } from "mongoose";
 import { VenderDto } from "../../../../common/DTOs/vender.dto";
 import { Person } from "../../models/person.models";
 import { Contact } from "../../models/contact.models";
@@ -10,24 +10,23 @@ import { CityModel } from "../../models/city.models";
 export class VenderDomainService {
 
     async createVender(venderData: VenderDto) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
+
 
         try {
             // 1️⃣ Resolve country & city
             const { countryId, cityId } =
-                await this.resolveCountryAndCity(venderData.address, session);
+                await this.resolveCountryAndCity(venderData.address);
 
             // 2️⃣ Create person
             const [person] = await Person.create(
                 [venderData.person],
-                { session }
+
             );
 
             // 3️⃣ Create contact
             const [contact] = await Contact.create(
                 [venderData.contact],
-                { session }
+
             );
 
             // 4️⃣ Create address
@@ -38,7 +37,7 @@ export class VenderDomainService {
                     cityId,
                     userId: venderData.userId
                 }],
-                { session }
+
             );
 
             // 5️⃣ Create vendor
@@ -49,17 +48,17 @@ export class VenderDomainService {
                     addressId: address._id,
                     ...this.mapVendorFields(venderData)
                 }],
-                { session }
+
             );
 
-            await session.commitTransaction();
+
             return vender;
 
         } catch (err) {
-            await session.abortTransaction();
+
             throw err;
         } finally {
-            session.endSession();
+            console.log('Finally.');
         }
     }
 
@@ -67,7 +66,7 @@ export class VenderDomainService {
 
     private async resolveCountryAndCity(
         address: any,
-        session: ClientSession
+
     ): Promise<{ countryId: Types.ObjectId; cityId: Types.ObjectId }> {
 
         if (!address?.country || !address?.city) {
@@ -77,26 +76,26 @@ export class VenderDomainService {
         let country = await Country.findOne(
             { countryName: address.country },
             null,
-            { session }
+
         );
 
         if (!country) {
             [country] = await Country.create(
                 [{ countryName: address.country }],
-                { session }
+
             );
         }
 
         let city = await CityModel.findOne(
             { cityName: address.city, countryId: country._id },
             null,
-            { session }
+
         );
 
         if (!city) {
             [city] = await CityModel.create(
                 [{ cityName: address.city, countryId: country._id }],
-                { session }
+
             );
         }
 
