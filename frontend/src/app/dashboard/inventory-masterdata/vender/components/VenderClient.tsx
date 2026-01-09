@@ -47,7 +47,7 @@ export default function VenderClient() {
   }, [searchTerm]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this vender?")) return;
+    if (!confirm("Are you sure you want to delete this vendor?")) return;
     try {
       await deleteVender(id);
       fetchData(currentPage, searchTerm);
@@ -71,10 +71,10 @@ export default function VenderClient() {
               className="text-3xl font-extrabold flex items-center gap-3"
               style={{ color: THEME_COLOR }}
             >
-              <Truck size={36} /> Vender Management
+              <Truck size={36} /> Vendor Management
             </h1>
             <p className="text-gray-500 mt-1">
-              Manage suppliers, venders and their financial profiles
+              Manage suppliers, vendors and their financial profiles
             </p>
           </div>
           <button
@@ -85,7 +85,7 @@ export default function VenderClient() {
             className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition-all active:scale-95"
             style={{ backgroundColor: THEME_COLOR }}
           >
-            <Plus size={22} /> Add Vender
+            <Plus size={22} /> Add Vendor
           </button>
         </div>
 
@@ -115,7 +115,7 @@ export default function VenderClient() {
         {loading ? (
           <div className="flex flex-col justify-center items-center py-20 gap-3">
             <Loader2 className="animate-spin text-orange-500" size={48} />
-            <p className="text-gray-400 font-medium">Fetching venders...</p>
+            <p className="text-gray-400 font-medium">Fetching vendors...</p>
           </div>
         ) : (
           <>
