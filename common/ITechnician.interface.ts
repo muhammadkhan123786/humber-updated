@@ -23,11 +23,11 @@ export interface ITechnicianBaseInformation<TUserId = string, TPersonId = string
     addressId: TAddressId;
     roleId: TRoleId;
     accountId: TAccountId;
-
+    employeeId: string;
     skills: TSkillsIds;           // service IDs
     zones: ITechnicianZone[];
 
-    profilePic?: string;        // file path / URL
-    documents?: string;       // multiple PDFs
+    profilePhoto?: string;        // file path / URL
+    certifications?: string[];       // multiple PDFs
 }
 
