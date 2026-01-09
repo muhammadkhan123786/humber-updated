@@ -45,6 +45,8 @@ import ticketTypesRouter from './routes/ticket-management-system-routes/ticket.t
 import ticketActionsRouter from './routes/ticket-management-system-routes/ticket.actions.routes';
 import ticketStatusTransitionRouter from './routes/ticket-management-system-routes/ticket.status.transition.routes';
 import ticketReferenceTypesRouter from './routes/ticket-management-system-routes/ticket.reference.types.routes';
+import documentTypesRouter from "./routes/document.types.routes";
+import jobTypesRouter from "./routes/job.types.routes";
 
 
 // Create express app
@@ -205,6 +207,9 @@ app.use(`${process.env.API_PREFIX}/ticket-transition-setup`, adminProtecter, tic
 app.use(`${process.env.API_PREFIX}/ticket-reference-types`, adminProtecter, ticketReferenceTypesRouter);
 
 
+//master data routes 09-01-2026
+app.use(`${process.env.API_PREFIX}/document-types`, adminProtecter, documentTypesRouter);
+app.use(`${process.env.API_PREFIX}/job-types`, adminProtecter, jobTypesRouter);
 
 //Muhammad Imran code ended here.
 
