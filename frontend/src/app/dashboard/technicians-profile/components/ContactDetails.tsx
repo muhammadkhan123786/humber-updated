@@ -5,9 +5,9 @@ import { Mail, Phone, MapPin } from "lucide-react";
 // Inline Interface to keep it clean
 interface ContactProps {
   formData: {
-    email: string;
-    phone: string;
-    address: string;
+    emailId: string;
+    phoneNumber: string;
+   address: { address: string };
   };
   setFormData: (data: any) => void;
 }
@@ -30,7 +30,7 @@ export default function ContactDetails({ formData, setFormData }: ContactProps) 
             type="email" name="email" required
             className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D]"
             placeholder="john@example.com"
-            value={formData.email} onChange={handleChange}
+            value={formData.emailId} onChange={handleChange}
           />
         </div>
         <div>
@@ -38,10 +38,10 @@ export default function ContactDetails({ formData, setFormData }: ContactProps) 
           <div className="relative">
             <Phone className="absolute left-3 top-3.5 text-gray-400" size={18} />
             <input 
-              type="tel" name="phone" required
+              type="tel" name="phoneNumber" required
               className="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D]"
               placeholder="+1 (555) 000000"
-              value={formData.phone} onChange={handleChange}
+              value={formData.phoneNumber} onChange={handleChange}
             />
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function ContactDetails({ formData, setFormData }: ContactProps) 
               type="text" name="address" required
               className="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D]"
               placeholder="123 Service St, Mechanic City, TX"
-              value={formData.address} onChange={handleChange}
+              value={formData.address.address} onChange={handleChange}
             />
           </div>
         </div>
