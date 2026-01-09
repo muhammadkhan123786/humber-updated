@@ -4,6 +4,9 @@ import tool from "../assets/tool.svg";
 import usergroup from "../assets/users-group-alt.svg";
 import booking from "../assets/calendar.svg";
 import staffmanagement from "../assets/users-alt.svg";
+import warehouse from "../assets/warehouses.png";
+import vender from "../assets/vendor.png";
+import ticket from "../assets/ticket.png";
 
 export const NavBarLinksData: NavLinksInterface[] = [
   { _id: 1, href: "/dashboard", roleId: [1, 2], label: "Dashboard", index: 1 },
@@ -237,8 +240,8 @@ export const NavBarLinksData: NavLinksInterface[] = [
     alt: "Vendors",
     href: "/dashboard/vender",
     roleId: [1],
-    label: "Vendors",
-    iconSrc: usergroup,
+    label: "Vendor",
+    iconSrc: vender,
     index: 9,
   },
   {
@@ -247,7 +250,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
     href: "/dashboard/warehouses",
     roleId: [1],
     label: "Warehouses",
-    iconSrc: usergroup,
+    iconSrc: warehouse,
     index: 10,
   },
   {
@@ -294,7 +297,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
     href: "#",
     roleId: [1],
     label: "Ticket Master Data",
-    iconSrc: staffmanagement,
+    iconSrc: ticket,
     index: 9,
     children: [
       {
