@@ -13,7 +13,10 @@ import { IDepartments } from "../../../../../../../common/Ticket-management-syst
 
 // 1. Zod Schema
 const departmentFormSchema = z.object({
-  departmentName: z.string().trim().min(3, "Department name must be at least 3 characters"),
+  departmentName: z
+    .string()
+    .trim()
+    .min(3, "Department name must be at least 3 characters"),
   isActive: z.boolean(),
   isDefault: z.boolean(),
   userId: z.string().optional(),
@@ -65,7 +68,8 @@ const DepartmentForm = ({
         departmentName: editingData.departmentName,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
-        userId: typeof editingData.userId === "string" ? editingData.userId : "",
+        userId:
+          typeof editingData.userId === "string" ? editingData.userId : "",
       });
     }
   }, [editingData, reset]);
@@ -90,7 +94,9 @@ const DepartmentForm = ({
       onRefresh();
       onClose();
     } catch (error: any) {
-      alert(error.response?.data?.message || error.message || "Error saving data");
+      alert(
+        error.response?.data?.message || error.message || "Error saving data"
+      );
     }
   };
 
@@ -117,7 +123,7 @@ const DepartmentForm = ({
             name="isActive"
             render={({ field }) => (
               <FormToggle
-                label="Active Status"
+                label="Active"
                 checked={field.value}
                 onChange={field.onChange}
                 // FIXED: Agar Default true hai to isActive disable ho jaye
@@ -130,7 +136,7 @@ const DepartmentForm = ({
             name="isDefault"
             render={({ field }) => (
               <FormToggle
-                label="Set as Default"
+                label="Default"
                 checked={field.value}
                 onChange={(val) => {
                   field.onChange(val);

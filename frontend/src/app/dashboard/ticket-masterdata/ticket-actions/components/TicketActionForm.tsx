@@ -82,7 +82,9 @@ const TicketActionForm = ({
       onRefresh();
       onClose();
     } catch (error: any) {
-      alert(error.response?.data?.message || error.message || "Error saving action");
+      alert(
+        error.response?.data?.message || error.message || "Error saving action"
+      );
     }
   };
 
@@ -117,7 +119,6 @@ const TicketActionForm = ({
                 label="Active"
                 checked={field.value}
                 onChange={field.onChange}
-               
                 disabled={isDefaultValue}
               />
             )}
@@ -127,7 +128,7 @@ const TicketActionForm = ({
             name="isDefault"
             render={({ field }) => (
               <FormToggle
-                label="Default Action"
+                label="Default"
                 checked={field.value}
                 onChange={(val) => {
                   field.onChange(val);
