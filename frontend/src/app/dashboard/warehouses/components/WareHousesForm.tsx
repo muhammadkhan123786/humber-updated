@@ -10,9 +10,9 @@ import {
   updateItem,
   PaginatedResponse,
   ApiErrorResponse,
-} from "../../../../../helper/apiHelper";
-import { warehouseDto } from "../../../../../../../common/DTOs/warehouse.dto";
-import { IWarehouseStatus } from "../../../../../../../common/IWarehouse.status.interface";
+} from "../../../../helper/apiHelper";
+import { warehouseDto } from "../../../../../../common/DTOs/warehouse.dto";
+import { IWarehouseStatus } from "../../../../../../common/IWarehouse.status.interface";
 import axios from "axios";
 interface Props {
   editingData: (warehouseDto & { _id?: string }) | null;

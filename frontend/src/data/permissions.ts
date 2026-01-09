@@ -195,12 +195,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Units",
         index: 10,
       },
-      {
-        _id: 124,
-        href: "/dashboard/inventory-masterdata/vender",
-        label: "Venders",
-        index: 11,
-      },
+
       {
         _id: 125,
         href: "/dashboard/inventory-masterdata/warehouse-status",
@@ -219,12 +214,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Sizes",
         index: 12,
       },
-      {
-        _id: 128,
-        href: "/dashboard/inventory-masterdata/warehouses",
-        label: "Warehouses",
-        index: 13,
-      },
+
       {
         _id: 129,
         href: "/dashboard/inventory-masterdata/product-attribute",
@@ -241,6 +231,24 @@ export const NavBarLinksData: NavLinksInterface[] = [
     label: "Repair tracker",
     iconSrc: tool,
     index: 3,
+  },
+  {
+    _id: 13,
+    alt: "Vendors",
+    href: "/dashboard/vender",
+    roleId: [1],
+    label: "Vendors",
+    iconSrc: usergroup,
+    index: 9,
+  },
+  {
+    _id: 14,
+    alt: "Warehouses",
+    href: "/dashboard/warehouses",
+    roleId: [1],
+    label: "Warehouses",
+    iconSrc: usergroup,
+    index: 10,
   },
   {
     _id: 4,

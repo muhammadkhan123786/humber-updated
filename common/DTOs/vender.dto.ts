@@ -4,7 +4,7 @@ export interface VenderDto extends basicCommonInfoDto {
   isActive?: boolean;
   isDeleted?: boolean;
   isDefault?: boolean;
-  venderType: "Supplier" | "Vender" | "Both";
+  venderType: "Supplier" | "Vendor" | "Both";
   paymentTermId: string;
   currencyId?: string;
   credit_Limit?: number;

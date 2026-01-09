@@ -5,7 +5,7 @@ import VenderTable from "./VenderTable";
 import VenderForm from "./VenderForm";
 import Pagination from "@/components/ui/Pagination";
 import { fetchVenders, deleteVender } from "@/hooks/useVender";
-import { VenderDto } from "../../../../../../../common/DTOs/vender.dto";
+import { VenderDto } from "../../../../../../common/DTOs/vender.dto";
 
 const THEME_COLOR = "#FE6B1D";
 
@@ -23,15 +23,11 @@ export default function VenderClient() {
   const fetchData = async (page = 1, search = "") => {
     try {
       setLoading(true);
-
-      // 'any' use karke TypeScript errors ignore kar rahe hain
       const res: any = await fetchVenders(page, 10, search);
-
-      // data aur total ko bhi 'any' type de rahe hain
       const data: any[] = res.data || [];
       const total: number = res.total || 0;
 
-      setDataList(data); // dataList ko 'any[]' assign ho jayega
+      setDataList(data);
       setTotalPages(Math.ceil(total / 10) || 1);
       setCurrentPage(page);
     } catch (err: any) {
