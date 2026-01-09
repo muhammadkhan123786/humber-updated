@@ -20,9 +20,11 @@ export default function TechnicianProfileManager() {
     salaryPeriod: "Per Month", // New (Default value)
     
     // Contact Info
-    email: "",
-    phone: "",
-    address: "",
+    emailId: "",
+    phoneNumber: "",
+    address:{
+      address:"",
+    },
 
     // Skills & Docs
     skills: [], 
@@ -38,7 +40,7 @@ export default function TechnicianProfileManager() {
     console.log("Full Form Data to be Sent:", formData);
     
     // Basic Validation
-    if (!formData.firstName || !formData.email || !formData.employeeId) {
+    if (!formData.firstName || !formData.emailId || !formData.employeeId) {
         alert("Please fill in the required fields: First Name, Email, and Employee ID.");
         return;
     }

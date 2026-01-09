@@ -24,39 +24,67 @@ interface TechRole {
   isActive: boolean;
 }
 
+interface JobType {
+  _id: string;
+  jobTypeName: string;
+  isActive: boolean;
+  isDefault: boolean;
+}
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const ROLES_API_URL = `${BASE_URL}/technician-roles`;
+const JOB_TYPES_API_URL = `${BASE_URL}/job-types`;
 
 export default function PersonalInformation({ formData, setFormData }: PersonalProps) {
   const [roles, setRoles] = useState<TechRole[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [jobTypes, setJobTypes] = useState<JobType[]>([]);
+  const [isLoadingRoles, setIsLoadingRoles] = useState(true);
+  const [isLoadingJobTypes, setIsLoadingJobTypes] = useState(true);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const fetchMasterRoles = async () => {
+    const fetchData = async () => {
+      const token = localStorage.getItem("token");
+      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = savedUser.id || savedUser._id;
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Fetch Technician Roles
       try {
-        setIsLoading(true);
-        const token = localStorage.getItem("token");
-        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const userId = savedUser.id || savedUser._id;
-
-        const res = await axios.get(ROLES_API_URL, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { userId }
-        });
-
-        if (res.data && res.data.data) {
-          const activeRoles = res.data.data.filter((r: TechRole) => r.isActive);
-          setRoles(activeRoles);
+        setIsLoadingRoles(true);
+        const res = await axios.get(ROLES_API_URL, { headers, params: { userId } });
+        if (res.data?.data) {
+          setRoles(res.data.data.filter((r: TechRole) => r.isActive));
         }
       } catch (err) {
         console.error("Error fetching roles:", err);
       } finally {
-        setIsLoading(false);
+        setIsLoadingRoles(false);
+      }
+
+      // Fetch Job Types
+      try {
+        setIsLoadingJobTypes(true);
+        const res = await axios.get(JOB_TYPES_API_URL, { headers, params: { userId } });
+        if (res.data?.data) {
+          const activeJobTypes = res.data.data.filter((j: JobType) => j.isActive);
+          setJobTypes(activeJobTypes);
+
+          // Agar koi Job Type "isDefault" hai aur formData mein abhi kuch nahi hai, toh usey set karein
+          const defaultType = activeJobTypes.find((j: JobType) => j.isDefault);
+          if (defaultType && !formData.jobType) {
+            setFormData((prev: any) => ({ ...prev, jobType: defaultType.jobTypeName }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching job types:", err);
+      } finally {
+        setIsLoadingJobTypes(false);
       }
     };
-    fetchMasterRoles();
+
+    fetchData();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -84,8 +112,7 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
       </h2>
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-        {/* LEFT SIDE: Profile Photo (Fixed size) */}
+        {/* LEFT SIDE: Profile Photo */}
         <div className="w-full lg:w-auto flex flex-col items-center gap-3 p-4 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200 min-w-[180px]">
           <div className="relative group">
             <div className="w-32 h-32 rounded-2xl overflow-hidden bg-gray-100 border-4 border-white shadow-sm flex items-center justify-center">
@@ -108,9 +135,8 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
           </button>
         </div>
 
-        {/* RIGHT SIDE: Form Fields (2 per row) */}
+        {/* RIGHT SIDE: Form Fields */}
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-full">
-
           {/* Row 1: Names */}
           <div>
             <label className="text-sm font-medium text-gray-600 block mb-1">First Name</label>
@@ -134,14 +160,14 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
             <div className="relative">
               <Briefcase className="absolute left-3 top-3.5 text-gray-400" size={18} />
               <select name="role" required className="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] appearance-none cursor-pointer" value={formData.role} onChange={handleChange}>
-                <option value="">Select Role</option>
+                <option value="">{isLoadingRoles ? "Loading roles..." : "Select Role"}</option>
                 {roles.map((r) => <option key={r._id} value={r.technicianRole}>{r.technicianRole}</option>)}
               </select>
               <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
             </div>
           </div>
 
-          {/* Row 3: Joining Date and Job Type */}
+          {/* Row 3: Joining Date and Dynamic Job Type */}
           <div>
             <label className="text-sm font-medium text-gray-600 block mb-1">Joining Date</label>
             <div className="relative">
@@ -152,17 +178,19 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
           <div>
             <label className="text-sm font-medium text-gray-600 block mb-1">Job Type</label>
             <div className="relative">
-              <select name="jobType" className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] appearance-none cursor-pointer" value={formData.jobType} onChange={handleChange}>
-                <option value="Full Time">Full Time</option>
-                <option value="Part Time">Part Time</option>
-                <option value="Contract">Contract</option>
-                <option value="Freelance">Freelance</option>
+              <select name="jobType" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] appearance-none cursor-pointer" value={formData.jobType} onChange={handleChange}>
+                <option value="">{isLoadingJobTypes ? "Loading job types..." : "Select Job Type"}</option>
+                {jobTypes.map((j) => (
+                  <option key={j._id} value={j.jobTypeName}>
+                    {j.jobTypeName}
+                  </option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
             </div>
           </div>
 
-          {/* Row 4: Salary & Period (Spans 2 columns for better look or stays in one) */}
+          {/* Row 4: Salary & Period */}
           <div className="md:col-span-2">
             <label className="text-sm font-medium text-gray-600 block mb-1">Salary & Period</label>
             <div className="flex flex-col md:flex-row gap-3">
@@ -172,11 +200,9 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
                   type="number"
                   name="salary"
                   placeholder="Enter Amount"
-                  // Isse numeric keyboard open hoga mobile par aur alphabets block honge
                   className="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   value={formData.salary}
                   onChange={handleChange}
-                  // "e", "E", "+", "-" symbols ko block karne ke liye
                   onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
                 />
               </div>
@@ -190,7 +216,6 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

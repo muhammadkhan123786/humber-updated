@@ -5,10 +5,11 @@ interface Props {
   label: string;
   checked: boolean | undefined;
   onChange: (val: boolean) => void;
-  description?: string
+  description?: string;
+  disabled?: boolean;
 }
 
-export const FormToggle = ({ label, checked, onChange, description }: Props) => (
+export const FormToggle = ({ label, checked, onChange, description,disabled }: Props) => (
   <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
     <input 
       type="checkbox" 
