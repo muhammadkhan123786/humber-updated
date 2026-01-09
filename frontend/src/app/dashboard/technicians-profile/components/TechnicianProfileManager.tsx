@@ -9,22 +9,22 @@ import { Save } from "lucide-react";
 export default function TechnicianProfileManager() {
   const [formData, setFormData] = useState({
     // Personal Info
-    firstName: "", 
-    lastName: "", 
-    employeeId: "", 
+    firstName: "",
+    lastName: "",
+    employeeId: "",
     role: "",
-    
+
     // Contact Info
-    email: "", 
-    phone: "", 
+    email: "",
+    phone: "",
     address: "",
     // Skills & Docs
-    skills: [], 
+    skills: [],
     certFile: null,
     // Status & Availability (Naya State)
     isActive: true,
-    serviceZones: [] ,
-    profilePhoto: null,
+    serviceZones: [],
+    profilePic: null,
   });
 
   const handleSave = () => {
@@ -41,7 +41,7 @@ export default function TechnicianProfileManager() {
           <h1 className="text-2xl font-black text-gray-800">Create Technician Profile</h1>
           <p className="text-gray-500">Add detailed information for the technical staff</p>
         </div>
-        <button 
+        <button
           onClick={handleSave}
           className="bg-[#FE6B1D] text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition-all shadow-lg active:scale-95"
         >
@@ -51,13 +51,13 @@ export default function TechnicianProfileManager() {
 
       {/* Form Sections */}
       <PersonalInformation formData={formData} setFormData={setFormData} />
-      
+
       <ContactDetails formData={formData} setFormData={setFormData} />
-      
+
       <StatusAvailability formData={formData} setFormData={setFormData} />
 
       <SpecializationSkills formData={formData} setFormData={setFormData} />
-      
+
       {/* Save Button at Bottom too (Optional but Good UX) */}
       {/* <div className="flex justify-end pt-4">
         <button 

@@ -9,7 +9,7 @@ interface PersonalProps {
     lastName: string;
     employeeId: string;
     role: string;
-    profilePhoto: File | null; // Naya field photo ke liye
+    profilePic: File | null; // Naya field photo ke liye
   };
   setFormData: (data: any) => void;
 }
