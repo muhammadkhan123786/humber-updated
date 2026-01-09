@@ -15,4 +15,4 @@ RUN rm -rf dist && npm run build
 
 EXPOSE 8081
 
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/backend/src/server.js"]
