@@ -8,5 +8,5 @@ export interface technicianProfileDto extends commonProfileDto {
     technicianRoleId: string;
     skills: string[];
     profilePic?: string;        // file path / URL
-    documents?: string;
+    documents?: string[];
 }
