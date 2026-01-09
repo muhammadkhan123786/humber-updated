@@ -1,11 +1,11 @@
-
-import { Document, Model, model, Schema, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 const ticketSequenceCounterSchema = new Schema(
     {
-
-    }, { timestamps: true }
+        _id: { type: String, required: true }, // e.g., "TICKET_2026"
+        seq: { type: Number, default: 0 }
+    },
+    { timestamps: true }
 );
 
-
-export const TicketActions = model("TicketActions", ticketSequenceCounterSchema);
+export const TicketSequenceCounter = model("TicketSequenceCounter", ticketSequenceCounterSchema);
