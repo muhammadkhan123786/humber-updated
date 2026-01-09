@@ -10,8 +10,8 @@ import WareHousesTable from "./WareHousesTable";
 import WareHousesForm from "./WareHousesForm";
 import Pagination from "@/components/ui/Pagination";
 import { fetchWarehouses, deleteWarehouse } from "@/hooks/useWareHouses";
-import { IWarehouse } from "../../../../../../../common/IWarehouses.interface";
-import { basicCommonInfoDto } from "../../../../../../../common/DTOs/profilecommonDto";
+import { IWarehouse } from "../../../../../../common/IWarehouses.interface";
+import { basicCommonInfoDto } from "../../../../../../common/DTOs/profilecommonDto";
 
 const THEME_COLOR = "#FE6B1D";
 

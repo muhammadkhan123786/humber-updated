@@ -9,8 +9,8 @@ import {
   XCircle,
   Star,
 } from "lucide-react";
-import { TableActionButton } from "../../../../common-form/TableActionButtons";
-import { VenderDto } from "../../../../../../../common/DTOs/vender.dto";
+import { TableActionButton } from "../../../common-form/TableActionButtons";
+import { VenderDto } from "../../../../../../common/DTOs/vender.dto";
 
 interface PopulatedPerson {
   _id: string;

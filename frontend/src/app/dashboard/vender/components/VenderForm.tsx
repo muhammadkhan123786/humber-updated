@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Save, Truck } from "lucide-react";
-import { FormModal } from "../../../../common-form/FormModal";
-import { FormInput } from "../../../../common-form/FormInput";
+import { FormModal } from "../../../common-form/FormModal";
+import { FormInput } from "../../../common-form/FormInput";
 import axios from "axios";
-import { VenderDto } from "../../../../../../../common/DTOs/vender.dto";
-import { ICurrency } from "../../../../../../../common/ICurrency.interface";
-import { IPaymentTerms } from "../../../../../../../common/IPayment.terms.interface";
+import { VenderDto } from "../../../../../../common/DTOs/vender.dto";
+import { ICurrency } from "../../../../../../common/ICurrency.interface";
+import { IPaymentTerms } from "../../../../../../common/IPayment.terms.interface";
 import { FormToggle } from "@/app/common-form/FormToggle";
 
 interface PopulatedPerson {
@@ -74,7 +74,7 @@ interface Props {
 }
 
 interface FormState {
-  venderType: "Supplier" | "Vender" | "Both";
+  venderType: "Supplier" | "Vendor" | "Both";
   business_name: string;
   website: string;
   paymentTermId: string;
@@ -598,13 +598,13 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
                 onChange={(e) =>
                   handleFormChange(
                     "venderType",
-                    e.target.value as "Supplier" | "Vender" | "Both"
+                    e.target.value as "Supplier" | "Vendor" | "Both"
                   )
                 }
                 required
               >
                 <option value="Supplier">Supplier</option>
-                <option value="Vender">Vender</option>
+                <option value="Vendor">Vendor</option>
                 <option value="Both">Both</option>
               </select>
             </div>
