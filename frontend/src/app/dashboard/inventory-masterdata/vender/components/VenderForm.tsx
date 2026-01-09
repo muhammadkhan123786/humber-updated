@@ -558,7 +558,7 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
 
   return (
     <FormModal
-      title={editingData ? "Edit Vender" : "Add New Vender"}
+      title={editingData ? "Edit Vendor" : "Add New Vendor"}
       icon={<Truck size={24} />}
       onClose={onClose}
       themeColor={themeColor}
@@ -590,7 +590,7 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Vender Type *
+                Vendor Type *
               </label>
               <select
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -920,8 +920,8 @@ const VenderForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
             {loading
               ? "Processing..."
               : editingData
-              ? "Update Vender"
-              : "Save Vender"}
+              ? "Update Vendor"
+              : "Save Vendor"}
           </button>
         </form>
       )}

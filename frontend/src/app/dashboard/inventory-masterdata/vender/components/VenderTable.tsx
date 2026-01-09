@@ -208,7 +208,7 @@ const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   colSpan={6}
                   className="px-6 py-12 text-center text-gray-400 italic"
                 >
-                  No venders found.
+                  No vendors found.
                 </td>
               </tr>
             )}
