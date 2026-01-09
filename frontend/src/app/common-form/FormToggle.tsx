@@ -2,11 +2,12 @@ import React from "react";
 
 interface Props {
   label: string;
-  checked: boolean;
+  checked: boolean | undefined;
   onChange: (val: boolean) => void;
+  description?: string
 }
 
-export const FormToggle = ({ label, checked, onChange }: Props) => (
+export const FormToggle = ({ label, checked, onChange, description }: Props) => (
   <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
     <input 
       type="checkbox" 
@@ -17,5 +18,10 @@ export const FormToggle = ({ label, checked, onChange }: Props) => (
     <span className="text-sm font-semibold text-gray-700 select-none">
       {label}
     </span>
+    {
+      description && (
+        <p>{description}</p>
+      )
+    }
   </label>
 );

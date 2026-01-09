@@ -45,6 +45,10 @@ import ticketTypesRouter from "./routes/ticket-management-system-routes/ticket.t
 import ticketActionsRouter from "./routes/ticket-management-system-routes/ticket.actions.routes";
 import ticketStatusTransitionRouter from "./routes/ticket-management-system-routes/ticket.status.transition.routes";
 
+//  Muzamil Hassan 8/1/2026
+
+import productAttributesRoutes from "./routes/product.attributes";
+
 // Create express app
 const app: Application = express();
 
@@ -204,6 +208,13 @@ app.use(
 
 //Muhammad Imran code ended here.
 
+//  Muzmil Hassan 8/1/2026
+
+app.use(
+  `${process.env.API_PREFIX}/product-attributes`,
+  adminProtecter,
+  productAttributesRoutes
+);
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });

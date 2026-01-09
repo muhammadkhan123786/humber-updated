@@ -76,23 +76,23 @@ export class DropdownService {
 }
 
 
-//   private static async fetchCategories(): Promise<DropdownOption[]> {
-//     try {
-//       const response = await getAll<{ _id: string; categoryName: string }>(
-//         "/categories",
-//         { limit: 100 }
-//       );
-//       console.log("categories", response);
-//       return response.data.map(item => ({
-//         value:  "695cd3474336b9778eaf4951",
-//         label:  "dell",
+  private static async fetchCategories(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; categoryName: string }>(
+        "/categories",
+        { limit: 100 }
+      );
+      console.log("categories", response);
+      return response.data.map(item => ({
+        value:  item._id,
+        label:  item.categoryName,
         
-//       }));
-//     } catch (error) {
-//       console.error("Error fetching categories:", error);
-//       return [];
-//     }
-//   }
+      }));
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      return [];
+    }
+  }
 
   private static async fetchBrands(): Promise<DropdownOption[]> {
     try {
@@ -110,28 +110,28 @@ export class DropdownService {
     }
   }
 
-private static async fetchCategories(): Promise<DropdownOption[]> {
-  try {
-    // For now, return static data
-    const staticCategories = [
-      { value: "695cd3474336b9778eaf4951", label: "Dell", code: "DEL" },
-      { value: "695cd3474336b9778eaf4952", label: "HP", code: "HP" },
-      { value: "695cd3474336b9778eaf4953", label: "Lenovo", code: "LEN" },
-      { value: "695cd3474336b9778eaf4954", label: "Apple", code: "APL" },
-      { value: "695cd3474336b9778eaf4955", label: "Acer", code: "ACE" },
-      { value: "695cd3474336b9778eaf4956", label: "Asus", code: "ASU" },
-      { value: "695cd3474336b9778eaf4957", label: "Microsoft", code: "MS" },
-      { value: "695cd3474336b9778eaf4958", label: "Samsung", code: "SAM" },
-    ];
+// private static async fetchCategories(): Promise<DropdownOption[]> {
+//   try {
+//     // For now, return static data
+//     const staticCategories = [
+//       { value: "695cd3474336b9778eaf4951", label: "Dell", code: "DEL" },
+//       { value: "695cd3474336b9778eaf4952", label: "HP", code: "HP" },
+//       { value: "695cd3474336b9778eaf4953", label: "Lenovo", code: "LEN" },
+//       { value: "695cd3474336b9778eaf4954", label: "Apple", code: "APL" },
+//       { value: "695cd3474336b9778eaf4955", label: "Acer", code: "ACE" },
+//       { value: "695cd3474336b9778eaf4956", label: "Asus", code: "ASU" },
+//       { value: "695cd3474336b9778eaf4957", label: "Microsoft", code: "MS" },
+//       { value: "695cd3474336b9778eaf4958", label: "Samsung", code: "SAM" },
+//     ];
     
-    console.log("Using static categories:", staticCategories);
-    return staticCategories;
+//     console.log("Using static categories:", staticCategories);
+//     return staticCategories;
     
-  } catch (error) {
-    console.error("Error in fetchCategories:", error);
-    return [];
-  }
-}
+//   } catch (error) {
+//     console.error("Error in fetchCategories:", error);
+//     return [];
+//   }
+// }
   private static async fetchTaxes(): Promise<DropdownOption[]> {
     try {
       const response = await getAll<{ _id: string; taxName: string; percentage: number }>(
@@ -193,7 +193,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/product-channels",
         { limit: 100 }
       );
-       console.log("channels", response);
+      
       return response.data.map(item => ({
         value: item._id,
         label: item.channelName,
@@ -210,7 +210,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/colors",
         { limit: 100 }
       );
-       console.log("colors", response);
+       
       return response.data.map(item => ({
         value: item._id,
         label: item.colorName,
@@ -227,7 +227,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/sizes",
         { limit: 100 }
       );
-       console.log("sizes", response);
+      
       return response.data.map(item => ({
         value: item._id,
         label: item.size,
@@ -245,7 +245,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/order-status",
         { limit: 100 }
       );
-       console.log("order-status", response);
+       
       return response.data.map(item => ({
         value: item._id,
         label: item.orderStatus,
@@ -305,7 +305,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/units",
         { limit: 100 }
       );
-       console.log("units", response);
+      
       return response.data.map(item => ({
         value: item._id,
         label: item.unitName,
@@ -323,7 +323,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/warehouses",
         { limit: 100 }
       );
-       console.log("warehouses", response);
+       
       return response.data.map(item => ({
         value: item._id,
         label: item?.addressId?.address,
@@ -340,7 +340,7 @@ private static async fetchCategories(): Promise<DropdownOption[]> {
         "/warehouse-status",
         { limit: 100 }
       );
-       console.log("warehouses status", response);
+      
       return response.data.map(item => ({
         value: item._id,
         label: item.wareHouseStatus,
