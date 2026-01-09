@@ -2,6 +2,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 
 // Define types for our data
+
+
 interface ForecastDataItem {
   week: string;
   value: number;

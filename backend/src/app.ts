@@ -49,6 +49,10 @@ import documentTypesRouter from "./routes/document.types.routes";
 import jobTypesRouter from "./routes/job.types.routes";
 
 
+//  Muzamil Hassan 8/1/2026
+
+import productAttributesRoutes from "./routes/product.attributes";
+
 // Create express app
 const app: Application = express();
 
@@ -213,6 +217,13 @@ app.use(`${process.env.API_PREFIX}/job-types`, adminProtecter, jobTypesRouter);
 
 //Muhammad Imran code ended here.
 
+//  Muzmil Hassan 8/1/2026
+
+app.use(
+  `${process.env.API_PREFIX}/product-attributes`,
+  adminProtecter,
+  productAttributesRoutes
+);
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });

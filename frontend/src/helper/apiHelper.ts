@@ -43,7 +43,7 @@ export const getAll = async <T>(
       ...getAuthConfig(),
       params,
     });
-    console.log("res", response);
+    
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {

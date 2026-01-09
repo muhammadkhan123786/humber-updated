@@ -1,6 +1,6 @@
 "use client";
-import React from "react";
-import { Layers, FolderTree, ArrowRight } from "lucide-react";
+import React, { useState } from "react";
+import { Layers, FolderTree, ArrowRight, Eye } from "lucide-react";
 import { ICategory } from "../../../../../../../common/ICategory.interface";
 import { StatusBadge } from "../../../../common-form/StatusBadge";
 import { TableActionButton } from "../../../../common-form/TableActionButtons";
@@ -12,64 +12,70 @@ interface CategoryTableProps {
   themeColor: string;
 }
 
+// Add _path property for internal usage
+interface FlatCategory extends ICategory {
+  _path: string[];
+}
+
 const CategoryTable = ({
   data,
   onEdit,
   onDelete,
   themeColor,
 }: CategoryTableProps) => {
-  const getFullHierarchy = (cat: ICategory): string[] => {
-    const names: string[] = [];
+  const [popupData, setPopupData] = useState<string[] | null>(null);
 
-    const traverse = (current: ICategory | null | undefined) => {
-      if (!current) return;
-      if (typeof current.parentId === "object" && current.parentId !== null) {
-        traverse(current.parentId as ICategory);
-      }
-      if (current.categoryName) {
-        names.push(current.categoryName);
-      }
+  // Flatten nested categories and keep the full path
+  const flattenCategories = (categories: ICategory[]): FlatCategory[] => {
+    const result: FlatCategory[] = [];
+
+    const traverse = (cats: ICategory[], parentPath: string[] = []) => {
+      cats.forEach((cat) => {
+        const currentPath = [...parentPath, cat.categoryName];
+        result.push({ ...cat, _path: currentPath });
+        if (cat.children && cat.children.length > 0) {
+          traverse(cat.children, currentPath);
+        }
+      });
     };
 
-    if (typeof cat.parentId === "object" && cat.parentId !== null) {
-      traverse(cat.parentId as ICategory);
-    }
+    traverse(categories);
+    return result;
+  };
 
-    return names;
+  const flatData = flattenCategories(data);
+
+  // Show short hierarchy in table (first 2 levels + "..." if deeper)
+  const getShortPath = (cat: FlatCategory) => {
+    if (cat._path.length > 2) return cat._path.slice(0, 2).join(" > ") + " ...";
+    return cat._path.join(" > ");
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="text-white" style={{ backgroundColor: themeColor }}>
-            <tr>
-              <th className="px-6 py-4 font-semibold">Category Details</th>
-              <th className="px-6 py-4 font-semibold">Hierarchy Path</th>
-              <th className="px-6 py-4 text-center font-semibold">Status</th>
-              <th className="px-6 py-4 text-center font-semibold">Actions</th>
-            </tr>
-          </thead>
+    <>
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead
+              className="text-white"
+              style={{ backgroundColor: themeColor }}
+            >
+              <tr>
+                <th className="px-6 py-4 font-semibold">Category</th>
+                <th className="px-6 py-4 font-semibold">Hierarchy</th>
+                <th className="px-6 py-4 text-center font-semibold">Status</th>
+                <th className="px-6 py-4 text-center font-semibold">Actions</th>
+              </tr>
+            </thead>
 
-          <tbody className="divide-y divide-gray-100">
-            {data.length > 0 ? (
-              data.map((item) => {
-                const parentPath = getFullHierarchy(item);
-
-                return (
+            <tbody className="divide-y divide-gray-100">
+              {flatData.length > 0 ? (
+                flatData.map((item) => (
                   <tr
                     key={item._id}
-                    className="transition-colors group"
-                    style={{
-                      backgroundColor: "transparent",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = `${themeColor}10`)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "transparent")
-                    }
+                    className="transition-colors group hover:bg-gray-50"
                   >
+                    {/* Category Column */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div
@@ -86,70 +92,125 @@ const CategoryTable = ({
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      {parentPath.length > 0 ? (
-                        <div className="flex items-center gap-1.5 flex-wrap text-[13px]">
-                          <FolderTree size={14} style={{ color: themeColor }} />
 
-                          {parentPath.map((name, index) => (
-                            <React.Fragment key={index}>
-                              <span
-                                className="font-medium px-2 py-0.5 rounded-md border"
-                                style={{
-                                  color: themeColor,
-                                  backgroundColor: `${themeColor}10`,
-                                  borderColor: `${themeColor}30`,
-                                }}
-                              >
-                                {name}
+                    {/* Hierarchy Column */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <FolderTree size={14} style={{ color: themeColor }} />
+
+                        {/* Hierarchy Path Display */}
+                        <div className="flex items-center flex-wrap gap-1">
+                          {item._path.length <= 2 ? (
+                            // Show full path for 2 levels or less
+                            item._path.map((name, index) => (
+                              <React.Fragment key={index}>
+                                <span className="text-[13px] font-medium">
+                                  {name}
+                                </span>
+                                {index < item._path.length - 1 && (
+                                  <ArrowRight
+                                    size={12}
+                                    style={{ color: themeColor }}
+                                  />
+                                )}
+                              </React.Fragment>
+                            ))
+                          ) : (
+                            // Show first 2 levels + "..." for deeper hierarchies
+                            <>
+                              <span className="text-[13px] font-medium">
+                                {item._path[0]}
                               </span>
-                              <ArrowRight size={12} className="text-gray-400" />
-                            </React.Fragment>
-                          ))}
-                          <span
-                            className="font-bold underline underline-offset-4"
-                            style={{ textDecorationColor: `${themeColor}80` }}
-                          >
-                            {item.categoryName}
-                          </span>
+                              <ArrowRight
+                                size={12}
+                                style={{ color: themeColor }}
+                              />
+                              <span className="text-[13px] font-medium">
+                                {item._path[1]}
+                              </span>
+                              <ArrowRight
+                                size={12}
+                                style={{ color: themeColor }}
+                              />
+                              <span className="text-[13px] font-medium text-gray-500">
+                                ...
+                              </span>
+
+                              {/* View All Button */}
+                              <button
+                                onClick={() => setPopupData(item._path)}
+                                className="ml-2 text-xs font-semibold px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+                              >
+                                View All
+                              </button>
+                            </>
+                          )}
                         </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-gray-400 rounded-md border border-gray-100">
-                          <span className="text-[10px] uppercase tracking-widest font-bold">
-                            Root Category
-                          </span>
-                        </div>
-                      )}
+                      </div>
                     </td>
+
+                    {/* Status */}
                     <td className="px-6 py-4 text-center">
                       <StatusBadge isActive={!!item.isActive} />
                     </td>
+
+                    {/* Actions */}
                     <td className="px-6 py-4 text-center">
                       <TableActionButton
                         onEdit={() => onEdit(item)}
-                        onDelete={() => item._id && onDelete(item._id)}
+                        onDelete={() => {
+                          if (!item._id) return;
+                          onDelete(item._id);
+                        }}
                       />
                     </td>
                   </tr>
-                );
-              })
-            ) : (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-6 py-20 text-center text-gray-400 italic"
-                >
-                  <div className="flex flex-col items-center gap-2">
-                    <FolderTree size={40} className="text-gray-200" />
-                    <p>No categories found.</p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-20 text-center text-gray-400 italic"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      <FolderTree size={40} className="text-gray-200" />
+                      <p>No categories found.</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+
+      {/* Popup Modal */}
+      {popupData && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl w-[400px] max-h-[80vh] overflow-y-auto p-6">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Eye size={18} /> Full Category Path
+            </h3>
+            <ul className="space-y-2">
+              {popupData.map((name, index) => (
+                <li
+                  key={index}
+                  className="px-3 py-2 border rounded-md bg-gray-50"
+                >
+                  {index + 1}. {name}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => setPopupData(null)}
+              className="mt-4 w-full py-2 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

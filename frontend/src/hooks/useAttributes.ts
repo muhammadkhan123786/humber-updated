@@ -1,11 +1,11 @@
 "use client";
 import axios from "axios";
-import { ICategory } from "../../../common/ICategory.interface";
+import { IAttribute } from "../../../common/IProductAttributes.interface";
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/categories`;
+const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/product-attributes`;
 
-interface CategoryResponse {
-  data: ICategory[];
+interface AttributeResponse {
+  data: IAttribute[];
   total: number;
   page: number;
   limit: number;
@@ -23,13 +23,13 @@ const getUserId = () => {
   return user.id || user._id;
 };
 
-export const fetchCategories = async (
+export const fetchAttributes = async (
   page = 1,
   limit = 10,
   search = ""
-): Promise<CategoryResponse> => {
+): Promise<AttributeResponse> => {
   const userId = getUserId();
-  console.log("Frontend userId:", userId); 
+  console.log("Frontend userId:", userId);
   const res = await axios.get(API_URL, {
     ...getAuthConfig(),
     params: {
@@ -42,24 +42,29 @@ export const fetchCategories = async (
   return res.data;
 };
 
-export const createCategory = async (
-  payload: Partial<ICategory>
-): Promise<ICategory> => {
+export const createAttribute = async (
+  payload: Partial<IAttribute>
+): Promise<IAttribute> => {
   const res = await axios.post(API_URL, payload, getAuthConfig());
   return res.data;
 };
 
-export const updateCategory = async (
+export const updateAttribute = async (
   id: string,
-  payload: Partial<ICategory>
-): Promise<ICategory> => {
+  payload: Partial<IAttribute>
+): Promise<IAttribute> => {
   const res = await axios.put(`${API_URL}/${id}`, payload, getAuthConfig());
   return res.data;
 };
 
-export const deleteCategory = async (
+export const deleteAttribute = async (
   id: string
 ): Promise<{ success: boolean }> => {
   const res = await axios.delete(`${API_URL}/${id}`, getAuthConfig());
+  return res.data;
+};
+
+export const fetchAttributeById = async (id: string): Promise<IAttribute> => {
+  const res = await axios.get(`${API_URL}/${id}`, getAuthConfig());
   return res.data;
 };

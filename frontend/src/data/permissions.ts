@@ -225,6 +225,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Warehouses",
         index: 13,
       },
+      {
+        _id: 129,
+        href: "/dashboard/inventory-masterdata/product-attribute",
+        label: "Product Attribute",
+        index: 14,
+      },
     ],
   },
   {
