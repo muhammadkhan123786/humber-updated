@@ -97,8 +97,11 @@ const OrderStatusForm = ({
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                className={`w-5 h-5 ${formData.isDefault ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-
+                className={`w-5 h-5 ${
+                  formData.isDefault
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-pointer"
+                }`}
                 disabled={formData.isDefault}
                 checked={formData.isActive}
                 onChange={(e) =>
@@ -116,7 +119,7 @@ const OrderStatusForm = ({
                   setFormData({ ...formData, isDefault: e.target.checked })
                 }
               />
-              <span className="text-sm font-medium">Set Default</span>
+              <span className="text-sm font-medium">Default</span>
             </label>
           </div>
 
