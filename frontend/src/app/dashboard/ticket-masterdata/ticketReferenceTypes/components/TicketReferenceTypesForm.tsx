@@ -1,0 +1,148 @@
+"use client";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, BookMarked } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { createItem, updateItem } from "../../../../../helper/apiHelper";
+import { ITicketReferenceTypes } from "../../../../../../../common/Ticket-management-system/ITicket.reference.types.interface";
+import { FormButton } from "@/app/common-form/FormButton";
+
+const formSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, "Reference code is required")
+    .transform((v) => v.toUpperCase()),
+  label: z.string().trim().min(1, "Label is required"),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+interface Props {
+  editingData: (ITicketReferenceTypes & { _id?: string }) | null;
+  onClose: () => void;
+  onRefresh: () => void;
+  themeColor: string;
+}
+
+const TicketReferenceTypesForm = ({
+  editingData,
+  onClose,
+  onRefresh,
+  themeColor,
+}: Props) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { code: "", label: "", isActive: true, isDefault: false },
+  });
+  const isDefaultValue = useWatch({
+    control,
+    name: "isDefault",
+  });
+
+  useEffect(() => {
+    if (editingData) {
+      reset({
+        code: editingData.code,
+        label: editingData.label,
+        isActive: Boolean(editingData.isActive),
+        isDefault: Boolean(editingData.isDefault),
+      });
+    }
+  }, [editingData, reset]);
+
+  const onSubmit = async (values: FormData) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
+
+      if (editingData?._id) {
+        await updateItem("/ticket-reference-types", editingData._id, payload);
+      } else {
+        await createItem("/ticket-reference-types", payload);
+      }
+      onRefresh();
+      onClose();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving data");
+    }
+  };
+
+  return (
+    <FormModal
+      title={editingData ? "Edit Reference Type" : "Add Reference Type"}
+      icon={<BookMarked size={24} />}
+      onClose={onClose}
+      themeColor={themeColor}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+        <div className="grid grid-cols-1 gap-6">
+          <FormInput
+            label="Reference Code *"
+            placeholder="e.g. EMAIL"
+            {...register("code")}
+            error={errors.code?.message}
+          />
+          <FormInput
+            label="Label *"
+            placeholder="e.g. Email Support"
+            {...register("label")}
+            error={errors.label?.message}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <FormToggle
+                label="Active"
+                checked={field.value}
+                onChange={field.onChange}
+                disabled={isDefaultValue}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="isDefault"
+            render={({ field }) => (
+              <FormToggle
+                label="Default"
+                checked={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true);
+                }}
+              />
+            )}
+          />
+        </div>
+        <FormButton
+          type="submit"
+          label={editingData ? "Update Reference Type" : "Save Reference Type"}
+          icon={<Save size={20} />}
+          loading={isSubmitting}
+          themeColor={themeColor}
+        />
+      </form>
+    </FormModal>
+  );
+};
+
+export default TicketReferenceTypesForm;

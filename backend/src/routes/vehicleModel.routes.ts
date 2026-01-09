@@ -12,6 +12,7 @@ const vehicleModelController = new AdvancedGenericController({
     service: vehicleModelServices,
     populate: ["userId", "brandId"],
     validationSchema: vehicleModelCreateSchema,
+    searchFields: ["modelName"]
 });
 
 modelRouter.get("/", vehicleModelController.getAll);

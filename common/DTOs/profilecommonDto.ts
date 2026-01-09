@@ -24,6 +24,8 @@ export interface basicCommonInfoDto {
   };
 }
 
+
+
 export interface commonProfileDto extends basicCommonInfoDto {
   isActive?: boolean;
   isDeleted?: boolean;

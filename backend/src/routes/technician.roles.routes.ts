@@ -12,6 +12,7 @@ const technicianRoleController = new AdvancedGenericController({
     service: TechnicianRoleRouterServices,
     populate: ["userId"],
     validationSchema: technicianRoleCreateSchema,
+    searchFields: [""]
 });
 
 TechnicianRoleRouter.get("/", technicianRoleController.getAll);

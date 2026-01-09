@@ -9,6 +9,7 @@ import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { createItem, updateItem } from "../../../../../helper/apiHelper";
 import { ITicketStatus } from "../../../../../../../common/Ticket-management-system/ITicketStatus.interface";
+
 const ticketStatusFormSchema = z.object({
   code: z.string().trim().min(1, "Status code is required"),
   label: z.string().trim().min(1, "Display label is required"),
@@ -38,6 +39,8 @@ const TicketStatusForm = ({
     handleSubmit,
     reset,
     control,
+    watch, // watch ko add kiya
+    setValue, // setValue ko add kiya auto-update ke liye
     formState: { errors, isSubmitting },
   } = useForm<TicketStatusFormData>({
     resolver: zodResolver(ticketStatusFormSchema),
@@ -51,6 +54,9 @@ const TicketStatusForm = ({
     },
   });
 
+  // watch ko yahan define kiya taake isDefaultValue use ho sakay
+  const isDefaultValue = watch("isDefault");
+
   useEffect(() => {
     if (editingData) {
       reset({
@@ -59,8 +65,7 @@ const TicketStatusForm = ({
         is_Terminal: Boolean(editingData.is_Terminal),
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
-        userId:
-          typeof editingData.userId === "string" ? editingData.userId : "",
+        userId: typeof editingData.userId === "string" ? editingData.userId : "",
       });
     }
   }, [editingData, reset]);
@@ -70,14 +75,7 @@ const TicketStatusForm = ({
       const userStr = localStorage.getItem("user");
       const user = userStr ? JSON.parse(userStr) : {};
       const userId = user.id || user._id;
-      const payload = {
-        code: values.code,
-        label: values.label,
-        is_Terminal: values.is_Terminal,
-        isActive: values.isActive,
-        isDefault: values.isDefault,
-        userId: userId,
-      };
+      const payload = { ...values, userId };
 
       if (editingData?._id) {
         await updateItem("/ticket-status", editingData._id, payload);
@@ -87,11 +85,10 @@ const TicketStatusForm = ({
       onRefresh();
       onClose();
     } catch (error: any) {
-      alert(
-        error.response?.data?.message || error.message || "Error saving data"
-      );
+      alert(error.response?.data?.message || error.message || "Error saving data");
     }
   };
+
   return (
     <FormModal
       title={editingData ? "Edit Ticket Status" : "Add Ticket Status"}
@@ -100,7 +97,7 @@ const TicketStatusForm = ({
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
-        <div className="grid grid-cols-1  gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <FormInput
             label="Status Code *"
             placeholder="e.g. OPEN"
@@ -114,6 +111,7 @@ const TicketStatusForm = ({
             error={errors.label?.message}
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
           <Controller
             control={control}
@@ -126,6 +124,7 @@ const TicketStatusForm = ({
               />
             )}
           />
+
           <Controller
             control={control}
             name="isActive"
@@ -134,9 +133,11 @@ const TicketStatusForm = ({
                 label="Active"
                 checked={field.value}
                 onChange={field.onChange}
+                disabled={isDefaultValue} 
               />
             )}
           />
+
           <Controller
             control={control}
             name="isDefault"
@@ -144,7 +145,10 @@ const TicketStatusForm = ({
               <FormToggle
                 label="Default"
                 checked={field.value}
-                onChange={field.onChange}
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true); 
+                }}
               />
             )}
           />
@@ -153,7 +157,7 @@ const TicketStatusForm = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2"
+          className="w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50"
           style={{ backgroundColor: themeColor }}
         >
           <Save size={20} />

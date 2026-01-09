@@ -12,6 +12,7 @@ const wareHouseStatusController = new AdvancedGenericController({
     service: warehouseStatusServices,
     populate: ["userId"],
     validationSchema: wareHouseStatusSchemaValidation,
+    searchFields: ["wareHouseStatus"]
 });
 
 warehouseStatusRouter.get("/", wareHouseStatusController.getAll);

@@ -4,6 +4,7 @@ import { VenderDoc, Vender } from "../models/vender.models";
 import { venderSchemaValidation } from "../schemas/vender.schema";
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { genericProfileIdsMiddleware } from "../middleware/generic.profile.middleware";
+import { saveOrUpdateVender } from "../controllers/vender.controller";
 
 const venderRouter = Router();
 
@@ -22,8 +23,8 @@ const venderProfileMiddleware = genericProfileIdsMiddleware<VenderDoc>(
 
 venderRouter.get("/", VenderController.getAll);
 venderRouter.get("/:id", VenderController.getById);
-venderRouter.post("/", venderProfileMiddleware, VenderController.create);
-venderRouter.put("/:id", venderProfileMiddleware, VenderController.update);
+venderRouter.post("/", saveOrUpdateVender);
+venderRouter.put("/:id", saveOrUpdateVender);
 venderRouter.delete("/:id", VenderController.delete);
 
 export default venderRouter;

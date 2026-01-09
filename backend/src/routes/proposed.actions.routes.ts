@@ -12,6 +12,7 @@ const proposedActionsController = new AdvancedGenericController({
     service: propsedActionsServices,
     populate: ["userId"],
     validationSchema: proposedActionSchemaValidation,
+    searchFields: ["proposedActionName"]
 });
 
 proposedActionsRouter.get("/", proposedActionsController.getAll);

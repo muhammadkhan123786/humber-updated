@@ -65,6 +65,7 @@ const UnitsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
             label="Active"
             checked={formData.isActive}
             onChange={(val) => setFormData({ ...formData, isActive: val })}
+            disabled={formData.isDefault}
           />
           <FormToggle
             label="Set as Default"

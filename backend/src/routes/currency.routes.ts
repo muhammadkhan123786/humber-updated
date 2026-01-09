@@ -12,6 +12,7 @@ const currencyController = new AdvancedGenericController({
     service: currencyServices,
     populate: ["userId"],
     validationSchema: currencyCreateSchema,
+    searchFields: ["currencyName"]
 });
 
 currecyRouter.get("/", currencyController.getAll);

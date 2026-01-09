@@ -75,7 +75,7 @@ const ServiceRequestForm = ({ editingData, onClose, onRefresh, themeColor, apiUr
 
                     <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
+                            <input type="checkbox"  className={`w-5 h-5 ${formData.isDefault ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
                             <span className="text-sm font-medium">Active</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">

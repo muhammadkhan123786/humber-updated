@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 
 interface Props {
@@ -11,12 +12,13 @@ export const FormToggle = ({ label, checked, onChange, description }: Props) => 
   <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
     <input 
       type="checkbox" 
-      className="w-5 h-5 accent-[#FE6B1D] cursor-pointer" 
+      className={`w-5 h-5 accent-[#FE6B1D] ${disabled ? '' : 'cursor-pointer'}`} 
       checked={checked} 
-      onChange={(e) => onChange(e.target.checked)} 
+      onChange={(e) => !disabled && onChange(e.target.checked)} // Disabled ho to change na ho
+      disabled={disabled}
     />
     <span className="text-sm font-semibold text-gray-700 select-none">
-      {label}
+      {label} {disabled && checked && <span className="text-[10px] text-orange-500 ml-1"></span>}
     </span>
     {
       description && (

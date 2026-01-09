@@ -95,7 +95,13 @@ const TicketTransitionTable = ({
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   onEdit={() => onEdit(item)}
-                  onDelete={() => onDelete(item._id)}
+                  onDelete={() => {
+                    if (item.isDefault) {
+                      alert("Default item cannot be deleted");
+                      return;
+                    }
+                    onDelete(item._id);
+                  }}
                 />
               </td>
             </tr>

@@ -93,7 +93,11 @@ export default function CustomersContent() {
     const openModal = useCallback((mode: 'add' | 'edit' | 'view', customer?: Customer) => {
         if ((mode === 'edit' || mode === 'view') && customer) {
             setSelectedCustomer(customer);
-            setFormData({ ...initialFormData, ...customer });
+            setFormData({ 
+                ...initialFormData, 
+                ...customer,
+                emailId: customer.email, // Map email to emailId for form
+            });
         } else {
             setFormData(initialFormData);
             setSelectedCustomer(null);
@@ -113,26 +117,52 @@ export default function CustomersContent() {
         }, 300);
     }, [initialFormData]);
 
-    const handleSubmit = useCallback(async () => {
-        if (!formData.firstName || !formData.emailId || !formData.zipCode) {
+  const handleSubmit = useCallback(async () => {
+    if (!formData.firstName || !formData.emailId || !formData.zipCode) {
         alert('Please fill in all required fields (Name, Email, and Post Code)');
         return;
     }
 
-        try {
-            if (modalMode === 'add') {
-                await customerApi.create(formData);
-            } else if (modalMode === 'edit' && selectedCustomer) {
-                const { id, ...updateData } = formData as any;
-                await customerApi.update(selectedCustomer.id!, updateData);
-            }
-            await fetchCustomers(false);
-            closeModal();
-        } catch (error) {
-            console.error('Error saving customer:', error);
-            alert('Error saving customer.');
+    try {
+        if (modalMode === 'add') {
+            await customerApi.create(formData);
+        } else if (modalMode === 'edit' && selectedCustomer) {
+            const { id, ...updateData } = formData as any;
+            await customerApi.update(selectedCustomer.id!, updateData);
         }
-    }, [formData, modalMode, selectedCustomer, closeModal, fetchCustomers]);
+        
+        // Success case
+        await fetchCustomers(false);
+        closeModal(); 
+        
+    } catch (error: any) {
+        // Yeh line console par error dikhayegi, lekin error screen ko trigger nahi karegi agar hum handle kar lein
+        console.warn('Handling expected conflict error:', error.response?.status);
+        
+        let errorMessage = 'Error saving customer.';
+        
+        // Check if it's a 409 Conflict
+        if (error.response?.status === 409) {
+            errorMessage = 'This email address is already registered. Please use a different email.';
+            
+            // ⚠️ Sab se important part:
+            // Alert dikhayein aur function ko yahin rok dein.
+            // Modal band NA karein aur state reset NA karein.
+            alert(errorMessage);
+            return; // Yahin se wapis chale jayein, niche wala logic run na ho
+        }
+
+        // Doosre errors ke liye
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        }
+        
+        alert(errorMessage);
+        
+        // Sirf bade technical errors par modal band karein, validation errors par nahi
+        // setShowModal(false); // Isay comment out ya hata dein agar aap chahte hain form na ure
+    }
+}, [formData, modalMode, selectedCustomer, closeModal, fetchCustomers]);
 
     const handleActionMenuClick = useCallback((event: React.MouseEvent, customerId: string) => {
         event.stopPropagation();

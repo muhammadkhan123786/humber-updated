@@ -12,6 +12,7 @@ const ItemsConditionsController = new AdvancedGenericController({
     service: itemConditionServices,
     populate: ["userId"],
     validationSchema: itemConditionSchemaValidation,
+    searchFields: ["itemConditionName"]
 });
 
 ItemsConditionsRouter.get("/", ItemsConditionsController.getAll);

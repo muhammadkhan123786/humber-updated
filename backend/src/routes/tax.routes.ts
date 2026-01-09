@@ -12,6 +12,7 @@ const taxController = new AdvancedGenericController({
     service: taxServices,
     populate: ["userId"],
     validationSchema: taxSchemaValidation,
+    searchFields: ["taxName", "percentage"]
 });
 
 taxRouter.get("/", taxController.getAll);

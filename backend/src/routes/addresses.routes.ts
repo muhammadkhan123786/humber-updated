@@ -12,6 +12,7 @@ const addressController = new AdvancedGenericController({
     service: addressServices,
     populate: ["userId", "countryId", "cityId"],
     validationSchema: adressCreateSchema,
+    searchFields: ["address"]
 });
 
 addressRouter.get("/", addressController.getAll);

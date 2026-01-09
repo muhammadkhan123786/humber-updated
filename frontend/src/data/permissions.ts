@@ -135,8 +135,8 @@ export const NavBarLinksData: NavLinksInterface[] = [
 
       {
         _id: 114,
-        href: "/dashboard/inventory-masterdata/Currencies",
-        label: "currencies",
+        href: "/dashboard/inventory-masterdata/currencies",
+        label: "Currencies",
         index: 1,
       },
       {
@@ -313,11 +313,18 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Ticket Type",
         index: 4,
       },
+
       {
         _id: 307,
         href: "/dashboard/ticket-masterdata/ticket-transition",
         label: "Ticket Transition",
         index: 5,
+      },
+      {
+        _id: 308,
+        href: "/dashboard/ticket-masterdata/ticketReferenceTypes",
+        label: "Ticket Reference Types",
+        index: 6,
       },
     ],
   },
@@ -387,6 +394,18 @@ export const NavBarLinksData: NavLinksInterface[] = [
         href: "/dashboard/service-zone",
         label: "Service Zone",
         index: 13,
+      },
+      {
+        _id: 114,
+        href: "/dashboard/job-type",
+        label: "Job Type",
+        index: 14,
+      },
+      {
+        _id: 115,
+        href: "/dashboard/document-type",
+        label: "Document Type",
+        index: 15,
       },
     ],
   },

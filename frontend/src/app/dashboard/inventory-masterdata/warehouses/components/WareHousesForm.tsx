@@ -395,6 +395,7 @@ const WareHousesForm = ({
             label="Active"
             checked={formData.isActive ?? true}
             onChange={(val) => handleFormChange("isActive", val)}
+            disabled={formData.isDefault}
           />
           <FormToggle
             label="Set as Default"

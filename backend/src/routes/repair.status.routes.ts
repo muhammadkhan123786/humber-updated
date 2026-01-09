@@ -12,6 +12,7 @@ const repairStatusController = new AdvancedGenericController({
     service: repairStatusServices,
     populate: ["userId"],
     validationSchema: repairStatusCreateSchema,
+    searchFields: ["repairStatus"]
 });
 
 repairStatusRouter.get("/", repairStatusController.getAll);
