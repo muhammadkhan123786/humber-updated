@@ -7,6 +7,7 @@ import { productBasicSchema } from "../schemas/product.basic.schema";
 
 
 export type productDoc = IProductBasic<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId[] | null, Types.ObjectId> & Document;
+
 const productBasicDbSchema = new Schema<productDoc>({
     ...productBasicSchema
 }, { timestamps: true });

@@ -95,7 +95,7 @@ const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
 
   const getBusinessName = (item: PopulatedVenderDto): string => {
     if (item.business_name) return item.business_name;
-    if (item.business_Name) return item.business_Name;
+    if (item.business_name) return item.business_name;
     return "No Business Name";
   };
 
@@ -191,7 +191,13 @@ const VenderTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   <td className="px-6 py-4 text-center">
                     <TableActionButton
                       onEdit={() => onEdit(item)}
-                      onDelete={() => onDelete(item._id)}
+                      onDelete={() => {
+                        if (item.isDefault) {
+                          alert("Default vendor cannot be deleted");
+                          return;
+                        }
+                        onDelete(item._id);
+                      }}
                     />
                   </td>
                 </tr>

@@ -20,8 +20,8 @@ export default function TechnicianProfileManager() {
     salaryPeriod: "Per Month", // New (Default value)
     
     // Contact Info
-    email: "", 
-    phone: "", 
+    email: "",
+    phone: "",
     address: "",
 
     // Skills & Docs
@@ -60,9 +60,9 @@ export default function TechnicianProfileManager() {
 
       {/* Form Sections */}
       <PersonalInformation formData={formData} setFormData={setFormData} />
-      
+
       <ContactDetails formData={formData} setFormData={setFormData} />
-      
+
       <StatusAvailability formData={formData} setFormData={setFormData} />
 
       <SpecializationSkills formData={formData} setFormData={setFormData} />

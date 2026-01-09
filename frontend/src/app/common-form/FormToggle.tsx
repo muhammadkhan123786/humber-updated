@@ -3,16 +3,13 @@ import React from "react";
 
 interface Props {
   label: string;
-  checked: boolean;
+  checked: boolean | undefined;
   onChange: (val: boolean) => void;
-  disabled?: boolean; // Naya prop
+  description?: string
 }
 
-export const FormToggle = ({ label, checked, onChange, disabled }: Props) => (
-  <label 
-    className={`flex items-center gap-2 p-4 rounded-xl flex-1 transition-all 
-      ${disabled ? 'opacity-60 cursor-not-allowed bg-gray-100' : 'cursor-pointer bg-gray-50 hover:bg-gray-100'}`}
-  >
+export const FormToggle = ({ label, checked, onChange, description }: Props) => (
+  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
     <input 
       type="checkbox" 
       className={`w-5 h-5 accent-[#FE6B1D] ${disabled ? '' : 'cursor-pointer'}`} 
@@ -23,5 +20,10 @@ export const FormToggle = ({ label, checked, onChange, disabled }: Props) => (
     <span className="text-sm font-semibold text-gray-700 select-none">
       {label} {disabled && checked && <span className="text-[10px] text-orange-500 ml-1"></span>}
     </span>
+    {
+      description && (
+        <p>{description}</p>
+      )
+    }
   </label>
 );

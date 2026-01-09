@@ -28,6 +28,8 @@ export const fetchCategories = async (
   limit = 10,
   search = ""
 ): Promise<CategoryResponse> => {
+  const userId = getUserId();
+  console.log("Frontend userId:", userId); 
   const res = await axios.get(API_URL, {
     ...getAuthConfig(),
     params: {

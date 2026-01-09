@@ -1,4 +1,6 @@
 import { SchemaDefinition, Types } from "mongoose";
+import { z, } from 'zod';
+import { objectIdSchema } from "../validators/objectId.schema";
 
 
 export const baseCustomerSchema: SchemaDefinition = {
@@ -16,4 +18,26 @@ export const baseCustomerSchema: SchemaDefinition = {
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
 }
+
+export const baseCustomerZodSchema = z.object({
+    userId: objectIdSchema,
+
+    personId: objectIdSchema.optional(),
+    addressId: objectIdSchema.optional(),
+    contactId: objectIdSchema.optional(),
+
+    sourceId: objectIdSchema.optional(),
+    accountId: objectIdSchema.optional(),
+
+    previousCustomerId: objectIdSchema.nullable().optional(),
+    convertedToCustomerId: objectIdSchema.nullable().optional(),
+
+    customerType: z.enum(["domestic", "corporate"]),
+
+    convertedAt: z.coerce.date().optional(),
+
+    isActive: z.boolean().default(true),
+    isDeleted: z.boolean().default(false),
+    isDefault: z.boolean().default(false),
+});
 

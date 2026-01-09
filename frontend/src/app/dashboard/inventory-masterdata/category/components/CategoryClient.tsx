@@ -20,7 +20,7 @@ export default function CategoryClient() {
     try {
       setLoading(true);
       const res = await fetchCategories(page, 10, search);
-
+        console.log("res", res);
       if (res && res.data) {
         setDataList(res.data);
         setPagination({
