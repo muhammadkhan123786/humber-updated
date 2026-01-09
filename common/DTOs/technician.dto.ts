@@ -7,6 +7,7 @@ export interface technicianProfileDto extends commonProfileDto {
     zones: ITechnicianZone[];
     technicianRoleId: string;
     skills: string[];
-    profilePic?: string;        // file path / URL
-    documents?: string;
+    profilePhoto?: string;        // file path / URL
+    certifications?: string[];
+    employeeId: string;
 }

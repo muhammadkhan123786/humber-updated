@@ -235,7 +235,7 @@ const TicketTransitionForm = ({
                 name="isDefault"
                 render={({ field }) => (
                   <FormToggle
-                    label="Default Transition"
+                    label="Default"
                     checked={field.value}
                     onChange={(val) => {
                       field.onChange(val);

@@ -398,7 +398,7 @@ const WareHousesForm = ({
             disabled={formData.isDefault}
           />
           <FormToggle
-            label="Set as Default"
+            label="Default"
             checked={formData.isDefault ?? false}
             onChange={(val) => handleFormChange("isDefault", val)}
           />

@@ -10,8 +10,8 @@ const technicianRouter = Router();
 
 // Configure file upload
 const technicianUpload = createUploader([
-    { name: 'profilePic', maxCount: 1, mimeTypes: ['image/jpeg', 'image/png'] },
-    { name: 'documents', maxCount: 5, mimeTypes: ['application/pdf'] }
+    { name: 'profilePhoto', maxCount: 1, mimeTypes: ['image/jpeg', 'image/png'] },
+    { name: 'certifications', maxCount: 100, mimeTypes: ['application/pdf', 'image/jpeg', 'image/png'] }
 ]);
 
 // Services + Controller

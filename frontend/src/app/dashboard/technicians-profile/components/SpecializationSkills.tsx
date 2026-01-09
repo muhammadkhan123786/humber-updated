@@ -7,7 +7,7 @@ import CertificationList from "./CertificationList";
 interface ComponentProps {
   formData: {
     skills: string[];
-    certifications: any[]; 
+    certifications: any[];
   };
   setFormData: any;
 }
@@ -91,9 +91,9 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
   const handleSelectSkill = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     if (selectedValue && !formData.skills.includes(selectedValue)) {
-      setFormData({ 
-        ...formData, 
-        skills: [...formData.skills, selectedValue] 
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, selectedValue]
       });
     }
     e.target.value = "";
@@ -136,16 +136,16 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
-      
+
       {/* 1. Skills Section */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: "#FE6B1D" }}>
             <Wrench size={22} /> Specialization & Skills
           </h2>
-          
+
           <div className="relative min-w-[250px]">
-            <select 
+            <select
               className="w-full p-3 pr-10 bg-orange-50 border border-orange-100 rounded-xl outline-none focus:ring-2 focus:ring-[#FE6B1D] text-[#FE6B1D] font-bold appearance-none cursor-pointer transition-all"
               onChange={handleSelectSkill}
               defaultValue=""
@@ -153,8 +153,8 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
             >
               <option value="" disabled>{loading ? "Loading..." : "+ Select Technical Skill"}</option>
               {masterServices.map((service) => (
-                <option 
-                  key={service._id} 
+                <option
+                  key={service._id}
                   value={service.MasterServiceType}
                   disabled={formData.skills.includes(service.MasterServiceType)}
                 >
@@ -193,7 +193,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: "#FE6B1D" }}>
             <FileText size={22} /> Certification & Documents
           </h2>
-          <button 
+          <button
             type="button"
             onClick={() => setIsAddingCert(true)}
             className="flex items-center gap-2 bg-[#FE6B1D] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#e85a15] transition-all shadow-md"
@@ -229,12 +229,12 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-gray-700">Upload Document</label>
                 <div className="relative h-[50px]">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept=".jpg,.png,.pdf"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      if (e.target.files) setTempCert({...tempCert, file: e.target.files[0]});
+                      if (e.target.files) setTempCert({ ...tempCert, file: e.target.files[0] });
                     }}
                   />
                   <div className="flex items-center justify-between px-4 h-full border border-dashed border-gray-300 bg-white rounded-xl">
@@ -248,7 +248,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
             </div>
 
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 type="button"
                 onClick={() => {
                    setIsAddingCert(false);
@@ -259,7 +259,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={handleSaveCertification}
                 className="flex items-center gap-2 bg-[#FE6B1D] text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-[#e85a15] shadow-sm"
@@ -277,8 +277,10 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
 
         {(!formData.certifications || formData.certifications.length === 0) && !isAddingCert && (
           <div className="w-full py-12 border-2 border-dotted border-gray-100 rounded-3xl text-center">
-            <Upload size={40} className="mx-auto text-gray-200 mb-2" />
-            <p className="text-gray-400 text-sm">No documents added. Click "Add New" to upload.</p>
+            <div className="flex flex-col items-center gap-2">
+              <Upload size={40} className="text-gray-200" />
+              <p className="text-gray-400 text-sm">{`No documents added yet. Click "Add New" to upload.`}</p>
+            </div>
           </div>
         )}
       </div>

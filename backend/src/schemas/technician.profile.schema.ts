@@ -48,6 +48,7 @@ export const createTechnicianSchema = z
         addressId: objectIdSchema,
         accountId: objectIdSchema,
         roleId: objectIdSchema,
+        employeeId: z.string().min(1, "Employee Id is required."),
 
         skills: z.array(objectIdSchema).optional(),
 
@@ -55,8 +56,8 @@ export const createTechnicianSchema = z
             .array(technicianZoneSchema)
             .min(1, "At least one zone is required"),
 
-        profilePic: z.string().url().optional(),
-        documents: z.string().url().optional(),
+        profilePhoto: z.string().url().optional(),
+        certifications: z.array(z.string().url()).optional(),
     })
     .refine(
         (data) => {
