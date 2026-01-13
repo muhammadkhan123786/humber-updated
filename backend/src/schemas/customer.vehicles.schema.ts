@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { objectIdSchema } from "../validators/objectId.schema";
+import { commonSchemaValidation } from "./shared/common.schema";
 
 export const vehicleTypeSchema = z.enum([
     "Scooter",
@@ -8,12 +9,14 @@ export const vehicleTypeSchema = z.enum([
 
 
 export const customerVehicleSchemaValidation = z.object({
+
+    ...commonSchemaValidation,
     userId: objectIdSchema,
 
     customerId: objectIdSchema,
     vehicleBrandId: objectIdSchema,
 
-    vehicleModelId: objectIdSchema,   
+    vehicleModelId: objectIdSchema,
 
     serialNumber: z.string().min(3).max(100),
 
