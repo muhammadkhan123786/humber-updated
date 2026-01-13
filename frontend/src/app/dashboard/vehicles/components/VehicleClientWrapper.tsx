@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import VehicleList from "./VehicleList";
 import VehicleManager from "./VehicleManager";
+import VehicleDetails from "./VehicleDetails";
 
 export default function VehicleClientWrapper() {
   const [view, setView] = useState<"list" | "add" | "edit">("list");
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -37,9 +39,7 @@ export default function VehicleClientWrapper() {
               <Plus size={20} /> Add New Vehicle
             </>
           ) : (
-            <>
-              <ArrowLeft size={20} /> Back to List
-            </>
+            <>Back to List</>
           )}
         </button>
       </div>
@@ -50,12 +50,27 @@ export default function VehicleClientWrapper() {
           onEdit={(id: string) => {
             setSelectedVehicleId(id);
             setView("edit");
-          }} 
+          }}
+          onViewDetails={(id: string) => {
+            setSelectedVehicleId(id);
+            setShowDetailsModal(true);
+          }}
         />
       ) : (
         <VehicleManager 
           editId={selectedVehicleId} 
           onSuccess={() => setView("list")} 
+        />
+      )}
+
+      {/* Vehicle Details Modal */}
+      {showDetailsModal && selectedVehicleId && (
+        <VehicleDetails
+          vehicleId={selectedVehicleId}
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedVehicleId(null);
+          }}
         />
       )}
     </div>

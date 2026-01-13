@@ -3,7 +3,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Eye, Edit, Trash2, Search, Loader2 } from "lucide-react";
 
-export default function VehicleList({ onEdit }: { onEdit: (id: string) => void }) {
+export default function VehicleList({ 
+  onEdit, 
+  onViewDetails 
+}: { 
+  onEdit: (id: string) => void;
+  onViewDetails: (id: string) => void;
+}) {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,6 +129,7 @@ export default function VehicleList({ onEdit }: { onEdit: (id: string) => void }
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
                     <button
+                      onClick={() => onViewDetails(v._id)}
                       className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                       title="View Details"
                     >
