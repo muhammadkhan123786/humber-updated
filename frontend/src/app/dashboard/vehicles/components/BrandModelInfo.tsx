@@ -14,15 +14,22 @@ export default function BrandModelInfo({ formData, setFormData }: { formData: an
          .then(res => setBrands(res.data.data || []));
   }, []);
 
-  useEffect(() => {
-    if (formData.vehicleBrandId) {
-      const token = localStorage.getItem("token");
-      axios.get(`${BASE_URL}/vechilemodel`, { 
-        headers: { Authorization: `Bearer ${token}` },
-        params: { brandId: formData.vehicleBrandId }
-      }).then(res => setModels(res.data.data || []));
-    }
-  }, [formData.vehicleBrandId]);
+ // Inside BrandModelInfo.tsx update the models useEffect:
+useEffect(() => {
+  // Use either the ID or the object's _id
+  const brandId = typeof formData.vehicleBrandId === 'object' ? formData.vehicleBrandId?._id : formData.vehicleBrandId;
+  
+  if (brandId) {
+    const token = localStorage.getItem("token");
+    axios.get(`${BASE_URL}/vechilemodel`, { 
+      headers: { Authorization: `Bearer ${token}` },
+      params: { brandId: brandId }
+    }).then(res => {
+      const modelList = res.data.data || [];
+      setModels(modelList);
+    });
+  }
+}, [formData.vehicleBrandId]);
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6">
