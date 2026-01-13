@@ -2,8 +2,9 @@ import { Schema, model, Types } from "mongoose";
 
 const ticketSequenceCounterSchema = new Schema(
     {
-        _id: { type: String, required: true }, // e.g., "TICKET_2026"
+        year: { type: Number, required: true, unique: true },
         seq: { type: Number, default: 0 }
+
     },
     { timestamps: true }
 );
