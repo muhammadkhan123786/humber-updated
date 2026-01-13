@@ -215,6 +215,9 @@ app.use(`${process.env.API_PREFIX}/ticket-reference-types`, adminProtecter, tick
 app.use(`${process.env.API_PREFIX}/document-types`, adminProtecter, documentTypesRouter);
 app.use(`${process.env.API_PREFIX}/job-types`, adminProtecter, jobTypesRouter);
 
+//vehicle register api 13-01-2026
+app.use(`${process.env.API_PREFIX}/customer-vehicle-register`, adminProtecter, jobTypesRouter);
+
 //Muhammad Imran code ended here.
 
 //  Muzmil Hassan 8/1/2026
