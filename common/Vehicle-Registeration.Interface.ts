@@ -13,10 +13,7 @@ export interface ICustomerVehicleRegInterface<
     vehicleBrandId: TVehicleBrandId;
 
     vehicleModelId: TVehicleModelId;
-
-    makeYear: number;
-    purchaseYear: number;
-
+  
     serialNumber: string;
     vehicleType: VehicleType;
 

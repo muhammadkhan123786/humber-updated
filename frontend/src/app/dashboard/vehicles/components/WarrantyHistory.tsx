@@ -1,10 +1,15 @@
 "use client";
 import { Calendar } from "lucide-react";
+import { string } from "zod";
 
 export default function WarrantyHistory({ formData, setFormData }: any) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Direct value string save karne ke bajaye usay Date object bana kar save karein
+  setFormData({ 
+    ...formData, 
+    [e.target.name]: String(new Date(e.target.value)) 
+  });
+};
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">

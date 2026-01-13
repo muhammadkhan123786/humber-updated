@@ -13,19 +13,7 @@ export const customerVehicleSchemaValidation = z.object({
     customerId: objectIdSchema,
     vehicleBrandId: objectIdSchema,
 
-    vehicleModelId: objectIdSchema,
-
-    makeYear: z
-        .number()
-        .int()
-        .min(1900)
-        .max(new Date().getFullYear()),
-
-    purchaseYear: z
-        .number()
-        .int()
-        .min(1900)
-        .max(new Date().getFullYear()),
+    vehicleModelId: objectIdSchema,   
 
     serialNumber: z.string().min(3).max(100),
 

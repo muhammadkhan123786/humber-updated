@@ -1,12 +1,13 @@
 import React from 'react'
-import VehicleManager from './components/VehicleManager'
+import VehicleClientWrapper from './components/VehicleClientWrapper'
 
-const page = () => {
+// Ye server component hi rahega
+const Page = () => {
   return (
-    <div>
-     <VehicleManager />
+    <div className="p-6 min-h-screen bg-gray-50/50">
+      <VehicleClientWrapper />
     </div>
   )
 }
 
-export default page
+export default Page

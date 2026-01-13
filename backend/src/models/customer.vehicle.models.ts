@@ -30,20 +30,8 @@ const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
             ref: "VechicleModel",
             required: true,
         },
-
-        makeYear: {
-            type: Number,
-            required: true,
-            min: 1900,
-        },
-
-        purchaseYear: {
-            type: Number,
-            required: true,
-            min: 1900,
-        },
-
-        serialNumber: {
+      
+       serialNumber: {
             type: String,
             required: true,
             trim: true,
