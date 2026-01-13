@@ -52,6 +52,7 @@ import jobTypesRouter from "./routes/job.types.routes";
 //  Muzamil Hassan 8/1/2026
 
 import productAttributesRoutes from "./routes/product.attributes";
+import customerVehicleRouter from "./routes/customer.vehicle.routes";
 
 // Create express app
 const app: Application = express();
@@ -216,7 +217,7 @@ app.use(`${process.env.API_PREFIX}/document-types`, adminProtecter, documentType
 app.use(`${process.env.API_PREFIX}/job-types`, adminProtecter, jobTypesRouter);
 
 //vehicle register api 13-01-2026
-app.use(`${process.env.API_PREFIX}/customer-vehicle-register`, adminProtecter, jobTypesRouter);
+app.use(`${process.env.API_PREFIX}/customer-vehicle-register`, adminProtecter, customerVehicleRouter);
 
 //Muhammad Imran code ended here.
 
