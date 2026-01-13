@@ -4,11 +4,10 @@ import axios from "axios";
 import { AlertTriangle, Plus, Search } from "lucide-react";
 import PriorityLevelTable from "./PriorityLevelTable";
 import PriorityLevelForm from "./PriorityLevelForm";
-import Pagination from "./Pagiantion"; 
+import Pagination from "./Pagiantion";
 
 const THEME_COLOR = "#FE6B1D";
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-// Route matching your app.use prefix
 const API_URL = `${BASE_URL}/service-request-prioprity-level`;
 
 export default function PriorityLevelClient() {
@@ -29,7 +28,7 @@ export default function PriorityLevelClient() {
 
       const res = await axios.get(API_URL, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { userId, page, limit: 10, search }
+        params: { userId, page, limit: 10, search },
       });
 
       if (res.data && res.data.data) {
@@ -37,60 +36,113 @@ export default function PriorityLevelClient() {
         setTotalPages(Math.ceil(res.data.total / 10) || 1);
         setCurrentPage(page);
       }
-    } catch (err) { 
-        console.error("Fetch Error:", err);
-        setDataList([]); 
-    } finally { setLoading(false); }
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setDataList([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchData(1, searchTerm);
+    const delayDebounce = setTimeout(() => {
+      fetchData(1, searchTerm);
+    }, 500);
+    return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this priority level?")) return;
+    if (!confirm("Are you sure you want to delete this priority level?"))
+      return;
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchData(currentPage, searchTerm);
-    } catch (err) { alert("Delete failed"); }
+    } catch (err) {
+      console.log(err);
+      alert("Delete failed");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 p-6 font-sans">
       <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold flex items-center gap-3" style={{ color: THEME_COLOR }}>
+            <h1
+              className="text-3xl font-extrabold flex items-center gap-3"
+              style={{ color: THEME_COLOR }}
+            >
               <AlertTriangle size={36} /> Priority Levels
             </h1>
-            <p className="text-gray-500 mt-1">Configure service request urgency levels</p>
+            <p className="text-gray-500 mt-1">
+              Configure urgency labels, descriptions, and colors
+            </p>
           </div>
-          <button onClick={() => { setEditingData(null); setShowForm(true); }} className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition-all active:scale-95" style={{ backgroundColor: THEME_COLOR }}>
+          <button
+            onClick={() => {
+              setEditingData(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:opacity-90 transition-all active:scale-95"
+            style={{ backgroundColor: THEME_COLOR }}
+          >
             <Plus size={22} /> Add Priority
           </button>
         </div>
 
         <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-500 transition-all">
           <Search className="text-gray-400" size={20} />
-          <input type="text" placeholder="Search priorities..." className="w-full outline-none text-lg" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input
+            type="text"
+            placeholder="Search by name or description..."
+            className="w-full outline-none text-lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         {(showForm || editingData) && (
-          <PriorityLevelForm editingData={editingData} onClose={() => { setShowForm(false); setEditingData(null); }} onRefresh={() => fetchData(currentPage, searchTerm)} themeColor={THEME_COLOR} apiUrl={API_URL} />
+          <PriorityLevelForm
+            editingData={editingData}
+            onClose={() => {
+              setShowForm(false);
+              setEditingData(null);
+            }}
+            onRefresh={() => fetchData(currentPage, searchTerm)}
+            themeColor={THEME_COLOR}
+            apiUrl={API_URL}
+          />
         )}
 
         {loading ? (
-           <div className="flex flex-col justify-center items-center py-20 gap-3">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-              <p className="text-gray-400">Loading...</p>
-           </div>
+          <div className="flex flex-col justify-center items-center py-20 gap-3">
+            <div
+              className="animate-spin rounded-full h-12 w-12 border-b-2"
+              style={{ borderColor: THEME_COLOR }}
+            ></div>
+            <p className="text-gray-400">Syncing priorities...</p>
+          </div>
         ) : (
           <>
-            <PriorityLevelTable data={dataList} onEdit={(item) => { setEditingData(item); setShowForm(false); }} onDelete={handleDelete} themeColor={THEME_COLOR} />
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => fetchData(page, searchTerm)} />
+            <PriorityLevelTable
+              data={dataList}
+              onEdit={(item) => {
+                setEditingData(item);
+                setShowForm(false);
+              }}
+              onDelete={handleDelete}
+              themeColor={THEME_COLOR}
+            />
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => fetchData(page, searchTerm)}
+              />
+            </div>
           </>
         )}
       </div>
