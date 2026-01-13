@@ -1,9 +1,10 @@
 import React from 'react'
+import VehicleManager from './components/VehicleManager'
 
 const page = () => {
   return (
     <div>
-      i am vehicle page
+     <VehicleManager />
     </div>
   )
 }
