@@ -1,11 +1,13 @@
 import { Document, Model, model, Schema, Types } from "mongoose";
 import { ICustomerVehicleRegInterface } from "../../../common/Vehicle-Registeration.Interface";
+import { commonSchema } from "../schemas/shared/common.schema";
 
 
 export type CustomerVehicleDoc = ICustomerVehicleRegInterface<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId> & Document;
 
 const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
     {
+        ...commonSchema,
         userId: {
             type: Schema.Types.ObjectId,
             ref: "User",
@@ -30,8 +32,8 @@ const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
             ref: "VechicleModel",
             required: true,
         },
-      
-       serialNumber: {
+
+        serialNumber: {
             type: String,
             required: true,
             trim: true,
