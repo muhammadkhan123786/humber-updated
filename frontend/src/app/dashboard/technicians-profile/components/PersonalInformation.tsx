@@ -5,8 +5,10 @@ import { User, Badge, Briefcase, ChevronDown, Loader2, Upload, Calendar, Banknot
 
 interface PersonalProps {
   formData: {
-    firstName: string;
-    lastName: string;
+   person: {
+      firstName: string;
+      lastName: string;
+    };
     employeeId: string;
     role: string;
     profilePhoto: File | null;
@@ -140,11 +142,11 @@ export default function PersonalInformation({ formData, setFormData }: PersonalP
           {/* Row 1: Names */}
           <div>
             <label className="text-sm font-medium text-gray-600 block mb-1">First Name</label>
-            <input type="text" name="firstName" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] transition-all" placeholder="John" value={formData.firstName} onChange={handleChange} />
+            <input type="text" name="firstName" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] transition-all" placeholder="John" value={formData.person.firstName} onChange={handleChange} />
           </div>
           <div>
             <label className="text-sm font-medium text-gray-600 block mb-1">Last Name</label>
-            <input type="text" name="lastName" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] transition-all" placeholder="Doe" value={formData.lastName} onChange={handleChange} />
+            <input type="text" name="lastName" required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D] transition-all" placeholder="Doe" value={formData.person.lastName} onChange={handleChange} />
           </div>
 
           {/* Row 2: ID and Role */}

@@ -5,8 +5,10 @@ import { Mail, Phone, MapPin } from "lucide-react";
 // Inline Interface to keep it clean
 interface ContactProps {
   formData: {
-    emailId: string;
-    phoneNumber: string;
+    contact:{
+      emailId: string;
+      phoneNumber: string;
+    };
    address: { address: string };
   };
   setFormData: (data: any) => void;
@@ -30,7 +32,7 @@ export default function ContactDetails({ formData, setFormData }: ContactProps) 
             type="email" name="email" required
             className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D]"
             placeholder="john@example.com"
-            value={formData.emailId} onChange={handleChange}
+            value={formData.contact.emailId} onChange={handleChange}
           />
         </div>
         <div>
@@ -41,7 +43,7 @@ export default function ContactDetails({ formData, setFormData }: ContactProps) 
               type="tel" name="phoneNumber" required
               className="w-full p-3 pl-10 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#FE6B1D]"
               placeholder="+1 (555) 000000"
-              value={formData.phoneNumber} onChange={handleChange}
+              value={formData.contact.phoneNumber} onChange={handleChange}
             />
           </div>
         </div>

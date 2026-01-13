@@ -289,6 +289,15 @@ export const NavBarLinksData: NavLinksInterface[] = [
     iconSrc: box,
     index: 8,
   },
+  {
+    _id: 11,
+    alt: "Vehicles",
+    href: "/dashboard/vehicles",
+    roleId: [1],
+    label: "Vehicles",
+    iconSrc: staffmanagement,
+    index: 11,
+  },
   //ticket master data
 
   {
