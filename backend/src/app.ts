@@ -57,6 +57,7 @@ import customerTicketBaseRouter from "./routes/ticket-management-system-routes/c
 import businessTypeRouter from "./routes/suppliers/business.types.routes";
 import paymentMethodRouter from "./routes/suppliers/payment.method.routes";
 import pricingAgreementRouter from "./routes/suppliers/pricing.agreement.routes";
+import productServicesRouter from "./routes/suppliers/product.services.routes";
 
 // Create express app
 const app: Application = express();
@@ -231,6 +232,8 @@ app.use(`${process.env.API_PREFIX}/business-types`, adminProtecter, businessType
 app.use(`${process.env.API_PREFIX}/payment-method`, adminProtecter, paymentMethodRouter);
 
 app.use(`${process.env.API_PREFIX}/pricing-agreement`, adminProtecter, pricingAgreementRouter);
+
+app.use(`${process.env.API_PREFIX}/product-services`, adminProtecter, productServicesRouter);
 
 //Muhammad Imran code ended here.
 
