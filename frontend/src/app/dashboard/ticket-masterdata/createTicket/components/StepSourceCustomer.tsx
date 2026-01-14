@@ -12,7 +12,7 @@ const StepSourceCustomer = ({ onNext }: { onNext: () => void }) => {
       id: "phone",
       label: "Phone",
       icon: Phone,
-      color: "bg-linear-to-br from-[#00D3F2] to-[#00A63E]",
+      color: "bg-linear-to-br from-[#2B7FFF] to-[#00B8DB]",
     },
     {
       id: "online",

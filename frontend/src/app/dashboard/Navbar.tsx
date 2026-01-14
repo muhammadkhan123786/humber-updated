@@ -6,19 +6,18 @@ import { NavLinksInterface } from "@/types/NavLinksInterface";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-
 export default function Navbar() {
   const [navBarLinks, setNavBarLinks] = useState<NavLinksInterface[]>([]);
   useEffect(() => {
     async function fetchLinks() {
       try {
-        const roleId = localStorage.getItem('roleId');
+        const roleId = localStorage.getItem("roleId");
         if (!roleId) return;
 
         const navLinks = await getRoleBaseNavBarLinks(+roleId);
         setNavBarLinks(navLinks);
       } catch (err) {
-        console.log('Error fetching navbar links.', err);
+        console.log("Error fetching navbar links.", err);
       }
     }
     fetchLinks();
@@ -26,7 +25,6 @@ export default function Navbar() {
 
   return (
     <nav className="h-full p-4 flex flex-col gap-4">
-
       {/* MAIN NAV LINKS */}
       {navBarLinks.map((link) => (
         <NavLink key={link._id} navbar={link}>
@@ -43,8 +41,6 @@ export default function Navbar() {
           </div>
         </NavLink>
       ))}
-
-
     </nav>
   );
 }
