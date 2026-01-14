@@ -56,6 +56,7 @@ import customerVehicleRouter from "./routes/customer.vehicle.routes";
 import customerTicketBaseRouter from "./routes/ticket-management-system-routes/customer.ticket.base.routes";
 import businessTypeRouter from "./routes/suppliers/business.types.routes";
 import paymentMethodRouter from "./routes/suppliers/payment.method.routes";
+import pricingAgreementRouter from "./routes/suppliers/pricing.agreement.routes";
 
 // Create express app
 const app: Application = express();
@@ -228,6 +229,8 @@ app.use(`${process.env.API_PREFIX}/customer-tickets`, adminProtecter, customerTi
 app.use(`${process.env.API_PREFIX}/business-types`, adminProtecter, businessTypeRouter);
 
 app.use(`${process.env.API_PREFIX}/payment-method`, adminProtecter, paymentMethodRouter);
+
+app.use(`${process.env.API_PREFIX}/pricing-agreement`, adminProtecter, pricingAgreementRouter);
 
 //Muhammad Imran code ended here.
 
