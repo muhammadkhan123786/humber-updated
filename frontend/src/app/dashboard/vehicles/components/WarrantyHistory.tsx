@@ -24,44 +24,44 @@ export default function WarrantyHistory({ formData, setFormData }: Props) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+    <div className="bg-linear-to-br from-white to-gray-50 p-8 rounded-2xl shadow-lg border border-gray-200 space-y-6 hover:shadow-2xl transition-all animate-fadeInUp animation-delay-200">
       <div className="flex justify-between items-center">
         <div className="space-y-1">
-          <h2 className="text-xl font-bold text-gray-800">Warranty & History</h2>
+          <h2 className="text-xl font-bold bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Warranty & History</h2>
           <p className="text-xs text-gray-400">Manage purchase dates and warranty coverage periods.</p>
         </div>
-        <div className="bg-green-50 text-green-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+        <div className="bg-linear-to-r from-green-100 to-emerald-100 text-green-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /> Warranty Active
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div>
-          <label className="text-sm font-medium text-gray-600 block mb-1">Purchase Date</label>
+        <div className="animate-fadeInUp">
+          <label className="text-sm font-bold text-gray-700 block mb-2 bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text ">Purchase Date</label>
           <input 
             type="date" 
             name="purchaseDate" 
-            className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-[#FE6B1D]" 
+            className="w-full p-3 bg-linear-to-br from-green-50 to-emerald-50 border border-gray-300 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all hover:border-green-400" 
             value={formatDateForInput(formData.purchaseDate)}
             onChange={handleChange} 
           />
         </div>
-        <div>
-          <label className="text-sm font-medium text-gray-600 block mb-1">Warranty Start Date</label>
+        <div className="animate-fadeInUp animation-delay-100">
+          <label className="text-sm font-bold text-gray-700 block mb-2 bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text ">Warranty Start Date</label>
           <input 
             type="date" 
             name="warrantyStartDate" 
-            className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-[#FE6B1D]" 
+            className="w-full p-3 bg-linear-to-br from-green-50 to-emerald-50 border border-gray-300 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all hover:border-green-400" 
             value={formatDateForInput(formData.warrantyStartDate)}
             onChange={handleChange} 
           />
         </div>
-        <div>
-          <label className="text-sm font-medium text-gray-600 block mb-1">Warranty End Date</label>
+        <div className="animate-fadeInUp animation-delay-200">
+          <label className="text-sm font-bold text-gray-700 block mb-2 bg-linear-to-r from-green-600 to-emerald-600 bg-clip-text ">Warranty End Date</label>
           <input 
             type="date" 
             name="warrantyEndDate" 
-            className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-[#FE6B1D]" 
+            className="w-full p-3 bg-linear-to-br from-green-50 to-emerald-50 border border-gray-300 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all hover:border-green-400" 
             value={formatDateForInput(formData.warrantyEndDate)}
             onChange={handleChange} 
           />

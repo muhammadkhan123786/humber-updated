@@ -130,30 +130,32 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-32 p-4 relative">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border-l-8 border-[#FE6B1D]">
-        <div>
-          <h1 className="text-2xl font-black text-gray-800">
-            {editId ? "Edit Vehicle Profile" : "Add New Vehicle"}
-          </h1>
-          <p className="text-gray-500 text-sm">Update the identification and warranty details below.</p>
+      {/* <div className="bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 p-8 rounded-2xl shadow-lg text-white border-0 animate-slideInLeft">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-black text-white mb-2">
+              {editId ? "✏️ Edit Vehicle Profile" : "🚗 Add New Vehicle"}
+            </h1>
+            <p className="text-blue-100 text-sm">Update the identification and warranty details below.</p>
+          </div>
+          {editId && (
+              <button onClick={onSuccess} className="p-2 hover:bg-white/20 rounded-full text-white transition-all hover:scale-110">
+                  <X size={24} />
+              </button>
+          )}
         </div>
-        {editId && (
-            <button onClick={onSuccess} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">
-                <X size={24} />
-            </button>
-        )}
-      </div>
+      </div> */}
 
       <VehicleIdentification formData={formData} setFormData={setFormData} />
       <BrandModelInfo formData={formData} setFormData={setFormData} />
       <WarrantyHistory formData={formData} setFormData={setFormData} />
       <VehicleNotes formData={formData} setFormData={setFormData} />
 
-      <div className="fixed bottom-6 right-8 z-50">
-        <div className="flex gap-4 items-center bg-white/70 backdrop-blur-md p-3 rounded-3xl shadow-2xl border border-white/50">
+      <div className="fixed bottom-6 right-8 z-50 animate-float">
+        <div className="flex gap-4 items-center bg-white/95 backdrop-blur-md p-3 rounded-3xl shadow-2xl border border-white/50">
           <button
             type="button"
-            className="px-6 py-3 text-gray-600 font-bold hover:bg-gray-100 rounded-2xl transition-all"
+            className="px-6 py-3 text-gray-600 font-bold hover:bg-linear-to-r hover:from-gray-100 hover:to-gray-200 rounded-2xl transition-all hover:scale-105 active:scale-95"
             onClick={onSuccess}
           >
             Cancel
@@ -162,7 +164,7 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
           <button
             onClick={handleSave}
             disabled={loading}
-            className={`min-w-[200px] bg-[#FE6B1D] text-white px-8 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${loading ? "opacity-70 cursor-not-allowed" : "hover:brightness-110"}`}
+            className={`min-w-[200px] bg-linear-to-r from-orange-500 to-red-600 text-white px-8 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 hover:shadow-2xl ${loading ? "opacity-70 cursor-not-allowed" : "hover:scale-105"}`}
           >
             {loading ? (
               <>
