@@ -9,7 +9,6 @@ import BrandModelInfo from "./BrandModelInfo";
 import WarrantyHistory from "./WarrantyHistory";
 import VehicleNotes from "./VehicleNotes";
 
-// Props define karein taake list se data aur navigation handle ho sake
 interface VehicleManagerProps {
   editId?: string | null;
   onSuccess: () => void;
@@ -21,7 +20,6 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
 
   const [formData, setFormData] = useState<Partial<ICustomerVehicleRegInterface>>({
     vehicleType: "Scooter",
-    customerId: "",
     vehicleBrandId: "",
     vehicleModelId: "",
     serialNumber: "",
@@ -32,46 +30,44 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
     vehiclePhoto: "",
   });
 
-  // 1. User ID aur Edit Data Fetch karne ka logic
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
     if (storedUserId) setCurrentUserId(storedUserId);
 
     if (editId) {
-    const fetchVehicleDetails = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    const data = res.data.data || res.data;
+      const fetchVehicleDetails = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          const data = res.data.data || res.data;
 
-    // FIX: Extracting IDs if they are objects
-    setFormData({
-      ...data,
-      customerId: data.customerId?._id || data.customerId?.id || data.customerId,
-      vehicleBrandId: data.vehicleBrandId?._id || data.vehicleBrandId,
-      vehicleModelId: data.vehicleModelId?._id || data.vehicleModelId,
-      // Date conversion
-      purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : new Date(),
-      warrantyStartDate: data.warrantyStartDate ? new Date(data.warrantyStartDate) : new Date(),
-      warrantyEndDate: data.warrantyEndDate ? new Date(data.warrantyEndDate) : new Date(),
-      // Photo handling
-      vehiclePhoto: data.vehiclePhoto || ""
-    });
-  } catch (error) {
-    console.error("Error fetching vehicle details:", error);
-    alert("Failed to load vehicle data for editing.");
-  }
-};
+          setFormData({
+            ...data,
+            // Backend agar object bhej raha hai toh ID extract karein
+            vehicleBrandId: data.vehicleBrandId?._id || data.vehicleBrandId,
+            vehicleModelId: data.vehicleModelId?._id || data.vehicleModelId,
+            // Dates handling
+            purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : new Date(),
+            warrantyStartDate: data.warrantyStartDate ? new Date(data.warrantyStartDate) : new Date(),
+            warrantyEndDate: data.warrantyEndDate ? new Date(data.warrantyEndDate) : new Date(),
+            vehiclePhoto: data.vehiclePhoto || ""
+          });
+        } catch (error) {
+          console.error("Error fetching vehicle details:", error);
+          alert("Failed to load vehicle data.");
+        }
+      };
       fetchVehicleDetails();
     }
   }, [editId]);
 
   const handleSave = async () => {
-    if (!formData.customerId || !formData.vehicleBrandId || !formData.vehicleModelId || !formData.serialNumber) {
-      alert("Please fill all required fields: Customer, Brand, Model, and Serial Number.");
+    // Validation: customerId yahan se remove kar di gayi hai
+    if (!formData.vehicleBrandId || !formData.vehicleModelId || !formData.serialNumber) {
+      alert("Please fill all required fields: Brand, Model, and Serial Number.");
       return;
     }
 
@@ -80,7 +76,6 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
     try {
       const data = new FormData();
       data.append("userId", currentUserId);
-      data.append("customerId", formData.customerId as string);
       data.append("vehicleBrandId", formData.vehicleBrandId as string);
       data.append("vehicleModelId", formData.vehicleModelId as string);
       data.append("vehicleType", formData.vehicleType as string);
@@ -97,7 +92,7 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
       data.append("warrantyStartDate", formatDate(formData.warrantyStartDate));
       data.append("warrantyEndDate", formatDate(formData.warrantyEndDate));
 
-      // Image Handling (Sirf tab upload karein agar nayi image select hui ho)
+      // Image Handling
       if (formData.vehiclePhoto && formData.vehiclePhoto.startsWith('data:image')) {
         const response = await fetch(formData.vehiclePhoto);
         const blob = await response.blob();
@@ -109,7 +104,6 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register`;
 
-      // Edit ke liye PUT, New ke liye POST
       const res = await axios({
         method: editId ? "put" : "post",
         url: apiEndpoint,
@@ -122,7 +116,7 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
 
       if (res.status === 201 || res.status === 200) {
         alert(editId ? "Vehicle Updated Successfully!" : "Vehicle Registered Successfully!");
-        onSuccess(); // Wapas List par jane ke liye
+        onSuccess();
       }
 
     } catch (error: any) {
@@ -136,32 +130,33 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-32 p-4 relative">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border-l-8 border-[#FE6B1D]">
-        <div>
-          <h1 className="text-2xl font-black text-gray-800">
-            {editId ? "Edit Vehicle Profile" : "Add New Vehicle"}
-          </h1>
-          <p className="text-gray-500 text-sm">Update the identification and warranty details below.</p>
+      {/* <div className="bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 p-8 rounded-2xl shadow-lg text-white border-0 animate-slideInLeft">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-black text-white mb-2">
+              {editId ? "✏️ Edit Vehicle Profile" : "🚗 Add New Vehicle"}
+            </h1>
+            <p className="text-blue-100 text-sm">Update the identification and warranty details below.</p>
+          </div>
+          {editId && (
+              <button onClick={onSuccess} className="p-2 hover:bg-white/20 rounded-full text-white transition-all hover:scale-110">
+                  <X size={24} />
+              </button>
+          )}
         </div>
-        {editId && (
-            <button onClick={onSuccess} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">
-                <X size={24} />
-            </button>
-        )}
-      </div>
+      </div> */}
 
       <VehicleIdentification formData={formData} setFormData={setFormData} />
       <BrandModelInfo formData={formData} setFormData={setFormData} />
       <WarrantyHistory formData={formData} setFormData={setFormData} />
       <VehicleNotes formData={formData} setFormData={setFormData} />
 
-      {/* Action Buttons */}
-      <div className="fixed bottom-6 right-8 z-50">
-        <div className="flex gap-4 items-center bg-white/70 backdrop-blur-md p-3 rounded-3xl shadow-2xl border border-white/50">
+      <div className="fixed bottom-6 right-8 z-50 animate-float">
+        <div className="flex gap-4 items-center bg-white/95 backdrop-blur-md p-3 rounded-3xl shadow-2xl border border-white/50">
           <button
             type="button"
-            className="px-6 py-3 text-gray-600 font-bold hover:bg-gray-100 rounded-2xl transition-all"
-            onClick={onSuccess} // Back to list
+            className="px-6 py-3 text-gray-600 font-bold hover:bg-linear-to-r hover:from-gray-100 hover:to-gray-200 rounded-2xl transition-all hover:scale-105 active:scale-95"
+            onClick={onSuccess}
           >
             Cancel
           </button>
@@ -169,7 +164,7 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
           <button
             onClick={handleSave}
             disabled={loading}
-            className={`min-w-[200px] bg-[#FE6B1D] text-white px-8 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${loading ? "opacity-70 cursor-not-allowed" : "hover:brightness-110"}`}
+            className={`min-w-[200px] bg-linear-to-r from-orange-500 to-red-600 text-white px-8 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 hover:shadow-2xl ${loading ? "opacity-70 cursor-not-allowed" : "hover:scale-105"}`}
           >
             {loading ? (
               <>
