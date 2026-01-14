@@ -6,6 +6,14 @@ import {
 } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 import { customerTicketBaseSchemaValidation } from "../../schemas/ticket-management-system-schemas/ticket.base.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
+import { createUploader } from "../../config/multer";
+import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
+import { handleVehicleVideoUpload } from "../../middleware/uploadVehicleVideo";
+
+const repairVehicleUpload = createUploader([
+    { name: 'vehicleRepairImages', maxCount: 1000, mimeTypes: ['image/jpeg', 'image/png'] },
+
+]);
 
 const customerTicketBaseRouter = Router();
 
@@ -21,8 +29,8 @@ const customerTicketBaseController = new AdvancedGenericController({
 
 customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
-customerTicketBaseRouter.post("/", customerTicketBaseController.create);
-customerTicketBaseRouter.put("/:id", customerTicketBaseController.update);
+customerTicketBaseRouter.post("/", repairVehicleUpload, mapUploadedFilesToBody(), handleVehicleVideoUpload("vehicleRepairVideo"), customerTicketBaseController.create);
+customerTicketBaseRouter.put("/:id", repairVehicleUpload, mapUploadedFilesToBody(), handleVehicleVideoUpload("vehicleRepairVideo"), customerTicketBaseController.update);
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
 
 export default customerTicketBaseRouter;

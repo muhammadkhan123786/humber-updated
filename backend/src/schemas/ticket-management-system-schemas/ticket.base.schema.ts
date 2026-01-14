@@ -7,8 +7,10 @@ export const customerTicketBaseSchema: SchemaDefinition<CustomerTicketBase<
     Types.ObjectId,
     Types.ObjectId,
     Types.ObjectId,
+    Types.ObjectId,
     Types.ObjectId
 >> = {
+
     ...commonSchema,
 
     ticketCode: { type: String, required: true, unique: true },
@@ -18,6 +20,8 @@ export const customerTicketBaseSchema: SchemaDefinition<CustomerTicketBase<
         enum: ["Phone", "Online Portal", "Walk-in"],
         required: true
     },
+
+    ticketStatusId: { type: Types.ObjectId, ref: "TicketStatus", required: true },
 
     customerId: { type: Types.ObjectId, ref: "CustomerBase", required: true },
 
@@ -32,6 +36,10 @@ export const customerTicketBaseSchema: SchemaDefinition<CustomerTicketBase<
         ref: "ServiceRequestPriorityModel",
         required: true
     },
+
+    vehicleRepairImages: { type: [String] },
+
+    vehicleRepairVideoURL: { type: String },
 
     address: { type: String }
 };
@@ -52,7 +60,14 @@ export const customerTicketBaseSchemaValidation = z.object({
 
     priorityId: z.string().regex(/^[0-9a-fA-F]{24}$/),
 
-    address: z.string().optional()
+    ticketStatusId: z.string().regex(/^[0-9a-fA-F]{24}$/),
+
+    address: z.string().optional(),
+
+    vehicleRepairImages: z.array(z.string()).optional(),
+
+    vehicleRepairVideoURL: z.string().optional()
+
 });
 
 
