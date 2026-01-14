@@ -54,6 +54,7 @@ import jobTypesRouter from "./routes/job.types.routes";
 import productAttributesRoutes from "./routes/product.attributes";
 import customerVehicleRouter from "./routes/customer.vehicle.routes";
 import customerTicketBaseRouter from "./routes/ticket-management-system-routes/customer.ticket.base.routes";
+import businessTypeRouter from "./routes/suppliers/business.types.routes";
 
 // Create express app
 const app: Application = express();
@@ -220,8 +221,11 @@ app.use(`${process.env.API_PREFIX}/job-types`, adminProtecter, jobTypesRouter);
 //vehicle register api 13-01-2026
 app.use(`${process.env.API_PREFIX}/customer-vehicle-register`, adminProtecter, customerVehicleRouter);
 
-//ticket generate routes 
+//ticket generate routes 14-01-2026
 app.use(`${process.env.API_PREFIX}/customer-tickets`, adminProtecter, customerTicketBaseRouter);
+
+app.use(`${process.env.API_PREFIX}/business-types`, adminProtecter, businessTypeRouter);
+
 
 //Muhammad Imran code ended here.
 
