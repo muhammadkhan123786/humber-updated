@@ -1,21 +1,21 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Briefcase, Plus, Search, Loader2 } from "lucide-react";
-import BussinessTypeTable from "./BussinessTypeTable";
-import BussinessTypeForm from "./BussinessTypeForm";
-import Pagination from "@/components/ui/Pagination"; // Ensure this path is correct
+import { Handshake, Plus, Search, Loader2 } from "lucide-react";
+import PricingAgreementTable from "./PricingAgreementTable";
+import PricingAgreementForm from "./PricingAgreementForm";
+import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem } from "@/helper/apiHelper";
-import { IBusinessTypes } from "../../../../../../common/suppliers/IBusiness.types.interface";
+import { IPricingAgreement } from "../../../../../../common/suppliers/IPricing.agreement.interface";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
-type BusinessTypeWithId = IBusinessTypes & { _id: string };
+type PricingAgreementWithId = IPricingAgreement & { _id: string };
 
-export default function BussinessTypeClient() {
-  const [dataList, setDataList] = useState<BusinessTypeWithId[]>([]);
+export default function PricingAgreementClient() {
+  const [dataList, setDataList] = useState<PricingAgreementWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingData, setEditingData] = useState<BusinessTypeWithId | null>(null);
+  const [editingData, setEditingData] = useState<PricingAgreementWithId | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -23,7 +23,7 @@ export default function BussinessTypeClient() {
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
-      const res = await getAll<BusinessTypeWithId>("/business-types", {
+      const res = await getAll<PricingAgreementWithId>("/pricing-agreement", {
         page: page.toString(),
         limit: "10",
         search: search.trim(),
@@ -39,7 +39,6 @@ export default function BussinessTypeClient() {
     }
   }, []);
 
-  // Debounced search effect
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchData(1, searchTerm);
@@ -48,9 +47,9 @@ export default function BussinessTypeClient() {
   }, [searchTerm, fetchData]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this business type?")) return;
+    if (!confirm("Are you sure you want to delete this pricing agreement?")) return;
     try {
-      await deleteItem("/business-types", id);
+      await deleteItem("/pricing-agreement", id);
       fetchData(currentPage, searchTerm);
     } catch (error) {
       console.error("Delete Error:", error);
@@ -64,17 +63,17 @@ export default function BussinessTypeClient() {
         <div className="flex justify-between items-center mb-8">
           <div>
            <h1 className="text-3xl font-extrabold flex items-center gap-3">
-              <Briefcase size={36} style={{ color: "var(--primary-solid)" }} />
+              <Handshake size={36} style={{ color: "var(--primary-solid)" }} />
               <span style={{ 
                 background: "var(--primary-gradient)", 
                 WebkitBackgroundClip: "text", 
                 WebkitTextFillColor: "transparent" 
               }}>
-               Bussiness Types
+                Pricing Agreements
               </span>
             </h1>
             <p className="text-gray-500">
-              Manage categories for your suppliers and business entities
+              Manage contract pricing terms with your suppliers
             </p>
           </div>
           <button
@@ -85,7 +84,7 @@ export default function BussinessTypeClient() {
             className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95"
             style={{ background: THEME_COLOR }}
           >
-            <Plus size={22} /> Add Business Type
+            <Plus size={22} /> Add Agreement
           </button>
         </div>
 
@@ -93,7 +92,7 @@ export default function BussinessTypeClient() {
           <Search className="text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search business type name..."
+            placeholder="Search pricing agreements..."
             className="w-full outline-none text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -101,7 +100,7 @@ export default function BussinessTypeClient() {
         </div>
 
         {showForm && (
-          <BussinessTypeForm
+          <PricingAgreementForm
             editingData={editingData}
             onClose={() => setShowForm(false)}
             onRefresh={() => fetchData(currentPage, searchTerm)}
@@ -111,16 +110,12 @@ export default function BussinessTypeClient() {
 
         {loading ? (
           <div className="flex flex-col justify-center items-center py-20">
-            <Loader2
-              className="animate-spin"
-              style={{ color: THEME_COLOR }}
-              size={48}
-            />
-            <p className="mt-4 text-gray-400 font-medium">Loading types...</p>
+            <Loader2 className="animate-spin" style={{ color: THEME_COLOR }} size={48} />
+            <p className="mt-4 text-gray-400 font-medium">Loading agreements...</p>
           </div>
         ) : (
           <>
-            <BussinessTypeTable
+            <PricingAgreementTable
               data={dataList}
               onEdit={(item) => {
                 setEditingData(item);

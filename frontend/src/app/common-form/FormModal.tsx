@@ -27,7 +27,7 @@ export const FormModal = ({
     >
       <div
         className="p-6 text-white flex justify-between items-center"
-        style={{ backgroundColor: themeColor }}
+        style={{ background: themeColor }}
       >
         <h2 className="text-xl font-bold flex items-center gap-2">
           {icon} {title}

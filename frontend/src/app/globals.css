@@ -279,3 +279,7 @@ body {
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
 }
+:root {
+  --primary-gradient: linear-gradient(135deg, #155DFC 0%, #009689 100%);
+  --primary-solid: #155DFC;
+}

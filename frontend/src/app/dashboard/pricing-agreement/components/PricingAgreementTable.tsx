@@ -3,22 +3,22 @@ import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star } from "lucide-react";
-import { IBusinessTypes } from "../../../../../../common/suppliers/IBusiness.types.interface";
+import { IPricingAgreement } from "../../../../../../common/suppliers/IPricing.agreement.interface";
 
 interface Props {
-  data: (IBusinessTypes & { _id: string })[];
-  onEdit: (item: IBusinessTypes & { _id: string }) => void;
+  data: (IPricingAgreement & { _id: string })[];
+  onEdit: (item: IPricingAgreement & { _id: string }) => void;
   onDelete: (id: string) => void;
   themeColor: string;
 }
 
-const BussinessTypeTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
+const PricingAgreementTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
       <table className="w-full text-left">
         <thead className="text-white" style={{ background: themeColor }}>
           <tr>
-            <th className="px-6 py-4">Business Type Name</th>
+            <th className="px-6 py-4">Pricing Agreement Name</th>
             <th className="px-6 py-4 text-center">Default</th>
             <th className="px-6 py-4 text-center">Status</th>
             <th className="px-6 py-4 text-center">Actions</th>
@@ -28,7 +28,7 @@ const BussinessTypeTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
           {data.map((item) => (
             <tr key={item._id} className="hover:bg-gray-50 transition-colors">
               <td className="px-6 py-4 font-semibold text-gray-800">
-                {item.businessTypeName}
+                {item.pricingAgreementName}
               </td>
               <td className="px-6 py-4 text-center">
                 {item.isDefault ? (
@@ -48,7 +48,7 @@ const BussinessTypeTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault)
-                      return alert("Default types cannot be deleted.");
+                      return alert("Default pricing agreements cannot be deleted.");
                     onDelete(item._id);
                   }}
                 />
@@ -58,7 +58,7 @@ const BussinessTypeTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
           {data.length === 0 && (
             <tr>
               <td colSpan={4} className="text-center py-10 text-gray-400">
-                No business types found.
+                No pricing agreements found.
               </td>
             </tr>
           )}
@@ -68,4 +68,4 @@ const BussinessTypeTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
   );
 };
 
-export default BussinessTypeTable;
+export default PricingAgreementTable;

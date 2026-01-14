@@ -13,7 +13,7 @@ export const FormToggle = ({ label, checked, onChange, description,disabled }: P
   <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
     <input
       type="checkbox"
-      className={`w-5 h-5 accent-[#FE6B1D] ${disabled ? "" : "cursor-pointer"}`}
+      className={`w-5 h-5 accent-[#155DFC] ${disabled ? "" : "cursor-pointer"}`}
       checked={checked}
       onChange={(e) => !disabled && onChange(e.target.checked)} // Disabled ho to change na ho
       disabled={disabled}
