@@ -13,7 +13,6 @@ export const customerVehicleSchemaValidation = z.object({
     ...commonSchemaValidation,
     userId: objectIdSchema,
 
-    customerId: objectIdSchema,
     vehicleBrandId: objectIdSchema,
 
     vehicleModelId: objectIdSchema,

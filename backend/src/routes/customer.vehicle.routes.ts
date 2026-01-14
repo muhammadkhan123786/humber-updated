@@ -10,13 +10,14 @@ const vehicleUpload = createUploader([
     { name: 'vehiclePhoto', maxCount: 1, mimeTypes: ['image/jpeg', 'image/png'] },
 
 ]);
+
 const customerVehicleRouter = Router();
 
 const customerVehicleServices = new GenericService<CustomerVehicleDoc>(CustomerVehicleModel);
 
 const customerVehicleController = new AdvancedGenericController({
     service: customerVehicleServices,
-    populate: ["userId", "customerId", "vehicleBrandId", "vehicleModelId"],
+    populate: ["userId", "vehicleBrandId", "vehicleModelId"],
     validationSchema: customerVehicleSchemaValidation,
     searchFields: ["serialNumber"]
 });

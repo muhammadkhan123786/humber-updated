@@ -5,15 +5,14 @@ export type VehicleType = "Scooter" | "Mobility Vehicle";
 
 export interface ICustomerVehicleRegInterface<
     TUserId = string,
-    TCustomerId = string,
     TVehicleBrandId = string,
     TVehicleModelId = string
 > extends IBaseEntity<TUserId> {
-    customerId: TCustomerId;
+
     vehicleBrandId: TVehicleBrandId;
 
     vehicleModelId: TVehicleModelId;
-  
+
     serialNumber: string;
     vehicleType: VehicleType;
 
