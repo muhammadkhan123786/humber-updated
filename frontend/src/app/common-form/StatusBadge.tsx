@@ -1,10 +1,11 @@
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export const StatusBadge = ({ isActive }: { isActive: boolean }) => (
-  <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1 ${
-    isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+  <div className={`relative inline-flex items-center h-7 w-12 rounded-full transition-all cursor-pointer ${
+    isActive ? 'bg-blue-500' : 'bg-gray-300'
   }`}>
-    {isActive ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-    {isActive ? "ACTIVE" : "INACTIVE"}
-  </span>
+    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
+      isActive ? 'translate-x-6' : 'translate-x-1'
+    }`}></div>
+  </div>
 );
