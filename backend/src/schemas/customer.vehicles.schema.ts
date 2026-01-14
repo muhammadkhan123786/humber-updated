@@ -25,7 +25,7 @@ export const customerVehicleSchemaValidation = z.object({
     warrantyStartDate: z.coerce.date(),
     warrantyEndDate: z.coerce.date(),
 
-    vehiclePhoto: z.string().url().optional(),
+    vehiclePhoto: z.string().optional(),
     note: z.string().max(1500).optional(),
 });
 

@@ -26,6 +26,20 @@ export default function VehicleIdentification({ formData, setFormData }: Props) 
     });
   }, []);
 
+  // Inside VehicleIdentification component, add this useEffect:
+useEffect(() => {
+  if (formData.customerId && customers.length > 0) {
+    const found = customers.find(c => c.id === formData.customerId || c._id === formData.customerId);
+    if (found) setSelectedCustomer(found);
+  }
+  // Set existing photo preview if available
+  if (formData.vehiclePhoto && !formData.vehiclePhoto.startsWith('data:')) {
+     setImagePreview(`${process.env.NEXT_PUBLIC_IMAGE_URL}${formData.vehiclePhoto}`);
+  } else if (formData.vehiclePhoto) {
+     setImagePreview(formData.vehiclePhoto);
+  }
+}, [formData.customerId, formData.vehiclePhoto, customers]);
+
   useEffect(() => {
     const filtered = customers.filter((c) => {
       const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
