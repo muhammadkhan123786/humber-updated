@@ -41,15 +41,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }:
               </div>
               
               {/* Status Toggle Switch */}
-              <div className="flex items-center gap-2">
-                <div className={`relative w-12 h-7 rounded-full transition-all ${
-                  item.isActive ? 'bg-blue-500' : 'bg-gray-300'
-                }`}>
-                  <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                    item.isActive ? 'translate-x-6' : 'translate-x-1'
-                  }`}></div>
-                </div>
-              </div>
+              <StatusBadge isActive={!!item.isActive} />
             </div>
 
             {/* Content Section */}
@@ -66,7 +58,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }:
                   onClick={() => onEdit(item)}
                   className="flex-1 flex items-center justify-center gap-2 py-2 text-gray-700 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
                 >
-                  ✏️ Edit
+                   Edit
                 </button>
                 <button
                   onClick={() => {
@@ -79,7 +71,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }:
                   className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                   title="Delete"
                 >
-                  🗑️
+                  
                 </button>
               </div>
             </div>
@@ -124,16 +116,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }:
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                {/* Status Toggle Switch */}
-                <div className="flex justify-center">
-                  <div className={`relative w-12 h-7 rounded-full transition-all cursor-pointer ${
-                    item.isActive ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}>
-                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                      item.isActive ? 'translate-x-6' : 'translate-x-1'
-                    }`}></div>
-                  </div>
-                </div>
+                <StatusBadge isActive={!!item.isActive} />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
