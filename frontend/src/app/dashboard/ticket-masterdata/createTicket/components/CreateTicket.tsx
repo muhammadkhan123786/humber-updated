@@ -12,7 +12,7 @@ const CreateTicket = () => {
     { id: 1, label: "Source & Customer", color: "#00D3F2" },
     { id: 2, label: "Product", color: "#AD46FF" },
     { id: 3, label: "Issue Details", color: "#FF6900" },
-    { id: 4, label: "Location & Priority", color: "#51A2FF" },
+    { id: 4, label: "Location & Priority", color: "#00C950" },
   ];
 
   return (

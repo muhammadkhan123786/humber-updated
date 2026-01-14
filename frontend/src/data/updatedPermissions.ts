@@ -8,7 +8,7 @@ import warehouse from "../assets/warehouses.png";
 import vender from "../assets/vendor.png";
 import ticket from "../assets/ticket.png";
 import dash from "../assets/Icon.png";
-import inventry from "../assets/Icon (1).png";
+import serviceTicket from "../assets/serviceticket.png";
 
 export const NavBarLinksData: NavLinksInterface[] = [
   {
@@ -22,18 +22,19 @@ export const NavBarLinksData: NavLinksInterface[] = [
 
   {
     _id: 2,
-    alt: "Inventory",
+    alt: "Service Tickets",
     href: "#",
     roleId: [1],
-    label: "Inventory",
-    iconSrc: inventry,
+    label: "Service Tickets",
+    iconSrc: serviceTicket,
     index: 2,
     children: [
       {
         _id: 201,
-        href: "/dashboard/inventory-dashboard/dashboard",
-        label: "Inventory Dashboard",
+        href: "/dashboard/service-ticket/all-tickets",
+        label: "All Tickets",
         index: 1,
+        iconSrc: serviceTicket,
       },
       {
         _id: 202,
