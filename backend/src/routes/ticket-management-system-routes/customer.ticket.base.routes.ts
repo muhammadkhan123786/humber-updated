@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
 import {
     customerTicketBaseDoc,
@@ -9,6 +9,7 @@ import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { handleVehicleVideoUpload } from "../../middleware/uploadVehicleVideo";
+import { generateTicketCode } from "../../utils/generateTicketCode";
 
 const repairVehicleUpload = createUploader([
     { name: 'vehicleRepairImages', maxCount: 1000, mimeTypes: ['image/jpeg', 'image/png'] },
@@ -29,7 +30,19 @@ const customerTicketBaseController = new AdvancedGenericController({
 
 customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
-customerTicketBaseRouter.post("/", repairVehicleUpload, mapUploadedFilesToBody(), handleVehicleVideoUpload("vehicleRepairVideo"), customerTicketBaseController.create);
+customerTicketBaseRouter.post(
+    "/",
+    repairVehicleUpload,
+    handleVehicleVideoUpload("vehicleRepairVideo"),
+    mapUploadedFilesToBody(),
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        req.body.ticketCode = await generateTicketCode();
+        next();
+    },
+    customerTicketBaseController.create
+);
+
 customerTicketBaseRouter.put("/:id", repairVehicleUpload, mapUploadedFilesToBody(), handleVehicleVideoUpload("vehicleRepairVideo"), customerTicketBaseController.update);
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
 
