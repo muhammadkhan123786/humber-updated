@@ -1,8 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { ICustomerVehicleRegInterface } from "../../../../.././../common/Vehicle-Registeration.Interface";
-
 export default function BrandModelInfo({ formData, setFormData }: { formData: any, setFormData: any }) {
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
@@ -32,11 +30,11 @@ useEffect(() => {
 }, [formData.vehicleBrandId]);
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div>
-        <label className="text-sm font-medium text-gray-600 block mb-1">Make *</label>
+    <div className="bg-linear-to-br from-white to-gray-50 p-8 rounded-2xl shadow-lg border border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-6 hover:shadow-2xl transition-all animate-fadeInUp animation-delay-100">
+      <div className="animate-fadeInUp">
+        <label className="text-sm font-bold text-gray-700 block mb-2 bg-linear-to-br from-blue-600 to-purple-600 bg-clip-text ">Make *</label>
         <select 
-          className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-[#FE6B1D]"
+          className="w-full p-3 bg-linear-to-br from-blue-50 to-purple-50 border border-gray-300 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all hover:border-blue-400"
           value={formData.vehicleBrandId}
           onChange={(e) => setFormData({...formData, vehicleBrandId: e.target.value})}
         >
@@ -45,10 +43,10 @@ useEffect(() => {
         </select>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-gray-600 block mb-1">Model *</label>
+      <div className="animate-fadeInUp animation-delay-100">
+        <label className="text-sm font-bold text-gray-700 block mb-2 bg-linear-to-br from-blue-600 to-purple-600 bg-clip-text ">Model *</label>
         <select 
-          className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-[#FE6B1D]"
+          className="w-full p-3 bg-linear-to-br from-blue-50 to-purple-50 border border-gray-300 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all hover:border-blue-400"
           value={formData.vehicleModelId}
           onChange={(e) => setFormData({...formData, vehicleModelId: e.target.value})}
         >
@@ -57,11 +55,12 @@ useEffect(() => {
         </select>
       </div>
 
-      <div>
-        <label className="text-sm font-medium text-gray-600 block mb-1">Serial Number *</label>
+      <div className="animate-fadeInUp animation-delay-200">
+        <label className="text-sm font-bold text-gray-700 block mb-2 bg-linear-to-br from-blue-600 to-purple-600 bg-clip-text t">Serial Number *</label>
         <input 
-          type="text" placeholder="S/N 123456789"
-          className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-[#FE6B1D]"
+          type="text" 
+          placeholder="S/N 123456789"
+          className="w-full p-3 bg-linear-to-br from-blue-50 to-purple-50 border border-gray-300 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all hover:border-blue-400"
           value={formData.serialNumber}
           onChange={(e) => setFormData({...formData, serialNumber: e.target.value})}
         />

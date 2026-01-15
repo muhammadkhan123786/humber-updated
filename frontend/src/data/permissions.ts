@@ -403,6 +403,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Document Type",
         index: 15,
       },
+      {
+        _id: 116,
+        href: "/dashboard/business-types",
+        label: "Business Type",
+        index: 16,
+      }
     ],
   },
 ];
