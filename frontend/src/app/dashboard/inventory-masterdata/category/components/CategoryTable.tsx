@@ -1,217 +1,207 @@
 "use client";
-import React, { useState } from "react";
-import { Layers, FolderTree, ArrowRight, Eye } from "lucide-react";
-import { ICategory } from "../../../../../../../common/ICategory.interface";
-import { StatusBadge } from "../../../../common-form/StatusBadge";
-import { TableActionButton } from "../../../../common-form/TableActionButtons";
+import React from "react";
+import {
+  Folder,
+  Layers,
+  Tag,
+  CheckCircle2,
+  XCircle,
+  Star,
+  Pencil,
+  Trash2,
+  Plus,
+} from "lucide-react";
 
-interface CategoryTableProps {
+// Use the interface based on your JSON structure
+export interface ICategory {
+  _id: string;
+  categoryName: string;
+  parentId: string | null;
+  isActive: boolean;
+  isDefault: boolean;
+  children?: ICategory[];
+}
+
+interface Props {
   data: ICategory[];
-  onEdit: (item: ICategory) => void;
-  onDelete: (id: string) => void;
-  themeColor: string;
+   onEdit: (cat: ICategory) => void;
+   onDelete: (id: string) => void;
+   onAddSub: (parent: ICategory) => void;
+   onSetDefault: (cat: ICategory) => void;
 }
 
-// Add _path property for internal usage
-interface FlatCategory extends ICategory {
-  _path: string[];
-}
-
-const CategoryTable = ({
+export const CategoryTable: React.FC<Props> = ({
   data,
   onEdit,
   onDelete,
-  themeColor,
-}: CategoryTableProps) => {
-  const [popupData, setPopupData] = useState<string[] | null>(null);
+  onAddSub,
+}) => {
+  const renderRows = (
+    categories: ICategory[],
+    level: number = 1,
+    parentPath: string = ""
+  ) => {
+    return categories.map((cat) => {
+      const currentPath = parentPath
+        ? `${parentPath} > ${cat.categoryName}`
+        : cat.categoryName;
 
-  // Flatten nested categories and keep the full path
-  const flattenCategories = (categories: ICategory[]): FlatCategory[] => {
-    const result: FlatCategory[] = [];
+      // Icon & Color Logic exactly like your target design
+      const Icon = level === 1 ? Folder : level === 2 ? Layers : Tag;
+      const iconColors = [
+        "bg-[#0ea5e9]", // Level 1: Blue
+        "bg-[#d946ef]", // Level 2: Fuchsia/Pink
+        "bg-[#10b981]", // Level 3+: Emerald
+      ];
+      const currentColor = iconColors[Math.min(level - 1, 2)];
 
-    const traverse = (cats: ICategory[], parentPath: string[] = []) => {
-      cats.forEach((cat) => {
-        const currentPath = [...parentPath, cat.categoryName];
-        result.push({ ...cat, _path: currentPath });
-        if (cat.children && cat.children.length > 0) {
-          traverse(cat.children, currentPath);
-        }
-      });
-    };
+      return (
+        <React.Fragment key={cat._id}>
+          <tr className="hover:bg-slate-50/50 transition-colors group border-b border-slate-100">
+            {/* Category Hierarchy & Path */}
+            <td className="px-6 py-4">
+              <div className="flex items-center gap-4">
+                {/* Visual Indentation for hierarchy awareness */}
+                <div
+                  className={`p-2.5 rounded-xl text-white shadow-sm ${currentColor}`}
+                  style={{ marginLeft: `${(level - 1) * 8}px` }}
+                >
+                  <Icon size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-slate-700 text-[15px]">
+                    {cat.categoryName}
+                  </span>
+                  <span className="text-[12px] text-slate-400 font-medium">
+                    {currentPath}
+                  </span>
+                </div>
+              </div>
+            </td>
 
-    traverse(categories);
-    return result;
-  };
+            {/* Level Badge */}
+            <td className="px-4 py-4 text-center">
+              <span
+                className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold border ${
+                  level === 1
+                    ? "bg-blue-50 border-blue-200 text-blue-600"
+                    : level === 2
+                    ? "bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-600"
+                }`}
+              >
+                Level {level}
+              </span>
+            </td>
 
-  const flatData = flattenCategories(data);
+            {/* Active Status Badge */}
+            <td className="px-4 py-4 text-center">
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold ${
+                  cat.isActive
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-600"
+                    : "bg-red-50 border-red-200 text-red-600"
+                }`}
+              >
+                {cat.isActive ? (
+                  <CheckCircle2 size={13} />
+                ) : (
+                  <XCircle size={13} />
+                )}
+                {cat.isActive ? "Active" : "Inactive"}
+              </div>
+            </td>
 
-  // Show short hierarchy in table (first 2 levels + "..." if deeper)
-  const getShortPath = (cat: FlatCategory) => {
-    if (cat._path.length > 2) return cat._path.slice(0, 2).join(" > ") + " ...";
-    return cat._path.join(" > ");
+            {/* Default Category Star */}
+            <td className="px-4 py-4 text-center">
+              {cat.isDefault ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-200 bg-amber-50 text-amber-600 text-[11px] font-bold">
+                  <Star size={13} fill="currentColor" />
+                  Default
+                </div>
+              ) : (
+                <div className="text-slate-200 flex justify-center">
+                  <Star size={18} />
+                </div>
+              )}
+            </td>
+
+            {/* Exact Actions Buttons from Image */}
+            <td className="px-6 py-4 text-right">
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => onAddSub(cat)}
+                  className="flex items-center gap-1
+    px-3 py-1.5
+    text-[11px] font-bold
+    rounded-[10px]
+    border border-[#D1D5DC]
+    bg-[#F8F9FF]
+    text-black/80
+    transition-all duration-200
+    hover:bg-[#DCFCE7]
+    hover:border-[#22C55E]
+    hover:text-[#22C55E]
+  "
+                >
+                  <Plus size={14} />
+                  Sub
+                </button>
+                <button
+                  onClick={() => onEdit(cat)}
+                  className="p-1.5 text-black/80 hover:text-indigo-600 hover:bg-[#DBEAFE] hover:border-[#8EC5FF]  rounded-[10px] border border-[#D1D5DC]"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  onClick={() => onDelete(cat._id)}
+                  className="flex items-center justify-center gap-2 p-1.5 text-black/80 hover:text-red-500 rounded-[10px] border border-[#D1D5DC] hover:border-red-500 hover:bg-[#FFE2E2]"
+                >
+                  <Trash2 size={14} />
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          {/* RECURSION: If this category has children, render them immediately below */}
+          {cat.children &&
+            cat.children.length > 0 &&
+            renderRows(cat.children, level + 1, currentPath)}
+        </React.Fragment>
+      );
+    });
   };
 
   return (
-    <>
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead
-              className="text-white"
-              style={{ backgroundColor: themeColor }}
-            >
+    <div className="w-full bg-white  overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-left border-collapse">
+          <thead className="border-b border-slate-100">
+            <tr className="text-slate-500 text-[12px] uppercase tracking-wider font-bold">
+              <th className="px-6 py-4">Category Hierarchy</th>
+              <th className="px-4 py-4 text-center">Level</th>
+              <th className="px-4 py-4 text-center">Active</th>
+              <th className="px-4 py-4 text-center">Default</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.length > 0 ? (
+              renderRows(data)
+            ) : (
               <tr>
-                <th className="px-6 py-4 font-semibold">Category</th>
-                <th className="px-6 py-4 font-semibold">Hierarchy</th>
-                <th className="px-6 py-4 text-center font-semibold">Status</th>
-                <th className="px-6 py-4 text-center font-semibold">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-100">
-              {flatData.length > 0 ? (
-                flatData.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="transition-colors group hover:bg-gray-50"
-                  >
-                    {/* Category Column */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="p-2 rounded-lg"
-                          style={{
-                            backgroundColor: `${themeColor}20`,
-                            color: themeColor,
-                          }}
-                        >
-                          <Layers size={18} />
-                        </div>
-                        <span className="font-bold text-gray-800">
-                          {item.categoryName}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Hierarchy Column */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <FolderTree size={14} style={{ color: themeColor }} />
-
-                        {/* Hierarchy Path Display */}
-                        <div className="flex items-center flex-wrap gap-1">
-                          {item._path.length <= 2 ? (
-                            // Show full path for 2 levels or less
-                            item._path.map((name, index) => (
-                              <React.Fragment key={index}>
-                                <span className="text-[13px] font-medium">
-                                  {name}
-                                </span>
-                                {index < item._path.length - 1 && (
-                                  <ArrowRight
-                                    size={12}
-                                    style={{ color: themeColor }}
-                                  />
-                                )}
-                              </React.Fragment>
-                            ))
-                          ) : (
-                            // Show first 2 levels + "..." for deeper hierarchies
-                            <>
-                              <span className="text-[13px] font-medium">
-                                {item._path[0]}
-                              </span>
-                              <ArrowRight
-                                size={12}
-                                style={{ color: themeColor }}
-                              />
-                              <span className="text-[13px] font-medium">
-                                {item._path[1]}
-                              </span>
-                              <ArrowRight
-                                size={12}
-                                style={{ color: themeColor }}
-                              />
-                              <span className="text-[13px] font-medium text-gray-500">
-                                ...
-                              </span>
-
-                              {/* View All Button */}
-                              <button
-                                onClick={() => setPopupData(item._path)}
-                                className="ml-2 text-xs font-semibold px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
-                              >
-                                View All
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 text-center">
-                      <StatusBadge isActive={!!item.isActive} />
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 text-center">
-                      <TableActionButton
-                        onEdit={() => onEdit(item)}
-                        onDelete={() => {
-                          if (!item._id) return;
-                          onDelete(item._id);
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-20 text-center text-gray-400 italic"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <FolderTree size={40} className="text-gray-200" />
-                      <p>No categories found.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Popup Modal */}
-      {popupData && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-[400px] max-h-[80vh] overflow-y-auto p-6">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <Eye size={18} /> Full Category Path
-            </h3>
-            <ul className="space-y-2">
-              {popupData.map((name, index) => (
-                <li
-                  key={index}
-                  className="px-3 py-2 border rounded-md bg-gray-50"
+                <td
+                  colSpan={5}
+                  className="px-6 py-10 text-center text-slate-400 font-medium"
                 >
-                  {index + 1}. {name}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => setPopupData(null)}
-              className="mt-4 w-full py-2 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+                  No categories found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
-
-export default CategoryTable;

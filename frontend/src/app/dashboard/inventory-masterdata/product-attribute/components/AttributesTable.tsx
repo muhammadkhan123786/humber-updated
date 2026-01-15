@@ -1,166 +1,162 @@
 "use client";
 import React, { useState } from "react";
-import { Layers, ListChecks, Eye } from "lucide-react";
-import { StatusBadge } from "../../../../common-form/StatusBadge";
-import { TableActionButton } from "../../../../common-form/TableActionButtons";
+import { 
+  Layers, Search, Pencil, Trash2, 
+  ChevronDown, Hash, Type, 
+  CheckSquare, List, Star, Tag
+} from "lucide-react";
 import { IAttribute } from "../../../../../../../common/IProductAttributes.interface";
 
 interface AttributeTableProps {
   data: IAttribute[];
   onEdit: (item: IAttribute) => void;
   onDelete: (id: string) => void;
-  themeColor: string;
 }
 
-const AttributeTable = ({
-  data,
-  onEdit,
-  onDelete,
-  themeColor,
-}: AttributeTableProps) => {
-  const [popupData, setPopupData] = useState<IAttribute | null>(null);
+const AttributeTable = ({ data, onEdit, onDelete }: AttributeTableProps) => {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Gradient definitions from your request
+  const gradients = [
+    "from-[#F6339A] to-[#AD46FF]", // Pink-Purple
+    "from-[#2B7FFF] to-[#00B8DB]"  // Blue-Cyan
+  ];
+
+  // Group attributes by category
+  const groupedData = data.reduce((acc, curr) => {
+    const groupName = curr.categoryId || "Global Attributes";
+    if (!acc[groupName]) acc[groupName] = [];
+    acc[groupName].push(curr);
+    return acc;
+  }, {} as Record<string, IAttribute[]>);
+
+  const TypeBadge = ({ type }: { type: string }) => {
+    const types: Record<string, { label: string; icon: any; color: string; bg: string }> = {
+      select: { label: "Dropdown", icon: ChevronDown, color: "text-[#6366F1]", bg: "bg-[#EEF2FF]" },
+      text: { label: "Text", icon: Type, color: "text-[#0EA5E9]", bg: "bg-[#F0F9FF]" },
+      number: { label: "Number", icon: Hash, color: "text-[#F59E0B]", bg: "bg-[#FFFBEB]" },
+      checkbox: { label: "Checkbox", icon: CheckSquare, color: "text-[#10B981]", bg: "bg-[#ECFDF5]" },
+      list: { label: "List", icon: List, color: "text-[#D946EF]", bg: "bg-[#FDF4FF]" },
+    };
+    const config = types[type] || types.text;
+    const Icon = config.icon;
+    return (
+      <div className={`flex items-center gap-1.5 px-3 py-1 rounded-lg w-fit ${config.bg} ${config.color} border border-current/10`}>
+        <Icon size={12} />
+        <span className="text-[11px] font-bold uppercase tracking-wider">{config.label}</span>
+      </div>
+    );
+  };
 
   return (
-    <>
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            {/* ================= HEADER ================= */}
-            <thead
-              className="text-white"
-              style={{ backgroundColor: themeColor }}
-            >
-              <tr>
-                <th className="px-6 py-4 font-semibold">Attribute</th>
-                <th className="px-6 py-4 font-semibold">Type</th>
-                <th className="px-6 py-4 font-semibold text-center">
-                  Required
-                </th>
-                <th className="px-6 py-4 font-semibold text-center">Options</th>
-                <th className="px-6 py-4 font-semibold text-center">Status</th>
-                <th className="px-6 py-4 font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-
-            {/* ================= BODY ================= */}
-            <tbody className="divide-y divide-gray-100">
-              {data.length > 0 ? (
-                data.map((item) => {
-                  if (!item._id) return null; // ✅ HARD SAFETY
-
-                  return (
-                    <tr
-                      key={item._id}
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      {/* Attribute Name */}
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="p-2 rounded-lg"
-                            style={{
-                              backgroundColor: `${themeColor}20`,
-                              color: themeColor,
-                            }}
-                          >
-                            <Layers size={18} />
-                          </div>
-                          <span className="font-semibold text-gray-800">
-                            {item.attributeName}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Type */}
-                      <td className="px-6 py-4 capitalize">{item.type}</td>
-
-                      {/* Required */}
-                      <td className="px-6 py-4 text-center">
-                        {item.isRequired ? "Yes" : "No"}
-                      </td>
-
-                      {/* Options */}
-                      <td className="px-6 py-4 text-center">
-                        {item.options?.length ? (
-                          <>
-                            {item.options.length}
-                            <button
-                              onClick={() => setPopupData(item)}
-                              className="ml-2 text-xs font-semibold px-2 py-1 rounded bg-gray-100 hover:bg-gray-200"
-                            >
-                              View
-                            </button>
-                          </>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-4 text-center">
-                        <StatusBadge isActive={item.status === "active"} />
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4 text-center">
-                        <TableActionButton
-                          onEdit={() => onEdit(item)}
-                          onDelete={() => {
-                            if (!item._id) return;
-                            onDelete(item._id);
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-20 text-center text-gray-400 italic"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <ListChecks size={40} className="text-gray-200" />
-                      <p>No attributes found.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+    <div className="space-y-10 max-w-[1400px] mx-auto p-4">
+      {/* Search Header matches Image C75D1F */}
+      <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-2 pl-4 text-gray-500 whitespace-nowrap">
+           <Search size={18} />
+           <span className="text-sm font-medium">Filter by Category:</span>
+        </div>
+        <input
+          type="text"
+          placeholder="Search attributes..."
+          className="flex-1 py-2 outline-none text-sm"
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <div className="bg-[#EEF2FF] text-[#6366F1] px-4 py-1.5 rounded-xl text-xs font-bold mr-2">
+          {data.length} attributes
         </div>
       </div>
 
-      {/* ================= OPTIONS POPUP ================= */}
-      {popupData?.options && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-2xl shadow-xl w-[400px] max-h-[80vh] overflow-y-auto p-6">
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <Eye size={18} /> Options for {popupData.attributeName}
-            </h3>
+      {Object.entries(groupedData).map(([groupName, items], index) => {
+        const filteredItems = items.filter(i => i.attributeName.toLowerCase().includes(searchTerm.toLowerCase()));
+        if (filteredItems.length === 0) return null;
 
-            <ul className="space-y-2">
-              {popupData.options.map((opt, idx) => (
-                <li
-                  key={idx}
-                  className="px-3 py-2 border rounded-md bg-gray-50"
-                >
-                  {idx + 1}. {opt.label} ({opt.value})
-                </li>
-              ))}
-            </ul>
+        // Alternate gradients based on index
+        const currentGradient = gradients[index % gradients.length];
+        const iconBg = index % 2 === 0 ? "bg-[#F6339A]" : "bg-[#2B7FFF]";
 
-            <button
-              onClick={() => setPopupData(null)}
-              className="mt-4 w-full py-2 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-600"
-            >
-              Close
-            </button>
+        return (
+          <div key={groupName} className="relative bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden">
+            {/* THE TOP GRADIENT BORDER */}
+            <div className={`h-[6px] w-full bg-gradient-to-r ${currentGradient}`} />
+
+            {/* Header matches Image C7C925 */}
+            <div className="p-6 flex items-center justify-between bg-white">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center text-white shadow-lg`}>
+                  <Tag size={24} fill="white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800 text-xl">{groupName}</h3>
+                  <p className="text-xs text-gray-400 font-medium tracking-wide">Mobility Accessories › {groupName}</p>
+                </div>
+              </div>
+              <div className="bg-gray-50 border border-gray-100 px-3 py-1 rounded-full text-[10px] font-bold text-gray-400 uppercase">
+                {filteredItems.length} attributes
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50/30 border-y border-gray-50">
+                  <tr className="text-gray-400 text-[11px] uppercase font-bold tracking-[0.1em]">
+                    <th className="px-8 py-4 text-left">Attribute Name</th>
+                    <th className="px-6 py-4 text-left">Type</th>
+                    <th className="px-6 py-4 text-center">Active</th>
+                    <th className="px-6 py-4 text-center">Default</th>
+                    <th className="px-6 py-4 text-right pr-8">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredItems.map((attr) => (
+                    <tr key={attr._id} className="group hover:bg-gray-50/40 transition-all">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-[#AD46FF]/10 text-[#AD46FF] flex items-center justify-center">
+                            <Layers size={14} />
+                          </div>
+                          <span className="font-semibold text-gray-700">{attr.attributeName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5"><TypeBadge type={attr.type} /></td>
+                      <td className="px-6 py-5">
+                        <div className="flex justify-center">
+                          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border ${
+                            attr.isActive ? "bg-[#ECFDF5] text-[#10B981] border-[#10B981]/20" : "bg-[#FFF1F2] text-[#F43F5E] border-[#F43F5E]/20"
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ${attr.isActive ? "bg-[#10B981]" : "bg-[#F43F5E]"}`} />
+                            {attr.isActive ? "ACTIVE" : "INACTIVE"}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex justify-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                            attr.isDefault ? "bg-[#FFFBEB] text-[#F59E0B] border border-[#F59E0B]/30" : "bg-gray-50 text-gray-300 border border-gray-100"
+                          }`}>
+                            <Star size={14} fill={attr.isDefault ? "#F59E0B" : "none"} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 pr-8">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => onEdit(attr)} className="p-2.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
+                            <Pencil size={16} />
+                          </button>
+                          <button onClick={() => onDelete(attr._id!)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
-    </>
+        );
+      })}
+    </div>
   );
 };
 

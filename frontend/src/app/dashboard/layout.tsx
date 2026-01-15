@@ -18,7 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 {!(pathName === '/dashboard/purchaseorder') && <aside className="hidden md:block w-64 bg-white text-black border-gray-500">
                     <Navbar />
                 </aside>}
-                <main className="flex-1 bg-gray-100 p-6 overflow-auto">
+                <main className="flex-1 bg-[#FAF4FE]  overflow-auto">
                     {children}
                 </main>
             </div>

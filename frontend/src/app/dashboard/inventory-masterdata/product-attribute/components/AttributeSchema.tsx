@@ -9,12 +9,16 @@ export const attributeSchemaValidation = z
     type: z.enum([
       "text",
       "number",
-      "select",
-      "multi_select",
+      "dropdown",
       "date",
+      "list",
+      "checkbox",
+      "radio",
+      "textarea"
     ]),
     unit: z.string().optional(), // Keep this
     isRequired: z.boolean().optional(),
+    isDefault: z.boolean().optional(),
     status: z.enum(["active", "inactive"]).optional(),
     options: z
       .array(

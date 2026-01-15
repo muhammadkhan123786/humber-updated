@@ -1,9 +1,11 @@
 import CategoryClient from "./components/CategoryClient";
+import ProductCategoriesDashboard from "./components/ProductCategoriesDashboard";
 
 const page = () => {
   return (
     <div>
-      <CategoryClient />
+      {/* <CategoryClient /> */}
+<ProductCategoriesDashboard />
     </div>
   );
 };

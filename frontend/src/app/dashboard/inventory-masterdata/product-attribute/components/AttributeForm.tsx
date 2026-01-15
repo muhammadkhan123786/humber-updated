@@ -3,19 +3,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { attributeSchemaValidation } from "./AttributeSchema";
-import { FormModal } from "../../../../common-form/FormModal";
-import { FormInput } from "../../../../common-form/FormInput";
-import { FormToggle } from "../../../../common-form/FormToggle";
+import { FormInput, SearchableSelect, Button } from "@/components/form"; 
+
 import Dropdown from "@/components/form/Dropdown";
-import { Save, Layers } from "lucide-react";
+import { Check, Star, AlertCircle, X, Plus } from "lucide-react";
 import { createAttribute, updateAttribute } from "@/hooks/useAttributes";
 import axios from "axios";
 import { IAttribute } from "../../../../../../../common/IProductAttributes.interface";
 import { ICategory } from "../../../../../../../common/ICategory.interface";
-import { DropdownService } from "@/helper/dropdown.service";
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
 interface Props {
   editingData: IAttribute | null;
@@ -30,11 +25,14 @@ const AttributeForm = ({
   onRefresh,
   themeColor,
 }: Props) => {
+  // Local state for the "Live" typing experience in the input
+  const [currentTyping, setCurrentTyping] = useState("");
+
   const {
     control,
     handleSubmit,
     watch,
-    reset,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(attributeSchemaValidation),
@@ -44,145 +42,87 @@ const AttributeForm = ({
           type: editingData.type,
           isRequired: editingData.isRequired ?? false,
           status: editingData.status ?? "active",
-          options: editingData.options ?? [],
           categoryId: editingData?.categoryId || "",
-          isForSubcategories: editingData.isForSubcategories ?? false,
-          unit: editingData?.unit || "",
+          isDefault: editingData?.isDefault ?? false,
+          options: editingData.options ?? [],
+        
         }
       : {
           attributeName: "",
           type: "text",
           isRequired: false,
           status: "active",
-          options: [],
           categoryId: "",
-          isForSubcategories: false,
+          isDefault: false,
+          options: [],
           unit: "",
         },
   });
 
-  console.log("error", errors);
-  const type = watch("type");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allCategories, setAllCategories] = useState<ICategory[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  
+  // Watch values for conditional logic
+  const selectedType = watch("type");
+  const optionsList = watch("options") || [];
 
-  /* ============================
-     1️⃣ Flatten category tree
-  ============================ */
-  const flattenCategories = (
-    categories: ICategory[] | null | undefined,
-    parent: ICategory | null = null
-  ): ICategory[] => {
-    if (!categories || !Array.isArray(categories)) {
-      return [];
-    }
+  // Show options only for specific types
+  const showOptionsField = ["list", "dropdown", "checkbox", "radio"].includes(selectedType);
 
-    let result: ICategory[] = [];
-
-    for (const cat of categories) {
-      result.push({
-        ...cat,
-        parentId: parent ? parent._id : cat.parentId,
-      });
-
-      if (cat.children && cat.children.length > 0) {
-        result = result.concat(flattenCategories(cat.children, cat));
-      }
-    }
-
-    return result;
-  };
-
-  const flatCategories = useMemo(
-    () => flattenCategories(allCategories),
-    [allCategories]
-  );
-
-  /* ============================
-     2️⃣ Build category options with full path
-  ============================ */
-  const categoryOptions = useMemo(() => {
-    if (!flatCategories || flatCategories.length === 0) {
-      return [];
-    }
-
-    const getFullPath = (cat: ICategory): string => {
-      if (!cat.parentId) return cat.categoryName;
-
-      const parent = flatCategories.find((c) => c._id === cat.parentId);
-      return parent
-        ? `${getFullPath(parent)} > ${cat.categoryName}`
-        : cat.categoryName;
+  const handleAddOption = () => {
+    if (!currentTyping.trim()) return;
+    
+    const newOption = { 
+      label: currentTyping.trim(), 
+      value: currentTyping.trim().toLowerCase().replace(/\s+/g, "_"), 
+      sort: optionsList.length + 1 
     };
 
-    return flatCategories
-      .filter((cat) => cat.isActive)
-      .map((cat) => ({
-        id: cat._id,
-        value: cat._id,
-        label: getFullPath(cat),
-        pathName: getFullPath(cat),
-      }))
-      .sort((a, b) => a.pathName.localeCompare(b.pathName));
-  }, [flatCategories]);
+    setValue("options", [...optionsList, newOption]);
+    setCurrentTyping(""); // Clear input
+  };
 
-  /* ============================
-     3️⃣ Fetch categories
-  ============================ */
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setLoadingCategories(true);
-        const BASE_URL =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-
-        // Get the auth token
+        const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
         const token = localStorage.getItem("token");
-        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const authToken = token || savedUser.token || savedUser.accessToken;
-
-        console.log("token", authToken);
-
         const response = await axios.get(`${BASE_URL}/categories`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         setAllCategories(response?.data?.data || response?.data || []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        setAllCategories([]);
-      } finally {
-        setLoadingCategories(false);
-      }
+      } catch (error) { console.error(error); }
     };
-
     fetchCategories();
   }, []);
 
-  /* ============================
-     4️⃣ Load other dropdown data
-  ============================ */
-  useEffect(() => {
-    const loadData = async () => {
-      const data = await DropdownService.fetchAll();
-      if (editingData) {
-        reset(editingData);
-      }
+  const flatCategories = useMemo(() => {
+    const flatten = (cats: ICategory[]): ICategory[] => {
+      return cats.reduce((acc: ICategory[], cat) => {
+        acc.push(cat);
+        if (cat.children) acc.push(...flatten(cat.children));
+        return acc;
+      }, []);
     };
-    loadData();
-  }, [onClose, editingData, reset]);
+    return flatten(allCategories);
+  }, [allCategories]);
 
-  /* ============================
-     5️⃣ Submit handler - FIXED
-  ============================ */
+  // const categoryOptions = useMemo(() => {
+  //   return flatCategories.map(cat => ({ value: cat._id, label: cat.categoryName }));
+  // }, [flatCategories]);
+
+  const categoryOptions = useMemo(() => {
+  return flatCategories
+    .filter(cat => cat._id)
+    .map(cat => ({
+      value: cat._id!,            // now guaranteed
+      label: cat.categoryName,
+    }));
+}, [flatCategories]);
+
+console.log("error", errors)
   const onSubmit = async (data: any) => {
-    setIsSubmitting(true);
-
-    try {
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+         const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
       const payload: Partial<IAttribute> = {
         attributeName: data.attributeName,
@@ -191,379 +131,251 @@ const AttributeForm = ({
         status: data.status,
         categoryId: data.categoryId || null,
         isForSubcategories: data.isForSubcategories,
+        isDefault: data.isDefault,
         userId: savedUser.id || savedUser._id,
+
       };
-
-      // DON'T generate code on client side - let the backend handle it
-      // Only preserve existing code for updates
-      if (editingData?._id && editingData?.code) {
-        payload.code = editingData.code;
-      }
-      // For new attributes, don't include code at all - backend will generate it
-
-      // Only include options for select/multi_select types
-      if (data.type === "select" || data.type === "multi_select") {
-        payload.options = data.options;
-      }
-
-      // Only include unit for number type
-      if (data.type === "number") {
-        payload.unit = data.unit;
-      }
-
-      console.log("Submitting payload:", payload);
-
-      if (editingData?._id) {
-        await updateAttribute(editingData._id, payload);
-      } else {
-        await createAttribute(payload);
-      }
-
+    console.log("Data", data);
+    setIsSubmitting(true);
+    try {
+      if (editingData?._id) await updateAttribute(editingData._id, data);
+      else await createAttribute(payload);
       onRefresh();
       onClose();
-    } catch (err) {
-      console.error("Submit error:", err);
-
-      if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || "Operation failed";
-        const errorCode = err.response?.data?.code || err.response?.status;
-        const errorData = err.response?.data;
-
-        console.log("Error details:", {
-          message: errorMessage,
-          code: errorCode,
-          data: errorData,
-        });
-
-        // Handle different types of errors
-        if (errorMessage.includes("duplicate key error")) {
-          if (errorMessage.includes("code_1")) {
-            alert(
-              "A duplicate attribute code was detected. Please try again. If the issue persists, contact support."
-            );
-          } else if (errorMessage.includes("attributeName")) {
-            alert(
-              "An attribute with this name already exists. Please use a different name."
-            );
-          } else {
-            alert(
-              "A duplicate record was found. Please check your input and try again."
-            );
-          }
-        } else if (errorCode === 400) {
-          alert("Invalid input. Please check all fields and try again.");
-        } else if (errorCode === 401) {
-          alert("Session expired. Please log in again.");
-        } else if (errorCode === 403) {
-          alert("You don't have permission to perform this action.");
-        } else if (errorCode === 404) {
-          alert("Resource not found. Please refresh and try again.");
-        } else if (errorCode === 500) {
-          alert("Server error. Please try again later or contact support.");
-        } else {
-          alert(
-            errorMessage || "An error occurred while saving the attribute."
-          );
-        }
-      } else {
-        alert("An unexpected error occurred. Please try again.");
-      }
-    } finally {
-      setIsSubmitting(false);
+    } catch (err: any) { 
+      alert(err?.response?.data?.message || "Operation failed"); 
+    } finally { 
+      setIsSubmitting(false); 
     }
   };
 
   return (
-    <FormModal
-      title={editingData ? "Edit Attribute" : "Add Attribute"}
-      icon={<Layers size={24} />}
-      onClose={onClose}
-      themeColor={themeColor}
-      width="max-w-3xl"
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Attribute Identity Section */}
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-1">
-            <div
-              className="p-1.5 rounded-lg"
-              style={{
-                backgroundColor: `${themeColor}20`,
-                color: themeColor,
-              }}
-            >
-              <Layers size={14} />
-            </div>
-            <span className="text-xs font-bold text-gray-500 uppercase">
-              Attribute Identity
-            </span>
-          </div>
-
-          {/* Attribute Name */}
-          <Controller
-            name="attributeName"
-            control={control}
-            render={({ field }) => (
-              <FormInput
-                label="Attribute Name"
-                {...field}
-                required
-                error={errors.attributeName?.message}
-              />
-            )}
-          />
-        </div>
-
-        {/* Category Selection */}
-        <div className="space-y-3">
-          <label className="text-sm font-bold text-gray-700">
-            Category Association
-          </label>
-
-          {loadingCategories ? (
-            <div className="text-center py-4 text-gray-500">
-              Loading categories...
-            </div>
-          ) : categoryOptions.length === 0 ? (
-            <div className="text-center py-4 text-gray-500 border rounded-lg bg-gray-50">
-              No categories available. Please create categories first.
-            </div>
-          ) : (
-            <>
-              {/* Category Dropdown */}
-              <Controller
-                name="categoryId"
-                control={control}
-                render={({ field }) => (
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-500 ml-1 uppercase">
-                      Select Category
-                    </label>
-                    <select
-                      className="w-full p-3 border border-gray-200 rounded-xl outline-none bg-white transition-all text-gray-700 font-medium focus:ring-2"
-                      style={{ boxShadow: `0 0 0 2px ${themeColor}40` }}
-                      value={field.value || ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    >
-                      <option value="">
-                        -- No Category (Global Attribute) --
-                      </option>
-                      {categoryOptions.map((opt) => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.pathName}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.categoryId?.message && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.categoryId.message as string}
-                      </p>
-                    )}
-                  </div>
-                )}
-              />
-
-              {/* Toggle for Subcategories */}
-              <Controller
-                name="isForSubcategories"
-                control={control}
-                render={({ field }) => (
-                  <FormToggle
-                    label="Apply to all subcategories"
-                    description="This attribute will be inherited by all subcategories of the selected category"
-                    checked={field.value}
-                    onChange={field.onChange}
-                    // disabled={!watch("categoryId")}
-                  />
-                )}
-              />
-
-              {!watch("categoryId") && (
-                <p className="text-sm text-gray-500 italic">
-                  Select a category to enable subcategory inheritance
-                </p>
-              )}
-            </>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      
+      {/* Category Selection */}
+      <div className="space-y-1">        
+        <Controller
+          name="categoryId"
+          control={control}
+          render={({ field }) => (
+            <SearchableSelect
+            label="Category"
+              options={categoryOptions}
+              value={field.value}
+              onChange={field.onChange}
+              placeholder="Select a category"
+             
+            />
           )}
-        </div>
+        />
+      </div>
 
-        {/* Type Dropdown */}
+      {/* Attribute Name */}
+      <div className="space-y-1">        
+        <Controller
+          name="attributeName"
+          control={control}
+          render={({ field }) => (
+            <FormInput
+              label="Attribute Name"
+              {...field}
+              required
+              placeholder="e.g., Brand, Model, Color"
+              className="rounded-xl border-slate-200"
+              error={errors.attributeName?.message}
+            />
+          )}
+        />
+      </div>
+
+      {/* Attribute Type */}
+      <div className="space-y-1">
+        <label className="text-sm font-semibold text-slate-700">
+          Attribute Type <span className="text-red-500">*</span>
+        </label>
         <Controller
           name="type"
           control={control}
           render={({ field }) => (
             <Dropdown
-              label="Attribute Type"
               {...field}
               options={[
                 { label: "Text", value: "text" },
+                { label: "List", value: "list" },
+                { label: "Checkbox", value: "checkbox" },
+                { label: "Dropdown", value: "dropdown" },
+                { label: "Radio", value: "radio" },
                 { label: "Number", value: "number" },
-                { label: "Select", value: "select" },
-                { label: "Multi-Select", value: "multi_select" },
                 { label: "Date", value: "date" },
+                { label: "Textarea", value: "textarea" },
               ]}
+              className="rounded-xl border-slate-200 h-[45px]"
             />
           )}
         />
+        <p className="text-[11px] text-slate-400 mt-1">Select the type of this attribute</p>
+      </div>
 
-        {/* Unit field for number type only */}
-        {type === "number" && (
-          <Controller
-            name="unit"
-            control={control}
-            render={({ field }) => (
-              <FormInput
-                label="Unit (e.g., kg, cm, lbs)"
-                placeholder="Enter unit of measurement"
-                {...field}
-                error={errors.unit?.message}
-              />
-            )}
-          />
-        )}
-
-        {/* Options (conditional - for select/multi_select) */}
-        {(type === "select" || type === "multi_select") && (
-          <Controller
-            name="options"
-            control={control}
-            render={({ field }) => (
-              <div
-                className="space-y-2 p-4 border border-dashed rounded-xl"
-                style={{
-                  backgroundColor: `${themeColor}10`,
-                  borderColor: `${themeColor}40`,
-                }}
+      {/* EXACT UI MATCH FOR OPTIONS/VALUES SECTION */}
+      {showOptionsField && (
+        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="space-y-1">
+            <label className="text-sm font-semibold text-slate-700 flex items-center gap-1">
+              Options/Values <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={currentTyping}
+                  onChange={(e) => setCurrentTyping(e.target.value)}
+                  onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleAddOption(); }}}
+                  className="w-full h-[45px] px-4 rounded-xl border-2 border-indigo-500/40 focus:border-purple-900 focus:ring-4 focus:ring-purple-900/20 outline-none transition-all shadow-sm font-medium text-slate-700"
+                  placeholder="Type an option..."
+                />
+              </div>
+              <button 
+                type="button"
+                onClick={() => setCurrentTyping("")}
+                className="w-[45px] h-[45px] flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 transition-colors"
               >
-                <div className="text-xs font-bold text-gray-500 uppercase mb-2">
-                  Attribute Options
-                </div>
+                <X size={18} />
+              </button>
+            </div>
+          </div>
 
-                {(field.value || []).map((opt: any, idx: number) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <FormInput
-                      label=""
-                      placeholder="Label (e.g., Small)"
-                      value={opt.label}
-                      onChange={(e) => {
-                        const newOpts = [...(field.value || [])];
-                        newOpts[idx].label = e.target.value;
-                        newOpts[idx].value = e.target.value
-                          .toLowerCase()
-                          .replace(/\s+/g, "_");
-                        field.onChange(newOpts);
-                      }}
-                    />
-                    <FormInput
-                      label=""
-                      placeholder="Value (auto-generated)"
-                      value={opt.value}
-                      onChange={(e) => {
-                        const newOpts = [...(field.value || [])];
-                        newOpts[idx].value = e.target.value;
-                        field.onChange(newOpts);
-                      }}
-                    />
+          <button
+            type="button"
+            onClick={handleAddOption}
+            className="w-full h-[35px] border border-slate-200 rounded-xl flex items-center justify-center gap-2 text-slate-600 font-semibold hover:bg-slate-50 transition-all bg-white shadow-sm"
+          >
+            <Plus size={18} /> Add Option
+          </button>
+
+          <div className="space-y-2">
+            <p className="text-[11px] text-slate-400 italic">Enter the {selectedType} options</p>
+            
+            {/* THE PREVIEW BOX */}
+            <div className="p-4 rounded-2xl border border-indigo-100 bg-indigo-50/40 min-h-[90px]">
+              <p className="text-[11px] font-bold text-indigo-500 mb-3 uppercase tracking-wider">Preview:</p>
+              <div className="flex flex-wrap gap-2">
+                {/* Real-time typing pill */}
+                {currentTyping && (
+                  <div className="flex items-center gap-2 bg-indigo-100/80 text-indigo-600 px-4 py-1.5 rounded-full border border-indigo-200 opacity-60 italic">
+                    <span className="text-xs font-bold">{currentTyping}</span>
+                  </div>
+                )}
+                
+                {/* Saved options pills */}
+                {optionsList.map((opt: any, idx: number) => (
+                  <div 
+                    key={idx} 
+                    className="flex items-center gap-2 bg-indigo-100 text-indigo-600 px-4 py-1.5 rounded-full border border-indigo-200 shadow-sm"
+                  >
+                    <span className="text-xs font-bold">{opt.label}</span>
                     <button
                       type="button"
-                      className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors mt-6"
                       onClick={() => {
-                        const newOpts = [...(field.value || [])];
-                        newOpts.splice(idx, 1);
-                        field.onChange(newOpts);
+                        const newOpts = optionsList.filter((_: any, i: number) => i !== idx);
+                        setValue("options", newOpts);
                       }}
+                      className="hover:text-red-500"
                     >
-                      Remove
+                      <X size={12} />
                     </button>
                   </div>
                 ))}
-
-                <button
-                  type="button"
-                  className="w-full py-2 text-sm font-bold rounded-lg transition-colors"
-                  style={{
-                    color: themeColor,
-                    backgroundColor: `${themeColor}20`,
-                  }}
-                  onClick={() =>
-                    field.onChange([
-                      ...(field.value || []),
-                      {
-                        label: "",
-                        value: "",
-                        sort: (field.value?.length || 0) + 1,
-                      },
-                    ])
-                  }
-                >
-                  + Add Option
-                </button>
               </div>
-            )}
-          />
-        )}
-
-        {/* Boolean Toggles Section */}
-        <div
-          className="p-4 rounded-xl border border-dashed"
-          style={{
-            backgroundColor: `${themeColor}10`,
-            borderColor: `${themeColor}40`,
-          }}
-        >
-          <div className="text-xs font-bold text-gray-500 uppercase mb-3">
-            Attribute Settings
-          </div>
-
-          <div className="">
-            <Controller
-              name="isRequired"
-              control={control}
-              render={({ field }) => (
-                <FormToggle
-                  label="Required"
-                  checked={field.value}
-                  onChange={field.onChange}
-                />
-              )}
-            />
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Status Dropdown */}
+      {/* Selection Cards (Active, Default, Required) */}
+      <div className="space-y-3">
+        {/* Active Status */}
         <Controller
           name="status"
           control={control}
           render={({ field }) => (
-            <Dropdown
-              label="Status"
-              {...field}
-              options={[
-                { label: "Active", value: "active" },
-                { label: "Inactive", value: "inactive" },
-              ]}
-            />
+            <div className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-md shadow-emerald-100">
+                  <Check size={20} strokeWidth={3} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Active Status</h4>
+                  <p className="text-[11px] text-slate-400">Make this attribute available for use</p>
+                </div>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={field.value === 'active'} 
+                onChange={(e) => field.onChange(e.target.checked ? 'active' : 'inactive')}
+                className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+              />
+            </div>
           )}
         />
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting || loadingCategories}
-          className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: themeColor }}
-        >
-          <Save size={20} />
-          {isSubmitting
-            ? "Saving..."
-            : loadingCategories
-            ? "Loading Categories..."
-            : editingData
-            ? "Update Attribute"
-            : "Save Attribute"}
-        </button>
-      </form>
-    </FormModal>
+        {/* Default Attribute */}
+        <Controller
+          name="isDefault"
+          control={control}
+          render={({ field }) => (
+            <div className="flex items-center justify-between p-3 rounded-2xl border border-amber-100 bg-amber-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-white shadow-md shadow-amber-100">
+                  <Star size={20} fill="currentColor" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Default Attribute</h4>
+                  <p className="text-[11px] text-slate-400">Set as default for this category</p>
+                </div>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={field.value} 
+                onChange={field.onChange}
+                className="w-5 h-5 rounded-lg border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer"
+              />
+            </div>
+          )}
+        />
+
+        {/* Required Field */}
+        <Controller
+          name="isRequired"
+          control={control}
+          render={({ field }) => (
+            <div className="flex items-center justify-between p-3 rounded-2xl border border-red-100 bg-red-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center text-white shadow-md shadow-red-100">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-sm">Important/Required</h4>
+                  <p className="text-[11px] text-slate-400">Mark as important or required field</p>
+                </div>
+              </div>
+              <input 
+                type="checkbox" 
+                checked={field.value} 
+                onChange={field.onChange}
+                className="w-5 h-5 rounded-lg border-slate-300 text-red-500 focus:ring-red-500 cursor-pointer"
+              />
+            </div>
+          )}
+        />
+      </div>    
+
+      <div className="flex justify-end gap-3 pt-4">
+          <Button variant="secondary" onClick={onClose} type="button">Cancel</Button>
+          <Button variant="primary" type="submit">
+           {isSubmitting ? "Processing..." : editingData ? "Update Attribute" : "+ Add Attribute"}
+          </Button>
+        </div>
+    </form>
   );
 };
 
