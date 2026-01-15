@@ -58,6 +58,7 @@ import paymentMethodRouter from "./routes/suppliers/payment.method.routes";
 import pricingAgreementRouter from "./routes/suppliers/pricing.agreement.routes";
 import productServicesRouter from "./routes/suppliers/product.services.routes";
 import jobTitleRouter from "./routes/master-data-routes/job.titles.routes";
+import iconsRouter from "./routes/master-data-routes/icons.routes";
 
 // Create express app
 const app: Application = express();
@@ -254,6 +255,7 @@ app.use(`${process.env.API_PREFIX}/product-services`, adminProtecter, productSer
 // 15-01-2026 Muhammad Imran 
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
+app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
 
 //Muhammad Imran code ended here.
 
