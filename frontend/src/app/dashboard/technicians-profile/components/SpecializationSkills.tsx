@@ -7,7 +7,7 @@ import CertificationList from "./CertificationList";
 interface ComponentProps {
   formData: {
     skills: string[];
-    certifications: any[]; 
+    certifications: any[];
   };
   setFormData: any;
 }
@@ -18,12 +18,22 @@ interface MasterService {
   isActive: boolean;
 }
 
+interface DocumentType {
+  _id: string;
+  documentTypeName: string;
+  isActive: boolean;
+  isDefault: boolean;
+}
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const MASTER_SERVICES_API = `${BASE_URL}/service-types-master`;
+const DOCUMENT_TYPES_API = `${BASE_URL}/document-types`;
 
 export default function SpecializationSkills({ formData, setFormData }: ComponentProps) {
   const [masterServices, setMasterServices] = useState<MasterService[]>([]);
+  const [docTypes, setDocTypes] = useState<DocumentType[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingDocs, setLoadingDocs] = useState(false);
 
   // Local state for Add New Certificate Form
   const [isAddingCert, setIsAddingCert] = useState(false);
@@ -32,40 +42,58 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
     file: null as File | null
   });
 
-  // 1. Fetch Master Services for Dropdown
+  // Fetch Master Data (Services and Document Types)
   useEffect(() => {
-    const fetchMasterData = async () => {
+    const fetchData = async () => {
+      const token = localStorage.getItem("token");
+      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const userId = savedUser.id || savedUser._id;
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // 1. Fetch Master Services
       try {
         setLoading(true);
-        const token = localStorage.getItem("token");
-        const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const userId = savedUser.id || savedUser._id;
-
-        const res = await axios.get(MASTER_SERVICES_API, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { userId, limit: 100 }
-        });
-
-        if (res.data && res.data.data) {
-          const activeServices = res.data.data.filter((s: MasterService) => s.isActive);
-          setMasterServices(activeServices);
+        const res = await axios.get(MASTER_SERVICES_API, { headers, params: { userId, limit: 100 } });
+        if (res.data?.data) {
+          setMasterServices(res.data.data.filter((s: MasterService) => s.isActive));
         }
       } catch (err) {
         console.error("Master Services Fetch Error:", err);
       } finally {
         setLoading(false);
       }
+
+      // 2. Fetch Document Types
+      try {
+        setLoadingDocs(true);
+        const res = await axios.get(DOCUMENT_TYPES_API, { headers, params: { userId, limit: 100 } });
+        if (res.data?.data) {
+          const activeDocs = res.data.data.filter((d: DocumentType) => d.isActive);
+          setDocTypes(activeDocs);
+
+          // Find default and set in tempCert if exists
+          const defaultDoc = activeDocs.find((d: DocumentType) => d.isDefault);
+          if (defaultDoc) {
+            setTempCert(prev => ({ ...prev, docType: defaultDoc.documentTypeName }));
+          }
+        }
+      } catch (err) {
+        console.error("Document Types Fetch Error:", err);
+      } finally {
+        setLoadingDocs(false);
+      }
     };
-    fetchMasterData();
+
+    fetchData();
   }, []);
 
-  // 2. Add Skill from Dropdown
+  // Skill Handling Logic
   const handleSelectSkill = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
     if (selectedValue && !formData.skills.includes(selectedValue)) {
-      setFormData({ 
-        ...formData, 
-        skills: [...formData.skills, selectedValue] 
+      setFormData({
+        ...formData,
+        skills: [...formData.skills, selectedValue]
       });
     }
     e.target.value = "";
@@ -76,7 +104,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
     setFormData({ ...formData, skills: newSkills });
   };
 
-  // 3. Certification Logic
+  // Certification Handling Logic
   const handleSaveCertification = () => {
     if (!tempCert.docType || !tempCert.file) {
       alert("Please select document type and upload a file.");
@@ -95,8 +123,9 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
       certifications: [...(formData.certifications || []), newCert]
     });
 
-    // Reset local form state
-    setTempCert({ docType: "", file: null });
+    // Reset local form and find default again for next entry
+    const defaultDoc = docTypes.find(d => d.isDefault);
+    setTempCert({ docType: defaultDoc ? defaultDoc.documentTypeName : "", file: null });
     setIsAddingCert(false);
   };
 
@@ -107,16 +136,16 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
-      
+
       {/* 1. Skills Section */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: "#FE6B1D" }}>
             <Wrench size={22} /> Specialization & Skills
           </h2>
-          
+
           <div className="relative min-w-[250px]">
-            <select 
+            <select
               className="w-full p-3 pr-10 bg-orange-50 border border-orange-100 rounded-xl outline-none focus:ring-2 focus:ring-[#FE6B1D] text-[#FE6B1D] font-bold appearance-none cursor-pointer transition-all"
               onChange={handleSelectSkill}
               defaultValue=""
@@ -124,8 +153,8 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
             >
               <option value="" disabled>{loading ? "Loading..." : "+ Select Technical Skill"}</option>
               {masterServices.map((service) => (
-                <option 
-                  key={service._id} 
+                <option
+                  key={service._id}
                   value={service.MasterServiceType}
                   disabled={formData.skills.includes(service.MasterServiceType)}
                 >
@@ -143,18 +172,14 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           {formData.skills.map((skill: string, index: number) => (
             <div key={index} className="group flex items-center gap-2 bg-orange-50 border border-orange-100 px-4 py-2 rounded-xl hover:bg-[#FE6B1D] hover:text-white transition-all shadow-sm">
               <span className="text-sm font-bold">{skill}</span>
-              <button 
-                type="button" 
-                onClick={() => removeSkill(index)} 
-                className="text-orange-300 group-hover:text-white transition-colors"
-              >
+              <button type="button" onClick={() => removeSkill(index)} className="text-orange-300 group-hover:text-white transition-colors">
                 <X size={14} />
               </button>
             </div>
           ))}
           {formData.skills.length === 0 && (
             <div className="w-full py-8 border-2 border-dotted border-gray-100 rounded-2xl text-center">
-              <p className="text-gray-400 text-sm italic">No skills selected. Use the dropdown to add your expertise.</p>
+              <p className="text-gray-400 text-sm italic">No skills selected.</p>
             </div>
           )}
         </div>
@@ -168,7 +193,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: "#FE6B1D" }}>
             <FileText size={22} /> Certification & Documents
           </h2>
-          <button 
+          <button
             type="button"
             onClick={() => setIsAddingCert(true)}
             className="flex items-center gap-2 bg-[#FE6B1D] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#e85a15] transition-all shadow-md"
@@ -177,36 +202,39 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           </button>
         </div>
 
-        {/* Dynamic Add Form (Shown when Add New is clicked) */}
         {isAddingCert && (
-          <div className="mb-6 p-6 border-2 border-orange-100 bg-orange-50/30 rounded-2xl">
+          <div className="mb-6 p-6 border-2 border-orange-100 bg-orange-50/30 rounded-2xl animate-in fade-in zoom-in duration-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* Document Type Dropdown */}
+              {/* Dynamic Document Type Dropdown */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-gray-700">Document Type</label>
-                <select 
-                  className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#FE6B1D]"
-                  value={tempCert.docType}
-                  onChange={(e) => setTempCert({...tempCert, docType: e.target.value})}
-                >
-                  <option value="">-- Select Type --</option>
-                  <option value="Trade License">Trade License</option>
-                  <option value="Technical Certificate">Technical Certificate</option>
-                  <option value="Identity Document">Identity Document (ID/Passport)</option>
-                  <option value="Other">Other</option>
-                </select>
+                <div className="relative">
+                  <select 
+                    className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#FE6B1D] appearance-none"
+                    value={tempCert.docType}
+                    onChange={(e) => setTempCert({...tempCert, docType: e.target.value})}
+                  >
+                 
+                    {docTypes.map((doc) => (
+                      <option key={doc._id} value={doc.documentTypeName}>
+                        {doc.documentTypeName} {doc.isDefault ? "" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-3.5 text-gray-400 pointer-events-none" size={18} />
+                </div>
               </div>
 
-              {/* Upload Document Field */}
+              {/* Upload Field */}
               <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-gray-700">Upload Document</label>
                 <div className="relative h-[50px]">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept=".jpg,.png,.pdf"
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      if (e.target.files) setTempCert({...tempCert, file: e.target.files[0]});
+                      if (e.target.files) setTempCert({ ...tempCert, file: e.target.files[0] });
                     }}
                   />
                   <div className="flex items-center justify-between px-4 h-full border border-dashed border-gray-300 bg-white rounded-xl">
@@ -220,14 +248,18 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
             </div>
 
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 type="button"
-                onClick={() => { setIsAddingCert(false); setTempCert({docType: "", file: null}); }}
+                onClick={() => {
+                   setIsAddingCert(false);
+                   const defaultDoc = docTypes.find(d => d.isDefault);
+                   setTempCert({docType: defaultDoc ? defaultDoc.documentTypeName : "", file: null}); 
+                }}
                 className="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="button"
                 onClick={handleSaveCertification}
                 className="flex items-center gap-2 bg-[#FE6B1D] text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-[#e85a15] shadow-sm"
@@ -238,7 +270,6 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           </div>
         )}
 
-        {/* List of Saved Certifications */}
         <CertificationList 
           certifications={formData.certifications} 
           onDelete={deleteCertification} 
@@ -248,7 +279,7 @@ export default function SpecializationSkills({ formData, setFormData }: Componen
           <div className="w-full py-12 border-2 border-dotted border-gray-100 rounded-3xl text-center">
             <div className="flex flex-col items-center gap-2">
               <Upload size={40} className="text-gray-200" />
-              <p className="text-gray-400 text-sm">No documents added yet. Click "Add New" to upload.</p>
+              <p className="text-gray-400 text-sm">{`No documents added yet. Click "Add New" to upload.`}</p>
             </div>
           </div>
         )}

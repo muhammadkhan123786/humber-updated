@@ -4,17 +4,29 @@ import tool from "../assets/tool.svg";
 import usergroup from "../assets/users-group-alt.svg";
 import booking from "../assets/calendar.svg";
 import staffmanagement from "../assets/users-alt.svg";
+import warehouse from "../assets/warehouses.png";
+import vender from "../assets/vendor.png";
+import ticket from "../assets/ticket.png";
+import dash from "../assets/Icon.png";
+import inventry from "../assets/Icon (1).png";
 
 export const NavBarLinksData: NavLinksInterface[] = [
-  { _id: 1, href: "/dashboard", roleId: [1, 2], label: "Dashboard", index: 1 },
-  // Inventory (Dropdown)
+  {
+    _id: 1,
+    href: "/dashboard",
+    roleId: [1, 2],
+    label: "Dashboard",
+    index: 1,
+    iconSrc: dash,
+  },
+
   {
     _id: 2,
     alt: "Inventory",
     href: "#",
     roleId: [1],
     label: "Inventory",
-    iconSrc: box,
+    iconSrc: inventry,
     index: 2,
     children: [
       {
@@ -86,7 +98,6 @@ export const NavBarLinksData: NavLinksInterface[] = [
     ],
   },
 
-  //Inventory Master Form
   {
     _id: 9,
     alt: "Inentory Master Form",
@@ -96,43 +107,6 @@ export const NavBarLinksData: NavLinksInterface[] = [
     iconSrc: staffmanagement,
     index: 9,
     children: [
-      // {
-      //   _id: 114,
-      //   href: "/dashboard/inventory-masterdata/currencies",
-      //   label: "currencies",
-      //   index: 1,
-      // },
-      // {
-      //   _id: 115,
-      //   href: "/dashboard/inventory-masterdata/payment-terms",
-      //   label: "Payment Terms",
-      //   index: 2,
-      // },
-      // {
-      //   _id: 116,
-      //   href: "/dashboard/inventory-masterdata/order-status",
-      //   label: "order Status",
-      //   index: 3,
-      // },
-      // {
-      //   _id: 117,
-      //   href: "/dashboard/inventory-masterdata/product-channel",
-      //   label: "Product Channel",
-      //   index: 4,
-      // },
-      // {
-      //   _id: 119,
-      //   href: "/dashboard/inventory-masterdata/proposed-actions",
-      //   label: "proposed Actions",
-      //   index: 6,
-      // },
-      //  {
-      //   _id:118,
-      //   href:"/dashboard/inventory-masterdata/product-source",
-      //   label:"Product Source",
-      //   index:5,
-      // }
-
       {
         _id: 114,
         href: "/dashboard/inventory-masterdata/currencies",
@@ -195,12 +169,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Units",
         index: 10,
       },
-      {
-        _id: 124,
-        href: "/dashboard/inventory-masterdata/vender",
-        label: "Venders",
-        index: 11,
-      },
+
       {
         _id: 125,
         href: "/dashboard/inventory-masterdata/warehouse-status",
@@ -219,12 +188,7 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Sizes",
         index: 12,
       },
-      {
-        _id: 128,
-        href: "/dashboard/inventory-masterdata/warehouses",
-        label: "Warehouses",
-        index: 13,
-      },
+
       {
         _id: 129,
         href: "/dashboard/inventory-masterdata/product-attribute",
@@ -241,6 +205,24 @@ export const NavBarLinksData: NavLinksInterface[] = [
     label: "Repair tracker",
     iconSrc: tool,
     index: 3,
+  },
+  {
+    _id: 13,
+    alt: "Vendors",
+    href: "/dashboard/vender",
+    roleId: [1],
+    label: "Vendor",
+    iconSrc: vender,
+    index: 9,
+  },
+  {
+    _id: 14,
+    alt: "Warehouses",
+    href: "/dashboard/warehouses",
+    roleId: [1],
+    label: "Warehouses",
+    iconSrc: warehouse,
+    index: 10,
   },
   {
     _id: 4,
@@ -278,7 +260,15 @@ export const NavBarLinksData: NavLinksInterface[] = [
     iconSrc: box,
     index: 8,
   },
-  //ticket master data
+  {
+    _id: 11,
+    alt: "Vehicles",
+    href: "/dashboard/vehicles",
+    roleId: [1],
+    label: "Vehicles",
+    iconSrc: staffmanagement,
+    index: 11,
+  },
 
   {
     _id: 10,
@@ -286,9 +276,15 @@ export const NavBarLinksData: NavLinksInterface[] = [
     href: "#",
     roleId: [1],
     label: "Ticket Master Data",
-    iconSrc: staffmanagement,
+    iconSrc: ticket,
     index: 9,
     children: [
+      {
+        _id: 309,
+        href: "/dashboard/ticket-masterdata/createTicket",
+        label: "Create Ticket",
+        index: 7,
+      },
       {
         _id: 203,
         href: "/dashboard/ticket-masterdata/ticket-status",
@@ -407,6 +403,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Document Type",
         index: 15,
       },
+      {
+        _id: 116,
+        href: "/dashboard/business-types",
+        label: "Business Type",
+        index: 16,
+      }
     ],
   },
 ];

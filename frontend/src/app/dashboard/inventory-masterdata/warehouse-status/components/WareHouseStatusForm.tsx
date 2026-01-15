@@ -80,7 +80,7 @@ const WareHouseForm = ({
             disabled={formData.isDefault}
           />
           <FormToggle
-            label="Set as Default"
+            label="Default"
             checked={formData.isDefault}
             onChange={(val) => setFormData({ ...formData, isDefault: val })}
           />

@@ -1,0 +1,142 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import { Briefcase, Plus, Search, Loader2 } from "lucide-react";
+import BussinessTypeTable from "./BussinessTypeTable";
+import BussinessTypeForm from "./BussinessTypeForm";
+import Pagination from "@/components/ui/Pagination"; // Ensure this path is correct
+import { getAll, deleteItem } from "@/helper/apiHelper";
+import { IBusinessTypes } from "../../../../../../common/suppliers/IBusiness.types.interface";
+
+const THEME_COLOR = "#FE6B1D";
+
+type BusinessTypeWithId = IBusinessTypes & { _id: string };
+
+export default function BussinessTypeClient() {
+  const [dataList, setDataList] = useState<BusinessTypeWithId[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editingData, setEditingData] = useState<BusinessTypeWithId | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchData = useCallback(async (page = 1, search = "") => {
+    try {
+      setLoading(true);
+      const res = await getAll<BusinessTypeWithId>("/business-types", {
+        page: page.toString(),
+        limit: "10",
+        search: search.trim(),
+      });
+      setDataList(res.data || []);
+      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setCurrentPage(page);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setDataList([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Debounced search effect
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchData(1, searchTerm);
+    }, 400);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, fetchData]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this business type?")) return;
+    try {
+      await deleteItem("/business-types", id);
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Delete Error:", error);
+      alert("Failed to delete item.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1
+              className="text-3xl font-extrabold flex items-center gap-3"
+              style={{ color: THEME_COLOR }}
+            >
+              <Briefcase size={36} /> Business Types
+            </h1>
+            <p className="text-gray-500">
+              Manage categories for your suppliers and business entities
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setEditingData(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95"
+            style={{ backgroundColor: THEME_COLOR }}
+          >
+            <Plus size={22} /> Add Business Type
+          </button>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-200 transition-all">
+          <Search className="text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search business type name..."
+            className="w-full outline-none text-lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {showForm && (
+          <BussinessTypeForm
+            editingData={editingData}
+            onClose={() => setShowForm(false)}
+            onRefresh={() => fetchData(currentPage, searchTerm)}
+            themeColor={THEME_COLOR}
+          />
+        )}
+
+        {loading ? (
+          <div className="flex flex-col justify-center items-center py-20">
+            <Loader2
+              className="animate-spin"
+              style={{ color: THEME_COLOR }}
+              size={48}
+            />
+            <p className="mt-4 text-gray-400 font-medium">Loading types...</p>
+          </div>
+        ) : (
+          <>
+            <BussinessTypeTable
+              data={dataList}
+              onEdit={(item) => {
+                setEditingData(item);
+                setShowForm(true);
+              }}
+              onDelete={handleDelete}
+              themeColor={THEME_COLOR}
+            />
+            {dataList.length > 0 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={(page) => fetchData(page, searchTerm)}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

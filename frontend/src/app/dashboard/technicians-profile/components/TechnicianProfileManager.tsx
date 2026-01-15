@@ -9,10 +9,12 @@ import { Save } from "lucide-react";
 export default function TechnicianProfileManager() {
   const [formData, setFormData] = useState({
     // Personal Info (Updated with new fields)
-    firstName: "", 
-    lastName: "", 
-    employeeId: "", 
-    role: "",
+    person:{
+      firstName: "",
+      lastName: "",
+    },
+    employeeId: "",
+    role: "Technician",
     profilePhoto: null,
     joiningDate: "",      // New
     jobType: "Full Time", // New (Default value)
@@ -20,9 +22,13 @@ export default function TechnicianProfileManager() {
     salaryPeriod: "Per Month", // New (Default value)
     
     // Contact Info
-    email: "",
-    phone: "",
-    address: "",
+    contact:{
+      emailId: "",
+      phoneNumber: "",
+    },
+    address:{
+      address:"",
+    },
 
     // Skills & Docs
     skills: [], 
@@ -38,14 +44,14 @@ export default function TechnicianProfileManager() {
     console.log("Full Form Data to be Sent:", formData);
     
     // Basic Validation
-    if (!formData.firstName || !formData.email || !formData.employeeId) {
+    if (!formData.person.firstName || !formData.contact.emailId || !formData.employeeId) {
         alert("Please fill in the required fields: First Name, Email, and Employee ID.");
         return;
     }
 
     // Yahan aap apna API logic likh sakte hain
     // Tip: Use FormData for sending files (profilePhoto and certifications)
-    alert(`Success! Technician ${formData.firstName} profile prepared with ${formData.certifications.length} documents.`);
+    alert(`Success! Technician ${formData.person.firstName} profile prepared with ${formData.certifications.length} documents.`);
   };
 
   return (
