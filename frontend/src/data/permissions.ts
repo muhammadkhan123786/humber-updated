@@ -432,6 +432,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
         href: "/dashboard/product-services",
         label: "Product & Services",
         index: 19,
+      },
+      {
+        _id: 120,
+        href: "/dashboard/icon",
+        label: "Icons",
+        index: 20,
       }
     ],
   },
