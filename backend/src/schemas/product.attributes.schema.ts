@@ -8,12 +8,12 @@ export const attributeSchema: SchemaDefinition = {
   attributeName: { type: String, required: true },
   type: {
     type: String,
-    enum: ["text", "number", "select", "multi_select", "date"],
+    enum: ["text", "number", "dropdown", "list", "date", "checkbox", "radio", "textarea"],
     required: true,
   },
-  categoryId: { type: Schema.Types.ObjectId, ref: "Category", default: null }, // Add this
-  isForSubcategories: { type: Boolean, default: false }, // Add this
-  unit: { type: String, default: "" }, // Add this for number/decimal types
+  categoryId: { type: Schema.Types.ObjectId, ref: "Category", default: null }, 
+  isForSubcategories: { type: Boolean, default: false }, 
+  isDefault: { type: Boolean, default: false},
   
   isRequired: { type: Boolean, default: false },
   status: {
@@ -34,13 +34,12 @@ export const attributeSchemaValidation = z.object({
   ...commonSchemaValidation,
 
   attributeName: z.string().min(2, "Attribute name is required"),
-  type: z.enum(["text", "number", "select", "multi_select", "date"]),
+  type: z.enum(["text", "number", "dropdown", "list", "date", "checkbox", "radio", "textarea"]),
   categoryId: z.string().optional().nullable(), // Add this
   isForSubcategories: z.boolean().optional(), // Add this
-  unit: z.string().optional(), // Add this
-
   isRequired: z.boolean().optional(),
   status: z.enum(["active", "inactive"]).optional(),
+  isDefault: z.boolean().optional(),
 
   options: z
     .array(

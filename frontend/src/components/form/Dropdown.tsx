@@ -16,6 +16,7 @@ export interface DropdownProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  required?: boolean;
 }
 
 const Dropdown = React.forwardRef<HTMLDivElement, DropdownProps>(
@@ -28,16 +29,16 @@ const Dropdown = React.forwardRef<HTMLDivElement, DropdownProps>(
       placeholder = 'Select...',
       className = '',
       disabled = false,
+      required = false,
     },
     ref
   ) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedValue, setSelectedValue] = useState(value || '');
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const selectedOption = options.find((opt) => opt.value === selectedValue);
+    // Sync internal state with external value for React Hook Form compatibility
+    const selectedOption = options.find((opt) => opt.value === value);
 
-    // Close dropdown when clicking outside
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,84 +49,98 @@ const Dropdown = React.forwardRef<HTMLDivElement, DropdownProps>(
       if (isOpen) {
         document.addEventListener('mousedown', handleClickOutside);
       }
-
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen]);
 
     const handleSelect = (optionValue: string) => {
-      setSelectedValue(optionValue);
       onChange?.(optionValue);
       setIsOpen(false);
     };
 
     return (
-      <div ref={ref} className={`relative ${className}`}>
+      <div ref={ref} className={`relative w-full ${className}`}>
         {label && (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {label}
+          <label className="block text-sm font-semibold text-slate-700 mb-1">
+            {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
 
         <div ref={dropdownRef} className="relative">
-          {/* Trigger Button */}
+          {/* Trigger Button - Styled to match image_d2510f.png */}
           <button
             type="button"
             onClick={() => !disabled && setIsOpen(!isOpen)}
             disabled={disabled}
             className={`
               w-full flex items-center justify-between gap-2
-              px-4 py-2 text-sm font-medium
-              bg-white dark:bg-slate-800
-              border border-gray-200 dark:border-slate-700
-              rounded-lg shadow-sm
-              text-gray-700 dark:text-gray-300
-              hover:bg-gray-50 dark:hover:bg-slate-700
-              focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-blue-500
-              transition-colors
-              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              px-4 h-[45px] text-sm
+              bg-white border border-slate-200
+              rounded-xl transition-all duration-200
+              text-slate-600
+              ${isOpen ? 'border-purple-400 ring-2 ring-purple-100' : 'hover:border-slate-300'}
+              ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-50' : 'cursor-pointer'}
             `}
           >
-            <span className="truncate">
+            <span className={`truncate ${!selectedOption ? 'text-slate-400' : 'text-slate-700'}`}>
               {selectedOption ? selectedOption.label : placeholder}
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${
-                isOpen ? 'rotate-180' : ''
+              className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                isOpen ? 'rotate-180 text-purple-500' : ''
               }`}
             />
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Dropdown Menu - Styled to match the scrollable list in image_d2c8f3.png */}
           {isOpen && (
-            <div className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              <div className="py-1">
-                {options.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handleSelect(option.value)}
-                    className={`
-                      w-full flex items-center justify-between px-4 py-2.5 text-sm
-                      transition-colors
-                      ${
-                        selectedValue === option.value
-                          ? 'bg-orange-50 dark:bg-blue-500/10 text-orange-600 dark:text-blue-400'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700'
-                      }
-                    `}
-                  >
-                    <span>{option.label}</span>
-                    {selectedValue === option.value && (
-                      <Check className="w-4 h-4" />
-                    )}
-                  </button>
-                ))}
+            <div className="absolute z-[100] w-full mt-1.5 bg-white border border-slate-200  shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+              <div className="max-h-[220px] overflow-y-auto custom-scrollbar py-1">
+                {options.length > 0 ? (
+                  options.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleSelect(option.value)}
+                      className={`
+                        w-full flex items-center justify-between px-4 py-2 text-sm
+                        transition-colors text-left
+                        ${
+                          value === option.value
+                            ? 'bg-purple-50 text-purple-700 font-medium'
+                            : 'hover:text-white  hover:bg-gray-600'
+                        }
+                      `}
+                    >
+                      <span>{option.label}</span>
+                      {value === option.value && (
+                        <Check className="w-4 h-4 text-purple-600" />
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-slate-400 italic">No options available</div>
+                )}
               </div>
             </div>
           )}
         </div>
+
+        {/* CSS for the scrollbar matching the figma design */}
+        <style jsx>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #cbd5e1;
+          }
+        `}</style>
       </div>
     );
   }

@@ -14,11 +14,11 @@ export default function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider>
+   
      
-      <div className={`${outfit.variable} font-sans`} style={{ fontFamily: 'var(--font-outfit)' }}>
+      <div className={` ${outfit.variable} font-sans`} style={{ fontFamily: 'var(--font-outfit)' }}>
         {children}
       </div>
-    </ThemeProvider>
+    
   );
 }

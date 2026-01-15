@@ -148,11 +148,11 @@ export default function Inventory() {
       </Header>
 
       {/* 2. Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {statsData.map((stat, index) => (
           <StatCard key={index} {...stat} />
         ))}
-      </div>
+      </div> */}
 
       {/* 3. Filters & Table Section */}
       <div className="space-y-4">

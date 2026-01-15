@@ -46,6 +46,7 @@ export const createAttribute = async (
   payload: Partial<IAttribute>
 ): Promise<IAttribute> => {
   const res = await axios.post(API_URL, payload, getAuthConfig());
+  console.log("res", res);
   return res.data;
 };
 

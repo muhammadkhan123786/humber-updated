@@ -1,120 +1,111 @@
 "use client";
-import React, { useState, useMemo } from "react";
-import { Save, Layers } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react"; // Added useEffect
+import { Check, Star } from "lucide-react";
 import axios from "axios";
+
 import { ICategory } from "../../../../../../../common/ICategory.interface";
-import { FormModal } from "../../../../common-form/FormModal";
-import { FormInput } from "../../../../common-form/FormInput";
-import { FormToggle } from "../../../../common-form/FormToggle";
 import { createCategory, updateCategory } from "@/hooks/useCategory";
+import { Button, FormInput, SearchableSelect } from "@/components/form";
 
 interface Props {
   editingData: ICategory | null;
-  allCategories: ICategory[]; // THIS IS TREE DATA FROM API
+  allCategories: ICategory[];
   onClose: () => void;
   onRefresh: () => void;
-  themeColor: string;
+  initialCategoryId?: string | null; 
 }
 
 const CategoryForm = ({
   editingData,
-  allCategories,
+  allCategories = [],
   onClose,
   onRefresh,
-  themeColor,
+  
+  initialCategoryId, 
 }: Props) => {
 
   /* ============================
-     1️⃣ Helpers
+     2️⃣ Auto-fill Logic (NEW)
   ============================ */
+  useEffect(() => {
+    // If we are adding a NEW category and a parent was pre-selected via the Tree "+" button
+    if (!editingData && initialCategoryId) {
+      setFormData((prev) => ({
+        ...prev,
+        parentId: initialCategoryId,
+      }));
+      setIsSubCategory(true);
+    }
+  }, [initialCategoryId, editingData]);
 
-  const getParentIdString = (
-    parent: string | ICategory | null | undefined
-  ): string => {
+  /* ... Flattening Logic remains the same ... */
+ const flattenCategories = (
+  categories: ICategory[] = [],
+  parent: ICategory | null = null
+): ICategory[] => {
+  let result: ICategory[] = [];
+
+  for (const cat of categories) {
+    const parentId =
+      parent?._id ??
+      (typeof cat.parentId === "string"
+        ? cat.parentId
+        : cat.parentId?._id ?? null);
+
+    result.push({
+      ...cat,
+      parentId,
+    });
+
+    if (cat.children?.length) {
+      result = result.concat(flattenCategories(cat.children, cat));
+    }
+  }
+
+  return result;
+};
+
+
+  const flatCategories = useMemo(() => flattenCategories(allCategories), [allCategories]);
+
+  const getParentIdString = (parent: any): string => {
     if (!parent) return "";
     if (typeof parent === "string") return parent;
     return parent._id || "";
   };
 
   /* ============================
-     2️⃣ Flatten category tree
-     (THIS IS THE MAIN FIX)
+     3️⃣ State Management
   ============================ */
-
-  const flattenCategories = (
-    categories: ICategory[],
-    parent: ICategory | null = null
-  ): ICategory[] => {
-    let result: ICategory[] = [];
-
-    for (const cat of categories) {
-      result.push({
-        ...cat,
-        parentId: parent ? parent._id : cat.parentId,
-      });
-
-      if (cat.children && cat.children.length > 0) {
-        result = result.concat(flattenCategories(cat.children, cat));
-      }
-    }
-
-    return result;
-  };
-
-  const flatCategories = useMemo(
-    () => flattenCategories(allCategories),
-    [allCategories]
-  );
-
-  /* ============================
-     3️⃣ Form state
-  ============================ */
-
   const [isSubCategory, setIsSubCategory] = useState<boolean>(
-    !!editingData?.parentId
+    !!editingData?.parentId || !!initialCategoryId // Set true if parent exists
   );
 
   const [formData, setFormData] = useState({
     categoryName: editingData?.categoryName || "",
-    parentId: getParentIdString(editingData?.parentId),
+    parentId: getParentIdString(editingData?.parentId) || (initialCategoryId ?? ""), // Fallback to initial
     isActive: editingData?.isActive ?? true,
     isDefault: editingData?.isDefault ?? false,
   });
 
-  /* ============================
-     4️⃣ Build dropdown options
-     Dell > Laptop > Gaming
-  ============================ */
-
   const categoryOptions = useMemo(() => {
     const getFullPath = (cat: ICategory): string => {
       if (!cat.parentId) return cat.categoryName;
-
-      const parent = flatCategories.find(
-        (c) => c._id === cat.parentId
-      );
-
-      return parent
-        ? `${getFullPath(parent)} > ${cat.categoryName}`
-        : cat.categoryName;
+      const parent = flatCategories.find(c => c._id === (typeof cat.parentId === "string" ? cat.parentId : cat.parentId?._id));
+      return parent ? `${getFullPath(parent)} > ${cat.categoryName}` : cat.categoryName;
     };
 
     return flatCategories
       .filter((cat) => cat._id !== editingData?._id)
       .map((cat) => ({
-        id: cat._id,
-        pathName: getFullPath(cat),
+        value: cat._id || "",
+        label: getFullPath(cat),
       }))
-      .sort((a, b) => a.pathName.localeCompare(b.pathName));
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [flatCategories, editingData]);
-
-  /* ============================
-     5️⃣ Submit
-  ============================ */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
 
@@ -123,9 +114,8 @@ const CategoryForm = ({
         isActive: formData.isActive,
         isDefault: formData.isDefault,
         userId: savedUser._id || savedUser.id,
-        parentId: isSubCategory && formData.parentId
-          ? formData.parentId
-          : null,
+        // Logic: if parentId has a value, use it.
+        parentId: formData.parentId ? formData.parentId : null,
       };
 
       if (editingData?._id) {
@@ -143,98 +133,66 @@ const CategoryForm = ({
     }
   };
 
-  /* ============================
-     6️⃣ UI
-  ============================ */
-
   return (
-    <FormModal
-      title={editingData ? "Edit Category" : "Add Category"}
-      icon={<Layers size={24} />}
-      onClose={onClose}
-      themeColor={themeColor}
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="relative">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-3">
+          <div className="animate-in slide-in-from-top-2 duration-200">
+            
+            <SearchableSelect
+            label="Parent Category"
+              options={categoryOptions}
+              value={formData.parentId}
+              onChange={(val: string) => {
+                setFormData({ ...formData, parentId: val });
+                setIsSubCategory(!!val); // Auto-toggle sub-category status if value exists
+              }}
+              placeholder="Search & Select Parent..."
+
+            />
+            <p className="text-[11px] text-slate-400 mt-2 ml-1">
+              {formData.parentId ? "Adding as a Sub-category" : "Adding as a Root category"}
+            </p>
+          </div>
+        </div>
 
         <FormInput
           label="Category Name"
           value={formData.categoryName}
-          onChange={(e) =>
-            setFormData({ ...formData, categoryName: e.target.value })
-          }
+          placeholder="e.g., Mobility Scooters"
+          onChange={(e) => setFormData({ ...formData, categoryName: e.target.value })}
           required
         />
 
-        <div className="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={isSubCategory}
-            onChange={(e) => {
-              setIsSubCategory(e.target.checked);
-              if (!e.target.checked) {
-                setFormData({ ...formData, parentId: "" });
-              }
-            }}
-          />
-         <label
-            htmlFor="subCat"
-            className="text-sm font-bold text-gray-700 cursor-pointer"
-          >
-            Enable Sub-Category Nesting
-          </label>
+        {/* ... Checkbox Cards stay exactly the same ... */}
+        <div className="space-y-4">
+            {/* Active Toggle */}
+            <div className={`flex items-center justify-between p-4 rounded-[1.5rem] border transition-all ${formData.isActive ? "border-emerald-100 bg-emerald-50/20" : "border-slate-100 bg-white"}`}>
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#00C853] flex items-center justify-center text-white"><Check size={20}/></div>
+                    <div><h4 className="font-bold text-[#2D3748] text-[15px]">Active Status</h4></div>
+                </div>
+                <input type="checkbox" checked={formData.isActive} onChange={() => setFormData({...formData, isActive: !formData.isActive})} />
+            </div>
+
+            {/* Default Toggle */}
+            <div className={`flex items-center justify-between p-4 rounded-[1.5rem] border transition-all ${formData.isDefault ? "border-amber-200 bg-amber-50/20" : "border-[#FFF59D] bg-white"}`}>
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#FFA000] flex items-center justify-center text-white"><Star size={20} fill="white"/></div>
+                    <div><h4 className="font-bold text-[#2D3748] text-[15px]">Default Category</h4></div>
+                </div>
+                <input type="checkbox" checked={formData.isDefault} onChange={() => setFormData({...formData, isDefault: !formData.isDefault})} />
+            </div>
         </div>
-        {isSubCategory && (
-  <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
-    <label className="text-xs font-bold text-gray-500 ml-1 uppercase">
-      Select Parent Category
-    </label>
 
-    <select
-      className="w-full p-3 border border-gray-200 rounded-xl outline-none bg-white transition-all text-gray-700 font-medium focus:ring-2"
-      style={{ boxShadow: `0 0 0 2px ${themeColor}40` }}
-      value={formData.parentId}
-      onChange={(e) =>
-        setFormData({ ...formData, parentId: e.target.value })
-      }
-      required
-    >
-      <option value="">-- Choose Parent --</option>
-      {categoryOptions.map((opt) => (
-        <option key={opt.id} value={opt.id}>
-          {opt.pathName}
-        </option>
-      ))}
-    </select>
-  </div>
-)}
-
-
-       <div className="flex gap-4 my-5"> <FormToggle
-          label="Active"
-          checked={formData.isActive}
-          onChange={(val) =>
-            setFormData({ ...formData, isActive: val })
-          }
-        />
-
-        <FormToggle
-          label="Default"
-          checked={formData.isDefault}
-          onChange={(val) =>
-            setFormData({ ...formData, isDefault: val })
-          }
-        /></div>
-
-        <button
-          type="submit"
-          className="w-full text-white py-3 rounded-xl flex items-center justify-center gap-2"
-          style={{ backgroundColor: themeColor }}
-        >
-          <Save size={18} />
-          {editingData ? "Update Category" : "Save Category"}
-        </button>
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="secondary" onClick={onClose} type="button">Cancel</Button>
+          <Button variant="primary" type="submit">
+            {editingData ? "Update Category" : "Add Category"}
+          </Button>
+        </div>
       </form>
-    </FormModal>
+    </div>
   );
 };
 
