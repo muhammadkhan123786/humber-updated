@@ -57,6 +57,8 @@ import businessTypeRouter from "./routes/suppliers/business.types.routes";
 import paymentMethodRouter from "./routes/suppliers/payment.method.routes";
 import pricingAgreementRouter from "./routes/suppliers/pricing.agreement.routes";
 import productServicesRouter from "./routes/suppliers/product.services.routes";
+import jobTitleRouter from "./routes/master-data-routes/job.titles.routes";
+import iconsRouter from "./routes/master-data-routes/icons.routes";
 
 // Create express app
 const app: Application = express();
@@ -237,7 +239,9 @@ app.use(
   customerVehicleRouter
 );
 
+
 //ticket generate routes 14-01-2026
+
 app.use(`${process.env.API_PREFIX}/customer-tickets`, adminProtecter, customerTicketBaseRouter);
 
 app.use(`${process.env.API_PREFIX}/business-types`, adminProtecter, businessTypeRouter);
@@ -247,6 +251,11 @@ app.use(`${process.env.API_PREFIX}/payment-method`, adminProtecter, paymentMetho
 app.use(`${process.env.API_PREFIX}/pricing-agreement`, adminProtecter, pricingAgreementRouter);
 
 app.use(`${process.env.API_PREFIX}/product-services`, adminProtecter, productServicesRouter);
+
+// 15-01-2026 Muhammad Imran 
+app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
+
+app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
 
 //Muhammad Imran code ended here.
 

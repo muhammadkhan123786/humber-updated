@@ -3,7 +3,7 @@ import { SchemaDefinition, Types } from "mongoose";
 import { IDepartments } from '../../../../common/Ticket-management-system/IDepartment.interface'
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
-export const departmentSchema: SchemaDefinition<IDepartments<Types.ObjectId>> = {
+export const departmentSchema = {
     ...commonSchema,
     departmentName: { type: String, required: true }
 

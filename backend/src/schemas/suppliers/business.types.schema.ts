@@ -3,7 +3,7 @@ import { SchemaDefinition, Types } from "mongoose";
 import { IBusinessTypes } from '../../../../common/suppliers/IBusiness.types.interface';
 
 
-export const businessTypeSchema: SchemaDefinition<IBusinessTypes<Types.ObjectId>> = {
+export const businessTypeSchema= {
     userId: { type: Types.ObjectId, ref: "User", required: true },
     businessTypeName: { type: String },
     isActive: { type: Boolean, required: true, default: true },

@@ -4,7 +4,7 @@ import { ITicketType } from '../../../../common/Ticket-management-system/ITicket
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
 
-export const ticketTypeSchema: SchemaDefinition<ITicketType<Types.ObjectId, Types.ObjectId>> = {
+export const ticketTypeSchema = {
     ...commonSchema,
     code: { type: String, required: true, unique: true },
     label: { type: String },

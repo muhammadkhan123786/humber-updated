@@ -415,6 +415,24 @@ export const NavBarLinksData: NavLinksInterface[] = [
         label: "Business Type",
         index: 16,
       },
+      {
+        _id: 117,
+        href: "/dashboard/payment-method",
+        label: "Payment Method",
+        index: 17,
+      },
+      {
+        _id: 118,
+        href: "/dashboard/pricing-agreement",
+        label: "Pricing Agreement",
+        index: 18,
+      },
+      {
+        _id: 119,
+        href: "/dashboard/product-services",
+        label: "Product & Services",
+        index: 19,
+      }
     ],
   },
 ];

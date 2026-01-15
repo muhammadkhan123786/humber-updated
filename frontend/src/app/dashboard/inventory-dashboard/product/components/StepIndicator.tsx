@@ -1,25 +1,40 @@
-export function StepIndicator({ steps, currentStep }: { steps: any[], currentStep: number }) {
+import React from 'react';
+
+interface Step {
+  id: number;
+  title: string;
+  icon: React.ReactNode;
+}
+
+export function StepIndicator({ steps, currentStep, onStepClick }: { 
+  steps: Step[], 
+  currentStep: number,
+  onStepClick?: (id: number) => void 
+}) {
   return (
-    <div className="flex items-center justify-between px-12 py-6 border-b bg-white">
-      {steps.map((step, idx) => (
-        <div key={step.id} className="flex items-center flex-1 last:flex-none">
-          <div className="flex flex-col items-center relative">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-              currentStep >= step.id ? "bg-orange-500 text-white shadow-lg ring-4 ring-orange-100" : "bg-gray-100 text-gray-400"
-            }`}>
+    <div className="flex items-center gap-8 px-6 border-b border-gray-200 bg-white">
+      {steps.map((step) => {
+        const isActive = currentStep === step.id;
+        
+        return (
+          <button
+            key={step.id}
+            onClick={() => onStepClick?.(step.id)}
+            className={`flex items-center gap-2 py-4 px-1 transition-all duration-200 outline-none ${
+              isActive 
+                ? " text-blue-600" 
+                : " text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <span className={`${isActive ? "text-blue-600" : "text-gray-400"}`}>
               {step.icon}
-            </div>
-            <span className={`absolute -bottom-6 text-[11px] font-bold uppercase tracking-wider whitespace-nowrap ${
-              currentStep >= step.id ? "text-orange-600" : "text-gray-400"
-            }`}>
+            </span>
+            <span className="text-sm font-medium">
               {step.title}
             </span>
-          </div>
-          {idx !== steps.length - 1 && (
-            <div className={`h-1 flex-1 mx-4 rounded ${currentStep > step.id ? "bg-orange-500" : "bg-gray-100"}`} />
-          )}
-        </div>
-      ))}
+          </button>
+        );
+      })}
     </div>
   );
 }

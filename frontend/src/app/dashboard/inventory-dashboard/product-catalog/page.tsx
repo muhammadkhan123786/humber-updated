@@ -143,11 +143,11 @@ export default function ProductCatalog() {
   return (
     <div className="space-y-8 p-6 bg-slate-50/30 min-h-screen">
       {/* 1. Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {statsData.map((stat, index) => (
           <StatCard key={index} {...stat} />
         ))}
-      </div>
+      </div> */}
 
       {/* 2. Filters & Actions Area */}
       <div className="flex flex-wrap items-center justify-between gap-4">
