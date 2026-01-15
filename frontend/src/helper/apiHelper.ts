@@ -43,7 +43,7 @@ export const getAll = async <T>(
       ...getAuthConfig(),
       params,
     });
-    
+
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -59,9 +59,9 @@ export const getAlls = async <T>(
 ): Promise<PaginatedResponse<T>> => {
   try {
     const rawToken = localStorage.getItem("token");
-    
+
     // Clean the token: remove quotes and whitespace
-    const cleanToken = rawToken ? rawToken.replace(/"/g, '').trim() : "";
+    const cleanToken = rawToken ? rawToken.replace(/"/g, "").trim() : "";
 
     const response = await api.get<PaginatedResponse<T>>(endpoint, {
       params,
@@ -70,13 +70,13 @@ export const getAlls = async <T>(
         ...(cleanToken && { Authorization: `Bearer ${cleanToken}` }),
       },
     });
-
+    console.log(response);
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       if (error.response?.status === 401) {
         console.warn("Session expired. Redirecting to login...");
-        // optional: localStorage.clear(); 
+        // optional: localStorage.clear();
         // optional: window.location.href = "/login";
       }
       throw error.response?.data || { message: error.message };
