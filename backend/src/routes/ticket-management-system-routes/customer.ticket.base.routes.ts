@@ -19,7 +19,13 @@ const repairVehicleUpload = createUploader([
   {
     name: "vehicleRepairVideo",
     maxCount: 1,
-    mimeTypes: ["video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/x-matroska"],
+    mimeTypes: [
+      "video/mp4",
+      "video/mpeg",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-matroska",
+    ],
   },
 ]);
 
@@ -31,7 +37,7 @@ const customerTicketServices = new GenericService<customerTicketBaseDoc>(
 
 const customerTicketBaseController = new AdvancedGenericController({
   service: customerTicketServices,
-  populate: ["userId"],
+  populate: ["userId", "assignedTechnicianId", "vehicleId"],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
@@ -48,13 +54,16 @@ customerTicketBaseRouter.post(
       console.log("[TICKET POST] req.files:", req.files);
       console.log("[TICKET POST] req.body keys:", Object.keys(req.body || {}));
       console.log("[TICKET POST] Full req.body:", req.body);
-      
+
       console.log(
         "[TICKET POST] Request body keys:",
         Object.keys(req.body || {})
       );
       console.log("[TICKET POST] Received ticketCode:", req.body?.ticketCode);
-      console.log("[TICKET POST] vehicleRepairImages:", req.body?.vehicleRepairImages);
+      console.log(
+        "[TICKET POST] vehicleRepairImages:",
+        req.body?.vehicleRepairImages
+      );
 
       // Ensure ticketCode exists - generate if not provided
       if (!req.body?.ticketCode) {

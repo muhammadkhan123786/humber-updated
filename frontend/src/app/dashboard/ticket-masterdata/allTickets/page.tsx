@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link"; // Added for routing
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   LayoutGrid,
   List,
@@ -13,17 +14,20 @@ import {
   Calendar,
   Home,
   ChevronRight,
-  MoreVertical,
   Inbox,
   Phone,
   UserCheck,
   User,
+  Trash2,
+  Edit3,
+  MoreVertical,
 } from "lucide-react";
-import { getAlls } from "../../../../helper/apiHelper";
+import { deleteItem, getAlls } from "../../../../helper/apiHelper";
 
 const TicketListingPage = () => {
   const [view, setView] = useState<"grid" | "table">("grid");
   const [tickets, setTickets] = useState<any[]>([]);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
@@ -31,7 +35,7 @@ const TicketListingPage = () => {
     urgency: "",
     source: "",
   });
-
+  const router = useRouter();
   const fetchTickets = async () => {
     setLoading(true);
     try {
@@ -62,7 +66,7 @@ const TicketListingPage = () => {
                 : t.urgency || "high",
             source: t.ticketSource || "Online",
             location: t.location || "Workshop",
-            technician: t.assignedTechnicianId?.name || "Unassigned",
+            technician: t.assignedTechnicianId?.employeeId || "Unassigned",
             createdAt: t.createdAt
               ? new Date(t.createdAt).toLocaleDateString()
               : "N/A",
@@ -134,7 +138,36 @@ const TicketListingPage = () => {
       </span>
     );
   };
+  const handleEdit = (ticket: any) => {
+    router.push(`createTicket?id=${ticket._id}`);
 
+    console.log("Editing:", ticket);
+  };
+  const handleDelete = async (id: string) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this ticket? This action cannot be undone."
+    );
+    if (isConfirmed) {
+      try {
+        setLoading(true);
+
+        const response = await deleteItem("/customer-tickets", id);
+
+        if (response && response.success) {
+          setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
+
+          console.log(response.message || "Ticket deleted successfully");
+        } else {
+          alert(response.message || "Failed to delete ticket");
+        }
+      } catch (err: any) {
+        console.error("Delete Error:", err);
+        alert(err.message || "An error occurred while deleting the ticket.");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
   return (
     <div className="p-8 bg-[#F8F9FF] min-h-screen font-sans text-gray-900">
       <div className="flex justify-between items-center mb-6">
@@ -144,9 +177,12 @@ const TicketListingPage = () => {
             Manage and track all service tickets
           </p>
         </div>
-        <button className="bg-[#6366F1] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm shadow-sm hover:bg-[#5558e6] transition-all">
-          <Plus size={18} /> Create New Ticket
-        </button>
+        <Link href="/dashboard/ticket-masterdata/createTicket">
+          <button className="flex items-end justify-center gap-2 text-white font-bold text-sm rounded-[10px] transition-all hover:opacity-90 shadow-[0_10px_15px_-3px_rgba(79,57,246,0.3)] bg-linear-to-r from-[#4F39F6] to-[#9810FA] pt-[12px] pr-[12px] pb-[13px] pl-[12px]">
+            <Plus size={18} strokeWidth={3} />
+            Create New Ticket
+          </button>
+        </Link>
       </div>
 
       <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6 flex flex-col lg:flex-row lg:items-center gap-4">
@@ -253,19 +289,39 @@ const TicketListingPage = () => {
           {tickets.map((t) => (
             <div
               key={t._id}
-              className="bg-white rounded-3xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-all border border-gray-50"
+              className="bg-white flex flex-col justify-between hover:shadow-lg transition-all border border-gray-50 relative overflow-hidden"
+              style={{
+                padding: "24px",
+                borderRadius: "16px",
+                boxShadow: "0px 10px 15px -3px rgba(79, 57, 246, 0.15)",
+                backgroundColor: "rgba(255, 255, 255, 0.8)",
+              }}
             >
-              <div>
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: "4px",
+                  background:
+                    "linear-gradient(90deg, #2B7FFF 0%, #00B8DB 100%)",
+                }}
+              />
+
+              <div className="pt-2">
+                {" "}
                 <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center gap-2 text-[#6366F1] font-semibold text-[13px]">
+                  <div
+                    className="flex items-center gap-2 font-semibold text-[13px]"
+                    style={{ color: "#4F39F6" }}
+                  >
                     <Clock size={16} strokeWidth={2.5} />
                     <span>{t.ticketCode || t.displayId}</span>
                   </div>
                   {getUrgencyBadge(t.urgency)}
                 </div>
-
                 <div className="mb-6">{getStatusBadge(t.status)}</div>
-
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-[#F5F3FF] flex items-center justify-center text-[#6D28D9]">
@@ -285,7 +341,6 @@ const TicketListingPage = () => {
                     </span>
                   </div>
                 </div>
-
                 <div className="min-h-[60px] mb-6">
                   <p className="text-[14px] text-gray-600 leading-relaxed font-normal">
                     {t.issue}
@@ -315,17 +370,20 @@ const TicketListingPage = () => {
                   </div>
 
                   <div className="flex items-center gap-2 justify-end">
-                    <User size={14} className="text-[#6366F1]" />
-                    <span className="text-[12px] font-bold text-[#6366F1] uppercase">
+                    <User size={14} style={{ color: "#4F39F6" }} />
+                    <span
+                      className="text-[12px] font-bold uppercase"
+                      style={{ color: "#4F39F6" }}
+                    >
                       {t.technician}
                     </span>
                   </div>
                 </div>
 
-                {/* Updated Action Link */}
                 <Link
-                  href={`/tickets/${t._id}`}
-                  className="w-full mt-6 text-[#6366F1] font-bold text-[14px] flex items-center justify-end gap-1 hover:gap-2 transition-all cursor-pointer"
+                  href={`/dashboard/ticket-masterdata/allTickets/${t._id}`}
+                  className="w-full mt-6 font-bold text-[14px] flex items-center justify-end gap-1 hover:gap-2 transition-all cursor-pointer"
+                  style={{ color: "#4F39F6" }}
                 >
                   View Details <ChevronRight size={18} strokeWidth={3} />
                 </Link>
@@ -358,7 +416,6 @@ const TicketListingPage = () => {
                   className="hover:bg-purple-50/30 transition-colors"
                 >
                   <td className="px-6 py-4 font-bold text-[#6D28D9] text-xs whitespace-nowrap">
-                    {/* ID linked for better UX */}
                     <Link
                       href={`/tickets/${t._id}`}
                       className="hover:underline"
@@ -391,20 +448,69 @@ const TicketListingPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[9px] font-bold uppercase">
-                        {t.technician?.slice(0, 2)}
+                        {typeof t.technician === "string"
+                          ? t.technician.slice(0, 2)
+                          : "UN"}
                       </div>
                       <span className="text-[11px] text-gray-600 font-bold">
-                        {t.technician}
+                        {t.technician !== "Unassigned"
+                          ? t.technician
+                          : "Not Assigned"}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[11px] text-gray-500 font-bold whitespace-nowrap">
                     {t.createdAt}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="p-2 hover:bg-gray-100 rounded-full transition-all text-gray-300">
-                      <MoreVertical size={16} />
+                  <td className="px-6 py-4 text-right relative">
+                    <button
+                      onClick={() =>
+                        setActiveMenu(activeMenu === t._id ? null : t._id)
+                      }
+                      className="p-2 text-gray-400 hover:bg-gray-100 rounded-full transition-all"
+                    >
+                      <MoreVertical size={20} />
                     </button>
+
+                    {activeMenu === t._id && (
+                      <>
+                        <div
+                          className="fixed inset-0 "
+                          onClick={() => setActiveMenu(null)}
+                        />
+
+                        <div
+                          className="absolute right-12 bottom-0 w-36 bg-white border border-gray-100 py-1 animate-in slide-in-from-bottom-2 duration-200"
+                          style={{
+                            borderRadius: "12px",
+                            boxShadow:
+                              "0px 10px 15px -3px rgba(79, 57, 246, 0.2)",
+                          }}
+                        >
+                          <button
+                            onClick={() => {
+                              handleEdit(t);
+                              setActiveMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-gray-700 hover:bg-gray-50"
+                          >
+                            <Edit3 size={16} className="text-gray-400" />
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleDelete(t._id);
+                              setActiveMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-red-600 hover:bg-red-50 border-t border-gray-50"
+                          >
+                            <Trash2 size={16} className="text-red-400" />
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

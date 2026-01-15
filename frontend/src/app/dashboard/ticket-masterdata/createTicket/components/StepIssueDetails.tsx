@@ -1,33 +1,30 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, Info, Upload, X, Film } from "lucide-react";
 import { Controller } from "react-hook-form";
-interface ImageItem {
-  file?: File; // for preview
-  path: string; // string to send to backend
-}
 
 const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
   const { control, watch, setValue } = form;
   const description = watch("issue_Details");
   const images = watch("vehicleRepairImages") || [];
   const videos = watch("vehicleRepairVideo") || [];
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewImages, setPreviewImages] = useState<File[]>([]);
+
+  const BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || "http://localhost:4000";
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter((f) => f.type.startsWith("image/"));
 
     if (imageFiles.length > 0) {
-      // Update preview
-      setPreviewImages([...previewImages, ...imageFiles]);
+      const newLocalBlobUrls = imageFiles.map((file) =>
+        URL.createObjectURL(file)
+      );
 
-      // Update form with strings only
-      const paths = imageFiles.map((file) => `/uploads/${file.name}`);
-      setValue("vehicleRepairImages", [...(images || []), ...paths], {
+      setValue("vehicleRepairImages", [...images, ...newLocalBlobUrls], {
         shouldValidate: true,
       });
     }
@@ -45,21 +42,12 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
       <div
-        className="p-8 text-white w-full"
+        className="p-8 text-white w-full flex items-center h-[66px] rounded-t-xl"
         style={{
-          display: "inline-grid",
-          height: "66px",
-          rowGap: "6px",
-          columnGap: "6px",
-          gridTemplateRows: "minmax(0, 16fr) minmax(0, 1fr)",
-          gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
-          borderRadius: "12px 12px 0 0",
           background: "linear-gradient(90deg, #FF6900 0%, #FB2C36 100%)",
         }}
       >
-        <h2 className="text-xl font-bold tracking-tight leading-none">
-          Issue Details
-        </h2>
+        <h2 className="text-xl font-bold tracking-tight">Issue Details</h2>
       </div>
 
       <div className="p-10 space-y-8">
@@ -67,7 +55,6 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
           <label className="text-sm font-black text-[#1E293B] uppercase tracking-widest">
             Fault Description *
           </label>
-
           <Controller
             name="issue_Details"
             control={control}
@@ -79,111 +66,112 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
               />
             )}
           />
-
           <p className="text-gray-400 text-xs flex items-center gap-1 font-bold">
             <Info size={14} /> Be as descriptive as possible.
           </p>
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-4">
-            <label className="block text-sm font-bold text-gray-700 ml-1">
-              Upload Photos or Videos (Optional)
-            </label>
+          <label className="block text-sm font-bold text-gray-700 ml-1">
+            Upload Photos or Videos (Optional)
+          </label>
 
-            {/* Main Upload Dropzone Area */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="relative w-full h-48 rounded-3xl border-2 border-dashed border-[#FF6900]/30 bg-[#FFF9F5] flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF4ED] transition-all overflow-hidden"
+          >
             <div
-              onClick={() => fileInputRef.current?.click()}
-              className="relative w-full h-48 rounded-3xl border-2 border-dashed border-[#FF6900]/30 bg-[#FFF9F5] flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF4ED] transition-all overflow-hidden"
+              className="w-16 h-16 rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-orange-200"
+              style={{
+                background: "linear-gradient(135deg, #FF6900 0%, #FB2C36 100%)",
+              }}
             >
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-orange-200"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #FF6900 0%, #FB2C36 100%)",
-                }}
-              >
-                <Upload size={32} strokeWidth={2.5} />
-              </div>
-
-              <p className="text-[#1E293B] font-bold text-sm">
-                Click to upload or drag and drop
-              </p>
-              <p className="text-gray-400 text-[11px] mt-1">
-                PNG, JPG, MP4 up to 10MB
-              </p>
+              <Upload size={32} strokeWidth={2.5} />
             </div>
+            <p className="text-[#1E293B] font-bold text-sm">
+              Click to upload or drag and drop
+            </p>
+            <p className="text-gray-400 text-[11px] mt-1">
+              PNG, JPG, MP4 up to 10MB
+            </p>
+          </div>
 
-            {/* File Previews Grid */}
-            <div className="grid grid-cols-4 md:grid-cols-5 gap-4 mt-6">
-              {previewImages.map((file, index) => (
+          <div className="grid grid-cols-4 md:grid-cols-5 gap-4 mt-6">
+            {images.map((path: string, index: number) => {
+              const isLocalBlob = path.startsWith("blob:");
+              const isFullUrl = path.startsWith("http");
+
+              let displayUrl = path;
+              if (!isLocalBlob && !isFullUrl) {
+                const cleanPath = path.startsWith("/")
+                  ? path.substring(1)
+                  : path;
+                displayUrl = `${BASE_URL}/${cleanPath}`;
+                console.log("Display URL", displayUrl);
+              }
+
+              return (
                 <div
-                  key={index}
-                  className="relative aspect-square rounded-[20px] overflow-hidden"
+                  key={`${displayUrl}-${index}`}
+                  className="relative aspect-square rounded-[20px] overflow-hidden border-2 border-white shadow-sm group"
                 >
                   <Image
-                    src={URL.createObjectURL(file)}
-                    alt="preview"
+                    src={displayUrl}
+                    alt={`Preview ${index}`}
                     fill
-                    unoptimized
+                    unoptimized={true}
                     className="object-cover"
                   />
                   <button
-                    onClick={() => {
-                      const newPreviews = previewImages.filter(
-                        (_, i) => i !== index
-                      );
-                      setPreviewImages(newPreviews);
-
-                      const newFormImages = images.filter(
-                        (_: any, i: any) => i !== index
-                      );
-                      setValue("vehicleRepairImages", newFormImages, {
-                        shouldValidate: true,
-                      });
-                    }}
-                  >
-                    X
-                  </button>
-                </div>
-              ))}
-
-              {videos.length > 0 && (
-                <div className="relative aspect-square rounded-[20px] overflow-hidden border border-blue-100 bg-blue-50 flex items-center justify-center group">
-                  <div className="flex flex-col items-center">
-                    <Film size={24} className="text-blue-500 mb-1" />
-                    <span className="text-[10px] font-bold text-blue-400">
-                      VIDEO
-                    </span>
-                  </div>
-                  <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeVideo();
-                    }}
-                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
-                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-full">
-                      <X size={18} className="text-white" />
-                    </div>
+                    <X size={14} />
                   </button>
+                  {!isLocalBlob && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-[8px] text-white text-center py-0.5">
+                      EXISTING
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              );
+            })}
 
-          <input
-            type="file"
-            ref={fileInputRef}
-            multiple
-            accept="image/*,video/*"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
+            {videos.length > 0 && (
+              <div className="relative aspect-square rounded-[20px] border border-blue-100 bg-blue-50 flex items-center justify-center group">
+                <div className="flex flex-col items-center">
+                  <Film size={24} className="text-blue-500 mb-1" />
+                  <span className="text-[10px] font-bold text-blue-400">
+                    VIDEO
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeVideo();
+                  }}
+                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-[20px]"
+                >
+                  <div className="bg-white/20 backdrop-blur-md p-2 rounded-full">
+                    <X size={18} className="text-white" />
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Actions */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          multiple
+          accept="image/*,video/*"
+          onChange={handleFileUpload}
+          className="hidden"
+        />
+
         <div className="flex justify-between items-center pt-8 border-t border-gray-50">
           <button
             onClick={onBack}
@@ -195,20 +183,15 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
           <button
             onClick={onNext}
             disabled={!description || description.length < 5 || isLoading}
-            className={`flex items-center gap-2 px-10 py-4 font-black text-white transition-all ${
-              description?.length >= 5
-                ? "hover:opacity-90 scale-[1.02] active:scale-[0.98]"
-                : "cursor-not-allowed opacity-50 shadow-none"
-            }`}
+            className="flex items-center gap-2 px-10 py-4 font-black text-white rounded-[10px] transition-all"
             style={{
-              borderRadius: "10px",
               background:
                 description?.length >= 5
                   ? "linear-gradient(90deg, #FF6900 0%, #FB2C36 100%)"
-                  : "#E5E7EB", // Gray-200
+                  : "#E5E7EB",
               boxShadow:
                 description?.length >= 5
-                  ? "0 10px 15px -3px rgba(255, 105, 0, 0.25), 0 4px 6px -4px rgba(251, 44, 54, 0.25)"
+                  ? "0 10px 15px -3px rgba(255, 105, 0, 0.25)"
                   : "none",
             }}
           >
