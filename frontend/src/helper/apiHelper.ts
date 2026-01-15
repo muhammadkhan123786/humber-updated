@@ -101,6 +101,30 @@ export const createItem = async <T>(
   }
 };
 
+export const getById = async <T>(
+  endpoint: string,
+  id: string
+): Promise<{ success: boolean; data: T }> => {
+  try {
+    const rawToken = localStorage.getItem("token");
+    const cleanToken = rawToken ? rawToken.replace(/"/g, "").trim() : "";
+
+    const response = await api.get<{ success: boolean; data: T }>(
+      `${endpoint}/${id}`,
+      {
+        headers: {
+          ...(cleanToken && { Authorization: `Bearer ${cleanToken}` }),
+        },
+      }
+    );
+    return response.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      throw error.response?.data || { message: error.message };
+    }
+    throw { message: "Unknown error occurred" };
+  }
+};
 // UPDATE
 export const updateItem = async <T>(
   endpoint: string,
