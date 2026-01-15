@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import CustomTable from "@/components/CustomTable";
 import Dropdown from "@/components/form/Dropdown";
-import type { StatCardProps } from "@/components/StatCard";
+// import type { StatCardProps } from "@/components/StatCard";
 
 // Type definitions for Order data
 export interface OrderItem {
@@ -49,81 +49,81 @@ export default function OrdersManagement() {
    const [status, setStatus] = useState('all');
    const [channel, setChannel] = useState('all')
 
-   const statsData: StatCardProps[] = [
-    {
-      title: "Orders to fulfill",
-      value: "10",
-      icon: TrendingUp,
-      color: "#4F46E5", // Indigo
-      gradientClass: "from-indigo-50 to-indigo-100",
-      description: "Out of 50 total",
-      progress: {
-        value: 20, // 10/50 = 20%
-        max: 100,
-        trackColor: "var(--muted)",
-        progressColor: "#4F46E5", // Same as icon color
-        height: 4,
-        borderRadius: 3,
-        showLabel: false,
-        labelPosition: "top-center"
-      }
-    },
-    {
-      title: "Awaiting Payment",
-      value: "05",
-      icon: Package,
-      color: "#10B981", // Emerald
-      gradientClass: "from-emerald-50 to-emerald-100",
-      description: "£2,450 pending",
-      progress: {
-        value: 35,
-        trackColor: "var(--muted)",
-        progressColor: "#10B981",
-        height: 4,
-        borderRadius: 3,
-        showLabel: false,
-        labelPosition: "top-center"
-      }
+  //  const statsData: StatCardProps[] = [
+  //   {
+  //     title: "Orders to fulfill",
+  //     value: "10",
+  //     icon: TrendingUp,
+  //     color: "#4F46E5", // Indigo
+  //     gradientClass: "from-indigo-50 to-indigo-100",
+  //     description: "Out of 50 total",
+  //     progress: {
+  //       value: 20, // 10/50 = 20%
+  //       max: 100,
+  //       trackColor: "var(--muted)",
+  //       progressColor: "#4F46E5", // Same as icon color
+  //       height: 4,
+  //       borderRadius: 3,
+  //       showLabel: false,
+  //       labelPosition: "top-center"
+  //     }
+  //   },
+  //   {
+  //     title: "Awaiting Payment",
+  //     value: "05",
+  //     icon: Package,
+  //     color: "#10B981", // Emerald
+  //     gradientClass: "from-emerald-50 to-emerald-100",
+  //     description: "£2,450 pending",
+  //     progress: {
+  //       value: 35,
+  //       trackColor: "var(--muted)",
+  //       progressColor: "#10B981",
+  //       height: 4,
+  //       borderRadius: 3,
+  //       showLabel: false,
+  //       labelPosition: "top-center"
+  //     }
       
-    },
-    {
-      title: "Shipped Today",
-      value: "34",
-      icon: ShoppingCart,
-      color: "#F59E0B", // Amber
-      gradientClass: "from-amber-50 to-amber-100",
-      progress: {
-        value: 68, // Representing 68% of daily target
-        trackColor: "var(--muted)",
-        progressColor: "#F59E0B",
-        height: 4,
-        borderRadius: 3,
-        showLabel: true,
-        labelPosition: 'top-center',
-        labelText: "68% of target",
+  //   },
+  //   {
+  //     title: "Shipped Today",
+  //     value: "34",
+  //     icon: ShoppingCart,
+  //     color: "#F59E0B", // Amber
+  //     gradientClass: "from-amber-50 to-amber-100",
+  //     progress: {
+  //       value: 68, // Representing 68% of daily target
+  //       trackColor: "var(--muted)",
+  //       progressColor: "#F59E0B",
+  //       height: 4,
+  //       borderRadius: 3,
+  //       showLabel: true,
+  //       labelPosition: 'top-center',
+  //       labelText: "68% of target",
        
-      }
-    },
-    {
-      title: "Total Revenue",
-      value: "£4,280",
-      icon: DollarSign,
-      color: "#F97316", // Orange
-      gradientClass: "from-orange-50 to-orange-100",
-      description: "Monthly target: £15,000",
-      progress: {
-        value: 28.5, // £4,280/£15,000 ≈ 28.5%
-        max: 100,
-        trackColor: "var(--muted)",
-        progressColor: "#F97316",
-        height: 4,
-        borderRadius: 3,
-        showLabel: true,
-        labelPosition: 'top-center',
-        labelText: "29%",
-      }
-    },
-  ];
+  //     }
+  //   },
+  //   {
+  //     title: "Total Revenue",
+  //     value: "£4,280",
+  //     icon: DollarSign,
+  //     color: "#F97316", // Orange
+  //     gradientClass: "from-orange-50 to-orange-100",
+  //     description: "Monthly target: £15,000",
+  //     progress: {
+  //       value: 28.5, // £4,280/£15,000 ≈ 28.5%
+  //       max: 100,
+  //       trackColor: "var(--muted)",
+  //       progressColor: "#F97316",
+  //       height: 4,
+  //       borderRadius: 3,
+  //       showLabel: true,
+  //       labelPosition: 'top-center',
+  //       labelText: "29%",
+  //     }
+  //   },
+  // ];
   const columns: TableColumn<OrderItem>[] = [
     {
       header: "Order ID",
@@ -319,11 +319,11 @@ export default function OrdersManagement() {
   return (
     <div className="p-6 bg-bg min-h-screen ">
       <div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {statsData.map((stat, index) => (
             <StatCard key={index} {...stat} />
           ))}
-        </div>
+        </div> */}
 {/* Filter */}
  <div className="flex justify-end mt-6  items-end  gap-3 mb-6">
           <Dropdown

@@ -61,7 +61,7 @@ const AnimatedModal = ({
             animate="visible"
             exit="exit"
             onClick={(e) => e.stopPropagation()}
-            className={`w-full ${maxWidth} bg-[#F8F9FF] rounded-[2rem] shadow-2xl relative overflow-hidden overflow-y-auto p-5`}
+            className={`w-full ${maxWidth} h-[600px] bg-[#F8F9FF] rounded-[2rem] shadow-2xl relative overflow-hidden overflow-y-auto p-5`}
           >
             {/* Header */}
             <div className="flex items-center justify-between">

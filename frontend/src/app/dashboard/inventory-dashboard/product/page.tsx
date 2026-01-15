@@ -147,8 +147,9 @@ const fetchProducts = async () => {
     //   />
     // </div>
     <div className="bg-[#d32424]">
+      data
 
-      <Super />
+      {/* <Super /> */}
     </div>
   );
 }

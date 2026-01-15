@@ -11,23 +11,24 @@ import {
   Trash2,
   Plus,
 } from "lucide-react";
+import { ICategory } from "../../../../../../../common/ICategory.interface";
 
 // Use the interface based on your JSON structure
-export interface ICategory {
-  _id: string;
-  categoryName: string;
-  parentId: string | null;
-  isActive: boolean;
-  isDefault: boolean;
-  children?: ICategory[];
-}
+// export interface ICategory {
+//   _id: string;
+//   categoryName: string;
+//   parentId: string | null;
+//   isActive: boolean;
+//   isDefault: boolean;
+//   children?: ICategory[];
+// }
 
 interface Props {
   data: ICategory[];
    onEdit: (cat: ICategory) => void;
    onDelete: (id: string) => void;
    onAddSub: (parent: ICategory) => void;
-   onSetDefault: (cat: ICategory) => void;
+  //  onSetDefault: (cat: ICategory) => void;
 }
 
 export const CategoryTable: React.FC<Props> = ({

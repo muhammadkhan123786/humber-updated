@@ -50,9 +50,14 @@ const AttributesDashboard: React.FC = () => {
   };
 
   const handleDeleteAttribute = async (id: string) => {
-    if (confirm("Are you sure you want to delete this attribute?")) {
+    try {
+      console.log("id", id);
+      if (confirm("Are you sure you want to delete this attribute?")) {
       await deleteAttribute(id);
-      fetchAttributeData();
+       await fetchAttributeData();
+    }
+    } catch (error) {
+      console.log("error", error)
     }
   };
 

@@ -4,7 +4,7 @@
 import { IBaseEntity } from './Base.Interface';
 export interface ICategory<TUserId = string, TId = string, IParentId = string | null > extends IBaseEntity<TUserId> {
     categoryName: string;
-    parentId?: IParentId | ICategory | null;
-    children?: ICategory<TId, TId>[];
+    parentId?: IParentId | ICategory | TId | null;
+        children?: ICategory<TUserId, TId>[];
 }
 

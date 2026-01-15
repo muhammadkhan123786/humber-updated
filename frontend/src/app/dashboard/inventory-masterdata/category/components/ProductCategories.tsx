@@ -1,18 +1,23 @@
 // src/pages/ProductCategories.tsx
 import React from "react";
 import CategoryTree from "./CategoryView";
+import { ICategory } from "../../../../../../../common/ICategory.interface";
+
 
 /* ===== Props Interface ===== */
+type ViewMode = "table" | "tree";
 interface ProductCategoriesProps {
-  viewType: string;
-  categories: any[]; 
-  onEdit: (categoryId: string) => void;
+  viewType: ViewMode;
+  categories: ICategory[];
+  onEdit: (category: ICategory) => void;
   onDelete: (categoryId: string) => void;
-  onCreate: (data: any) => void;
-  onSub: (parentId: string) => void;
-  onSetDefault: (categoryId: string) => void;
-  initialCategoryId?: string;
+  onCreate: (data: ICategory) => void;
+  onSub: (parent: ICategory) => void;
+  onSetDefault: (category: ICategory) => void;
+  initialCategoryId: string | null;
 }
+
+
 
 /* ===== Component ===== */
 const ProductCategories: React.FC<ProductCategoriesProps> = ({
@@ -30,13 +35,11 @@ const ProductCategories: React.FC<ProductCategoriesProps> = ({
       <CategoryTree
         categories={categories}
         viewType={viewType}
-        onCreate={onCreate}
-        onEdit={onEdit}
+         onEdit={onEdit}
         onDelete={onDelete}
         onSub={onSub}
         onSetDefault={onSetDefault}
-        initialCategoryId={initialCategoryId}
-      />
+       />
     </main>
   );
 };

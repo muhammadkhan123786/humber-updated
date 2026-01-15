@@ -12,9 +12,8 @@ interface Props {
   loading?: boolean;
   onEdit: (category: ICategory) => void;
   onDelete?: (id: string) => void;
-  onRefresh: () => void;
-  onSub: () => void;
-  onSetDefault: () => void;
+  onSub: (category: ICategory) => void;
+  onSetDefault: (category: ICategory) => void;
 }
 
 export const CategoryView: React.FC<Props> = ({
@@ -23,11 +22,10 @@ export const CategoryView: React.FC<Props> = ({
   loading,
   onEdit,
   onDelete = () => {},
-  onRefresh,
   onSub,
   onSetDefault,
 }) => {
-  console.log("type", viewType);
+
 
   if (loading) {
     return (

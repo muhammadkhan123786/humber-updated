@@ -49,11 +49,11 @@ const Super = () => {
       </PageHeader>
 
       <div className="p-6 bg-gray-50 min-h-screen space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-6">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 px-6">
           {statsData.map((stat, index) => (
             <StatCard key={stat.title} {...stat} />
           ))}
-        </div>
+        </div> */}
 
         <div className="p-6 bg-gray-50 min-h-screen space-y-4">
           {/* 1. Tabs Section */}
