@@ -3,9 +3,12 @@ import { IBaseEntity } from "./Base.Interface";
 export type AttributeType =
   | "text"
   | "number"
-  | "select"
-  | "multi_select"
-  | "date";
+  | "dropdown"
+  | "list"
+  | "date"
+  | "checkbox"
+  | "radio"
+  | "textarea";
 
 export interface IAttribute<TUserId = string, TAttributeId = string>
   extends IBaseEntity<TUserId> {
@@ -13,9 +16,9 @@ export interface IAttribute<TUserId = string, TAttributeId = string>
   type: AttributeType;
   categoryId?: string | null; // Add this
   isForSubcategories?: boolean; // Add this
-  unit?: string; // Add this
-  options?: { label: string; value: string }[];
+   options?: { label: string; value: string }[];
   isRequired?: boolean;
   status?: "active" | "inactive";
-  code?: string; // Add this for the unique code
+  code?: string;
+  isDefault?: boolean;
 }

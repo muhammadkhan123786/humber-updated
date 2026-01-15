@@ -12,7 +12,7 @@ const colorController = new AdvancedGenericController({
     service: colorServices,
     populate: ["userId"],
     validationSchema: colorSchemaValidation,
-    searchFields: ["colorName"]
+    searchFields: ["colorName", "colorCode"]
 });
 
 colorRouter.get("/", colorController.getAll);

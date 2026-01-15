@@ -9,21 +9,36 @@ interface Props {
   disabled?: boolean;
 }
 
-export const FormToggle = ({ label, checked, onChange, description,disabled }: Props) => (
-  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 p-4 rounded-xl flex-1 transition-colors">
+export const FormToggle = ({
+  label,
+  checked,
+  onChange,
+  description,
+  disabled = false,
+}: Props) => (
+  <label
+    className={`flex items-center gap-2 p-4 rounded-xl flex-1 transition-colors
+      ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer bg-gray-50"}
+    `}
+  >
     <input
       type="checkbox"
-      className={`w-5 h-5 accent-[#155DFC] ${disabled ? "" : "cursor-pointer"}`}
-      checked={checked}
-      onChange={(e) => !disabled && onChange(e.target.checked)} // Disabled ho to change na ho
+      className={`w-5 h-5 accent-[#FE6B1D] ${
+        disabled ? "" : "cursor-pointer"
+      }`}
+      checked={!!checked}
+      onChange={(e) => {
+        if (!disabled) onChange(e.target.checked);
+      }}
       disabled={disabled}
     />
+
     <span className="text-sm font-semibold text-gray-700 select-none">
-      {label}{" "}
-      {disabled && checked && (
-        <span className="text-[10px] text-orange-500 ml-1"></span>
-      )}
+      {label}
     </span>
-    {description && <p>{description}</p>}
+
+    {description && (
+      <p className="text-xs text-gray-500 ml-2">{description}</p>
+    )}
   </label>
 );

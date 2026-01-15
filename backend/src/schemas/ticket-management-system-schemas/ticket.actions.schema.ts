@@ -3,7 +3,7 @@ import { SchemaDefinition, Types } from "mongoose";
 import { ITicketActions } from '../../../../common/Ticket-management-system/ITicketActions.interface'
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
-export const ticketActionsSchema: SchemaDefinition<ITicketActions<Types.ObjectId>> = {
+export const ticketActionsSchema = {
     ...commonSchema,
     code: { type: String, required: true, unique: true },
     label: { type: String },

@@ -3,7 +3,7 @@ import { SchemaDefinition, Types } from "mongoose";
 import { IPricingAgreement } from '../../../../common/suppliers/IPricing.agreement.interface';
 
 
-export const pricingAgreementSchema: SchemaDefinition<IPricingAgreement<Types.ObjectId>> = {
+export const pricingAgreementSchema = {
     userId: { type: Types.ObjectId, ref: "User", required: true },
     pricingAgreementName: { type: String },
     isActive: { type: Boolean, required: true, default: true },
