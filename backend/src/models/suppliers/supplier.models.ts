@@ -1,4 +1,7 @@
+import { NextFunction } from "express";
 import { Schema, model, Types } from "mongoose";
+import { CityModel } from "../city.models";
+import { Country } from "../country.models";
 
 
 export const SupplierSchema = new Schema(
@@ -87,6 +90,54 @@ export const SupplierSchema = new Schema(
     }
 );
 
+// Pre-save middleware
+SupplierSchema.pre("save", async function (next: NextFunction) {
+    const doc = this as any;
+
+    // Handle Country
+    if (doc.businessAddress?.country && typeof doc.businessAddress.country === "string") {
+        let country = await Country.findOne({ countryName: doc.businessAddress.country });
+        if (!country) {
+            country = await Country.create({ countryName: doc.businessAddress.country });
+        }
+        doc.businessAddress.country = country._id;
+    }
+
+    // Handle City
+    if (doc.businessAddress?.city && typeof doc.businessAddress.city === "string") {
+        let city = await CityModel.findOne({ cityName: doc.businessAddress.city });
+        if (!city) {
+            city = await CityModel.create({ cityName: doc.businessAddress.city });
+        }
+        doc.businessAddress.city = city._id;
+    }
+
+    next();
+});
+
+// Pre-update middleware for findOneAndUpdate
+SupplierSchema.pre("findOneAndUpdate", async function (next: NextFunction) {
+    const update: any = this.getUpdate();
+
+    if (update.businessAddress?.country && typeof update.businessAddress.country === "string") {
+        let country = await Country.findOne({ countryName: update.businessAddress.country });
+        if (!country) {
+            country = await Country.create({ countryName: update.businessAddress.country });
+        }
+        update.businessAddress.country = country._id;
+    }
+
+    if (update.businessAddress?.city && typeof update.businessAddress.city === "string") {
+        let city = await CityModel.findOne({ cityName: update.businessAddress.city });
+        if (!city) {
+            city = await CityModel.create({ cityName: update.businessAddress.city });
+        }
+        update.businessAddress.city = city._id;
+    }
+
+    this.setUpdate(update);
+    next();
+});
 
 export const SupplierModel =
     model("Supplier") || model("Supplier", SupplierSchema);
