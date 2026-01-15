@@ -5,9 +5,7 @@ import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
 
 
-export const ticketStatusTransitionSchema: SchemaDefinition<
-    ITicketStatusTransitions<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId>
-> = {
+export const ticketStatusTransitionSchema = {
     ...commonSchema,
     from_status_id: { type: Types.ObjectId, ref: "TicketStatus", required: true },
     to_status_id: { type: Types.ObjectId, ref: "TicketStatus", required: true },

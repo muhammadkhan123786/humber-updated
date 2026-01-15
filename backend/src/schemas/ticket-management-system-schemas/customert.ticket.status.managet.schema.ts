@@ -4,7 +4,7 @@ import { CustomerTicketStatusManager } from '../../../../common/Ticket-managemen
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
 
-export const CustomerTicketStatusManagerSchema: SchemaDefinition<CustomerTicketStatusManager<Types.ObjectId, Types.ObjectId, Types.ObjectId>> = {
+export const CustomerTicketStatusManagerSchema = {
     ...commonSchema,
     customerTicketId: { type: Types.ObjectId, ref: "customerTicketBase" },
     customerTicketStatusId: { type: Types.ObjectId, ref: "TicketStatus" },

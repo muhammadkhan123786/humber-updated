@@ -3,16 +3,7 @@ import { SchemaDefinition, Types } from "mongoose";
 import { CustomerTicketBase } from "../../../../common/Ticket-management-system/ITicket.interface";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
-export const customerTicketBaseSchema: SchemaDefinition<
-  CustomerTicketBase<
-    Types.ObjectId,
-    Types.ObjectId,
-    Types.ObjectId,
-    Types.ObjectId,
-    Types.ObjectId,
-    Types.ObjectId
-  >
-> = {
+export const customerTicketBaseSchema = {
   ...commonSchema,
 
   ticketCode: { type: String, required: true, unique: true },

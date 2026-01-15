@@ -3,7 +3,7 @@ import { SchemaDefinition, Types } from "mongoose";
 import { IPaymentMethod } from '../../../../common/suppliers/IPayment.method.interface';
 
 
-export const paymentMethodSchema: SchemaDefinition<IPaymentMethod<Types.ObjectId>> = {
+export const paymentMethodSchema = {
     userId: { type: Types.ObjectId, ref: "User", required: true },
     paymentMethodName: { type: String },
     isActive: { type: Boolean, required: true, default: true },
