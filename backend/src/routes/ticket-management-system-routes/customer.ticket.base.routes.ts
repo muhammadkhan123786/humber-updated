@@ -9,6 +9,7 @@ import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateTicketCode } from "../../utils/generateTicketCode";
+import { normalizeArrays } from "../../middleware/normalizeArrays";
 
 const repairVehicleUpload = createUploader([
   {
@@ -46,6 +47,7 @@ customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
 customerTicketBaseRouter.post(
   "/",
+  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
   mapUploadedFilesToBody(),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -85,6 +87,7 @@ customerTicketBaseRouter.post(
 
 customerTicketBaseRouter.put(
   "/:id",
+  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
   mapUploadedFilesToBody(),
   customerTicketBaseController.update
