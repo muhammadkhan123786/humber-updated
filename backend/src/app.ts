@@ -59,6 +59,7 @@ import pricingAgreementRouter from "./routes/suppliers/pricing.agreement.routes"
 import productServicesRouter from "./routes/suppliers/product.services.routes";
 import jobTitleRouter from "./routes/master-data-routes/job.titles.routes";
 import iconsRouter from "./routes/master-data-routes/icons.routes";
+import SupplierRouters from "./routes/suppliers/supplier.routes";
 
 // Create express app
 const app: Application = express();
@@ -256,6 +257,10 @@ app.use(`${process.env.API_PREFIX}/product-services`, adminProtecter, productSer
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
 app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
+
+//16-02-2026
+app.use(`${process.env.API_PREFIX}/suppliers`, adminProtecter, SupplierRouters);
+
 
 //Muhammad Imran code ended here.
 

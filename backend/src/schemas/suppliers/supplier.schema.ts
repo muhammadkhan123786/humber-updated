@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { commonSchemaValidation } from "../shared/common.schema";
+import { objectIdOrStringSchema, objectIdSchema } from "../../validators/objectId.schema";
 
 export const emailString = z.string().refine(
     (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
@@ -28,18 +30,20 @@ export const urlString = z.string().refine(
     { message: "Invalid URL" }
 );
 
-export const supplierSchema = z.object({
+
+
+export const supplierSchemaValidation = z.object({
     supplierIdentification: z.object({
         legalBusinessName: z.string().min(1),
         tradingName: z.string().optional(),
         businessRegNumber: z.string().min(1),
         vat: z.string().optional(),
-        businessTypeId: z.string().min(1),
+        businessTypeId: objectIdSchema
     }),
 
     contactInformation: z.object({
         primaryContactName: z.string().min(1),
-        jobTitleId: z.string().min(1),
+        jobTitleId: objectIdSchema,
         phoneNumber: z.string().min(1),
         emailAddress: emailString.optional(),
         website: urlString.optional(),
@@ -48,9 +52,9 @@ export const supplierSchema = z.object({
     businessAddress: z.object({
         businessAddress: z.string().min(1),
         tradingAddress: z.string().optional(),
-        city: z.string().min(1),
+        city: objectIdOrStringSchema,
         state: z.string().min(1),
-        country: z.string().min(1),
+        country: objectIdOrStringSchema,
         zipCode: z.string().min(1),
     }),
 
@@ -58,8 +62,8 @@ export const supplierSchema = z.object({
         vatRegistered: z.boolean(),
         vatNumber: z.string().optional(),
         taxIdentificationNumber: z.string().min(1),
-        paymentCurrencyId: z.string().min(1),
-        paymentMethodId: z.string().min(1),
+        paymentCurrencyId: objectIdSchema,
+        paymentMethodId: objectIdSchema,
     }),
 
     bankPaymentDetails: z
@@ -74,15 +78,15 @@ export const supplierSchema = z.object({
         .optional(),
 
     productServices: z.object({
-        typeOfServiceId: z.string().min(1),
+        typeOfServiceId: objectIdSchema,
         productCategoryIds: z.array(z.string()).min(1),
         leadTimes: numericString,
         minimumOrderQuantity: numericString,
     }),
 
     commercialTerms: z.object({
-        paymentTermsId: z.string().min(1),
-        pricingAgreementId: z.string().min(1),
+        paymentTermsId: objectIdSchema,
+        pricingAgreementId: objectIdSchema,
         discountTerms: z.string().optional(),
         contractStartDate: isoDateString,
         contractEndDate: isoDateString.optional(),
@@ -106,15 +110,10 @@ export const supplierSchema = z.object({
             warrantyTerms: z.string().optional(),
         })
         .optional(),
-
-    common: z.object({
-        isActive: z.boolean().optional(),
-        isDeleted: z.boolean().optional(),
-        isDefault: z.boolean().optional(),
-    }),
+    ...commonSchemaValidation
 });
 
-export const supplierSchemaWithVatCheck = supplierSchema.superRefine(
+export const supplierSchemaWithVatCheck = supplierSchemaValidation.superRefine(
     (data, ctx) => {
         if (data.financialInformation.vatRegistered && !data.financialInformation.vatNumber) {
             ctx.addIssue({
@@ -126,6 +125,6 @@ export const supplierSchemaWithVatCheck = supplierSchema.superRefine(
     }
 );
 
-export type SupplierSchemaType = z.infer<typeof supplierSchema>;
+
 
 

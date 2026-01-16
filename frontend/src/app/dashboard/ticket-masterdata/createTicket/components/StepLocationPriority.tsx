@@ -10,6 +10,7 @@ import {
   Info,
   MapPin,
   Loader2,
+  Edit3,
 } from "lucide-react";
 import { Controller } from "react-hook-form";
 
@@ -22,6 +23,7 @@ const StepLocationPriority = ({
   customers,
   vehicles,
   isLoading,
+  isUpdating,
 }: any) => {
   const {
     control,
@@ -397,17 +399,26 @@ const StepLocationPriority = ({
           <button
             onClick={onCreate}
             disabled={isLoading}
-            className={`flex items-center gap-2 px-8  py-3.5 rounded-xl font-bold text-sm text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 ${
+            className={`flex items-center gap-2 px-8 py-3.5 rounded-xl font-bold text-sm text-white shadow-md hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 ${
               errors.priorityId ? "bg-red-500" : "bg-[#00C950]"
             }`}
           >
             {isLoading ? (
               <>
-                <Loader2 className="animate-spin" size={16} /> Creating...
+                <Loader2 className="animate-spin" size={16} />
+                {isUpdating ? "Updating..." : "Creating..."}
               </>
             ) : (
               <>
-                Create Ticket <Check size={16} />
+                {isUpdating ? (
+                  <>
+                    Update Ticket <Edit3 size={16} />
+                  </>
+                ) : (
+                  <>
+                    Create Ticket <Check size={16} />
+                  </>
+                )}
               </>
             )}
           </button>

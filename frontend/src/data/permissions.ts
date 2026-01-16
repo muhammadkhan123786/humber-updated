@@ -280,6 +280,12 @@ export const NavBarLinksData: NavLinksInterface[] = [
     index: 9,
     children: [
       {
+        _id: 310,
+        href: "/dashboard/ticket-masterdata/allTickets",
+        label: "All Ticket",
+        index: 8,
+      },
+      {
         _id: 309,
         href: "/dashboard/ticket-masterdata/createTicket",
         label: "Create Ticket",
