@@ -39,5 +39,6 @@ SupplierRouters.post("/", resolveBusinessAddressRefs, normalizeArrays(["business
 SupplierRouters.put("/:id", resolveBusinessAddressRefs, normalizeArrays(["businessRegistrationCertificates"]), supplierUploads, mapUploadedFilesToBody(), SupplierController.update);
 SupplierRouters.delete("/:id", SupplierController.delete);
 
+
 export default SupplierRouters;
 
