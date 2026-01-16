@@ -5,6 +5,7 @@ import { supplierSchemaValidation } from "../../schemas/suppliers/supplier.schem
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
+import { resolveBusinessAddressRefs } from "../../middleware/resolveBusinessAddressRefs";
 
 
 const supplierUploads = createUploader([
@@ -33,8 +34,8 @@ const SupplierController = new AdvancedGenericController({
 
 SupplierRouters.get("/", SupplierController.getAll);
 SupplierRouters.get("/:id", SupplierController.getById);
-SupplierRouters.post("/", supplierUploads, mapUploadedFilesToBody(), SupplierController.create);
-SupplierRouters.post("/:id", supplierUploads, mapUploadedFilesToBody(), SupplierController.update);
+SupplierRouters.post("/", resolveBusinessAddressRefs, supplierUploads, mapUploadedFilesToBody(), SupplierController.create);
+SupplierRouters.put("/:id", resolveBusinessAddressRefs, supplierUploads, mapUploadedFilesToBody(), SupplierController.update);
 SupplierRouters.delete("/:id", SupplierController.delete);
 
 export default SupplierRouters;
