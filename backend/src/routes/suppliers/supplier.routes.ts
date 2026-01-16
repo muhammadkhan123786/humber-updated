@@ -6,6 +6,7 @@ import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { resolveBusinessAddressRefs } from "../../middleware/resolveBusinessAddressRefs";
+import { normalizeArrays } from "../../middleware/normalizeArrays";
 
 
 const supplierUploads = createUploader([
@@ -34,8 +35,8 @@ const SupplierController = new AdvancedGenericController({
 
 SupplierRouters.get("/", SupplierController.getAll);
 SupplierRouters.get("/:id", SupplierController.getById);
-SupplierRouters.post("/", resolveBusinessAddressRefs, supplierUploads, mapUploadedFilesToBody(), SupplierController.create);
-SupplierRouters.put("/:id", resolveBusinessAddressRefs, supplierUploads, mapUploadedFilesToBody(), SupplierController.update);
+SupplierRouters.post("/", resolveBusinessAddressRefs, normalizeArrays(["businessRegistrationCertificates"]), supplierUploads, mapUploadedFilesToBody(), SupplierController.create);
+SupplierRouters.put("/:id", resolveBusinessAddressRefs, normalizeArrays(["businessRegistrationCertificates"]), supplierUploads, mapUploadedFilesToBody(), SupplierController.update);
 SupplierRouters.delete("/:id", SupplierController.delete);
 
 export default SupplierRouters;

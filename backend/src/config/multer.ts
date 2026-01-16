@@ -58,8 +58,8 @@ export const createUploader = (fields: UploadFieldRule[]) => {
 
     // Use .any() to parse all fields (both text and files)
     // This automatically preserves text form fields alongside files
-    const uploader = multer({ 
-        storage, 
+    const uploader = multer({
+        storage,
         fileFilter,
         limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
     }).any();
