@@ -155,7 +155,7 @@ export const CategoryTable: React.FC<Props> = ({
                   <Pencil size={15} />
                 </button>
                 <button
-                  onClick={() => onDelete(cat._id)}
+                  onClick={() => onDelete(cat._id!)}
                   className="flex items-center justify-center gap-2 p-1.5 text-black/80 hover:text-red-500 rounded-[10px] border border-[#D1D5DC] hover:border-red-500 hover:bg-[#FFE2E2]"
                 >
                   <Trash2 size={14} />
