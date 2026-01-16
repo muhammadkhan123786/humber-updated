@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { commonSchemaValidation } from "../shared/common.schema";
 
 export const emailString = z.string().refine(
     (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
@@ -28,7 +29,7 @@ export const urlString = z.string().refine(
     { message: "Invalid URL" }
 );
 
-export const supplierSchema = z.object({
+export const supplierSchemaValidation = z.object({
     supplierIdentification: z.object({
         legalBusinessName: z.string().min(1),
         tradingName: z.string().optional(),
@@ -106,15 +107,10 @@ export const supplierSchema = z.object({
             warrantyTerms: z.string().optional(),
         })
         .optional(),
-
-    common: z.object({
-        isActive: z.boolean().optional(),
-        isDeleted: z.boolean().optional(),
-        isDefault: z.boolean().optional(),
-    }),
+    ...commonSchemaValidation
 });
 
-export const supplierSchemaWithVatCheck = supplierSchema.superRefine(
+export const supplierSchemaWithVatCheck = supplierSchemaValidation.superRefine(
     (data, ctx) => {
         if (data.financialInformation.vatRegistered && !data.financialInformation.vatNumber) {
             ctx.addIssue({
@@ -126,6 +122,6 @@ export const supplierSchemaWithVatCheck = supplierSchema.superRefine(
     }
 );
 
-export type SupplierSchemaType = z.infer<typeof supplierSchema>;
+
 
 
