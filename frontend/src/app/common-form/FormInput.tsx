@@ -13,7 +13,7 @@ export const FormInput = ({ label, error, ...props }: Props) => (
 
     <input
       {...props}
-      className={`w-full border rounded-xl p-3 outline-none focus:ring-2 transition-all
+      className={`w-full border rounded-xl bg-[#F3F4F6] p-3 outline-none focus:ring-2 transition-all
         ${
           error
             ? "border-red-500 focus:ring-red-200"

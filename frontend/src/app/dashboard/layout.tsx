@@ -15,10 +15,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1">
         {!(pathName === "/dashboard/purchaseorder") && (
           <aside
-            className="hidden md:block w-72 text-white bg-gradient-to-b from-[#4F39F6] via-[#9810FA] to-[#8200DB] p-4"
+            className="hidden md:block w-72 text-white bg-linear-to-b from-[#4F39F6] via-[#9810FA] to-[#8200DB] p-4"
             style={{ borderRight: "1px solid rgba(255, 255, 255, 0.1)" }}
           >
-            {/* --- NEW HEADING SECTION --- */}
             <div className="flex items-center gap-3 px-2 mb-8 mt-2">
               <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
                 <Zap size={22} className="text-white fill-white" />
@@ -27,7 +26,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 Humber Mobility <br /> Scooter
               </h2>
             </div>
-            {/* --------------------------- */}
 
             <Navbar />
           </aside>

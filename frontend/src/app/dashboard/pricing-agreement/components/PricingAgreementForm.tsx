@@ -117,13 +117,14 @@ const PricingAgreementForm = ({ editingData, onClose, onRefresh, themeColor }: P
           />
         </div>
 
-        <FormButton
-          type="submit"
-          label={editingData ? "Update Agreement" : "Save Agreement"}
-          icon={<Save size={20} />}
-          loading={isSubmitting}
-          themeColor={themeColor}
-        />
+       <FormButton
+                    type="submit"
+                    label={editingData ? "Update Service" : "Create"} // Changed to "Create" to match image
+                    icon={<Save size={20} />}
+                    loading={isSubmitting}
+                    themeColor={themeColor}
+                    onCancel={onClose} // This triggers the new right-aligned design
+                />
       </form>
     </FormModal>
   );

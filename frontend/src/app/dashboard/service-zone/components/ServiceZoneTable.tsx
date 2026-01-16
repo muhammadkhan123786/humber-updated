@@ -1,68 +1,106 @@
+"use client";
+import React from "react";
 import { Edit, Trash2, Star, LocateFixed } from "lucide-react";
+import { StatusBadge } from "@/app/common-form/StatusBadge";
+import { TableActionButton } from "@/app/common-form/TableActionButtons";
 
 interface Props {
   data: any[];
+  displayView: "table" | "card";
   onEdit: (data: any) => void;
   onDelete: (id: string) => void;
   themeColor: string;
 }
 
-const ServiceZoneTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
+const getIconGradient = (index: number) => {
+  const gradients = [
+    "bg-gradient-to-br from-orange-400 to-orange-600",
+    "bg-gradient-to-br from-red-400 to-red-600",
+    "bg-gradient-to-br from-pink-400 to-rose-600",
+    "bg-gradient-to-br from-amber-400 to-orange-500",
+  ];
+  return gradients[index % gradients.length];
+};
+
+const ServiceZoneTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+  // Card View
+  if (displayView === "card") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data.map((item, index) => (
+          <div key={item._id} className="bg-white rounded-3xl border-2 border-orange-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-orange-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform">
+            <div className="p-4 flex items-start justify-between bg-white">
+              <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
+                <LocateFixed size={18} />
+              </div>
+              <StatusBadge isActive={!!item.isActive} />
+            </div>
+            <div className="px-4 pb-4 space-y-3">
+              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                {item.serviceZone}
+                {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
+              </h3>
+              <div className="flex gap-2 pt-4">
+                <button onClick={() => onEdit(item)} className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-orange-600">Edit</button>
+                <button 
+                  onClick={() => {
+                    if (item.isDefault) return alert("Default records cannot be deleted.");
+                    onDelete(item._id);
+                  }}
+                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Table View
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-      <table className="w-full text-left">
-        <thead className="text-white" style={{ backgroundColor: themeColor }}>
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
+      <table className="w-full text-[16px]! text-left">
+        <thead className="bg-[#FFF7ED] text-[#364153]! border-b-2 border-gray-200">
           <tr>
-            <th className="p-4">Service Zone</th>
-            <th className="p-4 text-center">Status</th>
-            <th className="p-4 text-center">Default</th>
-            <th className="p-4 text-center">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Zone Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {data.length > 0 ? data.map((item) => (
-            <tr key={item._id} className="hover:bg-orange-50 transition-colors">
-              <td className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 text-blue-500 rounded-lg">
-                    <LocateFixed size={18} />
-                  </div>
-                  <span className="font-bold text-gray-800">{item.serviceZone}</span>
+          {data.length > 0 ? data.map((item, index) => (
+            <tr key={item._id} className="hover:bg-[#FFF7ED] transition-colors">
+              <td className="px-6 py-4">
+                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
+                  <LocateFixed size={18} />
                 </div>
               </td>
-              <td className="p-4 text-center">
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${item.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {item.isActive ? "ACTIVE" : "INACTIVE"}
-                </span>
+              <td className="px-6 py-4 font-bold text-gray-900">
+                <div className="flex items-center gap-2">
+                  {item.serviceZone}
+                  {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
+                </div>
               </td>
-              <td className="p-4 text-center">
-                {item.isDefault ? (
-                  <Star size={20} className="inline text-yellow-500 fill-yellow-500" />
-                ) : (
-                  <span className="text-gray-300">-</span>
-                )}
+              <td className="px-6 py-4 text-center">
+                <StatusBadge isActive={!!item.isActive} />
               </td>
-              <td className="p-4 text-center">
-                <div className="flex justify-center gap-2">
-                  <button onClick={() => onEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit size={18} /></button>
-                  <button
-                    onClick={() => {
-                      if (item.isDefault) {
-                        alert("Default record cannot be deleted.");
-                      } else {
-                        onDelete(item._id);
-                      }
-                    }}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title={item.isDefault ? "Default record cannot be deleted" : "Delete"}
-                  >
-                    <Trash2 size={18} />
-                  </button>                </div>
+              <td className="px-6 py-4 text-center">
+                <TableActionButton 
+                   onEdit={() => onEdit(item)} 
+                   onDelete={() => {
+                     if (item.isDefault) return alert("Default records cannot be deleted.");
+                     onDelete(item._id);
+                   }} 
+                />
               </td>
             </tr>
           )) : (
             <tr>
-              <td colSpan={4} className="p-10 text-center text-gray-400 italic">No service zones found</td>
+              <td colSpan={4} className="text-center py-10 text-gray-400">No service zones found.</td>
             </tr>
           )}
         </tbody>

@@ -26,12 +26,7 @@ interface Props {
   themeColor: string;
 }
 
-const DocumentTypeForm = ({
-  editingData,
-  onClose,
-  onRefresh,
-  themeColor,
-}: Props) => {
+const DocumentTypeForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   const {
     register,
     handleSubmit,
@@ -93,7 +88,7 @@ const DocumentTypeForm = ({
           error={errors.documentTypeName?.message}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           <Controller
             control={control}
             name="isActive"
@@ -124,10 +119,11 @@ const DocumentTypeForm = ({
 
         <FormButton
           type="submit"
-          label={editingData ? "Update Type" : "Save Type"}
+          label={editingData ? "Update Type" : "Create"}
           icon={<Save size={20} />}
           loading={isSubmitting}
           themeColor={themeColor}
+          onCancel={onClose}
         />
       </form>
     </FormModal>
