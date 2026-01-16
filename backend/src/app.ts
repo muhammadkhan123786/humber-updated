@@ -70,7 +70,10 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded
 app.use(cors());
 
 // Static files (for uploads/public folder)
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(process.cwd(), "uploads"))
+);
 
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
