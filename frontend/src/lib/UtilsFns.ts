@@ -1,6 +1,16 @@
 import { NavLinksInterface } from "@/types/NavLinksInterface";
-import { NavBarLinksData } from "@/data/permissions";
+import { navigation } from "@/data/permissions";
 
-export function getRoleBaseNavBarLinks(roleId: number): NavLinksInterface[] {
-    return NavBarLinksData.filter((link) => link.roleId?.includes(roleId));
+interface NavItem {
+  _id: number;
+  label: string;
+  href: string;
+  icon: any;
+  roleId: number[];
+  subItems?: NavItem[];
 }
+export function getRoleBaseNavBarLinks(roleId: number): NavLinksInterface[] {
+    return navigation.filter((link) => link.roleId?.includes(roleId));
+}
+
+

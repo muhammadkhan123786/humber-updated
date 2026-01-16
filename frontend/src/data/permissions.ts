@@ -1,280 +1,127 @@
-import { NavLinksInterface } from "@/types/NavLinksInterface";
-import box from "../assets/box.svg";
-import tool from "../assets/tool.svg";
-import usergroup from "../assets/users-group-alt.svg";
-import booking from "../assets/calendar.svg";
-import staffmanagement from "../assets/users-alt.svg";
-import warehouse from "../assets/warehouses.png";
-import vender from "../assets/vendor.png";
-import ticket from "../assets/ticket.png";
-import dash from "../assets/Icon.png";
-import inventry from "../assets/Icon (1).png";
+import { 
+  LayoutDashboard, 
+  Package, 
+  Wrench, 
+  Users, 
+  Calendar, 
+  Warehouse, 
+  Store, 
+  Ticket, 
+  Settings, 
+  Database,
+  Truck,
+  ClipboardList,
+  FileText,
+  Boxes,
+  Briefcase,
+  History,
+  Tags,
+  MapPin,
+  Globe,
+  Milestone,
+  ShieldCheck,
+  Smartphone,
+  Wallet,
+  Receipt,
+  Activity,
+  Radio,
+  Zap,
+  UserCog,
+  ShoppingCart,
+  FilePlus,
+  BarChart3,
+  Building2,
+  Palette,
+  Maximize,
+  Scale,
+  ListTree,
+  UserCheck,
+  Tag
+} from 'lucide-react';
+import { INavBarLinkSharedInterface } from "../../../common/INavBarLinkSharedInterface";
 
-export const NavBarLinksData: NavLinksInterface[] = [
+interface NavItem {
+  _id: number;
+  name: string;
+  href: string;
+  icon: any;
+  roleId: number[];
+  subItems?: NavItem[];
+}
+
+export const navigation: INavBarLinkSharedInterface[] = [
   {
     _id: 1,
-    href: "/dashboard",
-    roleId: [1, 2],
     label: "Dashboard",
-    index: 1,
-    iconSrc: dash,
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    roleId: [1, 2],
   },
-
   {
     _id: 2,
-    alt: "Inventory",
-    href: "#",
-    roleId: [1],
     label: "Inventory",
-    iconSrc: inventry,
-    index: 2,
-    children: [
-      {
-        _id: 201,
-        href: "/dashboard/inventory-dashboard/dashboard",
-        label: "Inventory Dashboard",
-        index: 1,
-      },
-      {
-        _id: 202,
-        href: "/dashboard/inventory-dashboard/purchase-order",
-        label: "PurchaseOrder",
-        index: 2,
-      },
-      {
-        _id: 203,
-        href: "/dashboard/inventory-dashboard/inventory-overview",
-        label: "Inventory Overview",
-        index: 3,
-      },
-      {
-        _id: 204,
-        href: "/dashboard/inventory-dashboard/orders-management",
-        label: "Orders Management",
-        index: 4,
-      },
-      {
-        _id: 205,
-        href: "/dashboard/inventory-dashboard/product-catalog",
-        label: "Product Catalog",
-        index: 5,
-      },
-      {
-        _id: 206,
-        href: "/dashboard/inventory-dashboard/product",
-        label: "Product",
-        index: 6,
-      },
-      {
-        _id: 207,
-        href: "/dashboard/inventory-dashboard/create-purchase-order",
-        label: "Purchase Order",
-        index: 7,
-      },
-      {
-        _id: 208,
-        href: "/dashboard/inventory-dashboard/reporting-analytics",
-        label: "Reporting & Analytics",
-        index: 8,
-      },
-      {
-        _id: 209,
-        href: "/dashboard/inventory-dashboard/rma",
-        label: "Process New RMA",
-        index: 9,
-      },
-      {
-        _id: 210,
-        href: "/dashboard/inventory-dashboard/stock",
-        label: "Stock Adjustment",
-        index: 10,
-      },
-      {
-        _id: 211,
-        href: "/dashboard/inventory-dashboard/supplier",
-        label: "Supplier Management",
-        index: 11,
-      },
+    href: "#",
+    icon: Boxes,
+    roleId: [1],
+    subItems: [
+      { _id: 201, label: "Inventory Dashboard", href: "/dashboard/inventory-dashboard/dashboard", icon: LayoutDashboard, roleId: [1] },
+      { _id: 202, label: "Purchase Order", href: "/dashboard/inventory-dashboard/purchase-order", icon: ClipboardList, roleId: [1] },
+      { _id: 203, label: "Inventory Overview", href: "/dashboard/inventory-dashboard/inventory-overview", icon: FileText, roleId: [1] },
+      { _id: 204, label: "Orders Management", href: "/dashboard/inventory-dashboard/orders-management", icon: ShoppingCart, roleId: [1] },
+      { _id: 205, label: "Product Catalog", href: "/dashboard/inventory-dashboard/product-catalog", icon: Package, roleId: [1] },
+      { _id: 206, label: "Product", href: "/dashboard/inventory-dashboard/product", icon: Database, roleId: [1] },
+      { _id: 207, label: "Purchase Order", href: "/dashboard/inventory-dashboard/create-purchase-order", icon: FilePlus, roleId: [1] },
+      { _id: 208, label: "Reporting & Analytics", href: "/dashboard/inventory-dashboard/reporting-analytics", icon: BarChart3, roleId: [1] },
+      { _id: 209, label: "Process New RMA", href: "/dashboard/inventory-dashboard/rma", icon: History, roleId: [1] },
+      { _id: 210, label: "Stock Adjustment", href: "/dashboard/inventory-dashboard/stock", icon: Settings, roleId: [1] },
+      { _id: 211, label: "Supplier Management", href: "/dashboard/inventory-dashboard/supplier", icon: Building2, roleId: [1] },
     ],
   },
-
   {
     _id: 9,
-    alt: "Inentory Master Form",
+    label: "Inventory Master Data",
     href: "#",
+    icon: Database,
     roleId: [1],
-    label: "Inentory Master Data",
-    iconSrc: staffmanagement,
-    index: 9,
-    children: [
-      {
-        _id: 114,
-        href: "/dashboard/inventory-masterdata/currencies",
-        label: "Currencies",
-        index: 1,
-      },
-      {
-        _id: 115,
-        href: "/dashboard/inventory-masterdata/payment-terms",
-        label: "Payment Terms",
-        index: 2,
-      },
-      {
-        _id: 116,
-        href: "/dashboard/inventory-masterdata/order-status",
-        label: "Order Status",
-        index: 3,
-      },
-      {
-        _id: 117,
-        href: "/dashboard/inventory-masterdata/product-channel",
-        label: "Product Channel",
-        index: 4,
-      },
-      {
-        _id: 119,
-        href: "/dashboard/inventory-masterdata/proposed-actions",
-        label: "Proposed Actions",
-        index: 6,
-      },
-
-      {
-        _id: 120,
-        href: "/dashboard/inventory-masterdata/item-conditions",
-        label: "Item Conditions",
-        index: 7,
-      },
-
-      {
-        _id: 118,
-        href: "/dashboard/inventory-masterdata/product-source",
-        label: "Product Source",
-        index: 5,
-      },
-      {
-        _id: 121,
-        href: "/dashboard/inventory-masterdata/tax",
-        label: "Tax",
-        index: 8,
-      },
-      {
-        _id: 122,
-        href: "/dashboard/inventory-masterdata/category",
-        label: "Category",
-        index: 9,
-      },
-      {
-        _id: 123,
-        href: "/dashboard/inventory-masterdata/units",
-        label: "Units",
-        index: 10,
-      },
-
-      {
-        _id: 125,
-        href: "/dashboard/inventory-masterdata/warehouse-status",
-        label: "Warehouse Status",
-        index: 11,
-      },
-      {
-        _id: 126,
-        href: "/dashboard/inventory-masterdata/colors",
-        label: "Colors",
-        index: 12,
-      },
-      {
-        _id: 127,
-        href: "/dashboard/inventory-masterdata/sizes",
-        label: "Sizes",
-        index: 12,
-      },
-
-      {
-        _id: 129,
-        href: "/dashboard/inventory-masterdata/product-attribute",
-        label: "Product Attribute",
-        index: 14,
-      },
+    subItems: [
+      { _id: 114, label: "Currencies", href: "/dashboard/inventory-masterdata/currencies", icon: Wallet, roleId: [1] },
+      { _id: 115, label: "Payment Terms", href: "/dashboard/inventory-masterdata/payment-terms", icon: Receipt, roleId: [1] },
+      { _id: 116, label: "Order Status", href: "/dashboard/inventory-masterdata/order-status", icon: Activity, roleId: [1] },
+      { _id: 117, label: "Product Channel", href: "/dashboard/inventory-masterdata/product-channel", icon: Radio, roleId: [1] },
+      { _id: 119, label: "Proposed Actions", href: "/dashboard/inventory-masterdata/proposed-actions", icon: Zap, roleId: [1] },
+      { _id: 120, label: "Item Conditions", href: "/dashboard/inventory-masterdata/item-conditions", icon: ShieldCheck, roleId: [1] },
+      { _id: 118, label: "Product Source", href: "/dashboard/inventory-masterdata/product-source", icon: Globe, roleId: [1] },
+      { _id: 121, label: "Tax", href: "/dashboard/inventory-masterdata/tax", icon: Receipt, roleId: [1] },
+      { _id: 122, label: "Category", href: "/dashboard/inventory-masterdata/category", icon: Tags, roleId: [1] },
+      { _id: 123, label: "Units", href: "/dashboard/inventory-masterdata/units", icon: Scale, roleId: [1] },
+      { _id: 125, label: "Warehouse Status", href: "/dashboard/inventory-masterdata/warehouse-status", icon: Warehouse, roleId: [1] },
+      { _id: 126, label: "Colors", href: "/dashboard/inventory-masterdata/colors", icon: Palette, roleId: [1] },
+      { _id: 127, label: "Sizes", href: "/dashboard/inventory-masterdata/sizes", icon: Maximize, roleId: [1] },
+      { _id: 129, label: "Product Attribute", href: "/dashboard/inventory-masterdata/product-attribute", icon: Settings, roleId: [1] },
     ],
   },
-  {
-    _id: 3,
-    alt: "Repair tracker",
-    href: "/dashboard/repair-tracker",
-    roleId: [1],
-    label: "Repair tracker",
-    iconSrc: tool,
-    index: 3,
-  },
-  {
-    _id: 13,
-    alt: "Vendors",
-    href: "/dashboard/vender",
-    roleId: [1],
-    label: "Vendor",
-    iconSrc: vender,
-    index: 9,
-  },
-  {
-    _id: 14,
-    alt: "Warehouses",
-    href: "/dashboard/warehouses",
-    roleId: [1],
-    label: "Warehouses",
-    iconSrc: warehouse,
-    index: 10,
-  },
-  {
-    _id: 4,
-    alt: "Customers",
-    href: "/dashboard/customers",
-    roleId: [1],
-    label: "Customers",
-    iconSrc: usergroup,
-    index: 4,
-  },
-  {
-    _id: 5,
-    alt: "Bookings",
-    href: "/dashboard/bookings",
-    roleId: [1],
-    label: "Bookings",
-    iconSrc: booking,
-    index: 5,
-  },
-  {
-    _id: 6,
-    alt: "Staff management",
-    href: "/dashboard/staff-management",
-    roleId: [1],
-    label: "Staff management",
-    iconSrc: staffmanagement,
-    index: 6,
-  },
-  {
-    _id: 8,
-    alt: "Technicians",
-    href: "/dashboard/technicians-profile",
-    roleId: [1],
-    label: "Technicians Profile",
-    iconSrc: box,
-    index: 8,
-  },
-  {
-    _id: 11,
-    alt: "Vehicles",
-    href: "/dashboard/vehicles",
-    roleId: [1],
-    label: "Vehicles",
-    iconSrc: staffmanagement,
-    index: 11,
-  },
-
+  { _id: 3, label: "Repair tracker", href: "/dashboard/repair-tracker", icon: Wrench, roleId: [1] },
+  { _id: 13, label: "Vendor", href: "/dashboard/vender", icon: Store, roleId: [1] },
+  { _id: 14, label: "Warehouses", href: "/dashboard/warehouses", icon: Warehouse, roleId: [1] },
+  { _id: 4, label: "Customers", href: "/dashboard/customers", icon: Users, roleId: [1] },
+  { _id: 5, label: "Bookings", href: "/dashboard/bookings", icon: Calendar, roleId: [1] },
+  { _id: 6, label: "Staff management", href: "/dashboard/staff-management", icon: UserCog, roleId: [1] },
+  { _id: 8, label: "Technicians Profile", href: "/dashboard/technicians-profile", icon: Briefcase, roleId: [1] },
+  { _id: 11, label: "Vehicles", href: "/dashboard/vehicles", icon: Truck, roleId: [1] },
   {
     _id: 10,
-    alt: "Ticket Master Data",
+    label: "Ticket Master Data",
     href: "#",
+    icon: Ticket,
     roleId: [1],
+    subItems: [
+      { _id: 309, label: "Create Ticket", href: "/dashboard/ticket-masterdata/createTicket", icon: FilePlus, roleId: [1] },
+      { _id: 203, label: "Ticket Status", href: "/dashboard/ticket-masterdata/ticket-status", icon: Activity, roleId: [1] },
+      { _id: 204, label: "Department", href: "/dashboard/ticket-masterdata/department", icon: Building2, roleId: [1] },
+      { _id: 205, label: "Ticket Actions", href: "/dashboard/ticket-masterdata/ticket-actions", icon: Zap, roleId: [1] },
+      { _id: 306, label: "Ticket Type", href: "/dashboard/ticket-masterdata/ticket-type", icon: Tag, roleId: [1] },
+      { _id: 307, label: "Ticket Transition", href: "/dashboard/ticket-masterdata/ticket-transition", icon: Milestone, roleId: [1] },
+      { _id: 308, label: "Ticket Reference Types", href: "/dashboard/ticket-masterdata/ticketReferenceTypes", icon: ClipboardList, roleId: [1] },
     label: "Ticket Master Data",
     iconSrc: ticket,
     index: 9,
@@ -332,9 +179,27 @@ export const NavBarLinksData: NavLinksInterface[] = [
   },
   {
     _id: 7,
-    alt: "Master data",
+    label: "Master data",
     href: "#",
+    icon: Settings,
     roleId: [1],
+    subItems: [
+      { _id: 101, label: "Vehicle Brands", href: "/dashboard/vehiclebrands", icon: Tag, roleId: [1] },
+      { _id: 102, label: "Vehicle Models", href: "/dashboard/vehiclemodals", icon: Smartphone, roleId: [1] },
+      { _id: 103, label: "Repair Status", href: "/dashboard/repairstatus", icon: Activity, roleId: [1] },
+      { _id: 104, label: "Services", href: "/dashboard/services", icon: Wrench, roleId: [1] },
+      { _id: 105, label: "Sub Services", href: "/dashboard/subservices", icon: ListTree, roleId: [1] },
+      { _id: 106, label: "Country", href: "/dashboard/country", icon: Globe, roleId: [1] },
+      { _id: 107, label: "City", href: "/dashboard/city", icon: MapPin, roleId: [1] },
+      { _id: 108, label: "Customer Sources", href: "/dashboard/source", icon: Users, roleId: [1] },
+      { _id: 109, label: "Addressess", href: "/dashboard/addresses", icon: MapPin, roleId: [1] },
+      { _id: 110, label: "Technician Roles", href: "/dashboard/technician-roles", icon: UserCheck, roleId: [1] },
+      { _id: 111, label: "Services Request Type", href: "/dashboard/services-request-type", icon: ClipboardList, roleId: [1] },
+      { _id: 112, label: "Priority Level", href: "/dashboard/priority-level", icon: BarChart3, roleId: [1] },
+      { _id: 113, label: "Service Zone", href: "/dashboard/service-zone", icon: MapPin, roleId: [1] },
+      { _id: 114, label: "Job Type", href: "/dashboard/job-type", icon: Briefcase, roleId: [1] },
+      { _id: 115, label: "Document Type", href: "/dashboard/document-type", icon: FileText, roleId: [1] },
+      { _id: 116, label: "Business Type", href: "/dashboard/business-types", icon: Building2, roleId: [1] },
     label: "Master data",
     iconSrc: staffmanagement,
     index: 7,
@@ -442,3 +307,570 @@ export const NavBarLinksData: NavLinksInterface[] = [
     ],
   },
 ];
+
+
+
+
+// import { NavLinksInterface } from "@/types/NavLinksInterface";
+// import box from "../assets/box.svg";
+// import tool from "../assets/tool.svg";
+// import usergroup from "../assets/users-group-alt.svg";
+// import booking from "../assets/calendar.svg";
+// import staffmanagement from "../assets/users-alt.svg";
+// import warehouse from "../assets/warehouses.png";
+// import vender from "../assets/vendor.png";
+// import ticket from "../assets/ticket.png";
+// import dash from "../assets/Icon.png";
+// import inventry from "../assets/Icon (1).png";
+
+// import { 
+//   LayoutDashboard, 
+//   Users, 
+//   Package, 
+//   Wrench, 
+//   Plus, 
+//   ClipboardCheck, 
+//   History, 
+//   FileText,
+//   Menu,
+//   X,
+//   Zap,
+//   UserCog,
+//   Ticket,
+//   Settings,
+//   ChevronDown,
+//   ChevronRight,
+//   Tag,
+//   Box,
+//   ShoppingCart,
+//   PackageCheck,
+//   BarChart3,
+//   PackageX,
+//   ClipboardList,
+//   Briefcase,
+//   ListTree,
+//   List,
+//   FilePlus,
+//   Radio,
+//   UserCheck,
+//   PackagePlus,
+//   Building2,
+//   Activity,
+//   Receipt,
+//   ShoppingBag,
+//   Truck,
+//   Store,
+//   Wallet,
+//   Shield,
+//   Lock,
+//   LogOut,
+//   Bike,
+//   FileCheck
+// } from 'lucide-react';
+
+// export const NavBarLinksData: NavLinksInterface[] = [
+//   {
+//     _id: 1,
+//     href: "/dashboard",
+//     roleId: [1, 2],
+//     label: "Dashboard",
+//     index: 1,
+//     iconSrc: dash,
+//   },
+
+//   {
+//     _id: 2,
+//     alt: "Inventory",
+//     href: "#",
+//     roleId: [1],
+//     label: "Inventory",
+//     iconSrc: inventry,
+//     index: 2,
+//     children: [
+//       {
+//         _id: 201,
+//         href: "/dashboard/inventory-dashboard/dashboard",
+//         label: "Inventory Dashboard",
+//         index: 1,
+//       },
+//       {
+//         _id: 202,
+//         href: "/dashboard/inventory-dashboard/purchase-order",
+//         label: "PurchaseOrder",
+//         index: 2,
+//       },
+//       {
+//         _id: 203,
+//         href: "/dashboard/inventory-dashboard/inventory-overview",
+//         label: "Inventory Overview",
+//         index: 3,
+//       },
+//       {
+//         _id: 204,
+//         href: "/dashboard/inventory-dashboard/orders-management",
+//         label: "Orders Management",
+//         index: 4,
+//       },
+//       {
+//         _id: 205,
+//         href: "/dashboard/inventory-dashboard/product-catalog",
+//         label: "Product Catalog",
+//         index: 5,
+//       },
+//       {
+//         _id: 206,
+//         href: "/dashboard/inventory-dashboard/product",
+//         label: "Product",
+//         index: 6,
+//       },
+//       {
+//         _id: 207,
+//         href: "/dashboard/inventory-dashboard/create-purchase-order",
+//         label: "Purchase Order",
+//         index: 7,
+//       },
+//       {
+//         _id: 208,
+//         href: "/dashboard/inventory-dashboard/reporting-analytics",
+//         label: "Reporting & Analytics",
+//         index: 8,
+//       },
+//       {
+//         _id: 209,
+//         href: "/dashboard/inventory-dashboard/rma",
+//         label: "Process New RMA",
+//         index: 9,
+//       },
+//       {
+//         _id: 210,
+//         href: "/dashboard/inventory-dashboard/stock",
+//         label: "Stock Adjustment",
+//         index: 10,
+//       },
+//       {
+//         _id: 211,
+//         href: "/dashboard/inventory-dashboard/supplier",
+//         label: "Supplier Management",
+//         index: 11,
+//       },
+//     ],
+//   },
+
+//   {
+//     _id: 9,
+//     alt: "Inentory Master Form",
+//     href: "#",
+//     roleId: [1],
+//     label: "Inentory Master Data",
+//     iconSrc: staffmanagement,
+//     index: 9,
+//     children: [
+//       {
+//         _id: 114,
+//         href: "/dashboard/inventory-masterdata/currencies",
+//         label: "Currencies",
+//         index: 1,
+//       },
+//       {
+//         _id: 115,
+//         href: "/dashboard/inventory-masterdata/payment-terms",
+//         label: "Payment Terms",
+//         index: 2,
+//       },
+//       {
+//         _id: 116,
+//         href: "/dashboard/inventory-masterdata/order-status",
+//         label: "Order Status",
+//         index: 3,
+//       },
+//       {
+//         _id: 117,
+//         href: "/dashboard/inventory-masterdata/product-channel",
+//         label: "Product Channel",
+//         index: 4,
+//       },
+//       {
+//         _id: 119,
+//         href: "/dashboard/inventory-masterdata/proposed-actions",
+//         label: "Proposed Actions",
+//         index: 6,
+//       },
+
+//       {
+//         _id: 120,
+//         href: "/dashboard/inventory-masterdata/item-conditions",
+//         label: "Item Conditions",
+//         index: 7,
+//       },
+
+//       {
+//         _id: 118,
+//         href: "/dashboard/inventory-masterdata/product-source",
+//         label: "Product Source",
+//         index: 5,
+//       },
+//       {
+//         _id: 121,
+//         href: "/dashboard/inventory-masterdata/tax",
+//         label: "Tax",
+//         index: 8,
+//       },
+//       {
+//         _id: 122,
+//         href: "/dashboard/inventory-masterdata/category",
+//         label: "Category",
+//         index: 9,
+//       },
+//       {
+//         _id: 123,
+//         href: "/dashboard/inventory-masterdata/units",
+//         label: "Units",
+//         index: 10,
+//       },
+
+//       {
+//         _id: 125,
+//         href: "/dashboard/inventory-masterdata/warehouse-status",
+//         label: "Warehouse Status",
+//         index: 11,
+//       },
+//       {
+//         _id: 126,
+//         href: "/dashboard/inventory-masterdata/colors",
+//         label: "Colors",
+//         index: 12,
+//       },
+//       {
+//         _id: 127,
+//         href: "/dashboard/inventory-masterdata/sizes",
+//         label: "Sizes",
+//         index: 12,
+//       },
+
+//       {
+//         _id: 129,
+//         href: "/dashboard/inventory-masterdata/product-attribute",
+//         label: "Product Attribute",
+//         index: 14,
+//       },
+//     ],
+//   },
+//   {
+//     _id: 3,
+//     alt: "Repair tracker",
+//     href: "/dashboard/repair-tracker",
+//     roleId: [1],
+//     label: "Repair tracker",
+//     iconSrc: tool,
+//     index: 3,
+//   },
+//   {
+//     _id: 13,
+//     alt: "Vendors",
+//     href: "/dashboard/vender",
+//     roleId: [1],
+//     label: "Vendor",
+//     iconSrc: vender,
+//     index: 9,
+//   },
+//   {
+//     _id: 14,
+//     alt: "Warehouses",
+//     href: "/dashboard/warehouses",
+//     roleId: [1],
+//     label: "Warehouses",
+//     iconSrc: warehouse,
+//     index: 10,
+//   },
+//   {
+//     _id: 4,
+//     alt: "Customers",
+//     href: "/dashboard/customers",
+//     roleId: [1],
+//     label: "Customers",
+//     iconSrc: usergroup,
+//     index: 4,
+//   },
+//   {
+//     _id: 5,
+//     alt: "Bookings",
+//     href: "/dashboard/bookings",
+//     roleId: [1],
+//     label: "Bookings",
+//     iconSrc: booking,
+//     index: 5,
+//   },
+//   {
+//     _id: 6,
+//     alt: "Staff management",
+//     href: "/dashboard/staff-management",
+//     roleId: [1],
+//     label: "Staff management",
+//     iconSrc: staffmanagement,
+//     index: 6,
+//   },
+//   {
+//     _id: 8,
+//     alt: "Technicians",
+//     href: "/dashboard/technicians-profile",
+//     roleId: [1],
+//     label: "Technicians Profile",
+//     iconSrc: box,
+//     index: 8,
+//   },
+//   {
+//     _id: 11,
+//     alt: "Vehicles",
+//     href: "/dashboard/vehicles",
+//     roleId: [1],
+//     label: "Vehicles",
+//     iconSrc: staffmanagement,
+//     index: 11,
+//   },
+
+//   {
+//     _id: 10,
+//     alt: "Ticket Master Data",
+//     href: "#",
+//     roleId: [1],
+//     label: "Ticket Master Data",
+//     iconSrc: ticket,
+//     index: 9,
+//     children: [
+//       {
+//         _id: 309,
+//         href: "/dashboard/ticket-masterdata/createTicket",
+//         label: "Create Ticket",
+//         index: 7,
+//       },
+//       {
+//         _id: 203,
+//         href: "/dashboard/ticket-masterdata/ticket-status",
+//         label: "Ticket Status",
+//         index: 1,
+//       },
+//       {
+//         _id: 204,
+//         href: "/dashboard/ticket-masterdata/department",
+//         label: "Department",
+//         index: 2,
+//       },
+//       {
+//         _id: 205,
+//         href: "/dashboard/ticket-masterdata/ticket-actions",
+//         label: "Ticket Actions",
+//         index: 3,
+//       },
+//       {
+//         _id: 306,
+//         href: "/dashboard/ticket-masterdata/ticket-type",
+//         label: "Ticket Type",
+//         index: 4,
+//       },
+
+//       {
+//         _id: 307,
+//         href: "/dashboard/ticket-masterdata/ticket-transition",
+//         label: "Ticket Transition",
+//         index: 5,
+//       },
+//       {
+//         _id: 308,
+//         href: "/dashboard/ticket-masterdata/ticketReferenceTypes",
+//         label: "Ticket Reference Types",
+//         index: 6,
+//       },
+//     ],
+//   },
+//   {
+//     _id: 7,
+//     alt: "Master data",
+//     href: "#",
+//     roleId: [1],
+//     label: "Master data",
+//     iconSrc: staffmanagement,
+//     index: 7,
+//     children: [
+//       {
+//         _id: 101,
+//         href: "/dashboard/vehiclebrands",
+//         label: "Vehicle Brands",
+//         index: 1,
+//       },
+//       {
+//         _id: 102,
+//         href: "/dashboard/vehiclemodals",
+//         label: "Vehicle Models",
+//         index: 2,
+//       },
+//       {
+//         _id: 103,
+//         href: "/dashboard/repairstatus",
+//         label: "Repair Status",
+//         index: 3,
+//       },
+//       { _id: 104, href: "/dashboard/services", label: "Services", index: 4 },
+//       {
+//         _id: 105,
+//         href: "/dashboard/subservices",
+//         label: "Sub Services",
+//         index: 5,
+//       },
+//       { _id: 106, href: "/dashboard/country", label: "Country", index: 6 },
+//       { _id: 107, href: "/dashboard/city", label: "City", index: 7 },
+//       {
+//         _id: 108,
+//         href: "/dashboard/source",
+//         label: "Customer Sources",
+//         index: 8,
+//       },
+//       { _id: 109, href: "/dashboard/addresses", label: "Addressess", index: 9 },
+//       {
+//         _id: 110,
+//         href: "/dashboard/technician-roles",
+//         label: "Technician Roles",
+//         index: 10,
+//       },
+//       {
+//         _id: 111,
+//         href: "/dashboard/services-request-type",
+//         label: "Services Request Type",
+//         index: 11,
+//       },
+//       {
+//         _id: 112,
+//         href: "/dashboard/priority-level",
+//         label: "Priority Level",
+//         index: 12,
+//       },
+//       {
+//         _id: 113,
+//         href: "/dashboard/service-zone",
+//         label: "Service Zone",
+//         index: 13,
+//       },
+//       {
+//         _id: 114,
+//         href: "/dashboard/job-type",
+//         label: "Job Type",
+//         index: 14,
+//       },
+//       {
+//         _id: 115,
+//         href: "/dashboard/document-type",
+//         label: "Document Type",
+//         index: 15,
+//       },
+//       {
+//         _id: 116,
+//         href: "/dashboard/business-types",
+//         label: "Business Type",
+//         index: 16,
+//       }
+//     ],
+//   },
+// ];
+
+// interface NavItem {
+//   label: string;
+//   href: string;
+//   icon: any;
+//   subItems?: NavItem[];
+// }
+
+// const navigation: NavItem[] = [
+//   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+//   { 
+//     name: 'Service Tickets', 
+//     href: '/tickets', 
+//     icon: ClipboardList,
+//     subItems: [
+//       { name: 'All Tickets', href: '/tickets', icon: List },
+//       { name: 'Create Ticket', href: '/tickets/create', icon: FilePlus },
+//       { name: 'Customer Invoice', href: '/invoices/create', icon: Receipt },
+//       { name: 'Invoice Management', href: '/invoices', icon: FileText },
+//       { name: 'Customers', href: '/customers', icon: Users }
+//     ]
+//   },
+//   { 
+//     name: 'Sales Management', 
+//     href: '/sales', 
+//     icon: ShoppingBag,
+//     subItems: [
+//       { name: 'All Orders', href: '/sales', icon: ShoppingBag },
+//       { name: 'Delivery Assignments', href: '/sales/delivery-assignments', icon: Truck }
+//     ]
+//   },
+//   { 
+//     name: 'Technicians', 
+//     href: '/technicians', 
+//     icon: UserCheck,
+//     subItems: [
+//       { name: 'Technician Dashboard', href: '/technicians/dashboard', icon: LayoutDashboard },
+//       { name: 'Technician Assignment', href: '/technicians', icon: Wrench },
+//       { name: 'Manage Technicians', href: '/technicians/manage', icon: UserCog },
+//       { name: 'Technician Jobs', href: '/technicians/jobs', icon: ClipboardCheck },
+//       { name: 'Technician Activities', href: '/technicians/activities', icon: Activity },
+//       { name: 'Record Activity', href: '/technicians/activity-form', icon: FilePlus }
+//     ]
+//   },
+//   { 
+//     name: 'Inventory System', 
+//     href: '/inventory', 
+//     icon: Box,
+//     subItems: [
+//       { name: 'Product Catalog', href: '/products/enhanced', icon: Package },
+//       { name: 'Product Registration', href: '/products/register', icon: FileText },
+//       { name: 'Product Listing', href: '/products/listing', icon: List },
+//       { name: 'Parts Inventory', href: '/parts', icon: Wrench },
+//       { name: 'Purchase Orders', href: '/inventory/purchase-orders', icon: ShoppingCart },
+//       { name: 'Goods Received Notes', href: '/inventory/goods-received', icon: PackageCheck },
+//       { name: 'Goods Return Notes', href: '/inventory/goods-return', icon: PackageX },
+//       { name: 'Marketplace Distribution', href: '/inventory/marketplace-distribution', icon: BarChart3 },
+//       { name: 'Marketplace Connections', href: '/inventory/marketplace-connections', icon: Store }
+//     ]
+//   },
+//   { name: 'Parts & Inventory', href: '/parts', icon: Wrench },
+//   { name: 'Reports', href: '/reports', icon: FileText },
+//   { 
+//     name: 'Delivery System', 
+//     href: '/delivery', 
+//     icon: Bike,
+//     subItems: [
+//       { name: 'Delivery Dashboard', href: '/delivery/dashboard', icon: LayoutDashboard },
+//       { name: 'Rider Management', href: '/delivery/rider-management', icon: Users },
+//       { name: 'Rider Approval', href: '/delivery/rider-approval', icon: UserCheck },
+//       { name: 'Rider Documents', href: '/delivery/rider-documents', icon: FileText },
+//       { name: 'Contract Management', href: '/delivery/contract-management', icon: FileCheck },
+//       { name: 'Wage Calculation', href: '/delivery/wage-calculation', icon: Wallet }
+//     ]
+//   },
+//   { 
+//     name: 'System Users', 
+//     href: '/system-users', 
+//     icon: Shield,
+//     subItems: [
+//       { name: 'All Users', href: '/system-users', icon: Users },
+//       { name: 'User Roles', href: '/system-users/roles', icon: Shield },
+//       { name: 'User Types', href: '/system-users/user-types', icon: UserCog },
+//       { name: 'Login History', href: '/system-users/login-history', icon: Activity },
+//       { name: 'Permissions', href: '/system-users/permissions', icon: Lock }
+//     ]
+//   },
+//   { 
+//     name: 'System Setup', 
+//     href: '/setup', 
+//     icon: Settings,
+//     subItems: [
+//       { name: 'Suppliers', href: '/setup/suppliers', icon: Building2 },
+//       { name: 'Customer Types', href: '/setup/customer-types', icon: Users },
+//       { name: 'Ticket Sources', href: '/setup/ticket-sources', icon: Tag },
+//       { name: 'Product Categories', href: '/setup/product-categories', icon: Tag },
+//       { name: 'Product Attributes', href: '/setup/product-attributes', icon: Settings },
+//       { name: 'Marketplace Setup', href: '/setup/marketplace-setup', icon: Store },
+//       { name: 'Payment Mode Setup', href: '/setup/payment-mode', icon: Wallet },
+//       { name: 'Courier Settings', href: '/setup/courier-settings', icon: Truck },
+//       { name: 'Delivery System', href: '/setup/delivery-system', icon: Bike }
+//     ]
+//   },
+// ];
