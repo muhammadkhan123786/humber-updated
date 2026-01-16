@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { X, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export default function VehicleDetails({
     vehicleId,
@@ -70,8 +71,9 @@ export default function VehicleDetails({
                             {/* Photo */}
                             <div className="w-full h-72 rounded-t-2xl overflow-hidden border-b border-gray-200 bg-gray-50">
                                 {vehicle.vehiclePhoto ? (
-                                    <img
+                                    <Image
                                         src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${vehicle.vehiclePhoto}`}
+                                        width={72}
                                         alt="Vehicle"
                                         className="w-full h-full object-cover object-top"
                                         onError={(e) => {
@@ -108,8 +110,8 @@ export default function VehicleDetails({
                                     </span>
                                     <span
                                         className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${vehicle.isActive
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-red-100 text-red-700"
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-red-100 text-red-700"
                                             }`}
                                     >
                                         {vehicle.isActive ? "Active" : "Inactive"}
