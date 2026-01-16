@@ -14,6 +14,7 @@ export const resolveBusinessAddressRefs = async (req: Request, res: Response, ne
             if (!country) {
                 country = await Country.create({
                     countryName: businessAddress.country,
+                    userId: req.body.userId
                 });
             }
 
@@ -29,6 +30,8 @@ export const resolveBusinessAddressRefs = async (req: Request, res: Response, ne
             if (!city) {
                 city = await CityModel.create({
                     cityName: businessAddress.city,
+                    countryId: businessAddress.country,
+                    userId: req.body.userId
                 });
             }
 
