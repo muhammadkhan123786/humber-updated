@@ -3,7 +3,13 @@ import { Card, CardContent } from '@/components/form/Card';
 import { motion } from 'framer-motion'
 import { LucideIcon } from 'lucide-react';
 import { ProductStats } from '../components/Interface';
-
+import { 
+  Package, 
+  CheckCircle, 
+  Box, 
+  AlertCircle, 
+  Star 
+} from 'lucide-react';
 interface StatCardProps {
   label: string;
   value: number;
@@ -38,12 +44,12 @@ interface ProductStatsProps {
 }
 
 const STAT_CONFIGS = [
-  { label: 'Total Products', color: 'from-indigo-500 to-purple-500', icon: 'Package' },
-  { label: 'Active', color: 'from-blue-500 to-cyan-500', icon: 'CheckCircle' },
-  { label: 'In Stock', color: 'from-emerald-500 to-green-500', icon: 'Box' },
-  { label: 'Low Stock', color: 'from-amber-500 to-orange-500', icon: 'AlertCircle' },
-  { label: 'Out of Stock', color: 'from-rose-500 to-red-600', icon: 'AlertCircle' },
-  { label: 'Featured', color: 'from-yellow-500 to-amber-500', icon: 'Star' }
+  { label: 'Total Products', color: 'from-indigo-500 to-purple-500', icon: Package },
+  { label: 'Active', color: 'from-blue-500 to-cyan-500', icon: CheckCircle },
+  { label: 'In Stock', color: 'from-emerald-500 to-green-500', icon: Box },
+  { label: 'Low Stock', color: 'from-amber-500 to-orange-500', icon: AlertCircle },
+  { label: 'Out of Stock', color: 'from-rose-500 to-red-600', icon: AlertCircle },
+  { label: 'Featured', color: 'from-yellow-500 to-amber-500', icon: Star }
 ] as const;
 
 // Import icons dynamically
@@ -62,14 +68,13 @@ export const ProductStatistics = ({ stats }: ProductStatsProps) => {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {STAT_CONFIGS.map((config, index) => {
-        const Icon = Icons[config.icon as keyof typeof Icons];
         return (
           <StatCard
             key={config.label}
             label={config.label}
             value={statValues[index]}
             color={config.color}
-            icon={Icon}
+            icon={config.icon}
             index={index}
           />
         );

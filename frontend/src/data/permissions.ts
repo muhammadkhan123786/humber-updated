@@ -1,13 +1,13 @@
-import { 
-  LayoutDashboard, 
-  Package, 
-  Wrench, 
-  Users, 
-  Calendar, 
-  Warehouse, 
-  Store, 
-  Ticket, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Package,
+  Wrench,
+  Users,
+  Calendar,
+  Warehouse,
+  Store,
+  Ticket,
+  Settings,
   Database,
   Truck,
   ClipboardList,
@@ -36,18 +36,13 @@ import {
   Scale,
   ListTree,
   UserCheck,
-  Tag
-} from 'lucide-react';
+  Tag,
+  CreditCard, // Added for Payment Method
+  HandCoins,   // Added for Pricing Agreement
+  Search,      // Added for Icons
+  RefreshCw    // Added for RMA
+} from "lucide-react";
 import { INavBarLinkSharedInterface } from "../../../common/INavBarLinkSharedInterface";
-
-interface NavItem {
-  _id: number;
-  name: string;
-  href: string;
-  icon: any;
-  roleId: number[];
-  subItems?: NavItem[];
-}
 
 export const navigation: INavBarLinkSharedInterface[] = [
   {
@@ -68,13 +63,15 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: 202, label: "Purchase Order", href: "/dashboard/inventory-dashboard/purchase-order", icon: ClipboardList, roleId: [1] },
       { _id: 203, label: "Inventory Overview", href: "/dashboard/inventory-dashboard/inventory-overview", icon: FileText, roleId: [1] },
       { _id: 204, label: "Orders Management", href: "/dashboard/inventory-dashboard/orders-management", icon: ShoppingCart, roleId: [1] },
-      { _id: 205, label: "Product Catalog", href: "/dashboard/inventory-dashboard/product-catalog", icon: Package, roleId: [1] },
-      { _id: 206, label: "Product", href: "/dashboard/inventory-dashboard/product", icon: Database, roleId: [1] },
-      { _id: 207, label: "Purchase Order", href: "/dashboard/inventory-dashboard/create-purchase-order", icon: FilePlus, roleId: [1] },
+      { _id: 205, label: "Product Catalog", href: "/dashboard/inventory-dashboard/product-catalog", icon: ListTree, roleId: [1] },
+      { _id: 206, label: "Product", href: "/dashboard/inventory-dashboard/product", icon: Package, roleId: [1] },
+      { _id: 207, label: "Create Purchase Order", href: "/dashboard/inventory-dashboard/create-purchase-order", icon: FilePlus, roleId: [1] },
       { _id: 208, label: "Reporting & Analytics", href: "/dashboard/inventory-dashboard/reporting-analytics", icon: BarChart3, roleId: [1] },
-      { _id: 209, label: "Process New RMA", href: "/dashboard/inventory-dashboard/rma", icon: History, roleId: [1] },
+      { _id: 209, label: "Process New RMA", href: "/dashboard/inventory-dashboard/rma", icon: RefreshCw, roleId: [1] },
       { _id: 210, label: "Stock Adjustment", href: "/dashboard/inventory-dashboard/stock", icon: Settings, roleId: [1] },
       { _id: 211, label: "Supplier Management", href: "/dashboard/inventory-dashboard/supplier", icon: Building2, roleId: [1] },
+      { _id: 212, label: "Marketplace Distribution", href: "/dashboard/inventory-dashboard/marketplace-distribution", icon: Globe, roleId: [1] },
+      { _id: 213, label: "Marketplace Connections", href: "/dashboard/inventory-dashboard/marketplace-connections", icon: Radio, roleId: [1] },
     ],
   },
   {
@@ -122,59 +119,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: 306, label: "Ticket Type", href: "/dashboard/ticket-masterdata/ticket-type", icon: Tag, roleId: [1] },
       { _id: 307, label: "Ticket Transition", href: "/dashboard/ticket-masterdata/ticket-transition", icon: Milestone, roleId: [1] },
       { _id: 308, label: "Ticket Reference Types", href: "/dashboard/ticket-masterdata/ticketReferenceTypes", icon: ClipboardList, roleId: [1] },
-    label: "Ticket Master Data",
-    iconSrc: ticket,
-    index: 9,
-    children: [
-      {
-        _id: 310,
-        href: "/dashboard/ticket-masterdata/allTickets",
-        label: "All Ticket",
-        index: 8,
-      },
-      {
-        _id: 309,
-        href: "/dashboard/ticket-masterdata/createTicket",
-        label: "Create Ticket",
-        index: 7,
-      },
-      {
-        _id: 203,
-        href: "/dashboard/ticket-masterdata/ticket-status",
-        label: "Ticket Status",
-        index: 1,
-      },
-      {
-        _id: 204,
-        href: "/dashboard/ticket-masterdata/department",
-        label: "Department",
-        index: 2,
-      },
-      {
-        _id: 205,
-        href: "/dashboard/ticket-masterdata/ticket-actions",
-        label: "Ticket Actions",
-        index: 3,
-      },
-      {
-        _id: 306,
-        href: "/dashboard/ticket-masterdata/ticket-type",
-        label: "Ticket Type",
-        index: 4,
-      },
-
-      {
-        _id: 307,
-        href: "/dashboard/ticket-masterdata/ticket-transition",
-        label: "Ticket Transition",
-        index: 5,
-      },
-      {
-        _id: 308,
-        href: "/dashboard/ticket-masterdata/ticketReferenceTypes",
-        label: "Ticket Reference Types",
-        index: 6,
-      },
+      { _id: 310, label: "All Tickets", href: "/dashboard/ticket-masterdata/allTickets", icon: ListTree, roleId: [1] },
     ],
   },
   {
@@ -200,116 +145,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: 114, label: "Job Type", href: "/dashboard/job-type", icon: Briefcase, roleId: [1] },
       { _id: 115, label: "Document Type", href: "/dashboard/document-type", icon: FileText, roleId: [1] },
       { _id: 116, label: "Business Type", href: "/dashboard/business-types", icon: Building2, roleId: [1] },
-    label: "Master data",
-    iconSrc: staffmanagement,
-    index: 7,
-    children: [
-      {
-        _id: 101,
-        href: "/dashboard/vehiclebrands",
-        label: "Vehicle Brands",
-        index: 1,
-      },
-      {
-        _id: 102,
-        href: "/dashboard/vehiclemodals",
-        label: "Vehicle Models",
-        index: 2,
-      },
-      {
-        _id: 103,
-        href: "/dashboard/repairstatus",
-        label: "Repair Status",
-        index: 3,
-      },
-      { _id: 104, href: "/dashboard/services", label: "Services", index: 4 },
-      {
-        _id: 105,
-        href: "/dashboard/subservices",
-        label: "Sub Services",
-        index: 5,
-      },
-      { _id: 106, href: "/dashboard/country", label: "Country", index: 6 },
-      { _id: 107, href: "/dashboard/city", label: "City", index: 7 },
-      {
-        _id: 108,
-        href: "/dashboard/source",
-        label: "Customer Sources",
-        index: 8,
-      },
-      { _id: 109, href: "/dashboard/addresses", label: "Addressess", index: 9 },
-      {
-        _id: 110,
-        href: "/dashboard/technician-roles",
-        label: "Technician Roles",
-        index: 10,
-      },
-      {
-        _id: 111,
-        href: "/dashboard/services-request-type",
-        label: "Services Request Type",
-        index: 11,
-      },
-      {
-        _id: 112,
-        href: "/dashboard/priority-level",
-        label: "Priority Level",
-        index: 12,
-      },
-      {
-        _id: 113,
-        href: "/dashboard/service-zone",
-        label: "Service Zone",
-        index: 13,
-      },
-      {
-        _id: 114,
-        href: "/dashboard/job-type",
-        label: "Job Type",
-        index: 14,
-      },
-      {
-        _id: 115,
-        href: "/dashboard/document-type",
-        label: "Document Type",
-        index: 15,
-      },
-      {
-        _id: 116,
-        href: "/dashboard/business-types",
-        label: "Business Type",
-        index: 16,
-      },
-      {
-        _id: 117,
-        href: "/dashboard/payment-method",
-        label: "Payment Method",
-        index: 17,
-      },
-      {
-        _id: 118,
-        href: "/dashboard/pricing-agreement",
-        label: "Pricing Agreement",
-        index: 18,
-      },
-      {
-        _id: 119,
-        href: "/dashboard/product-services",
-        label: "Product & Services",
-        index: 19,
-      },
-      {
-        _id: 120,
-        href: "/dashboard/icon",
-        label: "Icons",
-        index: 20,
-      }
+      { _id: 117, label: "Payment Method", href: "/dashboard/payment-method", icon: CreditCard, roleId: [1] },
+      { _id: 118, label: "Pricing Agreement", href: "/dashboard/pricing-agreement", icon: HandCoins, roleId: [1] },
+      { _id: 119, label: "Product & Services", href: "/dashboard/product-services", icon: ShoppingCart, roleId: [1] },
+      { _id: 120, label: "Icons", href: "/dashboard/icon", icon: Search, roleId: [1] },
     ],
   },
 ];
-
-
-
 
 // import { NavLinksInterface } from "@/types/NavLinksInterface";
 // import box from "../assets/box.svg";
@@ -323,14 +165,14 @@ export const navigation: INavBarLinkSharedInterface[] = [
 // import dash from "../assets/Icon.png";
 // import inventry from "../assets/Icon (1).png";
 
-// import { 
-//   LayoutDashboard, 
-//   Users, 
-//   Package, 
-//   Wrench, 
-//   Plus, 
-//   ClipboardCheck, 
-//   History, 
+// import {
+//   LayoutDashboard,
+//   Users,
+//   Package,
+//   Wrench,
+//   Plus,
+//   ClipboardCheck,
+//   History,
 //   FileText,
 //   Menu,
 //   X,
@@ -780,9 +622,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
 
 // const navigation: NavItem[] = [
 //   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-//   { 
-//     name: 'Service Tickets', 
-//     href: '/tickets', 
+//   {
+//     name: 'Service Tickets',
+//     href: '/tickets',
 //     icon: ClipboardList,
 //     subItems: [
 //       { name: 'All Tickets', href: '/tickets', icon: List },
@@ -792,18 +634,18 @@ export const navigation: INavBarLinkSharedInterface[] = [
 //       { name: 'Customers', href: '/customers', icon: Users }
 //     ]
 //   },
-//   { 
-//     name: 'Sales Management', 
-//     href: '/sales', 
+//   {
+//     name: 'Sales Management',
+//     href: '/sales',
 //     icon: ShoppingBag,
 //     subItems: [
 //       { name: 'All Orders', href: '/sales', icon: ShoppingBag },
 //       { name: 'Delivery Assignments', href: '/sales/delivery-assignments', icon: Truck }
 //     ]
 //   },
-//   { 
-//     name: 'Technicians', 
-//     href: '/technicians', 
+//   {
+//     name: 'Technicians',
+//     href: '/technicians',
 //     icon: UserCheck,
 //     subItems: [
 //       { name: 'Technician Dashboard', href: '/technicians/dashboard', icon: LayoutDashboard },
@@ -814,9 +656,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
 //       { name: 'Record Activity', href: '/technicians/activity-form', icon: FilePlus }
 //     ]
 //   },
-//   { 
-//     name: 'Inventory System', 
-//     href: '/inventory', 
+//   {
+//     name: 'Inventory System',
+//     href: '/inventory',
 //     icon: Box,
 //     subItems: [
 //       { name: 'Product Catalog', href: '/products/enhanced', icon: Package },
@@ -832,9 +674,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
 //   },
 //   { name: 'Parts & Inventory', href: '/parts', icon: Wrench },
 //   { name: 'Reports', href: '/reports', icon: FileText },
-//   { 
-//     name: 'Delivery System', 
-//     href: '/delivery', 
+//   {
+//     name: 'Delivery System',
+//     href: '/delivery',
 //     icon: Bike,
 //     subItems: [
 //       { name: 'Delivery Dashboard', href: '/delivery/dashboard', icon: LayoutDashboard },
@@ -845,9 +687,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
 //       { name: 'Wage Calculation', href: '/delivery/wage-calculation', icon: Wallet }
 //     ]
 //   },
-//   { 
-//     name: 'System Users', 
-//     href: '/system-users', 
+//   {
+//     name: 'System Users',
+//     href: '/system-users',
 //     icon: Shield,
 //     subItems: [
 //       { name: 'All Users', href: '/system-users', icon: Users },
@@ -857,9 +699,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
 //       { name: 'Permissions', href: '/system-users/permissions', icon: Lock }
 //     ]
 //   },
-//   { 
-//     name: 'System Setup', 
-//     href: '/setup', 
+//   {
+//     name: 'System Setup',
+//     href: '/setup',
 //     icon: Settings,
 //     subItems: [
 //       { name: 'Suppliers', href: '/setup/suppliers', icon: Building2 },
