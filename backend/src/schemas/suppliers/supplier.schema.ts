@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { commonSchemaValidation } from "../shared/common.schema";
+import { objectIdSchema } from "../../validators/objectId.schema";
 
 export const emailString = z.string().refine(
     (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
@@ -29,18 +30,20 @@ export const urlString = z.string().refine(
     { message: "Invalid URL" }
 );
 
+
+
 export const supplierSchemaValidation = z.object({
     supplierIdentification: z.object({
         legalBusinessName: z.string().min(1),
         tradingName: z.string().optional(),
         businessRegNumber: z.string().min(1),
         vat: z.string().optional(),
-        businessTypeId: z.string().min(1),
+        businessTypeId: objectIdSchema
     }),
 
     contactInformation: z.object({
         primaryContactName: z.string().min(1),
-        jobTitleId: z.string().min(1),
+        jobTitleId: objectIdSchema,
         phoneNumber: z.string().min(1),
         emailAddress: emailString.optional(),
         website: urlString.optional(),
@@ -49,9 +52,9 @@ export const supplierSchemaValidation = z.object({
     businessAddress: z.object({
         businessAddress: z.string().min(1),
         tradingAddress: z.string().optional(),
-        city: z.string().min(1),
+        city: objectIdSchema,
         state: z.string().min(1),
-        country: z.string().min(1),
+        country: objectIdSchema,
         zipCode: z.string().min(1),
     }),
 
@@ -59,8 +62,8 @@ export const supplierSchemaValidation = z.object({
         vatRegistered: z.boolean(),
         vatNumber: z.string().optional(),
         taxIdentificationNumber: z.string().min(1),
-        paymentCurrencyId: z.string().min(1),
-        paymentMethodId: z.string().min(1),
+        paymentCurrencyId: objectIdSchema,
+        paymentMethodId: objectIdSchema,
     }),
 
     bankPaymentDetails: z
@@ -75,15 +78,15 @@ export const supplierSchemaValidation = z.object({
         .optional(),
 
     productServices: z.object({
-        typeOfServiceId: z.string().min(1),
+        typeOfServiceId: objectIdSchema,
         productCategoryIds: z.array(z.string()).min(1),
         leadTimes: numericString,
         minimumOrderQuantity: numericString,
     }),
 
     commercialTerms: z.object({
-        paymentTermsId: z.string().min(1),
-        pricingAgreementId: z.string().min(1),
+        paymentTermsId: objectIdSchema,
+        pricingAgreementId: objectIdSchema,
         discountTerms: z.string().optional(),
         contractStartDate: isoDateString,
         contractEndDate: isoDateString.optional(),
