@@ -1,7 +1,4 @@
-import { NextFunction } from "express";
 import { Schema, model, Types, Model, Document } from "mongoose";
-import { CityModel } from "../city.models";
-import { Country } from "../country.models";
 import { commonSchema } from "../../schemas/shared/common.schema";
 import { ISupplier } from "../../../../common/suppliers/ISuppliers.interface";
 
@@ -91,62 +88,5 @@ export const SupplierSchema = new Schema<SupplierBaseDoc>(
     }
 );
 
-// Pre-save middleware
-SupplierSchema.pre("validate", async function (next: NextFunction) {
-    const doc = this as any;
-
-    // COUNTRY
-    if (doc.businessAddress?.country && typeof doc.businessAddress.country === "string") {
-        let country = await Country.findOne({ countryName: doc.businessAddress.country });
-        if (!country) {
-            country = await Country.create({ countryName: doc.businessAddress.country });
-        }
-        doc.businessAddress.country = country._id;
-    }
-
-    // CITY
-    if (doc.businessAddress?.city && typeof doc.businessAddress.city === "string") {
-        let city = await CityModel.findOne({ cityName: doc.businessAddress.city });
-        if (!city) {
-            city = await CityModel.create({ cityName: doc.businessAddress.city });
-        }
-        doc.businessAddress.city = city._id;
-    }
-
-    next();
-});
-
-// Pre-update middleware for findOneAndUpdate
-SupplierSchema.pre("findOneAndUpdate", async function (next: NextFunction) {
-    const update: any = this.getUpdate();
-
-    const address = update.businessAddress || update.$set?.businessAddress;
-    if (!address) return next();
-
-    if (typeof address.country === "string") {
-        let country = await Country.findOne({ countryName: address.country });
-        if (!country) {
-            country = await Country.create({ countryName: address.country });
-        }
-        address.country = country._id;
-    }
-
-    if (typeof address.city === "string") {
-        let city = await CityModel.findOne({ cityName: address.city });
-        if (!city) {
-            city = await CityModel.create({ cityName: address.city });
-        }
-        address.city = city._id;
-    }
-
-    if (update.$set?.businessAddress) {
-        update.$set.businessAddress = address;
-    } else {
-        update.businessAddress = address;
-    }
-
-    this.setUpdate(update);
-    next();
-});
 
 export const SupplierModel: Model<SupplierBaseDoc> = model<SupplierBaseDoc>("SupplierModel", SupplierSchema);
