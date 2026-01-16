@@ -51,7 +51,7 @@ const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor 
                 <button
                   onClick={() => {
                     if (item.isDefault) return alert("Default roles cannot be deleted.");
-                    onDelete(item._id);
+                    onDelete(item._id!);
                   }}
                   className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                 >
@@ -98,7 +98,7 @@ const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor 
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault) return alert("Default roles cannot be deleted.");
-                    onDelete(item._id);
+                    onDelete(item._id!);
                   }}
                 />
               </td>

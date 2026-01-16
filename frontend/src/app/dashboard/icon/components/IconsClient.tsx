@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Image as IconLib, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
-import StatsCards from "@/app/common-form/StatsCard"; 
+import StatsCards from "@/app/common-form/StatsCard";
 import IconsTable from "./IconsTable";
 import IconsForm from "./IconsForm";
 import Pagination from "@/components/ui/Pagination";
@@ -55,7 +55,7 @@ export default function IconsClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        
+
         {/* Header - Same Gradient as Business Type */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
@@ -75,7 +75,7 @@ export default function IconsClient() {
           </button>
         </div>
 
-        <StatsCards 
+        <StatsCards
           totalCount={dataList.length}
           activeCount={dataList.filter(d => d.isActive).length}
           inactiveCount={dataList.filter(d => !d.isActive).length}
@@ -104,14 +104,14 @@ export default function IconsClient() {
             </div>
 
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
-              <button 
-                onClick={() => setDisplayView("card")} 
+              <button
+                onClick={() => setDisplayView("card")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"}`}
               >
                 <Grid3x3 size={16} /><span className="hidden sm:inline text-sm">Grid</span>
               </button>
-              <button 
-                onClick={() => setDisplayView("table")} 
+              <button
+                onClick={() => setDisplayView("table")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"}`}
               >
                 <List size={16} /><span className="hidden sm:inline text-sm">Table</span>
@@ -129,16 +129,19 @@ export default function IconsClient() {
           )}
 
           {loading ? (
-             <div className="flex flex-col justify-center items-center py-20">
-               <Loader2 className="animate-spin text-blue-600" size={48} />
-               <p className="mt-4 text-gray-400 font-medium">Loading icons...</p>
-             </div>
+            <div className="flex flex-col justify-center items-center py-20">
+              <Loader2 className="animate-spin text-blue-600" size={48} />
+              <p className="mt-4 text-gray-400 font-medium">Loading icons...</p>
+            </div>
           ) : (
             <>
               <IconsTable
                 data={dataList}
                 displayView={displayView}
-                onEdit={(item) => { setEditingData(item); setShowForm(true); }}
+                onEdit={(item) => {
+                  setEditingData(item);
+                  setShowForm(true);
+                }}
                 onDelete={handleDelete}
                 themeColor={THEME_COLOR}
               />
