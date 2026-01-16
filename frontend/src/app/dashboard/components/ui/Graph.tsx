@@ -20,9 +20,8 @@ const data = [
 
 export default function Graph({ graphColor }: { graphColor: string }) {
   return (
-    <ResponsiveContainer width="50%" height="50%" className="-mt-10 ml-16">
+    <ResponsiveContainer width={400} height={250} className="-mt-10 ml-16">
       <LineChart data={data}>
-
         {/* Gradient */}
         <defs>
           <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
@@ -39,7 +38,6 @@ export default function Graph({ graphColor }: { graphColor: string }) {
           formatter={(value) => [`${value}`, "Value"]}
           labelFormatter={(label) => label}
         />
-
 
         {/* Gradient Area */}
         <Area
