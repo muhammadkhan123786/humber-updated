@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import ThemeProvider from '@/components/theme/ThemeProvider';
+import ThemeProvider from "@/components/theme/ThemeProvider";
+import { Theme } from "@radix-ui/themes";
+import "@radix-ui/themes/styles.css";
 
 import "./globals.css";
 import Modal from "@/components/ui/Modal";
@@ -24,8 +26,9 @@ export default function RootLayout({
           <Modal />
 
           {/* Your content */}
-
-          <ThemeProvider>{children}</ThemeProvider>
+          <Theme>
+            <ThemeProvider>{children}</ThemeProvider>
+          </Theme>
         </ModalProvider>
       </body>
     </html>

@@ -6,4 +6,7 @@ export interface INavBarLinkSharedInterface {
   roleId?: number[];
   index?: number;
   children?: INavBarLinkSharedInterface[];
+  icon?: any;
+   subItems?: INavBarLinkSharedInterface[];
+   className?: string
 }

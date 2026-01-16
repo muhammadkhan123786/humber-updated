@@ -10,6 +10,8 @@ import { getAlls, deleteItem } from "@/helper/apiHelper";
 import InventoryManagement from "./components/InventoryManagement";
 import { Product, ProductTable, TableColumn, PaginatedResponse } from "./components/Interface";
 import Super from "./components/Super"
+import ProductDashboard from "./components/ProductDashboard";
+import ProductListingPage from "./components/ProductListingPage";
 
 export default function CreateProductPage() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -146,9 +148,9 @@ const fetchProducts = async () => {
     //     onCancel={() => setIsDeleteModalOpen(false)}
     //   />
     // </div>
-    <div className="bg-[#d32424]">
-      data
-
+    <div>
+      {/* <ProductDashboard/> */}
+<ProductListingPage />
       {/* <Super /> */}
     </div>
   );
