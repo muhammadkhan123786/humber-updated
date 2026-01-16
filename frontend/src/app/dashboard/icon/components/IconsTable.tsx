@@ -80,6 +80,7 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
                   onEdit={() => onEdit(item)} 
                   onDelete={() => {
                     if (item.isDefault) return alert("Default icons cannot be deleted.");
+                    if(!item._id) return
                     onDelete(item._id);
                   }} 
                 />
