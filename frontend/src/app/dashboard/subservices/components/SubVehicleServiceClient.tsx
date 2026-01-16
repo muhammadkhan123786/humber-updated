@@ -12,7 +12,7 @@ import { ISubServicesInterface } from "../../../../../../common/ISubServices.int
 const THEME_COLOR = "var(--primary-gradient)";
 
 // Type definition ensuring _id exists
-type SubServiceWithId = ISubServicesInterface & { _id: string };
+type SubServiceWithId = ISubServicesInterface & { _id?: string };
 
 export default function SubServicesVehicleClient() {
   const [dataList, setDataList] = useState<SubServiceWithId[]>([]);

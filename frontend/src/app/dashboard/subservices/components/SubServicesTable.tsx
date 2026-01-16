@@ -89,7 +89,7 @@ const SubServicesTable = ({ data, displayView = "table", onEdit, onDelete, theme
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault) return alert("Default records cannot be deleted.");
-                    onDelete(item._id);
+                    onDelete(item._id!);
                   }}
                 />
               </td>
