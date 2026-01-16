@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { commonSchemaValidation } from "../shared/common.schema";
-import { objectIdSchema } from "../../validators/objectId.schema";
+import { objectIdOrStringSchema, objectIdSchema } from "../../validators/objectId.schema";
 
 export const emailString = z.string().refine(
     (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
@@ -52,9 +52,9 @@ export const supplierSchemaValidation = z.object({
     businessAddress: z.object({
         businessAddress: z.string().min(1),
         tradingAddress: z.string().optional(),
-        city: objectIdSchema,
+        city: objectIdOrStringSchema,
         state: z.string().min(1),
-        country: objectIdSchema,
+        country: objectIdOrStringSchema,
         zipCode: z.string().min(1),
     }),
 
