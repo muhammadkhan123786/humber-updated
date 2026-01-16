@@ -92,10 +92,10 @@ export const SupplierSchema = new Schema<SupplierBaseDoc>(
 );
 
 // Pre-save middleware
-SupplierSchema.pre("save", async function (next: NextFunction) {
+SupplierSchema.pre("validate", async function (next: NextFunction) {
     const doc = this as any;
 
-    // Handle Country
+    // COUNTRY
     if (doc.businessAddress?.country && typeof doc.businessAddress.country === "string") {
         let country = await Country.findOne({ countryName: doc.businessAddress.country });
         if (!country) {
@@ -104,7 +104,7 @@ SupplierSchema.pre("save", async function (next: NextFunction) {
         doc.businessAddress.country = country._id;
     }
 
-    // Handle City
+    // CITY
     if (doc.businessAddress?.city && typeof doc.businessAddress.city === "string") {
         let city = await CityModel.findOne({ cityName: doc.businessAddress.city });
         if (!city) {
@@ -120,20 +120,29 @@ SupplierSchema.pre("save", async function (next: NextFunction) {
 SupplierSchema.pre("findOneAndUpdate", async function (next: NextFunction) {
     const update: any = this.getUpdate();
 
-    if (update.businessAddress?.country && typeof update.businessAddress.country === "string") {
-        let country = await Country.findOne({ countryName: update.businessAddress.country });
+    const address = update.businessAddress || update.$set?.businessAddress;
+    if (!address) return next();
+
+    if (typeof address.country === "string") {
+        let country = await Country.findOne({ countryName: address.country });
         if (!country) {
-            country = await Country.create({ countryName: update.businessAddress.country });
+            country = await Country.create({ countryName: address.country });
         }
-        update.businessAddress.country = country._id;
+        address.country = country._id;
     }
 
-    if (update.businessAddress?.city && typeof update.businessAddress.city === "string") {
-        let city = await CityModel.findOne({ cityName: update.businessAddress.city });
+    if (typeof address.city === "string") {
+        let city = await CityModel.findOne({ cityName: address.city });
         if (!city) {
-            city = await CityModel.create({ cityName: update.businessAddress.city });
+            city = await CityModel.create({ cityName: address.city });
         }
-        update.businessAddress.city = city._id;
+        address.city = city._id;
+    }
+
+    if (update.$set?.businessAddress) {
+        update.$set.businessAddress = address;
+    } else {
+        update.businessAddress = address;
     }
 
     this.setUpdate(update);
