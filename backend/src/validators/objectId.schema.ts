@@ -6,3 +6,11 @@ export const objectIdSchema = z
     .refine((val) => mongoose.Types.ObjectId.isValid(val), {
         message: "Invalid ObjectId",
     });
+
+export const objectIdOrStringSchema = z.union([
+    z.string(),
+    z.custom<mongoose.Types.ObjectId>(
+        (val) => val instanceof mongoose.Types.ObjectId,
+        { message: "Invalid ObjectId" }
+    ),
+]);

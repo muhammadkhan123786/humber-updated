@@ -50,3 +50,54 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
 }
+
+
+
+
+
+// types/product.ts
+export interface Category {
+  id: string;
+  name: string;
+  level: number;
+  parentId?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  sku: string;
+  description: string;
+  categories: {
+    level1: Category;
+    level2: Category;
+    level3: Category;
+  };
+  price: number;
+  costPrice: number;
+  stockQuantity: number;
+  stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock';
+  weight: string;
+  dimensions: string;
+  manufacturer: string;
+  warranty: string;
+  rating: number;
+  totalReviews: number;
+  imageUrl?: string;
+  featured: boolean;
+  status: 'active' | 'inactive' | 'discontinued';
+  onHand: number;
+  reserved: number;
+  available: number;
+  reorderLevel: number;
+  reorderQuantity: number;
+}
+
+export interface ProductStats {
+  total: number;
+  active: number;
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
+  featured: number;
+}

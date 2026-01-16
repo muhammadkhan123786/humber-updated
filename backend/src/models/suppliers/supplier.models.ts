@@ -1,7 +1,12 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, model, Types, Model, Document } from "mongoose";
+import { commonSchema } from "../../schemas/shared/common.schema";
+import { ISupplier } from "../../../../common/suppliers/ISuppliers.interface";
 
 
-export const SupplierSchema = new Schema(
+export type SupplierBaseDoc = ISupplier<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId[], Types.ObjectId, Types.ObjectId> & Document;
+
+
+export const SupplierSchema = new Schema<SupplierBaseDoc>(
     {
         supplierIdentification: {
             legalBusinessName: { type: String, required: true },
@@ -47,7 +52,7 @@ export const SupplierSchema = new Schema(
 
         productServices: {
             typeOfServiceId: { type: Types.ObjectId, ref: "ProductServices", required: true },
-            productCategoryIds: [{ type: Types.ObjectId, ref: "ProductCategory" }],
+            productCategoryIds: [{ type: Types.ObjectId, ref: "Category" }],
             leadTimes: { type: Number, required: true },
             minimumOrderQuantity: { type: Number, required: true },
         },
@@ -75,11 +80,7 @@ export const SupplierSchema = new Schema(
             warrantyTerms: { type: String },
         },
 
-        common: {
-            isActive: { type: Boolean, default: true },
-            isDeleted: { type: Boolean, default: false },
-            isDefault: { type: Boolean, default: false },
-        },
+        ...commonSchema
     },
     {
         timestamps: true,
@@ -88,5 +89,4 @@ export const SupplierSchema = new Schema(
 );
 
 
-export const SupplierModel =
-    model("Supplier") || model("Supplier", SupplierSchema);
+export const SupplierModel: Model<SupplierBaseDoc> = model<SupplierBaseDoc>("SupplierModel", SupplierSchema);
