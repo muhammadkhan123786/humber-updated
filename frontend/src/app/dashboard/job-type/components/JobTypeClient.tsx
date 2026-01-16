@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Briefcase, Plus, Search, Loader2 } from "lucide-react";
+import { Briefcase, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
+// Import common components
+import StatsCards from "@/app/common-form/StatsCard"; 
 import JobTypeTable from "./JobTypeTable";
 import JobTypeForm from "./JobTypeForm";
 import Pagination from "@/components/ui/Pagination";
@@ -8,6 +10,8 @@ import { getAll, deleteItem } from "../../../../helper/apiHelper";
 import { IJobTypes } from "../../../../../../common/IJob.types.interface";
 
 const THEME_COLOR = "#FE6B1D";
+const THEME_GRADIENT = "bg-linear-to-r from-orange-500 via-red-500 to-pink-600";
+
 type JobTypeWithId = IJobTypes & { _id: string };
 
 export default function JobTypeClient() {
@@ -18,6 +22,7 @@ export default function JobTypeClient() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [displayView, setDisplayView] = useState<"table" | "card">("table");
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -56,34 +61,45 @@ export default function JobTypeClient() {
     }
   };
 
+  // Stats calculation
+  const totalCount = dataList.length;
+  const activeCount = dataList.filter((d) => d.isActive).length;
+  const inactiveCount = dataList.filter((d) => !d.isActive).length;
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1
-              className="text-3xl font-extrabold flex items-center gap-3"
-              style={{ color: THEME_COLOR }}
-            >
-              <Briefcase size={36} /> Job Types
-            </h1>
-            <p className="text-gray-500">
-              Define employment categories (e.g. Full-time, Remote)
-            </p>
+    <div className="min-h-screen p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className={`${THEME_GRADIENT} rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft`}>
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
+              <Briefcase size={32} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold">Job Types</h1>
+              <p className="text-orange-50 text-lg">Define employment categories (e.g. Full-time, Remote)</p>
+            </div>
           </div>
           <button
             onClick={() => {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95"
-            style={{ backgroundColor: THEME_COLOR }}
+            className="flex items-center gap-2 text-orange-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Job Type
           </button>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-200 transition-all">
+        {/* Stats Cards */}
+        <StatsCards 
+          totalCount={totalCount}
+          activeCount={activeCount}
+          inactiveCount={inactiveCount}
+        />
+
+        {/* Search Bar */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-orange-300 transition-all">
           <Search className="text-gray-400" size={20} />
           <input
             type="text"
@@ -94,45 +110,78 @@ export default function JobTypeClient() {
           />
         </div>
 
-        {showForm && (
-          <JobTypeForm
-            editingData={editingData}
-            onClose={() => setShowForm(false)}
-            onRefresh={() => fetchData(currentPage, searchTerm)}
-            themeColor={THEME_COLOR}
-          />
-        )}
+        <div className={`bg-white p-5 pt-9 border-t-4! border-[${THEME_COLOR}]! `}>
+          <div className="flex justify-between items-center mb-6">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold bg-linear-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                Job Categories
+              </h2>
+              <p className="text-sm text-gray-500">Configure employment status and default types</p>
+            </div>
 
-        {loading ? (
-          <div className="flex flex-col justify-center items-center py-20">
-            <Loader2
-              className="animate-spin"
-              style={{ color: THEME_COLOR }}
-              size={48}
-            />
+            <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
+              <button
+                onClick={() => setDisplayView("card")}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                  displayView === "card"
+                    ? "bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Grid3x3 size={16} />
+                <span className="hidden sm:inline text-sm">Grid</span>
+              </button>
+              <button
+                onClick={() => setDisplayView("table")}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                  displayView === "table"
+                    ? "bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <List size={16} />
+                <span className="hidden sm:inline text-sm">Table</span>
+              </button>
+            </div>
           </div>
-        ) : (
-          <>
-            <JobTypeTable
-              data={dataList}
-              onEdit={(item) => {
-                setEditingData(item);
-                setShowForm(true);
-              }}
-              onDelete={handleDelete}
+
+          {showForm && (
+            <JobTypeForm
+              editingData={editingData}
+              onClose={() => setShowForm(false)}
+              onRefresh={() => fetchData(currentPage, searchTerm)}
               themeColor={THEME_COLOR}
             />
-            {dataList.length > 0 && (
-              <div className="mt-6">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={(page) => fetchData(page, searchTerm)}
-                />
-              </div>
-            )}
-          </>
-        )}
+          )}
+
+          {loading ? (
+            <div className="flex flex-col justify-center items-center py-20">
+              <Loader2 className="animate-spin text-orange-600" size={48} />
+            </div>
+          ) : (
+            <>
+              <JobTypeTable
+                data={dataList}
+                displayView={displayView}
+                onEdit={(item) => {
+                  setEditingData(item);
+                  setShowForm(true);
+                }}
+                onDelete={handleDelete}
+                themeColor={THEME_COLOR}
+              />
+              {dataList.length > 0 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => fetchData(page, searchTerm)}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateTicketCode } from "../../utils/generateTicketCode";
+import { normalizeArrays } from "../../middleware/normalizeArrays";
 
 const repairVehicleUpload = createUploader([
   {
@@ -19,7 +20,13 @@ const repairVehicleUpload = createUploader([
   {
     name: "vehicleRepairVideo",
     maxCount: 1,
-    mimeTypes: ["video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/x-matroska"],
+    mimeTypes: [
+      "video/mp4",
+      "video/mpeg",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-matroska",
+    ],
   },
 ]);
 
@@ -31,7 +38,7 @@ const customerTicketServices = new GenericService<customerTicketBaseDoc>(
 
 const customerTicketBaseController = new AdvancedGenericController({
   service: customerTicketServices,
-  populate: ["userId"],
+  populate: ["userId", "assignedTechnicianId", "vehicleId"],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
@@ -40,6 +47,7 @@ customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
 customerTicketBaseRouter.post(
   "/",
+  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
   mapUploadedFilesToBody(),
   async (req: Request, res: Response, next: NextFunction) => {
@@ -48,13 +56,16 @@ customerTicketBaseRouter.post(
       console.log("[TICKET POST] req.files:", req.files);
       console.log("[TICKET POST] req.body keys:", Object.keys(req.body || {}));
       console.log("[TICKET POST] Full req.body:", req.body);
-      
+
       console.log(
         "[TICKET POST] Request body keys:",
         Object.keys(req.body || {})
       );
       console.log("[TICKET POST] Received ticketCode:", req.body?.ticketCode);
-      console.log("[TICKET POST] vehicleRepairImages:", req.body?.vehicleRepairImages);
+      console.log(
+        "[TICKET POST] vehicleRepairImages:",
+        req.body?.vehicleRepairImages
+      );
 
       // Ensure ticketCode exists - generate if not provided
       if (!req.body?.ticketCode) {
@@ -76,6 +87,7 @@ customerTicketBaseRouter.post(
 
 customerTicketBaseRouter.put(
   "/:id",
+  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
   mapUploadedFilesToBody(),
   customerTicketBaseController.update

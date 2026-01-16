@@ -11,7 +11,6 @@ import { FormButton } from "@/app/common-form/FormButton";
 import { createItem, updateItem } from "../../../../helper/apiHelper";
 import { IJobTypes } from "../../../../../../common/IJob.types.interface";
 
-// Strict validation to avoid "undefined vs boolean" errors
 const jobTypeSchemaValidation = z.object({
   jobTypeName: z.string().min(1, "Job type name is required."),
   isActive: z.boolean(),
@@ -27,12 +26,7 @@ interface Props {
   themeColor: string;
 }
 
-const JobTypeForm = ({
-  editingData,
-  onClose,
-  onRefresh,
-  themeColor,
-}: Props) => {
+const JobTypeForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   const {
     register,
     handleSubmit,
@@ -45,7 +39,6 @@ const JobTypeForm = ({
     defaultValues: { jobTypeName: "", isActive: true, isDefault: false },
   });
 
-  // Prevents stale UI warning from React Compiler
   const isDefaultValue = useWatch({ control, name: "isDefault" });
 
   useEffect(() => {
@@ -91,7 +84,7 @@ const JobTypeForm = ({
           error={errors.jobTypeName?.message}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           <Controller
             control={control}
             name="isActive"
@@ -122,10 +115,11 @@ const JobTypeForm = ({
 
         <FormButton
           type="submit"
-          label={editingData ? "Update Job Type" : "Save Job Type"}
+          label={editingData ? "Update Job Type" : "Create"}
           icon={<Save size={20} />}
           loading={isSubmitting}
           themeColor={themeColor}
+          onCancel={onClose}
         />
       </form>
     </FormModal>
