@@ -37,7 +37,7 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
                 Edit
               </button>
               <button 
-                onClick={() => !item.isDefault && onDelete(item._id)} 
+                onClick={() => !item.isDefault && item._id && onDelete(item._id)} 
                 className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg transition-all"
               >
                 <Trash2 size={20}/>
