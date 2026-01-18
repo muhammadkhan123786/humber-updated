@@ -39,8 +39,10 @@ import {
   Tag,
   CreditCard, // Added for Payment Method
   HandCoins,   // Added for Pricing Agreement
-  Search,      // Added for Icons
-  RefreshCw    // Added for RMA
+  Search,      
+  RefreshCw,
+  PackageX,
+  PackageCheck,  
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "../../../common/INavBarLinkSharedInterface";
 
@@ -52,26 +54,55 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: LayoutDashboard,
     roleId: [1, 2],
   },
+
+
   {
     _id: 2,
-    label: "Inventory",
+    label: "Service Tickets",
+    href: "#",
+    icon: Ticket,
+    roleId: [1],
+    subItems: [
+     
+      { _id: 310, label: "All Tickets", href: "/dashboard/ticket-masterdata/allTickets", icon: ListTree, roleId: [1] },
+      
+      { _id: 309, label: "Create Ticket", href: "/dashboard/ticket-masterdata/createTicket", icon: FilePlus, roleId: [1] },
+      { _id: 203, label: "Ticket Status", href: "/dashboard/ticket-masterdata/ticket-status", icon: Activity, roleId: [1] },
+      { _id: 204, label: "Department", href: "/dashboard/ticket-masterdata/department", icon: Building2, roleId: [1] },
+      { _id: 205, label: "Ticket Actions", href: "/dashboard/ticket-masterdata/ticket-actions", icon: Zap, roleId: [1] },
+      { _id: 306, label: "Ticket Type", href: "/dashboard/ticket-masterdata/ticket-type", icon: Tag, roleId: [1] },
+      { _id: 307, label: "Ticket Transition", href: "/dashboard/ticket-masterdata/ticket-transition", icon: Milestone, roleId: [1] },
+      { _id: 308, label: "Ticket Reference Types", href: "/dashboard/ticket-masterdata/ticketReferenceTypes", icon: ClipboardList, roleId: [1] },
+    ],
+  },
+  {
+    _id: 10,
+    label: "Inventory System",
     href: "#",
     icon: Boxes,
     roleId: [1],
     subItems: [
-      { _id: 201, label: "Inventory Dashboard", href: "/dashboard/inventory-dashboard/dashboard", icon: LayoutDashboard, roleId: [1] },
-      { _id: 202, label: "Purchase Order", href: "/dashboard/inventory-dashboard/purchase-order", icon: ClipboardList, roleId: [1] },
-      { _id: 203, label: "Inventory Overview", href: "/dashboard/inventory-dashboard/inventory-overview", icon: FileText, roleId: [1] },
-      { _id: 204, label: "Orders Management", href: "/dashboard/inventory-dashboard/orders-management", icon: ShoppingCart, roleId: [1] },
-      { _id: 205, label: "Product Catalog", href: "/dashboard/inventory-dashboard/product-catalog", icon: ListTree, roleId: [1] },
-      { _id: 206, label: "Product Listing", href: "/dashboard/inventory-dashboard/product", icon: Package, roleId: [1] },
-      { _id: 207, label: "Create Purchase Order", href: "/dashboard/inventory-dashboard/create-purchase-order", icon: FilePlus, roleId: [1] },
-      { _id: 208, label: "Reporting & Analytics", href: "/dashboard/inventory-dashboard/reporting-analytics", icon: BarChart3, roleId: [1] },
-      { _id: 209, label: "Process New RMA", href: "/dashboard/inventory-dashboard/rma", icon: RefreshCw, roleId: [1] },
-      { _id: 210, label: "Stock Adjustment", href: "/dashboard/inventory-dashboard/stock", icon: Settings, roleId: [1] },
-      { _id: 211, label: "Supplier Management", href: "/dashboard/inventory-dashboard/supplier", icon: Building2, roleId: [1] },
+      // { _id: 201, label: "Inventory Dashboard", href: "/dashboard/inventory-dashboard/dashboard", icon: LayoutDashboard, roleId: [1] },
+      // { _id: 202, label: "Purchase Order", href: "/dashboard/inventory-dashboard/purchase-order", icon: ClipboardList, roleId: [1] },
+      // { _id: 203, label: "Inventory Overview", href: "/dashboard/inventory-dashboard/inventory-overview", icon: FileText, roleId: [1] },
+      // { _id: 204, label: "Orders Management", href: "/dashboard/inventory-dashboard/orders-management", icon: ShoppingCart, roleId: [1] },      
+      { _id: 205, label: "Product Catalog", href: "/dashboard/inventory-dashboard/product-catalog", icon: ListTree, roleId: [1] },      
+      { _id: 206, label: "Product Registration", href: "/dashboard/inventory-dashboard/product-register", icon: FileText, roleId: [1] },
+      { _id: 207, label: "Product Listing", href: "/dashboard/inventory-dashboard/product", icon: Package, roleId: [1] },
+      { _id: 208, label: "Parts Inventory", href: "/dashboard/inventory-dashboard/parts", icon: Wrench, roleId: [1] },
+      { _id: 209, label: "Purchase Orders", href: "/dashboard/inventory-dashboard/product-Orders", icon: ShoppingCart, roleId: [1] },
+      { _id: 210, label: "Goods Received Notes", href: "/dashboard/inventory-dashboard/product-goods-received", icon: PackageX, roleId: [1] },
+      { _id: 211, label: "Goods Return Notes", href: "/dashboard/inventory-dashboard/product-goods-return", icon: PackageCheck, roleId: [1] },
       { _id: 212, label: "Marketplace Distribution", href: "/dashboard/inventory-dashboard/marketplace-distribution", icon: BarChart3, roleId: [1] },
       { _id: 213, label: "Marketplace Connections", href: "/dashboard/inventory-dashboard/marketplace-connections", icon: Store, roleId: [1] },
+
+      
+      
+      // { _id: 207, label: "Create Purchase Order", href: "/dashboard/inventory-dashboard/create-purchase-order", icon: FilePlus, roleId: [1] },
+      // { _id: 208, label: "Reporting & Analytics", href: "/dashboard/inventory-dashboard/reporting-analytics", icon: BarChart3, roleId: [1] },
+      // { _id: 209, label: "Process New RMA", href: "/dashboard/inventory-dashboard/rma", icon: RefreshCw, roleId: [1] },
+      // { _id: 210, label: "Stock Adjustment", href: "/dashboard/inventory-dashboard/stock", icon: Settings, roleId: [1] },
+      // { _id: 211, label: "Supplier Management", href: "/dashboard/inventory-dashboard/supplier", icon: Building2, roleId: [1] },
     ],
   },
   {
@@ -105,23 +136,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
   { _id: 6, label: "Staff management", href: "/dashboard/staff-management", icon: UserCog, roleId: [1] },
   { _id: 8, label: "Technicians Profile", href: "/dashboard/technicians-profile", icon: Briefcase, roleId: [1] },
   { _id: 11, label: "Vehicles", href: "/dashboard/vehicles", icon: Truck, roleId: [1] },
-  {
-    _id: 10,
-    label: "Ticket Master Data",
-    href: "#",
-    icon: Ticket,
-    roleId: [1],
-    subItems: [
-      { _id: 309, label: "Create Ticket", href: "/dashboard/ticket-masterdata/createTicket", icon: FilePlus, roleId: [1] },
-      { _id: 203, label: "Ticket Status", href: "/dashboard/ticket-masterdata/ticket-status", icon: Activity, roleId: [1] },
-      { _id: 204, label: "Department", href: "/dashboard/ticket-masterdata/department", icon: Building2, roleId: [1] },
-      { _id: 205, label: "Ticket Actions", href: "/dashboard/ticket-masterdata/ticket-actions", icon: Zap, roleId: [1] },
-      { _id: 306, label: "Ticket Type", href: "/dashboard/ticket-masterdata/ticket-type", icon: Tag, roleId: [1] },
-      { _id: 307, label: "Ticket Transition", href: "/dashboard/ticket-masterdata/ticket-transition", icon: Milestone, roleId: [1] },
-      { _id: 308, label: "Ticket Reference Types", href: "/dashboard/ticket-masterdata/ticketReferenceTypes", icon: ClipboardList, roleId: [1] },
-      { _id: 310, label: "All Tickets", href: "/dashboard/ticket-masterdata/allTickets", icon: ListTree, roleId: [1] },
-    ],
-  },
+  
   {
     _id: 7,
     label: "Master data",
@@ -151,7 +166,21 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: 120, label: "Icons", href: "/dashboard/icon", icon: Search, roleId: [1] },
     ],
   },
+
+  {
+    _id: 130,
+    label: "System Setup",
+    href: "#",
+    icon: Settings,
+    roleId: [1],
+    subItems: [
+      { _id: 101, label: "Marketplace Setup", href: "/dashboard/marketplace-setup", icon: Store, roleId: [1] },
+     
+    ],
+  },
 ];
+
+
 
 // import { NavLinksInterface } from "@/types/NavLinksInterface";
 // import box from "../assets/box.svg";
