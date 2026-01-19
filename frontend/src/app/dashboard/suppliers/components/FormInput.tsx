@@ -1,11 +1,15 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
 
+interface OptionObject {
+  label: string;
+  value: string | number;
+}
 interface FormFieldProps {
   label: string;
   type?: "text" | "email" | "number" | "date" | "select" | "textarea";
   placeholder?: string;
-  options?: string[];
+  options?: (string | OptionObject)[];
   defaultValue?: string;
   className?: string;
 }
@@ -25,9 +29,20 @@ const FormField: React.FC<FormFieldProps> = ({
         {type === "select" ? (
           <>
             <select className="form-input-style appearance-none cursor-pointer pr-10">
-              {options?.map((opt) => (
-                <option key={opt}>{opt}</option>
-              ))}
+              {options?.map((opt) => {
+                if (typeof opt === "string") {
+                  return (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  );
+                }
+                return (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                );
+              })}
             </select>
             <ChevronDown
               className="absolute right-4 top-1/2 -translate-y-1/2 text-[#667085] pointer-events-none"

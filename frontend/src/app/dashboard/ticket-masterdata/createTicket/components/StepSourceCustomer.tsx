@@ -9,13 +9,9 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-const StepSourceCustomer = ({
-  onNext,
-  form,
-  customers,
-  onRegisterClick,
-}: any) => {
+const StepSourceCustomer = ({ onNext, form, customers }: any) => {
   const selectedSource = form.watch("ticketSource");
   const selectedCustomerId = form.watch("customerId");
 
@@ -31,8 +27,13 @@ const StepSourceCustomer = ({
   ];
 
   const selectedCustomerData = customers.find(
-    (c: any) => c._id === selectedCustomerId
+    (c: any) => c._id === selectedCustomerId,
   );
+
+  const router = useRouter();
+  const onRegisterClick = () => {
+    router.push("/dashboard/customers");
+  };
 
   return (
     <div className="flex flex-col animate-in fade-in duration-500">
