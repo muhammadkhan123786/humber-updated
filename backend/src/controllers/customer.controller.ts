@@ -4,6 +4,85 @@ import { domesticCustomerSchema } from "../schemas/domestic.customer.schema";
 import { corporateCustomerValidationSchema } from "../schemas/corporate.customer.schema";
 import { Request, Response, NextFunction } from "express";
 
+//utlity functions 
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59);
+
+const startOfWeek = (d: Date) => {
+    const day = d.getDay() || 7; // Sunday = 7
+    const diff = d.getDate() - day + 1; // Monday
+    return startOfDay(new Date(d.setDate(diff)));
+};
+
+const endOfWeek = (d: Date) => {
+    const start = startOfWeek(new Date(d));
+    return endOfDay(new Date(start.setDate(start.getDate() + 6)));
+};
+
+const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+const endOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+
+const startOfYear = (d: Date) => new Date(d.getFullYear(), 0, 1);
+const endOfYear = (d: Date) => new Date(d.getFullYear(), 11, 31, 23, 59, 59);
+
+const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+
+const generateDailyPeriods = (start: Date, end: Date) => {
+    const days: string[] = [];
+    const current = new Date(start);
+
+    while (current <= end) {
+        days.push(toYMD(current));
+        current.setDate(current.getDate() + 1);
+    }
+    return days;
+};
+
+const generateMonthlyPeriods = (year: number) =>
+    Array.from({ length: 12 }, (_, i) =>
+        `${year}-${String(i + 1).padStart(2, "0")}`
+    );
+
+const generateWeeklyPeriods = (start: Date, end: Date) => {
+    const weeks: string[] = [];
+    const current = new Date(start);
+
+    while (current <= end) {
+        const year = current.getFullYear();
+
+        // week number of the year (0-53)
+        const onejan = new Date(year, 0, 1);
+        const weekNum = Math.floor(
+            ((current.getTime() - onejan.getTime()) / 86400000 + onejan.getDay() + 1) / 7
+        );
+
+        const period = `${year}-${String(weekNum).padStart(2, "0")}`;
+
+        if (!weeks.includes(period)) weeks.push(period);
+
+        // jump to next week
+        current.setDate(current.getDate() + 7);
+    }
+
+    return weeks;
+};
+
+
+const zeroFill = (periods: string[], data: any[]) => {
+    const map = new Map(
+        data.map((item) => [item.period, item])
+    );
+
+    return periods.map((p) => ({
+        period: p,
+        total: map.get(p)?.total ?? 0,
+        domestic: map.get(p)?.domestic ?? 0,
+        corporate: map.get(p)?.corporate ?? 0,
+    }));
+};
+
+
+
 
 
 const domesticServices = new GenericService<CustomerBaseDoc>(domesticCutomerSchema);
@@ -108,41 +187,66 @@ export const saveCustomer = async (
     }
 };
 
-
 export const getCustomerSummary = async (req: Request, res: Response) => {
     try {
-        console.log("Get Customer Summary");
+        const { filter, from, to } = req.query as {
+            filter?: "daily" | "weekly" | "monthly";
+            from?: string;
+            to?: string;
+        };
 
-        const { filter, from, to } = req.query as { filter?: string; from?: string; to?: string };
-
+        const now = new Date();
         const match: any = {};
 
-        // 1️⃣ Custom date range filter
+        let rangeStart!: Date;
+        let rangeEnd!: Date;
+
+        // 🔹 1. Custom range
         if (from && to) {
-            match.createdAt = {
-                $gte: new Date(from),
-                $lte: new Date(to),
-            };
+            rangeStart = new Date(from);
+            rangeEnd = new Date(to);
+            match.createdAt = { $gte: rangeStart, $lte: rangeEnd };
+        } else {
+            if (filter === "daily") {
+                rangeStart = startOfWeek(new Date(now));
+                rangeEnd = endOfWeek(new Date(now));
+            }
+
+            if (filter === "weekly") {
+                rangeStart = startOfMonth(now);
+                rangeEnd = endOfMonth(now);
+            }
+
+            if (filter === "monthly") {
+                rangeStart = startOfYear(now);
+                rangeEnd = endOfYear(now);
+            }
+
+            match.createdAt = { $gte: rangeStart, $lte: rangeEnd };
         }
 
-        // 2️⃣ Determine grouping key
-        let groupId: any = null;
+        // 🔹 2. Grouping key
+        let groupId: any;
+
         switch (filter) {
             case "daily":
                 groupId = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
                 break;
+
             case "weekly":
-                groupId = { $dateToString: { format: "%Y-%U", date: "$createdAt" } }; // %U = week number
+                groupId = { $dateToString: { format: "%Y-%U", date: "$createdAt" } };
                 break;
+
             case "monthly":
                 groupId = { $dateToString: { format: "%Y-%m", date: "$createdAt" } };
                 break;
+
             default:
                 groupId = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
         }
 
-        // 3️⃣ Aggregate with customerType counts
-        const summary = await CustomerBase.aggregate([
+        // 🔹 3. Mongo aggregation
+        const mongoResult = await CustomerBase.aggregate([
             { $match: match },
             {
                 $group: {
@@ -159,20 +263,38 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
             { $sort: { _id: 1 } },
         ]);
 
-        // 4️⃣ Format response
-        const formatted = summary.map((s) => ({
+        const formattedMongo = mongoResult.map((s) => ({
             period: s._id,
             total: s.total,
             domestic: s.domestic,
             corporate: s.corporate,
         }));
 
-        res.json(formatted);
+        // 🔹 4. Generate expected periods
+        let periods: string[] = [];
+
+        if (filter === "daily") {
+            periods = generateDailyPeriods(rangeStart, rangeEnd);
+        }
+
+        if (filter === "weekly") {
+            periods = generateWeeklyPeriods(rangeStart, rangeEnd);
+        }
+
+        if (filter === "monthly") {
+            periods = generateMonthlyPeriods(rangeStart.getFullYear());
+        }
+
+        // 🔹 5. Zero fill
+        const result = zeroFill(periods, formattedMongo);
+
+        res.json(result);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Something went wrong" });
     }
 };
+
 
 const percentage = (current: number, last: number) => {
     if (last === 0) {
