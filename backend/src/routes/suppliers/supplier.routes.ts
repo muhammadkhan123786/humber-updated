@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
 import {
   SupplierModel,
@@ -10,14 +10,16 @@ import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { resolveBusinessAddressRefs } from "../../middleware/resolveBusinessAddressRefs";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
+import { parseNestedFormData } from "../../middleware/parseFormDataJson";
 
 const supplierUploads = createUploader([
   {
-    name: "businessRegistrationCertificates",
+    name: "businessRegistrationCertificatesFile",
     maxCount: 1000,
-    mimeTypes: ["image/jpeg", "image/png"],
+    mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
   },
 ]);
+
 const SupplierRouters = Router();
 
 const SupplierServices = new GenericService<SupplierBaseDoc>(SupplierModel);
@@ -40,24 +42,53 @@ const SupplierController = new AdvancedGenericController({
   validationSchema: supplierSchemaValidation,
 });
 
+const supplierLogging = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    console.log("[SUPPLIER] ===== REQUEST RECEIVED =====");
+    console.log("[SUPPLIER] req.files:", JSON.stringify(req.files, null, 2));
+    console.log("[SUPPLIER] req.body keys:", Object.keys(req.body || {}));
+    console.log("[SUPPLIER] Headers:", req.headers["content-type"]);
+    next();
+  } catch (error) {
+    console.error("[SUPPLIER LOGGING ERROR]:", error);
+    next();
+  }
+};
 SupplierRouters.get("/", SupplierController.getAll);
 SupplierRouters.get("/:id", SupplierController.getById);
+
 SupplierRouters.post(
   "/",
   supplierUploads,
-  mapUploadedFilesToBody(),
+  parseNestedFormData,
+  mapUploadedFilesToBody("/uploads", {
+    businessRegistrationCertificatesFile:
+      "complianceDocumentation.businessRegistrationCertificates",
+  }),
+  supplierLogging,
   resolveBusinessAddressRefs,
-  normalizeArrays(["businessRegistrationCertificates"]),
+  normalizeArrays(["complianceDocumentation.businessRegistrationCertificates"]),
   SupplierController.create,
 );
+
 SupplierRouters.put(
   "/:id",
-  resolveBusinessAddressRefs,
-  normalizeArrays(["businessRegistrationCertificates"]),
   supplierUploads,
-  mapUploadedFilesToBody(),
+  parseNestedFormData,
+  mapUploadedFilesToBody("/uploads", {
+    businessRegistrationCertificatesFile:
+      "complianceDocumentation.businessRegistrationCertificates",
+  }),
+  supplierLogging,
+  resolveBusinessAddressRefs,
+  normalizeArrays(["complianceDocumentation.businessRegistrationCertificates"]),
   SupplierController.update,
 );
+
 SupplierRouters.delete("/:id", SupplierController.delete);
 
 export default SupplierRouters;
