@@ -145,7 +145,7 @@ const TicketListingPage = () => {
   };
   const handleDelete = async (id: string) => {
     const isConfirmed = window.confirm(
-      "Are you sure you want to delete this ticket? This action cannot be undone."
+      "Are you sure you want to delete this ticket? This action cannot be undone.",
     );
     if (isConfirmed) {
       try {
