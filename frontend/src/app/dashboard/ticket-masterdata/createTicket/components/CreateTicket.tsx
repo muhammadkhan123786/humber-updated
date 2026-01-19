@@ -35,6 +35,7 @@ const CreateTicket = ({
     vehicles,
     priorities,
     technicians,
+    statuses,
     setError,
     setSuccess,
     editingId,
@@ -189,6 +190,7 @@ const CreateTicket = ({
               priorities={priorities}
               technicians={technicians}
               customers={customers}
+              statuses={statuses}
               vehicles={vehicles}
               isUpdating={isUpdating}
               isLoading={isLoading}

@@ -74,7 +74,7 @@ export const useTicketForm = () => {
         vehicleRepairImages: ticket.vehicleRepairImages || [],
       });
     },
-    [form]
+    [form],
   );
 
   const clearEdit = () => {
@@ -129,8 +129,8 @@ export const useTicketForm = () => {
             const defaultStatus =
               statusData.find((s: any) =>
                 ["open", "pending", "new"].some((kw) =>
-                  s?.statusName?.toLowerCase()?.includes(kw)
-                )
+                  s?.statusName?.toLowerCase()?.includes(kw),
+                ),
               ) || statusData[0];
 
             if (defaultStatus?._id) {
@@ -188,7 +188,7 @@ export const useTicketForm = () => {
           submissionData,
           {
             headers: { ...getAuthHeader() },
-          }
+          },
         );
       } else {
         res = await axios.post(`${baseUrl}/customer-tickets`, submissionData, {
@@ -210,7 +210,7 @@ export const useTicketForm = () => {
       }
     } catch (err: any) {
       setError(
-        err.response?.data?.message || err.message || "Submission failed"
+        err.response?.data?.message || err.message || "Submission failed",
       );
     } finally {
       setIsLoading(false);
