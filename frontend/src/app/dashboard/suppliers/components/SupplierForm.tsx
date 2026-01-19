@@ -88,7 +88,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           priceRes,
         ] = await Promise.all([
           fetch(`${baseUrl}/business-types`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/job-types`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/job-titles`, { headers }).then((r) => r.json()),
           fetch(`${baseUrl}/city`, { headers }).then((r) => r.json()),
           fetch(`${baseUrl}/country`, { headers }).then((r) => r.json()),
           fetch(`${baseUrl}/currencies`, { headers }).then((r) => r.json()),
@@ -113,7 +113,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
             })) || [],
           jobTitles:
             jobRes.data?.map((i: any) => ({
-              label: i.jobTypeName || i.name,
+              label: i.jobTittleName || i.name,
               value: i._id,
             })) || [],
           cities:
@@ -148,12 +148,12 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
             })) || [],
           paymentTerms:
             termRes.data?.map((i: any) => ({
-              label: i.termName || i.name,
+              label: i.paymentTerm || i.name,
               value: i._id,
             })) || [],
           pricingAgreements:
             priceRes.data?.map((i: any) => ({
-              label: i.agreementName || i.name,
+              label: i.pricingAgreementName || i.name,
               value: i._id,
             })) || [],
         });
@@ -383,11 +383,13 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           <div className="space-y-6">
             <FormField
               label="Type of Products or Services *"
-              placeholder="e.g. Spare Parts"
+              type="select"
+              options={dropdowns.productServices}
             />
             <FormField
               label="Product Categories *"
-              placeholder="Select categories"
+              type="select"
+              options={dropdowns.categories}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
               <FormField
@@ -411,11 +413,15 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           theme="sky"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-            <FormField label="Payment Terms *" placeholder="e.g. Net 30" />
+            <FormField
+              label="Payment Terms *"
+              type="select"
+              options={dropdowns.paymentTerms}
+            />
             <FormField
               label="Pricing Agreement *"
               type="select"
-              options={["Fixed", "Variable"]}
+              options={dropdowns.pricingAgreements}
             />
             <FormField
               label="Discount Terms"
