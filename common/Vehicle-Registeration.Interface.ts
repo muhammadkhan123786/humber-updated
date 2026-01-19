@@ -6,7 +6,8 @@ export type VehicleType = "Scooter" | "Mobility Vehicle";
 export interface ICustomerVehicleRegInterface<
     TUserId = string,
     TVehicleBrandId = string,
-    TVehicleModelId = string
+    TVehicleModelId = string,
+
 > extends IBaseEntity<TUserId> {
 
     vehicleBrandId: TVehicleBrandId;
@@ -21,6 +22,7 @@ export interface ICustomerVehicleRegInterface<
     warrantyEndDate: Date;
 
     vehiclePhoto?: string;
+    vehiclePhotoFile?: File;
     note?: string;
 }
 

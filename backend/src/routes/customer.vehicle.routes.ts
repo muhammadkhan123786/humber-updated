@@ -7,7 +7,7 @@ import { createUploader } from "../config/multer";
 import { mapUploadedFilesToBody } from "../middleware/mapUploadedFiles";
 
 const vehicleUpload = createUploader([
-    { name: 'vehiclePhoto', maxCount: 1, mimeTypes: ['image/jpeg', 'image/png'] },
+    { name: 'vehiclePhotoFile', maxCount: 1, mimeTypes: ['image/jpeg', 'image/png'] },
 
 ]);
 
@@ -24,8 +24,12 @@ const customerVehicleController = new AdvancedGenericController({
 
 customerVehicleRouter.get("/", customerVehicleController.getAll);
 customerVehicleRouter.get("/:id", customerVehicleController.getById);
-customerVehicleRouter.post("/", vehicleUpload, mapUploadedFilesToBody(), customerVehicleController.create);
-customerVehicleRouter.put("/:id", vehicleUpload, mapUploadedFilesToBody(), customerVehicleController.update);
+customerVehicleRouter.post("/", vehicleUpload, mapUploadedFilesToBody("/uploads", {
+    vehiclePhotoFile: "vehiclePhoto"
+}), customerVehicleController.create);
+customerVehicleRouter.put("/:id", vehicleUpload, mapUploadedFilesToBody("/uploads", {
+    vehiclePhotoFile: "vehiclePhoto"
+}), customerVehicleController.update);
 customerVehicleRouter.delete("/:id", customerVehicleController.delete);
 
 export default customerVehicleRouter;

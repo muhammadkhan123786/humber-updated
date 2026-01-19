@@ -73,7 +73,7 @@ export default function VehicleDetails({
                                 {vehicle.vehiclePhoto ? (
                                     <Image
                                         src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${vehicle.vehiclePhoto}`}
-                                        width={72}
+                                        fill
                                         alt="Vehicle"
                                         className="w-full h-full object-cover object-top"
                                         onError={(e) => {

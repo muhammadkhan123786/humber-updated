@@ -240,6 +240,7 @@ export default function VehicleList({
                       <Image
                         src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${v.vehiclePhoto}`}
                         alt="Vehicle"
+                        fill
                         className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-300"
                         onError={(e) => { (e.target as any).src = "https://via.placeholder.com/300x200?text=No+Image"; }}
                       />
