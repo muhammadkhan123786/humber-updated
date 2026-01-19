@@ -10,6 +10,7 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: IBusinessTypes & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
@@ -24,7 +25,7 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   // Card View
   if (displayView === "card") {
     return (
@@ -41,7 +42,11 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }:
               </div>
               
               {/* Status Toggle Switch */}
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
             {/* Content Section */}
@@ -116,7 +121,11 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, themeColor }:
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
