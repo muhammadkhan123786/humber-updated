@@ -13,31 +13,24 @@ export default function VehicleIdentification({ formData, setFormData }: Props) 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Logic for Edit Mode Preview ---
   useEffect(() => {
     if (formData.vehiclePhoto) {
-      // 1. Check if it's a new upload (Base64)
       if (formData.vehiclePhoto.startsWith('data:')) {
         setImagePreview(formData.vehiclePhoto);
-      }
-      // 2. Check if it's already a full URL (External or already processed)
-      else if (formData.vehiclePhoto.startsWith('http')) {
+      } else if (formData.vehiclePhoto.startsWith('http')) {
         setImagePreview(formData.vehiclePhoto);
-      }
-      // 3. Backend path (e.g., uploads/image.jpg) - Combine with Base URL
-      else {
+      } else {
         const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || "";
-        // Ensure no double slashes
         const cleanPath = formData.vehiclePhoto.startsWith('/')
           ? formData.vehiclePhoto
           : `/${formData.vehiclePhoto}`;
-
         setImagePreview(`${baseUrl}${cleanPath}`);
       }
     } else {
       setImagePreview(null);
     }
   }, [formData.vehiclePhoto]);
+
 
   const handleBoxClick = () => {
     fileInputRef.current?.click();
@@ -47,15 +40,19 @@ export default function VehicleIdentification({ formData, setFormData }: Props) 
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const previewUrl = URL.createObjectURL(file);
-
-    setImagePreview(previewUrl);
-    setFormData({
-      ...formData,
-      vehiclePhoto: previewUrl,   // still string for preview
-      vehiclePhotoFile: file      // real file for upload
-    });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setImagePreview(base64); // preview
+      setFormData({
+        ...formData,
+        vehiclePhoto: base64,     // only for preview
+        vehiclePhotoFile: file,   // actual file for backend
+      });
+    };
+    reader.readAsDataURL(file); // important
   };
+
 
 
   const removeImage = (e: React.MouseEvent) => {
@@ -107,6 +104,8 @@ export default function VehicleIdentification({ formData, setFormData }: Props) 
               <Image
                 src={imagePreview}
                 alt="Vehicle Preview"
+                fill
+                unoptimized
                 className="absolute inset-0 w-full h-full object-contain p-2 bg-white group-hover:scale-110 transition-transform duration-300"
                 onError={(e) => {
                   (e.target as any).src = "https://via.placeholder.com/400x300?text=Image+Not+Found";

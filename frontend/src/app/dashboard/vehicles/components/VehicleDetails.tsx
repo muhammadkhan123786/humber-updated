@@ -73,8 +73,10 @@ export default function VehicleDetails({
                                 {vehicle.vehiclePhoto ? (
                                     <Image
                                         src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${vehicle.vehiclePhoto}`}
-                                        fill
                                         alt="Vehicle"
+                                        width={72}
+                                        height={72}
+                                        unoptimized
                                         className="w-full h-full object-cover object-top"
                                         onError={(e) => {
                                             (e.target as any).src =

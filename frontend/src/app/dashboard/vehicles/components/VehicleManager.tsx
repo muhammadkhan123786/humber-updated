@@ -41,7 +41,7 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
           const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          
+
           const data = res.data.data || res.data;
 
           setFormData({
@@ -93,14 +93,12 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
       data.append("warrantyEndDate", formatDate(formData.warrantyEndDate));
 
       // Image Handling
-      if (formData.vehiclePhoto && formData.vehiclePhoto.startsWith('data:image')) {
-        const response = await fetch(formData.vehiclePhoto);
-        const blob = await response.blob();
-        data.append("vehiclePhoto", blob, "vehicle_image.jpg");
+      if (formData.vehiclePhotoFile) {
+        data.append("vehiclePhotoFile", formData.vehiclePhotoFile);
       }
 
       const token = localStorage.getItem("token");
-      const apiEndpoint = editId 
+      const apiEndpoint = editId
         ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register`;
 
