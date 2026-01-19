@@ -12,6 +12,7 @@ import {
   Loader2,
   Edit3,
 } from "lucide-react";
+import { Activity } from "react";
 import { Controller } from "react-hook-form";
 
 const StepLocationPriority = ({
@@ -21,6 +22,7 @@ const StepLocationPriority = ({
   priorities,
   technicians,
   customers,
+  statuses,
   vehicles,
   isLoading,
   isUpdating,
@@ -149,6 +151,46 @@ const StepLocationPriority = ({
             </p>
           </section>
         )}
+
+        <section className="space-y-4">
+          <label className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+            Ticket Status *
+          </label>
+          <Controller
+            name="ticketStatusId"
+            control={control}
+            render={({ field }) => (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {statuses?.map((s: any) => {
+                  const isActive = field.value === s._id;
+                  return (
+                    <button
+                      key={s._id}
+                      type="button"
+                      onClick={() => field.onChange(s._id)}
+                      className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center ${
+                        isActive
+                          ? "bg-green-500 text-white border-transparent shadow-md"
+                          : "bg-white text-gray-600 border-gray-100 hover:border-green-200"
+                      }`}
+                    >
+                      <span className="font-bold text-[11px] uppercase tracking-wider">
+                        {s.label}
+                      </span>
+                      {isActive && <Check size={12} className="mt-1" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          />
+          {errors.ticketStatusId && (
+            <p className="text-red-500 text-xs font-bold mt-1">
+              ⚠️ Please select a Ticket Status
+            </p>
+          )}
+        </section>
+        <div className="my-3"></div>
         <section className="space-y-4">
           <label className="text-sm font-bold text-[#1E293B]">
             Urgency Level *
@@ -169,8 +211,8 @@ const StepLocationPriority = ({
                         isActive
                           ? "bg-[#FFA500] text-white border-transparent shadow-md"
                           : errors.priorityId
-                          ? "bg-white text-gray-600 border-red-300"
-                          : "bg-white text-gray-600 border-gray-100"
+                            ? "bg-white text-gray-600 border-red-300"
+                            : "bg-white text-gray-600 border-gray-100"
                       }`}
                     >
                       <p className="font-bold text-sm">
@@ -322,7 +364,7 @@ const StepLocationPriority = ({
               {
                 label: "Customer",
                 value: customers?.find(
-                  (c: any) => c._id === watch("customerId")
+                  (c: any) => c._id === watch("customerId"),
                 )?.personId?.firstName +
                   " " +
                   customers?.find((c: any) => c._id === watch("customerId"))
@@ -335,7 +377,7 @@ const StepLocationPriority = ({
               {
                 label: "Product / Vehicle",
                 value: vehicles?.find(
-                  (v: any) => v._id === watch("vehicleId")
+                  (v: any) => v._id === watch("vehicleId"),
                 ) ? (
                   `${
                     vehicles.find((v: any) => v._id === watch("vehicleId"))
@@ -357,7 +399,7 @@ const StepLocationPriority = ({
               {
                 label: "Urgency",
                 value: priorities?.find(
-                  (p: any) => p._id === watch("priorityId")
+                  (p: any) => p._id === watch("priorityId"),
                 )?.serviceRequestPrioprity || (
                   <span className="text-red-500 font-bold italic">
                     Required
