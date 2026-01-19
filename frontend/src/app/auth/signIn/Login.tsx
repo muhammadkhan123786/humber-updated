@@ -7,9 +7,8 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  ZapIcon,
-  HeadphonesIcon,
-  Award,
+  Zap,
+  CheckCircle,
   User
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,14 +29,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (email === '' || password === '') {
       alert('Please enter credentials.');
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -45,7 +44,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email, 
+          email: email,
           password: password,
         }),
       });
@@ -61,20 +60,20 @@ export default function LoginPage() {
       // Success Logic
       console.log('Login successful:', result);
       localStorage.setItem('user', JSON.stringify(result.user));
-      
+
       localStorage.setItem('email', email);
       localStorage.setItem('userId', result.user.id);
       if (result.user.role) {
-        if(result.user.role === 'Admin'){
-        localStorage.setItem('roleId', JSON.stringify(1));
+        if (result.user.role === 'Admin') {
+          localStorage.setItem('roleId', JSON.stringify(1));
+        }
+        else if (result.user.role === 'Technician') {
+          localStorage.setItem('roleId', JSON.stringify(2));
+        }
+        else if (result.user.role === 'Customer') {
+          localStorage.setItem('roleId', JSON.stringify(3));
+        }
       }
-        else if(result.user.role === 'Technician'){
-        localStorage.setItem('roleId', JSON.stringify(2));
-      }
-      else if(result.user.role === 'Customer'){
-        localStorage.setItem('roleId', JSON.stringify(3));
-      }
-     }
       if (result.token) {
         localStorage.setItem('token', result.token);
       }
@@ -97,112 +96,124 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-gray-50 to-gray-100">
       <div className="max-w-6xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex flex-col lg:flex-row">
 
-          {/* Left Section - Customer Hub */}
-          <div className="hidden md:block relative lg:w-1/2 bg-[#FE6B1D] text-white p-8 lg:p-12 overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#FFFFFF30] rounded-full pointer-events-none" />
-            <div className="absolute -bottom-3 -left-11 w-20 h-14 bg-[#FFFFFF20] rounded-full pointer-events-none" />
-
-            <div className="relative z-10 mt-16 flex flex-col h-full">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="p-2 bg-[#FFFFFF3B] rounded-xl">
-                  <User className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-[32px] font-semibold">Customer Hub</h1>
+          {/* Left Section - Humber Mobility */}
+          <div className="hidden md:flex flex-col justify-center md:w-1/2 p-8 lg:p-12  min-h-[600px] bg-linear-to-br from-gray-50 to-gray-100">
+            {/* Logo and Title Section */}
+            <div>
+              {/* Logo */}
+              <div className="mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-[#9810FA] to-[#4F39F6] flex items-center justify-center shadow-lg">
+                  <ShieldCheck className="w-8 h-8 text-white" />
                 </div>
               </div>
 
-              <div className="flex-1">
-                <p className="text-[32px] leading-8 font-semibold mb-8">
-                  Join Thousands of Satisfied Customers
-                </p>
+              {/* Title */}
+              <h1 className="text-4xl leading-11 font-bold mb-2 bg-linear-to-r from-[#9810FA] via-[#4f39f6] to-[#fd0083] bg-clip-text text-transparent">
+                Humber Mobility
+              </h1>
 
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-                      <ShieldCheck className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white text-lg">Secure & encrypted data protection</h3>
-                    </div>
-                  </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-                      <ZapIcon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white text-lg">Fast onboarding process</h3>
-                    </div>
-                  </div>
+              {/* Subtitle */}
+              <h2 className="text-xl text-gray-600 font-medium mb-6">
+                Service & Repair System
+              </h2>
 
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-                      <HeadphonesIcon className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white text-lg">24/7 dedicated customer support</h3>
-                    </div>
-                  </div>
+              {/* Paragraph Description */}
+              <p className="text-gray-600 text-sm leading-relaxed mb-12">
+                Complete workflow management for mobility scooter services
+              </p>
+            </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-[#FFFFFF3B] rounded-lg">
-                      <Award className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-white text-lg">Exclusive member rewards & offers</h3>
-                    </div>
+            {/* Features Section */}
+            <div className="space-y-6">
+              {/* Feature 1 */}
+              <div className="flex items-start gap-4">
+                <div className="shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#AD46FF] to-[#615FFF] flex items-center justify-center shadow-md">
+                    <ShieldCheck className="w-6 h-6 text-white" />
                   </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-lg">Secure role-based access control</h3>
+                </div>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="flex items-start gap-4">
+                <div className="shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#615FFF] to-[#2B7FFF] flex items-center justify-center shadow-md">
+                    <Zap className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-lg">Real-time service tracking</h3>
+                </div>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="flex items-start gap-4">
+                <div className="shrink-0">
+                  <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#2B7FFF] to-[#00B8DB] flex items-center justify-center shadow-md">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-lg">Comprehensive reporting</h3>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Right Section - Login Form */}
-          <div className="lg:w-1/2 p-8 lg:p-12">
-            <div className="max-w-md mx-auto">
-              <div className="text-left mb-10">
-                <h2 className="text-2xl font-bold text-gray-900">Login to your account</h2>
+          <div className="relative lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-[#9810FA] via-[#4F39F6] to-[#E60076]" />
+
+            <div className="max-w-md mx-auto w-full">
+              <div className="text-left mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                <p className="text-gray-600">Sign in to access your account</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Email Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4  text-[#FE6B1D]" />
-                      Email Address
-                    </div>
+                    Email Address
                   </label>
                   <div className="relative">
+                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
+                      <Mail className="w-5 h-5 text-gray-400" />
+                    </div>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full px-4 py-3 placeholder:text-[#A0AEC0A1]  bg-[#F6F6F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                      placeholder="Please enter email"
+                      className="block w-full pl-10 pr-4 py-3 placeholder:text-gray-400 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9810FA] focus:border-transparent transition"
+                      placeholder="you@example.com"
                       required
                     />
                   </div>
                 </div>
 
+                {/* Password Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-[#FE6B1D]" />
-                      Password
-                    </div>
+                    Password
                   </label>
                   <div className="relative">
+                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
+                      <Lock className="w-5 h-5 text-gray-400" />
+                    </div>
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full px-4 pr-10 py-3 placeholder:text-[#A0AEC0A1]  bg-[#F6F6F6] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE6B1D] focus:border-[#FE6B1D] transition"
-                      placeholder="Please enter password"
+                      className="block w-full pl-10 pr-10 py-3 placeholder:text-gray-400 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9810FA] focus:border-transparent transition"
+                      placeholder="••••••••"
                       required
                     />
                     <button
@@ -211,22 +222,23 @@ export default function LoginPage() {
                       className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     >
                       {showPassword ? (
-                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-[#FE6B1D]" />
+                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                       ) : (
-                        <Eye className="h-5 w-5 text-gray-400 hover:text-[#FE6B1D]" />
+                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                {/* Remember & Forgot */}
+                <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
                       id="remember"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4  text-[#FE6B1D] focus:ring-[#FE6B1D] border border-[#C0C9D4] rounded"
+                      className="h-4 w-4 rounded border-gray-300 text-[#9810FA] focus:ring-[#9810FA]"
                     />
                     <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
                       Remember me
@@ -234,16 +246,17 @@ export default function LoginPage() {
                   </div>
                   <Link
                     href="/auth/reset-password"
-                    className="text-sm font-medium text-[#FE6B1D] hover:text-[#e55a17] transition"
+                    className="text-sm font-medium text-[#9810FA] hover:text-[#7d0fa3] transition"
                   >
                     Forgot password?
                   </Link>
                 </div>
 
+                {/* Sign In Button with Gradient */}
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-[#FE6B1D] text-white font-semibold py-3 px-4 rounded-lg hover:bg-[#e55a17] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FE6B1D] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-linear-to-r from-[#9810FA] via-[#4F39F6] to-[#E60076] text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9810FA] transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
@@ -254,50 +267,123 @@ export default function LoginPage() {
                       Signing in...
                     </span>
                   ) : (
-                    'Sign In'
+                    <span className="flex items-center justify-center gap-2">
+                      <Lock className="w-5 h-5" />
+                      Sign In
+                    </span>
                   )}
                 </button>
               </form>
 
-              <div className="mt-8">
+              {/* Divider */}
+              <div className="mt-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white text-gray-500">or login with</span>
+                    <span className="px-2 bg-white text-gray-500">Or use demo account</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Demo Accounts Section */}
+              <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-semibold text-gray-900 mb-3">Demo Accounts:</p>
+                <div className="space-y-2">
+                  {/* Administrator */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Administrator</p>
+                      <p className="text-xs text-gray-600">admin@humber.com</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('admin@humber.com');
+                        setPassword('demo');
+                      }}
+                      className="px-3 py-1 text-xs font-semibold bg-linear-to-r from-[#9810FA] to-[#4F39F6] text-white rounded hover:shadow-md transition"
+                    >
+                      Demo
+                    </button>
+                  </div>
+
+                  {/* Service Manager */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Service Manager</p>
+                      <p className="text-xs text-gray-600">manager@humber.com</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('manager@humber.com');
+                        setPassword('demo');
+                      }}
+                      className="px-3 py-1 text-xs font-semibold bg-linear-to-r from-[#4F39F6] to-[#E60076] text-white rounded hover:shadow-md transition"
+                    >
+                      Demo
+                    </button>
+                  </div>
+
+                  {/* Technician */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">Technician</p>
+                      <p className="text-xs text-gray-600">tech@humber.com</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('tech@humber.com');
+                        setPassword('demo');
+                      }}
+                      className="px-3 py-1 text-xs font-semibold bg-linear-to-r from-[#E60076] to-[#9810FA] text-white rounded hover:shadow-md transition"
+                    >
+                      Demo
+                    </button>
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <button
-                    onClick={handleGoogleLogin}
-                    className="w-full inline-flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FE6B1D] transition"
-                  >
-                    <Image src={google} alt="Google" className="w-5 h-5" />
-                    Google
-                  </button>
+                {/* Demo Mode Notice */}
+                <p className="text-xs text-blue-700 mt-3 pt-3 border-t border-blue-200">
+                  💡 Demo Mode: Click any demo account above to quickly sign in and explore the system.
+                </p>
+              </div>
 
-                  <button
-                    onClick={handleAppleLogin}
-                    className="w-full inline-flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FE6B1D] transition"
-                  >
-                    <Image src={apple} alt="Apple" className="w-10" />
-                    Apple
-                  </button>
-                </div>
 
-                <div className="mt-8 text-center">
-                  <p className="text-sm text-gray-600">
-                    Don&apos;t have an account?{' '}
-                    <Link
-                      href="/auth/signUp"
-                      className="font-semibold text-[#FE6B1D] hover:text-[#e55a17] transition"
-                    >
-                      Get Started
-                    </Link>
-                  </p>
-                </div>
+
+              {/* Social Login */}
+              {/* <div className="mt-6 grid grid-cols-2 gap-3">
+                <button
+                  onClick={handleGoogleLogin}
+                  className="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9810FA] transition"
+                >
+                  <Image src={google} alt="Google" className="w-4 h-4" />
+                  Google
+                </button>
+
+                <button
+                  onClick={handleAppleLogin}
+                  className="w-full inline-flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9810FA] transition"
+                >
+                  <Image src={apple} alt="Apple" className="w-4 h-4" />
+                  Apple
+                </button>
+              </div> */}
+
+              {/* Sign Up Link */}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-gray-600">
+                  Don&apos;t have an account?{' '}
+                  <Link
+                    href="/auth/signUp"
+                    className="font-semibold text-[#9810FA] hover:text-[#7d0fa3] transition"
+                  >
+                    Get Started
+                  </Link>
+                </p>
               </div>
             </div>
           </div>

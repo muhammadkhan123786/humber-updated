@@ -7,12 +7,12 @@ export default function AuthLayout({children}:{children:ReactNode}){
         <>        
         {/* Your content */}
           <div className="flex flex-col justify-center items-center min-h-screen px-4">
-            <Image
+            {/* <Image
               src={onyxtech}
               alt="logo"
               className="mb-8 w-48 h-auto"
               loading="eager"
-            />
+            /> */}
             {children}
           </div>
         </>
