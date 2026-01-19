@@ -52,8 +52,11 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
             {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                   {item.businessTypeName}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </h3>
               </div>
 
