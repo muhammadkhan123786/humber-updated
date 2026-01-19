@@ -548,7 +548,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
         href: "/dashboard/job-title",
         icon: Briefcase,
         roleId: [1],
-      }
+      },
     ],
   },
 ];

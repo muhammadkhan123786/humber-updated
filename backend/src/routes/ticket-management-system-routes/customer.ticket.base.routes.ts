@@ -33,7 +33,7 @@ const repairVehicleUpload = createUploader([
 const customerTicketBaseRouter = Router();
 
 const customerTicketServices = new GenericService<customerTicketBaseDoc>(
-  customerTicketBase
+  customerTicketBase,
 );
 
 const customerTicketBaseController = new AdvancedGenericController({
@@ -47,10 +47,9 @@ customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
 customerTicketBaseRouter.post(
   "/",
-  normalizeArrays(["vehicleRepairImagesFile"]),
   repairVehicleUpload,
   mapUploadedFilesToBody("/uploads", {
-    vehicleRepairImagesFile: "vehicleRepairImages"
+    vehicleRepairImagesFile: "vehicleRepairImages",
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -61,15 +60,14 @@ customerTicketBaseRouter.post(
 
       console.log(
         "[TICKET POST] Request body keys:",
-        Object.keys(req.body || {})
+        Object.keys(req.body || {}),
       );
       console.log("[TICKET POST] Received ticketCode:", req.body?.ticketCode);
       console.log(
         "[TICKET POST] vehicleRepairImages:",
-        req.body?.vehicleRepairImages
+        req.body?.vehicleRepairImages,
       );
 
-      // Ensure ticketCode exists - generate if not provided
       if (!req.body?.ticketCode) {
         const code = await generateTicketCode();
         if (!req.body) req.body = {};
@@ -84,15 +82,17 @@ customerTicketBaseRouter.post(
         .json({ success: false, message: "Failed to generate ticket code" });
     }
   },
-  customerTicketBaseController.create
+  customerTicketBaseController.create,
 );
 
 customerTicketBaseRouter.put(
   "/:id",
-  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
-  mapUploadedFilesToBody(),
-  customerTicketBaseController.update
+  mapUploadedFilesToBody("/uploads", {
+    vehicleRepairImagesFile: "vehicleRepairImages",
+  }),
+  normalizeArrays(["vehicleRepairImages"]),
+  customerTicketBaseController.update,
 );
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
 
