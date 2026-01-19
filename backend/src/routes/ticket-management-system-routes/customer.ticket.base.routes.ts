@@ -13,7 +13,7 @@ import { normalizeArrays } from "../../middleware/normalizeArrays";
 
 const repairVehicleUpload = createUploader([
   {
-    name: "vehicleRepairImages",
+    name: "vehicleRepairImagesFile",
     maxCount: 1000,
     mimeTypes: ["image/jpeg", "image/png"],
   },
@@ -47,9 +47,11 @@ customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
 customerTicketBaseRouter.post(
   "/",
-  normalizeArrays(["vehicleRepairImages"]),
+  normalizeArrays(["vehicleRepairImagesFile"]),
   repairVehicleUpload,
-  mapUploadedFilesToBody(),
+  mapUploadedFilesToBody("/uploads", {
+    vehicleRepairImagesFile: "vehicleRepairImages"
+  }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       console.log("[TICKET POST] ===== REQUEST RECEIVED =====");
