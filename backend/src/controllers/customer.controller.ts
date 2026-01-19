@@ -173,3 +173,144 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Something went wrong" });
     }
 };
+
+const percentage = (current: number, last: number) => {
+    if (last === 0) {
+        if (current === 0) return 0;
+        return 100;
+    }
+    return Math.round(((current - last) / last) * 100);
+};
+
+
+export const getCustomerDashboardSummary = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const now = new Date();
+
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            0,
+            23,
+            59,
+            59
+        );
+
+        const result = await CustomerBase.aggregate([
+            {
+                $facet: {
+                    // 🔢 Current totals by type
+                    currentByType: [
+                        {
+                            $group: {
+                                _id: "$customerType",
+                                count: { $sum: 1 },
+                            },
+                        },
+                    ],
+
+                    // 🔢 Last month totals by type
+                    lastMonthByType: [
+                        {
+                            $match: {
+                                createdAt: {
+                                    $gte: startOfLastMonth,
+                                    $lte: endOfLastMonth,
+                                },
+                            },
+                        },
+                        {
+                            $group: {
+                                _id: "$customerType",
+                                count: { $sum: 1 },
+                            },
+                        },
+                    ],
+
+                    // 👤 Active customers (current)
+                    activeCurrent: [
+                        { $match: { isActive: true } },
+                        { $count: "count" },
+                    ],
+
+                    // 👤 Active customers (last month)
+                    activeLastMonth: [
+                        {
+                            $match: {
+                                isActive: true,
+                                createdAt: {
+                                    $gte: startOfLastMonth,
+                                    $lte: endOfLastMonth,
+                                },
+                            },
+                        },
+                        { $count: "count" },
+                    ],
+
+                    // 📦 Total current
+                    totalCurrent: [{ $count: "count" }],
+
+                    // 📦 Total last month
+                    totalLastMonth: [
+                        {
+                            $match: {
+                                createdAt: {
+                                    $gte: startOfLastMonth,
+                                    $lte: endOfLastMonth,
+                                },
+                            },
+                        },
+                        { $count: "count" },
+                    ],
+                },
+            },
+        ]);
+
+        const data = result[0];
+
+        const getTypeCount = (arr: any[], type: string) =>
+            arr.find((x) => x._id === type)?.count || 0;
+
+        const currentDomestic = getTypeCount(data.currentByType, "domestic");
+        const currentCorporate = getTypeCount(data.currentByType, "corporate");
+
+        const lastDomestic = getTypeCount(data.lastMonthByType, "domestic");
+        const lastCorporate = getTypeCount(data.lastMonthByType, "corporate");
+
+        const totalCurrent = data.totalCurrent[0]?.count || 0;
+        const totalLast = data.totalLastMonth[0]?.count || 0;
+
+        const activeCurrent = data.activeCurrent[0]?.count || 0;
+        const activeLast = data.activeLastMonth[0]?.count || 0;
+
+        res.json({
+            total: {
+                current: totalCurrent,
+                lastMonth: totalLast,
+                percentage: percentage(totalCurrent, totalLast),
+            },
+            domestic: {
+                current: currentDomestic,
+                lastMonth: lastDomestic,
+                percentage: percentage(currentDomestic, lastDomestic),
+            },
+            corporate: {
+                current: currentCorporate,
+                lastMonth: lastCorporate,
+                percentage: percentage(currentCorporate, lastCorporate),
+            },
+            active: {
+                current: activeCurrent,
+                lastMonth: activeLast,
+                percentage: percentage(activeCurrent, activeLast),
+            },
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Customer summary failed" });
+    }
+};

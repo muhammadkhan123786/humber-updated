@@ -3,7 +3,7 @@ import { GenericService } from "../services/generic.crud.services";
 import { CustomerBaseDoc, CustomerBase } from "../models/customer.models";
 import { baseCustomerZodSchema } from "../schemas/base.customer.schema";
 import { AdvancedGenericController } from "../controllers/GenericController";
-import { getCustomerSummary, saveCustomer } from "../controllers/customer.controller";
+import { getCustomerDashboardSummary, getCustomerSummary, saveCustomer } from "../controllers/customer.controller";
 import { genericProfileIdsMiddleware } from "../middleware/generic.profile.middleware";
 
 const CustomerBaseRouter = Router();
@@ -28,6 +28,7 @@ const customerProfileMiddleware = genericProfileIdsMiddleware<CustomerBaseDoc>({
 
 // Correct order:
 CustomerBaseRouter.get("/summary", getCustomerSummary);
+CustomerBaseRouter.get("/summary/dashboard", getCustomerDashboardSummary);
 CustomerBaseRouter.get("/", CustomerBaseController.getAll);
 CustomerBaseRouter.get("/:id", CustomerBaseController.getById);
 CustomerBaseRouter.post("/", customerProfileMiddleware, saveCustomer);
