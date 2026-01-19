@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ArrowLeft,
   Building2,
   User,
   MapPin,
   Landmark,
-  ChevronDown,
   CreditCard,
   Package,
   FileText,
@@ -17,6 +16,8 @@ import {
   Trash2,
   Plus,
 } from "lucide-react";
+import FormSection from "./FormSection";
+import FormField from "./FormInput";
 
 interface SupplierFormProps {
   editData?: any;
@@ -24,20 +25,37 @@ interface SupplierFormProps {
 }
 
 const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
-  const [documents, setDocuments] = useState([{ id: 1, title: "", path: "" }]);
+  const [documents, setDocuments] = useState([
+    { id: 1, file: null as File | null },
+  ]);
+  const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+  const addDocument = () =>
+    setDocuments([...documents, { id: Date.now(), file: null }]);
 
-  const addDocument = () => {
-    setDocuments([...documents, { id: Date.now(), title: "", path: "" }]);
+  const removeDocument = (id: number) =>
+    documents.length > 1 &&
+    setDocuments(documents.filter((doc) => doc.id !== id));
+
+  const handleTriggerUpload = (id: number) => {
+    fileInputRefs.current[id]?.click();
   };
-
-  const removeDocument = (id: number) => {
-    if (documents.length > 1) {
-      setDocuments(documents.filter((doc) => doc.id !== id));
+  const handleFileChange = (
+    id: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setDocuments((prev) =>
+        prev.map((doc) =>
+          doc.id === id ? { ...doc, file: selectedFile } : doc,
+        ),
+      );
     }
   };
+
   return (
     <div className="w-full min-h-screen bg-[#fcfcfd] pb-20">
-      <div className="relative w-full bg-linear-to-r from-[#6366f1] via-[#a855f7] to-[#ec4899] p-6 md:p-8  text-white shadow-xl mb-8">
+      <div className="relative w-full bg-linear-to-r from-[#6366f1] via-[#a855f7] to-[#ec4899] p-6 md:p-8 text-white shadow-xl mb-8">
         <div className="max-w-[1600px] mx-auto flex items-center gap-5">
           <button
             onClick={onBack}
@@ -53,218 +71,109 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               <div className="bg-white/20 p-2 rounded-lg">
                 <Building2 size={24} />
               </div>
-              {editData ? " update Supplier " : " Add New Supplier"}
+              {editData ? " Update Supplier " : " Add New Supplier"}
             </h1>
             <p className="opacity-80 text-xs md:text-sm font-medium mt-0.5">
-              {editData
-                ? " Complete all required fields to update supplier"
-                : " Complete all required fields to register a new supplier"}
+              Complete all required fields to {editData ? "update" : "register"}{" "}
+              a supplier
             </p>
           </div>
         </div>
       </div>
 
       <div className="max-w-[1600px] mx-auto px-4 md:px-8 space-y-8">
-        {/* --- SECTION 1: SUPPLIER IDENTIFICATION (Grid as per Image) --- */}
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-blue-50/40 border-b border-blue-50">
-            <Building2 size={18} className="text-blue-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-blue-700">
-              1. Supplier Identification
-            </h3>
+        <FormSection
+          number={1}
+          title="Supplier Identification"
+          icon={Building2}
+          theme="blue"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <FormField
+              label="Legal Business Name *"
+              placeholder="Enter legal name"
+              className="md:col-span-2"
+            />
+            <FormField
+              label="Trading Name (if different)"
+              placeholder="Enter trading name"
+            />
+            <FormField
+              label="Business Registration Number *"
+              placeholder="e.g. CRN-123456"
+            />
+            <FormField
+              label="VAT / Tax Registration Number"
+              placeholder="e.g. VAT-7890"
+            />
+            <FormField
+              label="Business Type *"
+              type="select"
+              options={["Limited Company", "Sole Trader", "Partnership"]}
+            />
           </div>
-
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="field-label">Legal Business Name *</label>
-              <input
-                type="text"
-                placeholder="Enter legal name"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Trading Name (if different)</label>
-              <input
-                type="text"
-                placeholder="Enter trading name"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">
-                Business Registration Number *
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. CRN-123456"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">
-                VAT / Tax Registration Number
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. VAT-7890"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Business Type *</label>
-              <div className="relative">
-                <select className="form-input-style appearance-none cursor-pointer">
-                  <option>Limited Company</option>
-                  <option>Sole Trader</option>
-                  <option>Partnership</option>
-                </select>
-                <ChevronDown
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  size={18}
-                />
-              </div>
-            </div>
+        </FormSection>
+        <FormSection
+          number={2}
+          title="Contact Information"
+          icon={User}
+          theme="purple"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <FormField
+              label="Primary Contact Name *"
+              placeholder="John Smith"
+            />
+            <FormField label="Job Title *" placeholder="Manager" />
+            <FormField label="Phone Number *" placeholder="+44 20 1234 5678" />
+            <FormField
+              label="Email Address *"
+              type="email"
+              placeholder="email@company.com"
+            />
+            <FormField
+              label="Website"
+              placeholder="https://www.website.com"
+              className="md:col-span-2"
+            />
           </div>
-        </div>
-
-        {/* --- SECTION 2: CONTACT INFORMATION (Grid as per Image) --- */}
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-purple-50/40 border-b border-purple-50">
-            <User size={18} className="text-purple-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-purple-700">
-              2. Contact Information
-            </h3>
+        </FormSection>
+        <FormSection
+          number={3}
+          title="Business Address"
+          icon={MapPin}
+          theme="green"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <FormField
+              label="Registered Address *"
+              placeholder="Street name"
+              className="md:col-span-2"
+            />
+            <FormField
+              label="Trading Address (if different)"
+              placeholder="Secondary location"
+              className="md:col-span-2"
+            />
+            <FormField label="City *" placeholder="e.g. London" />
+            <FormField
+              label="State / County *"
+              placeholder="e.g. Greater London"
+            />
+            <FormField
+              label="Postal / ZIP Code *"
+              placeholder="e.g. EC1A 1BB"
+            />
+            <FormField label="Country *" placeholder="United Kingdom" />
           </div>
-
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-            <div className="space-y-1.5">
-              <label className="field-label">Primary Contact Name *</label>
-              <input
-                type="text"
-                placeholder="John Smith"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Job Title *</label>
-              <input
-                type="text"
-                placeholder="Manager"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Phone Number *</label>
-              <input
-                type="text"
-                placeholder="+44 20 1234 5678"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Email Address *</label>
-              <input
-                type="email"
-                placeholder="email@company.com"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="field-label">Website</label>
-              <input
-                type="text"
-                placeholder="https://www.website.com"
-                className="form-input-style"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-[#f0fdf4] border-b border-[#dcfce7]">
-            <MapPin size={18} className="text-[#16a34a]" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-[#15803d]">
-              3. Business Address
-            </h3>
-          </div>
-
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="field-label">Registered Address *</label>
-              <input
-                type="text"
-                placeholder="Street name, Building number"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="field-label">
-                Trading Address (if different)
-              </label>
-              <input
-                type="text"
-                placeholder="Warehouse or secondary location"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">City *</label>
-              <input
-                type="text"
-                placeholder="e.g. London"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">State / County *</label>
-              <input
-                type="text"
-                placeholder="e.g. Greater London"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Postal / ZIP Code *</label>
-              <input
-                type="text"
-                placeholder="e.g. EC1A 1BB"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Country *</label>
-              <input
-                type="text"
-                placeholder="United Kingdom"
-                className="form-input-style"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-[#fff7ed] border-b border-[#ffedd5]">
-            <Landmark size={18} className="text-[#ea580c]" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-[#c2410c]">
-              4. Financial & Tax Information
-            </h3>
-          </div>
-
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+        </FormSection>
+        <FormSection
+          number={4}
+          title="Financial & Tax Information"
+          icon={Landmark}
+          theme="orange"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
             <div className="space-y-3">
               <label className="field-label">VAT Registered</label>
               <div className="flex gap-6 mt-1">
@@ -287,371 +196,248 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
                 </label>
               </div>
             </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">VAT Number</label>
-              <input
-                type="text"
-                placeholder="Enter VAT if applicable"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Tax Identification Number</label>
-              <input
-                type="text"
-                placeholder="Enter TIN"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Payment Currency *</label>
-              <input
-                type="text"
-                defaultValue="GBP"
-                className="form-input-style"
-              />
-            </div>
-
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="field-label">Preferred Payment Method *</label>
-              <div className="relative">
-                <select className="form-input-style appearance-none cursor-pointer">
-                  <option>Bank Transfer</option>
-                  <option>Credit Card</option>
-                  <option>PayPal</option>
-                  <option>Net 30</option>
-                </select>
-                <ChevronDown
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  size={18}
-                />
-              </div>
-            </div>
+            <FormField
+              label="VAT Number"
+              placeholder="Enter VAT if applicable"
+            />
+            <FormField
+              label="Tax Identification Number"
+              placeholder="Enter TIN"
+            />
+            <FormField label="Payment Currency *" defaultValue="GBP" />
+            <FormField
+              label="Preferred Payment Method *"
+              type="select"
+              options={["Bank Transfer", "Credit Card", "PayPal", "Net 30"]}
+              className="md:col-span-2"
+            />
           </div>
-        </div>
-        <div className="bg-white rounded-4xlshadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-red-50/40 border-b border-red-50">
-            <CreditCard size={18} className="text-red-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-red-700">
-              5. Bank / Payment Details
-            </h3>
-          </div>
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-            <div className="space-y-1.5">
-              <label className="field-label">Bank Name *</label>
-              <input
-                type="text"
-                placeholder="Enter bank name"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Account Holder Name *</label>
-              <input
-                type="text"
-                placeholder="Full name on account"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Account Number *</label>
-              <input
-                type="text"
-                placeholder="Enter account number"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">
-                Sort Code / Routing Number *
-              </label>
-              <input
-                type="text"
-                placeholder="00-00-00"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">
-                IBAN (for international payments)
-              </label>
-              <input
-                type="text"
-                placeholder="GB00 XXXX ..."
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">SWIFT / BIC Code</label>
-              <input
-                type="text"
-                placeholder="BIC Code"
-                className="form-input-style"
-              />
-            </div>
-          </div>
-        </div>
+        </FormSection>
 
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-indigo-50/40 border-b border-indigo-50">
-            <Package size={18} className="text-indigo-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-indigo-700">
-              6. Products / Services Supplied
-            </h3>
+        <FormSection
+          number={5}
+          title="Bank / Payment Details"
+          icon={CreditCard}
+          theme="red"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <FormField label="Bank Name *" placeholder="Enter bank name" />
+            <FormField
+              label="Account Holder Name *"
+              placeholder="Full name on account"
+            />
+            <FormField
+              label="Account Number *"
+              placeholder="Enter account number"
+            />
+            <FormField
+              label="Sort Code / Routing Number *"
+              placeholder="00-00-00"
+            />
+            <FormField
+              label="IBAN (for international payments)"
+              placeholder="GB00 XXXX ..."
+            />
+            <FormField label="SWIFT / BIC Code" placeholder="BIC Code" />
           </div>
-          <div className="p-8 space-y-6">
-            <div className="space-y-1.5">
-              <label className="field-label">
-                Type of Products or Services *
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Spare Parts"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Product Categories *</label>
-              <input
-                type="text"
-                placeholder="Select categories"
-                className="form-input-style"
-              />
-            </div>
+        </FormSection>
+
+        <FormSection
+          number={6}
+          title="Products / Services Supplied"
+          icon={Package}
+          theme="indigo"
+        >
+          <div className="space-y-6">
+            <FormField
+              label="Type of Products or Services *"
+              placeholder="e.g. Spare Parts"
+            />
+            <FormField
+              label="Product Categories *"
+              placeholder="Select categories"
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-              <div className="space-y-1.5">
-                <label className="field-label">Lead Time (days) *</label>
-                <input
-                  type="number"
-                  placeholder="5"
-                  className="form-input-style"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="field-label">Minimum Order Quantity</label>
-                <input
-                  type="text"
-                  placeholder="MOQ"
-                  className="form-input-style"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Service Coverage Area</label>
-              <input
-                type="text"
-                placeholder="Nationwide / Regional"
-                className="form-input-style"
+              <FormField
+                label="Lead Time (days) *"
+                type="number"
+                placeholder="5"
               />
+              <FormField label="Minimum Order Quantity" placeholder="MOQ" />
             </div>
+            <FormField
+              label="Service Coverage Area"
+              placeholder="Nationwide / Regional"
+            />
           </div>
-        </div>
+        </FormSection>
 
-        {/* --- SECTION 7: COMMERCIAL TERMS (Exact Picture Layout) --- */}
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-sky-50/40 border-b border-sky-50">
-            <FileText size={18} className="text-sky-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-sky-700">
-              7. Commercial Terms
-            </h3>
+        <FormSection
+          number={7}
+          title="Commercial Terms"
+          icon={FileText}
+          theme="sky"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <FormField label="Payment Terms *" placeholder="e.g. Net 30" />
+            <FormField
+              label="Pricing Agreement *"
+              type="select"
+              options={["Fixed", "Variable"]}
+            />
+            <FormField
+              label="Discount Terms"
+              placeholder="Volume based discount"
+              className="md:col-span-2"
+            />
+            <FormField label="Contract Start Date *" type="date" />
+            <FormField label="Contract End Date" type="date" />
           </div>
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-            <div className="space-y-1.5">
-              <label className="field-label">Payment Terms *</label>
-              <input
-                type="text"
-                placeholder="e.g. Net 30"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Pricing Agreement *</label>
-              <div className="relative">
-                <select className="form-input-style appearance-none cursor-pointer">
-                  <option>Fixed</option>
-                  <option>Variable</option>
-                </select>
-                <ChevronDown
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  size={18}
-                />
-              </div>
-            </div>
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="field-label">Discount Terms</label>
-              <input
-                type="text"
-                placeholder="Volume based discount"
-                className="form-input-style"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Contract Start Date *</label>
-              <input type="date" className="form-input-style" />
-            </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Contract End Date</label>
-              <input type="date" className="form-input-style" />
-            </div>
-          </div>
-        </div>
+        </FormSection>
 
-        {/* --- SECTION 8: COMPLIANCE & DOCUMENTATION --- */}
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="flex items-center gap-2.5 p-5 bg-teal-50/40 border-b border-teal-50">
-            <ShieldCheck size={18} className="text-teal-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-teal-700">
-              8. Compliance & Documentation
-            </h3>
-          </div>
+        <FormSection
+          number={8}
+          title="Compliance & Documentation"
+          icon={ShieldCheck}
+          theme="teal"
+        >
+          <div className="space-y-6">
+            <div className="space-y-4">
+              {documents.map((doc, index) => (
+                <div
+                  key={doc.id}
+                  className="p-4 border border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors animate-in fade-in slide-in-from-top-1 duration-200"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`p-3 rounded-xl border border-slate-200 shadow-sm transition-colors ${
+                          doc.file
+                            ? "bg-teal-500 text-white"
+                            : "bg-white text-teal-600"
+                        }`}
+                      >
+                        <Upload size={20} />
+                      </div>
+                      <div>
+                        <label className="field-label ml-0!">
+                          {index === 0
+                            ? "Business Registration Certificate"
+                            : `Additional Document ${index + 1}`}
+                        </label>
+                        <p className="text-[12px] text-slate-500 font-medium truncate max-w-[250px]">
+                          {doc.file
+                            ? `Selected: ${doc.file.name}`
+                            : "PDF, JPG or PNG (Max. 5MB)"}
+                        </p>
+                      </div>
+                    </div>
 
-          <div className="p-8 space-y-6">
-            {documents.map((doc, index) => (
-              <div
-                key={doc.id}
-                className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
-              >
-                <label className="field-label">
-                  {index === 0
-                    ? "Business Registration Certificate"
-                    : `Additional Document ${index + 1}`}
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="File path or URL"
-                    className="form-input-style flex-1"
-                  />
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        className="hidden"
+                        ref={(el) => {
+                          fileInputRefs.current[doc.id] = el;
+                        }}
+                        onChange={(e) => handleFileChange(doc.id, e)}
+                        accept=".pdf,.jpg,.jpeg,.png"
+                      />
 
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="p-3 bg-slate-100 rounded-xl hover:bg-teal-50 hover:text-teal-600 transition-colors border border-slate-200 shadow-sm"
-                    >
-                      <Upload size={18} />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={addDocument}
-                      className="p-3 bg-teal-600 rounded-xl hover:bg-teal-700 text-white transition-all shadow-md shadow-teal-100 active:scale-90"
-                    >
-                      <Plus size={18} />
-                    </button>
-
-                    {index > 0 && (
                       <button
                         type="button"
-                        onClick={() => removeDocument(doc.id)}
-                        className="p-3 bg-rose-50 rounded-xl hover:bg-rose-100 text-rose-500 transition-colors border border-rose-100"
+                        onClick={() => handleTriggerUpload(doc.id)}
+                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
                       >
-                        <Trash2 size={18} />
+                        {doc.file ? "Change File" : "Choose File"}
                       </button>
-                    )}
+
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeDocument(doc.id)}
+                          className="p-2.5 bg-rose-50 rounded-lg hover:bg-rose-100 text-rose-500 transition-colors border border-rose-100"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            <div className="h-px bg-slate-100 w-full my-2" />
-
-            {/* Insurance & Compliance Fields */}
-            <div className="space-y-6">
-              <div className="space-y-1.5">
-                <label className="field-label">Insurance Details</label>
-                <input
-                  type="text"
-                  placeholder="Public Liability, Professional Indemnity, etc."
-                  className="form-input-style"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-                <div className="space-y-1.5">
-                  <label className="field-label">Insurance Expiry Date</label>
-                  <input type="date" className="form-input-style" />
-                </div>
-                <div className="space-y-3">
-                  <label className="field-label">
-                    Health & Safety Compliance
-                  </label>
-                  <div className="flex items-center gap-8 h-[50px]">
-                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="hs_comp"
-                        className="w-4 h-4 accent-teal-600"
-                      />
-                      <span className="text-sm font-bold text-slate-600 group-hover:text-teal-700 transition-colors">
-                        Yes
-                      </span>
-                    </label>
-                    <label className="flex items-center gap-2.5 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="hs_comp"
-                        defaultChecked
-                        className="w-4 h-4 accent-teal-600"
-                      />
-                      <span className="text-sm font-bold text-slate-600 group-hover:text-teal-700 transition-colors">
-                        No
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="field-label">
-                  Quality Certifications (ISO, etc.)
-                </label>
-                <input type="text" className="form-input-style" />
-              </div>
+              <button
+                type="button"
+                onClick={addDocument}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-teal-600 bg-white rounded-xl hover:bg-teal-50 transition-all border border-dashed border-teal-200 w-full justify-center mt-2"
+              >
+                <Plus size={16} />
+                Add Another Document Requirement
+              </button>
             </div>
-          </div>
-        </div>
 
-        {/* --- SECTION 9: OPERATIONAL INFORMATION (Rose/Pink Theme) --- */}
-        <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden mb-6">
-          <div className="flex items-center gap-2.5 p-5 bg-rose-50/40 border-b border-rose-50">
-            <ClipboardList size={18} className="text-rose-600" />
-            <h3 className="text-[13px] font-black uppercase tracking-wider text-rose-700">
-              9. Operational Information
-            </h3>
-          </div>
-
-          <div className="p-8 space-y-6">
-            {/* Top Row: Split 50/50 */}
+            <div className="h-px bg-slate-100 w-full my-4" />
+            <FormField
+              label="Insurance Details"
+              placeholder="Public Liability, etc."
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
-              <div className="space-y-1.5">
-                <label className="field-label">Order Contact Name *</label>
-                <input type="text" className="form-input-style" />
+              <FormField label="Insurance Expiry Date" type="date" />
+              <div className="space-y-3">
+                <label className="field-label">
+                  Health & Safety Compliance
+                </label>
+                <div className="flex items-center gap-8 h-[50px]">
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="hs_comp"
+                      className="w-4 h-4 accent-teal-600"
+                    />
+                    <span className="text-sm font-bold text-slate-600 group-hover:text-teal-700 transition-colors">
+                      Yes
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2.5 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="hs_comp"
+                      defaultChecked
+                      className="w-4 h-4 accent-teal-600"
+                    />
+                    <span className="text-sm font-bold text-slate-600 group-hover:text-teal-700 transition-colors">
+                      No
+                    </span>
+                  </label>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="field-label">Order Contact Email *</label>
-                <input type="email" className="form-input-style" />
-              </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="field-label">Returns Policy</label>
-              <textarea
-                className="form-input-style min-h-[100px] py-4 resize-none"
-                placeholder="Enter details..."
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="field-label">Warranty Terms</label>
-              <textarea
-                className="form-input-style min-h-[100px] py-4 resize-none"
-                placeholder="Enter details..."
-              />
-            </div>
+            <FormField label="Quality Certifications (ISO, etc.)" />
           </div>
-        </div>
+        </FormSection>
+        <FormSection
+          number={9}
+          title="Operational Information"
+          icon={ClipboardList}
+          theme="rose"
+        >
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+              <FormField label="Order Contact Name *" />
+              <FormField label="Order Contact Email *" type="email" />
+            </div>
+            <FormField
+              label="Returns Policy"
+              type="textarea"
+              placeholder="Enter details..."
+            />
+            <FormField
+              label="Warranty Terms"
+              type="textarea"
+              placeholder="Enter details..."
+            />
+          </div>
+        </FormSection>
 
         <div className="flex items-center justify-end gap-4 mt-8 pb-10">
           <button
@@ -664,12 +450,11 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
             type="submit"
             className="px-10 py-3 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all text-sm active:scale-[0.98]"
           >
-            Add Supplier
+            {editData ? "Update Supplier" : "Add Supplier"}
           </button>
         </div>
       </div>
-
-      <style jsx>{`
+      <style jsx global>{`
         .field-label {
           display: block;
           font-size: 11px;
@@ -678,6 +463,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           text-transform: uppercase;
           letter-spacing: 0.05em;
           margin-left: 4px;
+          margin-bottom: 6px; /* Added spacing between label and input */
         }
         .form-input-style {
           width: 100%;
