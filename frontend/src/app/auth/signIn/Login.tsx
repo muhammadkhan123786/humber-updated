@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from 'react';
 import {
   Mail,
@@ -9,14 +8,14 @@ import {
   ShieldCheck,
   Zap,
   CheckCircle,
-  User
+  User,
+  CircleAlert
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-import google from '../../../assets/google.png';
-import apple from '../../../assets/apple.png';
+// import Image from 'next/image';
+// import google from '../../../assets/google.png';
+// import apple from '../../../assets/apple.png';
 import { useRouter } from 'next/navigation';
-
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -26,17 +25,13 @@ export default function LoginPage() {
   const router = useRouter();
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:4000/api';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (email === '' || password === '') {
       alert('Please enter credentials.');
       return;
     }
-
     setIsLoading(true);
-
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
@@ -48,19 +43,15 @@ export default function LoginPage() {
           password: password,
         }),
       });
-
       const result = await res.json();
       console.log('Login response:', result);
-
       if (!res.ok) {
         alert(result.message || 'Login failed. Please check your credentials.');
         return;
       }
-
       // Success Logic
       console.log('Login successful:', result);
       localStorage.setItem('user', JSON.stringify(result.user));
-
       localStorage.setItem('email', email);
       localStorage.setItem('userId', result.user.id);
       if (result.user.role) {
@@ -87,19 +78,18 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Google login clicked');
-  };
+  // const handleGoogleLogin = () => {
+  //   console.log('Google login clicked');
+  // };
 
-  const handleAppleLogin = () => {
-    console.log('Apple login clicked');
-  };
+  // const handleAppleLogin = () => {
+  //   console.log('Apple login clicked');
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-gray-50 to-gray-100">
-      <div className="max-w-6xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="max-w-7xl w-full bg-white rounded-2xl shadow-2xl shadow-black/20 overflow-hidden">
         <div className="flex flex-col lg:flex-row">
-
           {/* Left Section - Humber Mobility */}
           <div className="hidden md:flex flex-col justify-center md:w-1/2 p-8 lg:p-12  min-h-[600px] bg-linear-to-br from-gray-50 to-gray-100">
             {/* Logo and Title Section */}
@@ -131,50 +121,49 @@ export default function LoginPage() {
             {/* Features Section */}
             <div className="space-y-6">
               {/* Feature 1 */}
-              <div className="flex items-start gap-4">
-                <div className="shrink-0">
-                  <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#AD46FF] to-[#615FFF] flex items-center justify-center shadow-md">
-                    <ShieldCheck className="w-6 h-6 text-white" />
-                  </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-white/50 px-4 h-16 shadow-md">
+                {/* Icon */}
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-indigo-500 shadow-md">
+                  <ShieldCheck size={18} className="text-white" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">Secure role-based access control</h3>
-                </div>
+                {/* Text */}
+                <p className="text-base text-gray-700">
+                  Secure role-based access control
+                </p>
               </div>
-
               {/* Feature 2 */}
-              <div className="flex items-start gap-4">
-                <div className="shrink-0">
-                  <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#615FFF] to-[#2B7FFF] flex items-center justify-center shadow-md">
-                    <Zap className="w-6 h-6 text-white" />
-                  </div>
+              <div className="flex items-center gap-3 rounded-2xl bg-white/50 px-4 h-16 shadow-md">
+                {/* Icon */}
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-[#615FFF] to-[#2B7FFF] shadow-md">
+                  <Zap size={18} className="text-white" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">Real-time service tracking</h3>
+                {/* Text */}
+                <p className="text-base text-gray-700 font-medium">
+                  Real-time service tracking
+                </p>
+              </div>
+              {/* Feature 3 */}
+              <div className="flex items-center gap-3 rounded-2xl bg-white/50 px-4 h-16 shadow-md">
+                {/* Icon */}
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-[#2B7FFF] to-[#00B8DB] shadow-md">
+                  <CheckCircle size={18} className="text-white" />
                 </div>
+                {/* Text */}
+                <p className="text-base text-gray-700 font-medium">
+                  Comprehensive reporting
+                </p>
               </div>
 
-              {/* Feature 3 */}
-              <div className="flex items-start gap-4">
-                <div className="shrink-0">
-                  <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#2B7FFF] to-[#00B8DB] flex items-center justify-center shadow-md">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 text-lg">Comprehensive reporting</h3>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Right Section - Login Form */}
-          <div className="relative lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
+          <div className="relative lg:w-1/2 p-8 lg:p-6 lg:pt-10 flex flex-col justify-center shadow-2xl shadow-black/20">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-[#9810FA] via-[#4F39F6] to-[#E60076]" />
 
             <div className="max-w-md mx-auto w-full">
               <div className="text-left mb-8">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                <h2 className="text-2xl font-normal leading-8 text-indigo-950 mb-2">Welcome Back</h2>
                 <p className="text-gray-600">Sign in to access your account</p>
               </div>
 
@@ -192,7 +181,7 @@ export default function LoginPage() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3 placeholder:text-gray-400 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9810FA] focus:border-transparent transition"
+                      className="block w-full pl-10 pr-4 py-2 placeholder:text-gray-400 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9810FA] focus:border-transparent transition"
                       placeholder="you@example.com"
                       required
                     />
@@ -212,7 +201,7 @@ export default function LoginPage() {
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full pl-10 pr-10 py-3 placeholder:text-gray-400 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9810FA] focus:border-transparent transition"
+                      className="block w-full pl-10 pr-10 py-2 placeholder:text-gray-400 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#9810FA] focus:border-transparent transition"
                       placeholder="••••••••"
                       required
                     />
@@ -256,7 +245,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-linear-to-r from-[#9810FA] via-[#4F39F6] to-[#E60076] text-white font-semibold py-3 px-4 rounded-lg hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9810FA] transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+                  className="w-full bg-linear-to-r from-[#9810FA] via-[#4F39F6] to-[#E60076] text-white font-semibold py-2 px-4 rounded-lg hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9810FA] transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
@@ -276,7 +265,7 @@ export default function LoginPage() {
               </form>
 
               {/* Divider */}
-              <div className="mt-6">
+              <div className="mt-6 mb-6">
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-300"></div>
@@ -288,69 +277,76 @@ export default function LoginPage() {
               </div>
 
               {/* Demo Accounts Section */}
-              <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-semibold text-gray-900 mb-3">Demo Accounts:</p>
-                <div className="space-y-2">
-                  {/* Administrator */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">Administrator</p>
-                      <p className="text-xs text-gray-600">admin@humber.com</p>
+              <div className="flex flex-col gap-3">
+                {/* Card 1 */}
+                <div className="w-full h-16 flex items-center justify-between rounded-2xl border border-gray-200 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-indigo-500 shadow-md">
+                      <User size={16} className="text-white" />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail('admin@humber.com');
-                        setPassword('demo');
-                      }}
-                      className="px-3 py-1 text-xs font-semibold bg-linear-to-r from-[#9810FA] to-[#4F39F6] text-white rounded hover:shadow-md transition"
-                    >
-                      Demo
-                    </button>
+
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-sm font-medium text-gray-900">Administrator</span>
+                      <span className="text-xs text-gray-500">admin@humber.com</span>
+                    </div>
                   </div>
 
-                  {/* Service Manager */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">Service Manager</p>
-                      <p className="text-xs text-gray-600">manager@humber.com</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail('manager@humber.com');
-                        setPassword('demo');
-                      }}
-                      className="px-3 py-1 text-xs font-semibold bg-linear-to-r from-[#4F39F6] to-[#E60076] text-white rounded hover:shadow-md transition"
-                    >
-                      Demo
-                    </button>
-                  </div>
-
-                  {/* Technician */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">Technician</p>
-                      <p className="text-xs text-gray-600">tech@humber.com</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail('tech@humber.com');
-                        setPassword('demo');
-                      }}
-                      className="px-3 py-1 text-xs font-semibold bg-linear-to-r from-[#E60076] to-[#9810FA] text-white rounded hover:shadow-md transition"
-                    >
-                      Demo
-                    </button>
+                  <div className="px-2 py-0.5 text-xs rounded-full border border-purple-200 bg-purple-50 text-purple-700">
+                    Demo
                   </div>
                 </div>
 
-                {/* Demo Mode Notice */}
-                <p className="text-xs text-blue-700 mt-3 pt-3 border-t border-blue-200">
-                  💡 Demo Mode: Click any demo account above to quickly sign in and explore the system.
-                </p>
+                {/* Card 2 */}
+                <div className="w-full h-16 flex items-center justify-between rounded-2xl border border-gray-200 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-indigo-500 shadow-md">
+                      <User size={16} className="text-white" />
+                    </div>
+
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-sm font-medium text-gray-900">Service Manager</span>
+                      <span className="text-xs text-gray-500">manager@humber.com</span>
+                    </div>
+                  </div>
+
+                  <div className="px-2 py-0.5 text-xs rounded-full border border-purple-200 bg-purple-50 text-purple-700">
+                    Demo
+                  </div>
+                </div>
+
+                {/* Card 3 */}
+                <div className="w-full h-16 flex items-center justify-between rounded-2xl border border-gray-200 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 flex items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-indigo-500 shadow-md">
+                      <User size={16} className="text-white" />
+                    </div>
+
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-sm font-medium text-gray-900">Technician</span>
+                      <span className="text-xs text-gray-500">tech@humber.com</span>
+                    </div>
+                  </div>
+
+                  <div className="px-2 py-0.5 text-xs rounded-full border border-purple-200 bg-purple-50 text-purple-700">
+                    Demo
+                  </div>
+                </div>
+
+                {/* Info Banner */}
+                <div className="w-full rounded-2xl border border-blue-200 bg-linear-to-r from-blue-50 to-cyan-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <CircleAlert size={20} className="text-blue-600 mt-0.5" />
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-sm font-medium text-blue-900">Demo Mode</h4>
+                      <p className="text-xs text-blue-700 leading-relaxed">
+                        Click any demo account above to quickly sign in and explore the system.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
+
+
 
 
 
