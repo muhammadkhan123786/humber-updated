@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Building2,
@@ -52,6 +52,122 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
       );
     }
   };
+
+  const [dropdowns, setDropdowns] = useState({
+    businessTypes: [],
+    jobTitles: [],
+    cities: [],
+    countries: [],
+    currencies: [],
+    paymentMethods: [],
+    productServices: [],
+    categories: [],
+    paymentTerms: [],
+    pricingAgreements: [],
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchDropdownData = async () => {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+      try {
+        const [
+          bizRes,
+          jobRes,
+          cityRes,
+          countryRes,
+          currRes,
+          methRes,
+          servRes,
+          catRes,
+          termRes,
+          priceRes,
+        ] = await Promise.all([
+          fetch(`${baseUrl}/business-types`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/job-types`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/city`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/country`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/currencies`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/payment-method`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/product-services`, { headers }).then((r) =>
+            r.json(),
+          ),
+          fetch(`${baseUrl}/categories`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/payment-terms`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/pricing-agreement`, { headers }).then((r) =>
+            r.json(),
+          ),
+        ]);
+
+        if (!isMounted) return;
+
+        setDropdowns({
+          businessTypes:
+            bizRes.data?.map((i: any) => ({
+              label: i.businessTypeName,
+              value: i._id,
+            })) || [],
+          jobTitles:
+            jobRes.data?.map((i: any) => ({
+              label: i.jobTypeName || i.name,
+              value: i._id,
+            })) || [],
+          cities:
+            cityRes.data?.map((i: any) => ({
+              label: i.cityName || i.name,
+              value: i._id,
+            })) || [],
+          countries:
+            countryRes.data?.map((i: any) => ({
+              label: i.countryName || i.name,
+              value: i._id,
+            })) || [],
+          currencies:
+            currRes.data?.map((i: any) => ({
+              label: `${i.currencyName} (${i.currencySymbol})`,
+              value: i._id,
+            })) || [],
+          paymentMethods:
+            methRes.data?.map((i: any) => ({
+              label: i.paymentMethodName || i.name,
+              value: i._id,
+            })) || [],
+          productServices:
+            servRes.data?.map((i: any) => ({
+              label: i.productServicesName || i.name,
+              value: i._id,
+            })) || [],
+          categories:
+            catRes.data?.map((i: any) => ({
+              label: i.categoryName || i.name,
+              value: i._id,
+            })) || [],
+          paymentTerms:
+            termRes.data?.map((i: any) => ({
+              label: i.termName || i.name,
+              value: i._id,
+            })) || [],
+          pricingAgreements:
+            priceRes.data?.map((i: any) => ({
+              label: i.agreementName || i.name,
+              value: i._id,
+            })) || [],
+        });
+      } catch (err) {
+        console.error("Error fetching supplier dropdowns:", err);
+      }
+    };
+
+    fetchDropdownData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-[#fcfcfd] pb-20">
@@ -109,7 +225,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
             <FormField
               label="Business Type *"
               type="select"
-              options={["Limited Company", "Sole Trader", "Partnership"]}
+              options={dropdowns.businessTypes}
             />
           </div>
         </FormSection>
@@ -124,7 +240,11 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               label="Primary Contact Name *"
               placeholder="John Smith"
             />
-            <FormField label="Job Title *" placeholder="Manager" />
+            <FormField
+              label="Job Title *"
+              type="select"
+              options={dropdowns.jobTitles}
+            />
             <FormField label="Phone Number *" placeholder="+44 20 1234 5678" />
             <FormField
               label="Email Address *"
@@ -155,7 +275,11 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               placeholder="Secondary location"
               className="md:col-span-2"
             />
-            <FormField label="City *" placeholder="e.g. London" />
+            <FormField
+              label="City *"
+              type="select"
+              options={dropdowns.cities}
+            />
             <FormField
               label="State / County *"
               placeholder="e.g. Greater London"
@@ -164,7 +288,11 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               label="Postal / ZIP Code *"
               placeholder="e.g. EC1A 1BB"
             />
-            <FormField label="Country *" placeholder="United Kingdom" />
+            <FormField
+              label="Country *"
+              type="select"
+              options={dropdowns.countries}
+            />
           </div>
         </FormSection>
         <FormSection
@@ -204,11 +332,15 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               label="Tax Identification Number"
               placeholder="Enter TIN"
             />
-            <FormField label="Payment Currency *" defaultValue="GBP" />
+            <FormField
+              label="Payment Currency *"
+              type="select"
+              options={dropdowns.currencies}
+            />
             <FormField
               label="Preferred Payment Method *"
               type="select"
-              options={["Bank Transfer", "Credit Card", "PayPal", "Net 30"]}
+              options={dropdowns.paymentMethods}
               className="md:col-span-2"
             />
           </div>
