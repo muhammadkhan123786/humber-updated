@@ -1,35 +1,28 @@
 import { Request, Response, NextFunction } from "express";
-
-export const mapUploadedFilesToBody = (basePath = "/uploads") => {
+export const mapUploadedFilesToBody = (
+  basePath = "/uploads",
+  aliases: Record<string, string> = {}
+) => {
   return (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-      // No uploaded files, leave req.body as-is
-      return next();
-    }
-
-    const filesArray = req.files as Express.Multer.File[];
+    if (!req.files || !Array.isArray(req.files)) return next();
 
     const filesByField: Record<string, Express.Multer.File[]> = {};
 
-    // Group files by fieldname
-    filesArray.forEach((file) => {
-      if (!filesByField[file.fieldname]) {
-        filesByField[file.fieldname] = [];
+    req.files.forEach((file) => {
+      const targetField = aliases[file.fieldname] ?? file.fieldname;
+
+      if (!filesByField[targetField]) {
+        filesByField[targetField] = [];
       }
-      filesByField[file.fieldname].push(file);
+      filesByField[targetField].push(file);
     });
 
-    // Map dynamically
     Object.entries(filesByField).forEach(([field, fileList]) => {
-      const paths = fileList.map((file) => `${basePath}/${file.filename}`);
+      const paths = fileList.map(
+        (file) => `${basePath}/${file.filename}`
+      );
 
-      if (fileList.length === 1) {
-        // single file → string
-        req.body[field] = paths[0];
-      } else {
-        // multiple files → array
-        req.body[field] = paths;
-      }
+      req.body[field] = fileList.length === 1 ? paths[0] : paths;
     });
 
     next();
