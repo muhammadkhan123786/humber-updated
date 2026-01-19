@@ -17,6 +17,7 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    console.log(files);
     const imageFiles = files.filter((f) => f.type.startsWith("image/"));
 
     if (imageFiles.length > 0) {

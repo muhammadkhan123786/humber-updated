@@ -1,5 +1,5 @@
 import { GenericService } from "../services/generic.crud.services";
-import { CustomerBaseDoc, domesticCutomerSchema, corporateCustomerSchema } from "../models/customer.models";
+import { CustomerBaseDoc, domesticCutomerSchema, corporateCustomerSchema, CustomerBase } from "../models/customer.models";
 import { domesticCustomerSchema } from "../schemas/domestic.customer.schema";
 import { corporateCustomerValidationSchema } from "../schemas/corporate.customer.schema";
 import { Request, Response, NextFunction } from "express";
@@ -109,5 +109,67 @@ export const saveCustomer = async (
 };
 
 
+export const getCustomerSummary = async (req: Request, res: Response) => {
+    try {
+        console.log("Get Customer Summary");
 
-//update customer 
+        const { filter, from, to } = req.query as { filter?: string; from?: string; to?: string };
+
+        const match: any = {};
+
+        // 1️⃣ Custom date range filter
+        if (from && to) {
+            match.createdAt = {
+                $gte: new Date(from),
+                $lte: new Date(to),
+            };
+        }
+
+        // 2️⃣ Determine grouping key
+        let groupId: any = null;
+        switch (filter) {
+            case "daily":
+                groupId = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
+                break;
+            case "weekly":
+                groupId = { $dateToString: { format: "%Y-%U", date: "$createdAt" } }; // %U = week number
+                break;
+            case "monthly":
+                groupId = { $dateToString: { format: "%Y-%m", date: "$createdAt" } };
+                break;
+            default:
+                groupId = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
+        }
+
+        // 3️⃣ Aggregate with customerType counts
+        const summary = await CustomerBase.aggregate([
+            { $match: match },
+            {
+                $group: {
+                    _id: groupId,
+                    total: { $sum: 1 },
+                    domestic: {
+                        $sum: { $cond: [{ $eq: ["$customerType", "domestic"] }, 1, 0] },
+                    },
+                    corporate: {
+                        $sum: { $cond: [{ $eq: ["$customerType", "corporate"] }, 1, 0] },
+                    },
+                },
+            },
+            { $sort: { _id: 1 } },
+        ]);
+
+        // 4️⃣ Format response
+        const formatted = summary.map((s) => ({
+            period: s._id,
+            total: s.total,
+            domestic: s.domestic,
+            corporate: s.corporate,
+        }));
+
+        res.json(formatted);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong" });
+    }
+};
