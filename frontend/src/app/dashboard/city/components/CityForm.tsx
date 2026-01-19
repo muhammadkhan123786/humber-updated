@@ -1,132 +1,182 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, MapPin } from "lucide-react";
+import { z } from "zod";
 import axios from "axios";
-import { X, Save, MapPin } from "lucide-react";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
+import { ICityInterface } from "../../../../../../common/City.interface";
+
+// Validation Schema
+const citySchemaValidation = z.object({
+    countryId: z.string().min(1, "Please select a country."),
+    cityName: z.string().min(1, "City name is required."),
+    isActive: z.boolean(),
+    isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof citySchemaValidation>;
 
 interface Props {
-    editingData: any | null;
+    editingData: (ICityInterface & { _id?: string }) | null;
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
-    apiUrl: string;
 }
 
-const CityForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
+const CityForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     const [countries, setCountries] = useState<any[]>([]);
-    const [formData, setFormData] = useState({
-        countryId: "",
-        cityName: "",
-        isActive: true,
-        isDefault: false,
-    });
-
     const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        setValue,
+        formState: { errors, isSubmitting },
+    } = useForm<FormData>({
+        resolver: zodResolver(citySchemaValidation),
+        defaultValues: {
+            countryId: "",
+            cityName: "",
+            isActive: true,
+            isDefault: false,
+        },
+    });
+
+    const isDefaultValue = useWatch({ control, name: "isDefault" });
+
+    // Fetch Countries for the dropdown
     useEffect(() => {
-        // Countries fetch karein dropdown ke liye
         const fetchCountries = async () => {
             try {
                 const token = localStorage.getItem("token");
                 const res = await axios.get(`${BASE_URL}/country`, {
                     headers: { Authorization: `Bearer ${token}` },
-                    params:{
-                        isActive:true,
-                        isDeleted:false
-                    }
+                    params: { isActive: true, isDeleted: false }
                 });
                 setCountries(res.data.data || []);
-            } catch (err) { console.error("Country fetch error", err); }
+            } catch (err) {
+                console.error("Country fetch error", err);
+            }
         };
         fetchCountries();
+    }, [BASE_URL]);
 
+    // Reset form when editingData changes
+    useEffect(() => {
         if (editingData) {
-            setFormData({
-                countryId: typeof editingData.countryId === 'object' ? editingData.countryId._id : editingData.countryId,
+            reset({
+                countryId: typeof editingData.countryId === 'object' ? (editingData.countryId as any)._id : editingData.countryId,
                 cityName: editingData.cityName,
-                isActive: editingData.isActive,
-                isDefault: editingData.isDefault,
+                isActive: Boolean(editingData.isActive),
+                isDefault: Boolean(editingData.isDefault),
             });
         }
-    }, [editingData, BASE_URL]);
+    }, [editingData, reset]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (values: FormData) => {
         try {
-            const token = localStorage.getItem("token");
-            const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            const payload = { ...formData, userId: savedUser.id || savedUser._id };
+            const userStr = localStorage.getItem("user");
+            const user = userStr ? JSON.parse(userStr) : {};
+            const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData) {
-                await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+            if (editingData?._id) {
+                await updateItem("/city", editingData._id, payload);
             } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                await createItem("/city", payload);
             }
             onRefresh();
             onClose();
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Operation failed");
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Error saving city data");
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="p-6 text-white flex justify-between items-center" style={{ backgroundColor: themeColor }}>
-                    <h2 className="text-xl font-bold flex items-center gap-2">
-                        <MapPin size={24} /> {editingData ? "Edit City" : "Add New City"}
-                    </h2>
-                    <button onClick={onClose} className="hover:bg-white/20 p-1 rounded-full"><X size={24} /></button>
+        <FormModal
+            title={editingData ? "Edit City" : "Add New City"}
+            icon={<MapPin size={24} />}
+            onClose={onClose}
+            themeColor={themeColor}
+        >
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+                {/* Country Select Dropdown */}
+                <div className="space-y-1">
+                    <label className="block text-sm font-semibold text-gray-700">Country *</label>
+                    <select
+                        {...register("countryId")}
+                        className={`w-full border rounded-xl p-3 outline-none focus:ring-2 transition-all ${
+                            errors.countryId ? "border-red-500 focus:ring-red-200" : "border-gray-200 focus:ring-blue-100"
+                        }`}
+                    >
+                        <option value="">Select Country</option>
+                        {countries.map((c) => (
+                            <option key={c._id} value={c._id}>
+                                {c.countryName}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.countryId && (
+                        <p className="text-red-500 text-xs mt-1">{errors.countryId.message}</p>
+                    )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold mb-2 text-gray-700">Country *</label>
-                        <select
-                            required
-                            className="w-full border rounded-xl p-3 outline-none focus:ring-2"
-                            style={{ borderColor: '#e5e7eb' }}
-                            value={formData.countryId}
-                            onChange={(e) => setFormData({ ...formData, countryId: e.target.value })}
-                        >
-                            <option value="">Select Country</option>
-                            {countries.map((c: any) => (
-                                <option key={c._id} value={c._id}>{c.countryName}</option>
-                            ))}
-                        </select>
-                    </div>
+                {/* City Name Input */}
+                <FormInput
+                    label="City Name *"
+                    placeholder="e.g. New York"
+                    {...register("cityName")}
+                    error={errors.cityName?.message}
+                />
 
-                    <div>
-                        <label className="block text-sm font-semibold mb-2 text-gray-700">City Name *</label>
-                        <input
-                            required
-                            className="w-full border rounded-xl p-3 outline-none focus:ring-2"
-                            style={{ borderColor: '#e5e7eb' }}
-                            value={formData.cityName}
-                            onChange={(e) => setFormData({ ...formData, cityName: e.target.value })}
-                        />
-                    </div>
+                {/* Toggles */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <Controller
+                        control={control}
+                        name="isActive"
+                        render={({ field }) => (
+                            <FormToggle
+                                label="Active"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                disabled={isDefaultValue}
+                            />
+                        )}
+                    />
+                    <Controller
+                        control={control}
+                        name="isDefault"
+                        render={({ field }) => (
+                            <FormToggle
+                                label="Default"
+                                checked={field.value}
+                                onChange={(val) => {
+                                    field.onChange(val);
+                                    if (val) setValue("isActive", true);
+                                }}
+                            />
+                        )}
+                    />
+                </div>
 
-                    <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox"  className={`w-5 h-5 ${formData.isDefault ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
-                            <span className="text-sm font-medium">Active</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isDefault}  onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} />
-                            <span className="text-sm font-medium">Default</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2" style={{ backgroundColor: themeColor }}>
-                        <Save size={20} /> {editingData ? "Update City" : "Save City"}
-                    </button>
-                </form>
-            </div>
-        </div>
+                {/* Action Buttons */}
+                <FormButton
+                    type="submit"
+                    label={editingData ? "Update City" : "Create"}
+                    icon={<Save size={20} />}
+                    loading={isSubmitting}
+                    themeColor={themeColor}
+                    onCancel={onClose}
+                />
+            </form>
+        </FormModal>
     );
 };
 

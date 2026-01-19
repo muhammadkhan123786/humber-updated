@@ -1,109 +1,93 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { X, Save } from "lucide-react";
-import { IServiceType, ServiceFormData } from "../types";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, Settings } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
+import { IServiceType } from "../types";
+
+const schema = z.object({
+  MasterServiceType: z.string().min(1, "Service type name is required."),
+  description: z.string().optional(),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof schema>;
 
 interface Props {
-    editingService: IServiceType | null;
-    onClose: () => void;
-    onRefresh: () => void;
-    themeColor: string;
-    apiUrl: string;
+  editingData: (IServiceType & { _id?: string }) | null;
+  onClose: () => void;
+  onRefresh: () => void;
+  themeColor: string;
+  apiUrl: string;
 }
 
-const ServicesForm = ({ editingService, onClose, onRefresh, themeColor, apiUrl }: Props) => {
-    const [formData, setFormData] = useState<ServiceFormData>({
-        MasterServiceType: "",
-        description: "",
-        isActive: true,
-        isDefault: false,
-    });
+const ServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
+  const { register, handleSubmit, reset, control, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { MasterServiceType: "", description: "", isActive: true, isDefault: false },
+  });
 
-    useEffect(() => {
-        if (editingService) {
-            setFormData({
-                MasterServiceType: editingService.MasterServiceType,
-                description: editingService.description || "",
-                isActive: editingService.isActive,
-                isDefault: editingService.isDefault,
-            });
-        }
-    }, [editingService]);
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem("token");
-            const base64Url = token!.split('.')[1];
-            const payloadData = JSON.parse(window.atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')));
-            
-            const payload = { ...formData, userId: payloadData.userId };
+  useEffect(() => {
+    if (editingData) {
+      reset({
+        MasterServiceType: editingData.MasterServiceType,
+        description: editingData.description || "",
+        isActive: Boolean(editingData.isActive),
+        isDefault: Boolean(editingData.isDefault),
+      });
+    }
+  }, [editingData, reset]);
 
-            if (editingService) {
-                await axios.put(`${apiUrl}/${editingService._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            }
-            onRefresh();
-            onClose();
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Operation failed");
-        }
-    };
+  const onSubmit = async (values: FormData) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
 
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-                <div className="p-6 text-white flex justify-between items-center" style={{ backgroundColor: themeColor }}>
-                    <h2 className="text-xl font-bold">{editingService ? "📝 Edit Service" : "✨ Add Service Type"}</h2>
-                    <button onClick={onClose}><X size={24} /></button>
-                </div>
+      if (editingData?._id) {
+        await updateItem(apiUrl, editingData._id, payload);
+      } else {
+        await createItem(apiUrl, payload);
+      }
+      onRefresh();
+      onClose();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving data");
+    }
+  };
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold mb-2">Service Type Name *</label>
-                        <input
-                            required
-                            placeholder="e.g. Oil Change, Tire Rotation"
-                            className="w-full border rounded-xl p-3 outline-none focus:border-orange-500"
-                            value={formData.MasterServiceType}
-                            onChange={(e) => setFormData({ ...formData, MasterServiceType: e.target.value })}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold mb-2">Description</label>
-                        <textarea
-                            placeholder="Brief description of the service..."
-                            className="w-full border rounded-xl p-3 outline-none focus:border-orange-500 h-24 resize-none"
-                            value={formData.description}
-                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox"  className={`w-5 h-5 ${formData.isDefault ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
-                            <span className="text-sm font-medium">Active</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500" checked={formData.isDefault} onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} />
-                            <span className="text-sm font-medium">Default</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" className="w-full text-white py-4 rounded-xl font-bold" style={{ backgroundColor: themeColor }}>
-                        <Save size={20} className="inline mr-2" /> {editingService ? "Update Service" : "Save Service"}
-                    </button>
-                </form>
-            </div>
+  return (
+    <FormModal title={editingData ? "Edit Service" : "Add Service Type"} icon={<Settings size={24} />} onClose={onClose} themeColor={themeColor}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+        <FormInput label="Service Type Name *" placeholder="e.g. Oil Change" {...register("MasterServiceType")} error={errors.MasterServiceType?.message} />
+        
+        <div>
+          <label className="block text-sm font-semibold mb-2 text-gray-700">Description</label>
+          <textarea className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-blue-200 h-24 resize-none" {...register("description")} />
         </div>
-    );
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+          <Controller control={control} name="isActive" render={({ field }) => (
+            <FormToggle label="Active" checked={field.value} onChange={field.onChange} disabled={isDefaultValue} />
+          )} />
+          <Controller control={control} name="isDefault" render={({ field }) => (
+            <FormToggle label="Default" checked={field.value} onChange={(val) => { field.onChange(val); if (val) setValue("isActive", true); }} />
+          )} />
+        </div>
+
+        <FormButton type="submit" label={editingData ? "Update Service" : "Create"} icon={<Save size={20} />} loading={isSubmitting} themeColor={themeColor} onCancel={onClose} />
+      </form>
+    </FormModal>
+  );
 };
 
 export default ServicesForm;

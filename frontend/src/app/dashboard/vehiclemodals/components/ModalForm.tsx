@@ -1,129 +1,176 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { X, Save } from "lucide-react";
-import { IVehicleModel, ModelFormData } from "../types";
+import { useEffect, useState } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, CarFront } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem, getAll } from "@/helper/apiHelper";
+import { IVehicleModel } from "../types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+const modelSchema = z.object({
+  brandId: z.string().min(1, "Please select a brand"),
+  modelName: z.string().min(1, "Model name is required"),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof modelSchema>;
 
 interface Props {
-    editingModel: IVehicleModel | null;
-    onClose: () => void;
-    onRefresh: () => void;
-    themeColor: string;
-    apiUrl: string;
+  editingData: IVehicleModel | null;
+  onClose: () => void;
+  onRefresh: () => void;
+  themeColor: string;
 }
 
-const ModalForm = ({ editingModel, onClose, onRefresh, themeColor, apiUrl }: Props) => {
-    const [brands, setBrands] = useState<{_id: string, brandName: string}[]>([]);
-    const [formData, setFormData] = useState<ModelFormData>({
-        brandId: "",
-        modelName: "",
-        isActive: true,
-        isDefault: false,
-    });
+const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+  const [brands, setBrands] = useState<{ _id: string; brandName: string }[]>([]);
 
-    useEffect(() => {
-        // Fetch Brands for Dropdown
-        const fetchBrands = async () => {
-            try {
-                const token = localStorage.getItem("token");
-                const res = await axios.get(`${BASE_URL}/vehiclebrand`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                    params:{
-                        isActive:true,
-                        isDeleted:false
-                    }
-                });
-                if (res.data.success) setBrands(res.data.data);
-            } catch (err) { console.error("Error fetching brands", err); }
-        };
-        fetchBrands();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(modelSchema),
+    defaultValues: {
+      isActive: true,
+      isDefault: false,
+      brandId: "",
+      modelName: "",
+    },
+  });
 
-        if (editingModel) {
-            setFormData({
-                brandId: typeof editingModel.brandId === 'object' ? editingModel.brandId._id : editingModel.brandId,
-                modelName: editingModel.modelName,
-                isActive: editingModel.isActive,
-                isDefault: editingModel.isDefault,
-            });
-        }
-    }, [editingModel]);
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem("token");
-            const base64Url = token!.split('.')[1];
-            const payloadData = JSON.parse(window.atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')));
-            
-            const payload = { ...formData, userId: payloadData.userId };
-
-            if (editingModel) {
-                await axios.put(`${apiUrl}/${editingModel._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            }
-            onRefresh();
-            onClose();
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Operation failed");
-        }
+  useEffect(() => {
+    const fetchBrands = async () => {
+      try {
+        const res = await getAll<any>("/vehiclebrand", { isActive: "true" });
+        setBrands(res.data || []);
+      } catch (error) {
+        console.error("Error fetching brands:", error);
+      }
     };
+    fetchBrands();
 
-    return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
-                <div className="p-6 text-white flex justify-between items-center" style={{ backgroundColor: themeColor }}>
-                    <h2 className="text-xl font-bold">{editingModel ? "📝 Edit Model" : "✨ Add New Model"}</h2>
-                    <button onClick={onClose}><X size={24} /></button>
-                </div>
+    if (editingData) {
+      reset({
+        brandId: typeof editingData.brandId === "object" ? editingData.brandId._id : editingData.brandId,
+        modelName: editingData.modelName,
+        isActive: Boolean(editingData.isActive),
+        isDefault: Boolean(editingData.isDefault),
+      });
+    }
+  }, [editingData, reset]);
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-semibold mb-2">Select Brand *</label>
-                        <select 
-                            required
-                            className="w-full border rounded-xl p-3 outline-none focus:border-orange-500"
-                            value={formData.brandId}
-                            onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
-                        >
-                            <option value="">Choose a Brand</option>
-                            {brands.map(b => <option key={b._id} value={b._id}>{b.brandName}</option>)}
-                        </select>
-                    </div>
+  const onSubmit = async (values: FormData) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
 
-                    <div>
-                        <label className="block text-sm font-semibold mb-2">Model Name *</label>
-                        <input
-                            required
-                            className="w-full border rounded-xl p-3 outline-none focus:border-orange-500"
-                            value={formData.modelName}
-                            onChange={(e) => setFormData({ ...formData, modelName: e.target.value })}
-                        />
-                    </div>
+      if (editingData?._id) {
+        await updateItem("/vechilemodel", editingData._id, payload);
+      } else {
+        await createItem("/vechilemodel", payload);
+      }
+      onRefresh();
+      onClose();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving model");
+    }
+  };
 
-                    <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox"  className={`w-5 h-5 ${formData.isDefault ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`} checked={formData.isActive} disabled={formData.isDefault} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />
-                            <span>Active</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="w-5 h-5 accent-orange-500 cursor-pointer" checked={formData.isDefault} onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} />
-                            <span>Default</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" className="w-full text-white py-4 rounded-xl font-bold" style={{ backgroundColor: themeColor }}>
-                        <Save size={20} className="inline mr-2" /> {editingModel ? "Update" : "Save"}
-                    </button>
-                </form>
-            </div>
+  return (
+    <FormModal
+      title={editingData ? "Edit Vehicle Model" : "Add Vehicle Model"}
+      icon={<CarFront size={24} />}
+      onClose={onClose}
+      themeColor={themeColor}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+        {/* Brand Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Select Brand *
+          </label>
+          <select
+            {...register("brandId")}
+            className={`w-full border rounded-xl p-3 outline-none transition-all appearance-none bg-white ${
+              errors.brandId
+                ? "border-red-500 focus:ring-red-100"
+                : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50"
+            }`}
+          >
+            <option value="">Choose a Brand</option>
+            {brands.map((b) => (
+              <option key={b._id} value={b._id}>
+                {b.brandName}
+              </option>
+            ))}
+          </select>
+          {errors.brandId && (
+            <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>
+          )}
         </div>
-    );
+
+        {/* Model Name */}
+        <FormInput
+          label="Model Name *"
+          placeholder="e.g. Corolla, Civic..."
+          {...register("modelName")}
+          error={errors.modelName?.message}
+        />
+
+        {/* Status Toggles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <FormToggle
+                label="Active"
+                checked={field.value}
+                onChange={field.onChange}
+                disabled={isDefaultValue}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="isDefault"
+            render={({ field }) => (
+              <FormToggle
+                label="Default"
+                checked={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true);
+                }}
+              />
+            )}
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <FormButton
+          type="submit"
+          label={editingData ? "Update Model" : "Create"}
+          icon={<Save size={20} />}
+          loading={isSubmitting}
+          themeColor={themeColor}
+          onCancel={onClose}
+        />
+      </form>
+    </FormModal>
+  );
 };
+
 export default ModalForm;
