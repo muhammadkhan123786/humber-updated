@@ -368,59 +368,36 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
       };
 
       const currentUserId = getCurrentUserId();
+
+      // Build proper JSON payload with correct types for booleans and arrays
       const payload: any = {
         userId: currentUserId,
         updatedAt: new Date().toISOString(),
-        isDeleted: false,
-
+        isDeleted: false, // Already boolean
         supplierIdentification: {
           legalBusinessName: formData.legalBusinessName.trim(),
-          tradingName: formData.tradingName?.trim() || undefined,
           businessRegNumber: formData.businessRegNumber.trim(),
-          vat: formData.taxRegNumber?.trim() || undefined,
           businessTypeId: formData.businessTypeId,
         },
-
         contactInformation: {
           primaryContactName: formData.primaryContactName.trim(),
           jobTitleId: formData.jobTitleId,
           phoneNumber: formData.phoneNumber.trim(),
           emailAddress: formData.emailAddress.trim(),
-          website: formData.website?.trim()
-            ? formData.website.startsWith("http")
-              ? formData.website.trim()
-              : `https://${formData.website.trim()}`
-            : undefined,
         },
-
         businessAddress: {
           businessAddress: formData.registeredAddress.trim(),
-          tradingAddress: formData.tradingAddress?.trim() || undefined,
           city: formData.cityId,
           state: formData.stateCounty.trim(),
           country: formData.countryId,
           zipCode: formData.postalCode.trim(),
         },
-
         financialInformation: {
-          vatRegistered: formData.vatRegistered === "Yes",
-          vatNumber: formData.taxRegNumber?.trim() || undefined,
+          vatRegistered: formData.vatRegistered === "Yes", // Boolean
           taxIdentificationNumber: formData.taxIdNumber.trim(),
           paymentCurrencyId: formData.currencyId,
           paymentMethodId: formData.paymentMethodId,
         },
-
-        bankPaymentDetails: formData.bankName?.trim()
-          ? {
-              bankName: formData.bankName.trim(),
-              accountHolderName: formData.accountHolderName.trim(),
-              accountNumber: formData.accountNumber.trim(),
-              sortCode: formData.sortCode?.trim() || undefined,
-              ibanNumber: formData.iban?.trim() || undefined,
-              swiftCode: formData.swiftCode?.trim() || undefined,
-            }
-          : undefined,
-
         productServices: {
           typeOfServiceId: formData.productServiceId,
           productCategoryIds: Array.isArray(formData.categoryId)
@@ -431,38 +408,88 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           leadTimes: formData.leadTime,
           minimumOrderQuantity: formData.moq,
         },
-
         commercialTerms: {
           paymentTermsId: formData.paymentTermId,
           pricingAgreementId: formData.pricingAgreementId,
-          discountTerms: formData.discountTerms?.trim() || undefined,
           contractStartDate: formData.contractStartDate,
-          contractEndDate: formData.contractEndDate || undefined,
         },
-
         complianceDocumentation: {
           businessRegistrationCertificates: documents
-            .filter((doc) => doc.existingUrl || doc.file)
-            .map((doc) => doc.existingUrl || ""),
-          insuranceDetails: formData.insuranceDetails?.trim() || undefined,
-          insuranceExpiryDate: formData.insuranceExpiryDate || undefined,
-          healthAndSafetyCompliance:
-            formData.hsCompliance === "Yes"
-              ? true
-              : formData.hsCompliance === "No"
-                ? false
-                : undefined,
-          qualityCertificate:
-            formData.qualityCertifications?.trim() || undefined,
+            .filter((doc) => doc.existingUrl && !doc.file)
+            .map((doc) => doc.existingUrl) as string[],
+          healthAndSafetyCompliance: formData.hsCompliance === "Yes", // Boolean
         },
-
-        operationalInformation: {
-          orderContactName: formData.orderContactName?.trim() || undefined,
-          orderContactEmail: formData.orderContactEmail?.trim() || undefined,
-          returnPolicy: formData.returnsPolicy?.trim() || undefined,
-          warrantyTerms: formData.warrantyTerms?.trim() || undefined,
-        },
+        operationalInformation: {},
       };
+
+      // Add optional fields
+      if (formData.tradingName?.trim()) {
+        payload.supplierIdentification.tradingName =
+          formData.tradingName.trim();
+      }
+      if (formData.taxRegNumber?.trim()) {
+        payload.supplierIdentification.vat = formData.taxRegNumber.trim();
+        payload.financialInformation.vatNumber = formData.taxRegNumber.trim();
+      }
+      if (formData.website?.trim()) {
+        const website = formData.website.startsWith("http")
+          ? formData.website.trim()
+          : `https://${formData.website.trim()}`;
+        payload.contactInformation.website = website;
+      }
+      if (formData.tradingAddress?.trim()) {
+        payload.businessAddress.tradingAddress = formData.tradingAddress.trim();
+      }
+      if (formData.bankName?.trim()) {
+        payload.bankPaymentDetails = {
+          bankName: formData.bankName.trim(),
+          accountHolderName: formData.accountHolderName.trim(),
+          accountNumber: formData.accountNumber.trim(),
+        };
+        if (formData.sortCode?.trim()) {
+          payload.bankPaymentDetails.sortCode = formData.sortCode.trim();
+        }
+        if (formData.iban?.trim()) {
+          payload.bankPaymentDetails.ibanNumber = formData.iban.trim();
+        }
+        if (formData.swiftCode?.trim()) {
+          payload.bankPaymentDetails.swiftCode = formData.swiftCode.trim();
+        }
+      }
+      if (formData.discountTerms?.trim()) {
+        payload.commercialTerms.discountTerms = formData.discountTerms.trim();
+      }
+      if (formData.contractEndDate) {
+        payload.commercialTerms.contractEndDate = formData.contractEndDate;
+      }
+      if (formData.insuranceDetails?.trim()) {
+        payload.complianceDocumentation.insuranceDetails =
+          formData.insuranceDetails.trim();
+      }
+      if (formData.insuranceExpiryDate) {
+        payload.complianceDocumentation.insuranceExpiryDate =
+          formData.insuranceExpiryDate;
+      }
+      if (formData.qualityCertifications?.trim()) {
+        payload.complianceDocumentation.qualityCertificate =
+          formData.qualityCertifications.trim();
+      }
+      if (formData.orderContactName?.trim()) {
+        payload.operationalInformation.orderContactName =
+          formData.orderContactName.trim();
+      }
+      if (formData.orderContactEmail?.trim()) {
+        payload.operationalInformation.orderContactEmail =
+          formData.orderContactEmail.trim();
+      }
+      if (formData.returnsPolicy?.trim()) {
+        payload.operationalInformation.returnPolicy =
+          formData.returnsPolicy.trim();
+      }
+      if (formData.warrantyTerms?.trim()) {
+        payload.operationalInformation.warrantyTerms =
+          formData.warrantyTerms.trim();
+      }
 
       if (editData?._id) {
         payload._id = editData._id;
@@ -471,75 +498,80 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
         payload.createdBy = currentUserId;
       }
 
-      console.log("Final payload structure:");
-      console.log(
-        "vatRegistered type:",
-        typeof payload.financialInformation.vatRegistered,
-      );
-      console.log(
-        "vatRegistered value:",
-        payload.financialInformation.vatRegistered,
-      );
-      console.log(
-        "healthAndSafetyCompliance type:",
-        typeof payload.complianceDocumentation.healthAndSafetyCompliance,
-      );
-      console.log(
-        "healthAndSafetyCompliance value:",
-        payload.complianceDocumentation.healthAndSafetyCompliance,
-      );
-      console.log("City ID:", payload.businessAddress.city);
-      console.log("Country ID:", payload.businessAddress.country);
-      console.log("Full payload:", JSON.stringify(payload, null, 2));
+      console.log("Payload to send:", JSON.stringify(payload, null, 2));
+
+      const formDataToSend = new FormData();
+
+      // Helper function to append nested objects to FormData WITH proper boolean handling
+      const appendToFormData = (obj: any, prefix = "") => {
+        for (const [key, value] of Object.entries(obj)) {
+          const fieldName = prefix ? `${prefix}[${key}]` : key;
+
+          if (value === null || value === undefined) {
+            continue;
+          }
+
+          if (Array.isArray(value)) {
+            value.forEach((item, index) => {
+              // Handle array items properly
+              if (typeof item === "boolean") {
+                formDataToSend.append(
+                  `${fieldName}[${index}]`,
+                  item ? "true" : "false",
+                );
+              } else if (typeof item === "object" && item !== null) {
+                // If array contains objects, stringify them
+                formDataToSend.append(
+                  `${fieldName}[${index}]`,
+                  JSON.stringify(item),
+                );
+              } else {
+                formDataToSend.append(`${fieldName}[${index}]`, String(item));
+              }
+            });
+          } else if (typeof value === "object" && !(value instanceof File)) {
+            appendToFormData(value, fieldName);
+          } else if (typeof value === "boolean") {
+            // Handle booleans - send as "true"/"false" strings
+            formDataToSend.append(fieldName, value ? "true" : "false");
+          } else {
+            formDataToSend.append(fieldName, String(value));
+          }
+        }
+      };
+
+      // Append all payload fields
+      appendToFormData(payload);
 
       const hasFiles = documents.some((doc) => doc.file);
-
       if (hasFiles) {
-        console.log("Has files, sending as FormData");
-
-        const formDataToSend = new FormData();
-
-        formDataToSend.append("data", JSON.stringify(payload));
-
         documents.forEach((doc) => {
           if (doc.file) {
-            formDataToSend.append("businessRegistrationCertificates", doc.file);
-          }
-        });
-
-        if (editData?._id) {
-          const existingUrls = documents
-            .filter((doc) => doc.existingUrl && !doc.file)
-            .map((doc) => doc.existingUrl) as string[];
-
-          if (existingUrls.length > 0) {
+            console.log(`Appending file: ${doc.file.name}`);
             formDataToSend.append(
-              "existingFiles",
-              JSON.stringify(existingUrls),
+              "businessRegistrationCertificatesFile",
+              doc.file,
             );
           }
-        }
+        });
+      }
 
-        console.log("FormData entries:");
-        for (let [key, value] of (formDataToSend as any).entries()) {
+      console.log("FormData entries:");
+      for (const [key, value] of (formDataToSend as any).entries()) {
+        if (value instanceof File) {
           console.log(
             key,
-            value instanceof File ? `File: ${value.name}` : value,
+            `File: ${value.name} (${value.type}, ${value.size} bytes)`,
           );
-        }
-        if (editData?._id) {
-          await updateSupplier(editData._id, formDataToSend);
         } else {
-          await createSupplier(formDataToSend);
+          console.log(key, value);
         }
-      } else {
-        console.log("No files, sending as plain JSON");
+      }
 
-        if (editData?._id) {
-          await updateSupplier(editData._id, payload);
-        } else {
-          await createSupplier(payload);
-        }
+      if (editData?._id) {
+        await updateSupplier(editData._id, formDataToSend);
+      } else {
+        await createSupplier(formDataToSend);
       }
 
       alert(
@@ -556,12 +588,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
 
       if (err.response?.data) {
         if (typeof err.response.data === "string") {
-          const match = err.response.data.match(/<pre>([\s\S]*?)<\/pre>/);
-          if (match) {
-            errorMessage += match[1].replace(/<br\s*\/?>/g, "\n");
-          } else {
-            errorMessage += err.response.data;
-          }
+          errorMessage += err.response.data;
         } else if (err.response.data.message) {
           if (Array.isArray(err.response.data.message)) {
             errorMessage +=
