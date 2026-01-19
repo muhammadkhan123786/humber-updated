@@ -20,5 +20,6 @@ export interface CustomerTicketBase<
   address?: string;
   ticketCode?: string;
   vehicleRepairImages?: string[];
+  vehicleRepairImagesFile?: File[];
   vehicleRepairVideoURL?: string;
 }

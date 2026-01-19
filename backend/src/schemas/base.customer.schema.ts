@@ -14,6 +14,8 @@ export const baseCustomerSchema: SchemaDefinition = {
     convertedToCustomerId: { type: Types.ObjectId, ref: "CustomerBase", default: null },
     customerType: { type: String, required: true, enum: ["domestic", "corporate"] },
     convertedAt: { type: Date },
+    isVatExemption: { type: Boolean, default: false },
+    reasonExemption: { type: String, default: null },
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
@@ -35,6 +37,9 @@ export const baseCustomerZodSchema = z.object({
     customerType: z.enum(["domestic", "corporate"]),
 
     convertedAt: z.coerce.date().optional(),
+
+    isVatExemption: z.boolean().default(false),
+    reasonExemption: z.string().optional(),
 
     isActive: z.boolean().default(true),
     isDeleted: z.boolean().default(false),
