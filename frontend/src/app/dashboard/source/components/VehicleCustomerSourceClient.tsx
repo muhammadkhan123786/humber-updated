@@ -1,20 +1,21 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Share2, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
+// Import common components
 import StatsCards from "@/app/common-form/StatsCard";
 import CustomerSourceTable from "./CustomerSourceTable";
 import CustomerSourceForm from "./CustomerSourceForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ICustomerSource } from "../../../../../../common/ICustomerSource";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
-// Type alias to ensure _id is treated as a string from the API
 type CustomerSourceWithId = ICustomerSource & { _id: string };
 
 export default function VehicleCustomerSourceClient() {
   const [dataList, setDataList] = useState<CustomerSourceWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<CustomerSourceWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<CustomerSourceWithId | null>(null);
@@ -22,6 +23,7 @@ export default function VehicleCustomerSourceClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -32,15 +34,28 @@ export default function VehicleCustomerSourceClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter logic matching BusinessType
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -55,17 +70,34 @@ export default function VehicleCustomerSourceClient() {
       await deleteItem("/customer-source", id);
       fetchData(currentPage, searchTerm);
     } catch (error) {
+      console.error("Delete Error:", error);
       alert("Failed to delete item.");
     }
   };
 
-  const activeCount = dataList.filter((d) => d.isActive).length;
-  const inactiveCount = dataList.filter((d) => !d.isActive).length;
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/customer-source", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
+  const totalSources = dataList.length;
+  const activeSources = dataList.filter((d) => d.isActive).length;
+  const inactiveSources = dataList.filter((d) => !d.isActive).length;
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header - Blue Gradient */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -87,13 +119,13 @@ export default function VehicleCustomerSourceClient() {
           </button>
         </div>
 
-        <StatsCards
-          totalCount={dataList.length}
-          activeCount={activeCount}
-          inactiveCount={inactiveCount}
+        <StatsCards 
+          totalCount={totalSources}
+          activeCount={activeSources}
+          inactiveCount={inactiveSources}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
-        {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
           <Search className="text-gray-400" size={20} />
           <input
@@ -117,14 +149,14 @@ export default function VehicleCustomerSourceClient() {
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"}`}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"}`}
               >
                 <Grid3x3 size={16} />
                 <span className="hidden sm:inline text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"}`}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"}`}
               >
                 <List size={16} />
                 <span className="hidden sm:inline text-sm">Table</span>
@@ -148,17 +180,28 @@ export default function VehicleCustomerSourceClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
+                  </span>
+                  <button onClick={() => setFilterStatus('all')} className="text-xs text-blue-600 hover:text-blue-800 font-bold">
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <CustomerSourceTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}
