@@ -33,7 +33,7 @@ export const SupplierSchema = new Schema<SupplierBaseDoc>(
 
     contactInformation: {
       primaryContactName: { type: String, required: true },
-      jobTitleId: { type: Types.ObjectId, ref: "JobType", required: true },
+      jobTitleId: { type: Types.ObjectId, ref: "JobTitles", required: true },
       phoneNumber: { type: String, required: true },
       emailAddress: { type: String },
       website: { type: String },
