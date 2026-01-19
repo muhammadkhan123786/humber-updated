@@ -31,6 +31,9 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
     { id: number; file: File | null; existingUrl?: string }[]
   >([]);
 
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewType, setPreviewType] = useState<"image" | "pdf">("image");
+
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
   useEffect(() => {
@@ -60,6 +63,27 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
 
   const handleTriggerUpload = (id: number) => {
     fileInputRefs.current[id]?.click();
+  };
+
+  const handlePreviewDocument = (doc: {
+    file: File | null;
+    existingUrl?: string;
+  }) => {
+    let urlToPreview = "";
+    if (doc.file) {
+      urlToPreview = URL.createObjectURL(doc.file);
+    } else if (doc.existingUrl) {
+      // Handle both relative and absolute URLs
+      urlToPreview = doc.existingUrl.startsWith("http")
+        ? doc.existingUrl
+        : `${process.env.NEXT_PUBLIC_IMAGE_URL}${doc.existingUrl}`;
+    }
+
+    if (urlToPreview) {
+      const ext = urlToPreview.toLowerCase().split(".").pop();
+      setPreviewType(ext === "pdf" ? "pdf" : "image");
+      setPreviewUrl(urlToPreview);
+    }
   };
 
   const handleFileChange = (
@@ -1093,6 +1117,15 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
                         onChange={(e) => handleFileChange(doc.id, e)}
                         accept=".pdf,.jpg,.jpeg,.png"
                       />
+                      {(doc.file || doc.existingUrl) && (
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewDocument(doc)}
+                          className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-bold text-blue-700 hover:bg-blue-100 shadow-sm"
+                        >
+                          Preview
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleTriggerUpload(doc.id)}
@@ -1276,6 +1309,85 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           cursor: not-allowed;
         }
       `}</style>
+
+      {/* Document Preview Modal */}
+      {previewUrl && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-200">
+              <h2 className="text-xl font-bold text-slate-900">
+                Document Preview
+              </h2>
+              <button
+                onClick={() => {
+                  setPreviewUrl(null);
+                  // Clean up blob URLs
+                  if (previewUrl?.startsWith("blob:")) {
+                    URL.revokeObjectURL(previewUrl);
+                  }
+                }}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <svg
+                  className="w-6 h-6 text-slate-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto bg-slate-50 p-6">
+              {previewType === "image" ? (
+                <div className="flex items-center justify-center h-full">
+                  <img
+                    src={previewUrl}
+                    alt="Document Preview"
+                    className="max-w-full max-h-full object-contain rounded-lg"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={previewUrl}
+                  className="w-full h-full rounded-lg"
+                  title="PDF Preview"
+                />
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end p-6 border-t border-slate-200 gap-3">
+              <a
+                href={previewUrl}
+                download
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Download
+              </a>
+              <button
+                onClick={() => {
+                  setPreviewUrl(null);
+                  if (previewUrl?.startsWith("blob:")) {
+                    URL.revokeObjectURL(previewUrl);
+                  }
+                }}
+                className="px-6 py-2.5 bg-slate-200 text-slate-900 rounded-lg font-semibold hover:bg-slate-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };

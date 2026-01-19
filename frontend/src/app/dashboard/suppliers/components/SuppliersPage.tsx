@@ -149,6 +149,19 @@ const SuppliersPage = () => {
       orderContactEmail: supplier.operationalInformation?.orderContactEmail,
       returnsPolicy: supplier.operationalInformation?.returnPolicy,
       warrantyTerms: supplier.operationalInformation?.warrantyTerms,
+
+      complianceDocumentation: {
+        businessRegistrationCertificates:
+          supplier.complianceDocumentation?.businessRegistrationCertificates ||
+          [],
+        insuranceDetails: supplier.complianceDocumentation?.insuranceDetails,
+        insuranceExpiryDate:
+          supplier.complianceDocumentation?.insuranceExpiryDate,
+        healthAndSafetyCompliance:
+          supplier.complianceDocumentation?.healthAndSafetyCompliance,
+        qualityCertificate:
+          supplier.complianceDocumentation?.qualityCertificate,
+      },
     };
 
     console.log("Edit data prepared:", flatData);
