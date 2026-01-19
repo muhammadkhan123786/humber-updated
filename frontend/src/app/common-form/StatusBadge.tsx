@@ -1,5 +1,3 @@
-import { CheckCircle2, XCircle } from "lucide-react";
-
 export const StatusBadge = ({ isActive }: { isActive: boolean }) => (
   <div className={`relative inline-flex items-center h-5 w-9 rounded-full transition-all cursor-pointer ${
     isActive ? 'bg-blue-500' : 'bg-gray-300'

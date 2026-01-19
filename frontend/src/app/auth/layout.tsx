@@ -6,7 +6,7 @@ export default function AuthLayout({children}:{children:ReactNode}){
      return (
         <>        
         {/* Your content */}
-          <div className="flex flex-col justify-center items-center min-h-screen px-4">
+          <div className="">
             {/* <Image
               src={onyxtech}
               alt="logo"

@@ -1,114 +1,129 @@
 "use client";
 import React from "react";
-import { Edit, Trash2, Star } from "lucide-react";
+import { TableActionButton } from "@/app/common-form/TableActionButtons";
+import { StatusBadge } from "@/app/common-form/StatusBadge";
+import { Star, AlertTriangle, Trash2 } from "lucide-react";
 
 interface Props {
   data: any[];
-  onEdit: (data: any) => void;
+  displayView: "table" | "card";
+  onEdit: (item: any) => void;
   onDelete: (id: string) => void;
   themeColor: string;
 }
 
-const PriorityLevelTable = ({ data, onEdit, onDelete, themeColor }: Props) => {
+const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+  // Card View
+  if (displayView === "card") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data.map((item) => (
+          <div
+            key={item._id}
+            className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+          >
+            <div className="p-4 flex items-start justify-between bg-white">
+              {/* Icon uses the priority's specific background color but follows the rounded-xl style */}
+              <div 
+                className="p-3 rounded-xl text-white shadow-lg" 
+                style={{ backgroundColor: item.backgroundColor || '#3b82f6' }}
+              >
+                <AlertTriangle size={18} />
+              </div>
+              <StatusBadge isActive={!!item.isActive} />
+            </div>
+
+            <div className="px-4 pb-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  {item.serviceRequestPrioprity}
+                </h3>
+                {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
+              </div>
+              
+              <p className="text-sm text-gray-500 line-clamp-2 h-10 italic">
+                {item.description || "No description provided."}
+              </p>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => onEdit(item)}
+                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => !item.isDefault && onDelete(item._id)}
+                  disabled={item.isDefault}
+                  className={`p-2 bg-gray-50 rounded-lg transition-all ${
+                    item.isDefault 
+                      ? "text-gray-200 cursor-not-allowed" 
+                      : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                  }`}
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">📭</div>
+            <p>No priority levels found.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Table View (Default)
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-      <table className="w-full text-left border-collapse">
-        <thead className="text-white" style={{ backgroundColor: themeColor }}>
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
+      <table className="w-full text-[16px]! text-left">
+        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
           <tr>
-            <th className="p-4 font-semibold">Priority Name</th>
-            <th className="p-4 font-semibold text-center">Color Tag</th>
-            <th className="p-4 font-semibold">Description</th>
-            <th className="p-4 font-semibold text-center">Status</th>
-            <th className="p-4 font-semibold text-center">Default</th>
-            <th className="p-4 font-semibold text-center">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Tag</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Priority Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {data.length > 0 ? (
-            data.map((item) => (
-              <tr key={item._id} className="hover:bg-gray-50 transition-colors">
-                {/* Priority Name */}
-                <td className="p-4">
-                  <span className="font-bold text-gray-800">
-                    {item.serviceRequestPrioprity}
-                  </span>
-                </td>
-
-                {/* Color Tag - Separated Column */}
-                <td className="p-4 text-center">
-                  <div className="flex justify-center">
-                    <div
-                      className="w-8 h-8 rounded-lg shadow-sm border border-black/5"
-                      style={{ backgroundColor: item.backgroundColor }}
-                      title={`Hex Code: ${item.backgroundColor}`}
-                    />
-                  </div>
-                </td>
-
-                {/* Description */}
-                <td className="p-4 text-sm text-gray-500 max-w-[200px]">
-                  <p className="truncate" title={item.description}>
-                    {item.description}
-                  </p>
-                </td>
-
-                {/* Status */}
-                <td className="p-4 text-center">
-                  <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider ${
-                      item.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {item.isActive ? "ACTIVE" : "INACTIVE"}
-                  </span>
-                </td>
-
-                {/* Default Star */}
-                <td className="p-4 text-center">
-                  {item.isDefault ? (
-                    <Star
-                      size={20}
-                      className="inline text-yellow-500 fill-yellow-500"
-                    />
-                  ) : (
-                    <span className="text-gray-300">-</span>
+          {data.map((item) => (
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
+              <td className="px-6 py-4">
+                <div 
+                  className="w-8 h-8 rounded-lg shadow-sm border border-gray-100" 
+                  style={{ backgroundColor: item.backgroundColor }} 
+                />
+              </td>
+              <td className="px-6 py-4 font-bold text-gray-900">
+                <div className="flex items-center gap-2">
+                  {item.serviceRequestPrioprity}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
                   )}
-                </td>
-
-                {/* Actions */}
-                <td className="p-4 text-center">
-                  <div className="flex justify-center gap-1">
-                    <button
-                      onClick={() => onEdit(item)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      onClick={() => !item.isDefault && onDelete(item._id)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        item.isDefault
-                          ? "text-gray-200 cursor-not-allowed"
-                          : "text-red-600 hover:bg-red-50"
-                      }`}
-                      disabled={item.isDefault}
-                      title={
-                        item.isDefault ? "Cannot delete default" : "Delete"
-                      }
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))
-          ) : (
+                </div>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <StatusBadge isActive={!!item.isActive} />
+              </td>
+              <td className="px-6 py-4 text-center">
+                <TableActionButton
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) return alert("Default priorities cannot be deleted.");
+                    onDelete(item._id);
+                  }}
+                />
+              </td>
+            </tr>
+          ))}
+          {data.length === 0 && (
             <tr>
-              <td colSpan={6} className="p-10 text-center text-gray-400 italic">
-                No priority levels found
+              <td colSpan={4} className="text-center py-10 text-gray-400">
+                No priority levels found.
               </td>
             </tr>
           )}

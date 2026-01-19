@@ -88,7 +88,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-linear-to-br from-gray-50 to-gray-100">
-      <div className="max-w-7xl w-full bg-white rounded-2xl shadow-2xl shadow-black/20 overflow-hidden">
+      <div className="max-w-6xl w-full bg-white rounded-2xl shadow-2xl shadow-black/20 overflow-hidden">
         <div className="flex flex-col lg:flex-row">
           {/* Left Section - Humber Mobility */}
           <div className="hidden md:flex flex-col justify-center md:w-1/2 p-8 lg:p-12  min-h-[600px] bg-linear-to-br from-gray-50 to-gray-100">
@@ -100,24 +100,19 @@ export default function LoginPage() {
                   <ShieldCheck className="w-8 h-8 text-white" />
                 </div>
               </div>
-
               {/* Title */}
               <h1 className="text-4xl leading-11 font-bold mb-2 bg-linear-to-r from-[#9810FA] via-[#4f39f6] to-[#fd0083] bg-clip-text text-transparent">
                 Humber Mobility
               </h1>
-
-
               {/* Subtitle */}
               <h2 className="text-xl text-gray-600 font-medium mb-6">
                 Service & Repair System
               </h2>
-
               {/* Paragraph Description */}
               <p className="text-gray-600 text-sm leading-relaxed mb-12">
                 Complete workflow management for mobility scooter services
               </p>
             </div>
-
             {/* Features Section */}
             <div className="space-y-6">
               {/* Feature 1 */}
@@ -153,15 +148,13 @@ export default function LoginPage() {
                   Comprehensive reporting
                 </p>
               </div>
-
             </div>
           </div>
-
           {/* Right Section - Login Form */}
-          <div className="relative lg:w-1/2 p-8 lg:p-6 lg:pt-10 flex flex-col justify-center shadow-2xl shadow-black/20">
+          <div className="relative lg:w-1/2 p-8 lg:p-8 lg:pt-10 flex flex-col justify-center shadow-2xl shadow-black/20">
             <div className="absolute top-0 left-0 w-full h-1.5 bg-linear-to-r from-[#9810FA] via-[#4F39F6] to-[#E60076]" />
 
-            <div className="max-w-md mx-auto w-full">
+            <div className=" w-full">
               <div className="text-left mb-8">
                 <h2 className="text-2xl font-normal leading-8 text-indigo-950 mb-2">Welcome Back</h2>
                 <p className="text-gray-600">Sign in to access your account</p>
