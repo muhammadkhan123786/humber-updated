@@ -39,6 +39,7 @@ export const useTicketForm = () => {
       userId: "",
       assignedTechnicianId: null,
       vehicleRepairImages: [],
+      vehicleRepairImagesFile: [],
       address: "",
       vehicleRepairVideoURL: "",
       issue_Details: "",

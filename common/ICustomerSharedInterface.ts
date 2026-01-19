@@ -10,7 +10,9 @@ export interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId 
     convertedToCustomerId: TconvertedToCustomerId;
     customerType: customerType;
     previousCustomerId?: TPreviousCustomerId;
-    convertedAt: Date
+    convertedAt: Date;
+    isVatExemption?: boolean;
+    reasonExemption?: string
 }
 
 
@@ -28,6 +30,7 @@ export interface ICorporateCustomer
     registrationNo: string;
     vatNo?: string;
     website?: string;
+
 }
 
 
