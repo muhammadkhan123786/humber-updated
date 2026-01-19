@@ -458,13 +458,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Users,
         roleId: [1],
       },
-      {
-        _id: 109,
-        label: "Addressess",
-        href: "/dashboard/addresses",
-        icon: MapPin,
-        roleId: [1],
-      },
+      // {
+      //   _id: 109,
+      //   label: "Addressess",
+      //   href: "/dashboard/addresses",
+      //   icon: MapPin,
+      //   roleId: [1],
+      // },
       {
         _id: 110,
         label: "Technician Roles",

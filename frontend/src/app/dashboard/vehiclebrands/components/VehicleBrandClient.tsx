@@ -1,43 +1,61 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Car, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
+// Import common components
 import StatsCards from "@/app/common-form/StatsCard"; 
 import BrandTable from "./BrandTable";
 import BrandForm from "./BrandForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IVehicleBrand } from "../types";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
+type VehicleBrandWithId = IVehicleBrand & { _id: string };
+
 export default function VehicleBrandClient() {
-  const [dataList, setDataList] = useState<IVehicleBrand[]>([]);
+  const [dataList, setDataList] = useState<VehicleBrandWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<VehicleBrandWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingData, setEditingData] = useState<IVehicleBrand | null>(null);
+  const [editingData, setEditingData] = useState<VehicleBrandWithId | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
-      const res = await getAll<IVehicleBrand>("/vehiclebrand", {
+      const res = await getAll<VehicleBrandWithId>("/vehiclebrand", {
         page: page.toString(),
         limit: "10",
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter data based on status when filterStatus changes
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -47,7 +65,7 @@ export default function VehicleBrandClient() {
   }, [searchTerm, fetchData]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this brand?")) return;
+    if (!confirm("Are you sure you want to delete this vehicle brand?")) return;
     try {
       await deleteItem("/vehiclebrand", id);
       fetchData(currentPage, searchTerm);
@@ -57,6 +75,23 @@ export default function VehicleBrandClient() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/vehiclebrand", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
+  // Calculate stats
   const totalItems = dataList.length;
   const activeItems = dataList.filter((d) => d.isActive).length;
   const inactiveItems = dataList.filter((d) => !d.isActive).length;
@@ -64,7 +99,7 @@ export default function VehicleBrandClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header - Blue/Teal Theme */}
+        {/* Header */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -86,10 +121,12 @@ export default function VehicleBrandClient() {
           </button>
         </div>
 
+        {/* Reusable Stats Cards Component with Filter */}
         <StatsCards 
           totalCount={totalItems}
           activeCount={activeItems}
           inactiveCount={inactiveItems}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
         {/* Search Bar */}
@@ -104,7 +141,6 @@ export default function VehicleBrandClient() {
           />
         </div>
 
-        {/* Table/Grid Container */}
         <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! ">
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
@@ -118,7 +154,9 @@ export default function VehicleBrandClient() {
               <button
                 onClick={() => setDisplayView("card")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"
+                  displayView === "card"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Grid3x3 size={16} />
@@ -127,7 +165,9 @@ export default function VehicleBrandClient() {
               <button
                 onClick={() => setDisplayView("table")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"
+                  displayView === "table"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <List size={16} />
@@ -152,17 +192,31 @@ export default function VehicleBrandClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <BrandTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}

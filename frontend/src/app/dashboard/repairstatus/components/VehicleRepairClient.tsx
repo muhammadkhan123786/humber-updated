@@ -6,16 +6,16 @@ import StatsCards from "@/app/common-form/StatsCard";
 import RepairTable from "./RepairTable";
 import RepairForm from "./RepairForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IRepairStatus } from "../types";
 
-// Using the exact CSS variable from your Country client
 const THEME_COLOR = "var(--primary-gradient)";
 
 type RepairStatusWithId = IRepairStatus & { _id: string };
 
 export default function VehicleRepairClient() {
   const [dataList, setDataList] = useState<RepairStatusWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<RepairStatusWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<RepairStatusWithId | null>(null);
@@ -23,6 +23,7 @@ export default function VehicleRepairClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -33,15 +34,28 @@ export default function VehicleRepairClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter logic matching BusinessType module
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -61,7 +75,22 @@ export default function VehicleRepairClient() {
     }
   };
 
-  // Calculate stats for the component
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/repairstatus", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
   const totalItems = dataList.length;
   const activeItems = dataList.filter((d) => d.isActive).length;
   const inactiveItems = dataList.filter((d) => !d.isActive).length;
@@ -69,8 +98,7 @@ export default function VehicleRepairClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        
-        {/* Header - Matching Country Client EXACTLY */}
+        {/* Header Section */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -92,14 +120,15 @@ export default function VehicleRepairClient() {
           </button>
         </div>
 
-        {/* Reusable Stats Cards Component */}
+        {/* Stats Cards with Filter Callback */}
         <StatsCards 
           totalCount={totalItems}
           activeCount={activeItems}
           inactiveCount={inactiveItems}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
-        {/* Search Bar - Matching blue focus ring */}
+        {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
           <Search className="text-gray-400" size={20} />
           <input
@@ -111,8 +140,8 @@ export default function VehicleRepairClient() {
           />
         </div>
 
-        {/* Table/Grid Container - Matching the specific border-t-4 and color */}
-        <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! ">
+        {/* Content Container */}
+        <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! shadow-sm rounded-b-2xl">
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
@@ -121,14 +150,11 @@ export default function VehicleRepairClient() {
               <p className="text-sm text-gray-500">Configure workflow stages for vehicle repair jobs</p>
             </div>
 
-            {/* View Switcher - Matching Country Client EXACTLY */}
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Grid3x3 size={16} />
@@ -137,9 +163,7 @@ export default function VehicleRepairClient() {
               <button
                 onClick={() => setDisplayView("table")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <List size={16} />
@@ -148,10 +172,13 @@ export default function VehicleRepairClient() {
             </div>
           </div>
 
-          {showForm && (
+          {(showForm || editingData) && (
             <RepairForm
               editingData={editingData}
-              onClose={() => setShowForm(false)}
+              onClose={() => {
+                setShowForm(false);
+                setEditingData(null);
+              }}
               onRefresh={() => fetchData(currentPage, searchTerm)}
               themeColor={THEME_COLOR}
             />
@@ -164,17 +191,31 @@ export default function VehicleRepairClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Statuses ({filteredDataList.length})
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <RepairTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}

@@ -6,7 +6,7 @@ import StatsCards from "@/app/common-form/StatsCard";
 import CountryTable from "./CountryTable";
 import CountryForm from "./CountryForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ICountry } from "../../../../../../common/Country.interface";
 
 const THEME_COLOR = "var(--primary-gradient)";
@@ -15,6 +15,7 @@ type CountryWithId = ICountry & { _id: string };
 
 export default function VehicleCountryClient() {
   const [dataList, setDataList] = useState<CountryWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<CountryWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<CountryWithId | null>(null);
@@ -22,6 +23,7 @@ export default function VehicleCountryClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -32,15 +34,28 @@ export default function VehicleCountryClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter logic based on status
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -60,7 +75,22 @@ export default function VehicleCountryClient() {
     }
   };
 
-  // Calculate stats for the component
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/country", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
   const totalCountries = dataList.length;
   const activeCountries = dataList.filter((d) => d.isActive).length;
   const inactiveCountries = dataList.filter((d) => !d.isActive).length;
@@ -68,7 +98,7 @@ export default function VehicleCountryClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header - Matching Business Type Gradient Style */}
+        {/* Header */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -90,11 +120,11 @@ export default function VehicleCountryClient() {
           </button>
         </div>
 
-        {/* Reusable Stats Cards Component */}
         <StatsCards 
           totalCount={totalCountries}
           activeCount={activeCountries}
           inactiveCount={inactiveCountries}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
         {/* Search Bar */}
@@ -109,7 +139,6 @@ export default function VehicleCountryClient() {
           />
         </div>
 
-        {/* Table/Grid Container */}
         <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! ">
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
@@ -119,7 +148,6 @@ export default function VehicleCountryClient() {
               <p className="text-sm text-gray-500">Configure countries for addresses and international services</p>
             </div>
 
-            {/* View Switcher */}
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
@@ -162,17 +190,31 @@ export default function VehicleCountryClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Countries ({filteredDataList.length})
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <CountryTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}

@@ -12,10 +12,10 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: CityWithId) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
-// Icon gradients matching the Business Type style
 const getIconGradient = (index: number) => {
   const gradients = [
     "bg-gradient-to-br from-blue-400 to-blue-600",
@@ -26,8 +26,8 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const CityTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
-  // Card View Logic
+const CityTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
+  // Card View
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -36,21 +36,29 @@ const CityTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) =
             key={item._id}
             className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
-            {/* Header Section */}
+            {/* Header Section with Icon and Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <MapPin size={18} />
               </div>
-              <StatusBadge isActive={!!item.isActive} />
+              
+              <StatusBadge 
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
             {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
                   {item.cityName}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </h3>
-                <p className="text-sm text-gray-500 flex items-center gap-1">
+                <p className="text-sm text-gray-500 font-medium italic">
                    {(item.countryId as any)?.countryName || "Unknown Country"}
                 </p>
               </div>
@@ -90,11 +98,11 @@ const CityTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) =
     );
   }
 
-  // Table View Logic
+  // Table View (Default)
   return (
-    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden rounded-xl">
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">City Name</th>
@@ -123,7 +131,11 @@ const CityTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) =
                 {(item.countryId as any)?.countryName || "N/A"}
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton

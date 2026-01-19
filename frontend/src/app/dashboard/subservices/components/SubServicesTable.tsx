@@ -6,13 +6,15 @@ import { Star, Layers, Trash2 } from "lucide-react";
 import { ISubServicesInterface } from "../../../../../../common/ISubServices.interface";
 
 interface Props {
-  data: ISubServicesInterface[];
+  data: (ISubServicesInterface & { _id: string })[];
   displayView: "table" | "card";
-  onEdit: (item: ISubServicesInterface) => void;
+  onEdit: (item: ISubServicesInterface & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
+// Icon gradients matching the Business Type style
 const getIconGradient = (index: number) => {
   const gradients = [
     "bg-gradient-to-br from-blue-400 to-blue-600",
@@ -23,8 +25,8 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const SubServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
-  // Card View
+const SubServicesTable = ({ data, displayView, onEdit, onDelete, onStatusChange }: Props) => {
+  // Card View logic
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -33,25 +35,39 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: P
             key={item._id}
             className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
+            {/* Header Section with Icon and Status Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <Layers size={18} />
               </div>
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive} 
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
+            {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
                   {item.subServiceName}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </h3>
                 <p className="text-xs text-blue-600 font-semibold uppercase tracking-wider">
-                  {typeof item.masterServiceId === 'object' ? (item.masterServiceId as any).MasterServiceType : 'N/A'}
+                  {typeof item.masterServiceId === 'object' 
+                    ? (item.masterServiceId as any).MasterServiceType 
+                    : 'N/A'}
                 </p>
-                <p className="text-sm text-gray-500 mt-2 line-clamp-1">{item.notes || "No notes available"}</p>
+                <p className="text-sm text-gray-500 mt-2 line-clamp-1">
+                  {item.notes || "No notes available"}
+                </p>
                 <p className="text-lg font-bold text-gray-700 mt-1">${item.cost || 0}</p>
               </div>
 
+              {/* Action Buttons */}
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => onEdit(item)}
@@ -65,10 +81,15 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: P
                       alert("Default records cannot be deleted.");
                       return;
                     }
-                    onDelete(item._id!);
+                    onDelete(item._id);
                   }}
-                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  className={`p-2 bg-gray-50 rounded-lg transition-all ${
+                    item.isDefault 
+                      ? "text-gray-200 cursor-not-allowed" 
+                      : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                  }`}
                   title="Delete"
+                  disabled={item.isDefault}
                 >
                   <Trash2 size={20} />
                 </button>
@@ -86,9 +107,9 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: P
     );
   }
 
-  // Table View
+  // Table View (Default)
   return (
-    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden rounded-xl">
       <table className="w-full text-[16px]! text-left">
         <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200">
           <tr>
@@ -102,9 +123,9 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: P
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors group">
               <td className="px-6 py-4">
-                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
+                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white group-hover:scale-110 transition-transform`}>
                   <Layers size={18} />
                 </div>
               </td>
@@ -128,14 +149,18 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: P
                 ${item.cost || 0}
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive} 
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault) return alert("Default records cannot be deleted.");
-                    onDelete(item._id!);
+                    onDelete(item._id);
                   }}
                 />
               </td>
