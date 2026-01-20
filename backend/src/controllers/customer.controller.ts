@@ -308,11 +308,10 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
 
             if (filter === "weekly") {
                 period = `${s._id.year}-W${s._id.week}`;
-            } else {
+            }
+            else {
                 period = s._id;
             }
-
-
             return {
                 period,
                 total: s.total,
@@ -335,11 +334,15 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
         }
         else {
             periods = generateMonthlyPeriods(rangeStart.getFullYear());
+            const Updatedperiods = periods.map((pM) => {
+                const [year, month] = pM.split("-");
+                const monthIndex = parseInt(month, 10) - 1;
+                return `${year}-${MONTH_NAMES[monthIndex]}`;
+            })
+            periods = [...Updatedperiods];
         }
 
-        /* =======================
-           6️⃣ Zero Fill
-        ======================= */
+
 
         const result = zeroFill(periods, formattedMongo);
 
