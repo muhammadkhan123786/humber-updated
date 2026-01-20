@@ -32,7 +32,7 @@ export const useTicketForm = () => {
     useState<string>("");
 
   const form = useForm<TicketFormData>({
-    resolver: zodResolver(ticketFormSchema),
+    resolver: zodResolver(ticketFormSchema) as unknown as any,
     defaultValues: {
       ticketSource: "Phone",
       location: "Workshop",
@@ -116,16 +116,30 @@ export const useTicketForm = () => {
         ])) as any[];
 
         if (results[0].status === "fulfilled")
-          setCustomers(results[0].value?.data ?? []);
+          setCustomers(
+            (results[0].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+
         if (results[1].status === "fulfilled")
-          setPriorities(results[1].value?.data ?? []);
+          setPriorities(
+            (results[1].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+
         if (results[3].status === "fulfilled")
-          setTechnicians(results[3].value?.data ?? []);
+          setTechnicians(
+            (results[3].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+
         if (results[4].status === "fulfilled")
-          setVehicles(results[4].value?.data ?? []);
+          setVehicles(
+            (results[4].value?.data ?? []).filter((i: any) => i.isActive),
+          );
 
         if (results[2].status === "fulfilled") {
-          const statusData = results[2].value?.data ?? [];
+          const statusData = (results[2].value?.data ?? []).filter(
+            (i: any) => i.isActive,
+          );
+
           setStatuses(statusData);
 
           if (!editingId) {
@@ -148,6 +162,7 @@ export const useTicketForm = () => {
         setIsLoading(false);
       }
     };
+
     fetchDropdownData();
   }, [form, editingId]);
 
@@ -185,7 +200,10 @@ export const useTicketForm = () => {
       const existingImages = imagesArray.filter(
         (path: string) => typeof path === "string" && !path.startsWith("blob:"),
       );
-      formData.append("vehicleRepairImages", JSON.stringify(existingImages));
+      if (existingImages.length > 0) {
+        formData.append("vehicleRepairImages", JSON.stringify(existingImages));
+      }
+
       if (
         data.vehicleRepairImagesFile &&
         data.vehicleRepairImagesFile.length > 0

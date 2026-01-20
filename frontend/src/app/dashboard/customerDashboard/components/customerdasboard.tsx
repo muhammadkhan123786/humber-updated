@@ -13,10 +13,14 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
     null,
   );
 
+  const handleDataChange = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
   const handleEditCustomer = (id: string) => {
     setSelectedCustomerId(id);
     setIsModalOpen(true);
@@ -39,7 +43,7 @@ const CustomerDashboard = () => {
       }
     };
     fetchStats();
-  }, []);
+  }, [refreshTrigger]);
 
   const getValue = (key: string) =>
     loading ? "..." : stats?.[key]?.current || 0;
@@ -52,6 +56,7 @@ const CustomerDashboard = () => {
           <ModalForm
             customerId={selectedCustomerId}
             onClose={handleCloseModal}
+            onSuccess={handleDataChange}
           />
         )}
       </AnimatePresence>
@@ -139,7 +144,10 @@ const CustomerDashboard = () => {
       </div>
       <div className="mt-2">
         {/* Yahan onEdit prop pass kiya hai */}
-        <CustomerManagementList onEdit={handleEditCustomer} />
+        <CustomerManagementList
+          onEdit={handleEditCustomer}
+          refreshTrigger={refreshTrigger}
+        />
       </div>
     </div>
   );
