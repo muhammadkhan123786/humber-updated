@@ -273,18 +273,24 @@ const ModalForm: React.FC<ModalProps> = ({
                   Source *
                 </label>
                 <div className="grid grid-cols-3 gap-3">
-                  {sourceOptions.map((item) => (
-                    <div
-                      key={item._id}
-                      onClick={() => setValue("sourceId", item._id)}
-                      className={`cursor-pointer p-3 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 text-center shadow-sm ${sourceId === item._id ? `text-white bg-linear-to-br from-[#6366F1] to-[#4F46E5] border-transparent` : "border-white bg-white text-slate-500"}`}
-                    >
-                      <Globe size={18} />
-                      <span className="text-[10px] font-bold">
-                        {item.customerSource}
-                      </span>
-                    </div>
-                  ))}
+                  {sourceOptions
+                    .filter((item) => item.isActive === true)
+                    .map((item) => (
+                      <div
+                        key={item._id}
+                        onClick={() => setValue("sourceId", item._id)}
+                        className={`cursor-pointer p-3 rounded-2xl border-2 transition-all flex flex-col items-center gap-2 text-center shadow-sm ${
+                          sourceId === item._id
+                            ? "text-white bg-linear-to-br from-[#6366F1] to-[#4F46E5] border-transparent"
+                            : "border-white bg-white text-slate-500"
+                        }`}
+                      >
+                        <Globe size={18} />
+                        <span className="text-[10px] font-bold">
+                          {item.customerSource}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
 

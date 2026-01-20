@@ -25,9 +25,13 @@ type ViewMode = "Grid" | "Table";
 // 1. Props interface define karein
 interface CustomerManagementListProps {
   onEdit: (id: string) => void;
+  refreshTrigger?: number;
 }
 
-const CustomerManagementList = ({ onEdit }: CustomerManagementListProps) => {
+const CustomerManagementList = ({
+  onEdit,
+  refreshTrigger,
+}: CustomerManagementListProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("Grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState<any[]>([]);
@@ -53,7 +57,7 @@ const CustomerManagementList = ({ onEdit }: CustomerManagementListProps) => {
       loadCustomers();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [loadCustomers]);
+  }, [loadCustomers, refreshTrigger]);
 
   // 2. handleEdit ab parent function call karega
   const handleEdit = (id: string) => {
