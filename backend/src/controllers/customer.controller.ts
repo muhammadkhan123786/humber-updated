@@ -27,16 +27,27 @@ const endOfYear = (d: Date) => new Date(d.getFullYear(), 11, 31, 23, 59, 59);
 
 const toYMD = (d: Date) => d.toISOString().slice(0, 10);
 
-const generateDailyPeriods = (start: Date, end: Date) => {
-    const days: string[] = [];
-    const current = new Date(start);
+export const generateDailyPeriods = (start: Date, end: Date): string[] => {
+    const periods: string[] = [];
 
-    while (current <= end) {
-        days.push(toYMD(current));
+    const current = new Date(start);
+    current.setHours(0, 0, 0, 0);
+
+    const last = new Date(end);
+    last.setHours(0, 0, 0, 0);
+
+    while (current < last) {
+        const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, "0");
+        const day = String(current.getDate()).padStart(2, "0");
+
+        periods.push(`${year}-${month}-${day}`);
         current.setDate(current.getDate() + 1);
     }
-    return days;
+
+    return periods;
 };
+
 
 const generateMonthlyPeriods = (year: number) =>
     Array.from({ length: 12 }, (_, i) =>
@@ -81,10 +92,6 @@ const zeroFill = (periods: string[], data: any[]) => {
     }));
 };
 
-
-
-
-
 const domesticServices = new GenericService<CustomerBaseDoc>(domesticCutomerSchema);
 
 const corporateServices = new GenericService<CustomerBaseDoc>(corporateCustomerSchema);
@@ -110,7 +117,7 @@ export const saveCustomer = async (
             return res.status(400).json({ message: "Invalid customer type" });
         }
 
-        // ✅ Validate input
+
         const parseResult = validationSchema.safeParse(req.body);
         if (!parseResult.success) {
             return res.status(400).json({
@@ -119,9 +126,7 @@ export const saveCustomer = async (
             });
         }
 
-        /* =========================
-           CREATE
-        ========================== */
+
         if (!id) {
             const customer = await targetService.create(req.body);
             return res.status(201).json({
@@ -130,7 +135,7 @@ export const saveCustomer = async (
             });
         }
 
-        // Fetch customer from BOTH collections
+
         const existingCustomer =
             (await domesticServices.getById(id)) ||
             (await corporateServices.getById(id));
@@ -139,12 +144,8 @@ export const saveCustomer = async (
             return res.status(404).json({ message: "Customer not found" });
         }
 
-        /* =========================
-           TYPE CONVERSION
-        ========================== */
         if (existingCustomer.customerType !== customerType) {
 
-            // 1️⃣ Archive old customer
             const oldService =
                 existingCustomer.customerType === "domestic"
                     ? domesticServices
@@ -155,13 +156,13 @@ export const saveCustomer = async (
                 convertedAt: new Date()
             });
 
-            // 2️⃣ Create new customer
+
             const newCustomer = await targetService.create({
                 ...req.body,
                 previousCustomerId: existingCustomer._id
             });
 
-            // 3️⃣ Link both
+
             await oldService.updateById(existingCustomer._id.toString(), {
                 convertedToCustomerId: newCustomer._id
             });
@@ -172,9 +173,7 @@ export const saveCustomer = async (
             });
         }
 
-        /* =========================
-           NORMAL UPDATE
-        ========================== */
+
         const updatedCustomer = await targetService.updateById(id, req.body);
 
         return res.status(200).json({
@@ -189,7 +188,7 @@ export const saveCustomer = async (
 
 export const getCustomerSummary = async (req: Request, res: Response) => {
     try {
-        const { filter, from, to } = req.query as {
+        const { filter = "daily", from, to } = req.query as {
             filter?: "daily" | "weekly" | "monthly";
             from?: string;
             to?: string;
@@ -198,54 +197,81 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
         const now = new Date();
         const match: any = {};
 
-        let rangeStart!: Date;
-        let rangeEnd!: Date;
+        let rangeStart: Date;
+        let rangeEnd: Date;
 
-        // 🔹 1. Custom range
+        /* =======================
+           1️⃣ Date Range Handling
+        ======================= */
+
+        // 🔹 Custom range (HIGHEST priority)
         if (from && to) {
             rangeStart = new Date(from);
+            rangeStart.setHours(0, 0, 0, 0);
+
             rangeEnd = new Date(to);
-            match.createdAt = { $gte: rangeStart, $lte: rangeEnd };
-        } else {
+            rangeEnd.setDate(rangeEnd.getDate() + 1);
+            rangeEnd.setHours(0, 0, 0, 0);
+
+            match.createdAt = {
+                $gte: rangeStart,
+                $lt: rangeEnd, // ✅ IMPORTANT
+            };
+        }
+        else {
             if (filter === "daily") {
-                rangeStart = startOfWeek(new Date(now));
-                rangeEnd = endOfWeek(new Date(now));
+                rangeStart = startOfWeek(now);
+                rangeEnd = endOfWeek(now);
             }
 
-            if (filter === "weekly") {
+            else if (filter === "weekly") {
                 rangeStart = startOfMonth(now);
                 rangeEnd = endOfMonth(now);
             }
 
-            if (filter === "monthly") {
+            else {
                 rangeStart = startOfYear(now);
                 rangeEnd = endOfYear(now);
             }
 
-            match.createdAt = { $gte: rangeStart, $lte: rangeEnd };
+            match.createdAt = {
+                $gte: rangeStart,
+                $lte: rangeEnd,
+            };
         }
 
-        // 🔹 2. Grouping key
+        /* =======================
+           2️⃣ Grouping Logic
+        ======================= */
+
         let groupId: any;
 
         switch (filter) {
             case "daily":
-                groupId = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
+                groupId = {
+                    $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+                };
                 break;
 
             case "weekly":
-                groupId = { $dateToString: { format: "%Y-%U", date: "$createdAt" } };
+                // ISO week (stable & recommended)
+                groupId = {
+                    year: { $isoWeekYear: "$createdAt" },
+                    week: { $isoWeek: "$createdAt" },
+                };
                 break;
 
             case "monthly":
-                groupId = { $dateToString: { format: "%Y-%m", date: "$createdAt" } };
+                groupId = {
+                    $dateToString: { format: "%Y-%m", date: "$createdAt" },
+                };
                 break;
-
-            default:
-                groupId = { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } };
         }
 
-        // 🔹 3. Mongo aggregation
+        /* =======================
+           3️⃣ Mongo Aggregation
+        ======================= */
+
         const mongoResult = await CustomerBase.aggregate([
             { $match: match },
             {
@@ -253,39 +279,54 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
                     _id: groupId,
                     total: { $sum: 1 },
                     domestic: {
-                        $sum: { $cond: [{ $eq: ["$customerType", "domestic"] }, 1, 0] },
+                        $sum: {
+                            $cond: [{ $eq: ["$customerType", "domestic"] }, 1, 0],
+                        },
                     },
                     corporate: {
-                        $sum: { $cond: [{ $eq: ["$customerType", "corporate"] }, 1, 0] },
+                        $sum: {
+                            $cond: [{ $eq: ["$customerType", "corporate"] }, 1, 0],
+                        },
                     },
                 },
             },
-            { $sort: { _id: 1 } },
+            { $sort: { "_id.year": 1, "_id.week": 1, _id: 1 } },
         ]);
 
+        /* =======================
+           4️⃣ Normalize Mongo Output
+        ======================= */
+
         const formattedMongo = mongoResult.map((s) => ({
-            period: s._id,
+            period:
+                filter === "weekly"
+                    ? `W${s._id.week}-${s._id.year}`
+                    : s._id,
             total: s.total,
             domestic: s.domestic,
             corporate: s.corporate,
         }));
 
-        // 🔹 4. Generate expected periods
+        /* =======================
+           5️⃣ Generate Periods
+        ======================= */
+
         let periods: string[] = [];
 
         if (filter === "daily") {
             periods = generateDailyPeriods(rangeStart, rangeEnd);
         }
-
-        if (filter === "weekly") {
+        else if (filter === "weekly") {
             periods = generateWeeklyPeriods(rangeStart, rangeEnd);
         }
-
-        if (filter === "monthly") {
+        else {
             periods = generateMonthlyPeriods(rangeStart.getFullYear());
         }
 
-        // 🔹 5. Zero fill
+        /* =======================
+           6️⃣ Zero Fill
+        ======================= */
+
         const result = zeroFill(periods, formattedMongo);
 
         res.json(result);
