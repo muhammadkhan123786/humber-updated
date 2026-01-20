@@ -48,10 +48,7 @@ export const saveCustomer = async (
   const customerId = (payload as { _id?: string })._id;
 
   if (customerId) {
-    return await createItem<Customer>(
-      `${ENDPOINT}/${customerId}`,
-      finalPayload,
-    );
+    return await updateItem<Customer>(ENDPOINT, customerId, finalPayload);
   }
 
   return await createItem<Customer>(ENDPOINT, finalPayload);
