@@ -97,25 +97,25 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
 
   // Table View (Default)
   return (
-    <div className="bg-white  mt-8 shadow-lg border border-gray-200 overflow-hidden">
-      <table className="w-full text-[16px]!  text-left">
-        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200">
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
+      <table className="w-full text-[16px]! text-left min-w-max">
+        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Name</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-[#ECFEFF]  transition-colors">
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
               <td className="px-6 py-4">
                 <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
                   <Briefcase size={18} />
                 </div>
               </td>
-              <td className="px-6 py-4 font-bold text-gray-900">
+              <td className="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   {item.businessTypeName}
                   {item.isDefault && (
