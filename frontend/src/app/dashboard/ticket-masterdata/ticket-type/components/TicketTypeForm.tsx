@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Layers, Save } from "lucide-react";
@@ -10,7 +10,6 @@ import { FormSelect } from "@/app/common-form/FormSelect";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormButton } from "@/app/common-form/FormButton";
 import { createItem, updateItem, getAlls } from "@/helper/apiHelper";
-import { ITicketType } from "../../../../../../../common/Ticket-management-system/ITicketType.interface";
 import { IDepartments } from "../../../../../../../common/Ticket-management-system/IDepartment.interface";
 
 const ticketTypeFormSchema = z.object({
@@ -31,16 +30,14 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
     handleSubmit, 
     reset, 
     control, 
-    watch, // Added watch
-    setValue, // Added setValue
+    setValue, 
     formState: { errors, isSubmitting } 
   } = useForm<TicketTypeFormData>({
     resolver: zodResolver(ticketTypeFormSchema),
     defaultValues: { code: "", label: "", departmentId: "", isActive: true, isDefault: false }
   });
 
-  // isDefault ki value monitor karne ke liye
-  const isDefaultValue = watch("isDefault");
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
 
   useEffect(() => {
     const loadDeps = async () => {
@@ -79,8 +76,8 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
 
   return (
     <FormModal title={editingData ? "Edit Ticket Type" : "Add Ticket Type"} icon={<Layers size={24} />} onClose={onClose} themeColor={themeColor}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput label="Type Code *" placeholder="e.g. HARDWARE" {...register("code")} error={errors.code?.message} />
           <FormInput label="Display Label *" placeholder="e.g. Hardware Issue" {...register("label")} error={errors.label?.message} />
         </div>
@@ -92,13 +89,13 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
           error={errors.departmentId?.message} 
         />
 
-        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
           <Controller control={control} name="isActive" render={({ field }) => (
             <FormToggle 
               label="Active" 
               checked={field.value} 
               onChange={field.onChange}
-              disabled={isDefaultValue} // Lock active toggle if default is true
+              disabled={isDefaultValue} 
             />
           )} />
           <Controller control={control} name="isDefault" render={({ field }) => (
@@ -107,13 +104,20 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
               checked={field.value} 
               onChange={(val) => {
                 field.onChange(val);
-                if (val) setValue("isActive", true); // Auto check Active when Default is selected
+                if (val) setValue("isActive", true); 
               }} 
             />
           )} />
         </div>
 
-        <FormButton type="submit" label="Save Ticket Type" loading={isSubmitting} icon={<Save size={20} />} themeColor={themeColor} />
+        <FormButton 
+          type="submit" 
+          label={editingData ? "Update Type" : "Create"} 
+          loading={isSubmitting} 
+          icon={<Save size={20} />} 
+          themeColor={themeColor} 
+          onCancel={onClose} // Triggers the correct right-aligned footer layout
+        />
       </form>
     </FormModal>
   );

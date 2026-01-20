@@ -1,68 +1,95 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Image as ImageIcon, Save, Upload, X } from "lucide-react";
+import { z } from "zod";
 import { IIcons } from "../../../../../../common/master-interfaces/IIcons.interface";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createIcon, updateIcon } from "@/hooks/useIcons";
+import { createItem, updateItem } from "@/helper/apiHelper";
+
+// Validation Schema
+const iconSchemaValidation = z.object({
+  iconName: z.string().min(1, "Icon name is required."),
+  icon: z.string().min(1, "Icon file is required."),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof iconSchemaValidation>;
 
 interface Props {
-  editingData: IIcons | null;
+  editingData: (IIcons & { _id?: string }) | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
 const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-  const [formData, setFormData] = useState({
-    iconName: "",
-    icon: "",
-    isActive: true,
-    isDefault: false,
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(iconSchemaValidation),
+    defaultValues: {
+      iconName: "",
+      icon: "",
+      isActive: true,
+      isDefault: false,
+    },
+  });
+
+  // Watch values to handle logic like JobTitle (Default must be Active)
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
+  const iconPreview = useWatch({ control, name: "icon" });
 
   useEffect(() => {
     if (editingData) {
-      setFormData({
+      reset({
         iconName: editingData.iconName,
         icon: editingData.icon,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
       });
     }
-  }, [editingData]);
+  }, [editingData, reset]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setFormData({ ...formData, icon: reader.result as string });
+      reader.onloadend = () => {
+        setValue("icon", reader.result as string, { shouldValidate: true });
+      };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.icon) return alert("Please select an icon file");
-    
-    setIsSubmitting(true);
+  const onSubmit = async (values: FormData) => {
     try {
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const payload = { ...formData, userId: savedUser.id || savedUser._id };
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) await updateIcon(editingData._id, payload);
-      else await createIcon(payload);
+      if (editingData?._id) {
+        await updateItem("/icons", editingData._id, payload);
+      } else {
+        await createItem("/icons", payload);
+      }
       
       onRefresh();
       onClose();
-    } catch (error) {
-      alert("Error saving icon");
-    } finally {
-      setIsSubmitting(false);
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving icon");
     }
   };
 
@@ -73,28 +100,34 @@ const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
       onClose={onClose} 
       themeColor={themeColor}
     >
-      <form onSubmit={handleSubmit} className="space-y-6 p-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+        {/* Icon Name Input */}
         <FormInput 
           label="Icon Name *" 
           placeholder="e.g. Shopping Cart"
-          value={formData.iconName} 
-          onChange={(e) => setFormData({...formData, iconName: e.target.value})} 
-          required 
+          {...register("iconName")}
+          error={errors.iconName?.message}
         />
 
+        {/* Custom Icon Upload Area */}
         <div className="space-y-2">
           <label className="text-sm font-bold text-gray-700">Icon File (Preview) *</label>
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-all bg-gray-50 group"
+            className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all bg-gray-50 group ${
+              errors.icon ? "border-red-500" : "border-gray-300 hover:border-blue-400"
+            }`}
           >
-            {formData.icon ? (
+            {iconPreview ? (
               <div className="relative">
-                <img src={formData.icon} alt="Preview" className="h-24 w-24 object-contain" />
+                <img src={iconPreview} alt="Preview" className="h-24 w-24 object-contain" />
                 <button 
                   type="button"
                   className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors"
-                  onClick={(e) => { e.stopPropagation(); setFormData({...formData, icon: ""}); }}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setValue("icon", ""); 
+                  }}
                 >
                   <X size={16}/>
                 </button>
@@ -108,20 +141,44 @@ const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
                 <p className="text-xs text-gray-400 mt-1">SVG, PNG or JPG (Max 2MB)</p>
               </>
             )}
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
           </div>
+          {errors.icon && <p className="text-xs text-red-500 mt-1">{errors.icon.message}</p>}
         </div>
 
+        {/* Toggles - Matching JobTitle Logic */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-          <FormToggle 
-            label="Active" 
-            checked={formData.isActive} 
-            onChange={(val) => setFormData({...formData, isActive: val})} 
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <FormToggle 
+                label="Active" 
+                checked={field.value} 
+                onChange={field.onChange}
+                disabled={isDefaultValue} // Cannot deactivate if it's default
+              />
+            )}
           />
-          <FormToggle 
-            label="Default" 
-            checked={formData.isDefault} 
-            onChange={(val) => setFormData({...formData, isDefault: val})} 
+          <Controller
+            control={control}
+            name="isDefault"
+            render={({ field }) => (
+              <FormToggle 
+                label="Default" 
+                checked={field.value} 
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true); // Auto-activate if set to default
+                }} 
+              />
+            )}
           />
         </div>
 

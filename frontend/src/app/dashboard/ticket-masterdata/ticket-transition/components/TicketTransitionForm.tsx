@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GitCompare, Loader2, Plus, Save } from "lucide-react";
+import { GitCompare, Loader2, Save } from "lucide-react";
 import { z } from "zod";
 
 import { FormModal } from "@/app/common-form/FormModal";
@@ -70,8 +70,7 @@ const TicketTransitionForm = ({
     handleSubmit,
     reset,
     control,
-    watch, // Added watch
-    setValue, // Added setValue
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TransitionFormData>({
     resolver: zodResolver(transitionSchema),
@@ -87,7 +86,7 @@ const TicketTransitionForm = ({
   });
 
   // Watch isDefault to disable isActive toggle
-  const isDefaultValue = watch("isDefault");
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -253,11 +252,12 @@ const TicketTransitionForm = ({
               label={
                 editingData
                   ? "Update Transition Rule"
-                  : "Create Transition Rule"
+                  : "Create"
               }
+              icon={<Save size={20} />}
               loading={isSubmitting}
               themeColor={themeColor}
-              icon={editingData ? <Save size={20} /> : <Plus size={20} />}
+              onCancel={onClose}
             />
           </>
         )}

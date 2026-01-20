@@ -5,7 +5,7 @@ import StatsCards from "@/app/common-form/StatsCard";
 import PaymentMethodTable from "./PaymentMethodTable";
 import PaymentMethodForm from "./PaymentMethodForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IPaymentMethod } from "../../../../../../common/suppliers/IPayment.method.interface";
 
 const THEME_COLOR = "var(--primary-gradient)";
@@ -14,6 +14,7 @@ type PaymentMethodWithId = IPaymentMethod & { _id: string };
 
 export default function PaymentMethodClient() {
   const [dataList, setDataList] = useState<PaymentMethodWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<PaymentMethodWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<PaymentMethodWithId | null>(null);
@@ -21,6 +22,7 @@ export default function PaymentMethodClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -31,15 +33,28 @@ export default function PaymentMethodClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filtering Logic
+  useEffect(() => {
+    let filtered = [...dataList];
+    if (filterStatus === 'active') {
+      filtered = dataList.filter(item => item.isActive);
+    } else if (filterStatus === 'inactive') {
+      filtered = dataList.filter(item => !item.isActive);
+    }
+    setFilteredDataList(filtered);
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -59,6 +74,23 @@ export default function PaymentMethodClient() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      
+      await updateItem("/payment-method", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
   const totalCount = dataList.length;
   const activeCount = dataList.filter((d) => d.isActive).length;
   const inactiveCount = dataList.filter((d) => !d.isActive).length;
@@ -66,7 +98,7 @@ export default function PaymentMethodClient() {
   return (
     <div className="min-h-screen p-6 bg-gray-50/50">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Modern Gradient Header */}
+        {/* Header */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -88,16 +120,11 @@ export default function PaymentMethodClient() {
           </button>
         </div>
 
-        {/* Dynamic Stats Cards */}
         <StatsCards 
           totalCount={totalCount}
           activeCount={activeCount}
           inactiveCount={inactiveCount}
-          labels={{
-            total: "Total Methods",
-            active: "Active Methods",
-            inactive: "Inactive Methods"
-          }}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
         {/* Search Bar */}
@@ -112,7 +139,6 @@ export default function PaymentMethodClient() {
           />
         </div>
 
-        {/* View Toggle Section */}
         <div className="bg-white p-5 pt-9 border-t-4 border-[#2B7FFF] rounded-b-2xl shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
@@ -164,17 +190,28 @@ export default function PaymentMethodClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} Items ({filteredDataList.length})
+                  </span>
+                  <button onClick={() => setFilterStatus('all')} className="text-xs text-blue-600 hover:underline font-bold">
+                    Reset Filter
+                  </button>
+                </div>
+              )}
               <PaymentMethodTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}

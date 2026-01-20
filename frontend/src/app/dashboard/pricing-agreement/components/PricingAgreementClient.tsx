@@ -6,7 +6,7 @@ import StatsCards from "@/app/common-form/StatsCard";
 import PricingAgreementTable from "./PricingAgreementTable";
 import PricingAgreementForm from "./PricingAgreementForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IPricingAgreement } from "../../../../../../common/suppliers/IPricing.agreement.interface";
 
 const THEME_COLOR = "var(--primary-gradient)";
@@ -15,6 +15,7 @@ type PricingAgreementWithId = IPricingAgreement & { _id: string };
 
 export default function PricingAgreementClient() {
   const [dataList, setDataList] = useState<PricingAgreementWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<PricingAgreementWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<PricingAgreementWithId | null>(null);
@@ -22,6 +23,7 @@ export default function PricingAgreementClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -32,15 +34,28 @@ export default function PricingAgreementClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filtering logic matching Business Type module
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -60,7 +75,22 @@ export default function PricingAgreementClient() {
     }
   };
 
-  // Calculate stats for the component
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/pricing-agreement", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
   const totalItems = dataList.length;
   const activeItems = dataList.filter((d) => d.isActive).length;
   const inactiveItems = dataList.filter((d) => !d.isActive).length;
@@ -68,7 +98,7 @@ export default function PricingAgreementClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header - Matching BusinessTypeClient */}
+        {/* Header - Blue Gradient Style */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -90,11 +120,11 @@ export default function PricingAgreementClient() {
           </button>
         </div>
 
-        {/* Reusable Stats Cards */}
         <StatsCards 
           totalCount={totalItems}
           activeCount={activeItems}
           inactiveCount={inactiveItems}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
         {/* Search Bar */}
@@ -160,17 +190,28 @@ export default function PricingAgreementClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)} Items ({filteredDataList.length})
+                  </span>
+                  <button onClick={() => setFilterStatus('all')} className="text-xs text-blue-600 hover:underline font-bold">
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <PricingAgreementTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}
