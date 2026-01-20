@@ -35,6 +35,7 @@ const customerProfileMiddleware = genericProfileIdsMiddleware<CustomerBaseDoc>({
   targetModel: CustomerBase,
 });
 
+
 // Correct order:
 CustomerBaseRouter.get("/summary", getCustomerSummary);
 CustomerBaseRouter.get("/summary/dashboard", getCustomerDashboardSummary);

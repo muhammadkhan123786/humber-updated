@@ -22,7 +22,6 @@ import ServiceZoneRouter from "./routes/service.zones.routes";
 import ServiceRequestPrioprityRouter from "./routes/service.request.prioprity.routes";
 import serviceRequestTypeRouter from "./routes/service.request.types.routes";
 import CustomerBaseRouter from "./routes/customer.routes";
-import technicianRouter from "./routes/technician.routes";
 import currecyRouter from "./routes/currency.routes";
 import paymentTermRouter from "./routes/payment.terms.routes";
 import orderStatusRouter from "./routes/order.status.rotues";
@@ -61,6 +60,7 @@ import jobTitleRouter from "./routes/master-data-routes/job.titles.routes";
 import iconsRouter from "./routes/master-data-routes/icons.routes";
 import SupplierRouters from "./routes/suppliers/supplier.routes";
 import contractTypeRouter from "./routes/master-data-routes/contract.types.routes";
+import techniciansRouter from "./routes/technicians/technicians.routes";
 
 // Create express app
 const app: Application = express();
@@ -131,8 +131,8 @@ app.use(
 );
 app.use(
   `${process.env.API_PREFIX}/technicians`,
-  adminProtecter,
-  technicianRouter,
+  // adminProtecter,
+  techniciansRouter,
 );
 app.use(`${process.env.API_PREFIX}/currencies`, adminProtecter, currecyRouter);
 app.use(
