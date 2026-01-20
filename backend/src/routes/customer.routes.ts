@@ -24,7 +24,9 @@ const CustomerBaseController = new AdvancedGenericController({
 
 });
 
+
 const customerProfileMiddleware = genericProfileIdsMiddleware<CustomerBaseDoc>({ targetModel: CustomerBase });
+
 
 // Correct order:
 CustomerBaseRouter.get("/summary", getCustomerSummary);

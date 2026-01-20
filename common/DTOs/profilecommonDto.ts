@@ -23,9 +23,6 @@ export interface basicCommonInfoDto {
     userId?: string;
   };
 }
-
-
-
 export interface commonProfileDto extends basicCommonInfoDto {
   isActive?: boolean;
   isDeleted?: boolean;

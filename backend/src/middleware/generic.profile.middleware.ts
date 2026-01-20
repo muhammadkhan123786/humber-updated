@@ -9,10 +9,9 @@ import { commonProfileDto } from "../../../common/DTOs/profilecommonDto";
 
 type GenericModels<T extends Document> = {
     targetModel: Model<T>; // e.g., TechnicianProfile, CustomerProfile, AdminProfile
-
 };
 
-export const genericProfileIdsMiddleware = <T extends Document & { accountId?: Types.ObjectId, personId: Types.ObjectId, contactId: Types.ObjectId, addressId: Types.ObjectId }>(models: GenericModels<T>, isAccountCreate = true) => {
+export const genericProfileIdsMiddleware = <T extends Document & { accountId?: Types.ObjectId, personId?: Types.ObjectId, contactId?: Types.ObjectId, addressId?: Types.ObjectId }>(models: GenericModels<T>, isAccountCreate = true) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const body = req.body as commonProfileDto;
