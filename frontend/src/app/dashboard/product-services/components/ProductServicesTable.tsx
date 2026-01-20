@@ -10,6 +10,7 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: IProductServices & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
@@ -23,8 +24,7 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const ProductServicesTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
-  // Card View
+const ProductServicesTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -37,12 +37,17 @@ const ProductServicesTable = ({ data, displayView, onEdit, onDelete, themeColor 
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <PackageSearch size={18} />
               </div>
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive} 
+                onChange={(newVal) => onStatusChange?.(item._id, newVal)}
+                editable={!item.isDefault}
+              />
             </div>
 
             <div className="px-4 pb-4 space-y-3">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
+              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                 {item.productServicesName}
+                {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
               </h3>
 
               <div className="flex gap-2 pt-4">
@@ -65,15 +70,20 @@ const ProductServicesTable = ({ data, displayView, onEdit, onDelete, themeColor 
             </div>
           </div>
         ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">📦</div>
+            <p>No services found.</p>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Table View
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Service Name</th>
@@ -98,7 +108,11 @@ const ProductServicesTable = ({ data, displayView, onEdit, onDelete, themeColor 
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive} 
+                  onChange={(newVal) => onStatusChange?.(item._id, newVal)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
@@ -111,6 +125,13 @@ const ProductServicesTable = ({ data, displayView, onEdit, onDelete, themeColor 
               </td>
             </tr>
           ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center py-10 text-gray-400">
+                No services found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

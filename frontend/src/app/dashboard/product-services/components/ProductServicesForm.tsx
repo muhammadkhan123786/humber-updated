@@ -88,13 +88,13 @@ const ProductServicesForm = ({ editingData, onClose, onRefresh, themeColor }: Pr
                     error={errors.productServicesName?.message}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4  pt-4">
                     <Controller
                         control={control}
                         name="isActive"
                         render={({ field }) => (
                             <FormToggle
-                                label="Active Status"
+                                label="Active"
                                 checked={field.value}
                                 onChange={field.onChange}
                                 disabled={isDefaultValue}
@@ -106,7 +106,7 @@ const ProductServicesForm = ({ editingData, onClose, onRefresh, themeColor }: Pr
                         name="isDefault"
                         render={({ field }) => (
                             <FormToggle
-                                label="Default Service"
+                                label="Default"
                                 checked={field.value}
                                 onChange={(val) => {
                                     field.onChange(val);
