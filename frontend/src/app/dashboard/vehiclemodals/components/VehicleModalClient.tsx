@@ -6,7 +6,7 @@ import StatsCards from "@/app/common-form/StatsCard";
 import ModelTable from "./ModalTable";
 import ModalForm from "./ModalForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IVehicleModel } from "../types";
 
 const THEME_COLOR = "var(--primary-gradient)";
@@ -15,6 +15,7 @@ type VehicleModelWithId = IVehicleModel & { _id: string };
 
 export default function VehicleModelClient() {
   const [dataList, setDataList] = useState<VehicleModelWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<VehicleModelWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<VehicleModelWithId | null>(null);
@@ -22,6 +23,7 @@ export default function VehicleModelClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -32,15 +34,28 @@ export default function VehicleModelClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter logic matching BusinessType
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -60,7 +75,22 @@ export default function VehicleModelClient() {
     }
   };
 
-  // Calculate stats for the component
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/vechilemodel", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
   const totalModels = dataList.length;
   const activeModels = dataList.filter((d) => d.isActive).length;
   const inactiveModels = dataList.filter((d) => !d.isActive).length;
@@ -68,7 +98,7 @@ export default function VehicleModelClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header Section */}
+        {/* Header */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -90,11 +120,12 @@ export default function VehicleModelClient() {
           </button>
         </div>
 
-        {/* Reusable Stats Cards Component */}
+        {/* Stats Cards with Filter callback */}
         <StatsCards 
           totalCount={totalModels}
           activeCount={activeModels}
           inactiveCount={inactiveModels}
+          onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
         {/* Search Bar */}
@@ -109,7 +140,6 @@ export default function VehicleModelClient() {
           />
         </div>
 
-        {/* Content Container */}
         <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! shadow-sm rounded-b-2xl">
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
@@ -123,9 +153,7 @@ export default function VehicleModelClient() {
               <button
                 onClick={() => setDisplayView("card")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Grid3x3 size={16} />
@@ -134,9 +162,7 @@ export default function VehicleModelClient() {
               <button
                 onClick={() => setDisplayView("table")}
                 className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <List size={16} />
@@ -164,17 +190,31 @@ export default function VehicleModelClient() {
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <ModelTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={currentPage}

@@ -1,17 +1,19 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
+// Import common components
 import StatsCards from "@/app/common-form/StatsCard"; 
 import TechnicianRolesTable from "./TechnicionRolesTable";
 import TechnicianRolesForm from "./TechnicionRolesForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ITechnicianRoles } from "../../../../../../common/ITechnicianRoles.interface";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
 export default function TechnicianRolesClient() {
   const [dataList, setDataList] = useState<ITechnicianRoles[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<ITechnicianRoles[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<ITechnicianRoles | null>(null);
@@ -19,6 +21,7 @@ export default function TechnicianRolesClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -29,15 +32,28 @@ export default function TechnicianRolesClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter data based on status matching BusinessType logic
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -52,22 +68,40 @@ export default function TechnicianRolesClient() {
       await deleteItem("/technician-roles", id);
       fetchData(currentPage, searchTerm);
     } catch (error) {
+      console.error("Delete Error:", error);
       alert("Failed to delete item.");
     }
   };
 
-  const total = dataList.length;
-  const active = dataList.filter((d) => d.isActive).length;
-  const inactive = dataList.filter((d) => !d.isActive).length;
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/technician-roles", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
+  // Calculate stats
+  const totalRoles = dataList.length;
+  const activeRoles = dataList.filter((d) => d.isActive).length;
+  const inactiveRoles = dataList.filter((d) => !d.isActive).length;
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Same Gradient Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center">
+        {/* Header */}
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <ShieldCheck size={32} />
+              <ShieldCheck size={32} className="text-white" />
             </div>
             <div>
               <h1 className="text-4xl font-bold">Technician Roles</h1>
@@ -75,15 +109,25 @@ export default function TechnicianRolesClient() {
             </div>
           </div>
           <button
-            onClick={() => { setEditingData(null); setShowForm(true); }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all"
+            onClick={() => {
+              setEditingData(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Role
           </button>
         </div>
 
-        <StatsCards totalCount={total} activeCount={active} inactiveCount={inactive} />
+        {/* Stats with Filter logic */}
+        <StatsCards 
+          totalCount={totalRoles}
+          activeCount={activeRoles}
+          inactiveCount={inactiveRoles}
+          onFilterChange={(filter) => setFilterStatus(filter)}
+        />
 
+        {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
           <Search className="text-gray-400" size={20} />
           <input
@@ -101,14 +145,31 @@ export default function TechnicianRolesClient() {
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
                 Role Categories
               </h2>
+              <p className="text-sm text-gray-500">Configure technician roles for staff management</p>
             </div>
 
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
-              <button onClick={() => setDisplayView("card")} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"}`}>
-                <Grid3x3 size={16} /> <span className="hidden sm:inline text-sm">Grid</span>
+              <button
+                onClick={() => setDisplayView("card")}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                  displayView === "card"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Grid3x3 size={16} />
+                <span className="hidden sm:inline text-sm">Grid</span>
               </button>
-              <button onClick={() => setDisplayView("table")} className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"}`}>
-                <List size={16} /> <span className="hidden sm:inline text-sm">Table</span>
+              <button
+                onClick={() => setDisplayView("table")}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                  displayView === "table"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <List size={16} />
+                <span className="hidden sm:inline text-sm">Table</span>
               </button>
             </div>
           </div>
@@ -125,19 +186,41 @@ export default function TechnicianRolesClient() {
           {loading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
+              <p className="mt-4 text-gray-400 font-medium">Loading roles...</p>
             </div>
           ) : (
             <>
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
               <TechnicianRolesTable
-                data={dataList}
+                data={filteredDataList}
                 displayView={displayView}
-                onEdit={(item) => { setEditingData(item); setShowForm(true); }}
+                onEdit={(item) => {
+                  setEditingData(item);
+                  setShowForm(true);
+                }}
                 onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
-              {dataList.length > 0 && (
+              {filteredDataList.length > 0 && (
                 <div className="mt-6">
-                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => fetchData(page, searchTerm)} />
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => fetchData(page, searchTerm)}
+                  />
                 </div>
               )}
             </>

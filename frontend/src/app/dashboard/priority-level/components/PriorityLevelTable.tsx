@@ -9,10 +9,11 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: any) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
-const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   // Card View
   if (displayView === "card") {
     return (
@@ -23,14 +24,17 @@ const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, themeColor }:
             className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
             <div className="p-4 flex items-start justify-between bg-white">
-              {/* Icon uses the priority's specific background color but follows the rounded-xl style */}
               <div 
                 className="p-3 rounded-xl text-white shadow-lg" 
                 style={{ backgroundColor: item.backgroundColor || '#3b82f6' }}
               >
                 <AlertTriangle size={18} />
               </div>
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive} 
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
             <div className="px-4 pb-4 space-y-3">
@@ -67,12 +71,6 @@ const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, themeColor }:
             </div>
           </div>
         ))}
-        {data.length === 0 && (
-          <div className="col-span-full text-center py-20 text-gray-400">
-            <div className="text-5xl mb-3">📭</div>
-            <p>No priority levels found.</p>
-          </div>
-        )}
       </div>
     );
   }
@@ -107,7 +105,11 @@ const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, themeColor }:
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive} 
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
@@ -120,13 +122,6 @@ const PriorityLevelTable = ({ data, displayView, onEdit, onDelete, themeColor }:
               </td>
             </tr>
           ))}
-          {data.length === 0 && (
-            <tr>
-              <td colSpan={4} className="text-center py-10 text-gray-400">
-                No priority levels found.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>

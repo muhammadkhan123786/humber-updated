@@ -10,6 +10,7 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: ITechnicianRoles) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
@@ -23,7 +24,8 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
+  // Card View
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -32,15 +34,31 @@ const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor 
             key={item._id}
             className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
+            {/* Header Section with Icon and Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <ShieldCheck size={18} />
               </div>
-              <StatusBadge isActive={!!item.isActive} />
+              
+              <StatusBadge 
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id!, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
+            {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{item.technicianRole}</h3>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  {item.technicianRole}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
+                </h3>
+              </div>
+
+              {/* Action Buttons */}
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => onEdit(item)}
@@ -50,10 +68,14 @@ const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor 
                 </button>
                 <button
                   onClick={() => {
-                    if (item.isDefault) return alert("Default roles cannot be deleted.");
+                    if (item.isDefault) {
+                      alert("Default roles cannot be deleted.");
+                      return;
+                    }
                     onDelete(item._id!);
                   }}
                   className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  title="Delete"  
                 >
                   <Trash2 size={20} />
                 </button>
@@ -61,14 +83,21 @@ const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor 
             </div>
           </div>
         ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">📭</div>
+            <p>No technician roles found.</p>
+          </div>
+        )}
       </div>
     );
   }
 
+  // Table View
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Role Name</th>
@@ -87,23 +116,37 @@ const TechnicianRolesTable = ({ data, displayView, onEdit, onDelete, themeColor 
               <td className="px-6 py-4 font-bold text-gray-900">
                 <div className="flex items-center gap-2">
                   {item.technicianRole}
-                  {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id!, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault) return alert("Default roles cannot be deleted.");
+                    if (item.isDefault)
+                      return alert("Default roles cannot be deleted.");
                     onDelete(item._id!);
                   }}
                 />
               </td>
             </tr>
           ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center py-10 text-gray-400">
+                No technician roles found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

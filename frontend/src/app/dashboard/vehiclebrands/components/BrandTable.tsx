@@ -10,10 +10,10 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: IVehicleBrand & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
-// Icon colors for different brands
 const getIconGradient = (index: number) => {
   const gradients = [
     "bg-gradient-to-br from-blue-400 to-blue-600",
@@ -24,7 +24,7 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const BrandTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const BrandTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   // Card View
   if (displayView === "card") {
     return (
@@ -34,25 +34,28 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
             key={item._id}
             className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
-            {/* Header Section with Icon and Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <Car size={18} />
               </div>
               
-              {/* Status Toggle Switch */}
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
-            {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                   {item.brandName}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </h3>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => onEdit(item)}
@@ -87,7 +90,7 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
     );
   }
 
-  // Table View (Default)
+  // Table View
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
@@ -116,7 +119,11 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton

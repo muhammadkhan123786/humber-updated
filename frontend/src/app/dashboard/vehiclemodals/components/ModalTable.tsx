@@ -10,10 +10,10 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: IVehicleModel & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
-// Matching the icon color patterns
 const getIconGradient = (index: number) => {
   const gradients = [
     "bg-gradient-to-br from-blue-400 to-blue-600",
@@ -24,7 +24,7 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const ModelTable = ({ data, displayView, onEdit, onDelete }: Props) => {
+const ModelTable = ({ data, displayView, onEdit, onDelete, onStatusChange }: Props) => {
   // Card View
   if (displayView === "card") {
     return (
@@ -34,28 +34,31 @@ const ModelTable = ({ data, displayView, onEdit, onDelete }: Props) => {
             key={item._id}
             className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
-            {/* Header Section with Icon and Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <CarFront size={18} />
               </div>
               
-              {/* Status Toggle Switch */}
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
-            {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
                   {item.modelName}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 font-medium">
                   Brand: {typeof item.brandId === 'object' ? (item.brandId as any).brandName : 'N/A'}
                 </p>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => onEdit(item)}
@@ -90,7 +93,7 @@ const ModelTable = ({ data, displayView, onEdit, onDelete }: Props) => {
     );
   }
 
-  // Table View (Default)
+  // Table View
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
@@ -119,11 +122,15 @@ const ModelTable = ({ data, displayView, onEdit, onDelete }: Props) => {
                   )}
                 </div>
               </td>
-              <td className="px-6 py-4 text-gray-600">
+              <td className="px-6 py-4 text-gray-600 font-medium">
                 {typeof item.brandId === 'object' ? (item.brandId as any).brandName : 'N/A'}
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton

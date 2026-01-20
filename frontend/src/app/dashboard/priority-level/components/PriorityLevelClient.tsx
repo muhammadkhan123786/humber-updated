@@ -6,12 +6,13 @@ import StatsCards from "@/app/common-form/StatsCard";
 import PriorityLevelTable from "./PriorityLevelTable";
 import PriorityLevelForm from "./PriorityLevelForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
 export default function PriorityLevelClient() {
   const [dataList, setDataList] = useState<any[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<any | null>(null);
@@ -19,6 +20,7 @@ export default function PriorityLevelClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -29,15 +31,28 @@ export default function PriorityLevelClient() {
         search: search.trim(),
       });
       setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
+      setFilteredDataList([]);
     } finally {
       setLoading(false);
     }
   }, []);
+
+  // Filter Logic matching Business Type Module
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -57,6 +72,22 @@ export default function PriorityLevelClient() {
     }
   };
 
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/service-request-prioprity-level", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status.");
+      fetchData(currentPage, searchTerm);
+    }
+  };
+
   const total = dataList.length;
   const active = dataList.filter((d) => d.isActive).length;
   const inactive = dataList.filter((d) => !d.isActive).length;
@@ -64,7 +95,7 @@ export default function PriorityLevelClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header - Matching Business Type style */}
+        {/* Header */}
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
@@ -83,7 +114,13 @@ export default function PriorityLevelClient() {
           </button>
         </div>
 
-        <StatsCards totalCount={total} activeCount={active} inactiveCount={inactive} />
+        {/* Stats with Filter logic */}
+        <StatsCards 
+          totalCount={total} 
+          activeCount={active} 
+          inactiveCount={inactive} 
+          onFilterChange={(filter) => setFilterStatus(filter as any)}
+        />
 
         {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
@@ -127,8 +164,32 @@ export default function PriorityLevelClient() {
             </div>
           ) : (
             <>
-              <PriorityLevelTable data={dataList} displayView={displayView} onEdit={(item) => { setEditingData(item); setShowForm(true); }} onDelete={handleDelete} themeColor={THEME_COLOR} />
-              {dataList.length > 0 && <div className="mt-6"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => fetchData(page, searchTerm)} /></div>}
+              {/* Filter Display */}
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium capitalize">
+                    Showing {filterStatus} Items ({filteredDataList.length})
+                  </span>
+                  <button onClick={() => setFilterStatus('all')} className="text-xs text-blue-600 hover:text-blue-800 font-bold">
+                    Clear Filter
+                  </button>
+                </div>
+              )}
+
+              <PriorityLevelTable 
+                data={filteredDataList} 
+                displayView={displayView} 
+                onEdit={(item) => { setEditingData(item); setShowForm(true); }} 
+                onDelete={handleDelete} 
+                onStatusChange={handleStatusChange}
+                themeColor={THEME_COLOR} 
+              />
+              
+              {filteredDataList.length > 0 && (
+                <div className="mt-6">
+                  <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page) => fetchData(page, searchTerm)} />
+                </div>
+              )}
             </>
           )}
         </div>
