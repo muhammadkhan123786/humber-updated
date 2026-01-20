@@ -145,7 +145,7 @@ export default function JobTypeClient() {
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Job Categories
+                Job Types
               </h2>
               <p className="text-sm text-gray-500">Configure employment status and default types</p>
             </div>
