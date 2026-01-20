@@ -3,6 +3,18 @@ import { CustomerBaseDoc, domesticCutomerSchema, corporateCustomerSchema, Custom
 import { domesticCustomerSchema } from "../schemas/domestic.customer.schema";
 import { corporateCustomerValidationSchema } from "../schemas/corporate.customer.schema";
 import { Request, Response, NextFunction } from "express";
+import { getISOWeek, getISOWeekYear } from "date-fns";
+
+const MONTH_NAMES = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+function formatMonthlyPeriod(period: string): string {
+    const [year, month] = period.split("-");
+    const monthIndex = Number(month) - 1;
+    return `${year}-${MONTH_NAMES[monthIndex]}`;
+}
 
 //utlity functions 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -54,29 +66,25 @@ const generateMonthlyPeriods = (year: number) =>
         `${year}-${String(i + 1).padStart(2, "0")}`
     );
 
-const generateWeeklyPeriods = (start: Date, end: Date) => {
-    const weeks: string[] = [];
-    const current = new Date(start);
+function generateWeeklyPeriods(start: Date, end: Date): string[] {
+    const periods: string[] = [];
+    const date = new Date(start);
 
-    while (current <= end) {
-        const year = current.getFullYear();
+    // Move to Monday
+    const day = date.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    date.setDate(date.getDate() + diff);
 
-        // week number of the year (0-53)
-        const onejan = new Date(year, 0, 1);
-        const weekNum = Math.floor(
-            ((current.getTime() - onejan.getTime()) / 86400000 + onejan.getDay() + 1) / 7
-        );
-
-        const period = `${year}-${String(weekNum).padStart(2, "0")}`;
-
-        if (!weeks.includes(period)) weeks.push(period);
-
-        // jump to next week
-        current.setDate(current.getDate() + 7);
+    while (date <= end) {
+        const year = getISOWeekYear(date);
+        const week = getISOWeek(date);
+        periods.push(`${year}-W${week}`);
+        date.setDate(date.getDate() + 7);
     }
 
-    return weeks;
-};
+    return [...new Set(periods)];
+}
+
 
 
 const zeroFill = (periods: string[], data: any[]) => {
@@ -254,13 +262,11 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
                 break;
 
             case "weekly":
-                // ISO week (stable & recommended)
                 groupId = {
                     year: { $isoWeekYear: "$createdAt" },
                     week: { $isoWeek: "$createdAt" },
                 };
                 break;
-
             case "monthly":
                 groupId = {
                     $dateToString: { format: "%Y-%m", date: "$createdAt" },
@@ -297,15 +303,23 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
            4️⃣ Normalize Mongo Output
         ======================= */
 
-        const formattedMongo = mongoResult.map((s) => ({
-            period:
-                filter === "weekly"
-                    ? `W${s._id.week}-${s._id.year}`
-                    : s._id,
-            total: s.total,
-            domestic: s.domestic,
-            corporate: s.corporate,
-        }));
+        const formattedMongo = mongoResult.map((s) => {
+            let period = "";
+
+            if (filter === "weekly") {
+                period = `${s._id.year}-W${s._id.week}`;
+            } else {
+                period = s._id;
+            }
+
+
+            return {
+                period,
+                total: s.total,
+                domestic: s.domestic,
+                corporate: s.corporate,
+            };
+        });
 
         /* =======================
            5️⃣ Generate Periods
