@@ -126,7 +126,7 @@ app.use(
 );
 app.use(
   `${process.env.API_PREFIX}/customers`,
-  adminProtecter,
+
   CustomerBaseRouter,
 );
 app.use(
