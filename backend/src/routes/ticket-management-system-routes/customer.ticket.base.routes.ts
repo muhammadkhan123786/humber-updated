@@ -38,7 +38,7 @@ const customerTicketServices = new GenericService<customerTicketBaseDoc>(
 
 const customerTicketBaseController = new AdvancedGenericController({
   service: customerTicketServices,
-  populate: ["userId", "assignedTechnicianId", "vehicleId"],
+  populate: ["userId", "assignedTechnicianId", "vehicleId", "priorityId", "ticketStatusId"],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
