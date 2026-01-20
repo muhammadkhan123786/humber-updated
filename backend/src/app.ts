@@ -60,6 +60,7 @@ import productServicesRouter from "./routes/suppliers/product.services.routes";
 import jobTitleRouter from "./routes/master-data-routes/job.titles.routes";
 import iconsRouter from "./routes/master-data-routes/icons.routes";
 import SupplierRouters from "./routes/suppliers/supplier.routes";
+import contractTypeRouter from "./routes/master-data-routes/contract.types.routes";
 
 // Create express app
 const app: Application = express();
@@ -270,7 +271,6 @@ app.use(
   adminProtecter,
   productServicesRouter,
 );
-
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
@@ -278,6 +278,9 @@ app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
 
 //16-02-2026
 app.use(`${process.env.API_PREFIX}/suppliers`, adminProtecter, SupplierRouters);
+
+//20-01-2026
+app.use(`${process.env.API_PREFIX}/contract-types`, adminProtecter, contractTypeRouter);
 
 //Muhammad Imran code ended here.
 
