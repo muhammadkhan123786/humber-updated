@@ -1,59 +1,158 @@
 "use client";
+import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
-import { Star } from "lucide-react";
+import { Star, Hash, BookMarked, Trash2 } from "lucide-react";
 import { ITicketReferenceTypes } from "../../../../../../../common/Ticket-management-system/ITicket.reference.types.interface";
 
 interface Props {
   data: (ITicketReferenceTypes & { _id: string })[];
+  displayView: "table" | "card";
   onEdit: (item: ITicketReferenceTypes & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
+
+// Dynamic gradients for card/table icons
+const getIconGradient = (index: number) => {
+  const gradients = [
+    "bg-gradient-to-br from-blue-400 to-blue-600",
+    "bg-gradient-to-br from-cyan-400 to-teal-600",
+    "bg-gradient-to-br from-indigo-400 to-purple-600",
+    "bg-gradient-to-br from-sky-400 to-blue-700",
+  ];
+  return gradients[index % gradients.length];
+};
+
 const TicketReferenceTypesTable = ({
   data,
+  displayView,
   onEdit,
   onDelete,
-  themeColor,
+  onStatusChange,
 }: Props) => {
+  
+  // --- Card View ---
+  if (displayView === "card") {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data.map((item, index) => (
+          <div
+            key={item._id}
+            className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+          >
+            {/* Header Section */}
+            <div className="p-4 flex items-start justify-between bg-white">
+              <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
+                <BookMarked size={18} />
+              </div>
+              <StatusBadge
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
+            </div>
+
+            {/* Content Section */}
+            <div className="px-4 pb-4 space-y-3">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                   <Hash size={14} className="text-blue-500" />
+                   <span className="text-xs font-mono font-bold text-blue-600 uppercase tracking-wider">{item.code}</span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  {item.label}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
+                </h3>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => onEdit(item)}
+                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    if (item.isDefault) {
+                      alert("Default types cannot be deleted.");
+                      return;
+                    }
+                    onDelete(item._id);
+                  }}
+                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  title="Delete"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">📭</div>
+            <p>No reference types found.</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- Table View (Default) ---
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-      <table className="w-full text-left">
-        <thead className="text-white" style={{ backgroundColor: themeColor }}>
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
+      <table className="w-full text-[16px]! text-left">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
           <tr>
-            <th className="px-6 py-4">Reference Code</th>
-            <th className="px-6 py-4">Label</th>
-            <th className="px-6 py-4 text-center">Default</th>
-            <th className="px-6 py-4 text-center">Status</th>
-            <th className="px-6 py-4 text-center">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Code</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Label</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {data.map((item) => (
-            <tr key={item._id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 font-mono font-bold text-orange-600">
-                {item.code}
+          {data.map((item, index) => (
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
+              <td className="px-6 py-4">
+                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
+                  <BookMarked size={18} />
+                </div>
               </td>
-              <td className="px-6 py-4 text-gray-800">{item.label}</td>
-              <td className="px-6 py-4 text-center">
-                {item.isDefault ? (
-                  <Star
-                    size={20}
-                    className="text-yellow-500 fill-yellow-500 mx-auto"
-                  />
-                ) : (
-                  <span className="text-gray-300">-</span>
-                )}
+              <td className="px-6 py-4">
+                <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded">
+                  {item.code}
+                </span>
+              </td>
+              <td className="px-6 py-4 font-bold text-gray-900">
+                <div className="flex items-center gap-2">
+                  {item.label}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault)
-                      return alert("Default types cannot be deleted.");
+                    if (item.isDefault) {
+                      alert("Default types cannot be deleted.");
+                      return;
+                    }
                     onDelete(item._id);
                   }}
                 />
@@ -63,7 +162,7 @@ const TicketReferenceTypesTable = ({
           {data.length === 0 && (
             <tr>
               <td colSpan={5} className="text-center py-10 text-gray-400">
-                No records found.
+                No reference types found.
               </td>
             </tr>
           )}

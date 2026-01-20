@@ -28,7 +28,7 @@ const ServiceRequestTable = ({ data, displayView, onEdit, onDelete, onStatusChan
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {data.map((item, index) => (
-          <div key={item._id} className="bg-white rounded-3xl border-2 border-orange-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform">
+          <div key={item._id} className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform">
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <Settings2 size={18} />
