@@ -334,12 +334,7 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
         }
         else {
             periods = generateMonthlyPeriods(rangeStart.getFullYear());
-            const Updatedperiods = periods.map((pM) => {
-                const [year, month] = pM.split("-");
-                const monthIndex = parseInt(month, 10) - 1;
-                return `${year}-${MONTH_NAMES[monthIndex]}`;
-            })
-            periods = [...Updatedperiods];
+
         }
 
 
