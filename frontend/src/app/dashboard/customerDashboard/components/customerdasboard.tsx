@@ -13,6 +13,19 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
+    null,
+  );
+
+  const handleEditCustomer = (id: string) => {
+    setSelectedCustomerId(id);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedCustomerId(null);
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -35,7 +48,12 @@ const CustomerDashboard = () => {
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <AnimatePresence>
-        {isModalOpen && <ModalForm onClose={() => setIsModalOpen(false)} />}
+        {isModalOpen && (
+          <ModalForm
+            customerId={selectedCustomerId}
+            onClose={handleCloseModal}
+          />
+        )}
       </AnimatePresence>
 
       <div className="bg-linear-to-r from-[#4F46E5] via-[#9333EA] to-[#E11DBC] rounded-[2.5rem] p-12 mb-10 flex flex-col md:flex-row justify-between items-center text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
@@ -120,7 +138,8 @@ const CustomerDashboard = () => {
         <CustomerGrowthAnalytics />
       </div>
       <div className="mt-2">
-        <CustomerManagementList />
+        {/* Yahan onEdit prop pass kiya hai */}
+        <CustomerManagementList onEdit={handleEditCustomer} />
       </div>
     </div>
   );
