@@ -13,7 +13,6 @@ import {
 } from "recharts";
 import { LayoutDashboard, Calendar } from "lucide-react";
 
-// Updated type to include "Custom"
 type ViewType = "Daily" | "Weekly" | "Monthly" | "Custom";
 
 interface DataPoint {
@@ -46,7 +45,6 @@ const dataMap: Record<Exclude<ViewType, "Custom">, DataPoint[]> = {
   ],
 };
 
-// Data specifically for when "Custom" is selected
 const customData: DataPoint[] = [
   { name: "Period 1", individual: 150, corporate: 60, total: 210 },
   { name: "Period 2", individual: 170, corporate: 75, total: 245 },
@@ -57,12 +55,10 @@ const customData: DataPoint[] = [
 const CustomerGrowthAnalytics: React.FC = () => {
   const [view, setView] = useState<ViewType>("Daily");
 
-  // Determine which data to show
   const activeData = view === "Custom" ? customData : dataMap[view];
 
   return (
     <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-gray-200/50 border border-gray-50 mt-10">
-      {/* Header & Controls */}
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -92,12 +88,11 @@ const CustomerGrowthAnalytics: React.FC = () => {
                 {type === "Custom" && <Calendar size={14} />}
                 {type}
               </button>
-            )
+            ),
           )}
         </div>
       </div>
 
-      {/* Custom Date Picker Section - only shows when Custom is clicked */}
       <AnimatePresence>
         {view === "Custom" && (
           <motion.div
@@ -135,7 +130,6 @@ const CustomerGrowthAnalytics: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Chart Container */}
       <div className="h-[350px] w-full">
         <AnimatePresence mode="wait">
           <motion.div
@@ -214,7 +208,6 @@ const CustomerGrowthAnalytics: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Custom Legend Section - Same as picture */}
       <div className="flex justify-center items-center gap-8 mt-12 border-t border-slate-50 pt-8">
         <div className="flex items-center gap-2.5">
           <div className="w-3 h-3 rounded-full bg-[#7C3AED]" />
