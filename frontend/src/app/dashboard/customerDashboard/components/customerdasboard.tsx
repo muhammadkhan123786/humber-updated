@@ -1,23 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
 import MetricCard from "./MetricCard";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Users, User, Building2, Calendar, History } from "lucide-react";
 import CustomerGrowthAnalytics from "./CustomerGrowthAnalytics";
 import CustomerManagementList from "./CustomerManagementList";
+import ModalForm from "./ModalForm";
 import { getAlls } from "../../../../helper/apiHelper";
 
 const CustomerDashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const response = await getAlls("/customers/summary/dashboard");
-        if (response) {
-          setStats(response);
-        }
+        if (response) setStats(response);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {
@@ -33,6 +34,10 @@ const CustomerDashboard = () => {
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
+      <AnimatePresence>
+        {isModalOpen && <ModalForm onClose={() => setIsModalOpen(false)} />}
+      </AnimatePresence>
+
       <div className="bg-linear-to-r from-[#4F46E5] via-[#9333EA] to-[#E11DBC] rounded-[2.5rem] p-12 mb-10 flex flex-col md:flex-row justify-between items-center text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
         <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="flex items-center gap-8 z-10">
@@ -54,7 +59,11 @@ const CustomerDashboard = () => {
             </p>
           </div>
         </div>
-        <button className="mt-8 md:mt-0 bg-white text-[#4F46E5] px-8 py-5 rounded-4xl font-black flex items-center gap-3 shadow-2xl hover:bg-slate-50 transition-all active:scale-95 z-10 group">
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="mt-8 md:mt-0 bg-white text-[#4F46E5] px-8 py-5 rounded-4xl font-black flex items-center gap-3 shadow-2xl hover:bg-slate-50 transition-all active:scale-95 z-10 group"
+        >
           <Plus
             size={24}
             strokeWidth={3}
@@ -110,7 +119,6 @@ const CustomerDashboard = () => {
       <div>
         <CustomerGrowthAnalytics />
       </div>
-
       <div className="mt-2">
         <CustomerManagementList />
       </div>
