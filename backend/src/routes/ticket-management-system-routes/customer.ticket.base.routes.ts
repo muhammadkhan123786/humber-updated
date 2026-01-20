@@ -38,7 +38,13 @@ const customerTicketServices = new GenericService<customerTicketBaseDoc>(
 
 const customerTicketBaseController = new AdvancedGenericController({
   service: customerTicketServices,
-  populate: ["userId", "assignedTechnicianId", "vehicleId", "priorityId", "ticketStatusId"],
+  populate: [
+    "userId",
+    "assignedTechnicianId",
+    "vehicleId",
+    "priorityId",
+    "ticketStatusId",
+  ],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
@@ -53,27 +59,11 @@ customerTicketBaseRouter.post(
   }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log("[TICKET POST] ===== REQUEST RECEIVED =====");
-      console.log("[TICKET POST] req.files:", req.files);
-      console.log("[TICKET POST] req.body keys:", Object.keys(req.body || {}));
-      console.log("[TICKET POST] Full req.body:", req.body);
+      const code = await generateTicketCode();
+      if (!req.body) req.body = {};
+      req.body.ticketCode = code;
+      console.log("[TICKET POST] Generated ticketCode:", code);
 
-      console.log(
-        "[TICKET POST] Request body keys:",
-        Object.keys(req.body || {}),
-      );
-      console.log("[TICKET POST] Received ticketCode:", req.body?.ticketCode);
-      console.log(
-        "[TICKET POST] vehicleRepairImages:",
-        req.body?.vehicleRepairImages,
-      );
-
-      if (!req.body?.ticketCode) {
-        const code = await generateTicketCode();
-        if (!req.body) req.body = {};
-        req.body.ticketCode = code;
-        console.log("[TICKET POST] Generated ticketCode:", code);
-      }
       next();
     } catch (error) {
       console.error("[TICKET POST ERROR]:", error);

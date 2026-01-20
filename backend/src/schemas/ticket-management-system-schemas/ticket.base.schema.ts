@@ -30,7 +30,7 @@ export const customerTicketBaseSchema = {
 
   priorityId: {
     type: Types.ObjectId,
-    ref: "ServiceRequestPriorityModel",
+    ref: "ServiceRequestPrioprityModel",
     required: true,
   },
 
