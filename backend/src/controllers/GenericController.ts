@@ -43,6 +43,7 @@ export class AdvancedGenericController<T extends Document> {
                 sortBy = "createdAt",
                 order = "desc",
                 search,
+                filter, // <-- new query param
                 ...rawFilters
             } = req.query;
 
@@ -79,6 +80,19 @@ export class AdvancedGenericController<T extends Document> {
             const sortOption: any = {};
             sortOption[sortBy as string] = order === "asc" ? 1 : -1;
 
+            // ✅ Check if filter=all, then skip pagination
+            if (filter === "all") {
+                const data = await query.sort(sortOption).exec();
+                return res.status(200).json({
+                    success: true,
+                    total,
+                    page: 1,
+                    limit: total,
+                    data,
+                });
+            }
+
+            // 🔹 Normal pagination
             const data = await query
                 .sort(sortOption)
                 .skip((pageNumber - 1) * pageSize)
