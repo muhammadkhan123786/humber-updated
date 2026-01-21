@@ -16,22 +16,17 @@ import {
 } from "lucide-react";
 import FormSection from "../../suppliers/components/FormSection";
 import FormField from "../../suppliers/components/FormInput";
-import { ITechnician } from "../../../../../../common/technician-updated/ITechnician.interface";
+// import { ITechnician } from "../../../../../../common/technician-updated/ITechnician.interface";
 
 interface ModalFormProps {
   onClose: () => void;
-  editData?: ITechnician;
+  initialData?: any;
 }
 
-const ModalForm = ({ onClose, editData }: ModalFormProps) => {
+const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
+  const isEditMode = !!initialData;
   const [paymentFreq, setPaymentFreq] = useState("Monthly");
-  const [activeDays, setActiveDays] = useState([
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-  ]);
+  const [activeDays, setActiveDays] = useState<string[]>([]);
   const [technicianStatus, setTechnicianStatus] = useState(true);
 
   const [documents, setDocuments] = useState<
@@ -42,19 +37,21 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
   const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
   useEffect(() => {
-    if (editData?.technicianDocuments) {
-      const existingDocs = editData.technicianDocuments.map((url, index) => ({
-        id: index + 1,
-        file: null,
-        existingUrl: url,
-      }));
+    if (isEditMode && initialData?.technicianDocuments) {
+      const existingDocs = initialData.technicianDocuments.map(
+        (url: string, index: number) => ({
+          id: index + 1,
+          file: null,
+          existingUrl: url,
+        }),
+      );
       setDocuments(
         existingDocs.length > 0 ? existingDocs : [{ id: 1, file: null }],
       );
     } else {
       setDocuments([{ id: 1, file: null }]);
     }
-  }, [editData]);
+  }, [isEditMode, initialData]);
 
   const addDocument = () =>
     setDocuments([...documents, { id: Date.now(), file: null }]);
@@ -191,7 +188,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
     dateOfJoining: "",
     contractTypeId: "",
     departmentId: "",
-    specializationIds: [],
+    specializationIds: [] as string[],
 
     // Salary & Compensation
     salary: "",
@@ -216,66 +213,85 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
   });
 
   useEffect(() => {
-    if (editData) {
-      console.log("Edit data received:", editData);
+    if (isEditMode && initialData) {
+      console.log("Edit data received:", initialData);
 
+      // Extract data from nested API response
+      const person = initialData.personId || {};
+      const contact = initialData.contactId || {};
+      const address = initialData.addressId || {};
+      const additionalInfo = initialData.additionalInformation || {};
+
+      // Map duty roster and active days
       const mappedDutyRoster =
-        editData.dutyRoster?.map((item) => ({
+        initialData.dutyRoster?.map((item: any) => ({
           day: item.day,
           isActive: item.isActive,
           startTime: item.startTime || "09:00",
           endTime: item.endTime || "17:00",
         })) || [];
 
-      if (mappedDutyRoster.length > 0) {
-        const activeDayNames = mappedDutyRoster
-          .filter((item) => item.isActive)
-          .map((item) => item.day);
-        setActiveDays(activeDayNames);
-      }
+      // Set active days based on duty roster
+      const activeDayNames = mappedDutyRoster
+        .filter((item: any) => item.isActive)
+        .map((item: any) => item.day);
+      setActiveDays(activeDayNames);
 
+      // Set payment frequency
+      setPaymentFreq(initialData.paymentFrequency || "Monthly");
+
+      // Set technician status
+      const isAvailable = initialData.technicianStatus === "Available";
+      setTechnicianStatus(isAvailable);
+
+      // Map specialization IDs
+      const specializationIds = Array.isArray(initialData.specializationIds)
+        ? initialData.specializationIds.map((item: any) => item._id)
+        : [];
+
+      // Format dates
+      const formatDate = (dateString: string) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0];
+      };
+
+      // Populate form data
       setFormData({
-        firstName: "",
-        middleName: "",
-        lastName: "",
-        emailAddress: editData.email || "",
-        phoneNumber: editData.phone || "",
-        dateOfBirth: editData.dateOfBirth
-          ? new Date(editData.dateOfBirth).toISOString().split("T")[0]
-          : "",
-        employeeId: editData.employeeId || "",
+        firstName: person.firstName || "",
+        middleName: person.middleName || "",
+        lastName: person.lastName || "",
+        emailAddress: contact.emailId || "",
+        phoneNumber: contact.mobileNumber || contact.phoneNumber || "",
+        dateOfBirth: formatDate(initialData.dateOfBirth),
+        employeeId: initialData.employeeId || "",
 
-        streetAddress: "",
-        city: "",
-        postcode: "",
+        streetAddress: address.address || "",
+        city: address.city || "",
+        postcode: address.zipCode || "",
 
-        dateOfJoining: editData.dateOfJoining
-          ? new Date(editData.dateOfJoining).toISOString().split("T")[0]
-          : "",
-        contractTypeId: editData.contractTypeId || "",
-        departmentId: editData.departmentId || "",
-        specializationIds: editData.specializationIds || [],
+        dateOfJoining: formatDate(initialData.dateOfJoining),
+        contractTypeId:
+          initialData.contractTypeId?._id || initialData.contractTypeId || "",
+        departmentId:
+          initialData.departmentId?._id || initialData.departmentId || "",
+        specializationIds: specializationIds,
 
-        // Salary & Compensation
-        salary: editData.salary?.toString() || "",
-        paymentFrequency: editData.paymentFrequency || "Monthly",
-        bankAccountNumber: editData.bankAccountNumber || "",
-        taxId: editData.taxId || "",
+        salary: initialData.salary?.toString() || "",
+        paymentFrequency: initialData.paymentFrequency || "Monthly",
+        bankAccountNumber: initialData.bankAccountNumber || "",
+        taxId: initialData.taxId || "",
+
         dutyRoster: mappedDutyRoster,
-        emergencyContactName:
-          editData.additionalInformation?.emergencyContactName || "",
-        emergencyContactPhone:
-          editData.additionalInformation?.emergencyContactNumber || "",
-        healthInsuranceDetails:
-          editData.additionalInformation?.healthInsuranceDetails || "",
-        additionalNotes: editData.additionalInformation?.additionalNotes || "",
-        technicianStatus: editData.technicianStatus || "Available",
-      });
 
-      setPaymentFreq(editData.paymentFrequency || "Monthly");
-      setTechnicianStatus(editData.technicianStatus === "Available");
+        emergencyContactName: additionalInfo.emergencyContactName || "",
+        emergencyContactPhone: additionalInfo.emergencyContactNumber || "",
+        healthInsuranceDetails: additionalInfo.healthInsuranceDetails || "",
+        additionalNotes: additionalInfo.additionalNotes || "",
+        technicianStatus: initialData.technicianStatus || "Available",
+      });
     }
-  }, [editData]);
+  }, [isEditMode, initialData]);
 
   const handleChange = (e: any) => {
     const { name, type, value, selectedOptions } = e.target;
@@ -313,7 +329,6 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
     setFormData((prev) => ({ ...prev, dutyRoster: updatedDutyRoster }));
   }, [activeDays]);
 
-  // Handle time change in duty roster
   const handleTimeChange = (
     day: string,
     field: "startTime" | "endTime",
@@ -332,6 +347,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -354,7 +370,6 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
       const token = localStorage.getItem("token");
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-      // Build duty roster from form data
       const dutyRosterPayload = formData.dutyRoster
         .filter((item) => item.isActive)
         .map((item) => ({
@@ -364,25 +379,15 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
           endTime: item.endTime,
         }));
 
-      // Create FormData - DO NOT use JSON.stringify for the entire payload
       const formDataToSend = new FormData();
 
-      // Append all fields INDIVIDUALLY, not as a single JSON
-      // This is the key fix - middleware expects individual fields
-
-      // 1. Basic fields
       formDataToSend.append("userId", currentUserId);
-      // formDataToSend.append("isActive", "true");
-      // formDataToSend.append("isDeleted", "false");
-      // formDataToSend.append("isDefault", "false");
       formDataToSend.append("role", "Technician");
 
-      // 2. Person object fields
       formDataToSend.append("person[firstName]", formData.firstName.trim());
       formDataToSend.append("person[middleName]", formData.middleName.trim());
       formDataToSend.append("person[lastName]", formData.lastName.trim());
 
-      // 3. Contact object fields - CRITICAL: These must match middleware expectation
       formDataToSend.append(
         "contact[mobileNumber]",
         formData.phoneNumber.trim(),
@@ -391,18 +396,12 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
         "contact[phoneNumber]",
         formData.phoneNumber.trim(),
       );
-      formDataToSend.append("contact[emailId]", formData.emailAddress.trim()); // Exact field name
-
-      // 4. Address object fields
+      formDataToSend.append("contact[emailId]", formData.emailAddress.trim());
       formDataToSend.append("address[address]", formData.streetAddress.trim());
       formDataToSend.append("address[zipCode]", formData.postcode.trim());
       formDataToSend.append("address[city]", formData.city.trim());
       formDataToSend.append("address[country]", "UK");
-      formDataToSend.append("address[latitude]", "");
-      formDataToSend.append("address[longitude]", "");
       formDataToSend.append("address[userId]", currentUserId);
-
-      // 5. Technician fields
       if (formData.employeeId.trim())
         formDataToSend.append("employeeId", formData.employeeId.trim());
       if (formData.dateOfBirth)
@@ -423,21 +422,14 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
         formDataToSend.append("taxId", formData.taxId.trim());
       formDataToSend.append("paymentFrequency", formData.paymentFrequency);
       formDataToSend.append("technicianStatus", formData.technicianStatus);
-
-      // 6. SpecializationIds (array)
       if (formData.specializationIds && formData.specializationIds.length > 0) {
         formData.specializationIds.forEach((id, index) => {
           formDataToSend.append(`specializationIds[${index}]`, id);
         });
       }
-
-      // 7. DutyRoster (array of objects)
-      // 7. DutyRoster (array of objects) - updated
       if (dutyRosterPayload.length > 0) {
         formDataToSend.append("dutyRoster", JSON.stringify(dutyRosterPayload));
       }
-
-      // 8. Additional Information
       if (formData.emergencyContactName.trim()) {
         formDataToSend.append(
           "additionalInformation[emergencyContactName]",
@@ -462,34 +454,29 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
           formData.additionalNotes.trim(),
         );
       }
+      if (isEditMode && initialData?._id) {
+        formDataToSend.append("_id", initialData._id);
+        formDataToSend.append("updatedAt", new Date().toISOString());
 
-      if (!editData?._id) {
+        if (initialData.personId)
+          formDataToSend.append("personId", initialData.personId._id);
+        if (initialData.contactId)
+          formDataToSend.append("contactId", initialData.contactId._id);
+        if (initialData.addressId)
+          formDataToSend.append("addressId", initialData.addressId._id);
+        if (initialData.accountId)
+          formDataToSend.append("accountId", initialData.accountId._id);
+      } else {
         formDataToSend.append("createdAt", new Date().toISOString());
         formDataToSend.append("createdBy", currentUserId);
       }
-
-      // 10. For edit, add IDs
-      if (editData?._id) {
-        formDataToSend.append("_id", editData._id);
-        formDataToSend.append("updatedAt", new Date().toISOString());
-
-        if (editData.personId)
-          formDataToSend.append("personId", editData.personId);
-        if (editData.contactId)
-          formDataToSend.append("contactId", editData.contactId);
-        if (editData.addressId)
-          formDataToSend.append("addressId", editData.addressId);
-        if (editData.accountId)
-          formDataToSend.append("accountId", editData.accountId);
-      }
-
       documents.forEach((doc) => {
         if (doc.file) {
           formDataToSend.append("technicianDocumentsFile", doc.file);
         }
       });
 
-      if (editData?._id) {
+      if (isEditMode && initialData?._id) {
         documents.forEach((doc, index) => {
           if (doc.existingUrl && !doc.file) {
             formDataToSend.append(
@@ -499,8 +486,6 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
           }
         });
       }
-
-      // Debug: Log FormData
       console.log("FormData entries:");
       for (const [key, value] of (formDataToSend as any).entries()) {
         if (value instanceof File) {
@@ -510,13 +495,12 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
         }
       }
 
-      // Send request
-      const url = editData?._id
-        ? `${baseUrl}/technicians/${editData._id}`
+      const url = isEditMode
+        ? `${baseUrl}/technicians/${initialData._id}`
         : `${baseUrl}/technicians`;
 
       const response = await fetch(url, {
-        method: editData?._id ? "PUT" : "POST",
+        method: isEditMode ? "PUT" : "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -538,7 +522,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
         }
 
         alert(
-          editData
+          isEditMode
             ? "Technician updated successfully!"
             : "Technician created successfully!",
         );
@@ -551,12 +535,17 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
       }
     } catch (err: any) {
       console.error("Full error:", err);
-      console.error("Error stack:", err.stack);
 
-      let errorMessage = `Failed to ${editData ? "update" : "create"} technician.\n\n`;
+      let errorMessage = `Failed to ${
+        isEditMode ? "update" : "create"
+      } technician`;
 
-      if (err.message) {
-        errorMessage += err.message;
+      if (
+        err?.response?.status === 409 ||
+        (typeof err?.message === "string" &&
+          err.message.toLowerCase().includes("already exists"))
+      ) {
+        errorMessage = "❌ Email already exists";
       }
 
       alert(errorMessage);
@@ -564,6 +553,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
       setIsSubmitting(false);
     }
   };
+
   const sectionTitleStyle =
     "flex items-center gap-2 text-md font-bold text-slate-800 border-b border-slate-50 pb-2 mb-4";
 
@@ -589,7 +579,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
         <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white">
           <div>
             <h2 className="text-xl font-bold text-[#E7000B]">
-              {editData ? "Update Technician" : "Register New Technician"}
+              {isEditMode ? "Update Technician" : "Register New Technician"}
             </h2>
             <p className="text-slate-400 text-sm font-medium">
               Complete technician profile and HR onboarding
@@ -613,11 +603,13 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
               </div>
               <div>
                 <h4 className="font-bold text-[#F54900] text-sm">
-                  HR Onboarding
+                  Complete HR Onboarding Form
                 </h4>
-                <p className="text-slate-500 font-medium text-[13px] leading-relaxed">
-                  Fields marked with <span className="text-red-500">*</span> are
-                  required for payroll and system access.
+                <p className="text-slate-500 font-medium text-[10px] leading-relaxed">
+                  Fill in all required fields marked with *. The form includes:
+                  Personal details, Google Places address lookup, multi-document
+                  upload, weekly duty roster, salary configuration, and
+                  comprehensive HR information..
                 </p>
               </div>
             </div>
@@ -772,7 +764,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
                     name="dateOfJoining"
                     value={formData.dateOfJoining}
                     onChange={handleChange}
-                    className="w-full p-3.5 bg-[#F8FAFF] border  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E7000B]/10 focus:border-[#E7000B] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm border-blue-200 focus:border-blue-500"
+                    className="w-full p-3.5 bg-[#F8FAFF] border  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E7000B]/10 focus:border-blue-500 transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm border-blue-200 focus:border-blue-500"
                     required
                   />
                 </div>
@@ -861,36 +853,64 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
                     Frequency *
                   </label>
                   <div className="flex gap-2">
-                    {["Daily", "Weekly", "Monthly"].map((freq) => (
+                    {[
+                      {
+                        label: "Daily",
+                        color: "from-blue-500 to-cyan-400",
+                        bg: "bg-blue-50",
+                        text: "text-blue-600",
+                        icon: "text-blue-500",
+                      },
+                      {
+                        label: "Weekly",
+                        color: "from-purple-600 to-pink-500",
+                        bg: "bg-purple-50",
+                        text: "text-purple-600",
+                        icon: "text-purple-500",
+                      },
+                      {
+                        label: "Monthly",
+                        color: "from-orange-500 to-yellow-400",
+                        bg: "bg-orange-50",
+                        text: "text-orange-600",
+                        icon: "text-orange-500",
+                      },
+                    ].map((freq) => (
                       <button
-                        key={freq}
+                        key={freq.label}
                         type="button"
                         onClick={() => {
-                          setPaymentFreq(freq);
+                          setPaymentFreq(freq.label);
                           setFormData((prev) => ({
                             ...prev,
-                            paymentFrequency: freq,
+                            paymentFrequency: freq.label,
                           }));
                         }}
                         className={`flex-1 flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all h-[74px] ${
-                          paymentFreq === freq
-                            ? "bg-linear-to-br from-[#F54900] via-[#E7000B] to-[#E60076] border-transparent text-white shadow-lg scale-[1.02]"
-                            : "bg-white border-slate-200 text-slate-400 hover:border-slate-300"
+                          paymentFreq === freq.label
+                            ? `bg-linear-to-br ${freq.color} border-transparent text-white shadow-lg scale-[1.02]`
+                            : `bg-white border-slate-200 text-slate-400 hover:border-slate-300`
                         }`}
                       >
                         <div
-                          className={`p-1.5 rounded-lg ${paymentFreq === freq ? "bg-white/20" : "bg-slate-50 border border-slate-100 shadow-sm"}`}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            paymentFreq === freq.label
+                              ? "bg-white/20"
+                              : `${freq.bg} border border-slate-100 shadow-sm`
+                          }`}
                         >
                           <Calendar
                             size={18}
                             className={
-                              paymentFreq === freq
+                              paymentFreq === freq.label
                                 ? "text-white"
-                                : "text-slate-500"
+                                : freq.icon
                             }
                           />
                         </div>
-                        <span className="text-[11px] font-bold">{freq}</span>
+                        <span className="text-[11px] font-bold">
+                          {freq.label}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -1234,7 +1254,7 @@ const ModalForm = ({ onClose, editData }: ModalFormProps) => {
             >
               {isSubmitting
                 ? "Processing..."
-                : editData
+                : isEditMode
                   ? "Update Technician"
                   : "Register Technician"}
             </button>
