@@ -259,6 +259,7 @@ export const getCustomerSummary = async (req: Request, res: Response) => {
         $gte: rangeStart,
         $lte: rangeEnd,
       };
+      match.isDeleted = { $ne: true };
     }
 
     /* =======================
@@ -365,7 +366,7 @@ const percentage = (current: number, last: number) => {
 
 export const getCustomerDashboardSummary = async (
   req: Request,
-  res: Response,
+  res: Response
 ) => {
   try {
     const now = new Date();
@@ -377,7 +378,7 @@ export const getCustomerDashboardSummary = async (
       0,
       23,
       59,
-      59,
+      59
     );
 
     const result = await CustomerBase.aggregate([
@@ -385,6 +386,7 @@ export const getCustomerDashboardSummary = async (
         $facet: {
           // 🔢 Current totals by type
           currentByType: [
+            { $match: { isDeleted: { $ne: true } } },
             {
               $group: {
                 _id: "$customerType",
@@ -397,6 +399,7 @@ export const getCustomerDashboardSummary = async (
           lastMonthByType: [
             {
               $match: {
+                isDeleted: { $ne: true },
                 createdAt: {
                   $gte: startOfLastMonth,
                   $lte: endOfLastMonth,
@@ -412,13 +415,22 @@ export const getCustomerDashboardSummary = async (
           ],
 
           // 👤 Active customers (current)
-          activeCurrent: [{ $match: { isActive: true } }, { $count: "count" }],
+          activeCurrent: [
+            {
+              $match: {
+                isActive: true,
+                isDeleted: { $ne: true },
+              },
+            },
+            { $count: "count" },
+          ],
 
           // 👤 Active customers (last month)
           activeLastMonth: [
             {
               $match: {
                 isActive: true,
+                isDeleted: { $ne: true },
                 createdAt: {
                   $gte: startOfLastMonth,
                   $lte: endOfLastMonth,
@@ -429,12 +441,16 @@ export const getCustomerDashboardSummary = async (
           ],
 
           // 📦 Total current
-          totalCurrent: [{ $count: "count" }],
+          totalCurrent: [
+            { $match: { isDeleted: { $ne: true } } },
+            { $count: "count" },
+          ],
 
           // 📦 Total last month
           totalLastMonth: [
             {
               $match: {
+                isDeleted: { $ne: true },
                 createdAt: {
                   $gte: startOfLastMonth,
                   $lte: endOfLastMonth,
