@@ -43,6 +43,6 @@ export interface ITechnician<
         additionalNotes?: string;
     };
     accountId?: IACCOUNTID;
-    technicianStatus?: technicianStatus
+    technicianStatus?: technicianStatus;
 
 }
