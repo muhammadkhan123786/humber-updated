@@ -316,15 +316,17 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       "Saturday",
     ];
 
-    const updatedDutyRoster = allDays.map((day) => {
-      const existing = formData.dutyRoster.find((d) => d.day === day);
-      return {
-        day,
-        isActive: activeDays.includes(day),
-        startTime: existing?.startTime || "09:00",
-        endTime: existing?.endTime || "17:00",
-      };
-    });
+    const updatedDutyRoster = allDays
+      .filter((day) => activeDays.includes(day))
+      .map((day) => {
+        const existing = formData.dutyRoster.find((d) => d.day === day);
+        return {
+          day,
+          isActive: true,
+          startTime: existing?.startTime || "09:00",
+          endTime: existing?.endTime || "17:00",
+        };
+      });
 
     setFormData((prev) => ({ ...prev, dutyRoster: updatedDutyRoster }));
   }, [activeDays]);
@@ -343,6 +345,30 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   };
 
   const toggleDay = (day: string) => {
+    setFormData((prev) => {
+      const exists = prev.dutyRoster.find((d) => d.day === day);
+
+      let updatedRoster;
+
+      if (exists) {
+        updatedRoster = prev.dutyRoster.map((d) =>
+          d.day === day ? { ...d, isActive: !d.isActive } : d,
+        );
+      } else {
+        updatedRoster = [
+          ...prev.dutyRoster,
+          {
+            day,
+            isActive: true,
+            startTime: "09:00",
+            endTime: "17:00",
+          },
+        ];
+      }
+
+      return { ...prev, dutyRoster: updatedRoster };
+    });
+
     setActiveDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
@@ -508,6 +534,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       });
 
       const text = await response.text();
+      console.log("Final Duty Roster:", formData.dutyRoster);
       console.log("Raw response:", text.substring(0, 1000));
 
       try {
