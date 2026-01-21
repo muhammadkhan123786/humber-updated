@@ -88,7 +88,7 @@ const PaymentMethodForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
           error={errors.paymentMethodName?.message}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4  pt-4">
           <Controller
             control={control}
             name="isActive"
@@ -106,7 +106,7 @@ const PaymentMethodForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
             name="isDefault"
             render={({ field }) => (
               <FormToggle
-                label="Default Method"
+                label="Default"
                 checked={field.value}
                 onChange={(val) => {
                   field.onChange(val);

@@ -35,7 +35,9 @@ export const ticketFormSchema = z.object({
 
   address: z.string().optional(),
 
-  vehicleRepairImages: z.union([z.string(), z.array(z.string())]).optional(),
+  vehicleRepairImages: z
+    .union([z.array(z.string()), z.string().transform(() => []), z.undefined()])
+    .optional(),
 
   vehicleRepairImagesFile: z.array(z.instanceof(File)).optional(),
 
