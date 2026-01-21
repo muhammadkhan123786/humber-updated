@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { GRNHeader } from './GRNHeader';
-import { GRNStats } from './GRNStats';
+import { GRNStat } from './GRNStats';
 import { GRNFilters } from './GRNFilters';
 import { GRNTable } from './GRNTable';
 import { CreateGRNDialog } from './CreateGRNDialog';
@@ -93,7 +93,7 @@ export default function GoodsReceivedPage() {
 
       <GRNHeader onCreateGRN={handleOpenCreateGRN} />
       
-      <GRNStats stats={stats} />
+      <GRNStat stats={stats} />
       
       <GRNFilters
         searchTerm={searchTerm}

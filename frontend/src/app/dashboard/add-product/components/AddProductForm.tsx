@@ -92,7 +92,14 @@ export default function AddProductForm() {
       console.log('Product data submitted:', data);
       toast.success('Product created successfully!');
     }
+    
   });
+  const filteredLevel2 =
+  categoryTree.find(c => c.id === selectedLevel1)?.children ?? [];
+
+const filteredLevel3 =
+  filteredLevel2.find(c => c.id === selectedLevel2)?.children ?? [];
+
 
   const renderStepContent = () => {
     const currentStepData = STEPS[currentStep - 1];
@@ -108,16 +115,20 @@ export default function AddProductForm() {
             bgGradient={currentStepData.bgGradient}
             borderGradient={currentStepData.borderGradient}
           >
-            <CategoryStep
-              selectedLevel1={selectedLevel1}
-              selectedLevel2={selectedLevel2}
-              selectedLevel3={selectedLevel3}
-              categoriesLevel1={categoryTree}
-              getSelectedCategory={getSelectedCategory}
-              onLevel1Change={setSelectedLevel1}
-              onLevel2Change={setSelectedLevel2}
-              onLevel3Change={setSelectedLevel3}
-            />
+  <CategoryStep
+  selectedLevel1={selectedLevel1}
+  selectedLevel2={selectedLevel2}
+  selectedLevel3={selectedLevel3}
+  categoriesLevel1={categoryTree}
+  filteredLevel2={filteredLevel2}
+  filteredLevel3={filteredLevel3}
+  getSelectedCategory={getSelectedCategory}
+  onLevel1Change={setSelectedLevel1}
+  onLevel2Change={setSelectedLevel2}
+  onLevel3Change={setSelectedLevel3}
+/>
+
+
           </StepCard>
         );
 

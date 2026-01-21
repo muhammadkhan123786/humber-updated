@@ -28,6 +28,7 @@ export function CategoryStep({
   onLevel2Change,
   onLevel3Change
 }: CategoryStepProps) {
+  
   return (
     <div className="space-y-6">
       {/* Cascading Dropdown Selectors */}
@@ -52,7 +53,7 @@ export function CategoryStep({
             className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all bg-white"
           >
             <option value="">-- Select Main Category --</option>
-            {categoriesLevel1.map((cat) => (
+            {categoriesLevel1?.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
@@ -87,7 +88,7 @@ export function CategoryStep({
                 </option>
               ))}
             </select>
-            {filteredLevel2.length === 0 && (
+            {filteredLevel2?.length === 0 && (
               <p className="text-xs text-gray-500 mt-1">No subcategories available</p>
             )}
           </motion.div>
@@ -111,7 +112,7 @@ export function CategoryStep({
               disabled={filteredLevel3.length === 0}
             >
               <option value="">-- Select Sub-subcategory --</option>
-              {filteredLevel3.map((cat) => (
+              {filteredLevel3?.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.name}
                 </option>

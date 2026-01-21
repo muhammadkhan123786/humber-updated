@@ -42,7 +42,7 @@ const statCards = [
   }
 ];
 
-export const GRNStats: React.FC<GRNStatsProps> = ({ stats }) => {
+export const GRNStat: React.FC<GRNStatsProps> = ({ stats }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

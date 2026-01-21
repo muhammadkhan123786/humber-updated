@@ -64,7 +64,7 @@ export function useProductForm({ initialData, onSubmit }: UseProductFormProps) {
     setDynamicFields(prev => ({ ...prev, [fieldName]: value }));
   }, []);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const fullFormData = {

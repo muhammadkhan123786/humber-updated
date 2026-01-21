@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
 import { Card, CardContent } from '@/components/form/Card';
-import { GoodsReturnNote } from '..goodsReturn/types/goodsReturn';
+import { GoodsReturnNote } from '../types/goodsReturn';
 import { getStatusColor, getStatusIcon, getReturnReasonColor } from '../utils/goodsReturnUtils';
 import { FileText, Truck, Calendar, User, RotateCcw, Download, PackageX } from 'lucide-react';
 import * as React from 'react';

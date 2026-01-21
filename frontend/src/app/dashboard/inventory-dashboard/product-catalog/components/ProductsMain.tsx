@@ -77,7 +77,7 @@ export default function EnhancedProducts() {
             <p className="text-gray-600 mt-2">Browse and manage all products by category</p>
           </div>
           <Button 
-            onClick={() => router.push('/products/add')}
+            onClick={() => router.push('/dashboard/add-product')}
             className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg"
           >
             <Plus className="h-4 w-4 mr-2" />

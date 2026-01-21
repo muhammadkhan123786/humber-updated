@@ -1,3 +1,30 @@
+// types/index.ts
+export interface PurchaseOrderItem {
+  id: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  receivedQuantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  orderNumber: string;
+  supplier: string;
+  supplierContact: string;
+  orderDate: Date;
+  expectedDelivery: Date;
+  status: 'ordered' | 'received' | 'cancelled' | 'pending';
+  deliveryStatus: 'not-delivered' | 'partially-delivered' | 'fully-delivered';
+  items: PurchaseOrderItem[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  notes: string;
+}
+
 export interface GoodsReceivedNoteItem {
   id: string;
   purchaseOrderItemId: string;

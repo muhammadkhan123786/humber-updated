@@ -6,7 +6,7 @@ interface NavigationButtonsProps {
   totalSteps: number;
   onPrev: () => void;
   onNext: () => void;
-  onSubmit: () => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
 export function NavigationButtons({
