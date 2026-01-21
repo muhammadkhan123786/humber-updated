@@ -1,59 +1,78 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Coins } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
-import { FormModal } from "@/app/common-form/FormModal";
-import { ICurrency } from "../../../../../../../common/ICurrency.interface"; // Path adjust karein
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
+import { ICurrency } from "../../../../../../../common/ICurrency.interface";
 
-interface FormProps {
-    editingData: ICurrency | null;
+const currencySchemaValidation = z.object({
+    currencyName: z.string().min(1, "Currency name is required."),
+    currencySymbol: z.string().min(1, "Symbol is required."),
+    isActive: z.boolean(),
+    isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof currencySchemaValidation>;
+
+interface Props {
+    editingData: (ICurrency & { _id?: string }) | null;
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
-    apiUrl: string;
 }
 
-export default function CurrenciesForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: FormProps) {
-    const [formData, setFormData] = useState<Partial<ICurrency>>({
-        currencyName: "",
-        currencySymbol: "",
-        isActive: true,
-        isDefault: false,
+const CurrenciesForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        setValue,
+        formState: { errors, isSubmitting },
+    } = useForm<FormData>({
+        resolver: zodResolver(currencySchemaValidation),
+        defaultValues: {
+            currencyName: "",
+            currencySymbol: "",
+            isActive: true,
+            isDefault: false,
+        },
     });
+
+    const isDefaultValue = useWatch({ control, name: "isDefault" });
 
     useEffect(() => {
         if (editingData) {
-            setFormData({
+            reset({
                 currencyName: editingData.currencyName,
                 currencySymbol: editingData.currencySymbol,
-                isActive: editingData.isActive,
-                isDefault: editingData.isDefault,
+                isActive: Boolean(editingData.isActive),
+                isDefault: Boolean(editingData.isDefault),
             });
         }
-    }, [editingData]);
+    }, [editingData, reset]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (values: FormData) => {
         try {
-            const token = localStorage.getItem("token");
-            const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            const payload = { ...formData, userId: savedUser.id || savedUser._id };
+            const userStr = localStorage.getItem("user");
+            const user = userStr ? JSON.parse(userStr) : {};
+            const payload = { ...values, userId: user.id || user._id };
 
             if (editingData?._id) {
-                await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                await updateItem("/currencies", editingData._id, payload);
             } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
+                await createItem("/currencies", payload);
             }
             onRefresh();
             onClose();
-        } catch (err: any) {
-            alert(err.response?.data?.message || "Operation failed");
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Error saving currency data");
         }
     };
 
@@ -64,49 +83,61 @@ export default function CurrenciesForm({ editingData, onClose, onRefresh, themeC
             onClose={onClose}
             themeColor={themeColor}
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
                 <FormInput
-                    label="Currency Name"
+                    label="Currency Name *"
                     placeholder="e.g. US Dollar"
-                    value={formData.currencyName || ""}
-                    onChange={(e) => setFormData({ ...formData, currencyName: e.target.value })}
-                    required
+                    {...register("currencyName")}
+                    error={errors.currencyName?.message}
                 />
+
                 <FormInput
-                    label="Currency Symbol"
+                    label="Currency Symbol *"
                     placeholder="e.g. $"
-                    value={formData.currencySymbol || ""}
-                    onChange={(e) => setFormData({ ...formData, currencySymbol: e.target.value })}
-                    required
+                    {...register("currencySymbol")}
+                    error={errors.currencySymbol?.message}
                 />
-                <div className="bg-gray-50">
-                    <div className="flex">
-                        <div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <Controller
+                        control={control}
+                        name="isActive"
+                        render={({ field }) => (
                             <FormToggle
                                 label="Active"
-                                checked={!!formData.isActive}
-                                onChange={(val) => setFormData({ ...formData, isActive: val })}
-                                disabled={formData.isDefault}
+                                checked={field.value}
+                                onChange={field.onChange}
+                                disabled={isDefaultValue}
                             />
-                           
-                        </div>
-                        <div>
-                             <FormToggle
+                        )}
+                    />
+                    <Controller
+                        control={control}
+                        name="isDefault"
+                        render={({ field }) => (
+                            <FormToggle
                                 label="Default"
-                                checked={!!formData.isDefault}
-                                onChange={(val) => setFormData({ ...formData, isDefault: val })}
+                                checked={field.value}
+                                onChange={(val) => {
+                                    field.onChange(val);
+                                    if (val) setValue("isActive", true);
+                                }}
                             />
-                        </div>
-                    </div>
+                        )}
+                    />
                 </div>
-                <button
+
+                <FormButton
                     type="submit"
-                    className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-                    style={{ backgroundColor: themeColor }}
-                >
-                    <Save size={20} /> {editingData ? "Update Currency" : "Save Currency"}
-                </button>
+                    label={editingData ? "Update Currency" : "Create"}
+                    icon={<Save size={20} />}
+                    loading={isSubmitting}
+                    themeColor={themeColor}
+                    onCancel={onClose}
+                />
             </form>
         </FormModal>
     );
-}
+};
+
+export default CurrenciesForm;

@@ -334,6 +334,15 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
     ],
   },
+  { _id: 3, label: "Repair tracker", href: "/dashboard/repair-tracker", icon: Wrench, roleId: [1] },
+  { _id: 13, label: "Vendor", href: "/dashboard/vender", icon: Store, roleId: [1] },
+  { _id: 14, label: "Warehouses", href: "/dashboard/warehouses", icon: Warehouse, roleId: [1] },
+  { _id: 4, label: "Customers", href: "/dashboard/customers", icon: Users, roleId: [1] },
+  { _id: 5, label: "Bookings", href: "/dashboard/bookings", icon: Calendar, roleId: [1] },
+  { _id: 6, label: "Staff management", href: "/dashboard/staff-management", icon: UserCog, roleId: [1] },
+  { _id: 8, label: "Technicians Profile", href: "/dashboard/technicians-profile", icon: Briefcase, roleId: [1] },
+  { _id: 11, label: "Vehicles", href: "/dashboard/vehicles", icon: Truck, roleId: [1] },
+  
   {
     _id: 1003,
     label: "Repair tracker",
@@ -678,6 +687,8 @@ export const navigation: INavBarLinkSharedInterface[] = [
     ],
   },
 ];
+
+
 
 // import { NavLinksInterface } from "@/types/NavLinksInterface";
 // import box from "../assets/box.svg";
