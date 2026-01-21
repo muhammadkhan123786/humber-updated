@@ -9,13 +9,9 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-const StepSourceCustomer = ({
-  onNext,
-  form,
-  customers,
-  onRegisterClick,
-}: any) => {
+const StepSourceCustomer = ({ onNext, form, customers }: any) => {
   const selectedSource = form.watch("ticketSource");
   const selectedCustomerId = form.watch("customerId");
 
@@ -31,8 +27,13 @@ const StepSourceCustomer = ({
   ];
 
   const selectedCustomerData = customers.find(
-    (c: any) => c._id === selectedCustomerId
+    (c: any) => c._id === selectedCustomerId,
   );
+
+  const router = useRouter();
+  const onRegisterClick = () => {
+    router.push("/dashboard/customers");
+  };
 
   return (
     <div className="flex flex-col animate-in fade-in duration-500">
@@ -92,8 +93,7 @@ const StepSourceCustomer = ({
               <option value="">Select a customer</option>
               {customers.map((c: any) => (
                 <option key={c._id} value={c._id}>
-                  {c.personId?.firstName} {c.personId?.lastName} -{" "}
-                  {c.contactId?.phoneNumber}
+                  {c.personId?.firstName}- {c.contactId?.mobileNumber}
                 </option>
               ))}
             </select>
@@ -125,11 +125,11 @@ const StepSourceCustomer = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DetailRow
                 label="Name"
-                value={`${selectedCustomerData.personId?.firstName} ${selectedCustomerData.personId?.lastName}`}
+                value={`${selectedCustomerData.personId?.firstName}`}
               />
               <DetailRow
                 label="Phone"
-                value={selectedCustomerData.contactId?.phoneNumber}
+                value={selectedCustomerData.contactId?.mobileNumber}
               />
               <DetailRow
                 label="Email"

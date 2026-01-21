@@ -56,14 +56,8 @@ const TicketListingPage = () => {
               (t.userId?.email ? t.userId.email.split("@")[0] : "Unknown"),
             productName: t.vehicleId?.name || "Drive Scout",
             issue: t.issue_Details || "No details provided",
-            status:
-              t.ticketStatusId === "695e62b94a0436aac0dd3944"
-                ? "open"
-                : t.status || "in progress",
-            urgency:
-              t.priorityId === "6965f40cdac61db61224caaf"
-                ? "medium"
-                : t.urgency || "high",
+            status: t.ticketStatusId?.code || "in progress",
+            urgency: t.priorityId?.serviceRequestPrioprity || "high",
             source: t.ticketSource || "Online",
             location: t.location || "Workshop",
             technician: t.assignedTechnicianId?.employeeId || "Unassigned",
@@ -145,7 +139,7 @@ const TicketListingPage = () => {
   };
   const handleDelete = async (id: string) => {
     const isConfirmed = window.confirm(
-      "Are you sure you want to delete this ticket? This action cannot be undone."
+      "Are you sure you want to delete this ticket? This action cannot be undone.",
     );
     if (isConfirmed) {
       try {

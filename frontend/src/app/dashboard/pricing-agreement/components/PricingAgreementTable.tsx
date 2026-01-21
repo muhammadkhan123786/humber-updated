@@ -10,6 +10,7 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: IPricingAgreement & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
@@ -23,7 +24,7 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   // Card View Logic
   if (displayView === "card") {
     return (
@@ -37,7 +38,11 @@ const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, themeColor
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <Handshake size={18} />
               </div>
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive} 
+                onChange={(newVal) => onStatusChange?.(item._id, newVal)}
+                editable={!item.isDefault}
+              />
             </div>
 
             <div className="px-4 pb-4 space-y-3">
@@ -55,7 +60,10 @@ const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, themeColor
                 </button>
                 <button
                   onClick={() => {
-                    if (item.isDefault) return alert("Default agreements cannot be deleted.");
+                    if (item.isDefault) {
+                      alert("Default agreements cannot be deleted.");
+                      return;
+                    }
                     onDelete(item._id);
                   }}
                   className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -66,15 +74,21 @@ const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, themeColor
             </div>
           </div>
         ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">🤝</div>
+            <p>No pricing agreements found.</p>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Table View (Business Type style)
+  // Table View
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700 w-24">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Agreement Name</th>
@@ -99,7 +113,11 @@ const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, themeColor
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive} 
+                  onChange={(newVal) => onStatusChange?.(item._id, newVal)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
@@ -112,6 +130,13 @@ const PricingAgreementTable = ({ data, displayView, onEdit, onDelete, themeColor
               </td>
             </tr>
           ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center py-10 text-gray-400">
+                No pricing agreements found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

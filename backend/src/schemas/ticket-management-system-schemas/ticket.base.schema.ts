@@ -30,7 +30,7 @@ export const customerTicketBaseSchema = {
 
   priorityId: {
     type: Types.ObjectId,
-    ref: "ServiceRequestPriorityModel",
+    ref: "ServiceRequestPrioprityModel",
     required: true,
   },
 
@@ -39,7 +39,7 @@ export const customerTicketBaseSchema = {
   vehicleRepairVideoURL: { type: String },
   assignedTechnicianId: {
     type: Types.ObjectId,
-    ref: "TechnicianProfileModel",
+    ref: "Technicians",
     default: null,
   },
 

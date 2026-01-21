@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Eye, Edit, Trash2, Search, Loader2, Grid3x3, List, CheckCircle, AlertCircle, FileText, Zap } from "lucide-react";
+import Image from "next/image";
 
 interface VehicleListProps {
   displayView: "card" | "table";
@@ -236,9 +237,11 @@ export default function VehicleList({
                   <div className="h-48 bg-linear-to-br from-gray-300 via-gray-200 to-gray-300 relative overflow-hidden flex items-center justify-center group">
                     <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-all duration-300"></div>
                     {v.vehiclePhoto ? (
-                      <img
+                      <Image
                         src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${v.vehiclePhoto}`}
                         alt="Vehicle"
+                        fill
+                        unoptimized
                         className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-300"
                         onError={(e) => { (e.target as any).src = "https://via.placeholder.com/300x200?text=No+Image"; }}
                       />

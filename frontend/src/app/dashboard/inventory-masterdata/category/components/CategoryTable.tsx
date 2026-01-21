@@ -25,9 +25,9 @@ import { ICategory } from "../../../../../../../common/ICategory.interface";
 
 interface Props {
   data: ICategory[];
-   onEdit: (cat: ICategory) => void;
-   onDelete: (id: string) => void;
-   onAddSub: (parent: ICategory) => void;
+  onEdit: (cat: ICategory) => void;
+  onDelete: (id: string) => void;
+  onAddSub: (parent: ICategory) => void;
   //  onSetDefault: (cat: ICategory) => void;
 }
 
@@ -83,13 +83,12 @@ export const CategoryTable: React.FC<Props> = ({
             {/* Level Badge */}
             <td className="px-4 py-4 text-center">
               <span
-                className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold border ${
-                  level === 1
+                className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold border ${level === 1
                     ? "bg-blue-50 border-blue-200 text-blue-600"
                     : level === 2
-                    ? "bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600"
-                    : "bg-emerald-50 border-emerald-200 text-emerald-600"
-                }`}
+                      ? "bg-fuchsia-50 border-fuchsia-200 text-fuchsia-600"
+                      : "bg-emerald-50 border-emerald-200 text-emerald-600"
+                  }`}
               >
                 Level {level}
               </span>
@@ -98,11 +97,10 @@ export const CategoryTable: React.FC<Props> = ({
             {/* Active Status Badge */}
             <td className="px-4 py-4 text-center">
               <div
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold ${
-                  cat.isActive
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold ${cat.isActive
                     ? "bg-emerald-50 border-emerald-200 text-emerald-600"
                     : "bg-red-50 border-red-200 text-red-600"
-                }`}
+                  }`}
               >
                 {cat.isActive ? (
                   <CheckCircle2 size={13} />

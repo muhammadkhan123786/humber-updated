@@ -10,10 +10,11 @@ interface Props {
   displayView: "table" | "card";
   onEdit: (item: IIcons) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
-const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const IconsTable = ({ data, displayView, onEdit, onDelete, onStatusChange }: Props) => {
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -22,7 +23,11 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
             <div className="bg-gray-50 rounded-2xl p-6 mb-4 flex justify-center relative group">
                 <img src={item.icon} alt={item.iconName} className="h-20 w-20 object-contain transition-transform group-hover:scale-110" />
                 <div className="absolute top-2 right-2">
-                   <StatusBadge isActive={!!item.isActive} />
+                   <StatusBadge 
+                    isActive={!!item.isActive} 
+                    onChange={(val) => item._id && onStatusChange?.(item._id, val)}
+                    editable={!item.isDefault}
+                   />
                 </div>
             </div>
             <h3 className="font-bold text-gray-900 text-lg flex items-center justify-center gap-2">
@@ -37,7 +42,10 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
                 Edit
               </button>
               <button 
-                onClick={() => !item.isDefault && item._id && onDelete(item._id)} 
+                onClick={() => {
+                  if (item.isDefault) return alert("Default icons cannot be deleted.");
+                  item._id && onDelete(item._id);
+                }} 
                 className="p-2 text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 rounded-lg transition-all"
               >
                 <Trash2 size={20}/>
@@ -45,6 +53,12 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
             </div>
           </div>
         ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+             <p className="text-5xl mb-4">🖼️</p>
+             <p>No icons found in the gallery.</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -52,7 +66,7 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden rounded-xl">
       <table className="w-full text-left">
-        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Preview</th>
             <th className="px-6 py-4 font-bold text-gray-700">Icon Name</th>
@@ -74,13 +88,20 @@ const IconsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) 
                   {item.isDefault && <Star size={18} className="text-yellow-500 fill-yellow-500" />}
                 </div>
               </td>
-              <td className="px-6 py-4 text-center"><StatusBadge isActive={!!item.isActive} /></td>
+              <td className="px-6 py-4 text-center">
+                <StatusBadge 
+                  isActive={!!item.isActive} 
+                  onChange={(val) => item._id && onStatusChange?.(item._id, val)}
+                  editable={!item.isDefault}
+                />
+              </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton 
                   onEdit={() => onEdit(item)} 
                   onDelete={() => {
                     if (item.isDefault) return alert("Default icons cannot be deleted.");
-                    onDelete(item._id!);
+                    if(!item._id) return;
+                    onDelete(item._id);
                   }} 
                 />
               </td>

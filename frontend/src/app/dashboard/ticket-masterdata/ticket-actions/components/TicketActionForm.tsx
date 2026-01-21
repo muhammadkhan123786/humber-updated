@@ -1,13 +1,14 @@
 "use client";
 import { useEffect } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Settings } from "lucide-react";
 import { z } from "zod";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
-import { createItem, updateItem } from "../../../../../helper/apiHelper";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
 import { ITicketActions } from "../../../../../../../common/Ticket-management-system/ITicketActions.interface";
 
 const ticketActionFormSchema = z.object({
@@ -41,8 +42,7 @@ const TicketActionForm = ({
     handleSubmit,
     reset,
     control,
-    watch, // Added watch
-    setValue, // Added setValue
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TicketActionFormData>({
     resolver: zodResolver(ticketActionFormSchema),
@@ -54,8 +54,8 @@ const TicketActionForm = ({
     },
   });
 
-  // isDefault ki current value ko monitor karein
-  const isDefaultValue = watch("isDefault");
+  // Monitor isDefault state to handle logic for isActive
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
 
   useEffect(() => {
     if (editingData) {
@@ -96,7 +96,7 @@ const TicketActionForm = ({
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput
             label="Action Code *"
             placeholder="e.g. REASSIGN"
@@ -110,6 +110,7 @@ const TicketActionForm = ({
             error={errors.label?.message}
           />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
           <Controller
             control={control}
@@ -132,7 +133,7 @@ const TicketActionForm = ({
                 checked={field.value}
                 onChange={(val) => {
                   field.onChange(val);
-                  // Jab default select ho, toh active ko true kar dein
+                  // If default is checked, ensure active is also true
                   if (val) {
                     setValue("isActive", true);
                   }
@@ -141,15 +142,15 @@ const TicketActionForm = ({
             )}
           />
         </div>
-        <button
+
+        <FormButton
           type="submit"
-          disabled={isSubmitting}
-          className="w-full text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
-          style={{ backgroundColor: themeColor }}
-        >
-          <Save size={20} />
-          {isSubmitting ? "Saving..." : "Save Action"}
-        </button>
+          label={editingData ? "Update Action" : "Create"}
+          icon={<Save size={20} />}
+          loading={isSubmitting}
+          themeColor={themeColor}
+          onCancel={onClose}
+        />
       </form>
     </FormModal>
   );

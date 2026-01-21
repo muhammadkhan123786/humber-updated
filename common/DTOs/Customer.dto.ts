@@ -1,46 +1,44 @@
-
 export type customerType = "domestic" | "corporate";
 export interface BaseCustomerDto {
-    userId: string;
-    //personal information.
-    firstName: string;
-    middleName?: string;
-    lastName?: string;
+  userId: string;
+  //personal information.
+  person: { firstName: string; middleName?: string; lastName?: string };
 
-    //contact information
-    mobileNumber: string;
-    phoneNumber?: string;
-    emailId?: string;
+  //contact information
 
-    // addres 
+  contact: { mobileNumber: string; phoneNumber?: string; emailId?: string };
+
+  // addres
+  address: {
     address: string;
+    userId?: string;
     zipCode?: string;
     city?: string;
     country?: string;
     latitude?: string;
     longitude?: string;
+  };
 
-    isActive?: boolean;
-    isDeleted?: boolean;
-    isDefault?: boolean;
+  sourceId: string;
 
-    customerType: customerType
+  isActive?: boolean;
+  isDeleted?: boolean;
+  isDefault?: boolean;
+  isVatExemption?: boolean;
+  vatExemptionReason?: string;
+  customerType: customerType;
 }
 
 export interface DomesticCustomerDto extends BaseCustomerDto {
-    customerType: "domestic",
+  customerType: "domestic";
 }
 
 export interface CorporateCutomerDto extends BaseCustomerDto {
-    customerType: "corporate",
-    companyName: string,
-    registrationNo?: string,
-    vatNo?: string,
-    website?: string
-
+  customerType: "corporate";
+  companyName: string;
+  registrationNo?: string;
+  vatNo?: string;
+  website?: string;
 }
 
-
-
 export type Customer = DomesticCustomerDto | CorporateCutomerDto;
-

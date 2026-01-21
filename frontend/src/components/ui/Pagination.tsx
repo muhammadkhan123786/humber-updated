@@ -50,7 +50,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) 
                             key={page}
                             onClick={() => onPageChange(page)}
                             className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${currentPage === page
-                                    ? 'bg-[#FE6B1D] text-white shadow-md'
+                                    ? 'bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 text-white shadow-md'
                                     : 'text-gray-600 hover:bg-orange-50 border border-transparent'
                                 }`}
                         >

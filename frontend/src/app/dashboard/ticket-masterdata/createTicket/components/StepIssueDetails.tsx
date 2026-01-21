@@ -2,14 +2,27 @@
 
 import React, { useRef } from "react";
 import Image from "next/image";
-import { ChevronRight, ChevronLeft, Info, Upload, X, Film } from "lucide-react";
+import { ChevronLeft, Upload, X } from "lucide-react";
 import { Controller } from "react-hook-form";
 
-const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
+interface Props {
+  onNext: (formData: any) => void;
+  onBack: () => void;
+  form: any;
+  isLoading: boolean;
+}
+
+const StepIssueDetails: React.FC<Props> = ({
+  onNext,
+  onBack,
+  form,
+  isLoading,
+}) => {
   const { control, watch, setValue } = form;
-  const description = watch("issue_Details");
+
   const images = watch("vehicleRepairImages") || [];
   const videos = watch("vehicleRepairVideo") || [];
+  const description = watch("issue_Details");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -18,25 +31,56 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter((f) => f.type.startsWith("image/"));
+    const videoFiles = files.filter((f) => f.type.startsWith("video/"));
 
-    if (imageFiles.length > 0) {
-      const newLocalBlobUrls = imageFiles.map((file) =>
-        URL.createObjectURL(file)
-      );
+    const newImageUrls = imageFiles.map((f) => URL.createObjectURL(f));
+    const newVideoUrls = videoFiles.map((f) => URL.createObjectURL(f));
 
-      setValue("vehicleRepairImages", [...images, ...newLocalBlobUrls], {
+    if (newImageUrls.length > 0) {
+      setValue("vehicleRepairImages", [...images, ...newImageUrls], {
         shouldValidate: true,
       });
+
+      setValue(
+        "vehicleRepairImagesFile",
+        [...(watch("vehicleRepairImagesFile") || []), ...imageFiles],
+        { shouldValidate: true },
+      );
+    }
+
+    if (newVideoUrls.length > 0) {
+      setValue("vehicleRepairVideo", [...videos, ...newVideoUrls], {
+        shouldValidate: true,
+      });
+      setValue(
+        "vehicleRepairVideoFile",
+        [...(watch("vehicleRepairVideoFile") || []), ...videoFiles],
+        { shouldValidate: true },
+      );
     }
   };
 
   const removeImage = (index: number) => {
-    const newImages = images.filter((_: any, i: number) => i !== index);
+    const targetImage = images[index];
+
+    const newImages = images.filter((_: string, i: number) => i !== index);
     setValue("vehicleRepairImages", newImages, { shouldValidate: true });
+
+    if (targetImage.startsWith("blob:")) {
+      const currentFiles = watch("vehicleRepairImagesFile") || [];
+
+      const blobIndex = images
+        .slice(0, index)
+        .filter((img: string) => img.startsWith("blob:")).length;
+      const newFiles = currentFiles.filter(
+        (_: any, i: number) => i !== blobIndex,
+      );
+      setValue("vehicleRepairImagesFile", newFiles, { shouldValidate: true });
+    }
   };
 
-  const removeVideo = () => {
-    setValue("vehicleRepairVideo", [], { shouldValidate: true });
+  const handleNext = () => {
+    onNext(form.getValues());
   };
 
   return (
@@ -66,9 +110,6 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
               />
             )}
           />
-          <p className="text-gray-400 text-xs flex items-center gap-1 font-bold">
-            <Info size={14} /> Be as descriptive as possible.
-          </p>
         </div>
 
         <div className="space-y-4">
@@ -78,21 +119,13 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
 
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="relative w-full h-48 rounded-3xl border-2 border-dashed border-[#FF6900]/30 bg-[#FFF9F5] flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF4ED] transition-all overflow-hidden"
+            className="relative w-full h-48 rounded-3xl border-2 border-dashed border-[#FF6900]/30 bg-[#FFF9F5] flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF4ED] transition-all"
           >
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-orange-200"
-              style={{
-                background: "linear-gradient(135deg, #FF6900 0%, #FB2C36 100%)",
-              }}
-            >
-              <Upload size={32} strokeWidth={2.5} />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-white mb-4 bg-gradient-to-br from-[#FF6900] to-[#FB2C36] shadow-lg shadow-orange-200">
+              <Upload size={32} />
             </div>
             <p className="text-[#1E293B] font-bold text-sm">
               Click to upload or drag and drop
-            </p>
-            <p className="text-gray-400 text-[11px] mt-1">
-              PNG, JPG, MP4 up to 10MB
             </p>
           </div>
 
@@ -100,14 +133,9 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
             {images.map((path: string, index: number) => {
               const isLocalBlob = path.startsWith("blob:");
               const isFullUrl = path.startsWith("http");
-
               let displayUrl = path;
               if (!isLocalBlob && !isFullUrl) {
-                const cleanPath = path.startsWith("/")
-                  ? path.substring(1)
-                  : path;
-                displayUrl = `${BASE_URL}/${cleanPath}`;
-                console.log("Display URL", displayUrl);
+                displayUrl = `${BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
               }
 
               return (
@@ -117,9 +145,9 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
                 >
                   <Image
                     src={displayUrl}
-                    alt={`Preview ${index}`}
+                    alt="Preview"
                     fill
-                    unoptimized={true}
+                    unoptimized
                     className="object-cover"
                   />
                   <button
@@ -130,36 +158,13 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
                     <X size={14} />
                   </button>
                   {!isLocalBlob && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-[8px] text-white text-center py-0.5">
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-[8px] text-white text-center py-1 font-bold">
                       EXISTING
                     </div>
                   )}
                 </div>
               );
             })}
-
-            {videos.length > 0 && (
-              <div className="relative aspect-square rounded-[20px] border border-blue-100 bg-blue-50 flex items-center justify-center group">
-                <div className="flex flex-col items-center">
-                  <Film size={24} className="text-blue-500 mb-1" />
-                  <span className="text-[10px] font-bold text-blue-400">
-                    VIDEO
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeVideo();
-                  }}
-                  className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-[20px]"
-                >
-                  <div className="bg-white/20 backdrop-blur-md p-2 rounded-full">
-                    <X size={18} className="text-white" />
-                  </div>
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
@@ -175,32 +180,26 @@ const StepIssueDetails = ({ onNext, onBack, form, isLoading }: any) => {
         <div className="flex justify-between items-center pt-8 border-t border-gray-50">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 px-8 py-4 rounded-2xl font-black bg-gray-50 text-gray-400 hover:bg-gray-100"
+            className="flex items-center gap-2 px-8 py-4 rounded-2xl font-black bg-gray-50 text-gray-400"
           >
             <ChevronLeft size={20} /> Previous
           </button>
 
           <button
-            onClick={onNext}
+            onClick={handleNext}
             disabled={!description || description.length < 5 || isLoading}
-            className="flex items-center gap-2 px-10 py-4 font-black text-white rounded-[10px] transition-all"
+            className="flex items-center gap-2 px-10 py-4 font-black text-white rounded-[10px]"
             style={{
               background:
                 description?.length >= 5
                   ? "linear-gradient(90deg, #FF6900 0%, #FB2C36 100%)"
                   : "#E5E7EB",
-              boxShadow:
-                description?.length >= 5
-                  ? "0 10px 15px -3px rgba(255, 105, 0, 0.25)"
-                  : "none",
             }}
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
             ) : (
-              <>
-                Next <ChevronRight size={20} />
-              </>
+              "Next"
             )}
           </button>
         </div>

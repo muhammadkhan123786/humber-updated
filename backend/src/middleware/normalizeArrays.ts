@@ -1,26 +1,46 @@
 import { NextFunction, Request, Response } from "express";
 
 export const normalizeArrays = (arrayFields: string[]) => {
-    return (req: Request, _res: Response, next: NextFunction) => {
-        for (const field of arrayFields) {
-            const value = req.body[field];
+  return (req: Request, _res: Response, next: NextFunction) => {
+    for (const field of arrayFields) {
+      const fieldParts = field.split(".");
 
-            if (!value) continue;
-
-            // If already array → OK
-            if (Array.isArray(value)) continue;
-
-            // If JSON string → parse
-            if (typeof value === "string") {
-                try {
-                    const parsed = JSON.parse(value);
-                    req.body[field] = Array.isArray(parsed) ? parsed : [parsed];
-                } catch {
-                    // Single value → wrap in array
-                    req.body[field] = [value];
-                }
-            }
+      let value: any;
+      if (fieldParts.length > 1) {
+        value = req.body;
+        for (const part of fieldParts) {
+          value = value?.[part];
         }
-        next();
-    };
+      } else {
+        value = req.body[field];
+      }
+
+      if (!value) continue;
+
+      if (Array.isArray(value)) continue;
+
+      if (typeof value === "string") {
+        try {
+          const parsed = JSON.parse(value);
+          value = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          value = [value];
+        }
+      } else {
+        value = [value];
+      }
+
+      if (fieldParts.length > 1) {
+        const parentField = fieldParts[0];
+        const childField = fieldParts[1];
+        if (!req.body[parentField]) {
+          req.body[parentField] = {};
+        }
+        req.body[parentField][childField] = value;
+      } else {
+        req.body[field] = value;
+      }
+    }
+    next();
+  };
 };

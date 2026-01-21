@@ -32,13 +32,14 @@ export const useTicketForm = () => {
     useState<string>("");
 
   const form = useForm<TicketFormData>({
-    resolver: zodResolver(ticketFormSchema),
+    resolver: zodResolver(ticketFormSchema) as unknown as any,
     defaultValues: {
       ticketSource: "Phone",
       location: "Workshop",
       userId: "",
       assignedTechnicianId: null,
       vehicleRepairImages: [],
+      vehicleRepairImagesFile: [],
       address: "",
       vehicleRepairVideoURL: "",
       issue_Details: "",
@@ -70,10 +71,13 @@ export const useTicketForm = () => {
           ticket.assignedTechnicianId ||
           null,
         vehicleRepairVideoURL: ticket.vehicleRepairVideoURL || "",
+
         vehicleRepairImages: ticket.vehicleRepairImages || [],
+
+        vehicleRepairImagesFile: [],
       });
     },
-    [form]
+    [form],
   );
 
   const clearEdit = () => {
@@ -112,24 +116,38 @@ export const useTicketForm = () => {
         ])) as any[];
 
         if (results[0].status === "fulfilled")
-          setCustomers(results[0].value?.data ?? []);
+          setCustomers(
+            (results[0].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+
         if (results[1].status === "fulfilled")
-          setPriorities(results[1].value?.data ?? []);
+          setPriorities(
+            (results[1].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+
         if (results[3].status === "fulfilled")
-          setTechnicians(results[3].value?.data ?? []);
+          setTechnicians(
+            (results[3].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+
         if (results[4].status === "fulfilled")
-          setVehicles(results[4].value?.data ?? []);
+          setVehicles(
+            (results[4].value?.data ?? []).filter((i: any) => i.isActive),
+          );
 
         if (results[2].status === "fulfilled") {
-          const statusData = results[2].value?.data ?? [];
+          const statusData = (results[2].value?.data ?? []).filter(
+            (i: any) => i.isActive,
+          );
+
           setStatuses(statusData);
 
           if (!editingId) {
             const defaultStatus =
               statusData.find((s: any) =>
                 ["open", "pending", "new"].some((kw) =>
-                  s?.statusName?.toLowerCase()?.includes(kw)
-                )
+                  (s?.code || s?.label)?.toLowerCase()?.includes(kw),
+                ),
               ) || statusData[0];
 
             if (defaultStatus?._id) {
@@ -144,6 +162,7 @@ export const useTicketForm = () => {
         setIsLoading(false);
       }
     };
+
     fetchDropdownData();
   }, [form, editingId]);
 
@@ -153,63 +172,72 @@ export const useTicketForm = () => {
       setError(null);
       setSuccess(null);
 
-      const ticketStatusId = data.ticketStatusId || defaultTicketStatusId;
+      const formData = new FormData();
 
-      const submissionData: any = {
-        ticketSource: data.ticketSource,
-        customerId: data.customerId,
-        vehicleId: data.vehicleId,
-        issue_Details: data.issue_Details,
-        location: data.location,
-        priorityId: data.priorityId,
-        ticketStatusId,
-        userId: data.userId,
-        vehicleRepairImages: data.vehicleRepairImages,
-      };
+      // Basic Fields
+      formData.append("ticketSource", data.ticketSource);
+      formData.append("customerId", data.customerId);
+      formData.append("vehicleId", data.vehicleId);
+      formData.append("issue_Details", data.issue_Details);
+      formData.append("location", data.location);
+      formData.append("priorityId", data.priorityId);
+      formData.append(
+        "ticketStatusId",
+        data.ticketStatusId || defaultTicketStatusId,
+      );
+      formData.append("userId", data.userId);
+
+      if (data.address) formData.append("address", data.address);
+      if (data.assignedTechnicianId)
+        formData.append("assignedTechnicianId", data.assignedTechnicianId);
 
       if (!editingId) {
-        submissionData.ticketCode = generateTicketCode();
+        formData.append("ticketCode", generateTicketCode());
+      }
+      const rawImages = data.vehicleRepairImages || [];
+      const imagesArray = Array.isArray(rawImages) ? rawImages : [rawImages];
+
+      const existingImages = imagesArray.filter(
+        (path: string) => typeof path === "string" && !path.startsWith("blob:"),
+      );
+      if (existingImages.length > 0) {
+        formData.append("vehicleRepairImages", JSON.stringify(existingImages));
       }
 
-      if (data.location !== "Workshop") submissionData.address = data.address;
-      if (data.assignedTechnicianId)
-        submissionData.assignedTechnicianId = data.assignedTechnicianId;
-      if (data.vehicleRepairVideoURL)
-        submissionData.vehicleRepairVideoURL = data.vehicleRepairVideoURL;
-
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-
-      let res;
-      if (editingId) {
-        res = await axios.put(
-          `${baseUrl}/customer-tickets/${editingId}`,
-          submissionData,
-          {
-            headers: { ...getAuthHeader() },
-          }
-        );
-      } else {
-        res = await axios.post(`${baseUrl}/customer-tickets`, submissionData, {
-          headers: { ...getAuthHeader() },
+      if (
+        data.vehicleRepairImagesFile &&
+        data.vehicleRepairImagesFile.length > 0
+      ) {
+        data.vehicleRepairImagesFile.forEach((file: File) => {
+          formData.append("vehicleRepairImagesFile", file);
         });
       }
 
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+      const apiEndpoint = editingId
+        ? `${baseUrl}/customer-tickets/${editingId}`
+        : `${baseUrl}/customer-tickets`;
+
+      const res = await axios({
+        method: editingId ? "put" : "post",
+        url: apiEndpoint,
+        data: formData,
+        headers: {
+          ...getAuthHeader(),
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       if (res.data.success) {
-        const message = editingId
-          ? "Ticket updated successfully!"
-          : "Ticket created successfully!";
-
-        setSuccess(message);
+        const message = editingId ? "Ticket updated!" : "Ticket created!";
         alert(message);
-
         clearEdit();
-
         router.push("/dashboard/ticket-masterdata/allTickets");
       }
     } catch (err: any) {
       setError(
-        err.response?.data?.message || err.message || "Submission failed"
+        err.response?.data?.message || err.message || "Submission failed",
       );
     } finally {
       setIsLoading(false);

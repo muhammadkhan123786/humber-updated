@@ -48,6 +48,7 @@ const TicketReferenceTypesForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: { code: "", label: "", isActive: true, isDefault: false },
   });
+
   const isDefaultValue = useWatch({
     control,
     name: "isDefault",
@@ -90,7 +91,7 @@ const TicketReferenceTypesForm = ({
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormInput
             label="Reference Code *"
             placeholder="e.g. EMAIL"
@@ -105,7 +106,7 @@ const TicketReferenceTypesForm = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           <Controller
             control={control}
             name="isActive"
@@ -133,12 +134,14 @@ const TicketReferenceTypesForm = ({
             )}
           />
         </div>
+
         <FormButton
           type="submit"
-          label={editingData ? "Update Reference Type" : "Save Reference Type"}
+          label={editingData ? "Update Reference Type" : "Create"}
           icon={<Save size={20} />}
           loading={isSubmitting}
           themeColor={themeColor}
+          onCancel={onClose}
         />
       </form>
     </FormModal>

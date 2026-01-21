@@ -13,7 +13,7 @@ import { normalizeArrays } from "../../middleware/normalizeArrays";
 
 const repairVehicleUpload = createUploader([
   {
-    name: "vehicleRepairImages",
+    name: "vehicleRepairImagesFile",
     maxCount: 1000,
     mimeTypes: ["image/jpeg", "image/png"],
   },
@@ -33,12 +33,18 @@ const repairVehicleUpload = createUploader([
 const customerTicketBaseRouter = Router();
 
 const customerTicketServices = new GenericService<customerTicketBaseDoc>(
-  customerTicketBase
+  customerTicketBase,
 );
 
 const customerTicketBaseController = new AdvancedGenericController({
   service: customerTicketServices,
-  populate: ["userId", "assignedTechnicianId", "vehicleId"],
+  populate: [
+    "userId",
+    "assignedTechnicianId",
+    "vehicleId",
+    "priorityId",
+    "ticketStatusId",
+  ],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
@@ -47,33 +53,17 @@ customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
 customerTicketBaseRouter.post(
   "/",
-  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
-  mapUploadedFilesToBody(),
+  mapUploadedFilesToBody("/uploads", {
+    vehicleRepairImagesFile: "vehicleRepairImages",
+  }),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log("[TICKET POST] ===== REQUEST RECEIVED =====");
-      console.log("[TICKET POST] req.files:", req.files);
-      console.log("[TICKET POST] req.body keys:", Object.keys(req.body || {}));
-      console.log("[TICKET POST] Full req.body:", req.body);
+      const code = await generateTicketCode();
+      if (!req.body) req.body = {};
+      req.body.ticketCode = code;
+      console.log("[TICKET POST] Generated ticketCode:", code);
 
-      console.log(
-        "[TICKET POST] Request body keys:",
-        Object.keys(req.body || {})
-      );
-      console.log("[TICKET POST] Received ticketCode:", req.body?.ticketCode);
-      console.log(
-        "[TICKET POST] vehicleRepairImages:",
-        req.body?.vehicleRepairImages
-      );
-
-      // Ensure ticketCode exists - generate if not provided
-      if (!req.body?.ticketCode) {
-        const code = await generateTicketCode();
-        if (!req.body) req.body = {};
-        req.body.ticketCode = code;
-        console.log("[TICKET POST] Generated ticketCode:", code);
-      }
       next();
     } catch (error) {
       console.error("[TICKET POST ERROR]:", error);
@@ -82,15 +72,17 @@ customerTicketBaseRouter.post(
         .json({ success: false, message: "Failed to generate ticket code" });
     }
   },
-  customerTicketBaseController.create
+  customerTicketBaseController.create,
 );
 
 customerTicketBaseRouter.put(
   "/:id",
-  normalizeArrays(["vehicleRepairImages"]),
   repairVehicleUpload,
-  mapUploadedFilesToBody(),
-  customerTicketBaseController.update
+  mapUploadedFilesToBody("/uploads", {
+    vehicleRepairImagesFile: "vehicleRepairImages",
+  }),
+  normalizeArrays(["vehicleRepairImages"]),
+  customerTicketBaseController.update,
 );
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
 
