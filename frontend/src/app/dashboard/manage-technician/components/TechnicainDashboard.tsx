@@ -4,6 +4,7 @@ import MetricCard from "../../customerDashboard/components/MetricCard";
 import { motion, AnimatePresence } from "framer-motion"; // Added AnimatePresence
 import { Plus, Users, UserCheck, Briefcase, Star, Wrench } from "lucide-react";
 import ModalForm from "./ModalForm"; // Import your Modal component
+import ManageTechnicianList from "./ManageTechnicianList";
 
 const HEADER_GRADIENT = "from-[#F54900] via-[#E7000B] to-[#E60076]";
 
@@ -23,35 +24,37 @@ const TechnicianDashboard = () => {
         {isModalOpen && <ModalForm onClose={() => setIsModalOpen(false)} />}
       </AnimatePresence>
 
-      {/* Header Section */}
       <div
-        className={`bg-linear-to-r ${HEADER_GRADIENT} rounded-[2.5rem] p-12 mb-10 flex flex-col md:flex-row justify-between items-center text-white shadow-2xl shadow-red-200 relative overflow-hidden`}
+        className={`bg-linear-to-r ${HEADER_GRADIENT} rounded-4xl p-8 mb-8 flex flex-col md:flex-row justify-between items-center text-white shadow-2xl shadow-red-200 relative overflow-hidden`}
       >
-        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="flex items-center gap-8 z-10">
-          <div className="bg-white/20 p-5 rounded-4xl backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+        <div className="absolute top-[-20%] right-[-10%] w-56 h-56 bg-white/10 rounded-full blur-3xl" />
+
+        <div className="flex items-center gap-6 z-10">
+          <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-xl border border-white/30 shadow-xl overflow-hidden">
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
             >
-              <Wrench size={48} strokeWidth={2.5} />
+              <Wrench size={40} strokeWidth={2.5} />
             </motion.div>
           </div>
+
           <div>
-            <h1 className="text-5xl font-black tracking-tight mb-2">
+            <h1 className="text-4xl font-black tracking-tight mb-1">
               Technician Management
             </h1>
-            <p className="opacity-90 text-lg font-semibold tracking-wide">
+            <p className="opacity-90 text-base font-semibold tracking-wide">
               Manage your technical workforce and monitor performance
             </p>
           </div>
         </div>
+
         <button
           onClick={() => setIsModalOpen(true)}
-          className="mt-8 md:mt-0 bg-white text-[#E7000B] px-8 py-5 rounded-4xl font-black flex items-center gap-3 shadow-2xl hover:bg-slate-50 transition-all active:scale-95 z-10 group"
+          className="mt-6 md:mt-0 bg-white text-[#E7000B] px-6 py-4 rounded-3xl font-bold flex items-center gap-3 shadow-xl hover:bg-slate-50 transition-all active:scale-95 z-10 group"
         >
           <Plus
-            size={24}
+            size={20}
             strokeWidth={3}
             className="transition-transform group-hover:rotate-90"
           />
