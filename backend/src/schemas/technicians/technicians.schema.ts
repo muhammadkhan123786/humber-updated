@@ -60,7 +60,7 @@ export const technicianSchema = {
     technicianStatus: {
         type: String,
         enum: TECHNICIAN_STATUS,
-        default: "Available",
+        default: TECHNICIAN_STATUS[0],
         required: true,
     },
     dateOfBirth: Date,

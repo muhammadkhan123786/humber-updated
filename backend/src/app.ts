@@ -128,7 +128,7 @@ app.use(
 app.use(`${process.env.API_PREFIX}/customers`, CustomerBaseRouter);
 app.use(
   `${process.env.API_PREFIX}/technicians`,
-  adminProtecter,
+  // adminProtecter,
   techniciansRouter,
 );
 app.use(`${process.env.API_PREFIX}/currencies`, adminProtecter, currecyRouter);

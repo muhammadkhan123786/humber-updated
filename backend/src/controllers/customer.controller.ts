@@ -25,12 +25,6 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
-function formatMonthlyPeriod(period: string): string {
-  const [year, month] = period.split("-");
-  const monthIndex = Number(month) - 1;
-  return `${year}-${MONTH_NAMES[monthIndex]}`;
-}
-
 //utlity functions
 const startOfDay = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate());

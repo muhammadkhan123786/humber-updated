@@ -4,6 +4,7 @@ import { technicianDoc, Technicians } from "../../models/technician-models/techn
 import { TECHNICIAN_SCHEMA_Validation } from "../../schemas/technicians/technicians.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { genericProfileIdsMiddleware } from "../../middleware/generic.profile.middleware";
+import { getTechnicianDashboardSummary } from "../../controllers/technician.statis.controller";
 
 const techniciansRouter = Router();
 
@@ -30,7 +31,7 @@ const technicianProfileMiddleware = genericProfileIdsMiddleware<technicianDoc>({
 
 
 // Correct order:
-
+techniciansRouter.get('/summary', getTechnicianDashboardSummary);
 techniciansRouter.get("/", technicianController.getAll);
 techniciansRouter.get("/:id", technicianController.getById);
 techniciansRouter.post("/", technicianProfileMiddleware, technicianController.create);
