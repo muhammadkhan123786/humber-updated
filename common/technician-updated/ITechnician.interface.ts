@@ -2,6 +2,7 @@ import { commonProfileDto } from '../DTOs/profilecommonDto';
 
 export type PAYMENT_FREQUENCY = "Daily" | "Weekly" | "Monthly";
 export type DAYS = "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
+export type technicianStatus = "Busy" | "Available";
 
 export type DUTY_ROSTER = {
     day: DAYS,
@@ -41,5 +42,7 @@ export interface ITechnician<
         healthInsuranceDetails?: string;
         additionalNotes?: string;
     };
-    accountId?: IACCOUNTID
+    accountId?: IACCOUNTID;
+    technicianStatus?: technicianStatus
+
 }
