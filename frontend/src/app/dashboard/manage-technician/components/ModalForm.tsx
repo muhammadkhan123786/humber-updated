@@ -237,6 +237,27 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         .map((item: any) => item.day);
       setActiveDays(activeDayNames);
 
+      // IMPORTANT: Initialize dutyRoster with ALL days, not just active ones
+      const allDays = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+      ];
+
+      const completeDutyRoster = allDays.map((day) => {
+        const existing = mappedDutyRoster.find((d: any) => d.day === day);
+        return {
+          day,
+          isActive: existing?.isActive || false,
+          startTime: existing?.startTime || "09:00",
+          endTime: existing?.endTime || "17:00",
+        };
+      });
+
       // Set payment frequency
       setPaymentFreq(initialData.paymentFrequency || "Monthly");
 
@@ -282,7 +303,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         bankAccountNumber: initialData.bankAccountNumber || "",
         taxId: initialData.taxId || "",
 
-        dutyRoster: mappedDutyRoster,
+        dutyRoster: completeDutyRoster, // Use complete roster with all days
 
         emergencyContactName: additionalInfo.emergencyContactName || "",
         emergencyContactPhone: additionalInfo.emergencyContactNumber || "",
@@ -305,32 +326,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  useEffect(() => {
-    const allDays = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
-
-    const updatedDutyRoster = allDays
-      .filter((day) => activeDays.includes(day))
-      .map((day) => {
-        const existing = formData.dutyRoster.find((d) => d.day === day);
-        return {
-          day,
-          isActive: true,
-          startTime: existing?.startTime || "09:00",
-          endTime: existing?.endTime || "17:00",
-        };
-      });
-
-    setFormData((prev) => ({ ...prev, dutyRoster: updatedDutyRoster }));
-  }, [activeDays]);
-
   const handleTimeChange = (
     day: string,
     field: "startTime" | "endTime",
@@ -346,26 +341,9 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
   const toggleDay = (day: string) => {
     setFormData((prev) => {
-      const exists = prev.dutyRoster.find((d) => d.day === day);
-
-      let updatedRoster;
-
-      if (exists) {
-        updatedRoster = prev.dutyRoster.map((d) =>
-          d.day === day ? { ...d, isActive: !d.isActive } : d,
-        );
-      } else {
-        updatedRoster = [
-          ...prev.dutyRoster,
-          {
-            day,
-            isActive: true,
-            startTime: "09:00",
-            endTime: "17:00",
-          },
-        ];
-      }
-
+      const updatedRoster = prev.dutyRoster.map((d) =>
+        d.day === day ? { ...d, isActive: !d.isActive } : d,
+      );
       return { ...prev, dutyRoster: updatedRoster };
     });
 
@@ -373,7 +351,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -972,74 +949,65 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                 Availability & Duty Roster
               </h3>
               <div className="space-y-2">
-                {[
-                  "Monday",
-                  "Tuesday",
-                  "Wednesday",
-                  "Thursday",
-                  "Friday",
-                  "Saturday",
-                  "Sunday",
-                ].map((day) => {
-                  const dayData = formData.dutyRoster.find(
-                    (d) => d.day === day,
-                  ) || {
-                    day,
-                    isActive: activeDays.includes(day),
-                    startTime: "09:00",
-                    endTime: "17:00",
-                  };
-
-                  return (
-                    <div
-                      key={day}
-                      className={`flex flex-wrap items-center justify-between p-3 rounded-2xl border transition-all ${dayData.isActive ? "bg-[#F0FDF4] border-[#DCFCE7]" : "bg-slate-50 border-slate-100 opacity-60"}`}
-                    >
-                      <div className="flex items-center gap-3 min-w-[120px]">
-                        <button
-                          type="button"
-                          onClick={() => toggleDay(day)}
-                          className={`w-10 h-5 rounded-full relative transition-colors ${dayData.isActive ? "bg-[#22C55E]" : "bg-slate-300"}`}
-                        >
-                          <div
-                            className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${dayData.isActive ? "right-1" : "left-1"}`}
-                          />
-                        </button>
-                        <span className="text-sm font-bold text-slate-700">
-                          {day}
+                {formData.dutyRoster.map((dayData) => (
+                  <div
+                    key={dayData.day}
+                    className={`flex flex-wrap items-center justify-between p-3 rounded-2xl border transition-all ${dayData.isActive ? "bg-[#F0FDF4] border-[#DCFCE7]" : "bg-slate-50 border-slate-100 opacity-60"}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-[120px]">
+                      <button
+                        type="button"
+                        onClick={() => toggleDay(dayData.day)}
+                        className={`w-10 h-5 rounded-full relative transition-colors ${dayData.isActive ? "bg-[#22C55E]" : "bg-slate-300"}`}
+                      >
+                        <div
+                          className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${dayData.isActive ? "right-1" : "left-1"}`}
+                        />
+                      </button>
+                      <span className="text-sm font-bold text-slate-700">
+                        {dayData.day}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">
+                          Start
                         </span>
+                        <input
+                          type="time"
+                          value={dayData.startTime}
+                          onChange={(e) =>
+                            handleTimeChange(
+                              dayData.day,
+                              "startTime",
+                              e.target.value,
+                            )
+                          }
+                          className="bg-white border border-slate-200 rounded-lg p-1.5 text-[12px] font-bold text-slate-600 focus:ring-1 focus:ring-[#22C55E] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!dayData.isActive}
+                        />
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">
-                            Start
-                          </span>
-                          <input
-                            type="time"
-                            value={dayData.startTime}
-                            onChange={(e) =>
-                              handleTimeChange(day, "startTime", e.target.value)
-                            }
-                            className="bg-white border border-slate-200 rounded-lg p-1.5 text-[12px] font-bold text-slate-600 focus:ring-1 focus:ring-[#22C55E] outline-none"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">
-                            End
-                          </span>
-                          <input
-                            type="time"
-                            value={dayData.endTime}
-                            onChange={(e) =>
-                              handleTimeChange(day, "endTime", e.target.value)
-                            }
-                            className="bg-white border border-slate-200 rounded-lg p-1.5 text-[12px] font-bold text-slate-600 focus:ring-1 focus:ring-[#22C55E] outline-none"
-                          />
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">
+                          End
+                        </span>
+                        <input
+                          type="time"
+                          value={dayData.endTime}
+                          onChange={(e) =>
+                            handleTimeChange(
+                              dayData.day,
+                              "endTime",
+                              e.target.value,
+                            )
+                          }
+                          className="bg-white border border-slate-200 rounded-lg p-1.5 text-[12px] font-bold text-slate-600 focus:ring-1 focus:ring-[#22C55E] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!dayData.isActive}
+                        />
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </section>
 
