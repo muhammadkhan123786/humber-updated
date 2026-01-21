@@ -125,10 +125,7 @@ app.use(
   adminProtecter,
   serviceRequestTypeRouter,
 );
-app.use(
-  `${process.env.API_PREFIX}/customers`,
-  CustomerBaseRouter,
-);
+app.use(`${process.env.API_PREFIX}/customers`, CustomerBaseRouter);
 app.use(
   `${process.env.API_PREFIX}/technicians`,
   adminProtecter,
@@ -280,7 +277,11 @@ app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
 app.use(`${process.env.API_PREFIX}/suppliers`, adminProtecter, SupplierRouters);
 
 //20-01-2026
-app.use(`${process.env.API_PREFIX}/contract-types`, adminProtecter, contractTypeRouter);
+app.use(
+  `${process.env.API_PREFIX}/contract-types`,
+  adminProtecter,
+  contractTypeRouter,
+);
 
 //Muhammad Imran code ended here.
 
