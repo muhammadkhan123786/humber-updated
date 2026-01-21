@@ -3,6 +3,8 @@ import { z, } from 'zod';
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 import { objectIdSchema } from "../../validators/objectId.schema";
 
+export const TECHNICIAN_STATUS = ["Available", "Busy"] as const;
+
 const DutyRosterSchema = new Schema(
     {
         day: {
@@ -55,7 +57,12 @@ export const technicianSchema = {
     addressId: { type: Types.ObjectId, ref: "Address" },
     contactId: { type: Types.ObjectId, ref: "Contact" },
     accountId: { type: Types.ObjectId, ref: "User", required: true },
-
+    technicianStatus: {
+        type: String,
+        enum: TECHNICIAN_STATUS,
+        default: "Available",
+        required: true,
+    },
     dateOfBirth: Date,
     employeeId: String,
     dateOfJoining: Date,
@@ -178,6 +185,11 @@ export const TECHNICIAN_SCHEMA_Validation = z.object({
     taxId: z.string().optional(),
 
     dutyRoster: z.array(DUTY_ROSTER_SCHEMA).default([]),
+
+    technicianStatus: z
+        .enum(TECHNICIAN_STATUS)
+        .optional()
+        .default("Available"),
 
     technicianDocuments: z.array(z.string()).default([]),
 
