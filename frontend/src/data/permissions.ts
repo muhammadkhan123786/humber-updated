@@ -97,6 +97,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: FilePlus,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Technician Assignment",
+        href: "/dashboard/technician-assignment",
+        icon: ListTree,
+        roleId: [1],
+      }
 
     ],
   },
