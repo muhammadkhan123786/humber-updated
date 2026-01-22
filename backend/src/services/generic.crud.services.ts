@@ -20,11 +20,16 @@ function hasIsDefaultField(
 
 export class GenericService<T extends Document> {
     constructor(protected readonly model: Model<T>) { }
-
-    getQuery(filter: QueryFilter<T> = {}, options?: { populate?: (string | PopulateOptions)[] }) {
+    async getQuery(filter: QueryFilter<T> = {}, options?: { populate?: (string | PopulateOptions)[] }) {
         let query = this.model.find(filter);
         if (options?.populate) query = query.populate(options.populate);
-        return query;
+        // Run counts in parallel
+        const [total, activeCount, inactiveCount] = await Promise.all([
+            this.model.countDocuments(filter),
+            this.model.countDocuments({ ...filter, isActive: true }),
+            this.model.countDocuments({ ...filter, isActive: false }),
+        ]);
+        return { query, total, activeCount, inactiveCount };
     }
 
     async create(data: Partial<T>): Promise<T> {
