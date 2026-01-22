@@ -130,11 +130,11 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
       try {
         const [contractRes, serviceMasterRes, deptRes] = await Promise.all([
-          fetch(`${baseUrl}/contract-types`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/service-types-master`, { headers }).then((r) =>
+          fetch(`${baseUrl}/contract-types?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/service-types-master?filter=all`, { headers }).then((r) =>
             r.json(),
           ),
-          fetch(`${baseUrl}/departments`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/departments?filter=all`, { headers }).then((r) => r.json()),
         ]);
 
         if (!isMounted) return;

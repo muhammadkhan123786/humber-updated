@@ -136,18 +136,18 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           termRes,
           priceRes,
         ] = await Promise.all([
-          fetch(`${baseUrl}/business-types`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/job-titles`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/city`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/country`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/currencies`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/payment-method`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/product-services`, { headers }).then((r) =>
+          fetch(`${baseUrl}/business-types?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/job-titles?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/city?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/country?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/currencies?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/payment-method?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/product-services?filter=all`, { headers }).then((r) =>
             r.json(),
           ),
-          fetch(`${baseUrl}/categories`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/payment-terms`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/pricing-agreement`, { headers }).then((r) =>
+          fetch(`${baseUrl}/categories?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/payment-terms?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/pricing-agreement?filter=all`, { headers }).then((r) =>
             r.json(),
           ),
         ]);
