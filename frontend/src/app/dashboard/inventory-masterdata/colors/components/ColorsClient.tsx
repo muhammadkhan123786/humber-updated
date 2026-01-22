@@ -20,6 +20,9 @@ export default function ColorsClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -29,6 +32,12 @@ export default function ColorsClient() {
         setDataList(res.data);
         setTotalPages(Math.ceil(res.total / 10) || 1);
         setCurrentPage(page);
+
+        // Fetch ALL data without pagination to get accurate active/inactive counts
+        const allDataRes = await fetchColors(1, 1000, search);
+        setTotalCount(res.total || 0);
+        setTotalActiveCount(allDataRes.data?.filter((d: IColor) => d.isActive).length || 0);
+        setTotalInactiveCount(allDataRes.data?.filter((d: IColor) => !d.isActive).length || 0);
       }
     } catch (err) {
       console.error("Fetch Error:", err);
@@ -57,9 +66,9 @@ export default function ColorsClient() {
   };
 
   // Calculate stats for the component
-  const totalCount = dataList.length;
-  const activeCount = dataList.filter((d) => d.isActive).length;
-  const inactiveCount = dataList.filter((d) => !d.isActive).length;
+  const statsTotalCount = totalCount;
+  const statsActiveCount = totalActiveCount;
+  const statsInactiveCount = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6 bg-gray-50/50">
@@ -89,9 +98,9 @@ export default function ColorsClient() {
 
         {/* Stats Cards */}
         <StatsCards 
-          totalCount={totalCount}
-          activeCount={activeCount}
-          inactiveCount={inactiveCount}
+          totalCount={statsTotalCount}
+          activeCount={statsActiveCount}
+          inactiveCount={statsInactiveCount}
         />
 
         {/* Search Bar */}

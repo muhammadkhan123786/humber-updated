@@ -17,6 +17,9 @@ export default function UnitsClient() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = async (page = 1, search = "") => {
     try {
@@ -26,6 +29,12 @@ export default function UnitsClient() {
         setDataList(res.data);
         setTotalPages(Math.ceil(res.total / 10) || 1);
         setCurrentPage(page);
+
+        // Fetch ALL data without pagination to get accurate active/inactive counts
+        const allDataRes = await fetchUnits(1, 1000, search);
+        setTotalCount(res.total || 0);
+        setTotalActiveCount(allDataRes.data?.filter((d: IUnit) => d.isActive).length || 0);
+        setTotalInactiveCount(allDataRes.data?.filter((d: IUnit) => !d.isActive).length || 0);
       }
     } catch (err) {
       console.log(err);

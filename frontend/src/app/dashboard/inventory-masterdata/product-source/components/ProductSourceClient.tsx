@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Search, Plus, Database, Loader2 } from "lucide-react";
+import StatsCards from "@/app/common-form/StatsCard";
 import ProductSourceTable from "./ProductSourceTable";
 import ProductSourceForm from "./ProductSourceForm";
 import { IProductSource } from "../../../../../../../common/IProduct.source.interface";
@@ -15,6 +16,9 @@ export default function ProductSourceClient() {
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<IProductSource | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = async () => {
     try {
@@ -26,6 +30,11 @@ export default function ProductSourceClient() {
         params: { userId: savedUser.id || savedUser._id, search: searchTerm }
       });
       setDataList(res.data.data || []);
+      
+      // Track stats
+      setTotalCount(res.data.data?.length || 0);
+      setTotalActiveCount(res.data.data?.filter((d: IProductSource) => d.isActive).length || 0);
+      setTotalInactiveCount(res.data.data?.filter((d: IProductSource) => !d.isActive).length || 0);
     } catch (err) { console.error(err); } finally { setLoading(false); }
   };
 
@@ -57,6 +66,13 @@ export default function ProductSourceClient() {
           onChange={(e) => setSearchTerm(e.target.value)} 
         />
       </div>
+
+      {/* Stats Cards */}
+      <StatsCards 
+        totalCount={totalCount}
+        activeCount={totalActiveCount}
+        inactiveCount={totalInactiveCount}
+      />
 
       {(showForm || editingData) && (
         <ProductSourceForm 

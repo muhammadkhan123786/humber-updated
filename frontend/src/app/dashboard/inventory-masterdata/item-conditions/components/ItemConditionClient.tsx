@@ -49,10 +49,20 @@ export default function ItemConditionClient() {
       setTotalPages(Math.ceil((res.data.total || 0) / 10) || 1);
       setCurrentPage(page);
       
-      // Track total counts across all data
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await axios.get(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          userId: savedUser.id || savedUser._id,
+          search: search.trim(),
+          limit: "1000"
+        }
+      });
+      
+      // Track total counts across ALL data
       setTotalCount(res.data.total || 0);
-      setTotalActiveCount(res.data.data?.filter((d: ItemConditionWithId) => d.isActive).length || 0);
-      setTotalInactiveCount(res.data.data?.filter((d: ItemConditionWithId) => !d.isActive).length || 0);
+      setTotalActiveCount(allDataRes.data.data?.filter((d: ItemConditionWithId) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data.data?.filter((d: ItemConditionWithId) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);

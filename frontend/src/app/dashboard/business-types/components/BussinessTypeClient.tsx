@@ -41,10 +41,16 @@ export default function BussinessTypeClient() {
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
       
-      // Track total counts across all data
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await getAll<BusinessTypeWithId>("/business-types", {
+        limit: "1000", // Get all data
+        search: search.trim(),
+      });
+      
+      // Track total counts across ALL data
       setTotalCount(res.total || 0);
-      setTotalActiveCount(res.data?.filter((d) => d.isActive).length || 0);
-      setTotalInactiveCount(res.data?.filter((d) => !d.isActive).length || 0);
+      setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);

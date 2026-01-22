@@ -52,10 +52,20 @@ export default function ContractTypeClient() {
       setTotalPages(Math.ceil(res.data.total / 10) || 1);
       setCurrentPage(page);
       
-      // Track total counts across all data
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await axios.get<{ data: ContractTypeWithId[]; total: number }>(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          userId: user.id || user._id,
+          limit: "1000", // Get all data
+          search: search.trim(),
+        },
+      });
+      
+      // Track total counts across ALL data
       setTotalCount(res.data.total || 0);
-      setTotalActiveCount(res.data.data?.filter((d) => d.isActive).length || 0);
-      setTotalInactiveCount(res.data.data?.filter((d) => !d.isActive).length || 0);
+      setTotalActiveCount(allDataRes.data.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data.data?.filter((d) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);

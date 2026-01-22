@@ -21,6 +21,9 @@ export default function SubServicesVehicleClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -34,6 +37,16 @@ export default function SubServicesVehicleClient() {
       setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
+
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await getAll<SubServiceWithId>("/sub-services", {
+        limit: "1000",
+        search: search.trim(),
+      });
+
+      setTotalCount(res.total || 0);
+      setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -88,9 +101,9 @@ export default function SubServicesVehicleClient() {
     }
   };
 
-  const totalCount = dataList.length;
-  const activeCount = dataList.filter((d) => d.isActive).length;
-  const inactiveCount = dataList.filter((d) => !d.isActive).length;
+  const statsTotal = totalCount;
+  const statsActive = totalActiveCount;
+  const statsInactive = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">
@@ -120,9 +133,9 @@ export default function SubServicesVehicleClient() {
 
         {/* Stats Cards */}
         <StatsCards 
-          totalCount={totalCount}
-          activeCount={activeCount}
-          inactiveCount={inactiveCount}
+          totalCount={statsTotal}
+          activeCount={statsActive}
+          inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
