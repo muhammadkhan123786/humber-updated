@@ -1,83 +1,134 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Database } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
-import { FormModal } from "@/app/common-form/FormModal";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
 import { IProductSource } from "../../../../../../../common/IProduct.source.interface";
 
-export default function ProductSourceForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: any) {
-    const [formData, setFormData] = useState<Partial<IProductSource>>({
-        productSource: "",
-        isActive: true,
-        isDefault: false,
+const productSourceSchemaValidation = z.object({
+    productSource: z.string().min(1, "Product source name is required."),
+    isActive: z.boolean(),
+    isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof productSourceSchemaValidation>;
+
+interface Props {
+    editingData: (IProductSource & { _id?: string }) | null;
+    onClose: () => void;
+    onRefresh: () => void;
+    themeColor: string;
+    apiUrl: string;
+}
+
+const ProductSourceForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        setValue,
+        formState: { errors, isSubmitting },
+    } = useForm<FormData>({
+        resolver: zodResolver(productSourceSchemaValidation),
+        defaultValues: {
+            productSource: "",
+            isActive: true,
+            isDefault: false,
+        },
     });
 
-    useEffect(() => {
-        if (editingData) setFormData({ ...editingData });
-    }, [editingData]);
+    const isDefaultValue = useWatch({ control, name: "isDefault" });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    useEffect(() => {
+        if (editingData) {
+            reset({
+                productSource: editingData.productSource,
+                isActive: Boolean(editingData.isActive),
+                isDefault: Boolean(editingData.isDefault),
+            });
+        }
+    }, [editingData, reset]);
+
+    const onSubmit = async (values: FormData) => {
         try {
-            const token = localStorage.getItem("token");
-            const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-            const payload = { ...formData, userId: savedUser.id || savedUser._id };
+            const userStr = localStorage.getItem("user");
+            const user = userStr ? JSON.parse(userStr) : {};
+            const payload = { ...values, userId: user.id || user._id };
 
             if (editingData?._id) {
-                await axios.put(`${apiUrl}/${editingData._id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+                await updateItem(apiUrl, editingData._id, payload);
             } else {
-                await axios.post(apiUrl, payload, { headers: { Authorization: `Bearer ${token}` } });
+                await createItem(apiUrl, payload);
             }
             onRefresh();
             onClose();
-        } catch (err: any) { alert(err.response?.data?.message || "Action failed"); }
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Error saving data");
+        }
     };
 
     return (
         <FormModal
-            title={editingData ? "Edit Source" : "Add Source"}
+            title={editingData ? "Edit Product Source" : "Add Product Source"}
             icon={<Database size={24} />}
             onClose={onClose}
             themeColor={themeColor}
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
                 <FormInput
-                    label="Product Source Name"
+                    label="Product Source Name *"
                     placeholder="e.g. Warehouse, Supplier A"
-                    value={formData.productSource || ""}
-                    onChange={(e) => setFormData({ ...formData, productSource: e.target.value })}
-                    required
+                    {...register("productSource")}
+                    error={errors.productSource?.message}
                 />
-                <div className="bg-gray-50">
-                    <div className="flex">
-                        <div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <Controller
+                        control={control}
+                        name="isActive"
+                        render={({ field }) => (
                             <FormToggle
                                 label="Active"
-                                checked={!!formData.isActive}
-                                onChange={(val) => setFormData({ ...formData, isActive: val })}
-                                disabled={formData.isDefault}
+                                checked={field.value}
+                                onChange={field.onChange}
+                                disabled={isDefaultValue}
                             />
-
-                        </div>
-                        <div>
+                        )}
+                    />
+                    <Controller
+                        control={control}
+                        name="isDefault"
+                        render={({ field }) => (
                             <FormToggle
                                 label="Default"
-                                checked={!!formData.isDefault}
-                                onChange={(val) => setFormData({ ...formData, isDefault: val })}
+                                checked={field.value}
+                                onChange={(val) => {
+                                    field.onChange(val);
+                                    if (val) setValue("isActive", true);
+                                }}
                             />
-                        </div>
-                    </div>
+                        )}
+                    />
                 </div>
-                <button
+
+                <FormButton
                     type="submit"
-                    className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-                    style={{ backgroundColor: themeColor }}
-                >
-                    <Save size={20} /> {editingData ? "Update Source" : "Save Source"}
-                </button>
+                    label={editingData ? "Update Source" : "Create"}
+                    icon={<Save size={20} />}
+                    loading={isSubmitting}
+                    themeColor={themeColor}
+                    onCancel={onClose}
+                />
             </form>
         </FormModal>
     );
-}
+};
+
+export default ProductSourceForm;
