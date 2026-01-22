@@ -1,5 +1,5 @@
 export interface INavBarLinkSharedInterface {
-  _id: number;
+  _id: string;
   label: string;
   href: string;
   alt?: string;
@@ -7,6 +7,6 @@ export interface INavBarLinkSharedInterface {
   index?: number;
   children?: INavBarLinkSharedInterface[];
   icon?: any;
-   subItems?: INavBarLinkSharedInterface[];
-   className?: string
+  subItems?: INavBarLinkSharedInterface[];
+  className?: string
 }
