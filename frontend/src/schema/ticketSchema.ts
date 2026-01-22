@@ -44,8 +44,11 @@ export const ticketFormSchema = z.object({
   vehicleRepairVideo: z.array(z.any()).optional(),
 
   vehicleRepairVideoURL: z.string().optional(),
+assignedTechnicianId: z
+  .array(z.string().regex(objectIdRegex, "Invalid Technician ID"))
+  .optional()
+  .default([]),
 
-  assignedTechnicianId: z.string().nullable().optional(),
 
   userId: z
     .string()

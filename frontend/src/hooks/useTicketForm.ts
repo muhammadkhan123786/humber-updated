@@ -37,7 +37,7 @@ export const useTicketForm = () => {
       ticketSource: "Phone",
       location: "Workshop",
       userId: "",
-      assignedTechnicianId: null,
+      assignedTechnicianId: [],
       vehicleRepairImages: [],
       vehicleRepairImagesFile: [],
       address: "",
@@ -66,10 +66,10 @@ export const useTicketForm = () => {
           ticket.ticketStatusId?._id || ticket.ticketStatusId || "",
         userId: ticket.userId?._id || ticket.userId || "",
         address: ticket.address || "",
-        assignedTechnicianId:
-          ticket.assignedTechnicianId?._id ||
-          ticket.assignedTechnicianId ||
-          null,
+      assignedTechnicianId: Array.isArray(ticket.assignedTechnicianId)
+  ? ticket.assignedTechnicianId.map((t: any) => t._id || t)
+  : [],
+
         vehicleRepairVideoURL: ticket.vehicleRepairVideoURL || "",
 
         vehicleRepairImages: ticket.vehicleRepairImages || [],
@@ -188,8 +188,11 @@ export const useTicketForm = () => {
       formData.append("userId", data.userId);
 
       if (data.address) formData.append("address", data.address);
-      if (data.assignedTechnicianId)
-        formData.append("assignedTechnicianId", data.assignedTechnicianId);
+ if (data.assignedTechnicianId && data.assignedTechnicianId.length > 0) {
+      data.assignedTechnicianId.forEach((techId, index) => {
+        formData.append(`assignedTechnicianId[${index}]`, techId);
+      });
+    }
 
       if (!editingId) {
         formData.append("ticketCode", generateTicketCode());
