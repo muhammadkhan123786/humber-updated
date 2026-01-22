@@ -73,7 +73,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ListTree,
         roleId: [1],
       },
-         {
+      {
         _id: nanoid(),
         label: "Customers",
         href: "/dashboard/customerDashboard",
@@ -83,7 +83,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
     ],
   },
 
-   {
+  {
     _id: nanoid(),
     label: "Technician",
     href: "#",

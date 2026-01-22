@@ -4,6 +4,8 @@ import { generateTicketCode } from "../utils/generateTicketCode";
 import { TicketStatus } from "../models/ticket-management-system-models/ticket.status.models";
 import { customerTicketBase } from "../models/ticket-management-system-models/customer.ticket.base.models";
 import { CustomerTicketStatus } from "../models/ticket-management-system-models/customer.ticket.status.manager.models";
+import { CustomerBase } from "../models/customer.models";
+import { Technicians } from "../models/technician-models/technician.models";
 
 export const saveTicket = async (req: Request, res: Response) => {
     // const session = await mongoose.startSession();
@@ -196,6 +198,12 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
         /* ============================
            STATUS WISE MERGE
         ============================ */
+        const [totalCustomer, activeTechnicians] = await Promise.all([
+            CustomerBase.countDocuments({ isDeleted: false }),
+            Technicians.countDocuments({ isDeleted: false, isActive: true }),
+
+        ]);
+
 
         const statusData = data.currentByStatus.map((curr: any) => {
             const last =
@@ -205,6 +213,7 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
 
             return {
                 statusId: curr._id,
+                statusName: curr.statusName,
                 current: curr.count,
                 lastMonth: last,
                 percentage:
@@ -236,6 +245,8 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
                 ),
             },
             statusWise: statusData,
+            totalCustomer,
+            activeTechnicians
         });
     } catch (err) {
         console.error(err);
