@@ -78,73 +78,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
     ],
   },
-
-  {
-    _id: 2,
-    label: "Service Tickets",
-    href: "#",
-    icon: Ticket,
-    roleId: [1],
-    subItems: [
-      {
-        _id: 310,
-        label: "All Tickets",
-        href: "/dashboard/ticket-masterdata/allTickets",
-        icon: ListTree,
-        roleId: [1],
-      },
-
-      {
-        _id: 309,
-        label: "Create Ticket",
-        href: "/dashboard/ticket-masterdata/createTicket",
-        icon: FilePlus,
-        roleId: [1],
-      },
-      {
-        _id: 203,
-        label: "Ticket Status",
-        href: "/dashboard/ticket-masterdata/ticket-status",
-        icon: Activity,
-        roleId: [1],
-      },
-      {
-        _id: 204,
-        label: "Department",
-        href: "/dashboard/ticket-masterdata/department",
-        icon: Building2,
-        roleId: [1],
-      },
-      {
-        _id: 205,
-        label: "Ticket Actions",
-        href: "/dashboard/ticket-masterdata/ticket-actions",
-        icon: Zap,
-        roleId: [1],
-      },
-      {
-        _id: 306,
-        label: "Ticket Type",
-        href: "/dashboard/ticket-masterdata/ticket-type",
-        icon: Tag,
-        roleId: [1],
-      },
-      {
-        _id: 307,
-        label: "Ticket Transition",
-        href: "/dashboard/ticket-masterdata/ticket-transition",
-        icon: Milestone,
-        roleId: [1],
-      },
-      {
-        _id: 308,
-        label: "Ticket Reference Types",
-        href: "/dashboard/ticket-masterdata/ticketReferenceTypes",
-        icon: ClipboardList,
-        roleId: [1],
-      },
-    ],
-  },
   {
     _id: 10,
     label: "Inventory System",
@@ -351,31 +284,10 @@ export const navigation: INavBarLinkSharedInterface[] = [
     roleId: [1],
   },
   {
-    _id: 13,
-    label: "Vendor",
-    href: "/dashboard/vender",
-    icon: Store,
-    roleId: [1],
-  },
-  {
     _id: 10014,
     label: "Warehouses",
     href: "/dashboard/warehouses",
     icon: Warehouse,
-    roleId: [1],
-  },
-  {
-    _id: 4,
-    label: "Customers",
-    href: "/dashboard/customers",
-    icon: Users,
-    roleId: [1],
-  },
-  {
-    _id: 5,
-    label: "Bookings",
-    href: "/dashboard/bookings",
-    icon: Calendar,
     roleId: [1],
   },
   {
@@ -393,32 +305,10 @@ export const navigation: INavBarLinkSharedInterface[] = [
     roleId: [1],
   },
   {
-    _id: 11,
-    label: "Vehicles",
-    href: "/dashboard/vehicles",
-    icon: Truck,
-    roleId: [1],
-  },
-
-  {
-    _id: 3,
-    label: "Repair tracker",
-    href: "/dashboard/repair-tracker",
-    icon: Wrench,
-    roleId: [1],
-  },
-  {
     _id: 10013,
     label: "Vendor",
     href: "/dashboard/vender",
     icon: Store,
-    roleId: [1],
-  },
-  {
-    _id: 14,
-    label: "Warehouses",
-    href: "/dashboard/warehouses",
-    icon: Warehouse,
     roleId: [1],
   },
   {
@@ -447,20 +337,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
     label: "Bookings",
     href: "/dashboard/bookings",
     icon: Calendar,
-    roleId: [1],
-  },
-  {
-    _id: 6,
-    label: "Staff management",
-    href: "/dashboard/staff-management",
-    icon: UserCog,
-    roleId: [1],
-  },
-  {
-    _id: 8,
-    label: "Technicians Profile",
-    href: "/dashboard/technicians-profile",
-    icon: Briefcase,
     roleId: [1],
   },
   {
@@ -667,6 +543,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ClipboardList,
         roleId: [1],
       },
+      {
+        _id: 128,
+        label: "Contract Type",
+        href: "/dashboard/contract-type",
+        icon: BarChart3,
+        roleId: [1],
+      }
     ],
   },
 

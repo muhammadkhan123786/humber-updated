@@ -8,8 +8,11 @@ export default function BrandModelInfo({ formData, setFormData }: { formData: an
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    axios.get(`${BASE_URL}/vehiclebrand`, { headers: { Authorization: `Bearer ${token}` }})
-         .then(res => setBrands(res.data.data || []));
+    axios.get(`${BASE_URL}/vehiclebrand?filter=all`, { headers: { Authorization: `Bearer ${token}` }})
+         .then(res => {console.log(res);
+           const brandList = res.data.data || [];
+           setBrands(brandList);
+         });
   }, []);
 
  // Inside BrandModelInfo.tsx update the models useEffect:

@@ -62,7 +62,7 @@ const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }
       try {
         const token = localStorage.getItem("token");
         // Keeping axial call for secondary data fetch, but simplified
-        const res = await axios.get(`${BASE_URL}/service-types-master`, {
+        const res = await axios.get(`${BASE_URL}/service-types-master?filter=all`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { isActive: true, isDeleted: false }
         });

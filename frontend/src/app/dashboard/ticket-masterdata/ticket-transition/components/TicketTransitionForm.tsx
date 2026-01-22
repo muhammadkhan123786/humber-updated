@@ -94,13 +94,13 @@ const TicketTransitionForm = ({
         setLoadingOptions(true);
         const [s, a, t] = await Promise.all([
           getAll<ITicketStatus & { _id: string; is_Terminal?: boolean }>(
-            "/ticket-status",
+            "/ticket-status?filter=all",
             { limit: 100 }
           ),
-          getAll<ITicketActions & { _id: string }>("/ticket-actions", {
+          getAll<ITicketActions & { _id: string }>("/ticket-actions?filter=all", {
             limit: 100,
           }),
-          getAll<ITicketType & { _id: string }>("/ticket-types", {
+          getAll<ITicketType & { _id: string }>("/ticket-types?filter=all", {
             limit: 100,
           }),
         ]);
