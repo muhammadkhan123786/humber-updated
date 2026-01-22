@@ -120,7 +120,7 @@ const TicketDetailPage = () => {
   const [activeTab, setActiveTab] = useState("Issue Details");
   const [brandDetails, setBrandDetails] = useState<BrandDetails | null>(null);
   const [modelDetails, setModelDetails] = useState<ModelDetails | null>(null);
-
+  console.log(setBrandDetails, setModelDetails);
   useEffect(() => {
     const fetchTicketData = async () => {
       if (!id) return;
@@ -129,16 +129,21 @@ const TicketDetailPage = () => {
         if (response && response.success) {
           const ticketData: any = response.data;
           setTicket(ticketData);
-
           if (ticketData.customerId) {
-            try {
-              const customerRes = await getAlls(
-                `/customers/${ticketData.customerId}`,
-              );
-              if (customerRes.success)
-                setCustomerDetails(customerRes.data as any);
-            } catch (err) {
-              console.warn("Could not fetch customer details:", err);
+            if (
+              typeof ticketData.customerId === "object" &&
+              ticketData.customerId !== null
+            ) {
+              setCustomerDetails({
+                personId: ticketData.customerId.personId,
+                contactId: ticketData.customerId.contactId,
+                addressId: ticketData.customerId.addressId,
+              });
+            } else {
+              try {
+              } catch (err) {
+                console.warn("Could not fetch customer details:", err);
+              }
             }
           }
 
@@ -171,15 +176,6 @@ const TicketDetailPage = () => {
 
                 if (vehicleData.vehicleBrandId) {
                   try {
-                    const brandId =
-                      typeof vehicleData.vehicleBrandId === "string"
-                        ? vehicleData.vehicleBrandId
-                        : vehicleData.vehicleBrandId._id;
-
-                    const brandRes: any = await getAlls(
-                      `/vehicle-brands/${brandId}`,
-                    );
-                    if (brandRes.success) setBrandDetails(brandRes.data);
                   } catch (err) {
                     console.warn("Could not fetch brand details:", err);
                   }
@@ -187,15 +183,6 @@ const TicketDetailPage = () => {
 
                 if (vehicleData.vehicleModelId) {
                   try {
-                    const modelId =
-                      typeof vehicleData.vehicleModelId === "string"
-                        ? vehicleData.vehicleModelId
-                        : vehicleData.vehicleModelId._id;
-
-                    const modelRes: any = await getAlls(
-                      `/vehicle-models/${modelId}`,
-                    );
-                    if (modelRes.success) setModelDetails(modelRes.data);
                   } catch (err) {
                     console.warn("Could not fetch model details:", err);
                   }
@@ -439,7 +426,7 @@ const TicketDetailPage = () => {
             </div>
           </div>
 
-          {/* Vehicle Card - IMPROVED */}
+          {/* Vehicle Card */}
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-50">
             <div className="flex items-center gap-3 mb-6 text-gray-800 font-bold">
               <Car size={20} className="text-green-500" />
@@ -463,19 +450,13 @@ const TicketDetailPage = () => {
                     <div className="flex items-center gap-2">
                       <Tag size={14} className="text-gray-400" />
                       <span>
-                        <span className="text-gray-400">Brand ID:</span>{" "}
-                        {typeof vehicleDetails.vehicleBrandId === "string"
-                          ? vehicleDetails.vehicleBrandId
-                          : vehicleDetails.vehicleBrandId?._id || "N/A"}
+                        <span className="text-gray-400">Brand:</span> {brand}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <Tag size={14} className="text-gray-400" />
                       <span>
-                        <span className="text-gray-400">Model ID:</span>{" "}
-                        {typeof vehicleDetails.vehicleModelId === "string"
-                          ? vehicleDetails.vehicleModelId
-                          : vehicleDetails.vehicleModelId?._id || "N/A"}
+                        <span className="text-gray-400">Model:</span> {model}
                       </span>
                     </div>
 

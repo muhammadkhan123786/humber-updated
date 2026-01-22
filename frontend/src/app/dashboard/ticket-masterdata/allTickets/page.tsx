@@ -51,9 +51,7 @@ const TicketListingPage = () => {
         const mappedData = response.data.map((t: any) => {
           return {
             ...t,
-            customerName:
-              t.userId?.name ||
-              (t.userId?.email ? t.userId.email.split("@")[0] : "Unknown"),
+            customerName: t.customerId?.personId?.firstName,
             productName: t.vehicleId?.vehicleType || "",
             issue: t.issue_Details || "No details provided",
             status: t.ticketStatusId?.code || "",
