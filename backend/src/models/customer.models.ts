@@ -19,6 +19,12 @@ const corporateCustomer = new Schema({
     website: String,
 });
 
+CustomerBaseSchema.index({
+    ticketStatusId: 1,
+    assignedTechnicianId: 1,
+    isDeleted: 1
+});
+
 
 
 export const domesticCutomerSchema = CustomerBase.discriminator("domestic", domesticCutomer);

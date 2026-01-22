@@ -61,23 +61,25 @@ const CustomerDashboard = () => {
         )}
       </AnimatePresence>
 
-      <div className="bg-linear-to-r from-[#4F46E5] via-[#9333EA] to-[#E11DBC] rounded-[2.5rem] p-12 mb-10 flex flex-col md:flex-row justify-between items-center text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="flex items-center gap-8 z-10">
-          <div className="bg-white/20 p-5 rounded-4xl backdrop-blur-xl border border-white/30 shadow-2xl overflow-hidden">
+      <div className="bg-linear-to-r from-[#4F46E5] via-[#9333EA] to-[#E11DBC] rounded-4xl p-8 mb-8 flex flex-col md:flex-row justify-between items-center text-white shadow-2xl shadow-indigo-200 relative overflow-hidden">
+        <div className="absolute top-[-20%] right-[-10%] w-56 h-56 bg-white/10 rounded-full blur-3xl" />
+
+        <div className="flex items-center gap-6 z-10">
+          <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-xl border border-white/30 shadow-xl overflow-hidden">
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
               className="flex items-center justify-center"
             >
-              <Users size={48} strokeWidth={2.5} />
+              <Users size={40} strokeWidth={2.5} />
             </motion.div>
           </div>
+
           <div>
-            <h1 className="text-5xl font-black tracking-tight mb-2">
+            <h1 className="text-4xl font-black tracking-tight mb-1">
               Customer Management
             </h1>
-            <p className="opacity-90 text-lg font-semibold tracking-wide">
+            <p className="opacity-90 text-base font-semibold tracking-wide">
               Search and manage customer records
             </p>
           </div>
@@ -85,10 +87,10 @@ const CustomerDashboard = () => {
 
         <button
           onClick={() => setIsModalOpen(true)}
-          className="mt-8 md:mt-0 bg-white text-[#4F46E5] px-8 py-5 rounded-4xl font-black flex items-center gap-3 shadow-2xl hover:bg-slate-50 transition-all active:scale-95 z-10 group"
+          className="mt-6 md:mt-0 bg-white text-[#4F46E5] px-6 py-4 rounded-3xl font-bold flex items-center gap-3 shadow-xl hover:bg-slate-50 transition-all active:scale-95 z-10 group"
         >
           <Plus
-            size={24}
+            size={20}
             strokeWidth={3}
             className="transition-transform group-hover:rotate-90"
           />
