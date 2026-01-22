@@ -33,9 +33,7 @@ const StepLocationPriority = ({
     formState: { errors },
   } = form;
   const currentLoc = watch("location") || "Workshop";
-  const selectedTechId = watch("assignedTechnicianId");
-
-  const selectedTech = technicians?.find((t: any) => t._id === selectedTechId);
+  const selectedTechIds: string[] = watch("assignedTechnicianId") || [];
 
   const locations = [
     {
@@ -60,6 +58,16 @@ const StepLocationPriority = ({
 
   const showAddressField =
     currentLoc === "On-Site" || currentLoc === "Mobile Service";
+  const selectedTechnicianNames =
+    selectedTechIds.length > 0
+      ? technicians
+          ?.filter((t: any) => selectedTechIds.includes(t._id))
+          .map(
+            (tech: any) =>
+              `${tech.personId?.firstName} ${tech.personId?.lastName}`,
+          )
+          .join(", ")
+      : null;
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500 pb-10 bg-white">
@@ -260,7 +268,7 @@ const StepLocationPriority = ({
 
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                   {technicians?.map((tech: any) => {
-                    const isSelected = field.value === tech._id;
+                    const isSelected = field.value?.includes(tech._id);
                     const statusColor = tech.isActive
                       ? "text-green-600 bg-green-100"
                       : "text-red-500 bg-red-50";
@@ -269,9 +277,17 @@ const StepLocationPriority = ({
                       <button
                         key={tech._id}
                         type="button"
-                        onClick={() =>
-                          field.onChange(isSelected ? null : tech._id)
-                        }
+                        onClick={() => {
+                          if (isSelected) {
+                            field.onChange(
+                              (field.value || []).filter(
+                                (id: string) => id !== tech._id,
+                              ),
+                            );
+                          } else {
+                            field.onChange([...(field.value || []), tech._id]);
+                          }
+                        }}
                         className={`shrink-0 w-64 p-4 rounded-xl border transition-all text-left relative ${
                           isSelected
                             ? "bg-[#7C3AED] text-white border-transparent shadow-xl"
@@ -406,6 +422,16 @@ const StepLocationPriority = ({
                   </span>
                 ),
               },
+
+              // ✅ UPDATED — Technicians integrated
+              {
+                label: `Technician(s)`,
+                value: selectedTechnicianNames ? (
+                  selectedTechnicianNames
+                ) : (
+                  <span className="italic text-gray-400">Not assigned</span>
+                ),
+              },
             ].map((item) => (
               <div
                 key={item.label}
@@ -417,16 +443,6 @@ const StepLocationPriority = ({
                 </span>
               </div>
             ))}
-
-            {selectedTech && (
-              <div className="flex justify-between items-center text-xs border-b border-green-100/50 pb-2">
-                <span className="text-green-700 font-bold">Technician:</span>
-                <span className="text-gray-600 font-bold">
-                  {selectedTech.personId?.firstName}{" "}
-                  {selectedTech.personId?.lastName}
-                </span>
-              </div>
-            )}
           </div>
         </section>
 

@@ -24,6 +24,9 @@ export default function PaymentTermClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -46,6 +49,11 @@ export default function PaymentTermClient() {
       setFilteredDataList(res.data.data || []);
       setTotalPages(Math.ceil((res.data.total || 0) / 10) || 1);
       setCurrentPage(page);
+      
+      // Track total counts across all data
+      setTotalCount(res.data.total || 0);
+      setTotalActiveCount(res.data.data?.filter((d: PaymentTermWithId) => d.isActive).length || 0);
+      setTotalInactiveCount(res.data.data?.filter((d: PaymentTermWithId) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -109,9 +117,9 @@ export default function PaymentTermClient() {
   };
 
   // Calculate stats for the component
-  const totalTerms = dataList.length;
-  const activeTerms = dataList.filter((d) => d.isActive).length;
-  const inactiveTerms = dataList.filter((d) => !d.isActive).length;
+  const totalTerms = totalCount;
+  const activeTerms = totalActiveCount;
+  const inactiveTerms = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">

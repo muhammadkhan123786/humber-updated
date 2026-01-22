@@ -1,24 +1,27 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Briefcase, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
+import axios from "axios";
+import { FileText, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
 // Import common components
 import StatsCards from "@/app/common-form/StatsCard"; 
-import BussinessTypeTable from "./BussinessTypeTable";
-import BussinessTypeForm from "./BussinessTypeForm";
+import ContractTypeTable from "./ContractTypeTable";
+import ContractTypeForm from "./ContractTypeForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
-import { IBusinessTypes } from "../../../../../../common/suppliers/IBusiness.types.interface";
+import { IContract } from "../../../../../../common/master-interfaces/IContract.type.interface";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+const API_URL = `${BASE_URL}/contract-types`;
 
 const THEME_COLOR = "var(--primary-gradient)";
 
-type BusinessTypeWithId = IBusinessTypes & { _id: string };
+type ContractTypeWithId = IContract & { _id: string; isActive?: boolean; isDefault?: boolean };
 
-export default function BussinessTypeClient() {
-  const [dataList, setDataList] = useState<BusinessTypeWithId[]>([]);
-  const [filteredDataList, setFilteredDataList] = useState<BusinessTypeWithId[]>([]);
+export default function ContractTypeClient() {
+  const [dataList, setDataList] = useState<ContractTypeWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<ContractTypeWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingData, setEditingData] = useState<BusinessTypeWithId | null>(null);
+  const [editingData, setEditingData] = useState<ContractTypeWithId | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -31,20 +34,28 @@ export default function BussinessTypeClient() {
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
-      const res = await getAll<BusinessTypeWithId>("/business-types", {
-        page: page.toString(),
-        limit: "10",
-        search: search.trim(),
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      
+      const res = await axios.get<{ data: ContractTypeWithId[]; total: number }>(API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          userId: user.id || user._id,
+          page: page.toString(),
+          limit: "10",
+          search: search.trim(),
+        },
       });
-      setDataList(res.data || []);
-      setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setDataList(res.data.data || []);
+      setFilteredDataList(res.data.data || []);
+      setTotalPages(Math.ceil(res.data.total / 10) || 1);
       setCurrentPage(page);
       
       // Track total counts across all data
-      setTotalCount(res.total || 0);
-      setTotalActiveCount(res.data?.filter((d) => d.isActive).length || 0);
-      setTotalInactiveCount(res.data?.filter((d) => !d.isActive).length || 0);
+      setTotalCount(res.data.total || 0);
+      setTotalActiveCount(res.data.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(res.data.data?.filter((d) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -54,7 +65,6 @@ export default function BussinessTypeClient() {
     }
   }, []);
 
-  // Filter data based on status when filterStatus changes
   useEffect(() => {
     if (filterStatus === 'all') {
       setFilteredDataList(dataList);
@@ -73,9 +83,12 @@ export default function BussinessTypeClient() {
   }, [searchTerm, fetchData]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this business type?")) return;
+    if (!confirm("Are you sure you want to delete this contract type?")) return;
     try {
-      await deleteItem("/business-types", id);
+      const token = localStorage.getItem("token");
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       fetchData(currentPage, searchTerm);
     } catch (error) {
       console.error("Delete Error:", error);
@@ -85,23 +98,25 @@ export default function BussinessTypeClient() {
 
   const handleStatusChange = async (id: string, newStatus: boolean) => {
     try {
+      const token = localStorage.getItem("token");
       const userStr = localStorage.getItem("user");
       const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/business-types", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      // Update local state immediately
+      await axios.put(
+        `${API_URL}/${id}`,
+        {
+          isActive: newStatus,
+          userId: user.id || user._id,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       fetchData(currentPage, searchTerm);
     } catch (error) {
       console.error("Status Update Error:", error);
       alert("Failed to update status.");
-      // Revert the change by refreshing
       fetchData(currentPage, searchTerm);
     }
   };
 
-  // Calculate stats for the component
   const totalTypes = totalCount;
   const activeTypes = totalActiveCount;
   const inactiveTypes = totalInactiveCount;
@@ -113,11 +128,11 @@ export default function BussinessTypeClient() {
         <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slideInLeft">
           <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Briefcase size={32} className="text-white" />
+              <FileText size={32} className="text-white" />
             </div>
             <div className="flex-1 md:flex-none">
-              <h1 className="text-3xl md:text-4xl font-bold">Business Types</h1>
-              <p className="text-blue-100 text-sm md:text-lg">Manage customer type categories</p>
+              <h1 className="text-3xl md:text-4xl font-bold">Contract Types</h1>
+              <p className="text-blue-100 text-sm md:text-lg">Manage legal and service contract categories</p>
             </div>
           </div>
           <button
@@ -127,11 +142,10 @@ export default function BussinessTypeClient() {
             }}
             className="flex items-center justify-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
-            <Plus size={22} /> Add Business Type
+            <Plus size={22} /> Add Contract Type
           </button>
         </div>
 
-        {/* Reusable Stats Cards Component with Filter */}
         <StatsCards 
           totalCount={totalTypes}
           activeCount={activeTypes}
@@ -144,7 +158,7 @@ export default function BussinessTypeClient() {
           <Search className="text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search business type name..."
+            placeholder="Search contract type name..."
             className="w-full outline-none text-lg"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -155,29 +169,25 @@ export default function BussinessTypeClient() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 mb-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Business Types
+                Contract Types
               </h2>
-              <p className="text-sm text-gray-500">Configure business type categories for registration and ticketing</p>
+              <p className="text-sm text-gray-500">Configure contract types for document generation and compliance</p>
             </div>
 
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1 w-full md:w-auto">
               <button
                 onClick={() => setDisplayView("card")}
                 className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                  displayView === "card"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <Grid3x3 size={16} />
-                <span className=" text-sm">Grid</span>
+                <span className="text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
                 className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                  displayView === "table"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
                 }`}
               >
                 <List size={16} />
@@ -187,36 +197,33 @@ export default function BussinessTypeClient() {
           </div>
 
           {showForm && (
-            <BussinessTypeForm
+            <ContractTypeForm
               editingData={editingData}
               onClose={() => setShowForm(false)}
               onRefresh={() => fetchData(currentPage, searchTerm)}
               themeColor={THEME_COLOR}
+              apiUrl={API_URL}
             />
           )}
 
           {loading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
-              <p className="mt-4 text-gray-400 font-medium">Loading types...</p>
+              <p className="mt-4 text-gray-400 font-medium">Loading contract types...</p>
             </div>
           ) : (
             <>
-              {/* Filter Status Display */}
               {filterStatus !== 'all' && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
                   <span className="text-sm text-blue-700 font-medium">
                     Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
                   </span>
-                  <button
-                    onClick={() => setFilterStatus('all')}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
-                  >
+                  <button onClick={() => setFilterStatus('all')} className="text-xs text-blue-600 hover:text-blue-800 font-bold">
                     Clear Filter
                   </button>
                 </div>
               )}
-              <BussinessTypeTable
+              <ContractTypeTable
                 data={filteredDataList}
                 displayView={displayView}
                 onEdit={(item) => {

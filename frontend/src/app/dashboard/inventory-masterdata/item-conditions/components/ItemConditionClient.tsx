@@ -24,6 +24,9 @@ export default function ItemConditionClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -45,6 +48,11 @@ export default function ItemConditionClient() {
       setFilteredDataList(res.data.data || []);
       setTotalPages(Math.ceil((res.data.total || 0) / 10) || 1);
       setCurrentPage(page);
+      
+      // Track total counts across all data
+      setTotalCount(res.data.total || 0);
+      setTotalActiveCount(res.data.data?.filter((d: ItemConditionWithId) => d.isActive).length || 0);
+      setTotalInactiveCount(res.data.data?.filter((d: ItemConditionWithId) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -110,9 +118,9 @@ export default function ItemConditionClient() {
   };
 
   // Calculate stats for the component
-  const totalConditions = dataList.length;
-  const activeConditions = dataList.filter((d) => d.isActive).length;
-  const inactiveConditions = dataList.filter((d) => !d.isActive).length;
+  const totalConditions = totalCount;
+  const activeConditions = totalActiveCount;
+  const inactiveConditions = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">

@@ -52,7 +52,7 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await getAll<any>("/vehiclebrand", { isActive: "true" });
+        const res = await getAll<any>("/vehiclebrand?filter=all", { isActive: "true" });
         setBrands(res.data || []);
       } catch (error) {
         console.error("Error fetching brands:", error);
