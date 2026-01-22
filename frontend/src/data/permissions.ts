@@ -73,9 +73,33 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ListTree,
         roleId: [1],
       },
+         {
+        _id: nanoid(),
+        label: "Customers",
+        href: "/dashboard/customerDashboard",
+        icon: ListTree,
+        roleId: [1],
+      },
     ],
   },
 
+   {
+    _id: nanoid(),
+    label: "Technician",
+    href: "#",
+    icon: Database,
+    roleId: [1],
+    subItems: [
+      {
+        _id: nanoid(),
+        label: "Manage Technician",
+        href: "/dashboard/manage-technician",
+        icon: FilePlus,
+        roleId: [1],
+      },
+
+    ],
+  },
   /* ================= INVENTORY SYSTEM ================= */
   {
     _id: nanoid(),
@@ -163,7 +187,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: Settings,
     roleId: [1],
     subItems: [
+      { _id: nanoid(), label: "Suppliers", href: "/dashboard/suppliers", icon: Store, roleId: [1] },
       { _id: nanoid(), label: "Marketplace Setup", href: "/dashboard/marketplace-setup", icon: Store, roleId: [1] },
+
     ],
   },
 ];
