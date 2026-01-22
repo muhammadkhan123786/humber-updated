@@ -10,6 +10,7 @@ import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateTicketCode } from "../../utils/generateTicketCode";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
+import { getTicketCountByStatus, getUnassignedTickets } from "../../controllers/customer.ticket.controllet";
 
 const repairVehicleUpload = createUploader([
   {
@@ -49,6 +50,11 @@ const customerTicketBaseController = new AdvancedGenericController({
   searchFields: ["ticketCode"],
 });
 
+//get all unassigned technician tickets 
+customerTicketBaseRouter.get('/unassigned-technician-tickets', getUnassignedTickets)
+//tickets count with status id.
+customerTicketBaseRouter.get('/ticket-count-status-wise', getTicketCountByStatus)
+
 customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
 customerTicketBaseRouter.post(
@@ -85,5 +91,7 @@ customerTicketBaseRouter.put(
   customerTicketBaseController.update,
 );
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
+
+
 
 export default customerTicketBaseRouter;
