@@ -69,7 +69,7 @@ export const saveTicket = async (req: Request, res: Response) => {
 };
 
 
-//get all ticket whose technician assigned 0 
+//get all ticket whose technician assigned 0
 export const getUnassignedTickets = async (req: Request, res: Response) => {
     try {
         const page = Number(req.query.page || 1);
@@ -78,7 +78,7 @@ export const getUnassignedTickets = async (req: Request, res: Response) => {
         const filter = {
             isDeleted: { $ne: true },
             $or: [
-                { assignedTechnicianId: null },
+                { assignedTechnicianId: [] },
                 { assignedTechnicianId: { $exists: false } },
             ],
         };
@@ -108,7 +108,7 @@ export const getUnassignedTickets = async (req: Request, res: Response) => {
     }
 };
 
-// ticket count with status id 
+// ticket count with status id
 export const getTicketCountByStatus = async (req: Request, res: Response) => {
     try {
         const now = new Date();
