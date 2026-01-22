@@ -1,48 +1,74 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 import { Zap, ArrowRight } from "lucide-react";
 import { TicketListItem } from "./TicketListItem";
+import { getAlls } from "@/helper/apiHelper";
 
 const RecentTickets = () => {
-  const tickets = [
-    {
-      ticketId: "T-2026-001",
-      status: "in progress",
-      statusColor: "bg-orange-500",
-      priority: "HIGH",
-      priorityColor: "bg-red-500",
-      customerName: "John Smith",
-      equipment: "Pride Victory 10",
-      description:
-        "Battery not holding charge, scooter stops after 15 minutes of use",
-      date: "08/01/2026",
-      category: "phone",
-    },
-    {
-      ticketId: "T-2026-002",
-      status: "open",
-      statusColor: "bg-cyan-500",
-      priority: "MEDIUM",
-      priorityColor: "bg-amber-500",
-      customerName: "Mary Johnson",
-      equipment: "Drive Scout",
-      description: "Front wheel making grinding noise when turning left",
-      date: "09/01/2026",
-      category: "online",
-    },
-    {
-      ticketId: "T-2026-003",
-      status: "completed",
-      statusColor: "bg-green-500",
-      priority: "LOW",
-      priorityColor: "bg-slate-500",
-      customerName: "Robert Williams",
-      equipment: "Golden Buzzaround XL",
-      description:
-        "Tiller steering column loose, needs adjustment and tightening",
-      date: "05/01/2026",
-      category: "walk-in",
-    },
-  ];
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const getColorConfig = (type: string, value: string) => {
+    const val = value?.toLowerCase();
+    if (type === "status") {
+      if (val === "open") return "bg-cyan-500";
+      if (val === "in progress") return "bg-orange-500";
+      if (val === "closed" || val === "completed") return "bg-green-500";
+      return "bg-slate-500";
+    }
+    if (type === "priority") {
+      if (val === "high") return "bg-red-500";
+      if (val === "medium") return "bg-amber-500";
+      if (val === "low") return "bg-slate-500";
+      return "bg-blue-500";
+    }
+    return "bg-gray-500";
+  };
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setLoading(true);
+        const response: any = await getAlls("/customer-tickets");
+        if (response.success) {
+          const mappedTickets = response.data.map((item: any) => ({
+            ticketId: item.ticketCode,
+            status: item.ticketStatusId?.label || "Unknown",
+            statusColor: getColorConfig("status", item.ticketStatusId?.label),
+            priority:
+              item.priorityId?.serviceRequestPrioprity?.toUpperCase() ||
+              "NORMAL",
+            priorityColor: getColorConfig(
+              "priority",
+              item.priorityId?.serviceRequestPrioprity,
+            ),
+            customerName: item.customerId?.personId?.firstName || "",
+            equipment: item.vehicleId?.vehicleType || "General Equipment",
+            description: item.issue_Details,
+            date: new Date(item.createdAt).toLocaleDateString("en-GB"),
+            category: item.ticketSource?.toLowerCase(),
+          }));
+          setTickets(mappedTickets);
+        }
+      } catch (error) {
+        console.error("Error fetching tickets:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-gray-50 w-full flex justify-center">
+        <p className="text-gray-400 animate-pulse font-bold">
+          Loading Recent Tickets...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-gray-50 w-full">
@@ -59,7 +85,7 @@ const RecentTickets = () => {
           </h2>
         </div>
 
-        <button className="flex items-center  gap-2 text-[#6366f1] font-bold text-sm hover:gap-1 hover:bg-gray-300 transition-all group">
+        <button className="flex items-center gap-2 text-[#6366f1] font-bold text-sm hover:gap-1 transition-all group">
           View All
           <ArrowRight
             size={18}
@@ -69,9 +95,15 @@ const RecentTickets = () => {
       </div>
 
       <div className="flex flex-col gap-5">
-        {tickets.map((ticket) => (
-          <TicketListItem key={ticket.ticketId} {...ticket} />
-        ))}
+        {tickets.length > 0 ? (
+          tickets.map((ticket) => (
+            <TicketListItem key={ticket.ticketId} {...ticket} />
+          ))
+        ) : (
+          <p className="text-center text-gray-400 py-10 italic">
+            No tickets found.
+          </p>
+        )}
       </div>
     </div>
   );
