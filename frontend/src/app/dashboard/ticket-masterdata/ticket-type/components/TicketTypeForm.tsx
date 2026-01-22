@@ -41,7 +41,7 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
 
   useEffect(() => {
     const loadDeps = async () => {
-      const res = await getAlls<IDepartments>("/departments");
+      const res = await getAlls<IDepartments>("/departments?filter=all");
       const formatted = res.data.map(d => ({ label: d.departmentName, value: d._id! }));
       setDepartments(formatted);
     };
