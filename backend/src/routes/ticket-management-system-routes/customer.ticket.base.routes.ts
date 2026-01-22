@@ -45,6 +45,10 @@ const customerTicketBaseController = new AdvancedGenericController({
     "vehicleId",
     "priorityId",
     "ticketStatusId",
+    {
+      path: "vehicleId",
+      populate: [{ path: "vehicleBrandId" }, { path: "vehicleModelId" }],
+    },
   ],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
