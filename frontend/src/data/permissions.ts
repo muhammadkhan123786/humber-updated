@@ -75,15 +75,10 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
     ],
   },
-<<<<<<< HEAD
-  {
-    _id: 10,
-=======
 
   /* ================= INVENTORY SYSTEM ================= */
   {
     _id: nanoid(),
->>>>>>> main
     label: "Inventory System",
     href: "#",
     icon: Boxes,
@@ -125,87 +120,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: nanoid(), label: "Product Attribute", href: "/dashboard/inventory-masterdata/product-attribute", icon: Settings, roleId: [1] },
     ],
   },
-<<<<<<< HEAD
-  { _id: 3, label: "Repair tracker", href: "/dashboard/repair-tracker", icon: Wrench, roleId: [1] },
-  { _id: 13, label: "Vendor", href: "/dashboard/vender", icon: Store, roleId: [1] },
-  { _id: 14, label: "Warehouses", href: "/dashboard/warehouses", icon: Warehouse, roleId: [1] },
-  { _id: 4, label: "Customers", href: "/dashboard/customers", icon: Users, roleId: [1] },
-  { _id: 5, label: "Bookings", href: "/dashboard/bookings", icon: Calendar, roleId: [1] },
-  { _id: 6, label: "Staff management", href: "/dashboard/staff-management", icon: UserCog, roleId: [1] },
-  { _id: 8, label: "Technicians Profile", href: "/dashboard/technicians-profile", icon: Briefcase, roleId: [1] },
-  { _id: 11, label: "Vehicles", href: "/dashboard/vehicles", icon: Truck, roleId: [1] },
-  
-  {
-    _id: 1003,
-    label: "Repair tracker",
-    href: "/dashboard/repair-tracker",
-    icon: Wrench,
-    roleId: [1],
-  },
-  {
-    _id: 10014,
-    label: "Warehouses",
-    href: "/dashboard/warehouses",
-    icon: Warehouse,
-    roleId: [1],
-  },
-  {
-    _id: 1006,
-    label: "Staff management",
-    href: "/dashboard/staff-management",
-    icon: UserCog,
-    roleId: [1],
-  },
-  {
-    _id: 1008,
-    label: "Technicians Profile",
-    href: "/dashboard/technicians-profile",
-    icon: Briefcase,
-    roleId: [1],
-  },
-  {
-    _id: 10013,
-    label: "Vendor",
-    href: "/dashboard/vender",
-    icon: Store,
-    roleId: [1],
-  },
-  {
-    _id: 124,
-    label: "Customer Dashboard",
-    href: "/dashboard/customerDashboard",
-    icon: Users,
-    roleId: [1],
-  },
-  {
-    _id: 344,
-    label: "Customers",
-    href: "/dashboard/customers",
-    icon: Users,
-    roleId: [1],
-  },
-  {
-    _id: 123,
-    label: "Suppliers",
-    href: "/dashboard/suppliers",
-    icon: Users,
-    roleId: [1],
-  },
-  {
-    _id: 342,
-    label: "Bookings",
-    href: "/dashboard/bookings",
-    icon: Calendar,
-    roleId: [1],
-  },
-  {
-    _id: 312,
-    label: "Vehicles",
-    href: "/dashboard/vehicles",
-    icon: Truck,
-    roleId: [1],
-  },
-=======
 
   /* ================= CORE MODULES ================= */
   { _id: nanoid(), label: "Repair Tracker", href: "/dashboard/repair-tracker", icon: Wrench, roleId: [1] },
@@ -216,7 +130,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
   { _id: nanoid(), label: "Staff Management", href: "/dashboard/staff-management", icon: UserCog, roleId: [1] },
   { _id: nanoid(), label: "Technicians Profile", href: "/dashboard/technicians-profile", icon: Briefcase, roleId: [1] },
   { _id: nanoid(), label: "Vehicles", href: "/dashboard/vehicles", icon: Truck, roleId: [1] },
->>>>>>> main
 
   /* ================= MASTER DATA ================= */
   {
@@ -226,204 +139,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: Settings,
     roleId: [1],
     subItems: [
-<<<<<<< HEAD
-      {
-        _id: 101,
-        label: "Vehicle Brands",
-        href: "/dashboard/vehiclebrands",
-        icon: Tag,
-        roleId: [1],
-      },
-      {
-        _id: 102,
-        label: "Vehicle Models",
-        href: "/dashboard/vehiclemodals",
-        icon: Smartphone,
-        roleId: [1],
-      },
-      {
-        _id: 103,
-        label: "Repair Status",
-        href: "/dashboard/repairstatus",
-        icon: Activity,
-        roleId: [1],
-      },
-      {
-        _id: 104,
-        label: "Services",
-        href: "/dashboard/services",
-        icon: Wrench,
-        roleId: [1],
-      },
-      {
-        _id: 105,
-        label: "Sub Services",
-        href: "/dashboard/subservices",
-        icon: ListTree,
-        roleId: [1],
-      },
-      {
-        _id: 106,
-        label: "Country",
-        href: "/dashboard/country",
-        icon: Globe,
-        roleId: [1],
-      },
-      {
-        _id: 107,
-        label: "City",
-        href: "/dashboard/city",
-        icon: MapPin,
-        roleId: [1],
-      },
-      {
-        _id: 108,
-        label: "Customer Sources",
-        href: "/dashboard/source",
-        icon: Users,
-        roleId: [1],
-      },
-      // {
-      //   _id: 109,
-      //   label: "Addressess",
-      //   href: "/dashboard/addresses",
-      //   icon: MapPin,
-      //   roleId: [1],
-      // },
-      {
-        _id: 110,
-        label: "Technician Roles",
-        href: "/dashboard/technician-roles",
-        icon: UserCheck,
-        roleId: [1],
-      },
-      {
-        _id: 111,
-        label: "Services Request Type",
-        href: "/dashboard/services-request-type",
-        icon: ClipboardList,
-        roleId: [1],
-      },
-      {
-        _id: 112,
-        label: "Priority Level",
-        href: "/dashboard/priority-level",
-        icon: BarChart3,
-        roleId: [1],
-      },
-      {
-        _id: 113,
-        label: "Service Zone",
-        href: "/dashboard/service-zone",
-        icon: MapPin,
-        roleId: [1],
-      },
-      {
-        _id: 114,
-        label: "Job Type",
-        href: "/dashboard/job-type",
-        icon: Briefcase,
-        roleId: [1],
-      },
-      {
-        _id: 115,
-        label: "Document Type",
-        href: "/dashboard/document-type",
-        icon: FileText,
-        roleId: [1],
-      },
-      {
-        _id: 116,
-        label: "Business Type",
-        href: "/dashboard/business-types",
-        icon: Building2,
-        roleId: [1],
-      },
-      {
-        _id: 117,
-        label: "Payment Method",
-        href: "/dashboard/payment-method",
-        icon: CreditCard,
-        roleId: [1],
-      },
-      {
-        _id: 118,
-        label: "Pricing Agreement",
-        href: "/dashboard/pricing-agreement",
-        icon: HandCoins,
-        roleId: [1],
-      },
-      {
-        _id: 119,
-        label: "Product & Services",
-        href: "/dashboard/product-services",
-        icon: ShoppingCart,
-        roleId: [1],
-      },
-      {
-        _id: 120,
-        label: "Icons",
-        href: "/dashboard/icon",
-        icon: Search,
-        roleId: [1],
-      },
-      {
-        _id: 121,
-        label: "Job Titles",
-        href: "/dashboard/job-title",
-        icon: Briefcase,
-        roleId: [1],
-      },
-      {
-        _id: 122,
-        label: "Ticket Status",
-        href: "/dashboard/ticket-masterdata/ticket-status",
-        icon: Activity,
-        roleId: [1],
-      },
-      {
-        _id: 123,
-        label: "Department",
-        href: "/dashboard/ticket-masterdata/department",
-        icon: Building2,
-        roleId: [1],
-      },
-      {
-        _id: 124,
-        label: "Ticket Actions",
-        href: "/dashboard/ticket-masterdata/ticket-actions",
-        icon: Zap,
-        roleId: [1],
-      },
-      {
-        _id: 125,
-        label: "Ticket Type",
-        href: "/dashboard/ticket-masterdata/ticket-type",
-        icon: Tag,
-        roleId: [1],
-      },
-      {
-        _id: 126,
-        label: "Ticket Transition",
-        href: "/dashboard/ticket-masterdata/ticket-transition",
-        icon: Milestone,
-        roleId: [1],
-      },
-      {
-        _id: 127,
-        label: "Ticket Reference Types",
-        href: "/dashboard/ticket-masterdata/ticketReferenceTypes",
-        icon: ClipboardList,
-        roleId: [1],
-      },
-      {
-        _id: 128,
-        label: "Contract Type",
-        href: "/dashboard/contract-type",
-        icon: BarChart3,
-        roleId: [1],
-      }
-=======
       { _id: nanoid(), label: "Vehicle Brands", href: "/dashboard/vehiclebrands", icon: Tag, roleId: [1] },
       { _id: nanoid(), label: "Vehicle Models", href: "/dashboard/vehiclemodals", icon: Smartphone, roleId: [1] },
       { _id: nanoid(), label: "Repair Status", href: "/dashboard/repairstatus", icon: Activity, roleId: [1] },
@@ -437,7 +152,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: nanoid(), label: "Service Zone", href: "/dashboard/service-zone", icon: MapPin, roleId: [1] },
       { _id: nanoid(), label: "Payment Method", href: "/dashboard/payment-method", icon: CreditCard, roleId: [1] },
       { _id: nanoid(), label: "Pricing Agreement", href: "/dashboard/pricing-agreement", icon: HandCoins, roleId: [1] },
->>>>>>> main
     ],
   },
 
