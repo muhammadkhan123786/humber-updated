@@ -176,6 +176,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: nanoid(), label: "Service Zone", href: "/dashboard/service-zone", icon: MapPin, roleId: [1] },
       { _id: nanoid(), label: "Payment Method", href: "/dashboard/payment-method", icon: CreditCard, roleId: [1] },
       { _id: nanoid(), label: "Pricing Agreement", href: "/dashboard/pricing-agreement", icon: HandCoins, roleId: [1] },
+      { _id: nanoid(), label: "Contract Types", href: "/dashboard/contract-type", icon: FileText, roleId: [1] },
     ],
   },
 
