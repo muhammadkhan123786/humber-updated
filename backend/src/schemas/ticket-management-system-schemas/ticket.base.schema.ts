@@ -38,9 +38,9 @@ export const customerTicketBaseSchema = {
 
   vehicleRepairVideoURL: { type: String },
   assignedTechnicianId: {
-    type: Types.ObjectId,
+    type: [Types.ObjectId],
     ref: "Technicians",
-    default: null,
+    default: [],
   },
 
   address: { type: String },
@@ -77,10 +77,11 @@ export const customerTicketBaseSchemaValidation = z.object({
 
   address: z.string().optional(),
   assignedTechnicianId: z
-    .string()
-    .regex(/^[0-9a-fA-F]{24}$/, "Invalid Technician ID")
-    .nullable()
-    .optional(),
+    .array(
+      z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Technician ID")
+    )
+    .optional()
+    .default([]),
 
   vehicleRepairImages: z.array(z.string()).optional(),
 

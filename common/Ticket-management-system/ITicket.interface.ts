@@ -7,7 +7,7 @@ export interface CustomerTicketBase<
   TVEHICLEID = string,
   TURGENCEID = string,
   TTICKETSTATUSID = string,
-  TTECHID = string
+  TTECHID = string[]
 > extends IBaseEntity<TUSERID> {
   ticketSource: TicketSource;
   customerId: TCUSTOMERID;
