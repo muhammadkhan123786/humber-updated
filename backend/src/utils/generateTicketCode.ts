@@ -1,4 +1,5 @@
 import { TicketSequenceCounter } from "../models/ticket-management-system-models/ticket.sequence.models";
+import { TechnicianJobSequenceCounter } from "../models/ticket-management-system-models/technician.jobs.counter.models";
 
 export const generateTicketCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
@@ -14,4 +15,20 @@ export const generateTicketCode = async (): Promise<string> => {
   }
   console.log("counter", counter);
   return `TKT-${year}-${String(counter.seq).padStart(6, "0")}`;
+};
+
+export const generateTechnicianJobCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  const counter = await TechnicianJobSequenceCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to Technician Job Code sequence");
+  }
+
+  return `JOB-${year}-${String(counter.seq).padStart(6, "0")}`;
 };
