@@ -65,3 +65,184 @@ export const saveTicket = async (req: Request, res: Response) => {
         });
     }
 };
+
+
+//get all ticket whose technician assigned 0 
+export const getUnassignedTickets = async (req: Request, res: Response) => {
+    try {
+        const page = Number(req.query.page || 1);
+        const limit = Number(req.query.limit || 10);
+
+        const filter = {
+            isDeleted: { $ne: true },
+            $or: [
+                { assignedTechnicianId: null },
+                { assignedTechnicianId: { $exists: false } },
+            ],
+        };
+
+        const [data, total] = await Promise.all([
+            customerTicketBase.find(filter)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate("customerId vehicleId priorityId ticketStatusId"),
+
+            customerTicketBase.countDocuments(filter),
+        ]);
+
+        res.status(200).json({
+            success: true,
+            page,
+            limit,
+            total,
+            data,
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch unassigned tickets",
+        });
+    }
+};
+
+// ticket count with status id 
+export const getTicketCountByStatus = async (req: Request, res: Response) => {
+    try {
+        const now = new Date();
+
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            0,
+            23,
+            59,
+            59
+        );
+
+        const result = await customerTicketBase.aggregate([
+            {
+                $match: { isDeleted: { $ne: true } },
+            },
+            {
+                $facet: {
+                    /* ============================
+                     STATUS WISE COUNTS
+                    ============================ */
+
+                    currentByStatus: [
+                        {
+                            $group: {
+                                _id: "$ticketStatusId",
+                                count: { $sum: 1 },
+                            },
+                        },
+                    ],
+
+                    lastMonthByStatus: [
+                        {
+                            $match: {
+                                createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+                            },
+                        },
+                        {
+                            $group: {
+                                _id: "$ticketStatusId",
+                                count: { $sum: 1 },
+                            },
+                        },
+                    ],
+
+                    /* ============================
+                     TOTAL TICKETS
+                    ============================ */
+
+                    totalCurrent: [{ $count: "count" }],
+
+                    totalLastMonth: [
+                        {
+                            $match: {
+                                createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+                            },
+                        },
+                        { $count: "count" },
+                    ],
+
+                    /* ============================
+                     URGENT TICKETS
+                    ============================ */
+
+                    urgentCurrent: [
+                        { $match: { priority: "Urgent" } },
+                        { $count: "count" },
+                    ],
+
+                    urgentLastMonth: [
+                        {
+                            $match: {
+                                priority: "Urgent",
+                                createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+                            },
+                        },
+                        { $count: "count" },
+                    ],
+                },
+            },
+        ]);
+
+        const data = result[0];
+
+        /* ============================
+           STATUS WISE MERGE
+        ============================ */
+
+        const statusData = data.currentByStatus.map((curr: any) => {
+            const last =
+                data.lastMonthByStatus.find((l: any) =>
+                    l._id.equals(curr._id)
+                )?.count || 0;
+
+            return {
+                statusId: curr._id,
+                current: curr.count,
+                lastMonth: last,
+                percentage:
+                    last === 0 ? (curr.count > 0 ? 100 : 0) : ((curr.count - last) / last) * 100,
+            };
+        });
+
+        /* ============================
+           SUMMARY HELPERS
+        ============================ */
+
+        const calcSummary = (current = 0, last = 0) => ({
+            current,
+            lastMonth: last,
+            percentage:
+                last === 0 ? (current > 0 ? 100 : 0) : ((current - last) / last) * 100,
+        });
+
+        res.json({
+            success: true,
+            summary: {
+                totalTickets: calcSummary(
+                    data.totalCurrent[0]?.count || 0,
+                    data.totalLastMonth[0]?.count || 0
+                ),
+                urgentTickets: calcSummary(
+                    data.urgentCurrent[0]?.count || 0,
+                    data.urgentLastMonth[0]?.count || 0
+                ),
+            },
+            statusWise: statusData,
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch ticket status summary",
+        });
+    }
+};
+
