@@ -60,7 +60,8 @@ const TicketListingPage = () => {
             urgency: t.priorityId?.serviceRequestPrioprity || "high",
             source: t.ticketSource || "Online",
             location: t.location || "Workshop",
-            technician: t.assignedTechnicianId?.employeeId || "Unassigned",
+            technician:
+              t.assignedTechnicianId?.length > 0 ? "Assigned" : "Not Assigned",
             createdAt: t.createdAt
               ? new Date(t.createdAt).toLocaleDateString()
               : "N/A",
@@ -446,10 +447,14 @@ const TicketListingPage = () => {
                           ? t.technician.slice(0, 2)
                           : "UN"}
                       </div>
-                      <span className="text-[11px] text-gray-600 font-bold">
-                        {t.technician !== "Unassigned"
-                          ? t.technician
-                          : "Not Assigned"}
+                      <span
+                        className={`px-2 py-0.5 rounded text-white text-[9px] font-bold ${
+                          t.technician && t.technician !== "Unassigned"
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                      >
+                        {t.technician}
                       </span>
                     </div>
                   </td>
