@@ -217,7 +217,7 @@ export default function ProductListingPage() {
                     asChild
                     className="bg-white text-cyan-600 hover:bg-white/90"
                   >
-                    <Link href="/products/add">
+                    <Link href="/dashboard/add-product">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Product
                     </Link>

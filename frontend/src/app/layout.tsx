@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { Outfit } from "next/font/google";
 import ThemeProvider from "@/components/theme/ThemeProvider";
 import { Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
-
-import "./globals.css";
 import Modal from "@/components/ui/Modal";
 import { ModalProvider } from "@/context/ModalContext";
+import "./globals.css";
+
+
 
 export const metadata: Metadata = {
   title: "Humber Mobility",
@@ -19,13 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="bg-[#B4B4B4] antialiased">
-        {/* Google Maps Script */}
+      <body className={`bg-[#B4B4B4] antialiased `}>
         <ModalProvider>
-          {/* Modal MUST be here at top level */}
           <Modal />
-
-          {/* Your content */}
           <Theme>
             <ThemeProvider>{children}</ThemeProvider>
           </Theme>

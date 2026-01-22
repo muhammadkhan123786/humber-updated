@@ -1,134 +1,133 @@
 "use client";
-import React, { useState } from "react";
-import axios from "axios";
-import { X, Save, Zap } from "lucide-react";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Save, Zap } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
 import { IProposedActions } from "../../../../../../../common/IProposed.actions";
 
+const proposedActionSchema = z.object({
+  proposedActionName: z.string().min(1, "Proposed action name is required."),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof proposedActionSchema>;
+
 interface Props {
-  editingData: IProposedActions | null;
+  editingData: (IProposedActions & { _id?: string }) | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
-  apiUrl: string;
 }
 
-const PurposedActionForm = ({
-  editingData,
-  onClose,
-  onRefresh,
-  themeColor,
-  apiUrl,
-}: Props) => {
-  const [formData, setFormData] = useState<
-    Pick<IProposedActions, "proposedActionName" | "isActive" | "isDefault">
-  >(() => ({
-    proposedActionName: editingData?.proposedActionName || "",
-    isActive: editingData?.isActive ?? true,
-    isDefault: editingData?.isDefault ?? false,
-  }));
+const PurposedActionForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(proposedActionSchema),
+    defaultValues: {
+      proposedActionName: "",
+      isActive: true,
+      isDefault: false,
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
+
+  useEffect(() => {
+    if (editingData) {
+      reset({
+        proposedActionName: editingData.proposedActionName,
+        isActive: Boolean(editingData.isActive),
+        isDefault: Boolean(editingData.isDefault),
+      });
+    }
+  }, [editingData, reset]);
+
+  const onSubmit = async (values: FormData) => {
     try {
-      const token = localStorage.getItem("token");
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const payload = { ...formData, userId: savedUser.id || savedUser._id };
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData) {
-        await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      if (editingData?._id) {
+        await updateItem("/proposed-actions", editingData._id, payload);
       } else {
-        await axios.post(apiUrl, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await createItem("/proposed-actions", payload);
       }
-
       onRefresh();
       onClose();
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message || "Operation failed");
-      } else {
-        alert("Operation failed");
-      }
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving action");
     }
   };
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div
-          className="p-6 text-white flex justify-between items-center"
-          style={{ backgroundColor: themeColor }}
-        >
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Zap size={24} />
-            {editingData ? "Edit Proposed Action" : "Add Proposed Action"}
-          </h2>
-          <button
-            onClick={onClose}
-            className="hover:bg-white/20 p-1 rounded-full transition-colors"
-          >
-            <X size={24} />
-          </button>
+    <FormModal
+      title={editingData ? "Edit Proposed Action" : "Add Proposed Action"}
+      icon={<Zap size={24} />}
+      onClose={onClose}
+      themeColor={themeColor}
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+        <FormInput
+          label="Proposed Action Name *"
+          placeholder="e.g. Call Customer, Send Quote"
+          {...register("proposedActionName")}
+          error={errors.proposedActionName?.message}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <FormToggle
+                label="Active"
+                checked={field.value}
+                onChange={field.onChange}
+                disabled={isDefaultValue}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="isDefault"
+            render={({ field }) => (
+              <FormToggle
+                label="Default"
+                checked={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true);
+                }}
+              />
+            )}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Proposed Action Name *
-            </label>
-            <input
-              required
-              placeholder="e.g. Call Customer, Send Quote"
-              className="w-full border rounded-xl p-3 outline-none focus:ring-2 transition-all border-gray-200"
-              value={formData.proposedActionName}
-              onChange={(e) =>
-                setFormData({ ...formData, proposedActionName: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="flex items-center gap-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className={`w-5 h-5 ${
-                  formData.isDefault
-                    ? "cursor-not-allowed opacity-50"
-                    : "cursor-pointer"
-                }`}
-                checked={formData.isActive}
-                disabled={formData.isDefault}
-                onChange={(e) =>
-                  setFormData({ ...formData, isActive: e.target.checked })
-                }
-              />
-              <span className="text-sm font-medium">Active</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className="w-5 h-5 accent-[#FE6B1D]"
-                checked={formData.isDefault}
-                onChange={(e) =>
-                  setFormData({ ...formData, isDefault: e.target.checked })
-                }
-              />
-              <span className="text-sm font-medium">Default</span>
-            </label>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-            style={{ backgroundColor: themeColor }}
-          >
-            <Save size={20} /> {editingData ? "Update Action" : "Save Action"}
-          </button>
-        </form>
-      </div>
-    </div>
+        <FormButton
+          type="submit"
+          label={editingData ? "Update Action" : "Create"}
+          icon={<Save size={20} />}
+          loading={isSubmitting}
+          themeColor={themeColor}
+          onCancel={onClose}
+        />
+      </form>
+    </FormModal>
   );
 };
+
 export default PurposedActionForm;

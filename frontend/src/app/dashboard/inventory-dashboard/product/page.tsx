@@ -13,6 +13,8 @@ import Super from "./components/Super"
 import ProductDashboard from "./components/ProductDashboard";
 import ProductListingPage from "./components/ProductListingPage";
 
+import { sampleProducts } from "./data/sampleProducts"
+
 export default function CreateProductPage() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
@@ -150,7 +152,7 @@ const fetchProducts = async () => {
     // </div>
     <div>
       {/* <ProductDashboard/> */}
-<ProductListingPage />
+        <ProductListingPage />
       {/* <Super /> */}
     </div>
   );
