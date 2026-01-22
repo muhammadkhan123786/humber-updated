@@ -22,6 +22,9 @@ export default function TicketTypeClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -35,11 +38,19 @@ export default function TicketTypeClient() {
         search: search.trim(),
         userId: user.id || user._id,
       });
+      const allDataRes = await getAll<IPopulatedTicketType>(API_URL, {
+        limit: "1000",
+        search: search.trim(),
+        userId: user.id || user._id,
+      });
 
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
+      setTotalCount(res.total || 0);
+      setTotalActiveCount(allDataRes.data?.filter(d => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter(d => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -96,9 +107,9 @@ export default function TicketTypeClient() {
   };
 
   // Stats calculation
-  const totalTypes = dataList.length;
-  const activeTypes = dataList.filter((d) => d.isActive).length;
-  const inactiveTypes = dataList.filter((d) => !d.isActive).length;
+  const statsTotal = totalCount;
+  const statsActive = totalActiveCount;
+  const statsInactive = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">
@@ -127,9 +138,9 @@ export default function TicketTypeClient() {
 
         {/* Stats Cards with Filter callback */}
         <StatsCards 
-          totalCount={totalTypes}
-          activeCount={activeTypes}
-          inactiveCount={inactiveTypes}
+          totalCount={statsTotal}
+          activeCount={statsActive}
+          inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
         />
 

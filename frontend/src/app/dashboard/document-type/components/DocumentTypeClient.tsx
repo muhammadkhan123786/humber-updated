@@ -24,6 +24,9 @@ export default function DocumentTypeClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -37,6 +40,17 @@ export default function DocumentTypeClient() {
       setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 10) || 1);
       setCurrentPage(page);
+
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await getAll<DocumentTypeWithId>("/document-types", {
+        limit: "1000", // Get all data
+        search: search.trim(),
+      });
+
+      // Track total counts across ALL data
+      setTotalCount(res.total || 0);
+      setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -91,9 +105,9 @@ export default function DocumentTypeClient() {
     }
   };
 
-  const totalTypes = dataList.length;
-  const activeTypes = dataList.filter((d) => d.isActive).length;
-  const inactiveTypes = dataList.filter((d) => !d.isActive).length;
+const totalTypes = totalCount;
+      const activeTypes = totalActiveCount;
+      const inactiveTypes = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">

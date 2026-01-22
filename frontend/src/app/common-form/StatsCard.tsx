@@ -19,7 +19,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({
     activeCount,
     inactiveCount,
     labels = {
-        total: "Total Business Types",
+        total: "Total Types",
         active: "Active Types",
         inactive: "Inactive Types",
     },

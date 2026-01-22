@@ -22,6 +22,9 @@ export default function IconsClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -32,6 +35,12 @@ export default function IconsClient() {
         setFilteredDataList(res.data);
         setTotalPages(Math.ceil(res.total / 10) || 1);
         setCurrentPage(page);
+
+        // Fetch ALL data without pagination to get accurate active/inactive counts
+        const allDataRes = await fetchIcons(1, 1000, search);
+        setTotalCount(res.total || 0);
+        setTotalActiveCount(allDataRes.data?.filter((d: IIcons) => d.isActive).length || 0);
+        setTotalInactiveCount(allDataRes.data?.filter((d: IIcons) => !d.isActive).length || 0);
       }
     } catch (err) {
       setDataList([]);
@@ -108,9 +117,9 @@ export default function IconsClient() {
 
         {/* Stats Cards with Filter Trigger */}
         <StatsCards
-          totalCount={dataList.length}
-          activeCount={dataList.filter(d => d.isActive).length}
-          inactiveCount={dataList.filter(d => !d.isActive).length}
+          totalCount={totalCount}
+          activeCount={totalActiveCount}
+          inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
         />
 
