@@ -54,12 +54,12 @@ const TicketListingPage = () => {
             customerName:
               t.userId?.name ||
               (t.userId?.email ? t.userId.email.split("@")[0] : "Unknown"),
-            productName: t.vehicleId?.name || "Drive Scout",
+            productName: t.vehicleId?.vehicleType || "",
             issue: t.issue_Details || "No details provided",
-            status: t.ticketStatusId?.code || "in progress",
-            urgency: t.priorityId?.serviceRequestPrioprity || "high",
-            source: t.ticketSource || "Online",
-            location: t.location || "Workshop",
+            status: t.ticketStatusId?.code || "",
+            urgency: t.priorityId?.serviceRequestPrioprity || "",
+            source: t.ticketSource || "",
+            location: t.location || "",
             technician:
               t.assignedTechnicianId?.length > 0 ? "Assigned" : "Not Assigned",
             createdAt: t.createdAt
@@ -78,7 +78,7 @@ const TicketListingPage = () => {
       setLoading(false);
     }
   };
-
+  console.log("tickets", tickets);
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchTickets();
