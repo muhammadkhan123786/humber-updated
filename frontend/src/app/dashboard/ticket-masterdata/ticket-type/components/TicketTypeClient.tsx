@@ -7,6 +7,7 @@ import TicketTypeTable, { IPopulatedTicketType } from "./TicketTypeTable";
 import TicketTypeForm from "./TicketTypeForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 const API_URL = "/ticket-types";
@@ -34,7 +35,7 @@ export default function TicketTypeClient() {
 
       const res = await getAll<IPopulatedTicketType>(API_URL, {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
         userId: user.id || user._id,
       });
@@ -46,7 +47,7 @@ export default function TicketTypeClient() {
 
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
       setTotalCount(res.total || 0);
       setTotalActiveCount(allDataRes.data?.filter(d => d.isActive).length || 0);
@@ -90,21 +91,18 @@ export default function TicketTypeClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem(API_URL, id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call jo status update ko smooth banaye ga
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    API_URL, // Yahan directly API_URL variable pass kar dein
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   // Stats calculation
   const statsTotal = totalCount;

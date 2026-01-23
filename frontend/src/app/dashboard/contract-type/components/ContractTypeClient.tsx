@@ -8,6 +8,8 @@ import ContractTypeTable from "./ContractTypeTable";
 import ContractTypeForm from "./ContractTypeForm";
 import Pagination from "@/components/ui/Pagination";
 import { IContract } from "../../../../../../common/master-interfaces/IContract.type.interface";
+import { updateItem } from "@/helper/apiHelper";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 const API_URL = `${BASE_URL}/contract-types`;
@@ -43,13 +45,13 @@ export default function ContractTypeClient() {
         params: {
           userId: user.id || user._id,
           page: page.toString(),
-          limit: "10",
+          limit: "12",
           search: search.trim(),
         },
       });
       setDataList(res.data.data || []);
       setFilteredDataList(res.data.data || []);
-      setTotalPages(Math.ceil(res.data.total / 10) || 1);
+      setTotalPages(Math.ceil(res.data.total / 12) || 1);
       setCurrentPage(page);
       
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -105,28 +107,18 @@ export default function ContractTypeClient() {
       alert("Failed to delete item.");
     }
   };
-
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const token = localStorage.getItem("token");
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await axios.put(
-        `${API_URL}/${id}`,
-        {
-          isActive: newStatus,
-          userId: user.id || user._id,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
-
+const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function jo Optimistic UI aur API call handle karega
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    API_URL,
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
   const totalTypes = totalCount;
   const activeTypes = totalActiveCount;
   const inactiveTypes = totalInactiveCount;

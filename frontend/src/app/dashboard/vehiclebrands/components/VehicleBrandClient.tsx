@@ -33,12 +33,12 @@ export default function VehicleBrandClient() {
       setLoading(true);
       const res = await getAll<VehicleBrandWithId>("/vehiclebrand", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -88,21 +88,46 @@ export default function VehicleBrandClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/vehiclebrand", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
+const handleStatusChange = async (id: string, newStatus: boolean) => {
+  // 1. Optimistic Update: UI ko foran update karein
+  // Is se toggle animation bilkul smooth ho jayegi bina kisi "wait" ke
+  setDataList((prevList) =>
+    prevList.map((item) =>
+      item._id === id ? { ...item, isActive: newStatus } : item
+    )
+  );
+
+  try {
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    
+    // 2. Background API call (Bina fetchData ke)
+    await updateItem("/vehiclebrand", id, {
+      isActive: newStatus,
+      userId: user.id || user._id,
+    });
+
+    // 3. Stats ko manually update karein taake cards sync rahein
+    if (newStatus) {
+      setTotalActiveCount((prev) => prev + 1);
+      setTotalInactiveCount((prev) => prev - 1);
+    } else {
+      setTotalActiveCount((prev) => prev - 1);
+      setTotalInactiveCount((prev) => prev + 1);
     }
-  };
+
+  } catch (error) {
+    console.error("Vehicle Brand Status Update Error:", error);
+    alert("Failed to update status. Reverting change...");
+    
+    // 4. Error Handle: Rollback to previous state
+    setDataList((prevList) =>
+      prevList.map((item) =>
+        item._id === id ? { ...item, isActive: !newStatus } : item
+      )
+    );
+  }
+};
 
   // Calculate stats
   const statsTotal = totalCount;

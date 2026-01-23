@@ -8,6 +8,7 @@ import { getAll, deleteItem, updateItem } from "../../../../../helper/apiHelper"
 import { ITicketStatusTransitions } from "../../../../../../../common/Ticket-management-system/ITicket.status.transition.interface";
 import TicketTransitionForm from "./TicketTransitionForm";
 import TicketTransitionTable from "./TicketTransitionTable";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -42,7 +43,7 @@ export default function TicketTransitionClient() {
         "/ticket-transition-setup",
         {
           page: page.toString(),
-          limit: "10",
+          limit: "12",
           search: search.trim(),
         }
       );
@@ -55,7 +56,7 @@ export default function TicketTransitionClient() {
       );
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
       setTotalCount(res.total || 0);
       setTotalActiveCount(allDataRes.data?.filter(d => d.isActive).length || 0);
@@ -98,23 +99,18 @@ export default function TicketTransitionClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/ticket-transition-setup", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      // Update local state immediately
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      // Revert the change by refreshing
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function jo state aur API ko handle karega
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/ticket-transition-setup", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   // Calculate stats for the component
   const statsTotal = totalCount;

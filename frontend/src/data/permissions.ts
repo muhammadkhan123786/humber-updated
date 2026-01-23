@@ -103,6 +103,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         href: "/dashboard/technician-assignment",
         icon: ListTree,
         roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Record Activity",
+        href: "/dashboard/record-activity",
+        icon: ListTree,
+        roleId: [1],
       }
 
     ],
@@ -196,6 +203,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: nanoid(), label: "Job Types", href: "/dashboard/job-type", icon: Globe, roleId: [1] },
       { _id: nanoid(), label: "Services Request Type", href: "/dashboard/services-request-type", icon: Tag, roleId: [1] },
       { _id: nanoid(), label: "Contract Types", href: "/dashboard/contract-type", icon: FileText, roleId: [1] },
+      { _id: nanoid(), label: "Technician Service Types", href: "/dashboard/technician-service", icon: Wrench, roleId: [1] },
     ],
   },
 
