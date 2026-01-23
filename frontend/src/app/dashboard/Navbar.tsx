@@ -1,106 +1,62 @@
-// "use client";
-
-// import NavLink from "@/components/ui/NavLink";
-// import { getRoleBaseNavBarLinks } from "@/lib/UtilsFns";
-// import { NavLinksInterface } from "@/types/NavLinksInterface";
-// import Image from "next/image";
-// import { useEffect, useState } from "react";
-
-// interface NavItem {
-//   _id: number;
-//   name: string;
-//   href: string;
-//   icon: any;
-//   roleId: number[];
-//   subItems?: NavItem[];
-// }
-// export default function Navbar() {
-//   const [navBarLinks, setNavBarLinks] = useState<NavItem[]>([]);
-//   useEffect(() => {
-//     async function fetchLinks() {
-//       try {
-//         const roleId = localStorage.getItem("roleId");
-//         if (!roleId) return;
-
-//         const navLinks = await getRoleBaseNavBarLinks(+roleId);
-//         setNavBarLinks(navLinks);
-//       } catch (err) {
-//         console.log("Error fetching navbar links.", err);
-//       }
-//     }
-//     fetchLinks();
-//   }, []);
-
-//   return (
-//     <nav className="h-full p-4 flex flex-col gap-4">
-//       {/* MAIN NAV LINKS */}
-//       {navBarLinks.map((link) => (
-//         <NavLink key={link._id} navbar={link}>
-//           <div className="flex gap-2 items-center">
-//             {link.iconSrc && (
-//               <Image
-//                 src={link.iconSrc}
-//                 alt={link.alt ?? link.label}
-//                 width={20}
-//                 height={20}
-//               />
-//             )}
-//             <span>{link.label}</span>
-//           </div>
-//         </NavLink>
-//       ))}
-//     </nav>
-//   );
-// }
-
-
-
 "use client";
 
 import NavLink from "@/components/ui/NavLink";
 import { getRoleBaseNavBarLinks } from "@/lib/UtilsFns";
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { INavBarLinkSharedInterface } from "../../../../common/INavBarLinkSharedInterface";
 
 
+// Sabse pehle ID type ko string karein kyunki MongoDB ya backend se strings aate hain
 interface NavItem {
-  _id: number;
+  _id: string; // Changed from number to string
   label: string;
   href: string;
-  icon: any; 
+  icon: any;
   roleId: number[];
   subItems?: NavItem[];
-
 }
 
 export default function Navbar() {
-  const [navBarLinks, setNavBarLinks] = useState<INavBarLinkSharedInterface[]>([]);
-  const [openMenus, setOpenMenus] = useState<number[]>([]);
+  const [navBarLinks, setNavBarLinks] = useState<NavItem[]>([]);
+  // Open menus ki state ko bhi string array banayein
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // 1. Hydration mismatch se bachne ke liye mount check
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 0);
+
+    // 2. Data fetching logic
     function fetchLinks() {
       try {
         const roleId = localStorage.getItem("roleId");
         if (!roleId) return;
 
-        const navLinks = getRoleBaseNavBarLinks(+roleId);
+        // getRoleBaseNavBarLinks ko call karein aur unknown cast karein taake type mismatch na ho
+        const navLinks = getRoleBaseNavBarLinks(+roleId) as unknown as NavItem[];
         setNavBarLinks(navLinks);
       } catch (err) {
         console.error("Error fetching navbar links.", err);
       }
     }
+
     fetchLinks();
+    return () => clearTimeout(timer);
   }, []);
 
-  const toggleSubMenu = (id: number) => {
+  const toggleSubMenu = (id: string) => {
     setOpenMenus((prev) =>
       prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
     );
   };
 
+  // Hydration protection: Server aur client ka match hona zaroori hai
+  if (!isMounted) return null;
+
   return (
-    <nav className="h-full p-4 flex flex-col gap-2 overflow-y-auto">
+    <nav className="h-full p-4 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
       {navBarLinks.map((link) => {
         const Icon = link.icon;
         const hasSubItems = link.subItems && link.subItems.length > 0;
@@ -108,36 +64,39 @@ export default function Navbar() {
 
         return (
           <div key={link._id} className="flex flex-col gap-1">
-            {/* Main Link or Dropdown Trigger */}
-            <div 
-              className="flex items-center justify-between group"
-              onClick={() => hasSubItems && toggleSubMenu(link._id)}
-            >
-              <NavLink navbar={link}>
-                <div className="flex gap-3 items-center py-2 px-3 rounded-md hover:bg-gray-100 transition-colors">
-                  {/* Render Lucide Icon as a Component */}
-                  {Icon && <Icon size={20} className="text-gray-600" />}
-                  <span className="text-sm font-medium">{link.label}</span>
-                </div>
-              </NavLink>
+            <div className="flex items-center justify-between group cursor-pointer">
+              {/* Agar subItems hain to ye div toggle karega, warna Link navigate karega */}
+              <div
+                className="flex-1"
+                onClick={() => hasSubItems && toggleSubMenu(link._id)}
+              >
+                <NavLink navbar={link as any}>
+                  <div className="flex gap-3 items-center py-2 px-3 rounded-md hover:bg-gray-100 transition-colors">
+                    {Icon && <Icon size={20} className="text-gray-600" />}
+                    <span className="text-sm font-medium">{link.label}</span>
+                  </div>
+                </NavLink>
+              </div>
 
               {hasSubItems && (
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform mr-2 ${isOpen ? "rotate-180" : ""}`} 
-                />
+                <div onClick={() => toggleSubMenu(link._id)} className="p-2">
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform text-gray-400 ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </div>
               )}
             </div>
 
-            {/* Sub-Items (Render if menu is open) */}
+            {/* Sub-Items Rendering */}
             {hasSubItems && isOpen && (
-              <div className="ml-8 flex flex-col gap-1 border-l pl-2">
+              <div className="ml-8 flex flex-col gap-1 border-l border-gray-200 pl-2">
                 {link.subItems?.map((sub) => {
                   const SubIcon = sub.icon;
                   return (
-                    <NavLink key={sub._id} navbar={sub}>
-                      <div className="flex gap-3 items-center py-2 px-3 rounded-md hover:bg-gray-50 text-gray-500 hover:text-black">
-                        {SubIcon && <SubIcon size={18} />}
+                    <NavLink key={sub._id} navbar={sub as any}>
+                      <div className="flex gap-3 items-center py-2 px-3 rounded-md hover:bg-gray-50 text-gray-500 hover:text-indigo-600 transition-colors">
+                        {SubIcon && <SubIcon size={16} />}
                         <span className="text-xs">{sub.label}</span>
                       </div>
                     </NavLink>
