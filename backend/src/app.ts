@@ -309,7 +309,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/technician-jobs`,
-  adminProtecter,
+  // adminProtecter,
   technicianJobsRouter,
 );
 
