@@ -14,7 +14,7 @@ export type Part<TPRODUCTID = string> = {
     quantity: number;
     unitCost: number;
     totalCost?: number;
-    reasonForChange?: number;
+    reasonForChange?: string;
 };
 
 export type InspectionStatus = "PASS" | "FAIL" | "N/A";

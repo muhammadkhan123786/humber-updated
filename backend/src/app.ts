@@ -64,6 +64,7 @@ import techniciansRouter from "./routes/technicians/technicians.routes";
 import technicianServiceTypeRouter from "./routes/master-data-routes/technician.service.types.routes";
 import technicianInspectionListRouter from "./routes/master-data-routes/technician.inspection.list.routes";
 import technicianJobStatusRouter from "./routes/master-data-routes/technician.jobs.status.routes";
+import technicianJobsRouter from "./routes/technician-jobs/technician.jobs.routes";
 
 // Create express app
 const app: Application = express();
@@ -304,6 +305,12 @@ app.use(
   `${process.env.API_PREFIX}/technician-job-status`,
   adminProtecter,
   technicianJobStatusRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-jobs`,
+  adminProtecter,
+  technicianJobsRouter,
 );
 
 
