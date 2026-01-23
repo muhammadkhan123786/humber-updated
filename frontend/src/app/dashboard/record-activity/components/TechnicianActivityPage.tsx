@@ -40,24 +40,30 @@ const TechnicianActivityPage = () => {
       <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="flex justify-center items-center p-2 bg-gray-50/50 border-b border-gray-100">
           <div className="flex items-center gap-1 bg-gray-100/50 p-1 rounded-2xl overflow-x-auto no-scrollbar">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all duration-200 whitespace-nowrap cursor-pointer ${isActive ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200" : "text-gray-500 hover:text-gray-700"}`}
-                >
-                  <tab.icon size={16} className={isActive ? "text-[#4F39F6]" : "text-gray-400"} />
-                  <span className="text-sm">{tab.label}</span>
-                  {tab.badge && (
-                    <span className={`ml-1 px-2 py-0.5 text-[10px] text-white rounded-full font-black ${tab.badgeColor || "bg-[#9810FA]"}`}>
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          {tabs.map((tab) => {
+  const isActive = activeTab === tab.id;
+  return (
+    <button
+      key={tab.id}
+      onClick={() => setActiveTab(tab.id)}
+
+      className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold transition-all duration-200 whitespace-nowrap cursor-pointer ${
+        isActive
+          ? "bg-white text-gray-900 shadow-sm ring-1 ring-gray-200"
+          : "text-gray-500 hover:text-gray-700"
+      }`}
+    >
+      <tab.icon size={14} className={isActive ? "text-[#4F39F6]" : "text-gray-400"} />
+      <span className="text-[13px]">{tab.label}</span>
+
+      {tab.badge && (
+        <span className={`ml-0.5 px-1.5 py-0.5 text-[9px] text-white rounded-md font-black ${tab.badgeColor || "bg-[#9810FA]"}`}>
+          {tab.badge}
+        </span>
+      )}
+    </button>
+  );
+})}
           </div>
         </div>
 
