@@ -7,6 +7,7 @@ import StatsCards from "@/app/common-form/StatsCard";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ITicketStatus } from "../../../../../../../common/Ticket-management-system/ITicketStatus.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)"; // Matches Business Type
 
@@ -32,7 +33,7 @@ export default function TicketStatusClient() {
       setLoading(true);
       const res = await getAll<TicketStatusWithId>("/ticket-status", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       const allDataRes = await getAll<TicketStatusWithId>("/ticket-status", {
@@ -41,7 +42,7 @@ export default function TicketStatusClient() {
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
       setTotalCount(res.total || 0);
       setTotalActiveCount(allDataRes.data?.filter(d => d.isActive).length || 0);
@@ -79,16 +80,17 @@ export default function TicketStatusClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      await updateItem("/ticket-status", id, { isActive: newStatus, userId: user.id || user._id });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/ticket-status", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   return (
     <div className="min-h-screen p-6">

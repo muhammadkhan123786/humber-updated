@@ -67,7 +67,7 @@ const ServiceRequestTable = ({ data, displayView, onEdit, onDelete, onStatusChan
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
       <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#FFF7ED] border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Name</th>
@@ -77,7 +77,7 @@ const ServiceRequestTable = ({ data, displayView, onEdit, onDelete, onStatusChan
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-[#FFF7ED] transition-colors">
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
               <td className="px-6 py-4">
                 <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
                   <Settings2 size={18} />

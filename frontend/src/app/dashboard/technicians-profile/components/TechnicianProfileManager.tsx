@@ -9,31 +9,31 @@ import { Save } from "lucide-react";
 export default function TechnicianProfileManager() {
   const [formData, setFormData] = useState({
     // Personal Info (Updated with new fields)
-    person:{
+    person: {
       firstName: "",
       lastName: "",
     },
     employeeId: "",
     role: "Technician",
     profilePhoto: null,
-    joiningDate: "",      // New
+    joiningDate: "", // New
     jobType: "Full Time", // New (Default value)
-    salary: "",           // New
+    salary: "", // New
     salaryPeriod: "Per Month", // New (Default value)
-    
+
     // Contact Info
-    contact:{
+    contact: {
       emailId: "",
       phoneNumber: "",
     },
-    address:{
-      address:"",
+    address: {
+      address: "",
     },
 
     // Skills & Docs
-    skills: [], 
+    skills: [],
     certifications: [], // Array for multiple certifications
-    
+
     // Status & Availability
     isActive: true,
     serviceZones: [],
@@ -42,16 +42,21 @@ export default function TechnicianProfileManager() {
   const handleSave = async () => {
     // Console log for debugging
     console.log("Full Form Data to be Sent:", formData);
-    
-    // Basic Validation
-    if (!formData.person.firstName || !formData.contact.emailId || !formData.employeeId) {
-        alert("Please fill in the required fields: First Name, Email, and Employee ID.");
-        return;
-    }
 
-    // Yahan aap apna API logic likh sakte hain
-    // Tip: Use FormData for sending files (profilePhoto and certifications)
-    alert(`Success! Technician ${formData.person.firstName} profile prepared with ${formData.certifications.length} documents.`);
+    // Basic Validation
+    if (
+      !formData.person.firstName ||
+      !formData.contact.emailId ||
+      !formData.employeeId
+    ) {
+      alert(
+        "Please fill in the required fields: First Name, Email, and Employee ID.",
+      );
+      return;
+    }
+    alert(
+      `Success! Technician ${formData.person.firstName} profile prepared with ${formData.certifications.length} documents.`,
+    );
   };
 
   return (
@@ -59,8 +64,12 @@ export default function TechnicianProfileManager() {
       {/* Top Header Section */}
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border-l-8 border-[#FE6B1D]">
         <div>
-          <h1 className="text-2xl font-black text-gray-800">Create Technician Profile</h1>
-          <p className="text-gray-500">Enter personal, professional, and contact details</p>
+          <h1 className="text-2xl font-black text-gray-800">
+            Create Technician Profile
+          </h1>
+          <p className="text-gray-500">
+            Enter personal, professional, and contact details
+          </p>
         </div>
       </div>
 
@@ -72,10 +81,10 @@ export default function TechnicianProfileManager() {
       <StatusAvailability formData={formData} setFormData={setFormData} />
 
       <SpecializationSkills formData={formData} setFormData={setFormData} />
-      
+
       {/* Save Button */}
       <div className="flex justify-end pt-4">
-        <button 
+        <button
           onClick={handleSave}
           className="bg-[#FE6B1D] text-white px-10 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#e85a15] transition-all shadow-xl active:scale-95"
         >

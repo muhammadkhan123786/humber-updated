@@ -8,6 +8,7 @@ import ServicesForm from "./ServicesForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IServiceType } from "../types";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -31,12 +32,12 @@ export default function VehicleServicesClient() {
       setLoading(true);
       const res = await getAll<IServiceType>("/service-types-master", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -86,21 +87,17 @@ export default function VehicleServicesClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/service-types-master", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/service-types-master", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const statsTotal = totalCount;
   const statsActive = totalActiveCount;

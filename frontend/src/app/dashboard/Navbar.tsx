@@ -17,10 +17,15 @@ interface NavItem {
 }
 
 export default function Navbar() {
+<<<<<<< HEAD
   const [navBarLinks, setNavBarLinks] = useState<NavItem[]>([]);
   // Open menus ki state ko bhi string array banayein
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+=======
+  const [navBarLinks, setNavBarLinks] = useState<INavBarLinkSharedInterface[]>([]);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+>>>>>>> main
 
   useEffect(() => {
     // 1. Hydration mismatch se bachne ke liye mount check
@@ -64,6 +69,7 @@ export default function Navbar() {
 
         return (
           <div key={link._id} className="flex flex-col gap-1">
+<<<<<<< HEAD
             <div className="flex items-center justify-between group cursor-pointer">
               {/* Agar subItems hain to ye div toggle karega, warna Link navigate karega */}
               <div
@@ -85,6 +91,26 @@ export default function Navbar() {
                     className={`transition-transform text-gray-400 ${isOpen ? "rotate-180" : ""}`}
                   />
                 </div>
+=======
+            {/* Main Link or Dropdown Trigger */}
+            <div
+              className="flex items-center justify-between group"
+              onClick={() => hasSubItems && toggleSubMenu(link._id)}
+            >
+              <NavLink navbar={link}>
+                <div className="flex gap-3 items-center py-2 px-3 rounded-md hover:bg-gray-100 transition-colors">
+                  {/* Render Lucide Icon as a Component */}
+                  {Icon && <Icon size={20} className="text-gray-600" />}
+                  <span className="text-sm font-medium">{link.label}</span>
+                </div>
+              </NavLink>
+
+              {hasSubItems && (
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform mr-2 ${isOpen ? "rotate-180" : ""}`}
+                />
+>>>>>>> main
               )}
             </div>
 

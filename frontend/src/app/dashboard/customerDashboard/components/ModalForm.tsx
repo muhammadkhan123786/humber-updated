@@ -247,7 +247,7 @@ const ModalForm: React.FC<ModalProps> = ({
                   </label>
                   <input
                     {...register("person.firstName", { required: true })}
-                    className="w-full bg-[#E8F0FE] border-none rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 ring-indigo-200 uppercase"
+                    className="w-full bg-[#E8F0FE] border-none rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 ring-indigo-200 "
                     placeholder="NAME"
                   />
                 </div>

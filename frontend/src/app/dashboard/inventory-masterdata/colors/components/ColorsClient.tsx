@@ -9,6 +9,7 @@ import Pagination from "@/components/ui/Pagination";
 import { IColor } from "../../../../../../../common/IColor.interface";
 import { fetchColors, deleteColor } from "@/hooks/useColors";
 import { updateItem } from "@/helper/apiHelper";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -32,12 +33,12 @@ export default function ColorsClient() {
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
-      const res = await fetchColors(page, 10, search.trim());
+      const res = await fetchColors(page, 12, search.trim());
       
       const items = res?.data || [];
       setDataList(items);
       setFilteredDataList(items);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination for accurate stats
@@ -83,21 +84,18 @@ export default function ColorsClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/colors", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call: Instant UI toggle, background sync.
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/colors", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   return (
     <div className="min-h-screen p-6 bg-gray-50/50">

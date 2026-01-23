@@ -19,6 +19,7 @@ import {
 
 import { fetchCustomers, removeCustomer } from "../../../../hooks/useCustomer";
 import CustomerCard from "./CustomerCard";
+import Pagination from "@/components/ui/Pagination";
 
 type ViewMode = "Grid" | "Table";
 
@@ -37,29 +38,39 @@ const CustomerManagementList = ({
   const [customers, setCustomers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const loadCustomers = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetchCustomers(1, 50, searchTerm);
-      if (response.success) {
-        setCustomers(response.data);
+  const loadCustomers = useCallback(
+    async (page = 1) => {
+      setIsLoading(true);
+      try {
+        const response = await fetchCustomers(page, 10, searchTerm);
+        if (response.success) {
+          setCustomers(response.data);
+          const totalItems = response.total || 0;
+          const limitPerPage = response.limit || 10;
+          const calculatedTotalPages = Math.ceil(totalItems / limitPerPage);
+
+          setTotalPages(calculatedTotalPages);
+          setCurrentPage(page);
+        }
+      } catch (error) {
+        console.error("Failed to load customers:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to load customers:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchTerm]);
+    },
+    [searchTerm],
+  );
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      loadCustomers();
+      loadCustomers(1);
     }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [loadCustomers, refreshTrigger]);
 
-  // 2. handleEdit ab parent function call karega
   const handleEdit = (id: string) => {
     onEdit(id);
   };
@@ -162,7 +173,7 @@ const CustomerManagementList = ({
                   email={c.contactId?.emailId}
                   phone={c.contactId?.mobileNumber}
                   address={c.addressId?.address}
-                  status="Active"
+                  status={c.isActive ? "Active" : "Inactive"}
                   registeredDate={new Date(c.createdAt).toLocaleDateString()}
                   onEdit={() => handleEdit(c._id)} // Grid Edit Trigger
                   onDelete={() => handleDelete(c._id)}
@@ -282,6 +293,15 @@ const CustomerManagementList = ({
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+          {!isLoading && customers.length > 0 && totalPages > 1 && (
+            <div className=" flex justify-end border-t border-slate-100 ">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => loadCustomers(page)}
+              />
             </div>
           )}
         </>

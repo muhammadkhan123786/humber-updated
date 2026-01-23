@@ -43,19 +43,30 @@ const ServiceRequestForm = ({ editingData, onClose, onRefresh, themeColor }: Pro
         }
     }, [editingData, reset]);
 
-    const onSubmit = async (values: FormData) => {
-        try {
-            if (editingData?._id) {
-                await updateItem("/service-request-type", editingData._id, values);
-            } else {
-                await createItem("/service-request-type", values);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving data");
+   const onSubmit = async (values: FormData) => {
+    try {
+        // localStorage se user ID nikalain
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const userId = user.id || user._id;
+
+        // Backend ko bhejne ke liye data prepare karein
+        const payload = {
+            ...values,
+            userId: userId // Agar backend ko userId chahiye toh ye lazmi hai
+        };
+
+        if (editingData?._id) {
+            await updateItem("/service-request-type", editingData._id, payload);
+        } else {
+            await createItem("/service-request-type", payload);
         }
-    };
+        onRefresh();
+        onClose();
+    } catch (error: any) {
+        alert(error.response?.data?.message || "Error saving data");
+    }
+};
 
     return (
         <FormModal title={editingData ? "Edit Request Type" : "Add Request Type"} icon={<Settings2 size={24} />} onClose={onClose} themeColor={themeColor}>

@@ -7,6 +7,7 @@ import JobTitleForm from "./JobTitleForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IJobTitles } from "../../../../../../common/suppliers/IJob.titles";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 type JobTitleWithId = IJobTitles & { _id: string };
@@ -31,12 +32,12 @@ export default function JobTitleClient() {
       setLoading(true);
       const res = await getAll<JobTitleWithId>("/job-titles", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -85,21 +86,18 @@ export default function JobTitleClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/job-titles", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+const handleStatusChange = (id: string, newStatus: boolean) => {
+  // 1 line code for job titles module
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/job-titles", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const total = totalCount;
   const active = totalActiveCount;
@@ -154,7 +152,7 @@ export default function JobTitleClient() {
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Designation Categories
+               Job Titles
               </h2>
               <p className="text-sm text-gray-500">Configure job titles for employee management</p>
             </div>

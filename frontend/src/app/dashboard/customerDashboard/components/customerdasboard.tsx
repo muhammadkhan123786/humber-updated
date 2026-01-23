@@ -98,49 +98,53 @@ const CustomerDashboard = () => {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-6 mb-16">
-        <MetricCard
-          title="Total Customers"
-          value={getValue("total")}
-          percentage={getPercentage("total")}
-          isPositive={getPercentage("total") >= 0}
-          icon={Users}
-          gradient="bg-gradient-to-br from-[#00C6FB] to-[#005BEA]"
-        />
-        <MetricCard
-          title="Domestic Customers"
-          value={getValue("domestic")}
-          percentage={getPercentage("domestic")}
-          isPositive={getPercentage("domestic") >= 0}
-          icon={User}
-          gradient="bg-gradient-to-br from-[#9D50BB] to-[#6E48AA]"
-        />
-        <MetricCard
-          title="Corporate Customers"
-          value={getValue("corporate")}
-          percentage={getPercentage("corporate")}
-          isPositive={getPercentage("corporate") >= 0}
-          icon={Building2}
-          gradient="bg-gradient-to-br from-[#F093FB] to-[#F5576C]"
-        />
-        <MetricCard
-          title="Active Customers"
-          value={getValue("active")}
-          percentage={getPercentage("active")}
-          isPositive={getPercentage("active") >= 0}
-          icon={Calendar}
-          gradient="bg-gradient-to-br from-[#0BA360] to-[#3CBA92]"
-        />
-        <MetricCard
-          title="Avg. Service History"
-          value="4.2"
-          percentage="5.8"
-          isPositive
-          icon={History}
-          gradient="bg-gradient-to-br from-[#FA709A] to-[#FEE140]"
-        />
-      </div>
-
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-10 rounded-4xl overflow-hidden shadow-lg border border-white/10">
+  <MetricCard
+    title="TOTAL CUSTOMERS"
+    value={getValue("total")}
+    percentage={getPercentage("total")}
+    isPositive={getPercentage("total") >= 0}
+    icon={Users}
+    gradient="bg-gradient-to-br from-[#00C6FB] to-[#005BEA]"
+    className="w-full"
+  />
+  <MetricCard
+    title="DOMESTIC CUSTOMERS"
+    value={getValue("domestic")}
+    percentage={getPercentage("domestic")}
+    isPositive={getPercentage("domestic") >= 0}
+    icon={User}
+    gradient="bg-gradient-to-br from-[#9D50BB] to-[#6E48AA]"
+    className="w-full border-l border-white/10"
+  />
+  <MetricCard
+    title="CORPORATE CUSTOMERS"
+    value={getValue("corporate")}
+    percentage={getPercentage("corporate")}
+    isPositive={getPercentage("corporate") >= 0}
+    icon={Building2}
+    gradient="bg-gradient-to-br from-[#F093FB] to-[#F5576C]"
+    className="w-full border-l border-white/10"
+  />
+  <MetricCard
+    title="ACTIVE CUSTOMERS"
+    value={getValue("active")}
+    percentage={getPercentage("active")}
+    isPositive={getPercentage("active") >= 0}
+    icon={Calendar}
+    gradient="bg-gradient-to-br from-[#0BA360] to-[#3CBA92]"
+    className="w-full border-l border-white/10"
+  />
+  <MetricCard
+    title="AVG. SERVICE HISTORY"
+    value="4.2"
+    percentage="5.8"
+    isPositive
+    icon={History}
+    gradient="bg-gradient-to-br from-[#FA709A] to-[#FEE140]"
+    className="w-full border-l border-white/10"
+  />
+</div>
       <div>
         <CustomerGrowthAnalytics />
       </div>

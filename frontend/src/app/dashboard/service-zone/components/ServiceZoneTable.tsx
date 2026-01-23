@@ -67,7 +67,7 @@ const ServiceZoneTable = ({ data, displayView, onEdit, onDelete, onStatusChange 
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden rounded-xl">
       <table className="w-full text-left">
-        <thead className="bg-[#FFF7ED] text-[#364153]! border-b-2 border-gray-200">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Zone Name</th>
@@ -77,7 +77,7 @@ const ServiceZoneTable = ({ data, displayView, onEdit, onDelete, onStatusChange 
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.length > 0 ? data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-[#FFF7ED] transition-colors">
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
               <td className="px-6 py-4">
                 <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
                   <LocateFixed size={18} />

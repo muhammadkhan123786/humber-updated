@@ -11,6 +11,7 @@ interface MetricProps {
   isPositive: boolean;
   icon: LucideIcon;
   gradient: string;
+  className?: string;
 }
 
 const MetricCard: React.FC<MetricProps> = ({
@@ -20,21 +21,22 @@ const MetricCard: React.FC<MetricProps> = ({
   isPositive,
   icon: Icon,
   gradient,
+  className,
 }) => {
   return (
     <motion.div
       whileHover="hover"
       initial="initial"
-      className={`relative flex flex-col justify-between p-6 rounded-[2.5rem] w-64 h-52 text-white shadow-xl overflow-hidden transition-transform hover:scale-105 ${gradient}`}
+
+      className={`relative flex flex-col justify-between p-6 rounded-[2.5rem] ${className || "w-64"} h-52 text-white shadow-xl overflow-hidden transition-transform hover:scale-105 ${gradient}`}
     >
-      {/* --- Slow Motion Shine Layer --- */}
       <motion.div
         variants={{
           initial: { x: "-150%", skewX: "-20deg" },
           hover: { x: "150%", skewX: "-20deg" },
         }}
         transition={{
-          duration: 1.8, // 0.75 se barha kar 1.8 kar diya taake slow guzre
+          duration: 1.8,
           ease: "easeInOut",
         }}
         className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/25 to-transparent z-0 pointer-events-none"
@@ -45,7 +47,6 @@ const MetricCard: React.FC<MetricProps> = ({
           {title}
         </h3>
 
-        {/* Glassmorphism Icon Box */}
         <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg overflow-hidden">
           <motion.div
             variants={{
@@ -53,7 +54,7 @@ const MetricCard: React.FC<MetricProps> = ({
               hover: { rotate: 360 },
             }}
             transition={{
-              duration: 0.8, // Icon rotation ko bhi thora slow kiya hai matching ke liye
+              duration: 0.8,
               ease: "easeInOut",
             }}
             className="flex items-center justify-center"

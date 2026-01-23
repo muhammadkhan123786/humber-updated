@@ -8,6 +8,7 @@ import BussinessTypeForm from "./BussinessTypeForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IBusinessTypes } from "../../../../../../common/suppliers/IBusiness.types.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -33,12 +34,12 @@ export default function BussinessTypeClient() {
       setLoading(true);
       const res = await getAll<BusinessTypeWithId>("/business-types", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
       
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -89,23 +90,18 @@ export default function BussinessTypeClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/business-types", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      // Update local state immediately
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      // Revert the change by refreshing
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call jo state management aur API call ko handle karega
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/business-types", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   // Calculate stats for the component
   const totalTypes = totalCount;
