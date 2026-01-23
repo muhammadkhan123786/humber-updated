@@ -7,6 +7,7 @@ import PriorityLevelTable from "./PriorityLevelTable";
 import PriorityLevelForm from "./PriorityLevelForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -85,21 +86,17 @@ export default function PriorityLevelClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/service-request-prioprity-level", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+const handleStatusChange = (id: string, newStatus: boolean) => {
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/service-request-prioprity-level",
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const statsTotal = totalCount;
   const statsActive = totalActiveCount;

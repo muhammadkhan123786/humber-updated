@@ -8,6 +8,7 @@ import CityForm from "./CityForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper"; // Updated to use apiHelper
 import { ICityInterface } from "../../../../../../common/City.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -34,13 +35,13 @@ export default function VehicleCityClient() {
       // Using apiHelper for consistent token/header management
       const res = await getAll<CityWithId>("/city", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
 
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -92,24 +93,18 @@ export default function VehicleCityClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      
-      // Using apiHelper updateItem
-      await updateItem("/city", id, { 
-        isActive: newStatus, 
-        userId: user.id || user._id 
-      });
-
-      fetchData(currentPage, searchTerm);
-    } catch (error: any) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call jo flicker-free update handle karega
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/city", // City endpoint
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const total = totalCount;
   const active = totalActiveCount;

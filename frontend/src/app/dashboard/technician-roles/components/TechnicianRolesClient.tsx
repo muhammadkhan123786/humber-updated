@@ -31,12 +31,12 @@ export default function TechnicianRolesClient() {
       setLoading(true);
       const res = await getAll<ITechnicianRoles>("/technician-roles", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -86,21 +86,37 @@ export default function TechnicianRolesClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/technician-roles", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
+ const handleStatusChange = async (id: string, newStatus: boolean) => {
+  setDataList((prevList) =>
+    prevList.map((item) =>
+      item._id === id ? { ...item, isActive: newStatus } : item
+    )
+  );
+
+  try {
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+        await updateItem("/technician-roles", id, {
+      isActive: newStatus,
+      userId: user.id || user._id,
+    });
+    if (newStatus) {
+      setTotalActiveCount((prev) => prev + 1);
+      setTotalInactiveCount((prev) => prev - 1);
+    } else {
+      setTotalActiveCount((prev) => prev - 1);
+      setTotalInactiveCount((prev) => prev + 1);
     }
-  };
+  } catch (error) {
+    console.error("Technician Role Status Update Error:", error);
+    alert("Failed to update status. Reverting...");
+        setDataList((prevList) =>
+      prevList.map((item) =>
+        item._id === id ? { ...item, isActive: !newStatus } : item
+      )
+    );
+  }
+};
 
   // Calculate stats
   const statsTotal = totalCount;

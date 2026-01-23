@@ -8,6 +8,7 @@ import Pagination from "@/components/ui/Pagination";
 import { IIcons } from "../../../../../../common/master-interfaces/IIcons.interface";
 import { fetchIcons, deleteIcon } from "@/hooks/useIcons";
 import { updateItem } from "@/helper/apiHelper"; // Ensure this is imported
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -33,7 +34,7 @@ export default function IconsClient() {
       if (res?.data) {
         setDataList(res.data);
         setFilteredDataList(res.data);
-        setTotalPages(Math.ceil(res.total / 10) || 1);
+        setTotalPages(Math.ceil(res.total / 12) || 1);
         setCurrentPage(page);
 
         // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -68,22 +69,18 @@ export default function IconsClient() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, fetchData]);
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      
-      await updateItem("/icons", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // 1 line code for icons module
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/icons", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this icon?")) return;
