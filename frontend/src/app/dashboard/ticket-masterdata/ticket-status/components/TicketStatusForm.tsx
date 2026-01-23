@@ -107,13 +107,13 @@ const TicketStatusForm = ({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
           <Controller
             control={control}
             name="is_Terminal"
             render={({ field }) => (
               <FormToggle
-                label="Terminal Status"
+                label="Status"
                 checked={field.value}
                 onChange={field.onChange}
               />
