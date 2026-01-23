@@ -7,6 +7,12 @@ import { CustomerTicketStatus } from "../models/ticket-management-system-models/
 import { CustomerBase } from "../models/customer.models";
 import { Technicians } from "../models/technician-models/technician.models";
 
+const calculatePercentage = (current = 0, last = 0) => {
+    if (last === 0 && current > 0) return 100;
+    if (last === 0 && current === 0) return 0;
+    return Number((((current - last) / last) * 100).toFixed(2));
+};
+
 export const saveTicket = async (req: Request, res: Response) => {
     // const session = await mongoose.startSession();
     // session.startTransaction();
@@ -123,17 +129,19 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
             59
         );
 
+        /* ============================
+           DASHBOARD AGGREGATION
+        ============================ */
+
         const result = await customerTicketBase.aggregate([
             {
                 $match: { isDeleted: { $ne: true } },
             },
             {
                 $facet: {
-                    /* ============================
-                     STATUS WISE COUNTS
-                    ============================ */
+                    /* -------- STATUS COUNTS -------- */
 
-                    currentByStatus: [
+                    current: [
                         {
                             $group: {
                                 _id: "$ticketStatusId",
@@ -142,7 +150,7 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
                         },
                     ],
 
-                    lastMonthByStatus: [
+                    lastMonth: [
                         {
                             $match: {
                                 createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
@@ -156,9 +164,7 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
                         },
                     ],
 
-                    /* ============================
-                     TOTAL TICKETS
-                    ============================ */
+                    /* -------- TOTAL TICKETS -------- */
 
                     totalCurrent: [{ $count: "count" }],
 
@@ -171,9 +177,7 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
                         { $count: "count" },
                     ],
 
-                    /* ============================
-                     URGENT TICKETS
-                    ============================ */
+                    /* -------- URGENT TICKETS -------- */
 
                     urgentCurrent: [
                         { $match: { priority: "Urgent" } },
@@ -196,33 +200,109 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
         const data = result[0];
 
         /* ============================
-           STATUS WISE MERGE
+           STATUS WISE WITH PERCENTAGE
         ============================ */
+
+        const statusWise = await customerTicketBase.aggregate([
+            {
+                $match: { isDeleted: { $ne: true } },
+            },
+            {
+                $group: {
+                    _id: "$ticketStatusId",
+                    current: { $sum: 1 },
+                },
+            },
+            {
+                $lookup: {
+                    from: "ticketstatuses",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "status",
+                },
+            },
+            { $unwind: "$status" },
+            {
+                $lookup: {
+                    from: "customerticketbases",
+                    let: { statusId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$ticketStatusId", "$$statusId"] },
+                                        { $gte: ["$createdAt", startOfLastMonth] },
+                                        { $lte: ["$createdAt", endOfLastMonth] },
+                                    ],
+                                },
+                            },
+                        },
+                        { $count: "count" },
+                    ],
+                    as: "lastMonth",
+                },
+            },
+            {
+                $addFields: {
+                    lastMonthCount: {
+                        $ifNull: [{ $arrayElemAt: ["$lastMonth.count", 0] }, 0],
+                    },
+                },
+            },
+            {
+                $addFields: {
+                    percentage: {
+                        $cond: [
+                            { $eq: ["$lastMonthCount", 0] },
+                            {
+                                $cond: [{ $gt: ["$current", 0] }, 100, 0],
+                            },
+                            {
+                                $round: [
+                                    {
+                                        $multiply: [
+                                            {
+                                                $divide: [
+                                                    { $subtract: ["$current", "$lastMonthCount"] },
+                                                    "$lastMonthCount",
+                                                ],
+                                            },
+                                            100,
+                                        ],
+                                    },
+                                    2,
+                                ],
+                            },
+                        ],
+                    },
+                },
+            },
+            {
+                $project: {
+                    _id: 0,
+                    statusId: "$_id",
+                    statusCode: "$status.code",
+                    statusName: "$status.name",
+                    current: 1,
+                    lastMonth: "$lastMonthCount",
+                    percentage: 1,
+                },
+            },
+            { $sort: { current: -1 } },
+        ]);
+
+        /* ============================
+           COUNTS
+        ============================ */
+
         const [totalCustomer, activeTechnicians] = await Promise.all([
             CustomerBase.countDocuments({ isDeleted: false }),
             Technicians.countDocuments({ isDeleted: false, isActive: true }),
-
         ]);
 
-
-        const statusData = data.currentByStatus.map((curr: any) => {
-            const last =
-                data.lastMonthByStatus.find((l: any) =>
-                    l._id.equals(curr._id)
-                )?.count || 0;
-
-            return {
-                statusId: curr._id,
-                statusName: curr.statusName,
-                current: curr.count,
-                lastMonth: last,
-                percentage:
-                    last === 0 ? (curr.count > 0 ? 100 : 0) : ((curr.count - last) / last) * 100,
-            };
-        });
-
         /* ============================
-           SUMMARY HELPERS
+           SUMMARY HELPER
         ============================ */
 
         const calcSummary = (current = 0, last = 0) => ({
@@ -231,6 +311,10 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
             percentage:
                 last === 0 ? (current > 0 ? 100 : 0) : ((current - last) / last) * 100,
         });
+
+        /* ============================
+           RESPONSE
+        ============================ */
 
         res.json({
             success: true,
@@ -244,9 +328,9 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
                     data.urgentLastMonth[0]?.count || 0
                 ),
             },
-            statusWise: statusData,
+            statusWise,
             totalCustomer,
-            activeTechnicians
+            activeTechnicians,
         });
     } catch (err) {
         console.error(err);
@@ -256,4 +340,5 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
         });
     }
 };
+
 
