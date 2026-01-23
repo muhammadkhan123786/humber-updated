@@ -2,13 +2,13 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
-  ChevronLeft,
-  Layout,
   Settings,
   Package,
   CheckSquare,
   Image as ImageIcon,
-  Clock
+  Clock,
+  ArrowLeft,
+  ClipboardEdit
 } from "lucide-react";
 
 export const ActivityHero = () => {
@@ -25,26 +25,26 @@ export const ActivityHero = () => {
       <div className="bg-linear-to-r from-[#4F39F6] to-[#9810FA] p-6 rounded-3xl shadow-xl flex items-center gap-4 text-white mb-8">
         <Link href="/dashboard">
           <button className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all cursor-pointer group">
-            <ChevronLeft size={24} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
           </button>
         </Link>
         <motion.div
-    // 1. Initial entrance animation
+
     initial={{ scale: 0, rotate: -180 }}
     animate={{
       scale: 1,
-      rotate: 360 // 2. Continuous 360 rotation
+      rotate: 360
     }}
     transition={{
       scale: { type: "spring", duration: 0.8 },
       rotate: {
         repeat: Infinity,
-        duration: 12, // Adjust speed: 12 seconds for a slow, premium feel
+        duration: 12,
         ease: "linear",
       },
     }}
   >
-    <Layout size={32} />
+    <ClipboardEdit size={32} />
   </motion.div>
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Record Technician Activity</h1>
