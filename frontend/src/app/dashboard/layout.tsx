@@ -8,6 +8,11 @@ import { ChevronDown, ChevronRight, Menu, Zap, LogOut } from "lucide-react";
 import { getRoleBaseNavBarLinks } from "@/lib/UtilsFns";
 import { Button } from "@/components/form/CustomButton";
 
+<<<<<<< HEAD
+=======
+
+// Interface matching your data
+>>>>>>> main
 interface NavItem {
   _id: string;
   label: string;
@@ -29,10 +34,16 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   // States
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navBarLinks, setNavBarLinks] = useState<NavItem[]>([]);
+<<<<<<< HEAD
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
   const [isMounted, setIsMounted] = useState(false);
 
   // 1. Mount handle karein hydration error se bachne ke liye
+=======
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
+    {},
+  );
+>>>>>>> main
 
   useEffect(() => {
     setIsMounted(true);
@@ -42,7 +53,11 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       const links = getRoleBaseNavBarLinks(+roleId) as unknown as NavItem[];
       setNavBarLinks(links);
 
+<<<<<<< HEAD
       // Initial expansion logic
+=======
+      // Auto-expand menus that contain the active route
+>>>>>>> main
       const initialExpansion: Record<string, boolean> = {};
       links.forEach((link) => {
         if (link.subItems?.some((sub) => pathname === sub.href)) {
@@ -53,6 +68,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     }
   }, []); // Khali dependency: Sirf mount par chalega
 
+<<<<<<< HEAD
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
@@ -62,14 +78,24 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     }
   };
 
+=======
+>>>>>>> main
   const toggleMenu = (id: string) => {
     setExpandedMenus((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+<<<<<<< HEAD
   // Agar component mount nahi hua, to render na karein (Hydration safety)
   if (!isMounted) return null;
 
   const renderNavItem = (item: NavItem, index?: number, isMobile: boolean = false) => {
+=======
+  const renderNavItem = (
+    item: NavItem,
+    index?: string,
+    isMobile: boolean = false,
+  ) => {
+>>>>>>> main
     const Icon = item.icon;
     const isActive = pathname === item.href;
     const hasSubItems = item.subItems && item.subItems.length > 0;
@@ -82,7 +108,15 @@ export default function Layout({ children, onLogout }: LayoutProps) {
           <motion.div
             initial={isMobile ? { opacity: 0, x: -20 } : undefined}
             animate={isMobile ? { opacity: 1, x: 0 } : undefined}
+<<<<<<< HEAD
             transition={isMobile && index !== undefined ? { delay: index * 0.05 } : undefined}
+=======
+            transition={
+              isMobile && typeof index === "number"
+                ? { delay: index * 0.05 }
+                : undefined
+            }
+>>>>>>> main
           >
             <button
               onClick={() => toggleMenu(item._id)}
@@ -121,9 +155,30 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                           : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
                       }`}
                     >
+<<<<<<< HEAD
                       {SubIcon && <SubIcon className="h-4 w-4" />}
                       <span>{subItem.label}</span>
                     </Link>
+=======
+                      <Link
+                        href={subItem.href}
+                        onClick={() => isMobile && setSidebarOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${isSubActive
+                          ? "bg-white/20 text-white font-medium border-l-2 border-white"
+                          : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
+                          }`}
+                      >
+                        {SubIcon && <SubIcon className="h-4 w-4" />}
+                        <span>{subItem.label}</span>
+                        {isSubActive && (
+                          <motion.div
+                            layoutId="activeSubNav"
+                            className="ml-auto h-1.5 w-1.5 rounded-full bg-white"
+                          />
+                        )}
+                      </Link>
+                    </motion.div>
+>>>>>>> main
                   );
                 })}
               </motion.div>
@@ -138,7 +193,15 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         key={item._id}
         initial={isMobile ? { opacity: 0, x: -20 } : undefined}
         animate={isMobile ? { opacity: 1, x: 0 } : undefined}
+<<<<<<< HEAD
         transition={isMobile && index !== undefined ? { delay: index * 0.05 } : undefined}
+=======
+        transition={
+          isMobile && typeof index === "number"
+            ? { delay: index * 0.05 }
+            : undefined
+        }
+>>>>>>> main
       >
         <Link
           href={item.href}
@@ -156,6 +219,13 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   };
 
   return (
+<<<<<<< HEAD
+<<<<<<< HEAD
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
+      {/* Sidebar Desktop */}
+=======
+=======
+>>>>>>> c3ca1b9beb1f13d64db2aee53cd79912eea4d1ce
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
       {/* Background patterns... (Keep existing code) */}
 
@@ -223,6 +293,10 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       </AnimatePresence>
 
       {/* Desktop sidebar */}
+<<<<<<< HEAD
+>>>>>>> main
+=======
+>>>>>>> c3ca1b9beb1f13d64db2aee53cd79912eea4d1ce
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col h-full bg-linear-to-br from-indigo-600 via-purple-600 to-purple-700 shadow-2xl">
           <div className="flex h-16 items-center px-6 border-b border-white/10 text-white gap-2 shrink-0">

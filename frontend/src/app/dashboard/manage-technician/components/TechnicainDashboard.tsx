@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import ModalForm from "./ModalForm";
 import ManageTechnicianList from "./ManageTechnicianList";
+import Pagination from "@/components/ui/Pagination";
 
 const HEADER_GRADIENT = "from-[#F54900] via-[#E7000B] to-[#E60076]";
 
@@ -25,8 +26,11 @@ const TechnicianDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
-  const fetchData = async () => {
+  const fetchData = async (page = 1) => {
     try {
       setLoading(true);
       const headers = {
@@ -34,9 +38,12 @@ const TechnicianDashboard = () => {
       };
 
       const [techRes, summaryRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians`, {
-          headers,
-        }),
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians?page=${page}&limit=${limit}`,
+          {
+            headers,
+          },
+        ),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians/summary`, {
           headers,
         }),
@@ -55,7 +62,7 @@ const TechnicianDashboard = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(1);
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -97,6 +104,7 @@ const TechnicianDashboard = () => {
     setSelectedTechnician(tech);
     setIsModalOpen(true);
   };
+  console.log("reponse data", setCurrentPage, setTotalPages);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -232,6 +240,15 @@ const TechnicianDashboard = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
+      )}
+      {!loading && technicians.length > 0 && totalPages > 1 && (
+        <div className=" flex justify-end border-t border-slate-200  pb-10">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => fetchData(page)}
+          />
+        </div>
       )}
     </div>
   );

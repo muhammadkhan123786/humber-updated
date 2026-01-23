@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -11,9 +11,7 @@ import {
   Clock,
   Settings,
   Globe,
-  Calendar,
   Home,
-  ChevronRight,
   Inbox,
   Phone,
   UserCheck,
@@ -21,8 +19,10 @@ import {
   Trash2,
   Edit3,
   MoreVertical,
+  ArrowRight,
 } from "lucide-react";
 import { deleteItem, getAlls } from "../../../../helper/apiHelper";
+import Pagination from "@/components/ui/Pagination";
 
 const TicketListingPage = () => {
   const [view, setView] = useState<"grid" | "table">("grid");
@@ -30,32 +30,43 @@ const TicketListingPage = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
     status: "",
     urgency: "",
     source: "",
   });
   const router = useRouter();
-  const fetchTickets = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (searchTerm?.trim()) params.append("searchTerm", searchTerm.trim());
-      if (filters.status) params.append("ticketStatusId", filters.status);
-      if (filters.urgency) params.append("priorityId", filters.urgency);
-      if (filters.source) params.append("ticketSource", filters.source);
+  const fetchTickets = useCallback(
+    async (page = 1) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.append("page", page.toString());
+        params.append("limit", "10");
 
-      const response = await getAlls(`/customer-tickets?${params.toString()}`);
+        if (searchTerm.trim() !== "") {
+          params.append("search", searchTerm.trim());
+        }
 
-      if (response && response.success && Array.isArray(response.data)) {
-        const mappedData = response.data.map((t: any) => {
-          return {
+        if (filters.status) params.append("ticketStatusId", filters.status);
+        if (filters.urgency) params.append("priorityId", filters.urgency);
+        if (filters.source) params.append("ticketSource", filters.source);
+
+        const response = await getAlls(
+          `/customer-tickets?${params.toString()}`,
+        );
+
+        if (response && response.success && Array.isArray(response.data)) {
+          const mappedData = response.data.map((t: any) => ({
             ...t,
-            customerName: t.customerId?.personId?.firstName,
+            customerName: t.customerId?.personId?.firstName || "Unknown",
             productName: t.vehicleId?.vehicleType || "",
             issue: t.issue_Details || "No details provided",
             status: t.ticketStatusId?.code || "",
             urgency: t.priorityId?.serviceRequestPrioprity || "",
+            bg: t.priorityId?.backgroundColor || "",
             source: t.ticketSource || "",
             location: t.location || "",
             technician:
@@ -63,26 +74,43 @@ const TicketListingPage = () => {
             createdAt: t.createdAt
               ? new Date(t.createdAt).toLocaleDateString()
               : "N/A",
-          };
-        });
-        setTickets(mappedData);
-      } else {
+          }));
+
+          setTickets(mappedData);
+
+          // FIX: Calculate total pages using the 'total' and 'limit' from your API response
+          const totalItems = response.total || 0;
+          const limitPerPage = response.limit || 10;
+          const calculatedTotalPages = Math.ceil(totalItems / limitPerPage);
+
+          setTotalPages(calculatedTotalPages);
+          setCurrentPage(page);
+        } else {
+          setTickets([]);
+          setTotalPages(1);
+        }
+      } catch (err) {
+        console.error("API Error:", err);
         setTickets([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.warn("API Error:", err);
-      setTickets([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-  console.log("tickets", tickets);
+    },
+    [filters.source, filters.status, filters.urgency, searchTerm],
+  );
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchTickets();
+      fetchTickets(1);
     }, 500);
+
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, filters]);
+  }, [
+    searchTerm,
+    filters.status,
+    filters.urgency,
+    filters.source,
+    fetchTickets,
+  ]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -115,17 +143,13 @@ const TicketListingPage = () => {
     );
   };
 
-  const getUrgencyBadge = (urgency: string = "") => {
-    const urgencyMap: Record<string, string> = {
-      high: "bg-[#FF4D00]",
-      medium: "bg-[#FFB800]",
-      low: "bg-[#545F66]",
-    };
+  const getUrgencyBadge = (urgency: string = "", bgColor: string = "") => {
     return (
       <span
-        className={`px-2 py-0.5 rounded text-white text-[9px] font-black uppercase ${
-          urgencyMap[urgency.toLowerCase()] || "bg-gray-400"
-        }`}
+        className="px-2 py-0.5 rounded text-white text-[9px] font-black uppercase"
+        style={{
+          backgroundColor: bgColor || "#9CA3AF",
+        }}
       >
         {urgency}
       </span>
@@ -171,7 +195,7 @@ const TicketListingPage = () => {
           </p>
         </div>
         <Link href="/dashboard/ticket-masterdata/createTicket">
-          <button className="flex items-end justify-center gap-2 text-white font-bold text-sm rounded-[10px] transition-all hover:opacity-90 shadow-[0_10px_15px_-3px_rgba(79,57,246,0.3)] bg-linear-to-r from-[#4F39F6] to-[#9810FA] pt-[12px] pr-[12px] pb-[13px] pl-[12px]">
+          <button className="flex items-end justify-center gap-2 text-white font-bold text-sm rounded-[10px] transition-all hover:opacity-90 shadow-[0_10px_15px_-3px_rgba(79,57,246,0.3)] bg-linear-to-r from-[#4F39F6] to-[#9810FA] pt-3 pr-3 pb-[13px] pl-3">
             <Plus size={18} strokeWidth={3} />
             Create New Ticket
           </button>
@@ -282,7 +306,7 @@ const TicketListingPage = () => {
           {tickets.map((t) => (
             <div
               key={t._id}
-              className="bg-white flex flex-col justify-between hover:shadow-lg transition-all border border-gray-50 relative overflow-hidden"
+              className="bg-white flex flex-col justify-between hover:shadow-lg transition-all border border-gray-50 relative group" // 'group' class yahan add ki hai
               style={{
                 padding: "24px",
                 borderRadius: "16px",
@@ -303,7 +327,6 @@ const TicketListingPage = () => {
               />
 
               <div className="pt-2">
-                {" "}
                 <div className="flex justify-between items-center mb-2">
                   <div
                     className="flex items-center gap-2 font-semibold text-[13px]"
@@ -312,9 +335,70 @@ const TicketListingPage = () => {
                     <Clock size={16} strokeWidth={2.5} />
                     <span>{t.ticketCode || t.displayId}</span>
                   </div>
-                  {getUrgencyBadge(t.urgency)}
+
+                  <div className="flex items-center gap-2 relative">
+                    {getUrgencyBadge(t.urgency, t.bg)}
+                    <div
+                      className={`transition-opacity duration-200 ${activeMenu === t._id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                    >
+                      <button
+                        onClick={() =>
+                          setActiveMenu(activeMenu === t._id ? null : t._id)
+                        }
+                        className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+                    </div>
+
+                    {activeMenu === t._id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setActiveMenu(null)}
+                        />
+                        <div
+                          className="absolute right-0 top-8 w-40 bg-white border border-gray-100 py-1 z-20 shadow-xl animate-in fade-in zoom-in duration-200"
+                          style={{ borderRadius: "12px" }}
+                        >
+                          <Link
+                            href={`/dashboard/ticket-masterdata/allTickets/${t._id}`}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 border-b border-gray-50"
+                          >
+                            <Search size={14} className="text-blue-500" /> View
+                            Details
+                          </Link>
+
+                          <button
+                            onClick={() => {
+                              handleEdit(t);
+                              setActiveMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50"
+                          >
+                            <Edit3 size={14} className="text-amber-500" /> Edit
+                            Ticket
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleDelete(t._id);
+                              setActiveMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 border-t border-gray-50"
+                          >
+                            <Trash2 size={14} className="text-red-400" /> Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                {/* ... Baki card ka content (Status, Customer, Product, Issue) wese hi rahega ... */}
+
                 <div className="mb-6">{getStatusBadge(t.status)}</div>
+
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-[#F5F3FF] flex items-center justify-center text-[#6D28D9]">
@@ -324,7 +408,6 @@ const TicketListingPage = () => {
                       {t.customerName}
                     </span>
                   </div>
-
                   <div className="flex items-center gap-3 text-gray-500">
                     <div className="w-9 h-9 flex items-center justify-center">
                       <Settings size={18} className="text-[#A78BFA]" />
@@ -334,6 +417,7 @@ const TicketListingPage = () => {
                     </span>
                   </div>
                 </div>
+
                 <div className="min-h-[60px] mb-6">
                   <p className="text-[14px] text-gray-600 leading-relaxed font-normal">
                     {t.issue}
@@ -347,28 +431,10 @@ const TicketListingPage = () => {
                     {getSourceIcon(t.source)}
                     <span className="text-[12px] font-medium">{t.source}</span>
                   </div>
-
                   <div className="flex items-center gap-2 justify-end text-gray-400">
                     <Home size={14} className="text-orange-400" />
                     <span className="text-[12px] font-medium">
                       {t.location}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <Calendar size={14} />
-                    <span className="text-[12px] font-medium">
-                      {t.createdAt}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 justify-end">
-                    <User size={14} style={{ color: "#4F39F6" }} />
-                    <span
-                      className="text-[12px] font-bold uppercase"
-                      style={{ color: "#4F39F6" }}
-                    >
-                      {t.technician}
                     </span>
                   </div>
                 </div>
@@ -378,7 +444,7 @@ const TicketListingPage = () => {
                   className="w-full mt-6 font-bold text-[14px] flex items-center justify-end gap-1 hover:gap-2 transition-all cursor-pointer"
                   style={{ color: "#4F39F6" }}
                 >
-                  View Details <ChevronRight size={18} strokeWidth={3} />
+                  View Details <ArrowRight size={18} strokeWidth={3} />
                 </Link>
               </div>
             </div>
@@ -426,7 +492,9 @@ const TicketListingPage = () => {
                     {t.issue}
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(t.status)}</td>
-                  <td className="px-6 py-4">{getUrgencyBadge(t.urgency)}</td>
+                  <td className="px-6 py-4">
+                    {getUrgencyBadge(t.urgency, t.bg)}
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase">
                       {getSourceIcon(t.source)} {t.source}
@@ -513,6 +581,16 @@ const TicketListingPage = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!loading && tickets.length > 0 && totalPages > 1 && (
+        <div className=" flex justify-end border-t border-gray-100 ">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => fetchTickets(page)}
+          />
         </div>
       )}
     </div>

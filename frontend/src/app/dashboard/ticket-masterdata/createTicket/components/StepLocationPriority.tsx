@@ -55,7 +55,7 @@ const StepLocationPriority = ({
       icon: Truck,
     },
   ];
-
+  console.log("this is our tech ", technicians);
   const showAddressField =
     currentLoc === "On-Site" || currentLoc === "Mobile Service";
   const selectedTechnicianNames =
@@ -169,26 +169,28 @@ const StepLocationPriority = ({
             control={control}
             render={({ field }) => (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {statuses?.map((s: any) => {
-                  const isActive = field.value === s._id;
-                  return (
-                    <button
-                      key={s._id}
-                      type="button"
-                      onClick={() => field.onChange(s._id)}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center ${
-                        isActive
-                          ? "bg-green-500 text-white border-transparent shadow-md"
-                          : "bg-white text-gray-600 border-gray-100 hover:border-green-200"
-                      }`}
-                    >
-                      <span className="font-bold text-[11px] uppercase tracking-wider">
-                        {s.label}
-                      </span>
-                      {isActive && <Check size={12} className="mt-1" />}
-                    </button>
-                  );
-                })}
+                {statuses
+                  ?.filter((s: any) => s.isDefault === true)
+                  .map((s: any) => {
+                    const isActive = field.value === s._id;
+                    return (
+                      <button
+                        key={s._id}
+                        type="button"
+                        onClick={() => field.onChange(s._id)}
+                        className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center ${
+                          isActive
+                            ? "bg-green-500 text-white border-transparent shadow-md"
+                            : "bg-white text-gray-600 border-gray-100 hover:border-green-200"
+                        }`}
+                      >
+                        <span className="font-bold text-[11px] uppercase tracking-wider">
+                          {s.label}
+                        </span>
+                        {isActive && <Check size={12} className="mt-1" />}
+                      </button>
+                    );
+                  })}
               </div>
             )}
           />
@@ -210,17 +212,22 @@ const StepLocationPriority = ({
               <div className="flex flex-col gap-2">
                 {priorities?.map((p: any) => {
                   const isActive = field.value === p._id;
+
                   return (
                     <button
                       key={p._id}
                       type="button"
                       onClick={() => field.onChange(p._id)}
+                      // Dynamic color ke liye hum style use karenge
+                      style={{
+                        backgroundColor: isActive ? p.backgroundColor : "white",
+                      }}
                       className={`relative flex flex-col items-start p-4 rounded-xl border transition-all text-left ${
                         isActive
-                          ? "bg-[#FFA500] text-white border-transparent shadow-md"
+                          ? "text-white border-transparent shadow-md" // Ab yahan bg- color nikal diya hai
                           : errors.priorityId
-                            ? "bg-white text-gray-600 border-red-300"
-                            : "bg-white text-gray-600 border-gray-100"
+                            ? "text-gray-600 border-red-300"
+                            : "text-gray-600 border-gray-100"
                       }`}
                     >
                       <p className="font-bold text-sm">
@@ -269,9 +276,6 @@ const StepLocationPriority = ({
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                   {technicians?.map((tech: any) => {
                     const isSelected = field.value?.includes(tech._id);
-                    const statusColor = tech.isActive
-                      ? "text-green-600 bg-green-100"
-                      : "text-red-500 bg-red-50";
 
                     return (
                       <button
@@ -311,13 +315,15 @@ const StepLocationPriority = ({
                               {tech.personId?.lastName}
                             </p>
                             <span
-                              className={`text-[9px] w-fit px-2 py-0.5 rounded-full font-bold mt-0.5 ${
-                                isSelected
-                                  ? "bg-white/20 text-white"
-                                  : statusColor
+                              className={`text-[11px] font-bold ${
+                                tech.technicianStatus?.toLowerCase() ===
+                                  "busy" ||
+                                tech.technicianStatus?.toLowerCase() === "bzy"
+                                  ? "text-red-500"
+                                  : "text-green-600"
                               }`}
                             >
-                              {tech.isActive ? "Available" : "Busy"}
+                              {tech.technicianStatus}
                             </span>
                           </div>
                         </div>

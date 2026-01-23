@@ -1072,6 +1072,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               type="date"
               value={formData.contractEndDate}
               onChange={handleChange}
+               min={formData.contractStartDate}
             />
           </div>
         </FormSection>

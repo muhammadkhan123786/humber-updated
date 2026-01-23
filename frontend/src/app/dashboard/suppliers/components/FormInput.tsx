@@ -23,6 +23,8 @@ interface FormFieldProps {
   required?: boolean;
   disabled?: boolean;
   multiple?: boolean; // 👈 Add this to fix the TypeScript error
+   min?: string;   // ✅ ADD THIS
+  max?: string;
 }
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -36,7 +38,9 @@ const FormField: React.FC<FormFieldProps> = ({
   defaultValue,
   className = "",
   required = false,
-  multiple = false, // 👈 Default to false
+  multiple = false,
+ min,
+  max,
 }) => {
   const commonProps = {
     name,
@@ -44,6 +48,8 @@ const FormField: React.FC<FormFieldProps> = ({
     onChange,
     placeholder,
     required,
+     min,
+  max,
     className:
       "w-full bg-white border border-[#d0d5dd] rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-400 transition-all",
   };
