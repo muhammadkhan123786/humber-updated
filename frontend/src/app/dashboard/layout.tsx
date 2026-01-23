@@ -220,9 +220,12 @@ export default function Layout({ children, onLogout }: LayoutProps) {
 
   return (
 <<<<<<< HEAD
+<<<<<<< HEAD
     <div className="min-h-screen bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
       {/* Sidebar Desktop */}
 =======
+=======
+>>>>>>> c3ca1b9beb1f13d64db2aee53cd79912eea4d1ce
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
       {/* Background patterns... (Keep existing code) */}
 
@@ -290,7 +293,10 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       </AnimatePresence>
 
       {/* Desktop sidebar */}
+<<<<<<< HEAD
 >>>>>>> main
+=======
+>>>>>>> c3ca1b9beb1f13d64db2aee53cd79912eea4d1ce
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col h-full bg-linear-to-br from-indigo-600 via-purple-600 to-purple-700 shadow-2xl">
           <div className="flex h-16 items-center px-6 border-b border-white/10 text-white gap-2 shrink-0">

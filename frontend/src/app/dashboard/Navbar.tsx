@@ -18,6 +18,7 @@ interface NavItem {
 
 export default function Navbar() {
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [navBarLinks, setNavBarLinks] = useState<NavItem[]>([]);
   // Open menus ki state ko bhi string array banayein
   const [openMenus, setOpenMenus] = useState<string[]>([]);
@@ -26,6 +27,10 @@ export default function Navbar() {
   const [navBarLinks, setNavBarLinks] = useState<INavBarLinkSharedInterface[]>([]);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 >>>>>>> main
+=======
+  const [navBarLinks, setNavBarLinks] = useState<INavBarLinkSharedInterface[]>([]);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+>>>>>>> c3ca1b9beb1f13d64db2aee53cd79912eea4d1ce
 
   useEffect(() => {
     // 1. Hydration mismatch se bachne ke liye mount check
