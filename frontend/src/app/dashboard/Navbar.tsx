@@ -68,7 +68,7 @@ interface NavItem {
   _id: number;
   label: string;
   href: string;
-  icon: any; 
+  icon: any;
   roleId: number[];
   subItems?: NavItem[];
 
@@ -76,7 +76,7 @@ interface NavItem {
 
 export default function Navbar() {
   const [navBarLinks, setNavBarLinks] = useState<INavBarLinkSharedInterface[]>([]);
-  const [openMenus, setOpenMenus] = useState<number[]>([]);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   useEffect(() => {
     function fetchLinks() {
@@ -93,7 +93,7 @@ export default function Navbar() {
     fetchLinks();
   }, []);
 
-  const toggleSubMenu = (id: number) => {
+  const toggleSubMenu = (id: string) => {
     setOpenMenus((prev) =>
       prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
     );
@@ -109,7 +109,7 @@ export default function Navbar() {
         return (
           <div key={link._id} className="flex flex-col gap-1">
             {/* Main Link or Dropdown Trigger */}
-            <div 
+            <div
               className="flex items-center justify-between group"
               onClick={() => hasSubItems && toggleSubMenu(link._id)}
             >
@@ -122,9 +122,9 @@ export default function Navbar() {
               </NavLink>
 
               {hasSubItems && (
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform mr-2 ${isOpen ? "rotate-180" : ""}`} 
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform mr-2 ${isOpen ? "rotate-180" : ""}`}
                 />
               )}
             </div>

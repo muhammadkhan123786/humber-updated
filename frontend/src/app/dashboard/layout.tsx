@@ -51,9 +51,10 @@ import { ChevronDown, ChevronRight, Menu, X, Zap, LogOut } from "lucide-react";
 import { getRoleBaseNavBarLinks } from "@/lib/UtilsFns";
 import { Button } from "@/components/form/CustomButton"; // Assuming your button path
 
+
 // Interface matching your data
 interface NavItem {
-  _id: number;
+  _id: string;
   label: string;
   href: string;
   icon: any;
@@ -70,7 +71,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navBarLinks, setNavBarLinks] = useState<NavItem[]>([]);
-  const [expandedMenus, setExpandedMenus] = useState<Record<number, boolean>>(
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
     {},
   );
 
@@ -82,7 +83,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
       setNavBarLinks(links);
 
       // Auto-expand menus that contain the active route
-      const initialExpansion: Record<number, boolean> = {};
+      const initialExpansion: Record<string, boolean> = {};
       links.forEach((link) => {
         if (link.subItems?.some((sub) => pathname === sub.href)) {
           initialExpansion[link._id] = true;
@@ -92,13 +93,13 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     }
   }, [pathname]);
 
-  const toggleMenu = (id: number) => {
+  const toggleMenu = (id: string) => {
     setExpandedMenus((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const renderNavItem = (
     item: NavItem,
-    index?: number,
+    index?: string,
     isMobile: boolean = false,
   ) => {
     const Icon = item.icon;
@@ -116,18 +117,17 @@ export default function Layout({ children, onLogout }: LayoutProps) {
             initial={isMobile ? { opacity: 0, x: -20 } : undefined}
             animate={isMobile ? { opacity: 1, x: 0 } : undefined}
             transition={
-              isMobile && index !== undefined
+              isMobile && typeof index === "number"
                 ? { delay: index * 0.05 }
                 : undefined
             }
           >
             <button
               onClick={() => toggleMenu(item._id)}
-              className={`w-full group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                isActive || hasActiveSubItem
-                  ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
-                  : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
-              }`}
+              className={`w-full group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive || hasActiveSubItem
+                ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
+                : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
+                }`}
             >
               <div className="flex items-center gap-3">
                 {Icon && <Icon className="h-5 w-5" />}
@@ -163,11 +163,10 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                       <Link
                         href={subItem.href}
                         onClick={() => isMobile && setSidebarOpen(false)}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
-                          isSubActive
-                            ? "bg-white/20 text-white font-medium border-l-2 border-white"
-                            : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
-                        }`}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${isSubActive
+                          ? "bg-white/20 text-white font-medium border-l-2 border-white"
+                          : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
+                          }`}
                       >
                         {SubIcon && <SubIcon className="h-4 w-4" />}
                         <span>{subItem.label}</span>
@@ -194,17 +193,18 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         initial={isMobile ? { opacity: 0, x: -20 } : undefined}
         animate={isMobile ? { opacity: 1, x: 0 } : undefined}
         transition={
-          isMobile && index !== undefined ? { delay: index * 0.05 } : undefined
+          isMobile && typeof index === "number"
+            ? { delay: index * 0.05 }
+            : undefined
         }
       >
         <Link
           href={item.href}
           onClick={() => isMobile && setSidebarOpen(false)}
-          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-            isActive
-              ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
-              : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
-          }`}
+          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive
+            ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
+            : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
+            }`}
         >
           {Icon && <Icon className="h-5 w-5" />}
           <span className="font-medium">{item.label}</span>
@@ -265,7 +265,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
               {/* 4. Navigation Links Area */}
               <nav className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                 {navBarLinks.map((item, index) =>
-                  renderNavItem(item, index, true),
+                  renderNavItem(item, String(index), true),
                 )}
               </nav>
 
