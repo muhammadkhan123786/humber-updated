@@ -61,6 +61,7 @@ import iconsRouter from "./routes/master-data-routes/icons.routes";
 import SupplierRouters from "./routes/suppliers/supplier.routes";
 import contractTypeRouter from "./routes/master-data-routes/contract.types.routes";
 import techniciansRouter from "./routes/technicians/technicians.routes";
+import technicianServiceTypeRouter from "./routes/master-data-routes/technician.service.types.routes";
 
 // Create express app
 const app: Application = express();
@@ -241,7 +242,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/customer-tickets`,
-  // adminProtecter,
+  adminProtecter,
   customerTicketBaseRouter,
 );
 
@@ -282,6 +283,14 @@ app.use(
   adminProtecter,
   contractTypeRouter,
 );
+
+//23-01-2026 
+app.use(
+  `${process.env.API_PREFIX}/technician-service-types`,
+  adminProtecter,
+  technicianServiceTypeRouter,
+);
+
 
 //Muhammad Imran code ended here.
 
