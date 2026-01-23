@@ -7,6 +7,7 @@ import SubServicesForm from "./SubServicesForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ISubServicesInterface } from "../../../../../../common/ISubServices.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 type SubServiceWithId = ISubServicesInterface & { _id: string };
 
@@ -30,12 +31,12 @@ export default function SubServicesVehicleClient() {
       setLoading(true);
       const res = await getAll<SubServiceWithId>("/sub-services", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -85,21 +86,18 @@ export default function SubServicesVehicleClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/sub-services", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Bas 1 line ka code aur aapka kaam ho gaya!
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/sub-services", // Endpoint for sub-services
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const statsTotal = totalCount;
   const statsActive = totalActiveCount;

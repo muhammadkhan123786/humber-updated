@@ -8,6 +8,7 @@ import SizeForm from "./SizeForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ISize } from "../../../../../../../common/ISize.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 const API_URL = "/sizes";
@@ -37,7 +38,7 @@ export default function SizeClient() {
 
       const res = await getAll<SizeWithId>(API_URL, {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
         userId: user.id || user._id,
       });
@@ -51,7 +52,7 @@ export default function SizeClient() {
 
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
       
       // Track total counts across ALL data
@@ -96,21 +97,17 @@ export default function SizeClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem(API_URL, id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    API_URL, 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   return (
     <div className="min-h-screen p-6">

@@ -8,6 +8,7 @@ import TicketActionForm from "./TicketActionForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ITicketActions } from "../../../../../../../common/Ticket-management-system/ITicketActions.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -33,7 +34,7 @@ export default function TicketActionsClient() {
       setLoading(true);
       const res = await getAll<TicketActionWithId>("/ticket-actions", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       const allDataRes = await getAll<TicketActionWithId>("/ticket-actions", {
@@ -42,7 +43,7 @@ export default function TicketActionsClient() {
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
       setTotalCount(res.total || 0);
       setTotalActiveCount(allDataRes.data?.filter(d => d.isActive).length || 0);
@@ -86,21 +87,18 @@ export default function TicketActionsClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/ticket-actions", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function jo state management aur API call dono ko handle karega
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/ticket-actions", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const statsTotal = totalCount;
   const statsActive = totalActiveCount;

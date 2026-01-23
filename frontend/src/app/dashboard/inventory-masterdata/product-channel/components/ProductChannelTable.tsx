@@ -86,7 +86,7 @@ const ProductChannelTable = ({ data, displayView, onEdit, onDelete, onStatusChan
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
       <table className="w-full text-[16px] text-left min-w-max">
-        <thead className="bg-[#FFF7ED] border-b-2 border-orange-100 sticky top-0">
+        <thead className="bg-[#ECFEFF] border-b-2 border-orange-100 sticky top-0">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Channel Name</th>
@@ -96,7 +96,7 @@ const ProductChannelTable = ({ data, displayView, onEdit, onDelete, onStatusChan
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-blue-50/50 transition-colors">
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
               <td className="px-6 py-4">
                 <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
                   <Tv size={18} />

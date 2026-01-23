@@ -7,6 +7,8 @@ import ItemConditionTable from "./ItemConditionTable";
 import ItemConditionForm from "./ItemConditionForm";
 import Pagination from "@/components/ui/Pagination";
 import { IItemsConditions } from "../../../../../../../common/IItems.conditions.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import { updateItem } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/items-conditions`;
@@ -40,13 +42,13 @@ export default function ItemConditionClient() {
           userId: savedUser.id || savedUser._id,
           search: search.trim(),
           page: page.toString(),
-          limit: "10"
+          limit: "12"
         }
       });
       
       setDataList(res.data.data || []);
       setFilteredDataList(res.data.data || []);
-      setTotalPages(Math.ceil((res.data.total || 0) / 10) || 1);
+      setTotalPages(Math.ceil((res.data.total || 0) / 12) || 1);
       setCurrentPage(page);
       
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -104,28 +106,18 @@ export default function ItemConditionClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const token = localStorage.getItem("token");
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      
-      await axios.put(`${API_URL}/${id}`, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Update local state immediately
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      // Revert the change by refreshing
-      fetchData(currentPage, searchTerm);
-    }
-  };
+const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call: Instant UI update with zero flicker!
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    API_URL, 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   // Calculate stats for the component
   const totalConditions = totalCount;

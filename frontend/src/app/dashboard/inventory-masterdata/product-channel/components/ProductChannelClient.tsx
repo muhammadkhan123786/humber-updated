@@ -8,6 +8,7 @@ import ProductChannelForm from "./ProductChannelForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IChannel } from "../../../../../../../common/IChannel.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 
 // Updated theme color to use CSS variable
 const THEME_COLOR = "var(--primary-gradient)";
@@ -34,12 +35,12 @@ export default function ProductChannelClient() {
       setLoading(true);
       const res = await getAll<ChannelWithId>("/product-channels", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -90,21 +91,18 @@ export default function ProductChannelClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/product-channels", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call jo state management aur API call dono ko handle karega
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/product-channels", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   // Stats calculation
   const statsTotal = totalCount;

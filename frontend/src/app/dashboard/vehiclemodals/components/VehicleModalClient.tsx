@@ -33,12 +33,12 @@ export default function VehicleModelClient() {
       setLoading(true);
       const res = await getAll<VehicleModelWithId>("/vechilemodel", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
 
       // Fetch ALL data without pagination to get accurate active/inactive counts
@@ -88,21 +88,49 @@ export default function VehicleModelClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/vechilemodel", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
+const handleStatusChange = async (id: string, newStatus: boolean) => {
+  // 1. UI ko fauran update karein (Optimistic Update)
+  // Is se switch bina kisi delay ke on/off ho jayega
+  setDataList((prevList) =>
+    prevList.map((item) =>
+      item._id === id ? { ...item, isActive: newStatus } : item
+    )
+  );
+
+  try {
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    
+    // 2. Background mein API call karein
+    await updateItem("/vechilemodel", id, {
+      isActive: newStatus,
+      userId: user.id || user._id,
+    });
+
+    // 3. Stats update karein (taake header cards ke number sync rahein)
+    if (newStatus) {
+      setTotalActiveCount((prev) => prev + 1);
+      setTotalInactiveCount((prev) => prev - 1);
+    } else {
+      setTotalActiveCount((prev) => prev - 1);
+      setTotalInactiveCount((prev) => prev + 1);
     }
-  };
+
+    // NOTE: fetchData() call karne ki zaroorat nahi hai, 
+    // kyunki state already update ho chuki hai.
+
+  } catch (error) {
+    console.error("Status Update Error:", error);
+    alert("Failed to update status. Reverting...");
+    
+    // 4. Agar API fail ho jaye, to UI ko purani state par rollback karein
+    setDataList((prevList) =>
+      prevList.map((item) =>
+        item._id === id ? { ...item, isActive: !newStatus } : item
+      )
+    );
+  }
+};
 
   const statsTotal = totalCount;
   const statsActive = totalActiveCount;
