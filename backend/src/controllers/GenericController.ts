@@ -69,9 +69,6 @@ export class AdvancedGenericController<T extends Document> {
                 }
             });
 
-            // const total = await this.options.service
-            //     .getQuery(queryFilters)
-            //     .countDocuments();
 
             let { query, total, activeCount, inactiveCount } = await this.options.service.getQuery(queryFilters, {
                 populate: this.options.populate,
@@ -82,7 +79,7 @@ export class AdvancedGenericController<T extends Document> {
 
             // ✅ Check if filter=all, then skip pagination
             if (filter === "all") {
-                const data = await query.sort(sortOption).exec();
+                const data = await query.sort(sortOption).find({ isActive: true }).exec();
                 return res.status(200).json({
                     success: true,
                     total,
