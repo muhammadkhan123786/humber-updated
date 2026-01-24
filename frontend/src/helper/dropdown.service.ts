@@ -106,28 +106,6 @@ export class DropdownService {
     }
   }
 
-  // private static async fetchCategories(): Promise<DropdownOption[]> {
-  //   try {
-  //     // For now, return static data
-  //     const staticCategories = [
-  //       { value: "695cd3474336b9778eaf4951", label: "Dell", code: "DEL" },
-  //       { value: "695cd3474336b9778eaf4952", label: "HP", code: "HP" },
-  //       { value: "695cd3474336b9778eaf4953", label: "Lenovo", code: "LEN" },
-  //       { value: "695cd3474336b9778eaf4954", label: "Apple", code: "APL" },
-  //       { value: "695cd3474336b9778eaf4955", label: "Acer", code: "ACE" },
-  //       { value: "695cd3474336b9778eaf4956", label: "Asus", code: "ASU" },
-  //       { value: "695cd3474336b9778eaf4957", label: "Microsoft", code: "MS" },
-  //       { value: "695cd3474336b9778eaf4958", label: "Samsung", code: "SAM" },
-  //     ];
-
-  //     console.log("Using static categories:", staticCategories);
-  //     return staticCategories;
-
-  //   } catch (error) {
-  //     console.error("Error in fetchCategories:", error);
-  //     return [];
-  //   }
-  // }
   private static async fetchTaxes(): Promise<DropdownOption[]> {
     try {
       const response = await getAll<{
@@ -153,6 +131,7 @@ export class DropdownService {
         currencyName: string;
         currencySymbol: string;
       }>("/currencies", { limit: 100 });
+
 
       return response.data.map((item) => ({
         value: item._id,
@@ -343,4 +322,59 @@ export class DropdownService {
       return [];
     }
   }
+
+  private static async fetchConditions(): Promise<DropdownOption[]> {
+    try {
+      const response = await getAll<{ _id: string; itemConditionName: string }>(
+        "/items-conditions",
+        { limit: 100 }
+      );
+      return response.data.map((item) => ({
+        value: item._id,
+        label: item.itemConditionName,
+      }));
+    } catch (error) {
+      console.error("Error fetching sizes:", error);
+      return [];
+    }
+  }
+
+
+  // DO NOT create a new class
+// ADD this method inside existing DropdownService class
+
+static async fetchOnlyTaxAndCurrency() {
+  try {
+    const [taxes, currencies] =
+      await Promise.all([
+        this.fetchTaxes(),
+        this.fetchCurrencies(),       
+      ]);
+    return {
+      taxes,
+      currencies,     
+    };
+  } catch (error) {
+    console.error("Error fetching only four dropdowns", error);
+    throw error;
+  }
+}
+
+static async fetchOnlyWarehouse() {
+  try {
+    const warehouses = await this.fetchWherehoues();
+    const warehouseStatus = await this.fetchWherehouesStatus();
+    const productStatus = await this.fetchStatus();
+    const conditions = await this.fetchConditions();
+    return {
+      warehouses,
+      warehouseStatus,
+      productStatus,
+      conditions
+    };
+  } catch (error) {
+    console.error("Error fetching only warehouse dropdowns", error);
+    throw error;
+  }
+}
 }

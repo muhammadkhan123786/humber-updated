@@ -1,40 +1,39 @@
-'use client'
-import { AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+"use client";
+import { AnimatePresence } from "framer-motion";
 
 // Data
-import { STEPS } from '../data/productData';
+import { STEPS } from "../data/productData";
 
 // Hooks
-import { useProductForm } from '@/hooks/useProductForm';
+import { useProductForm } from "../hooks/useProductForm";
 
 // Components
-import { AnimatedBackground } from './AnimatedBackground';
-import { FormHeader } from './FormHeader';
-import { StepIndicator } from './StepIndicator';
-import { StepCard } from './StepCard';
-import { NavigationButtons } from './NavigationButtons';
-import { CategoryStep } from './steps/CategoryStep';
-import { BasicInfoStep } from './steps/BasicInfoStep';
-import { PricingStep } from './steps/PricingStep';
-import { InventoryStep } from './steps/InventoryStep';
-import { SpecificationsStep } from './steps/SpecificationsStep';
-
-
-// Import category tree
-import { categoryTree } from '../data/categoryTree';
+import { AnimatedBackground } from "./AnimatedBackground";
+import { FormHeader } from "./FormHeader";
+import { StepIndicator } from "./StepIndicator";
+import { StepCard } from "./StepCard";
+import { NavigationButtons } from "./NavigationButtons";
+import { CategoryStep } from "./steps/CategoryStep";
+import { BasicInfoStep } from "./steps/BasicInfoStep";
+import { PricingStep } from "./steps/PricingStep";
+import { InventoryStep } from "./steps/InventoryStep";
+import { SpecificationsStep } from "./steps/SpecificationsStep";
 
 export default function AddProductForm() {
   const {
     currentStep,
     formData,
-    selectedLevel1,
-    selectedLevel2,
-    selectedLevel3,
+    selectedPath,
+    fetchedCategories,
+    selectedCategories,
+    getCategoriesAtLevel,
+    handleCategorySelect,
     dynamicFields,
     tags,
     images,
     newTag,
+    dropdowns,
+    dropdownLoading,
     getSelectedCategory,
     getAllFields,
     handleInputChange,
@@ -46,60 +45,52 @@ export default function AddProductForm() {
     removeImage,
     nextStep,
     prevStep,
-    setSelectedLevel1,
-    setSelectedLevel2,
-    setSelectedLevel3,
-    setNewTag
+    setNewTag,
+    attributes,
   } = useProductForm({
     initialData: {
-      productName: '',
-      sku: '',
-      barcode: '',
-      brand: '',
-      manufacturer: '',
-      modelNumber: '',
-      description: '',
-      shortDescription: '',
-      costPrice: '',
-      sellingPrice: '',
-      retailPrice: '',
-      discountPercentage: '',
-      taxRate: '20',
+      productName: "",
+      sku: "",
+      barcode: "",
+      brand: "",
+      manufacturer: "",
+      modelNumber: "",
+      description: "",
+      shortDescription: "",
+      keywords: "",
+      costPrice: "",
+      sellingPrice: "",
+      retailPrice: "",
+      discountPercentage: "",
+      taxRate: "20",
       vatExempt: false,
-      stockQuantity: '',
-      minStockLevel: '',
-      maxStockLevel: '',
-      reorderPoint: '',
-      stockLocation: '',
-      warehouse: '',
-      binLocation: '',
-      weight: '',
-      length: '',
-      width: '',
-      height: '',
-      color: '',
-      material: '',
-      warranty: '',
-      warrantyPeriod: '',
-      condition: 'new',
-      status: 'active',
+      stockQuantity: "",
+      minStockLevel: "",
+      maxStockLevel: "",
+      reorderPoint: "",
+      stockLocation: "",
+      warehouse: "",
+      binLocation: "",
+      weight: "",
+      length: "",
+      width: "",
+      height: "",
+      color: "",
+      material: "",
+      warranty: "",
+      warrantyPeriod: "",
+      condition: "new",
+      status: "active",
       featured: false,
-      metaTitle: '',
-      metaDescription: '',
-      metaKeywords: ''
+      metaTitle: "",
+      metaDescription: "",
+      metaKeywords: "",
     },
     onSubmit: (data) => {
-      console.log('Product data submitted:', data);
-      toast.success('Product created successfully!');
-    }
-    
+      console.log("Product data submitted:", data);
+    },
+    categories: [], // Pass empty array initially, will be fetched in hook
   });
-  const filteredLevel2 =
-  categoryTree.find(c => c.id === selectedLevel1)?.children ?? [];
-
-const filteredLevel3 =
-  filteredLevel2.find(c => c.id === selectedLevel2)?.children ?? [];
-
 
   const renderStepContent = () => {
     const currentStepData = STEPS[currentStep - 1];
@@ -115,20 +106,13 @@ const filteredLevel3 =
             bgGradient={currentStepData.bgGradient}
             borderGradient={currentStepData.borderGradient}
           >
-  <CategoryStep
-  selectedLevel1={selectedLevel1}
-  selectedLevel2={selectedLevel2}
-  selectedLevel3={selectedLevel3}
-  categoriesLevel1={categoryTree}
-  filteredLevel2={filteredLevel2}
-  filteredLevel3={filteredLevel3}
-  getSelectedCategory={getSelectedCategory}
-  onLevel1Change={setSelectedLevel1}
-  onLevel2Change={setSelectedLevel2}
-  onLevel3Change={setSelectedLevel3}
-/>
-
-
+            <CategoryStep
+              selectedPath={selectedPath || []}
+              categories={fetchedCategories || []}
+              selectedCategories={selectedCategories || []}
+              getCategoriesAtLevel={getCategoriesAtLevel}
+              handleCategorySelect={handleCategorySelect}
+            />
           </StepCard>
         );
 
@@ -170,6 +154,9 @@ const filteredLevel3 =
             <PricingStep
               formData={formData}
               onInputChange={handleInputChange}
+              currencies={dropdowns.currencies}
+              taxes={dropdowns.taxes}
+              // dropdownLoading={dropdownLoading}
             />
           </StepCard>
         );
@@ -187,17 +174,28 @@ const filteredLevel3 =
             <InventoryStep
               formData={formData}
               onInputChange={handleInputChange}
+              warehouses={dropdowns.warehouses}
+              warehouseStatus={dropdowns.warehouseStatus}
+              productStatus={dropdowns.productStatus}
+              conditions={dropdowns.conditions}
             />
           </StepCard>
         );
 
       case 5:
+        const selectedCategory = getSelectedCategory();
+        const selectedLevel1 = selectedPath[0] || "";
+        const selectedLevel2 = selectedPath[1] || "";
+        const selectedLevel3 = selectedPath[2] || "";
+
         return (
           <StepCard
             title={currentStepData.title}
-            subtitle={selectedLevel1 || selectedLevel2 || selectedLevel3
-              ? 'Category-specific attributes and specifications'
-              : 'Category-specific and common product specifications'}
+            subtitle={
+              selectedLevel1 || selectedLevel2 || selectedLevel3
+                ? "Category-specific attributes and specifications"
+                : "Category-specific and common product specifications"
+            }
             icon={currentStepData.icon}
             gradient={currentStepData.gradient}
             bgGradient={currentStepData.bgGradient}
@@ -213,6 +211,7 @@ const filteredLevel3 =
               getSelectedCategory={getSelectedCategory}
               onDynamicFieldChange={handleDynamicFieldChange}
               onInputChange={handleInputChange}
+              attributes={attributes}
             />
           </StepCard>
         );
@@ -235,9 +234,7 @@ const filteredLevel3 =
       <StepIndicator steps={STEPS} currentStep={currentStep} />
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <AnimatePresence mode="wait">
-          {renderStepContent()}
-        </AnimatePresence>
+        <AnimatePresence mode="wait">{renderStepContent()}</AnimatePresence>
 
         <NavigationButtons
           currentStep={currentStep}

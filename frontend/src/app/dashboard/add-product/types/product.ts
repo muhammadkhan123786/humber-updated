@@ -24,3 +24,12 @@ export interface CategoryState {
     level3: CategoryNode | null;
   };
 }
+
+
+export interface CategoryNode {
+  _id: string;
+  categoryName: string;
+  parentId: string | null;
+  children?: CategoryNode[];
+  fields?: DynamicField[];
+}

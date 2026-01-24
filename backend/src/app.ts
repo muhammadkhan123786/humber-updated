@@ -9,6 +9,7 @@ import authRouter from "./routes/auth.routes";
 import { adminProtecter } from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
+import aiRoutes from './routes/ai.routes';
 
 import customerSourceRouter from "./routes/customer.source.routes";
 import repairStatusRouter from "./routes/repair.status.routes";
@@ -292,6 +293,14 @@ app.use(
   adminProtecter,
   productAttributesRoutes,
 );
+
+
+app.use(
+  `${process.env.API_PREFIX}/ai`,
+  
+  aiRoutes,
+);
+
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });

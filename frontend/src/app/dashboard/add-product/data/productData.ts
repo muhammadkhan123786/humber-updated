@@ -10,7 +10,8 @@ export interface FormData {
   modelNumber: string;
   description: string;
   shortDescription: string;
-  
+  keywords: string;
+
   // Pricing
   costPrice: string;
   sellingPrice: string;
@@ -83,6 +84,7 @@ export const initialFormData: FormData = {
   modelNumber: '',
   description: '',
   shortDescription: '',
+  keywords: '',
   costPrice: '',
   sellingPrice: '',
   retailPrice: '',
