@@ -62,6 +62,7 @@ import iconsRouter from "./routes/master-data-routes/icons.routes";
 import SupplierRouters from "./routes/suppliers/supplier.routes";
 import contractTypeRouter from "./routes/master-data-routes/contract.types.routes";
 import techniciansRouter from "./routes/technicians/technicians.routes";
+import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
 
 // Create express app
 const app: Application = express();
@@ -275,7 +276,7 @@ app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
 
 //16-02-2026
-app.use(`${process.env.API_PREFIX}/suppliers`, adminProtecter, SupplierRouters);
+app.use(`${process.env.API_PREFIX}/suppliers`,  SupplierRouters);
 
 //20-01-2026
 app.use(
@@ -301,6 +302,11 @@ app.use(
   aiRoutes,
 );
 
+app.use(
+  `${process.env.API_PREFIX}/purchase-orders`,
+  
+  purchaseOrderRoutes,
+);
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });
