@@ -10,16 +10,15 @@ import { PurchaseOrderForm } from './PurchaseOrderForm';
 import { ViewOrderDialog } from './ViewOrderDialog';
 import { DeleteOrderDialog } from './DeleteOrderDialog';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
-import { PurchaseOrder } from '../types/purchaseOrders';
-import { toast } from 'sonner';
+import { IPurchaseOrder } from '../../../../../common/IPurchase.order.interface';
 
 export default function PurchaseOrdersPage() {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [viewingOrder, setViewingOrder] = useState<PurchaseOrder | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<IPurchaseOrder | null>(null);
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
-
+const [nextNumber, setNextNumber] = useState();
   const {
     filteredOrders,
     stats,
@@ -35,6 +34,7 @@ export default function PurchaseOrdersPage() {
     setNewItem,
     suppliers,
     statuses,
+    loading,
     handleAddItem,
     handleRemoveItem,
     handleSaveOrder,
@@ -42,7 +42,9 @@ export default function PurchaseOrdersPage() {
     handleDeleteOrder,
     handleStatusChange,
     handleEditOrder,
-    calculateTotals
+    calculateTotals,
+    orderNumber,
+    handleExportSingleOrder,
   } = usePurchaseOrders();
 
   const handleOpenCreateOrder = () => {
@@ -50,12 +52,12 @@ export default function PurchaseOrdersPage() {
     setIsOrderDialogOpen(true);
   };
 
-  const handleOpenEditOrder = (order: PurchaseOrder) => {
+  const handleOpenEditOrder = (order: IPurchaseOrder) => {
     handleEditOrder(order);
     setIsOrderDialogOpen(true);
   };
 
-  const handleOpenViewOrder = (order: PurchaseOrder) => {
+  const handleOpenViewOrder = (order: IPurchaseOrder) => {
     setViewingOrder(order);
     setIsViewDialogOpen(true);
   };
@@ -65,25 +67,38 @@ export default function PurchaseOrdersPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (deletingOrderId) {
-      handleDeleteOrder(deletingOrderId);
-      toast.success('Purchase order deleted successfully!');
-      setIsDeleteDialogOpen(false);
-      setDeletingOrderId(null);
-    }
-  };
+const handleConfirmDelete = async () => {
+  console.log("deletingOrderId", deletingOrderId)
 
-  const handleSaveOrderAndClose = () => {
-    handleSaveOrder();
-    setIsOrderDialogOpen(false);
-  };
+  try {
+    await handleDeleteOrder(deletingOrderId);
+  } finally {
+    setIsDeleteDialogOpen(false);
+    setDeletingOrderId(null);
+  }
+};
+
 
   const handleCloseOrderDialog = () => {
     setIsOrderDialogOpen(false);
     resetForm();
   };
+  
 
+  // In your PurchaseOrdersPage component
+// Remove or comment out this line from ViewOrderDialog props:
+// onExport: handleExportOrders,
+
+// Instead, create a separate function for single order export:
+
+
+// Then in your ViewOrderDialog:
+<ViewOrderDialog
+  open={isViewDialogOpen}
+  onOpenChange={setIsViewDialogOpen}
+  order={viewingOrder}
+  onExport={handleExportSingleOrder} // Pass the correct function
+/>
   return (
     <div className="space-y-6 relative p-4 md:p-6">
       {/* Animated Background Elements */}
@@ -120,13 +135,19 @@ export default function PurchaseOrdersPage() {
         statuses={statuses}
       />
       
-      <PurchaseOrdersTable
-        orders={filteredOrders}
-        onView={handleOpenViewOrder}
-        onEdit={handleOpenEditOrder}
-        onDelete={handleOpenDeleteOrder}
-        onStatusChange={handleStatusChange}
-      />
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      ) : (
+        <PurchaseOrdersTable
+          orders={filteredOrders || []}
+          onView={handleOpenViewOrder}
+          onEdit={handleOpenEditOrder}
+          onDelete={handleOpenDeleteOrder}
+          onStatusChange={handleStatusChange}
+        />
+      )}
 
       {/* Dialogs */}
       <PurchaseOrderForm
@@ -141,15 +162,17 @@ export default function PurchaseOrdersPage() {
         suppliers={suppliers}
         onAddItem={handleAddItem}
         onRemoveItem={handleRemoveItem}
-        onSaveOrder={handleSaveOrderAndClose}
+        onSaveOrder={handleSaveOrder}
         onCancel={handleCloseOrderDialog}
         calculateTotals={calculateTotals}
+       orderNumber = {orderNumber}
       />
 
       <ViewOrderDialog
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
         order={viewingOrder}
+        onExport = { handleExportSingleOrder }
       />
 
       <DeleteOrderDialog

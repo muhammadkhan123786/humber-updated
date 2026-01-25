@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { string, z } from "zod";
 import { Schema, SchemaDefinition } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
 
@@ -20,8 +20,12 @@ export const purchaseOrderSchema: SchemaDefinition = {
     unique: true,
   },
   supplier: {
-    type: Schema.Types.ObjectId,
-    ref: "Supplier",
+    type: string,
+    required: true,
+
+  },
+    supplierContact: {
+    type: String,
     required: true,
   },
    
@@ -85,8 +89,8 @@ export const purchaseOrderItemZodSchema = z.object({
 export const purchaseOrderZodSchema = z.object({
     ...commonSchemaValidation,
   orderNumber: z.string().min(1, "Order number is required"),
-  supplier: z.string().min(1, "Supplier is required"), // This can be ObjectId as string
-  
+  supplier: z.string().min(1, "Supplier is required"),
+  supplierContact: z.string().min(1, "Supplier contact is required"),  
   orderDate: z.coerce.date().optional().default(() => new Date()),
   expectedDelivery: z.coerce.date(),
   status: z.enum(['draft', 'pending', 'approved', 'ordered', 'received', 'cancelled']).default('draft'),

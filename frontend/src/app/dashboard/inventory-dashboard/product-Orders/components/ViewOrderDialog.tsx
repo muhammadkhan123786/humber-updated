@@ -1,5 +1,5 @@
 'use client';
-
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/form/Dialog';
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
@@ -9,21 +9,47 @@ import { Building2, Truck, Calendar, Package, Download } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
+
 interface ViewOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   order: PurchaseOrder | null;
+    onExport: (filters?: any) => Promise<boolean>;
+
 }
+
 
 export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
   open,
   onOpenChange,
-  order
+  order,
+  onExport
 }) => {
   if (!order) return null;
 
   const StatusIcon = getStatusIcon(order.status);
+   const [exportFilters, setExportFilters] = useState({
+    status: '',
+    startDate: '',
+    endDate: '',
+    supplier: '',
+  });
 
+    const handleExportSubmit = async () => {
+    try {
+      const success = await onExport(order);
+      if (success) {
+
+        setExportFilters({
+          status: '',
+          startDate: '',
+          endDate: '',
+          supplier: '',
+        });
+      }
+    } finally {
+    }
+  };
   const handleExportPDF = () => {
     // In a real app, this would generate and download a PDF
     alert('PDF export functionality would be implemented here');
@@ -44,7 +70,7 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
             <div>
               <p className="text-2xl font-bold text-gray-900">{order.orderNumber}</p>
               <p className="text-sm text-gray-600 mt-1">
-                Order Date: {order.orderDate.toLocaleDateString()}
+                Order Date: {new Date(order.orderDate).toLocaleDateString()}
               </p>
             </div>
             <div className={cn(
@@ -72,7 +98,7 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
                 <Truck className="h-5 w-5 text-emerald-600" />
                 <p className="text-sm text-gray-600">Expected Delivery</p>
               </div>
-              <p className="font-semibold text-gray-900">{order.expectedDelivery.toLocaleDateString()}</p>
+              <p className="font-semibold text-gray-900">{new Date(order.expectedDelivery).toLocaleDateString()}</p>
             </div>
           </div>
 
@@ -82,7 +108,7 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
               <p className="text-sm text-gray-600 mb-1">Order Date</p>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-blue-600" />
-                <p className="font-semibold text-gray-900">{order.orderDate.toLocaleDateString()}</p>
+                <p className="font-semibold text-gray-900">Order Date: {new Date(order.orderDate).toLocaleDateString()}</p>
               </div>
             </div>
             
@@ -162,7 +188,7 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
             Close
           </Button>
           <Button 
-            onClick={handleExportPDF}
+            onClick={handleExportSubmit}
             className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           >
             <Download className="h-4 w-4" />

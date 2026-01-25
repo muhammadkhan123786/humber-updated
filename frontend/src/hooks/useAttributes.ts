@@ -29,9 +29,7 @@ export const fetchAttributes = async (
   search = "",
   categoryIds: string[] = [],
 ): Promise<AttributeResponse> => {
-  const userId = getUserId();
-  console.log("Frontend userId:", userId);
-  const res = await axios.get(API_URL, {
+   const res = await axios.get(API_URL, {
     ...getAuthConfig(),
     params: {
       userId: getUserId(),
@@ -50,7 +48,7 @@ export const createAttribute = async (
   payload: Partial<IAttribute>
 ): Promise<IAttribute> => {
   const res = await axios.post(API_URL, payload, getAuthConfig());
-  console.log("res", res);
+ 
   return res.data;
 };
 

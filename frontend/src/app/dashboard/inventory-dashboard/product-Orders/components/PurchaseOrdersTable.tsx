@@ -20,7 +20,7 @@ export const PurchaseOrdersTable: React.FC<PurchaseOrdersTableProps> = ({
   onDelete,
   onStatusChange
 }) => {
-  if (orders.length === 0) {
+  if (orders?.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -55,9 +55,9 @@ export const PurchaseOrdersTable: React.FC<PurchaseOrdersTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {orders.map((order, index) => (
+              {orders?.map((order, index) => (
                 <PurchaseOrderRow
-                  key={order.id}
+                  key={order._id}
                   order={order}
                   index={index}
                   onView={onView}

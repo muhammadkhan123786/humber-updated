@@ -28,6 +28,7 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
   onStatusChange
 }) => {
   const StatusIcon = getStatusIcon(order.status);
+  console.log("order", order);
 
   return (
     <motion.tr
@@ -54,13 +55,13 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
-          <span className="text-gray-700 text-sm">{order.orderDate.toLocaleDateString()}</span>
+          <span className="text-gray-700 text-sm">{order?.orderDate}</span>
         </div>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Truck className="h-4 w-4 text-emerald-600" />
-          <span className="text-gray-700 text-sm">{order.expectedDelivery.toLocaleDateString()}</span>
+          <span className="text-gray-700 text-sm">{order?.expectedDelivery}</span>
         </div>
       </td>
       <td className="p-4">
@@ -69,12 +70,12 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
         </Badge>
       </td>
       <td className="p-4">
-        <span className="font-semibold text-emerald-600 text-lg">£{order.total.toFixed(2)}</span>
+        <span className="font-semibold text-emerald-600 text-lg">£{order.total}</span>
       </td>
       <td className="p-4">
         <Select
           value={order.status}
-          onValueChange={(value) => onStatusChange(order.id, value as PurchaseOrder['status'])}
+          onValueChange={(value) => onStatusChange(order._id, value as PurchaseOrder['status'])}
         >
           <SelectTrigger className={cn(
             "w-40 border-0 font-medium shadow-sm text-white",
@@ -116,7 +117,7 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onDelete(order.id)}
+            onClick={() => onDelete(order._id)}
             className="hover:bg-red-50 hover:text-red-600"
           >
             <Trash2 className="h-4 w-4" />
