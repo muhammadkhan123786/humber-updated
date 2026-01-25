@@ -62,7 +62,12 @@ import iconsRouter from "./routes/master-data-routes/icons.routes";
 import SupplierRouters from "./routes/suppliers/supplier.routes";
 import contractTypeRouter from "./routes/master-data-routes/contract.types.routes";
 import techniciansRouter from "./routes/technicians/technicians.routes";
+
+
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
+import grnRoutes from "./routes/grn.routes";
+import goodsReturnRoutes from "./routes/goodsReturn.routes";
+
 
 // Create express app
 const app: Application = express();
@@ -307,6 +312,20 @@ app.use(
   
   purchaseOrderRoutes,
 );
+
+
+app.use(
+  `${process.env.API_PREFIX}/grn`,
+  
+  grnRoutes,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/goods-return-notice`,
+  
+  goodsReturnRoutes,
+);
+
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });
