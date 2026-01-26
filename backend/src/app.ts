@@ -65,6 +65,7 @@ import technicianServiceTypeRouter from "./routes/master-data-routes/technician.
 import technicianInspectionListRouter from "./routes/master-data-routes/technician.inspection.list.routes";
 import technicianJobStatusRouter from "./routes/master-data-routes/technician.jobs.status.routes";
 import technicianJobsRouter from "./routes/technician-jobs/technician.jobs.routes";
+import autoCodeGeneratorRouter from "./routes/auto-code-generator/auto.code.generator.routes";
 
 // Create express app
 const app: Application = express();
@@ -313,6 +314,13 @@ app.use(
   technicianJobsRouter,
 );
 
+//26-01-2026 
+app.use(
+  `${process.env.API_PREFIX}/auto-generate-codes`,
+  //adminProtecter,
+  autoCodeGeneratorRouter,
+
+);
 
 
 //Muhammad Imran code ended here.
