@@ -7,8 +7,6 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
 
     try {
         const { emailId, password, confirmPassword, role } = req.body;
-
-
         // Check if user exists
         const existingUser = await User.findOne({ email: emailId });
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
@@ -54,11 +52,11 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ message: `Email ${email} does not exist. Invalid credentials.` });
         }
 
+        if (!user.isActive) { return res.status(400).json({ message: `Email ${email} your email is not active/verified. Please contact website administrator.` }); }
         const isMatch = await comparePassword(password, user.password!);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid password. Please check.' });
         }
-
         const token = generateToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
         return res.status(200).json({

@@ -1,0 +1,37 @@
+import { z } from "zod";
+
+export const createDriverSchema = z.object({
+
+    personalInfo: z.object({
+        firstName: z.string().min(2),
+        lastName: z.string().min(2)
+    }),
+
+    accountDetails: z.object({
+        emailId: z.email(),
+        password: z.string().min(8)
+    }),
+
+    contactDetails: z.object({
+        phoneNumber: z.string().min(10),
+        dateOfBirth: z.string().refine((date) => new Date(date) < new Date(), { message: "Date of birth must be in the past" }).refine((date) => {
+            const age = new Date().getFullYear() - new Date(date).getFullYear();
+            return age >= 18;
+
+        }, { message: "Driver age must be greater than 18." }).regex(/^\d{4}-\d{2}-\d{2}$/)
+    }),
+
+    driverLicenseDetails: z.object({
+        licenseNumber: z.string(),
+        expiryDate: z.string(),
+        experience: z.number().min(0)
+    }),
+
+    vehicleDetails: z.object({
+        vehicleType: z.string(),
+        make: z.string(),
+        model: z.string(),
+        year: z.number()
+    })
+
+});

@@ -35,7 +35,6 @@ import {
   Smartphone,
   MapPin,
   UserCheck,
-
   CreditCard,
   HandCoins,
   FileText,
