@@ -141,6 +141,14 @@ export default function TicketReferenceTypesClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Reference Types",
+            active: "Active Types",
+            inactive: "Inactive Types"
+          }}
+          icons={{
+            total: <BookMarked size={24} />,
+          }}
         />
 
         {/* Search Bar */}

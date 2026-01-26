@@ -135,6 +135,14 @@ export default function SubServicesVehicleClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Sub-Services",
+            active: "Active Sub-Services",
+            inactive: "Inactive Sub-Services"
+          }}
+          icons={{
+            total: <Layers size={24} />,
+          }}
         />
 
         {/* Search Bar */}

@@ -136,6 +136,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Repair Statuses",
+            active: "Active Statuses",
+            inactive: "Inactive Statuses"
+          }}
+          icons={{
+            total: <Wrench size={24} />,
+          }}
         />
 
         {/* Search Bar */}

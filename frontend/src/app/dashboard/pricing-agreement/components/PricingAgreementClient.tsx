@@ -133,6 +133,14 @@ export default function PricingAgreementClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Pricing Agreements",
+            active: "Active Agreements",
+            inactive: "Inactive Agreements"
+          }}
+          icons={{
+            total: <Handshake size={24} />,
+          }}
         />
 
         {/* Search Bar */}

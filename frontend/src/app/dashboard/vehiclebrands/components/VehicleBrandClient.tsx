@@ -165,6 +165,14 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Vehicle Brands",
+            active: "Active Brands",
+            inactive: "Inactive Brands"
+          }}
+          icons={{
+            total: <Car size={24} />,
+          }}
         />
 
         {/* Search Bar */}

@@ -129,6 +129,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             activeCount={statsActive} 
             inactiveCount={statsInactive} 
             onFilterChange={(f) => setFilterStatus(f)}
+            labels={{
+              total: "Total Zones",
+              active: "Active Zones",
+              inactive: "Inactive Zones"
+            }}
+            icons={{
+              total: <Map size={24} />,
+            }}
         />
 
         {/* Search Bar */}

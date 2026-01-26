@@ -139,6 +139,14 @@ export default function BussinessTypeClient() {
           activeCount={activeTypes}
           inactiveCount={inactiveTypes}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Business Types",
+            active: "Active Types",
+            inactive: "Inactive Types"
+          }}
+          icons={{
+            total: <Briefcase size={24} />,
+          }}
         />
 
         {/* Search Bar */}

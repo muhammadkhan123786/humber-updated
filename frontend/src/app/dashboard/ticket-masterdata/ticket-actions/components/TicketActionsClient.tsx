@@ -134,6 +134,14 @@ export default function TicketActionsClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Ticket Actions",
+            active: "Active Actions",
+            inactive: "Inactive Actions"
+          }}
+          icons={{
+            total: <Settings size={24} />,
+          }}
         />
 
         {/* Search Bar */}

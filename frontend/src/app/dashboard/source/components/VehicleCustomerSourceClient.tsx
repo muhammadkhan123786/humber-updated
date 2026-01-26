@@ -135,6 +135,14 @@ export default function VehicleCustomerSourceClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Customer Sources",
+            active: "Active Sources",
+            inactive: "Inactive Sources"
+          }}
+          icons={{
+            total: <Share2 size={24} />,
+          }}
         />
 
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">

@@ -130,6 +130,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
           activeCount={statsActive} 
           inactiveCount={statsInactive} 
           onFilterChange={(filter) => setFilterStatus(filter as any)}
+          labels={{
+            total: "Total Priority Levels",
+            active: "Active Priorities",
+            inactive: "Inactive Priorities"
+          }}
+          icons={{
+            total: <AlertTriangle size={24} />,
+          }}
         />
 
         {/* Search Bar */}

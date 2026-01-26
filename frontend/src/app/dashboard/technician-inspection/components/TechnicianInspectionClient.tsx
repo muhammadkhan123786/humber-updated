@@ -107,6 +107,15 @@ export default function TechnicianInspectionClient() {
           activeCount={totalActiveCount}
           inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Inspections types",
+            active: "Active Inspections",
+            inactive: "Inactive Inspections"
+          }}
+          icons={{
+            total: <ClipboardCheck size={24} />,
+          
+          }}
         />
 
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">

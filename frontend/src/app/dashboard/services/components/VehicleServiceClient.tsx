@@ -135,6 +135,14 @@ export default function VehicleServicesClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Service Types",
+            active: "Active Services",
+            inactive: "Inactive Services"
+          }}
+          icons={{
+            total: <Settings size={24} />,
+          }}
         />
 
         {/* Search Bar */}

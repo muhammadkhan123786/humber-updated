@@ -137,6 +137,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Departments",
+            active: "Active Departments",
+            inactive: "Inactive Departments"
+          }}
+          icons={{
+            total: <Building2 size={24} />,
+          }}
         />
 
         {/* Search Bar */}

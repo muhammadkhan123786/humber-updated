@@ -132,6 +132,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Payment Methods",
+            active: "Active Methods",
+            inactive: "Inactive Methods"
+          }}
+          icons={{
+            total: <CreditCard size={24} />,
+          }}
         />
 
         {/* Search Bar */}

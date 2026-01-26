@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Briefcase, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
 // Import common components
-import StatsCards from "@/app/common-form/StatsCard"; 
+import StatsCards from "@/app/common-form/StatsCard";
 import JobTypeTable from "./JobTypeTable";
 import JobTypeForm from "./JobTypeForm";
 import Pagination from "@/components/ui/Pagination";
@@ -89,17 +89,17 @@ export default function JobTypeClient() {
     }
   };
 
- const handleStatusChange = (id: string, newStatus: boolean) => {
-  handleOptimisticStatusUpdate(
-    id,
-    newStatus,
-    "/job-types", 
-    setDataList,
-    setTotalActiveCount,
-    setTotalInactiveCount,
-    updateItem
-  );
-};
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+    handleOptimisticStatusUpdate(
+      id,
+      newStatus,
+      "/job-types",
+      setDataList,
+      setTotalActiveCount,
+      setTotalInactiveCount,
+      updateItem
+    );
+  };
 
   // Stats calculation
   const statsTotal = totalCount;
@@ -132,11 +132,19 @@ export default function JobTypeClient() {
         </div>
 
         {/* Stats Cards with Filter functionality */}
-        <StatsCards 
+        <StatsCards
           totalCount={statsTotal}
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Job Types",
+            active: "Active Job Types",
+            inactive: "Inactive Job Types"
+          }}
+          icons={{
+            total: <Briefcase size={24} />,
+          }}
         />
 
         {/* Search Bar */}
@@ -163,22 +171,20 @@ export default function JobTypeClient() {
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <Grid3x3 size={16} />
                 <span className="hidden sm:inline text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <List size={16} />
                 <span className="hidden sm:inline text-sm">Table</span>

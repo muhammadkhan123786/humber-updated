@@ -119,6 +119,14 @@ export default function TicketStatusClient() {
           activeCount={totalActiveCount}
           inactiveCount={totalInactiveCount}
           onFilterChange={setFilterStatus}
+          labels={{
+            total: "Total Ticket Statuses",
+            active: "Active Statuses",
+            inactive: "Inactive Statuses"
+          }}
+          icons={{
+            total: <Tag size={24} />,
+          }}
         />
 
         {/* Search */}

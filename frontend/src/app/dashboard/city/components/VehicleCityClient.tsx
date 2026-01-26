@@ -137,6 +137,14 @@ export default function VehicleCityClient() {
           activeCount={active} 
           inactiveCount={inactive} 
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Cities",
+            active: "Active Cities",
+            inactive: "Inactive Cities"
+          }}
+          icons={{
+            total: <MapPin size={24} />,
+          }}
         />
 
         {/* Search Bar */}

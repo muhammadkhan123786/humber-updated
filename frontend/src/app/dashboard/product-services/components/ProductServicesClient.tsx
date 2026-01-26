@@ -136,8 +136,15 @@ export default function ProductServicesClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Services",
+            active: "Active Services",
+            inactive: "Inactive Services"
+          }}
+          icons={{
+            total: <PackageSearch size={24} />,
+          }}
         />
-
         {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
           <Search className="text-gray-400" size={20} />

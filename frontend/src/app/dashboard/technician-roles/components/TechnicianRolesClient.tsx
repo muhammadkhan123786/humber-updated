@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
 // Import common components
-import StatsCards from "@/app/common-form/StatsCard"; 
+import StatsCards from "@/app/common-form/StatsCard";
 import TechnicianRolesTable from "./TechnicionRolesTable";
 import TechnicianRolesForm from "./TechnicionRolesForm";
 import Pagination from "@/components/ui/Pagination";
@@ -86,37 +86,37 @@ export default function TechnicianRolesClient() {
     }
   };
 
- const handleStatusChange = async (id: string, newStatus: boolean) => {
-  setDataList((prevList) =>
-    prevList.map((item) =>
-      item._id === id ? { ...item, isActive: newStatus } : item
-    )
-  );
-
-  try {
-    const userStr = localStorage.getItem("user");
-    const user = userStr ? JSON.parse(userStr) : {};
-        await updateItem("/technician-roles", id, {
-      isActive: newStatus,
-      userId: user.id || user._id,
-    });
-    if (newStatus) {
-      setTotalActiveCount((prev) => prev + 1);
-      setTotalInactiveCount((prev) => prev - 1);
-    } else {
-      setTotalActiveCount((prev) => prev - 1);
-      setTotalInactiveCount((prev) => prev + 1);
-    }
-  } catch (error) {
-    console.error("Technician Role Status Update Error:", error);
-    alert("Failed to update status. Reverting...");
-        setDataList((prevList) =>
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    setDataList((prevList) =>
       prevList.map((item) =>
-        item._id === id ? { ...item, isActive: !newStatus } : item
+        item._id === id ? { ...item, isActive: newStatus } : item
       )
     );
-  }
-};
+
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      await updateItem("/technician-roles", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+      if (newStatus) {
+        setTotalActiveCount((prev) => prev + 1);
+        setTotalInactiveCount((prev) => prev - 1);
+      } else {
+        setTotalActiveCount((prev) => prev - 1);
+        setTotalInactiveCount((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error("Technician Role Status Update Error:", error);
+      alert("Failed to update status. Reverting...");
+      setDataList((prevList) =>
+        prevList.map((item) =>
+          item._id === id ? { ...item, isActive: !newStatus } : item
+        )
+      );
+    }
+  };
 
   // Calculate stats
   const statsTotal = totalCount;
@@ -149,11 +149,20 @@ export default function TechnicianRolesClient() {
         </div>
 
         {/* Stats with Filter logic */}
-        <StatsCards 
+        <StatsCards
           totalCount={statsTotal}
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Technicians Roles",
+            active: "Active Roles",
+            inactive: "Inactive Roles"
+          }}
+          icons={{
+            total: <ShieldCheck size={24} />,
+
+          }}
         />
 
         {/* Search Bar */}
@@ -180,22 +189,20 @@ export default function TechnicianRolesClient() {
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <Grid3x3 size={16} />
                 <span className="hidden sm:inline text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <List size={16} />
                 <span className="hidden sm:inline text-sm">Table</span>

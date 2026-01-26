@@ -140,6 +140,14 @@ export default function TicketTypeClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Ticket Types",
+            active: "Active Types",
+            inactive: "Inactive Types"
+          }}
+          icons={{
+            total: <Layers size={24} />,
+          }}
         />
 
         {/* Search Bar */}

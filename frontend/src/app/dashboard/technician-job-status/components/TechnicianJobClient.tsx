@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Activity, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
-import StatsCards from "@/app/common-form/StatsCard"; 
+import { Activity, Plus, Search, Loader2, Grid3x3, List, XCircle, CheckCircle } from "lucide-react";
+import StatsCards from "@/app/common-form/StatsCard";
 import TechnicianJobTable from "./TechnicianJobTable";
 import TechnicianJobForm from "./TechnicianJobForm";
 import Pagination from "@/components/ui/Pagination";
@@ -39,12 +39,12 @@ export default function TechnicianJobClient() {
       setFilteredDataList(res.data || []);
       setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
-      
+
       const allDataRes = await getAll<StatusWithId>("/technician-job-status", {
         limit: "1000",
         search: search.trim(),
       });
-      
+
       setTotalCount(res.total || 0);
       setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
       setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
@@ -101,11 +101,19 @@ export default function TechnicianJobClient() {
           </button>
         </div>
 
-        <StatsCards 
+        <StatsCards
           totalCount={totalCount}
           activeCount={totalActiveCount}
           inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Job Statuses",
+            active: "Active Statuses",
+            inactive: "Inactive Statuses"
+          }}
+          icons={{
+            total: <Activity size={24} />,
+          }}
         />
 
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">

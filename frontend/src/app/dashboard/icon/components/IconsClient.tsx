@@ -118,6 +118,14 @@ export default function IconsClient() {
           activeCount={totalActiveCount}
           inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Icons",
+            active: "Active Icons",
+            inactive: "Inactive Icons"
+          }}
+          icons={{
+            total: <IconLib size={24} />,
+          }}
         />
 
         {/* Search Bar */}

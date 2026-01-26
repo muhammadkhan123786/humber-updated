@@ -148,6 +148,14 @@ export default function TicketTransitionClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Transitions",
+            active: "Active Transitions",
+            inactive: "Inactive Transitions"
+          }}
+          icons={{
+            total: <GitCompare size={24} />,
+          }}
         />
 
         {/* Search Bar */}

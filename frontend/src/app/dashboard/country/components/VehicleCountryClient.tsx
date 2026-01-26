@@ -136,6 +136,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
           activeCount={activeCountries}
           inactiveCount={inactiveCountries}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Countries",
+            active: "Active Countries",
+            inactive: "Inactive Countries"
+          }}
+          icons={{
+            total: <Globe size={24} />,
+          }}
         />
 
         {/* Search Bar */}
