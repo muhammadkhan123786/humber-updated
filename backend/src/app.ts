@@ -66,6 +66,7 @@ import technicianInspectionListRouter from "./routes/master-data-routes/technici
 import technicianJobStatusRouter from "./routes/master-data-routes/technician.jobs.status.routes";
 import technicianJobsRouter from "./routes/technician-jobs/technician.jobs.routes";
 import autoCodeGeneratorRouter from "./routes/auto-code-generator/auto.code.generator.routes";
+import driverRouter from "./routes/driver/driver.routes";
 
 // Create express app
 const app: Application = express();
@@ -317,8 +318,15 @@ app.use(
 //26-01-2026 
 app.use(
   `${process.env.API_PREFIX}/auto-generate-codes`,
-  //adminProtecter,
+  adminProtecter,
   autoCodeGeneratorRouter,
+
+);
+
+app.use(
+  `${process.env.API_PREFIX}/register-driver`,
+  //adminProtecter,
+  driverRouter,
 
 );
 

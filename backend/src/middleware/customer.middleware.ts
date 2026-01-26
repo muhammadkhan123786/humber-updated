@@ -4,7 +4,6 @@ import { CityModel } from "../models/city.models";
 import { Person } from "../models/person.models";
 import { Contact } from "../models/contact.models";
 import { Address } from "../models/addresses.models";
-import mongoose, { ClientSession } from "mongoose";
 import { findOrCreate } from "../utils/findOrCreate";
 import { CustomerBase } from "../models/customer.models";
 
