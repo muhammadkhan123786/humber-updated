@@ -4,6 +4,7 @@ import MetricCard from "./MetricCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Users, User, Building2, Calendar, History } from "lucide-react";
 import CustomerGrowthAnalytics from "./CustomerGrowthAnalytics";
+import { useSearchParams } from "next/navigation";
 import CustomerManagementList from "./CustomerManagementList";
 import ModalForm from "./ModalForm";
 import { getAlls } from "../../../../helper/apiHelper";
@@ -11,12 +12,21 @@ import { getAlls } from "../../../../helper/apiHelper";
 const CustomerDashboard = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
     null,
   );
+  useEffect(() => {
+    const registerAction = searchParams.get("create");
+    if (registerAction === "true") {
+      setIsModalOpen(true);
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [searchParams]);
 
   const handleDataChange = () => {
     setRefreshTrigger((prev) => prev + 1);
@@ -98,58 +108,57 @@ const CustomerDashboard = () => {
         </button>
       </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-10 rounded-4xl overflow-hidden shadow-lg border border-white/10">
-  <MetricCard
-    title="TOTAL CUSTOMERS"
-    value={getValue("total")}
-    percentage={getPercentage("total")}
-    isPositive={getPercentage("total") >= 0}
-    icon={Users}
-    gradient="bg-gradient-to-br from-[#00C6FB] to-[#005BEA]"
-    className="w-full"
-  />
-  <MetricCard
-    title="DOMESTIC CUSTOMERS"
-    value={getValue("domestic")}
-    percentage={getPercentage("domestic")}
-    isPositive={getPercentage("domestic") >= 0}
-    icon={User}
-    gradient="bg-gradient-to-br from-[#9D50BB] to-[#6E48AA]"
-    className="w-full border-l border-white/10"
-  />
-  <MetricCard
-    title="CORPORATE CUSTOMERS"
-    value={getValue("corporate")}
-    percentage={getPercentage("corporate")}
-    isPositive={getPercentage("corporate") >= 0}
-    icon={Building2}
-    gradient="bg-gradient-to-br from-[#F093FB] to-[#F5576C]"
-    className="w-full border-l border-white/10"
-  />
-  <MetricCard
-    title="ACTIVE CUSTOMERS"
-    value={getValue("active")}
-    percentage={getPercentage("active")}
-    isPositive={getPercentage("active") >= 0}
-    icon={Calendar}
-    gradient="bg-gradient-to-br from-[#0BA360] to-[#3CBA92]"
-    className="w-full border-l border-white/10"
-  />
-  <MetricCard
-    title="AVG. SERVICE HISTORY"
-    value="4.2"
-    percentage="5.8"
-    isPositive
-    icon={History}
-    gradient="bg-gradient-to-br from-[#FA709A] to-[#FEE140]"
-    className="w-full border-l border-white/10"
-  />
-</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-10 rounded-4xl overflow-hidden shadow-lg border border-white/10">
+        <MetricCard
+          title="TOTAL CUSTOMERS"
+          value={getValue("total")}
+          percentage={getPercentage("total")}
+          isPositive={getPercentage("total") >= 0}
+          icon={Users}
+          gradient="bg-gradient-to-br from-[#00C6FB] to-[#005BEA]"
+          className="w-full"
+        />
+        <MetricCard
+          title="DOMESTIC CUSTOMERS"
+          value={getValue("domestic")}
+          percentage={getPercentage("domestic")}
+          isPositive={getPercentage("domestic") >= 0}
+          icon={User}
+          gradient="bg-gradient-to-br from-[#9D50BB] to-[#6E48AA]"
+          className="w-full border-l border-white/10"
+        />
+        <MetricCard
+          title="CORPORATE CUSTOMERS"
+          value={getValue("corporate")}
+          percentage={getPercentage("corporate")}
+          isPositive={getPercentage("corporate") >= 0}
+          icon={Building2}
+          gradient="bg-gradient-to-br from-[#F093FB] to-[#F5576C]"
+          className="w-full border-l border-white/10"
+        />
+        <MetricCard
+          title="ACTIVE CUSTOMERS"
+          value={getValue("active")}
+          percentage={getPercentage("active")}
+          isPositive={getPercentage("active") >= 0}
+          icon={Calendar}
+          gradient="bg-gradient-to-br from-[#0BA360] to-[#3CBA92]"
+          className="w-full border-l border-white/10"
+        />
+        <MetricCard
+          title="AVG. SERVICE HISTORY"
+          value="4.2"
+          percentage="5.8"
+          isPositive
+          icon={History}
+          gradient="bg-gradient-to-br from-[#FA709A] to-[#FEE140]"
+          className="w-full border-l border-white/10"
+        />
+      </div>
       <div>
         <CustomerGrowthAnalytics />
       </div>
       <div className="mt-2">
-        {/* Yahan onEdit prop pass kiya hai */}
         <CustomerManagementList
           onEdit={handleEditCustomer}
           refreshTrigger={refreshTrigger}

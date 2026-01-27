@@ -10,7 +10,10 @@ import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateTicketCode } from "../../utils/generateTicketCode";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
-import { getTicketCountByStatus, getUnassignedTickets } from "../../controllers/customer.ticket.controllet";
+import {
+  getTicketCountByStatus,
+  getUnassignedTickets,
+} from "../../controllers/customer.ticket.controllet";
 
 const repairVehicleUpload = createUploader([
   {
@@ -52,17 +55,34 @@ const customerTicketBaseController = new AdvancedGenericController({
       },
     },
     {
+      path: "assignedTechnicianId",
+      populate: [{ path: "personId" }],
+    },
+    {
       path: "vehicleId",
       populate: [{ path: "vehicleBrandId" }, { path: "vehicleModelId" }],
     },
-    { path: "customerId", populate: [{ path: "personId" }, { path: "addressId" }, { path: "contactId" }] }
+    {
+      path: "customerId",
+      populate: [
+        { path: "personId" },
+        { path: "addressId" },
+        { path: "contactId" },
+      ],
+    },
   ],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
 
-customerTicketBaseRouter.get("/unassigned-technician-tickets", getUnassignedTickets);
-customerTicketBaseRouter.get('/ticket-count-status-wise', getTicketCountByStatus);
+customerTicketBaseRouter.get(
+  "/unassigned-technician-tickets",
+  getUnassignedTickets,
+);
+customerTicketBaseRouter.get(
+  "/ticket-count-status-wise",
+  getTicketCountByStatus,
+);
 
 customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);

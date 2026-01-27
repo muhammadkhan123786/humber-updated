@@ -9,7 +9,6 @@ import {
   Search,
   Plus,
   Clock,
-  Settings,
   Globe,
   Home,
   Inbox,
@@ -20,10 +19,31 @@ import {
   Edit3,
   MoreVertical,
   ArrowRight,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  Box,
+  Wrench,
+  Truck,
 } from "lucide-react";
 import { deleteItem, getAlls } from "../../../../helper/apiHelper";
 import Pagination from "@/components/ui/Pagination";
-
+const getStatusIcon = (status: string = "") => {
+  const s = status.toLowerCase();
+  if (s === "open") return <AlertCircle size={16} strokeWidth={2.5} />;
+  if (s === "completed") return <CheckCircle2 size={16} strokeWidth={2.5} />;
+  return <Clock size={16} strokeWidth={2.5} />;
+};
+const getLocationIcon = (location: string = "") => {
+  const l = location.toLowerCase();
+  if (l.includes("workshop")) {
+    return <Wrench size={14} className="text-blue-500" />;
+  }
+  if (l.includes("mobile")) {
+    return <Truck size={14} className="text-gray-400" />;
+  }
+  return <Home size={14} className="text-orange-400" />;
+};
 const TicketListingPage = () => {
   const [view, setView] = useState<"grid" | "table">("grid");
   const [tickets, setTickets] = useState<any[]>([]);
@@ -32,6 +52,7 @@ const TicketListingPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalTickets, setTotalTickets] = useState(0); // New state
   const [filters, setFilters] = useState({
     status: "",
     urgency: "",
@@ -71,15 +92,13 @@ const TicketListingPage = () => {
             location: t.location || "",
             technician:
               t.assignedTechnicianId?.length > 0 ? "Assigned" : "Not Assigned",
-            createdAt: t.createdAt
-              ? new Date(t.createdAt).toLocaleDateString()
-              : "N/A",
+            createdAt: t.createdAt ? t.createdAt : "N/A",
           }));
 
           setTickets(mappedData);
 
-          // FIX: Calculate total pages using the 'total' and 'limit' from your API response
           const totalItems = response.total || 0;
+          setTotalTickets(totalItems);
           const limitPerPage = response.limit || 10;
           const calculatedTotalPages = Math.ceil(totalItems / limitPerPage);
 
@@ -111,7 +130,7 @@ const TicketListingPage = () => {
     filters.source,
     fetchTickets,
   ]);
-
+  console.log("this isn", tickets);
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -132,6 +151,7 @@ const TicketListingPage = () => {
       "in progress": "bg-[#FF8A00]",
       completed: "bg-[#00C853]",
     };
+
     return (
       <span
         className={`px-3 py-1 rounded-full text-white text-[10px] font-bold lowercase ${
@@ -146,7 +166,7 @@ const TicketListingPage = () => {
   const getUrgencyBadge = (urgency: string = "", bgColor: string = "") => {
     return (
       <span
-        className="px-2 py-0.5 rounded text-white text-[9px] font-black uppercase"
+        className="px-2 py-0.5 rounded-full text-white text-[9px] font-black uppercase"
         style={{
           backgroundColor: bgColor || "#9CA3AF",
         }}
@@ -277,7 +297,8 @@ const TicketListingPage = () => {
       </div>
 
       <p className="text-gray-400 text-[11px] font-bold italic mb-6">
-        Showing {tickets.length} of {tickets.length} tickets
+        Showing {tickets.length > 0 ? (currentPage - 1) * 10 + 1 : 0}-
+        {Math.min(currentPage * 10, totalTickets)} of {totalTickets} tickets
       </p>
 
       {loading ? (
@@ -302,7 +323,7 @@ const TicketListingPage = () => {
           </button>
         </div>
       ) : view === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+        <div className="grid  grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
           {tickets.map((t) => (
             <div
               key={t._id}
@@ -320,19 +341,21 @@ const TicketListingPage = () => {
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: "4px",
+                  height: "6px",
                   background:
                     "linear-gradient(90deg, #2B7FFF 0%, #00B8DB 100%)",
+                  borderTopLeftRadius: "36px",
+                  borderTopRightRadius: "36px",
                 }}
               />
 
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
                   <div
-                    className="flex items-center gap-2 font-semibold text-[13px]"
+                    className="flex items-center gap-2  text-[13px]"
                     style={{ color: "#4F39F6" }}
                   >
-                    <Clock size={16} strokeWidth={2.5} />
+                    {getStatusIcon(t.status)}
                     <span>{t.ticketCode || t.displayId}</span>
                   </div>
 
@@ -395,8 +418,6 @@ const TicketListingPage = () => {
                   </div>
                 </div>
 
-                {/* ... Baki card ka content (Status, Customer, Product, Issue) wese hi rahega ... */}
-
                 <div className="mb-6">{getStatusBadge(t.status)}</div>
 
                 <div className="space-y-3 mb-4">
@@ -410,7 +431,7 @@ const TicketListingPage = () => {
                   </div>
                   <div className="flex items-center gap-3 text-gray-500">
                     <div className="w-9 h-9 flex items-center justify-center">
-                      <Settings size={18} className="text-[#A78BFA]" />
+                      <Box size={18} className="text-[#A78BFA]" />
                     </div>
                     <span className="text-[14px] font-medium">
                       {t.productName}
@@ -432,13 +453,35 @@ const TicketListingPage = () => {
                     <span className="text-[12px] font-medium">{t.source}</span>
                   </div>
                   <div className="flex items-center gap-2 justify-end text-gray-400">
-                    <Home size={14} className="text-orange-400" />
+                    {getLocationIcon(t.location)}
                     <span className="text-[12px] font-medium">
                       {t.location}
                     </span>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-y-3">
+                  {/* Creation Date */}
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <Calendar size={14} className="text-gray-400" />
+                    <span className="text-[12px] font-medium">
+                      {t.createdAt
+                        ? new Date(t.createdAt).toLocaleDateString("en-GB")
+                        : "N/A"}
+                    </span>
+                  </div>
 
+                  <div
+                    className="flex items-center gap-2 justify-end"
+                    style={{ color: "#4F39F6" }}
+                  >
+                    <User size={14} />
+                    <span className="text-[12px] font-bold">
+                      {/* Accessing the first technician's name from the array */}
+                      {t.assignedTechnicianId?.[0]?.personId?.firstName ||
+                        "Unassigned"}
+                    </span>
+                  </div>
+                </div>
                 <Link
                   href={`/dashboard/ticket-masterdata/allTickets/${t._id}`}
                   className="w-full mt-6 font-bold text-[14px] flex items-center justify-end gap-1 hover:gap-2 transition-all cursor-pointer"
@@ -474,7 +517,7 @@ const TicketListingPage = () => {
                   key={t._id}
                   className="hover:bg-purple-50/30 transition-colors"
                 >
-                  <td className="px-6 py-4 font-bold text-[#6D28D9] text-xs whitespace-nowrap">
+                  <td className="px-6 py-4  text-[#6D28D9] text-xs whitespace-nowrap">
                     <Link
                       href={`/tickets/${t._id}`}
                       className="hover:underline"
@@ -501,26 +544,29 @@ const TicketListingPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-500 uppercase">
-                      <Home size={13} className="text-orange-300" />{" "}
-                      {t.location}
+                    <div className="flex items-center gap-2 justify-end text-gray-400">
+                      {getLocationIcon(t.location)}
+                      <span className="text-[12px] font-medium">
+                        {t.location}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[9px] font-bold uppercase">
-                        {typeof t.technician === "string"
-                          ? t.technician.slice(0, 2)
+                      {/* Avatar Circle */}
+                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#8B5CF6] to-[#6366F1] flex items-center justify-center text-white text-[10px] font-bold uppercase shadow-sm">
+                        {t.assignedTechnicianId?.[0]?.personId?.firstName
+                          ? t.assignedTechnicianId[0].personId.firstName.slice(
+                              0,
+                              2,
+                            )
                           : "UN"}
                       </div>
-                      <span
-                        className={`px-2 py-0.5 rounded text-white text-[9px] font-bold ${
-                          t.technician && t.technician !== "Unassigned"
-                            ? "bg-green-500"
-                            : "bg-red-500"
-                        }`}
-                      >
-                        {t.technician}
+
+                      {/* Technician Name Text */}
+                      <span className="text-[12px] font-medium text-[#1E1B4B]">
+                        {t.assignedTechnicianId?.[0]?.personId?.firstName ||
+                          "Unassigned"}
                       </span>
                     </div>
                   </td>
