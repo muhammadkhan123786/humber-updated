@@ -2,12 +2,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { CarFront, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
 // Import common components
-import StatsCards from "@/app/common-form/StatsCard"; 
+import StatsCards from "@/app/common-form/StatsCard";
 import ModelTable from "./ModalTable";
 import ModalForm from "./ModalForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IVehicleModel } from "../types";
+import { motion } from "framer-motion";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
+
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -88,49 +91,49 @@ export default function VehicleModelClient() {
     }
   };
 
-const handleStatusChange = async (id: string, newStatus: boolean) => {
-  // 1. UI ko fauran update karein (Optimistic Update)
-  // Is se switch bina kisi delay ke on/off ho jayega
-  setDataList((prevList) =>
-    prevList.map((item) =>
-      item._id === id ? { ...item, isActive: newStatus } : item
-    )
-  );
-
-  try {
-    const userStr = localStorage.getItem("user");
-    const user = userStr ? JSON.parse(userStr) : {};
-    
-    // 2. Background mein API call karein
-    await updateItem("/vechilemodel", id, {
-      isActive: newStatus,
-      userId: user.id || user._id,
-    });
-
-    // 3. Stats update karein (taake header cards ke number sync rahein)
-    if (newStatus) {
-      setTotalActiveCount((prev) => prev + 1);
-      setTotalInactiveCount((prev) => prev - 1);
-    } else {
-      setTotalActiveCount((prev) => prev - 1);
-      setTotalInactiveCount((prev) => prev + 1);
-    }
-
-    // NOTE: fetchData() call karne ki zaroorat nahi hai, 
-    // kyunki state already update ho chuki hai.
-
-  } catch (error) {
-    console.error("Status Update Error:", error);
-    alert("Failed to update status. Reverting...");
-    
-    // 4. Agar API fail ho jaye, to UI ko purani state par rollback karein
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    // 1. UI ko fauran update karein (Optimistic Update)
+    // Is se switch bina kisi delay ke on/off ho jayega
     setDataList((prevList) =>
       prevList.map((item) =>
-        item._id === id ? { ...item, isActive: !newStatus } : item
+        item._id === id ? { ...item, isActive: newStatus } : item
       )
     );
-  }
-};
+
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+
+      // 2. Background mein API call karein
+      await updateItem("/vechilemodel", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+
+      // 3. Stats update karein (taake header cards ke number sync rahein)
+      if (newStatus) {
+        setTotalActiveCount((prev) => prev + 1);
+        setTotalInactiveCount((prev) => prev - 1);
+      } else {
+        setTotalActiveCount((prev) => prev - 1);
+        setTotalInactiveCount((prev) => prev + 1);
+      }
+
+      // NOTE: fetchData() call karne ki zaroorat nahi hai, 
+      // kyunki state already update ho chuki hai.
+
+    } catch (error) {
+      console.error("Status Update Error:", error);
+      alert("Failed to update status. Reverting...");
+
+      // 4. Agar API fail ho jaye, to UI ko purani state par rollback karein
+      setDataList((prevList) =>
+        prevList.map((item) =>
+          item._id === id ? { ...item, isActive: !newStatus } : item
+        )
+      );
+    }
+  };
 
   const statsTotal = totalCount;
   const statsActive = totalActiveCount;
@@ -140,11 +143,9 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <CarFront size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<CarFront size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Vehicle Models</h1>
               <p className="text-blue-100 text-lg">Manage specific vehicle series and series models</p>
@@ -155,18 +156,26 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Vehicle Model
           </button>
         </div>
 
         {/* Stats Cards with Filter callback */}
-        <StatsCards 
+        <StatsCards
           totalCount={statsTotal}
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Vehicle Models",
+            active: "Active Models",
+            inactive: "Inactive Models"
+          }}
+          icons={{
+            total: <CarFront size={24} />,
+          }}
         />
 
         {/* Search Bar */}
@@ -193,18 +202,16 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
+                  }`}
               >
                 <Grid3x3 size={16} />
                 <span className="hidden sm:inline text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-gray-900"
+                  }`}
               >
                 <List size={16} />
                 <span className="hidden sm:inline text-sm">Table</span>

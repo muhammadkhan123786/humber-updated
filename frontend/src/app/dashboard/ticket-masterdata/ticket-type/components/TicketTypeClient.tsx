@@ -8,6 +8,7 @@ import TicketTypeForm from "./TicketTypeForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 const API_URL = "/ticket-types";
@@ -113,11 +114,9 @@ export default function TicketTypeClient() {
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header - Aligned with the Gradient Style */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Layers size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<Layers size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Ticket Types</h1>
               <p className="text-orange-100 text-lg">Categorize tickets by technical domains</p>
@@ -128,7 +127,7 @@ export default function TicketTypeClient() {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Ticket Type
           </button>
@@ -140,6 +139,14 @@ export default function TicketTypeClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Ticket Types",
+            active: "Active Types",
+            inactive: "Inactive Types"
+          }}
+          icons={{
+            total: <Layers size={24} />,
+          }}
         />
 
         {/* Search Bar */}

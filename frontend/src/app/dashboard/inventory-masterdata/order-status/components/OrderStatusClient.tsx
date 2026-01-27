@@ -9,6 +9,7 @@ import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IOrderStatus } from "../../../../../../../common/order.status.interface";
 import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -111,11 +112,9 @@ export default function OrderStatusClient() {
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Blue Gradient Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-6 md:p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-6 md:p-7 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slideInLeft">
           <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <ClipboardList size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<ClipboardList size={32} className="text-white" />} />
             <div className="flex-1 md:flex-none">
               <h1 className="text-3xl md:text-4xl font-bold">Order Statuses</h1>
               <p className="text-blue-100 text-sm md:text-lg">Manage lifecycle stages for orders</p>
@@ -126,7 +125,7 @@ export default function OrderStatusClient() {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center justify-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
+            className="flex items-center justify-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
             <Plus size={22} /> Add Status
           </button>
@@ -137,6 +136,14 @@ export default function OrderStatusClient() {
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Order Statuses",
+            active: "Active Statuses",
+            inactive: "Inactive Statuses"
+          }}
+          icons={{
+            total: <ClipboardList size={24} />,
+          }}
         />
 
         {/* Search Bar */}

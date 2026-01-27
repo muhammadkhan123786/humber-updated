@@ -2,13 +2,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Car, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
 // Import common components
-import StatsCards from "@/app/common-form/StatsCard"; 
+import StatsCards from "@/app/common-form/StatsCard";
 import BrandTable from "./BrandTable";
 import BrandForm from "./BrandForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IVehicleBrand } from "../types";
-
+import { motion } from "framer-motion";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 const THEME_COLOR = "var(--primary-gradient)";
 
 type VehicleBrandWithId = IVehicleBrand & { _id: string };
@@ -88,46 +89,46 @@ export default function VehicleBrandClient() {
     }
   };
 
-const handleStatusChange = async (id: string, newStatus: boolean) => {
-  // 1. Optimistic Update: UI ko foran update karein
-  // Is se toggle animation bilkul smooth ho jayegi bina kisi "wait" ke
-  setDataList((prevList) =>
-    prevList.map((item) =>
-      item._id === id ? { ...item, isActive: newStatus } : item
-    )
-  );
-
-  try {
-    const userStr = localStorage.getItem("user");
-    const user = userStr ? JSON.parse(userStr) : {};
-    
-    // 2. Background API call (Bina fetchData ke)
-    await updateItem("/vehiclebrand", id, {
-      isActive: newStatus,
-      userId: user.id || user._id,
-    });
-
-    // 3. Stats ko manually update karein taake cards sync rahein
-    if (newStatus) {
-      setTotalActiveCount((prev) => prev + 1);
-      setTotalInactiveCount((prev) => prev - 1);
-    } else {
-      setTotalActiveCount((prev) => prev - 1);
-      setTotalInactiveCount((prev) => prev + 1);
-    }
-
-  } catch (error) {
-    console.error("Vehicle Brand Status Update Error:", error);
-    alert("Failed to update status. Reverting change...");
-    
-    // 4. Error Handle: Rollback to previous state
+  const handleStatusChange = async (id: string, newStatus: boolean) => {
+    // 1. Optimistic Update: UI ko foran update karein
+    // Is se toggle animation bilkul smooth ho jayegi bina kisi "wait" ke
     setDataList((prevList) =>
       prevList.map((item) =>
-        item._id === id ? { ...item, isActive: !newStatus } : item
+        item._id === id ? { ...item, isActive: newStatus } : item
       )
     );
-  }
-};
+
+    try {
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+
+      // 2. Background API call (Bina fetchData ke)
+      await updateItem("/vehiclebrand", id, {
+        isActive: newStatus,
+        userId: user.id || user._id,
+      });
+
+      // 3. Stats ko manually update karein taake cards sync rahein
+      if (newStatus) {
+        setTotalActiveCount((prev) => prev + 1);
+        setTotalInactiveCount((prev) => prev - 1);
+      } else {
+        setTotalActiveCount((prev) => prev - 1);
+        setTotalInactiveCount((prev) => prev + 1);
+      }
+
+    } catch (error) {
+      console.error("Vehicle Brand Status Update Error:", error);
+      alert("Failed to update status. Reverting change...");
+
+      // 4. Error Handle: Rollback to previous state
+      setDataList((prevList) =>
+        prevList.map((item) =>
+          item._id === id ? { ...item, isActive: !newStatus } : item
+        )
+      );
+    }
+  };
 
   // Calculate stats
   const statsTotal = totalCount;
@@ -138,11 +139,9 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Car size={32} className="text-white" />
-            </div>
+          <AnimatedIcon icon={<Car size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Vehicle Brands</h1>
               <p className="text-blue-100 text-lg">Manage manufacturers and brand identities</p>
@@ -153,18 +152,26 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Brand
           </button>
         </div>
 
         {/* Reusable Stats Cards Component with Filter */}
-        <StatsCards 
+        <StatsCards
           totalCount={statsTotal}
           activeCount={statsActive}
           inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Vehicle Brands",
+            active: "Active Brands",
+            inactive: "Inactive Brands"
+          }}
+          icons={{
+            total: <Car size={24} />,
+          }}
         />
 
         {/* Search Bar */}
@@ -191,22 +198,20 @@ const handleStatusChange = async (id: string, newStatus: boolean) => {
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <Grid3x3 size={16} />
                 <span className="hidden sm:inline text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <List size={16} />
                 <span className="hidden sm:inline text-sm">Table</span>

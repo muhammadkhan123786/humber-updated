@@ -7,6 +7,7 @@ import TechnicianServiceForm from "./TechnicianServiceForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ITechnicianServiceType } from "../../../../../../common/master-interfaces/IService.type.interface";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 type ServiceTypeWithId = ITechnicianServiceType & { _id: string };
@@ -99,20 +100,29 @@ export default function TechnicianServiceClient() {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur"><Settings size={32} /></div>
+            <AnimatedIcon icon={<Settings size={32} className="text-white" />} />
             <div>
               <h1 className="text-3xl font-bold">Technician Service Types</h1>
               <p className="text-blue-100">Manage technician service categories</p>
             </div>
           </div>
-          <button onClick={() => { setEditingData(null); setShowForm(true); }} className="bg-white flex justify-center items-center gap-2 text-blue-600 px-6 py-3 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all">
+          <button onClick={() => { setEditingData(null); setShowForm(true); }} className="bg-white flex justify-center items-center gap-2 text-blue-600 px-5 py-2 rounded-2xl font-bold shadow-lg hover:scale-105 transition-all">
             <Plus size={22} /> Add Service Type
           </button>
         </div>
 
-        <StatsCards totalCount={totalCount} activeCount={totalActiveCount} inactiveCount={totalInactiveCount} onFilterChange={setFilterStatus} />
+        <StatsCards totalCount={totalCount} activeCount={totalActiveCount} inactiveCount={totalInactiveCount} onFilterChange={setFilterStatus} 
+          labels={{
+            total: "Total Service Types",
+            active: "Active Types",
+            inactive: "Inactive Types"
+          }}
+          icons={{
+            total: <Settings size={24} />,
+          }}
+        />
 
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300">
           <Search className="text-gray-400" size={20} />

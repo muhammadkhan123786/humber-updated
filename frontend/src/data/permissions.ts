@@ -61,18 +61,19 @@ export const navigation: INavBarLinkSharedInterface[] = [
     subItems: [
       {
         _id: nanoid(),
-        label: "Create Ticket",
-        href: "/dashboard/ticket-masterdata/createTicket",
-        icon: FilePlus,
-        roleId: [1],
-      },
-      {
-        _id: nanoid(),
         label: "All Tickets",
         href: "/dashboard/ticket-masterdata/allTickets",
         icon: ListTree,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Create Ticket",
+        href: "/dashboard/ticket-masterdata/createTicket",
+        icon: FilePlus,
+        roleId: [1],
+      },
+
       {
         _id: nanoid(),
         label: "Customers",
@@ -150,12 +151,10 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: nanoid(), label: "Item Conditions", href: "/dashboard/inventory-masterdata/item-conditions", icon: ShieldCheck, roleId: [1] },
       { _id: nanoid(), label: "Product Source", href: "/dashboard/inventory-masterdata/product-source", icon: Globe, roleId: [1] },
       { _id: nanoid(), label: "Tax", href: "/dashboard/inventory-masterdata/tax", icon: Receipt, roleId: [1] },
-      { _id: nanoid(), label: "Category", href: "/dashboard/inventory-masterdata/category", icon: Tags, roleId: [1] },
       { _id: nanoid(), label: "Units", href: "/dashboard/inventory-masterdata/units", icon: Scale, roleId: [1] },
       { _id: nanoid(), label: "Warehouse Status", href: "/dashboard/inventory-masterdata/warehouse-status", icon: Warehouse, roleId: [1] },
       { _id: nanoid(), label: "Colors", href: "/dashboard/inventory-masterdata/colors", icon: Palette, roleId: [1] },
       { _id: nanoid(), label: "Sizes", href: "/dashboard/inventory-masterdata/sizes", icon: Maximize, roleId: [1] },
-      { _id: nanoid(), label: "Product Attribute", href: "/dashboard/inventory-masterdata/product-attribute", icon: Settings, roleId: [1] },
     ],
   },
 
@@ -218,8 +217,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
     roleId: [1],
     subItems: [
       { _id: nanoid(), label: "Suppliers", href: "/dashboard/suppliers", icon: Store, roleId: [1] },
+      { _id: nanoid(), label: "Product Attribute", href: "/dashboard/inventory-masterdata/product-attribute", icon: Settings, roleId: [1] },
+      { _id: nanoid(), label: "Category", href: "/dashboard/inventory-masterdata/category", icon: Tags, roleId: [1] },
       { _id: nanoid(), label: "Marketplace Setup", href: "/dashboard/marketplace-setup", icon: Store, roleId: [1] },
-
     ],
   },
 ];
