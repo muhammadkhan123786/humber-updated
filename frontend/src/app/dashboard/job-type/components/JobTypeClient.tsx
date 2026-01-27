@@ -9,6 +9,7 @@ import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IJobTypes } from "../../../../../../common/IJob.types.interface";
 import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -110,11 +111,9 @@ export default function JobTypeClient() {
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Briefcase size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<Briefcase size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Job Types</h1>
               <p className="text-blue-100 text-lg">Define employment categories (e.g. Full-time, Remote)</p>
@@ -125,7 +124,7 @@ export default function JobTypeClient() {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Job Type
           </button>
@@ -139,8 +138,8 @@ export default function JobTypeClient() {
           onFilterChange={(filter) => setFilterStatus(filter)}
           labels={{
             total: "Total Job Types",
-            active: "Active Job Types",
-            inactive: "Inactive Job Types"
+            active: "Active Types",
+            inactive: "Inactive Types"
           }}
           icons={{
             total: <Briefcase size={24} />,

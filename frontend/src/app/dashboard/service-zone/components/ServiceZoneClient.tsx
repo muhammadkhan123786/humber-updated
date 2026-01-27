@@ -8,6 +8,7 @@ import StatsCards from "@/app/common-form/StatsCard";
 import { IServicesZones } from "../../../../../../common/service.zones.interface"; // Adjust path as needed
 import { updateItem, getAll, deleteItem } from "@/helper/apiHelper";
 import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 const API_URL = "/services-zones";
@@ -105,11 +106,9 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
     <div className="min-h-screen p-6 bg-gray-50/50">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Map size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<Map size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Service Zones</h1>
               <p className="text-orange-50 text-lg">Manage geographical areas where your services are available</p>
@@ -117,7 +116,7 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
           </div>
           <button
             onClick={() => { setEditingData(null); setShowForm(true); }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Zone
           </button>
