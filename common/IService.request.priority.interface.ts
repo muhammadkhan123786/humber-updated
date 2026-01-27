@@ -4,4 +4,5 @@ export interface ServiceRequestPrioprity<TUserId = string> extends IBaseEntity<T
     serviceRequestPrioprity: string;
     description: string;
     backgroundColor: string;
+    index?: number;
 }

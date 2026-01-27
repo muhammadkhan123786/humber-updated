@@ -10,6 +10,11 @@ const ServiceRequestPriopritySchema = new Schema<ServiceRequestPrioprityDoc>({
     serviceRequestPrioprity: { type: String, required: true },
     description: { type: String, required: true },
     backgroundColor: { type: String, required: true },
+    index: {
+        type: Number,
+        unique: true,
+        sparse: true
+    },
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
