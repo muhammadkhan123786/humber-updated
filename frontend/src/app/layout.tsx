@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`bg-[#B4B4B4] antialiased `}>
+      <body className={`bg-[#B4B4B4]`}>
         <ModalProvider>
           <Modal />
           <Theme>
