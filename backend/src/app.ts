@@ -67,6 +67,7 @@ import technicianJobStatusRouter from "./routes/master-data-routes/technician.jo
 import technicianJobsRouter from "./routes/technician-jobs/technician.jobs.routes";
 import autoCodeGeneratorRouter from "./routes/auto-code-generator/auto.code.generator.routes";
 import driverRouter from "./routes/driver/driver.routes";
+import otpRouter from "./routes/otp-routes/mobile.otp.routes";
 
 // Create express app
 const app: Application = express();
@@ -330,6 +331,13 @@ app.use(
 
 );
 
+//27-01-2026 
+app.use(
+  `${process.env.API_PREFIX}/forget-password`,
+  //adminProtecter,
+  otpRouter,
+
+);
 
 //Muhammad Imran code ended here.
 
