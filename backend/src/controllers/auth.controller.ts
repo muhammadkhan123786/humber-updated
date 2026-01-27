@@ -68,12 +68,19 @@ export const login = async (req: Request, res: Response) => {
                     message: "Driver profile not found for this account"
                 });
             }
+            if (!driver.isVerified) {
+                return res.status(404).json({
+                    message: "Your account is not verified yet. please wait or contact website admin."
+                });
+            }
+
             return res.status(200).json({
                 user: {
                     id: user._id,
                     email: user.email,
                     role: user.role,
-                    driverId: driver._id
+                    driverId: driver._id,
+                    isApproved: driver.isVerified,
                 },
                 token
             });
@@ -120,3 +127,4 @@ export const setupPassword = async (req: Request, res: Response) => {
         res.status(500).json({ message: error.message });
     }
 };
+

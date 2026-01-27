@@ -23,3 +23,13 @@ export const sendConfirmationEmail = async (userEmail: string, role: string) => 
         html: `<p>Click <a href="${confirmationLink}">here</a> to set your password and activate your account.</p>`
     });
 };
+
+
+export const sendEmailTemplate = async (EmailId: string, template: string, subject: string) => {
+    await transporator.sendMail({
+        from: `Humber ${process.env.gmailuser}`,
+        to: EmailId,
+        subject: subject,
+        html: template
+    });
+};
