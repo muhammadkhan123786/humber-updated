@@ -2,27 +2,21 @@
 
 import React, { useRef } from "react";
 import Image from "next/image";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { Info, Upload, X } from "lucide-react";
 import { Controller } from "react-hook-form";
 
 interface Props {
-  onNext: (formData: any) => void;
-  onBack: () => void;
+  onNext?: (formData: any) => void;
+  onBack?: () => void;
   form: any;
   isLoading: boolean;
 }
 
-const StepIssueDetails: React.FC<Props> = ({
-  onNext,
-  onBack,
-  form,
-  isLoading,
-}) => {
+const StepIssueDetails: React.FC<Props> = ({ form }) => {
   const { control, watch, setValue } = form;
 
   const images = watch("vehicleRepairImages") || [];
   const videos = watch("vehicleRepairVideo") || [];
-  const description = watch("issue_Details");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,10 +73,6 @@ const StepIssueDetails: React.FC<Props> = ({
     }
   };
 
-  const handleNext = () => {
-    onNext(form.getValues());
-  };
-
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
       <div
@@ -91,25 +81,58 @@ const StepIssueDetails: React.FC<Props> = ({
           background: "linear-gradient(90deg, #FF6900 0%, #FB2C36 100%)",
         }}
       >
-        <h2 className="text-xl font-bold tracking-tight">Issue Details</h2>
+        <div>
+          <h2 className="text-xl font-bold pt-3 tracking-tight">
+            Issue Details
+          </h2>
+          <p
+            className="leading-none opacity-90 pt-2"
+            style={{ fontSize: "12px", fontWeight: 400 }}
+          >
+            Describe the problem
+          </p>
+        </div>
       </div>
 
       <div className="p-10 space-y-8">
         <div className="space-y-3">
-          <label className="text-sm font-black text-[#1E293B] uppercase tracking-widest">
-            Fault Description *
+          <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
+            Fault or Accident Description{" "}
+            <span className="text-red-500">*</span>
           </label>
+
           <Controller
             name="issue_Details"
             control={control}
             render={({ field }) => (
               <textarea
                 {...field}
-                className="w-full p-6 rounded-3xl bg-[#F8FAFF] border border-[#EEF2FF] text-[#1E293B] font-medium outline-none focus:ring-2 ring-orange-100 min-h-[150px] resize-none"
-                placeholder="What seems to be the problem?"
+                required
+                className="
+          w-full mt-2 p-6
+          rounded-3xl
+          bg-[#F8FAFF]
+          border border-[#EEF2FF]
+          text-[#1E293B] font-medium
+          outline-none
+          focus:ring-2 focus:ring-orange-100
+          focus:border-orange-300
+          min-h-[150px]
+          resize-none
+          placeholder:text-slate-400
+        "
+                placeholder="Describe the issue in detail..."
               />
             )}
           />
+
+          <div className="flex items-start gap-2 text-gray-500 text-xs font-normal font-['Arial'] leading-4">
+            <Info size={12} strokeWidth={1.5} className="mt-0.5" />
+            <span>
+              Provide as much detail as possible to help technicians understand
+              the issue
+            </span>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -121,7 +144,7 @@ const StepIssueDetails: React.FC<Props> = ({
             onClick={() => fileInputRef.current?.click()}
             className="relative w-full h-48 rounded-3xl border-2 border-dashed border-[#FF6900]/30 bg-[#FFF9F5] flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF4ED] transition-all"
           >
-            <div className="w-16 h-16 rounded-full flex items-center justify-center text-white mb-4 bg-gradient-to-br from-[#FF6900] to-[#FB2C36] shadow-lg shadow-orange-200">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center text-white mb-4 bg-linear-to-br from-[#FF6900] to-[#FB2C36] shadow-lg shadow-orange-200">
               <Upload size={32} />
             </div>
             <p className="text-[#1E293B] font-bold text-sm">
@@ -176,33 +199,6 @@ const StepIssueDetails: React.FC<Props> = ({
           onChange={handleFileUpload}
           className="hidden"
         />
-
-        <div className="flex justify-between items-center pt-8 border-t border-gray-50">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-8 py-4 rounded-2xl font-black bg-gray-50 text-gray-400"
-          >
-            <ChevronLeft size={20} /> Previous
-          </button>
-
-          <button
-            onClick={handleNext}
-            disabled={!description || description.length < 5 || isLoading}
-            className="flex items-center gap-2 px-10 py-4 font-black text-white rounded-[10px]"
-            style={{
-              background:
-                description?.length >= 5
-                  ? "linear-gradient(90deg, #FF6900 0%, #FB2C36 100%)"
-                  : "#E5E7EB",
-            }}
-          >
-            {isLoading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-            ) : (
-              "Next"
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );

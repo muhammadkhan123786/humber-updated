@@ -29,9 +29,9 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   // States
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
-
-
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const roleId =
     typeof window !== "undefined"
@@ -56,14 +56,18 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     setExpandedMenus((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-
-
-  const renderNavItem = (item: NavItem, index?: string, isMobile: boolean = false) => {
+  const renderNavItem = (
+    item: NavItem,
+    index?: string,
+    isMobile: boolean = false,
+  ) => {
     const Icon = item.icon;
     const isActive = pathname === item.href;
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isExpanded = expandedMenus[item._id];
-    const hasActiveSubItem = item.subItems?.some((sub) => pathname === sub.href);
+    const hasActiveSubItem = item.subItems?.some(
+      (sub) => pathname === sub.href,
+    );
 
     if (hasSubItems) {
       return (
@@ -75,16 +79,21 @@ export default function Layout({ children, onLogout }: LayoutProps) {
           >
             <button
               onClick={() => toggleMenu(item._id)}
-              className={`w-full group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive || hasActiveSubItem
-                ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
-                : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
-                }`}
+              className={`w-full group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                isActive || hasActiveSubItem
+                  ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
+                  : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
+              }`}
             >
               <div className="flex items-center gap-3">
                 {Icon && <Icon className="h-5 w-5" />}
                 <span className="font-medium">{item.label}</span>
               </div>
-              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
             </button>
           </motion.div>
 
@@ -104,10 +113,11 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                       key={subItem._id}
                       href={subItem.href}
                       onClick={() => isMobile && setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${isSubActive
-                        ? "bg-white/20 text-white font-medium border-l-2 border-white"
-                        : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
-                        }`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
+                        isSubActive
+                          ? "bg-white/20 text-white font-medium border-l-2 border-white"
+                          : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
+                      }`}
                     >
                       {SubIcon && <SubIcon className="h-4 w-4" />}
                       <span>{subItem.label}</span>
@@ -131,20 +141,20 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         <Link
           href={item.href}
           onClick={() => isMobile && setSidebarOpen(false)}
-          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive
-            ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
-            : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
-            }`}
+          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+            isActive
+              ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
+              : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
+          }`}
         >
           {Icon && <Icon className="h-5 w-5" />}
           <span className="font-medium">{item.label}</span>
         </Link>
-      </motion.div >
+      </motion.div>
     );
   };
 
   return (
-
     <div className="min-h-screen bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
       {/* Sidebar Desktop */}
       <div className="min-h-screen bg-linear-to-br from-indigo-50 via-purple-50 to-pink-50 relative">
@@ -185,7 +195,6 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                     onClick={() => setSidebarOpen(false)}
                     className="p-2 -mr-2 text-white/80 hover:text-white transition-colors"
                   >
-
                     <X className="h-6 w-6" />
                   </button>
                 </div>
@@ -225,7 +234,9 @@ export default function Layout({ children, onLogout }: LayoutProps) {
 
             <nav className="flex-1 p-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-1 mb-6">
-                {navBarLinks.map((item) => renderNavItem(item, undefined, false))}
+                {navBarLinks.map((item) =>
+                  renderNavItem(item, undefined, false),
+                )}
               </div>
 
               <div className="pt-4 border-t border-white/10 space-y-4">
@@ -238,8 +249,12 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                 </button>
 
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-                  <h3 className="text-white font-semibold text-sm mb-1">Need help?</h3>
-                  <p className="text-white/70 text-xs">Contact support anytime</p>
+                  <h3 className="text-white font-semibold text-sm mb-1">
+                    Need help?
+                  </h3>
+                  <p className="text-white/70 text-xs">
+                    Contact support anytime
+                  </p>
                 </div>
               </div>
             </nav>
@@ -249,15 +264,21 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         <div className="lg:pl-64">
           {/* Header - Non-sticky */}
           <header className="relative z-10 flex h-16 items-center border-b bg-white/80 backdrop-blur-md px-8 justify-between">
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
               <Menu />
             </Button>
-            <div className="text-sm text-gray-500">{new Date().toDateString()}</div>
+            <div className="text-sm text-gray-500">
+              {new Date().toDateString()}
+            </div>
           </header>
           <main className="p-4 lg:p-8">{children}</main>
         </div>
       </div>
     </div>
-  )
+  );
 }
-

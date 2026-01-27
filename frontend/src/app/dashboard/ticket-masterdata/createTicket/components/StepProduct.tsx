@@ -1,38 +1,50 @@
 "use client";
 
 import React from "react";
-import {
-  ChevronRight,
-  ChevronLeft,
-  Loader2,
-  Info,
-  ShoppingBag,
-} from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import { Controller } from "react-hook-form";
 
+import { CustomSelect } from "../../../../common-form/CustomSelect";
+
 interface StepProductProps {
-  onNext: () => void;
-  onBack: () => void;
+  onNext?: () => void;
+  onBack?: () => void;
   form: any;
   vehicles: any[];
   isLoadingVehicles: boolean;
+  customers: any[];
 }
 
 const StepProduct: React.FC<StepProductProps> = ({
-  onNext,
-  onBack,
   form,
   vehicles,
   isLoadingVehicles,
+  customers,
 }) => {
   const {
-    control,
     watch,
     formState: { errors },
   } = form;
+
   const selectedVehicleId = watch("vehicleId");
+  const selectedCustomerId = watch("customerId");
 
   const vehicleDetails = vehicles.find((v) => v._id === selectedVehicleId);
+  const selectedCustomer = customers.find(
+    (c: any) => c._id === selectedCustomerId,
+  );
+
+  const ownershipType =
+    selectedCustomer?.customerType === "domestic"
+      ? "Customer Owned"
+      : selectedCustomer?.customerType === "corporate"
+        ? "Company Owned"
+        : "";
+
+  const vehicleOptions = vehicles.map((v: any) => ({
+    id: v._id,
+    label: `${v.vehicleBrandId?.brandName} (${v.vehicleModelId?.modelName}) - ${v.serialNumber}`,
+  }));
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
@@ -51,17 +63,22 @@ const StepProduct: React.FC<StepProductProps> = ({
       >
         <div className="flex justify-between items-center h-full">
           <div>
-            <h2 className="text-xl font-bold tracking-tight leading-none">
+            <h2 className="text-xl pt-4 font-bold tracking-tight leading-none">
               Product
             </h2>
+            <p
+              className="leading-none opacity-90 pt-2"
+              style={{ fontSize: "12px", fontWeight: 400 }}
+            >
+              Select ticket source and customer
+            </p>
           </div>
-          <ShoppingBag className="opacity-20" size={32} />
         </div>
       </div>
 
       <div className="p-10 space-y-10">
         <div className="space-y-4">
-          <label className="text-sm font-black text-[#1E293B] uppercase tracking-widest flex justify-between items-center">
+          <label className="flex items-center gap-2 text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Select Mobility Scooter *
             {isLoadingVehicles && (
               <Loader2 className="animate-spin text-[#AD46FF]" size={18} />
@@ -70,36 +87,24 @@ const StepProduct: React.FC<StepProductProps> = ({
 
           <Controller
             name="vehicleId"
-            control={control}
+            control={form.control}
             render={({ field }) => (
-              <select
-                {...field}
-                disabled={
-                  isLoadingVehicles ||
-                  (vehicles.length === 0 && !isLoadingVehicles)
+              <CustomSelect
+                options={vehicleOptions}
+                value={field.value}
+                onChange={(id: string) => {
+                  field.onChange(id);
+                }}
+                placeholder={
+                  isLoadingVehicles
+                    ? "Searching records..."
+                    : "Select a product"
                 }
-                className="w-full p-5 rounded-3xl bg-[#F8FAFF] border border-[#EEF2FF] text-[#1E293B] font-bold outline-none focus:ring-2 ring-purple-100 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoadingVehicles ? (
-                  <option>Searching records...</option>
-                ) : (
-                  <>
-                    <option value="">
-                      {vehicles.length === 0
-                        ? "No vehicles registered for this customer"
-                        : "Select a vehicle"}
-                    </option>
-                    {vehicles.map((v) => (
-                      <option key={v._id} value={v._id}>
-                        {v.vehicleBrandId?.brandName}{" "}
-                        {v.vehicleModelId?.modelName} — Serial: {v.serialNumber}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
+                error={!!errors.vehicleId}
+              />
             )}
           />
+
           {errors.vehicleId && (
             <p className="text-red-500 text-sm font-bold flex items-center gap-1">
               <Info size={14} /> {errors.vehicleId.message}
@@ -107,80 +112,62 @@ const StepProduct: React.FC<StepProductProps> = ({
           )}
         </div>
 
-        {vehicleDetails ? (
-          <div className="space-y-4">
-            <h3 className="text-[#9810FA] font-bold text-sm ml-2">
-              Part Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-3xl bg-white/50">
-              {[
-                {
-                  label: "Brand",
-                  value: vehicleDetails.vehicleBrandId?.brandName,
-                },
-                {
-                  label: "Model",
-                  value: vehicleDetails.vehicleModelId?.modelName,
-                },
-                { label: "Serial Number", value: vehicleDetails.serialNumber },
-                { label: "Type", value: vehicleDetails.vehicleType },
-                { label: "Note", value: vehicleDetails.note || "N/A" },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="bg-[#F4F9FB] p-5 rounded-2xl border border-white shadow-sm transition-all hover:shadow-md"
-                >
-                  <span className="block text-[11px] font-semibold text-[#9810FA] mb-1">
-                    {item.label}
-                  </span>
-                  <span className="text-[#1A1C1E] font-medium text-[15px] block">
-                    {item.value || "Not Set"}
-                  </span>
+        {vehicleDetails && (
+          <div className="space-y-4 animate-in fade-in duration-500">
+            <div className="self-stretch w-full px-6 pt-6 pb-6 bg-linear-to-br from-purple-50 to-pink-50 rounded-2xl  outline-1 outline-offset-1 outline-purple-100 flex flex-col justify-start items-start gap-4">
+              <div className="self-stretch h-5 inline-flex justify-start items-start">
+                <div className="flex-1 text-purple-900 text-sm font-bold font-['Arial'] leading-5">
+                  Part Details
                 </div>
-              ))}
+              </div>
+              <div className="self-stretch grid grid-cols-1 md:grid-cols-2 gap-3">
+                {[
+                  {
+                    label: "Make",
+                    value: vehicleDetails.vehicleBrandId?.brandName,
+                  },
+                  {
+                    label: "Model",
+                    value: vehicleDetails.vehicleModelId?.modelName,
+                  },
+                  {
+                    label: "Year",
+                    value: vehicleDetails?.purchaseDate
+                      ? new Date(vehicleDetails.purchaseDate).getFullYear()
+                      : "N/A",
+                  },
+                  {
+                    label: "Serial Number",
+                    value: vehicleDetails.serialNumber,
+                  },
+
+                  {
+                    label: "Ownership",
+                    value: ownershipType,
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    className="px-3 py-3 bg-white/60 rounded-xl flex flex-col justify-start items-start gap-1 border border-white/40 shadow-sm"
+                  >
+                    {/* Label */}
+                    <div className="self-stretch h-4 inline-flex justify-start items-start">
+                      <div className="flex-1 text-purple-600 text-xs font-normal font-['Arial'] leading-4">
+                        {item.label}
+                      </div>
+                    </div>
+                    {/* Value */}
+                    <div className="self-stretch min-h-5 inline-flex justify-start items-start">
+                      <div className="flex-1 text-gray-700 text-sm font-normal font-['Arial'] capitalize leading-5 truncate">
+                        {item.value || "Not Set"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        ) : (
-          !isLoadingVehicles &&
-          vehicles.length > 0 && (
-            <div className="p-12 border-2 border-dashed border-gray-100 rounded-3xl text-center text-gray-400 text-sm italic font-medium bg-white/30">
-              Information about the vehicle will appear here once selected.
-            </div>
-          )
         )}
-        <div className="flex justify-between items-center pt-8 border-t border-gray-50">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-2 px-8 py-4 rounded-[10px] font-bold bg-gray-100 text-gray-500 hover:bg-gray-200 transition-all active:scale-95"
-          >
-            <ChevronLeft size={20} /> Previous
-          </button>
-
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={!selectedVehicleId || isLoadingVehicles}
-            className={`flex items-center gap-2 px-10 py-4 font-black text-white transition-all ${
-              selectedVehicleId && !isLoadingVehicles
-                ? "hover:opacity-90 scale-[1.02] active:scale-[0.98]"
-                : "cursor-not-allowed opacity-50"
-            }`}
-            style={{
-              borderRadius: "10px",
-              background:
-                selectedVehicleId && !isLoadingVehicles
-                  ? "linear-gradient(90deg, #AD46FF 0%, #F6339A 100%)"
-                  : "#E5E7EB",
-              boxShadow:
-                selectedVehicleId && !isLoadingVehicles
-                  ? "0 10px 15px -3px rgba(173, 70, 255, 0.2), 0 4px 6px -4px rgba(246, 51, 154, 0.2)"
-                  : "none",
-            }}
-          >
-            Next <ChevronRight size={20} />
-          </button>
-        </div>
       </div>
     </div>
   );

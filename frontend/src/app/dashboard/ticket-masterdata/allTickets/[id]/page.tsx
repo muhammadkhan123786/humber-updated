@@ -15,7 +15,6 @@ import {
   Wrench,
   CheckCircle,
   Clock,
-  Globe,
   Briefcase,
   Building,
   Car,
@@ -259,35 +258,33 @@ const TicketDetailPage = () => {
     "Invoice",
     "Activity Log",
   ];
-
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "open":
-        return "bg-green-100 text-green-800";
-      case "closed":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-[#00A3FF] text-white"; // Bright Blue
       case "in progress":
-        return "bg-blue-100 text-blue-800";
+        return "bg-[#FF8A00] text-white"; // Orange
+      case "completed":
+        return "bg-[#00C853] text-white"; // Success Green
+      case "pending":
+        return "bg-[#FFB800] text-white"; // Yellow-Orange (Same as Medium)
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-400 text-white";
     }
   };
 
   const getPriorityColor = (priority?: string) => {
     switch (priority?.toLowerCase()) {
       case "high":
-        return "bg-red-100 text-red-800";
+        return "bg-gradient-to-r from-[#FF8A00] to-[#FF3D00] text-white";
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gradient-to-r from-[#FFB800] to-[#FF8A00] text-white";
       case "low":
-        return "bg-green-100 text-green-800";
+        return "bg-[#4B5563] text-white"; // Dark slate/grey for Low
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-400 text-white";
     }
   };
-
   const formatDate = (dateString: string): string => {
     if (!dateString) return "N/A";
     try {
@@ -354,11 +351,6 @@ const TicketDetailPage = () => {
                 >
                   {ticket.priorityId?.serviceRequestPrioprity || "Normal"}
                 </span>
-                {ticket.isActive && (
-                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded-full uppercase">
-                    Active
-                  </span>
-                )}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
@@ -370,10 +362,6 @@ const TicketDetailPage = () => {
                 <Clock size={14} />
                 <span>Updated: {formatDate(ticket.updatedAt)}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Globe size={14} />
-                <span>Source: {ticket.ticketSource}</span>
-              </div>
             </div>
           </div>
         </div>
@@ -383,7 +371,7 @@ const TicketDetailPage = () => {
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-50">
             <div className="flex items-center gap-3 mb-6 text-gray-800 font-bold">
               <User size={20} className="text-blue-500" />
-              <span>Customer Details</span>
+              <span>Customer</span>
             </div>
             <div className="space-y-3">
               {customerDetails ? (
@@ -430,7 +418,7 @@ const TicketDetailPage = () => {
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-50">
             <div className="flex items-center gap-3 mb-6 text-gray-800 font-bold">
               <Car size={20} className="text-green-500" />
-              <span>Vehicle Details</span>
+              <span>Product</span>
             </div>
             <div className="space-y-3">
               {vehicleDetails ? (
@@ -450,7 +438,7 @@ const TicketDetailPage = () => {
                     <div className="flex items-center gap-2">
                       <Tag size={14} className="text-gray-400" />
                       <span>
-                        <span className="text-gray-400">Brand:</span> {brand}
+                        <span className="text-gray-400">Make:</span> {brand}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -464,17 +452,11 @@ const TicketDetailPage = () => {
                     <div className="flex items-center gap-2">
                       <Hash size={14} className="text-gray-400" />
                       <span>
-                        <span className="text-gray-400">Serial:</span>{" "}
+                        <span className="text-gray-400">S/N:</span>{" "}
                         {vehicleDetails.serialNumber || "N/A"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Car size={14} className="text-gray-400" />
-                      <span>
-                        <span className="text-gray-400">Type:</span>{" "}
-                        {vehicleDetails.vehicleType || "N/A"}
-                      </span>
-                    </div>
+
                     {vehicleDetails.vehicleRegistrationNumber && (
                       <div className="flex items-center gap-2">
                         <Tag size={14} className="text-gray-400" />
@@ -508,7 +490,7 @@ const TicketDetailPage = () => {
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-50">
             <div className="flex items-center gap-3 mb-6 text-gray-800 font-bold">
               <ClipboardList size={20} className="text-purple-500" />
-              <span>Ticket Information</span>
+              <span>Ticket Info</span>
             </div>
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex justify-between items-center">
@@ -526,31 +508,16 @@ const TicketDetailPage = () => {
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Urgency:</span>
                 <span
-                  className={`px-2 py-1 rounded-full text-xs font-bold ${getPriorityColor(
-                    ticket.priorityId?.serviceRequestPrioprity,
+                  className={`px-2 py-1 text-gray-900 font-semibold
                   )}`}
                 >
                   {ticket.priorityId?.serviceRequestPrioprity || "Normal"}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-gray-400">Status:</span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-bold ${getStatusColor(
-                    ticket.ticketStatusId?.label,
-                  )}`}
-                >
-                  {ticket.ticketStatusId?.label || "Unknown"}
-                </span>
+                <span className="text-gray-400">Coverage:</span>
+                <span className="text-gray-900 font-semibold">warranty</span>
               </div>
-              {ticket.address && (
-                <div className="pt-2 border-t border-gray-100">
-                  <div className="flex items-start gap-2">
-                    <MapPin size={14} className="text-gray-400 mt-0.5" />
-                    <span className="text-gray-700">{ticket.address}</span>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
