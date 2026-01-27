@@ -131,3 +131,46 @@ export const customerProtecter = (
         return; // ✅ return void
     }
 };
+
+
+//driver protector operations middleware.
+export const driverProtecter = (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    let token: string | undefined;
+
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer ")
+    ) {
+        token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+        res.status(401).json({ message: "Not authorized, token missing" });
+        return; // ✅ return void
+    }
+
+    try {
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET as string
+        ) as { id: string; role: Roles };
+
+        // attach user info to request
+        req.user = decoded;
+        req.role = decoded.role;
+
+        if (decoded.role !== "Driver") {
+            res.status(403).json({ message: "Not authorized, Driver access only" });
+            return; // ✅ return void
+        }
+
+        next(); // ✅ continue to next middleware
+    } catch (error) {
+        res.status(401).json({ message: "Not authorized, token invalid" });
+        return; // ✅ return void
+    }
+};

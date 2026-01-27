@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Roles, User } from '../models/user.models';
 import { hashPassword, comparePassword, generateToken } from '../services/auth.service';
+import { DriverModel } from '../models/driver/driver.models';
 
 //this is middleware. common for register all user.
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {
@@ -58,6 +59,26 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Invalid password. Please check.' });
         }
         const token = generateToken({ userId: user._id.toString(), email: user.email, role: user.role });
+
+        if (user.role === "Driver") {
+            const driver = await DriverModel.findOne({ accountId: user._id });
+
+            if (!driver) {
+                return res.status(404).json({
+                    message: "Driver profile not found for this account"
+                });
+            }
+            return res.status(200).json({
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    driverId: driver._id
+                },
+                token
+            });
+        }
+
 
         return res.status(200).json({
             user: {
