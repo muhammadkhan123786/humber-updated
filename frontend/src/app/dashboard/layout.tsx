@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +25,18 @@ interface LayoutProps {
 export default function Layout({ children, onLogout }: LayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [roleId, setRoleId] = useState<number | null>(null);
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    const storedRoleId = localStorage.getItem("roleId");
+    if (storedRoleId) {
+      setRoleId(Number(storedRoleId));
+    }
+  }, []);
+  useEffect(() => {
+    setToday(new Date().toDateString());
+  }, []);
 
   // States
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -33,10 +45,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
     {},
   );
 
-  const roleId =
-    typeof window !== "undefined"
-      ? Number(localStorage.getItem("roleId"))
-      : null;
+
 
   const navBarLinks = useMemo<NavItem[]>(() => {
     if (!roleId) return [];
@@ -79,11 +88,10 @@ export default function Layout({ children, onLogout }: LayoutProps) {
           >
             <button
               onClick={() => toggleMenu(item._id)}
-              className={`w-full group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                isActive || hasActiveSubItem
-                  ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
-                  : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
-              }`}
+              className={`w-full group flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive || hasActiveSubItem
+                ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
+                : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
+                }`}
             >
               <div className="flex items-center gap-3">
                 {Icon && <Icon className="h-5 w-5" />}
@@ -113,11 +121,10 @@ export default function Layout({ children, onLogout }: LayoutProps) {
                       key={subItem._id}
                       href={subItem.href}
                       onClick={() => isMobile && setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${
-                        isSubActive
-                          ? "bg-white/20 text-white font-medium border-l-2 border-white"
-                          : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
-                      }`}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm ${isSubActive
+                        ? "bg-white/20 text-white font-medium border-l-2 border-white"
+                        : "text-white/70 hover:bg-white/10 hover:text-white hover:translate-x-1 border-l-2 border-white/20"
+                        }`}
                     >
                       {SubIcon && <SubIcon className="h-4 w-4" />}
                       <span>{subItem.label}</span>
@@ -141,11 +148,10 @@ export default function Layout({ children, onLogout }: LayoutProps) {
         <Link
           href={item.href}
           onClick={() => isMobile && setSidebarOpen(false)}
-          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-            isActive
-              ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
-              : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
-          }`}
+          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActive
+            ? "bg-white text-indigo-600 shadow-lg shadow-white/20"
+            : "text-white/90 hover:bg-white/10 hover:text-white hover:translate-x-1"
+            }`}
         >
           {Icon && <Icon className="h-5 w-5" />}
           <span className="font-medium">{item.label}</span>
@@ -273,7 +279,7 @@ export default function Layout({ children, onLogout }: LayoutProps) {
               <Menu />
             </Button>
             <div className="text-sm text-gray-500">
-              {new Date().toDateString()}
+              {today}
             </div>
           </header>
           <main className="p-4 lg:p-8">{children}</main>
