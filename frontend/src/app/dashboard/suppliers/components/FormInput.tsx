@@ -74,7 +74,7 @@ const FormField: React.FC<FormFieldProps> = ({
     min,
     max,
     className: [
-      "w-full bg-white",
+      "w-full h-9 bg-gray-100",
       "border border-[#d0d5dd]",
       "rounded-xl px-4 py-3",
       "outline-none transition-all",
@@ -136,7 +136,7 @@ const FormField: React.FC<FormFieldProps> = ({
         ) : type === "textarea" ? (
           <textarea
             {...(commonProps as any)}
-            className={`${commonProps.className} min-h-[120px] resize-none`}
+            className={`${commonProps.className} min-h-16 py-2 px-3 resize-none`}
           />
         ) : (
           <input {...commonProps} type={type} defaultValue={defaultValue} />

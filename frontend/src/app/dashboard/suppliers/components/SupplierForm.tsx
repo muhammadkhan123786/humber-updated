@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Trash2,
   Plus,
+  Users,
 } from "lucide-react";
 import FormSection from "./FormSection";
 import FormField from "./FormInput";
@@ -667,50 +668,66 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full min-h-screen bg-[#fcfcfd] pb-20"
+      className="w-full min-h-screen pb-20"
     >
-      <div className="relative w-full bg-linear-to-r from-[#6366f1] via-[#a855f7] to-[#ec4899] p-6 md:p-8 text-white shadow-xl mb-8">
-        <div className="max-w-[1600px] mx-auto flex items-center gap-5">
+      <div className="self-stretch h-32 pl-8 pt-8 bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl flex flex-col justify-start items-start mb-8">
+        <div className="flex items-center gap-5">
+
+          {/* Back Button - matching the Figma 'w-9 h-9' logic */}
           <button
             type="button"
             onClick={onBack}
-            className="p-2.5 bg-white/20 rounded-xl hover:bg-white/30 transition-all backdrop-blur-md border border-white/20 group"
+            className="w-10 h-10 flex justify-center items-center  rounded-[10px] hover:bg-white/20 transition-all backdrop-blur-md  group"
           >
             <ArrowLeft
               size={20}
-              className="group-hover:-translate-x-1 transition-transform"
+              className="text-white group-hover:-translate-x-1 transition-transform"
             />
           </button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-lg">
-                <Building2 size={24} />
+
+          <div className="relative flex justify-center items-center h-20 w-20">
+            {/* Wrap both elements in this spinning container */}
+            <div className="flex justify-center items-center animate-[spin_13s_linear_infinite]">
+
+              {/* Background Glass - Now locked to the icon */}
+              <div className="absolute w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-sm border border-white/10 rotate-[59.56deg]" />
+
+              {/* The Icon - Now spinning with the background */}
+              <div className="relative z-10">
+                <Building2 size={36} className="text-white" />
               </div>
+
+            </div>
+          </div>
+          {/* Text Content */}
+          <div className="flex flex-col justify-start items-start gap-1">
+            <h1 className="text-white text-4xl font-bold font-sans leading-10 drop-shadow-md">
               {editData ? "Update Supplier" : "Add New Supplier"}
             </h1>
-            <p className="opacity-80 text-xs md:text-sm font-medium mt-0.5">
-              Complete all required fields to {editData ? "update" : "register"}{" "}
-              a supplier
+            <p className="text-white/90 text-lg font-normal font-sans leading-7">
+              Complete all required fields to {editData ? "update" : "register"} a new supplier
             </p>
           </div>
+
         </div>
       </div>
 
-      <div className="max-w-[1600px] mx-auto px-4 md:px-8 space-y-8">
+      <div className="max-w-[1600px]  mx-auto space-y-8">
         {/* Form sections remain the same */}
         <FormSection
           number={1}
           title="Supplier Identification"
           icon={Building2}
           theme="blue"
+          headerClassName="bg-linear-to-r from-blue-50 to-indigo-50" // Different bg for every section
+          iconClassName="text-blue-600"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2  gap-x-4 gap-y-4 ">
             <FormField
               label="Legal Business Name *"
               name="legalBusinessName"
               value={formData.legalBusinessName}
               onChange={handleChange}
-              placeholder="Enter legal name"
               className="md:col-span-2"
               required
             />
@@ -719,14 +736,12 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="tradingName"
               value={formData.tradingName}
               onChange={handleChange}
-              placeholder="Enter trading name"
             />
             <FormField
               label="Business Registration Number *"
               name="businessRegNumber"
               value={formData.businessRegNumber}
               onChange={handleChange}
-              placeholder="e.g. CRN-123456"
               required
             />
             <FormField
@@ -734,7 +749,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="taxRegNumber"
               value={formData.taxRegNumber}
               onChange={handleChange}
-              placeholder="e.g. VAT-7890"
+
             />
             <FormField
               label="Business Type *"
@@ -751,16 +766,17 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
         <FormSection
           number={2}
           title="Contact Information"
-          icon={User}
+          icon={Users}
           theme="purple"
+          headerClassName="bg-linear-to-r from-purple-50 to-pink-50" // Different bg for every section
+          iconClassName="text-purple-600"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
             <FormField
               label="Primary Contact Name *"
               name="primaryContactName"
               value={formData.primaryContactName}
               onChange={handleChange}
-              placeholder="John Smith"
               required
             />
             <FormField
@@ -777,7 +793,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
-              placeholder="+44 20 1234 5678"
               required
             />
             <FormField
@@ -786,7 +801,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               type="email"
               value={formData.emailAddress}
               onChange={handleChange}
-              placeholder="email@company.com"
               required
             />
             <FormField
@@ -794,7 +808,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="website"
               value={formData.website}
               onChange={handleChange}
-              placeholder="https://www.website.com"
               className="md:col-span-2"
             />
           </div>
@@ -805,14 +818,15 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Business Address"
           icon={MapPin}
           theme="green"
+          headerClassName="bg-linear-to-r from-green-50 to-emerald-50" // Different bg for every section
+          iconClassName="text-green-600"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
             <FormField
               label="Registered Address *"
               name="registeredAddress"
               value={formData.registeredAddress}
               onChange={handleChange}
-              placeholder="Street name"
               className="md:col-span-2"
               required
             />
@@ -821,7 +835,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="tradingAddress"
               value={formData.tradingAddress}
               onChange={handleChange}
-              placeholder="Secondary location"
               className="md:col-span-2"
             />
             <FormField
@@ -829,7 +842,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="cityId"
               value={formData.cityId}
               onChange={handleChange}
-              placeholder="e.g. London"
               required
             />
             <FormField
@@ -837,7 +849,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="stateCounty"
               value={formData.stateCounty}
               onChange={handleChange}
-              placeholder="e.g. Greater London"
               required
             />
             <FormField
@@ -845,7 +856,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="postalCode"
               value={formData.postalCode}
               onChange={handleChange}
-              placeholder="e.g. EC1A 1BB"
               required
             />
             <FormField
@@ -853,7 +863,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="countryId"
               value={formData.countryId}
               onChange={handleChange}
-              placeholder="e.g. United Kingdom"
               required
             />
           </div>
@@ -864,15 +873,18 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Financial & Tax Information"
           icon={Landmark}
           theme="orange"
+          headerClassName="bg-linear-to-r from-orange-50 to-amber-50"
+          iconClassName="text-orange-600"
+
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
             <div className="space-y-3">
-              <label className="field-label">VAT Registered</label>
-              <div className="flex gap-6 mt-1">
+              <label className="text-sm font-medium">VAT Registered</label>
+              <div className="flex gap-4 mt-2">
                 {["Yes", "No"].map((opt) => (
                   <label
                     key={opt}
-                    className="flex items-center gap-2 cursor-pointer font-bold text-slate-600 text-sm"
+                    className="flex items-center gap-2 cursor-pointer font-medium"
                   >
                     <input
                       type="radio"
@@ -880,7 +892,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
                       value={opt}
                       checked={formData.vatRegistered === opt}
                       onChange={handleChange}
-                      className="w-4 h-4 accent-orange-500"
+                      className="w-4 h-4 accent-blue-500"
                     />{" "}
                     {opt}
                   </label>
@@ -892,7 +904,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="taxRegNumber"
               value={formData.taxRegNumber}
               onChange={handleChange}
-              placeholder="Enter VAT if applicable"
               disabled={formData.vatRegistered === "No"}
             />
             <FormField
@@ -900,7 +911,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               name="taxIdNumber"
               value={formData.taxIdNumber}
               onChange={handleChange}
-              placeholder="Enter TIN"
               required
             />
             <FormField
@@ -919,7 +929,12 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               value={formData.paymentMethodId}
               onChange={handleChange}
               options={dropdowns.paymentMethods}
-              className="md:col-span-2"
+              className="md:col-span-2  
+             [&_select]:bg-transparent! [&_input]:bg-transparent! 
+             [&_select]:border [&_select]:border-gray-300 
+             [&_select]:focus:outline-none [&_select]:focus:ring-2 [&_select]:focus:ring-orange-500
+             [&_input]:border [&_input]:border-gray-300 
+             [&_input]:focus:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-orange-500"
               required
             />
           </div>
@@ -930,49 +945,45 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Bank / Payment Details"
           icon={CreditCard}
           theme="red"
+          headerClassName="bg-linear-to-r from-red-50 to-rose-50"
+          iconClassName="text-red-600"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
             <FormField
               label="Bank Name"
               name="bankName"
               value={formData.bankName}
               onChange={handleChange}
-              placeholder="Enter bank name"
             />
             <FormField
               label="Account Holder Name"
               name="accountHolderName"
               value={formData.accountHolderName}
               onChange={handleChange}
-              placeholder="Full name on account"
             />
             <FormField
               label="Account Number"
               name="accountNumber"
               value={formData.accountNumber}
               onChange={handleChange}
-              placeholder="Enter account number"
             />
             <FormField
               label="Sort Code / Routing Number"
               name="sortCode"
               value={formData.sortCode}
               onChange={handleChange}
-              placeholder="00-00-00"
             />
             <FormField
               label="IBAN"
               name="iban"
               value={formData.iban}
               onChange={handleChange}
-              placeholder="GB00 XXXX ..."
             />
             <FormField
               label="SWIFT / BIC Code"
               name="swiftCode"
               value={formData.swiftCode}
               onChange={handleChange}
-              placeholder="BIC Code"
             />
           </div>
         </FormSection>
@@ -982,6 +993,8 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Products / Services Supplied"
           icon={Package}
           theme="indigo"
+          headerClassName="bg-linear-to-r from-indigo-50 to-purple-50"
+          iconClassName="text-indigo-600"
         >
           <div className="space-y-6">
             <FormField
@@ -1003,7 +1016,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               options={dropdowns.categories}
               required
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
               <FormField
                 label="Lead Time (days) *"
                 name="leadTime"
@@ -1030,8 +1043,10 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Commercial Terms"
           icon={FileText}
           theme="sky"
+          headerClassName="bg-linear-to-r from-cyan-50 to-blue-50"
+          iconClassName="text-cyan-600"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
             <FormField
               label="Payment Terms *"
               name="paymentTermId"
@@ -1072,7 +1087,7 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               type="date"
               value={formData.contractEndDate}
               onChange={handleChange}
-               min={formData.contractStartDate}
+              min={formData.contractStartDate}
             />
           </div>
         </FormSection>
@@ -1082,6 +1097,8 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Compliance & Documentation"
           icon={ShieldCheck}
           theme="teal"
+          headerClassName="bg-linear-to-r from-teal-50 to-green-50"
+          iconClassName="text-teal-600"
         >
           <div className="space-y-6">
             <div className="space-y-4">
@@ -1161,11 +1178,12 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
             <FormField
               label="Insurance Details"
               name="insuranceDetails"
+              type="textarea"
               value={formData.insuranceDetails}
               onChange={handleChange}
-              placeholder="Public Liability, etc."
+              placeholder="Public Liability,Professional Indemnity, etc."
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
               <FormField
                 label="Insurance Expiry Date"
                 name="insuranceExpiryDate"
@@ -1214,9 +1232,11 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
           title="Operational Information"
           icon={ClipboardList}
           theme="rose"
+          headerClassName="bg-linear-to-r from-pink-50 to-rose-50"
+          iconClassName="text-pink-600"
         >
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4">
               <FormField
                 label="Order Contact Name"
                 name="orderContactName"
@@ -1237,7 +1257,6 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               type="textarea"
               value={formData.returnsPolicy}
               onChange={handleChange}
-              placeholder="Enter details..."
             />
             <FormField
               label="Warranty Terms"
@@ -1245,30 +1264,36 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ editData, onBack }) => {
               type="textarea"
               value={formData.warrantyTerms}
               onChange={handleChange}
-              placeholder="Enter details..."
             />
           </div>
         </FormSection>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-4 mt-8 pb-10">
+        {/* Form Actions Container */}
+        <div className="self-stretch h-20 pr-6 pt-6 bg-white rounded-2xl shadow-lg shadow-black/5 flex justify-end items-start gap-4 mt-8 pb-10">
+
+          {/* Cancel Button */}
           <button
             type="button"
             onClick={onBack}
-            className="px-8 py-3 rounded-xl font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-all text-sm"
+            className="w-20 h-9 px-4 py-2 bg-slate-50 rounded-[10px]   outline-1 outline-indigo-600/10 hover:bg-[#10b981] hover:text-white transition-all text-center text-indigo-950 text-sm font-medium font-sans leading-5"
           >
             Cancel
           </button>
+
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-10 py-3 bg-[#6366f1] hover:bg-[#4f46e5] text-white rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all text-sm active:scale-[0.98] disabled:opacity-50"
+            className="min-w-28 h-9 px-4 py-2 bg-linear-to-r from-indigo-600 to-purple-600 rounded-[10px] hover:opacity-90 transition-all disabled:opacity-50 active:scale-[0.98] flex justify-center items-center gap-2 shadow-md shadow-indigo-200"
           >
-            {isSubmitting
-              ? "Processing..."
-              : editData
-                ? "Update Supplier"
-                : "Add Supplier"}
+            <span className="text-center text-white text-sm font-normal font-sans leading-5">
+              {isSubmitting
+                ? "Processing..."
+                : editData
+                  ? "Update Supplier"
+                  : "Add Supplier"}
+            </span>
           </button>
         </div>
       </div>
