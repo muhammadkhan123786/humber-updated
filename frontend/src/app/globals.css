@@ -139,6 +139,8 @@ body {
 /* ========== UTILITY CLASSES USING CSS VARIABLES ========== */
 
 /* Text Colors */
+
+
 .text-bg {
   color: var(--background);
 }

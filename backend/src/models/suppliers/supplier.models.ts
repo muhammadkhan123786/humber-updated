@@ -19,6 +19,7 @@ export type SupplierBaseDoc = ISupplier<
 
 export const SupplierSchema = new Schema<SupplierBaseDoc>(
   {
+    supplierCode: { type: String },
     supplierIdentification: {
       legalBusinessName: { type: String, required: true },
       tradingName: { type: String },

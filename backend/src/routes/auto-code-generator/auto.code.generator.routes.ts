@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 import { Response, Request } from "express";
-import { getCurrentTechnicianJobCode, getCurrentTicketCode, getEmployeeCode } from "../../utils/generateTicketCode";
+import { getCurrentTechnicianJobCode, getCurrentTicketCode, getEmployeeCode, getSupplierCurrentCode } from "../../utils/generateTicketCode";
 
 const autoCodeGeneratorRouter = Router();
 
@@ -31,7 +31,17 @@ autoCodeGeneratorRouter.get('/employee-code', async (req: Request, res: Response
         const employeeCode = await getEmployeeCode();
         res.json({ employeeCode: employeeCode });
     } catch (error: any) {
-        res.status(500).json({ error: error.message || "Failed to get ticket code." });
+        res.status(500).json({ error: error.message || "Failed to get employee code." });
+    }
+})
+
+//supplier code 
+autoCodeGeneratorRouter.get('/supplier-code', async (req: Request, res: Response) => {
+    try {
+        const supplierCode = await getSupplierCurrentCode();
+        res.json({ supplierCode: supplierCode });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message || "Failed to get supplier code." });
     }
 })
 

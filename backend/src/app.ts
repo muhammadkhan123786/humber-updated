@@ -319,7 +319,7 @@ app.use(
 //26-01-2026 
 app.use(
   `${process.env.API_PREFIX}/auto-generate-codes`,
-  adminProtecter,
+  //  adminProtecter,
   autoCodeGeneratorRouter,
 
 );
@@ -338,6 +338,9 @@ app.use(
   otpRouter,
 
 );
+
+//28-01-2026
+
 
 //Muhammad Imran code ended here.
 
