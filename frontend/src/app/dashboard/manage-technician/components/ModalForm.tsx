@@ -20,9 +20,11 @@ import {
   Clock,
   Paperclip,
   Check,
+  Award,
 } from "lucide-react";
 import FormSection from "../../suppliers/components/FormSection";
 import FormField from "../../suppliers/components/FormInput";
+import useGoogleMapLoad from "@/hooks/useGoogleMapLoad"; // Add this import
 
 interface ModalFormProps {
   onClose: () => void;
@@ -34,6 +36,9 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   const [paymentFreq, setPaymentFreq] = useState("Monthly");
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [technicianStatus, setTechnicianStatus] = useState(true);
+
+  // Add Google Maps loader
+  const googleMapLoader = useGoogleMapLoad();
 
   const [documents, setDocuments] = useState<
     { id: number; file: File | null; existingUrl?: string }[]
@@ -58,6 +63,63 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       setDocuments([{ id: 1, file: null }]);
     }
   }, [isEditMode, initialData]);
+
+  // Initialize Google Maps Autocomplete
+  useEffect(() => {
+    if (!googleMapLoader) return;
+    if (!window.google) return;
+
+    const input = document.getElementById(
+      "street-address-input",
+    ) as HTMLInputElement;
+    if (!input) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      types: ["address"],
+      componentRestrictions: { country: "uk" }, // UK addresses only
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.place_id) return;
+
+      const service = new google.maps.places.PlacesService(
+        document.createElement("div"),
+      );
+      service.getDetails({ placeId: place.place_id }, (result, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && result) {
+          const address = result.formatted_address ?? "";
+          const postalCode =
+            result.address_components?.find((c) =>
+              c.types.includes("postal_code"),
+            )?.long_name ?? "";
+          const city =
+            result.address_components?.find((c) => c.types.includes("locality"))
+              ?.long_name ?? "";
+          const country =
+            result.address_components?.find((c) => c.types.includes("country"))
+              ?.long_name ?? "";
+
+          // Update form data
+          setFormData((prev) => ({
+            ...prev,
+            streetAddress: address,
+            city: city,
+            postcode: postalCode,
+            // You can add these hidden fields if needed
+            ...(result.geometry?.location && {
+              latitude: result.geometry.location.lat(),
+              longitude: result.geometry.location.lng(),
+            }),
+          }));
+        }
+      });
+    });
+
+    return () => {
+      listener.remove(); // cleanup listener
+    };
+  }, [googleMapLoader]);
 
   const removeDocument = (id: number) =>
     documents.length > 1 &&
@@ -156,6 +218,8 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     streetAddress: "",
     city: "",
     postcode: "",
+    latitude: 0, // Added for Google Maps
+    longitude: 0, // Added for Google Maps
 
     // Employment Details
     dateOfJoining: "",
@@ -169,7 +233,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     bankAccountNumber: "",
     taxId: "",
 
-    // Availability - YAHAN INITIALIZE KARO
+    // Availability
     dutyRoster: [
       { day: "Sunday", isActive: false, startTime: "09:00", endTime: "17:00" },
       { day: "Monday", isActive: true, startTime: "09:00", endTime: "17:00" },
@@ -228,7 +292,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         .map((item: any) => item.day);
       setActiveDays(activeDayNames);
 
-      // IMPORTANT: Initialize dutyRoster with ALL days, not just active ones
+      // Initialize dutyRoster with ALL days
       const allDays = [
         "Sunday",
         "Monday",
@@ -270,7 +334,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
       // Populate form data
       setFormData((prev) => ({
-        ...prev, // IMPORTANT: Pehle ki values preserve karo
+        ...prev,
         firstName: person.firstName || "",
         middleName: person.middleName || "",
         lastName: person.lastName || "",
@@ -282,6 +346,8 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         streetAddress: address.address || "",
         city: address.city || "",
         postcode: address.zipCode || "",
+        latitude: address.latitude || 0,
+        longitude: address.longitude || 0,
 
         dateOfJoining: formatDate(initialData.dateOfJoining),
         contractTypeId:
@@ -295,7 +361,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         bankAccountNumber: initialData.bankAccountNumber || "",
         taxId: initialData.taxId || "",
 
-        dutyRoster: completeDutyRoster, // Use complete roster with all days
+        dutyRoster: completeDutyRoster,
 
         emergencyContactName: additionalInfo.emergencyContactName || "",
         emergencyContactPhone: additionalInfo.emergencyContactNumber || "",
@@ -305,6 +371,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       }));
     }
   }, [isEditMode, initialData]);
+
   const handleChange = (e: any) => {
     const { name, type, value, selectedOptions } = e.target;
 
@@ -316,6 +383,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleMultipleFiles = (files: File[]) => {
     if (files.length === 0) return;
 
@@ -331,6 +399,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
     setDocuments([...existingDocs, ...newDocuments]);
   };
+
   const handleTimeChange = (
     day: string,
     field: "startTime" | "endTime",
@@ -356,8 +425,16 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate address
+    if (!formData.streetAddress) {
+      alert("Please enter a valid address.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -410,6 +487,19 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       formDataToSend.append("address[city]", formData.city.trim());
       formDataToSend.append("address[country]", "UK");
       formDataToSend.append("address[userId]", currentUserId);
+
+      // Add latitude and longitude if available
+      if (formData.latitude && formData.longitude) {
+        formDataToSend.append(
+          "address[latitude]",
+          formData.latitude.toString(),
+        );
+        formDataToSend.append(
+          "address[longitude]",
+          formData.longitude.toString(),
+        );
+      }
+
       if (formData.employeeId.trim())
         formDataToSend.append("employeeId", formData.employeeId.trim());
       if (formData.dateOfBirth)
@@ -566,8 +656,25 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   const sectionTitleStyle =
     "flex items-center gap-2 text-md font-bold text-slate-800 border-b border-slate-50 pb-2 mb-4";
 
+  // Show loading state while Google Maps is loading
+  if (!googleMapLoader && !isEditMode) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+        <div className="relative w-[900px] max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="flex items-center justify-center h-full p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading Google Maps API...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="fixed  inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -580,7 +687,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative w-full  max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+        className="relative w-[900px] max-h-[90vh] bg-white rounded-3xl shadow-2xl overflow-y-auto custom-scrollbar"
       >
         <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white">
           <div>
@@ -601,7 +708,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="p-6 max-h-[75vh]  overflow-y-auto space-y-10 custom-scrollbar">
+          <div className="p-6 space-y-10">
             <div className="w-full max-w-[835px] min-h-24 px-5 py-4 bg-linear-to-r from-[#FFF7F4] via-[#FFF3F3] to-[#FFF0F6] rounded-2xl  outline-2 -outline-offset-2 outline-[#FFD9C7] flex flex-col justify-center">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-linear-to-br from-[#FF5100] to-[#FF2E00] rounded-full flex justify-center items-center shadow-sm shrink-0">
@@ -626,7 +733,12 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               </div>
             </div>
 
-            <FormSection icon={User} title="Personal Information" theme="red">
+            <FormSection
+              icon={User}
+              title="Personal Information"
+              theme="red"
+              iconClassName="text-red-500 "
+            >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <FormField
                   label="First Name *"
@@ -702,21 +814,30 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               </div>
             </FormSection>
 
+            {/* Address Information Section - Updated with Google Maps */}
             <FormSection
               icon={MapPin}
               title="Address Information"
               theme="green"
+              iconClassName="text-green-500 "
             >
-              <FormField
-                label="Street Address *"
-                name="streetAddress"
-                value={formData.streetAddress}
-                onChange={handleChange}
-                placeholder="Start typing address... (e.g., 123 Main St)"
-                className="mb-4"
-                hoverColor="green"
-                required
-              />
+              <div className="space-y-2 mb-4">
+                <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
+                  Street Address *
+                </label>
+                <input
+                  id="street-address-input"
+                  name="streetAddress"
+                  value={formData.streetAddress}
+                  onChange={handleChange}
+                  placeholder="Start typing address... (UK addresses only)"
+                  className="w-full h-9 px-4 bg-[#F0FDF4] border border-[#DCFCE7] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981]/10 focus:border-[#10B981] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
+                  required
+                />
+                <p className="text-xs text-slate-500 ml-1">
+                  Start typing your UK address and select from suggestions
+                </p>
+              </div>
 
               {/* Info Box */}
               <div className="p-3.5 rounded-xl bg-[#EBFFF3] border border-[#C6F6D5] flex gap-3 items-center mb-4">
@@ -738,25 +859,47 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
               {/* City and Postcode Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  label="City *"
-                  name="city"
-                  type="text"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="Enter city"
-                  hoverColor="blue"
-                  required
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
+                    City *
+                  </label>
+                  <input
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="Auto-filled from address"
+                    className="w-full h-9 px-4 bg-[#F0F9FF] border border-[#DBEAFE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/10 focus:border-[#3B82F6] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
+                    required
+                    readOnly
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
+                    Postcode *
+                  </label>
+                  <input
+                    name="postcode"
+                    value={formData.postcode}
+                    onChange={handleChange}
+                    placeholder="Auto-filled from address"
+                    className="w-full h-9 px-4 bg-[#FDF2F8] border border-[#FCE7F3] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC4899]/10 focus:border-[#EC4899] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
+                    required
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              {/* Hidden fields for coordinates */}
+              <div className="hidden">
+                <input
+                  type="hidden"
+                  name="latitude"
+                  value={formData.latitude}
                 />
-                <FormField
-                  label="Postcode *"
-                  name="postcode"
-                  type="text"
-                  value={formData.postcode}
-                  onChange={handleChange}
-                  placeholder="Enter postcode"
-                  hoverColor="purple"
-                  required
+                <input
+                  type="hidden"
+                  name="longitude"
+                  value={formData.longitude}
                 />
               </div>
             </FormSection>
@@ -766,6 +909,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               icon={Briefcase}
               title="Employment Details"
               theme="blue"
+              iconClassName="text-blue-500 "
             >
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
@@ -777,7 +921,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                     name="dateOfJoining"
                     value={formData.dateOfJoining}
                     onChange={handleChange}
-                    className="w-full p-3.5 bg-[#F8FAFF] border  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E7000B]/10 focus:border-blue-500 transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm border-blue-200 focus:border-blue-500"
+                    className="w-full h-9 px-4 bg-[#F8FAFF] border  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E7000B]/10 focus:border-blue-500 transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm border-blue-2"
                     required
                   />
                 </div>
@@ -820,6 +964,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               icon={PoundSterling}
               title="Salary & Compensation"
               theme="green"
+              iconClassName="text-green-500 "
             >
               <div className="p-3 bg-[#EBFFF3] border border-[#C6F6D5] rounded-xl flex items-center gap-3 text-[#16A34A] text-[12px] font-bold mb-4">
                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
@@ -837,7 +982,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
                 {/* Salary Amount Input with Currency Symbol */}
                 <div className="space-y-1.5">
-                  <div className="relative">
+                  <div className="relative ">
                     <FormField
                       label="Salary Amount *"
                       name="salary"
@@ -849,7 +994,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                       hoverColor="green"
                       required
                     />
-                    <span className="absolute left-4 top-[43px] text-[#16A34A] font-bold text-lg">
+                    <span className="absolute left-4 top-[30px] text-[#16A34A] font-bold text-lg">
                       £
                     </span>
                   </div>
@@ -869,25 +1014,46 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                       {
                         label: "Daily",
                         activeBg:
-                          "bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] border-transparent text-white", //
-                        hoverBorder: "hover:border-[#3B82F6]",
-                        icon: Calendar,
-                        iconColor: "text-blue-500",
+                          "bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] text-white outline-transparent shadow-lg shadow-blue-200/50",
+                        hoverBorder: "hover:outline-blue-400 hover:bg-blue-50",
+                        icon: ({ size }: { size?: number }) => (
+                          <span
+                            style={{ fontSize: size }}
+                            className="leading-none"
+                          >
+                            📅
+                          </span>
+                        ),
                       },
                       {
                         label: "Weekly",
                         activeBg:
-                          "bg-gradient-to-r from-[#C026D3] to-[#F43F5E] border-transparent text-white", //
-                        hoverBorder: "hover:border-[#C026D3]",
-                        icon: CalendarDays,
-                        iconColor: "text-purple-600",
+                          "bg-gradient-to-r from-[#C026D3] to-[#F43F5E] text-white outline-transparent shadow-lg shadow-purple-200/50",
+                        hoverBorder:
+                          "hover:outline-purple-400 hover:bg-pink-50",
+                        icon: ({ size }: { size?: number }) => (
+                          <span
+                            style={{ fontSize: size }}
+                            className="leading-none"
+                          >
+                            📆
+                          </span>
+                        ),
                       },
                       {
                         label: "Monthly",
-                        activeBg: "bg-[#00C964] border-transparent text-white", //
-                        hoverBorder: "hover:border-[#00C964]",
-                        icon: CalendarDays,
-                        iconColor: "text-green-600",
+                        activeBg:
+                          "bg-gradient-to-br from-emerald-500 to-green-500 text-white outline-transparent shadow-lg shadow-green-200/50",
+                        hoverBorder:
+                          "hover:outline-emerald-400 hover:bg-emerald-100",
+                        icon: ({ size }: { size?: number }) => (
+                          <span
+                            style={{ fontSize: size }}
+                            className="leading-none"
+                          >
+                            🗓️
+                          </span>
+                        ),
                       },
                     ].map((freq) => {
                       const isSelected = paymentFreq === freq.label;
@@ -898,27 +1064,25 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                           key={freq.label}
                           type="button"
                           onClick={() => setPaymentFreq(freq.label)}
-                          className={`flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 h-[100px] shadow-sm ${
+                          className={`w-32 h-20 px-3.5 pt-3.5 pb-0.5 rounded-2xl outline-2 -outline-offset-2 transition-all duration-300 flex flex-col justify-start items-center gap-1 ${
                             isSelected
                               ? freq.activeBg
-                              : `bg-white border-[#F3F4F6] text-[#6B7280] ${freq.hoverBorder}`
+                              : `bg-white outline-gray-200 text-gray-400 ${freq.hoverBorder}`
                           }`}
                         >
-                          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm border border-slate-100">
-                            <Icon
-                              size={22}
-                              // Icon color remains consistent for selection
-                              className={`${isSelected ? freq.iconColor : "text-[#6B7280]"}`}
-                            />
+                          <div className="self-stretch h-8 flex items-center justify-center">
+                            <Icon size={24} />
                           </div>
 
-                          <span
-                            className={`text-[13px] font-bold ${
-                              isSelected ? "text-white" : "text-[#374151]"
-                            }`}
-                          >
-                            {freq.label}
-                          </span>
+                          <div className="self-stretch h-4 flex items-center justify-center">
+                            <span
+                              className={`text-xs font-bold font-['Arial'] leading-4 ${
+                                isSelected ? "text-white" : "text-gray-700"
+                              }`}
+                            >
+                              {freq.label}
+                            </span>
+                          </div>
                         </button>
                       );
                     })}
@@ -1016,10 +1180,13 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                 ))}
               </div>
             </section>
+
+            {/* Rest of the form remains exactly the same... */}
             {/* 6. Document Upload */}
             <section className="space-y-3">
               <h3 className={sectionTitleStyle}>
                 <svg
+                  className="text-blue-600"
                   width="20"
                   height="20"
                   viewBox="0 0 24 24"
@@ -1040,118 +1207,133 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               </h3>
 
               <div className="p-6 rounded-2xl border-2 border-slate-100 hover:border-cyan-100 transition-all">
-                <div className="text-center mb-6 bg-linear-to-br from-cyan-50 to-blue-50 border border-cyan-100 rounded-xl py-3 px-4">
-                  <p className="text-slate-700 text-sm font-medium">
-                    <Paperclip className="inline-block w-4 h-4 mr-2 text-slate-900" />
-                    Upload multiple documents:{" "}
-                    <span className="font-bold">
-                      Resume, Certifications, ID Proof, Licenses, Background
-                      Check, Training Certificates, etc.
-                    </span>
-                  </p>
-                </div>
-
-                <div
-                  className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-linear-to-br from-cyan-200 to-blue-200  cursor-pointer hover:border-cyan-400 hover:bg-slate-50/80 transition-all duration-300"
-                  onClick={() => {
-                    if (documents.length > 0) {
-                      const input = fileInputRefs.current[documents[0]?.id];
-                      if (input) {
-                        input.click();
-                      }
-                    }
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.add(
-                      "border-cyan-500",
-                      "bg-cyan-50/20",
-                    );
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove(
-                      "border-cyan-500",
-                      "bg-cyan-50/20",
-                    );
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove(
-                      "border-cyan-500",
-                      "bg-cyan-50/20",
-                    );
-
-                    if (e.dataTransfer.files.length > 0) {
-                      const files = Array.from(e.dataTransfer.files);
-                      handleMultipleFiles(files);
-                    }
-                  }}
-                >
-                  <motion.div
-                    className="h-20 w-20 rounded-2xl bg-linear-to-br from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center shadow-lg mx-auto mb-4 relative overflow-hidden group"
-                    whileHover={{ rotate: 360 }}
-                    transition={{ duration: 0.7, ease: "easeInOut" }}
-                  >
-                    <div className="absolute inset-0 bg-linear-to-br from-cyan-200 to-blue-200 opacity-0 group-hover:opacity-30 transition-opacity" />
-                    <Upload size={32} className="text-white relative z-10" />
-                  </motion.div>
-
-                  <h4 className="text-lg font-bold text-slate-800 mb-2">
-                    Click to Upload Multiple Documents
-                  </h4>
-
-                  <p className="text-slate-500 text-sm mb-6">or drag & drop</p>
-
-                  <div className="mb-4">
-                    <p className="text-slate-700 text-sm font-medium mb-1">
-                      PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
-                    </p>
-                    <div className="flex items-center justify-center gap-4 text-xs text-green-600 font-medium">
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 size={12} />
-                        Select multiple files at once
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 size={12} />
-                        No file limit
-                      </span>
+                <div className="self-stretch w-full flex flex-col justify-start items-start gap-3">
+                  {/* Top Info Bar */}
+                  <div className="self-stretch px-4 py-3 bg-linear-to-r from-cyan-50 to-blue-50 rounded-xl  outline-1 -outline-offset-1 outline-cyan-200 flex flex-col justify-start items-start">
+                    <div className="self-stretch inline-flex justify-start items-center gap-2">
+                      <span className="text-gray-700 text-base">📎</span>
+                      <div className="inline-flex flex-wrap gap-1 text-gray-700 text-sm">
+                        <span className="font-normal">
+                          Upload multiple documents:
+                        </span>
+                        <span className="font-bold">
+                          Resume, Certifications, ID Proof, Licenses, Background
+                          Check, Training Certificates, etc.
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    className="px-8 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-all duration-300 inline-flex items-center gap-2 shadow-sm hover:shadow"
-                    onClick={(e) => {
-                      e.stopPropagation();
+                  {/* Main Upload Area */}
+                  <div
+                    className="self-stretch min-h-72 relative bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-50 rounded-2xl  outline-2 outline-offset-2 outline-cyan-300 overflow-hidden cursor-pointer transition-all duration-300 hover:outline-cyan-400 group"
+                    onClick={() => {
                       if (documents.length > 0) {
-                        const input = fileInputRefs.current[documents[0].id];
-                        if (input) {
-                          input.click();
-                        }
+                        const input = fileInputRefs.current[documents[0]?.id];
+                        if (input) input.click();
                       }
                     }}
-                  >
-                    Browse Files
-                  </button>
-
-                  <input
-                    type="file"
-                    className="hidden"
-                    ref={(el) => {
-                      if (documents.length > 0) {
-                        fileInputRefs.current[documents[0].id] = el;
-                      }
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add(
+                        "outline-cyan-500",
+                        "bg-cyan-100/50",
+                      );
                     }}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0) {
-                        const files = Array.from(e.target.files);
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        "outline-cyan-500",
+                        "bg-cyan-100/50",
+                      );
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        "outline-cyan-500",
+                        "bg-cyan-100/50",
+                      );
+                      if (e.dataTransfer.files.length > 0) {
+                        const files = Array.from(e.dataTransfer.files);
                         handleMultipleFiles(files);
                       }
                     }}
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    multiple={true}
-                  />
+                  >
+                    <div className="absolute inset-0 opacity-40 bg-linear-to-br from-cyan-200 to-blue-200 pointer-events-none" />
+
+                    {/* Content Container */}
+                    <div className="relative z-10 flex flex-col items-center justify-center p-8 gap-6 text-center">
+                      {/* Animated Icon Container */}
+                      <motion.div
+                        className="h-20 w-20 rounded-2xl bg-linear-to-br from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center shadow-lg overflow-hidden"
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.7, ease: "easeInOut" }}
+                      >
+                        <Upload size={32} className="text-white" />
+                      </motion.div>
+
+                      {/* Text Content */}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <h4 className="text-xl font-bold text-gray-800">
+                            Click to Upload Multiple Documents
+                          </h4>
+                          <span className="px-3 py-1 bg-cyan-500 text-white text-sm font-bold rounded-full">
+                            or drag & drop
+                          </span>
+                        </div>
+
+                        <p className="text-gray-600 text-sm">
+                          PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+                        </p>
+
+                        <div className="flex items-center justify-center gap-4 text-xs text-cyan-700">
+                          <span className="flex items-center gap-1">
+                            ✓ Select multiple files at once
+                          </span>
+                          <span className="flex items-center gap-1">
+                            • ✓ No file limit
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        type="button"
+                        className="px-6 py-2 bg-linear-to-r from-cyan-600 to-blue-600 text-white font-medium rounded-[10px] shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (documents.length > 0) {
+                            const input =
+                              fileInputRefs.current[documents[0].id];
+                            if (input) input.click();
+                          }
+                        }}
+                      >
+                        <Upload size={16} />
+                        Browse Files
+                      </button>
+
+                      {/* Hidden Input */}
+                      <input
+                        type="file"
+                        className="hidden"
+                        ref={(el) => {
+                          if (documents.length > 0) {
+                            fileInputRefs.current[documents[0].id] = el;
+                          }
+                        }}
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files.length > 0) {
+                            const files = Array.from(e.target.files);
+                            handleMultipleFiles(files);
+                          }
+                        }}
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        multiple
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {documents.filter((doc) => doc.file || doc.existingUrl).length >
@@ -1321,11 +1503,13 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                 )}
               </div>
             </section>
-            {/* 7. Additional Information */}
+
+            {/* 7. Additional Information - Rest of the form remains the same */}
             <FormSection
-              icon={SquarePen}
+              icon={Award}
               title="Additional Information"
               theme="rose"
+              iconClassName="text-rose-500 "
             >
               {/* Emergency Contact Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -1375,7 +1559,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               <div
                 className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
                   technicianStatus
-                    ? "bg-[#F0FFF4] border-[#22C55E]/30 ring-1 ring-[#22C55E]/10" // Matches the soft green outline in image_ced1f2.png
+                    ? "bg-[#F0FFF4] border-[#22C55E]/30 ring-1 ring-[#22C55E]/10"
                     : "bg-slate-50 border-slate-200"
                 }`}
               >
@@ -1383,11 +1567,10 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   <div
                     className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                       technicianStatus
-                        ? "bg-[#00C951] text-white shadow-lg shadow-green-100" // Vibrant green from image_ced1f2.png
-                        : "bg-slate-400 text-white shadow-md shadow-slate-200" // Grey circle from image_ced1d0.png
+                        ? "bg-[#00C951] text-white shadow-lg shadow-green-100"
+                        : "bg-slate-400 text-white shadow-md shadow-slate-200"
                     }`}
                   >
-                    {/* Changed icons to match the screenshot circular style */}
                     {technicianStatus ? (
                       <Check size={22} strokeWidth={3} />
                     ) : (
@@ -1446,10 +1629,8 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              // Changed flex-2 to flex-1 so both buttons have the same size
-              // Gradient matches image_cecdd3.png
-              className="flex-1 py-3.5 rounded-xl font-bold bg-gradient-to-r from-[#FF5C00] via-[#E7000B] to-[#D8006F] text-white shadow-lg shadow-red-100 hover:opacity-95 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting || (!googleMapLoader && !isEditMode)}
+              className="flex-1 py-3.5 rounded-xl font-bold bg-linear-to-r from-[#FF5C00] via-[#E7000B] to-[#D8006F] text-white shadow-lg shadow-red-100 hover:opacity-95 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? "Processing..."
@@ -1461,7 +1642,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         </form>
       </motion.div>
 
-      {/* Document Preview Modal */}
+      {/* Document Preview Modal - Remains the same */}
       {previewUrl && (
         <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">

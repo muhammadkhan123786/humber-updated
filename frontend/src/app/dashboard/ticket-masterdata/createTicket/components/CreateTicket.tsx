@@ -139,10 +139,10 @@ const CreateTicket = ({
   };
 
   return (
-    <div className="px-4 md:px-8 pb-12 bg-fixed">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen px-4 md:px-8 pb-12 bg-[#F8F9FD] bg-fixed">
+      <div className="max-w-5xl mx-auto pt-10">
         {/* Header Section */}
-        <div className="max-w-5xl mx-auto pl-6 md:px-0">
+        <div className="max-w-5xl mx-auto pt-10 pl-6 md:px-0">
           <div className="flex flex-col items-start">
             <div className="flex items-center px-9 gap-4 mb-1">
               <button
@@ -156,13 +156,22 @@ const CreateTicket = ({
               </button>
 
               <h1
-                className="text-3xl font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #4F39F6 0%, #9810FA 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontFamily: "Arial, sans-serif",
+                  fontSize: "30px",
+                  fontWeight: 700,
+                  lineHeight: "36px",
+                }}
               >
                 {isUpdating ? "Update Service Ticket" : "Create Service Ticket"}
               </h1>
             </div>
 
-            <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm uppercase tracking-widest">
+            <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm  tracking-widest">
               Step {currentStep} of 4
             </p>
           </div>
@@ -178,10 +187,11 @@ const CreateTicket = ({
               >
                 <div
                   style={{ width: "52.8px", height: "52.8px" }}
-                  className={`rounded-full flex justify-center items-center shrink-0 shadow-md transition-all duration-500 bg-linear-to-br ${currentStep >= step.id
-                    ? step.color
-                    : "from-gray-200 to-gray-300"
-                    } text-white`}
+                  className={`rounded-full flex   justify-center items-center shrink-0 shadow-md transition-all duration-500 bg-linear-to-br ${
+                    currentStep >= step.id
+                      ? step.color
+                      : "from-gray-200 to-gray-300"
+                  } text-white`}
                 >
                   {currentStep > step.id ? (
                     <Check size={24} strokeWidth={3} />
@@ -192,8 +202,9 @@ const CreateTicket = ({
 
                 <div className="absolute top-[62px] w-32 text-center">
                   <span
-                    className={`text-[12px] font-bold leading-tight transition-colors duration-300 ${currentStep >= step.id ? "text-gray-800" : "text-gray-400"
-                      }`}
+                    className={`text-sm font-medium   ${
+                      currentStep >= step.id ? "text-gray-900" : "text-gray-400"
+                    }`}
                   >
                     {step.label}
                   </span>
@@ -210,10 +221,11 @@ const CreateTicket = ({
                     }}
                   >
                     <div
-                      className={`h-[3px] rounded-full transition-all duration-500 ${currentStep > step.id
-                        ? `bg-linear-to-r ${step.color}`
-                        : "bg-gray-200"
-                        }`}
+                      className={`h-[3px] rounded-full transition-all duration-500 ${
+                        currentStep > step.id
+                          ? `bg-linear-to-r ${step.color}`
+                          : "bg-gray-200"
+                      }`}
                       style={{ width: "40%" }}
                     />
                   </div>
@@ -279,10 +291,11 @@ const CreateTicket = ({
           <button
             type="button"
             onClick={handlePreviousStep}
-            className={`flex items-center gap-2 px-6 py-3 font-bold transition-all duration-300 ${currentStep === 1
-              ? "text-[#1E293B]/60 hover:text-[#4F39F6]"
-              : "text-[#1E293B]/60 hover:text-[#4F39F6]"
-              }`}
+            className={`flex items-center gap-2 px-6 py-3 font-bold transition-all duration-300 ${
+              currentStep === 1
+                ? "text-[#1E293B]/60 hover:text-[#4F39F6]"
+                : "text-[#1E293B]/60 hover:text-[#4F39F6]"
+            }`}
           >
             <ArrowLeft size={18} strokeWidth={2.5} />
             <span className="text-sm">Previous</span>
@@ -292,12 +305,13 @@ const CreateTicket = ({
             type="button"
             onClick={handleNextStep}
             disabled={!isStepValid() || isLoading}
-            className={`flex items-center justify-center gap-3 px-10 py-3 font-bold text-white transition-all duration-300 rounded-[10px] ${isStepValid()
-              ? "hover:opacity-90 hover:scale-[1.02] shadow-lg"
-              : "grayscale opacity-50 cursor-not-allowed"
-              } bg-linear-to-r ${steps[currentStep - 1].color}`}
+            className={`flex items-center justify-center gap-3 px-10 py-3 font-bold text-white transition-all duration-300 rounded-[10px] ${
+              isStepValid()
+                ? "hover:opacity-90 hover:scale-[1.02] shadow-lg"
+                : "grayscale opacity-50 cursor-not-allowed"
+            } bg-linear-to-r ${steps[currentStep - 1].color}`}
           >
-            <span className="text-3xl font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="text-sm">
               {currentStep === 4
                 ? isUpdating
                   ? "Update Ticket"
@@ -308,7 +322,7 @@ const CreateTicket = ({
           </button>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 
