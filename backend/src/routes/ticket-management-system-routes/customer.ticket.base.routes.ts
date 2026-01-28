@@ -8,7 +8,7 @@ import { customerTicketBaseSchemaValidation } from "../../schemas/ticket-managem
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
-import { generateTicketCode } from "../../utils/generateTicketCode";
+import { generateTicketCode } from "../../utils/generate.AutoCode.Counter";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
 import {
   getTicketCountByStatus,

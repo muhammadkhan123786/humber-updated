@@ -319,14 +319,14 @@ app.use(
 //26-01-2026 
 app.use(
   `${process.env.API_PREFIX}/auto-generate-codes`,
-  //  adminProtecter,
+  adminProtecter,
   autoCodeGeneratorRouter,
 
 );
 
 app.use(
   `${process.env.API_PREFIX}/register-driver`,
-  //adminProtecter,
+  // adminProtecter,
   driverRouter,
 
 );
