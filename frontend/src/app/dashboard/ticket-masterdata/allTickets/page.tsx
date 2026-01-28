@@ -571,7 +571,7 @@ const TicketListingPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[11px] text-gray-500 font-bold whitespace-nowrap">
-                    {t.createdAt}
+                    {new Date(t.createdAt).toLocaleDateString("en-GB")}
                   </td>
                   <td className="px-6 py-4 text-right relative">
                     <button

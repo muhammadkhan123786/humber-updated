@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from "react";
 
 import {
   Search,
-  LayoutGrid,
   List,
   SquarePen,
   Trash2,
@@ -15,6 +14,9 @@ import {
   Phone,
   Check,
   Loader2,
+  MapPin,
+  Calendar,
+  Grid3X3,
 } from "lucide-react";
 
 import { fetchCustomers, removeCustomer } from "../../../../hooks/useCustomer";
@@ -23,7 +25,6 @@ import Pagination from "@/components/ui/Pagination";
 
 type ViewMode = "Grid" | "Table";
 
-// 1. Props interface define karein
 interface CustomerManagementListProps {
   onEdit: (id: string) => void;
   refreshTrigger?: number;
@@ -95,13 +96,6 @@ const CustomerManagementList = ({
     }
   };
 
-  const getTypeStyles = (type: string) => {
-    const t = type?.toLowerCase();
-    if (t === "corporate" || t === "company") return "bg-[#E11DBC] text-white";
-    if (t === "government") return "bg-[#00C853] text-white";
-    return "bg-[#00A3FF] text-white";
-  };
-
   const getTypeIcon = (type: string) => {
     const t = type?.toLowerCase();
     if (t === "corporate" || t === "company") return <Building2 size={14} />;
@@ -115,13 +109,13 @@ const CustomerManagementList = ({
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-3/4">
           <Search
-            className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
+            className="absolute left-5 top-1/2 -translate-y-1/2 text-indigo-500"
             size={18}
           />
           <input
             type="text"
             placeholder="Search by name, email, or phone..."
-            className="w-full pl-14 pr-6 py-4 bg-[#F8FAFC] border border-slate-100 rounded-[1.2rem] outline-none focus:ring-4 ring-indigo-500/5 font-medium text-slate-500 shadow-sm"
+            className="w-full pl-14 pr-6 py-4 bg-[#F8FAFC] border-[3px] border-indigo-100 rounded-[1.2rem] outline-none transition-all duration-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 font-medium text-slate-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus:shadow-[0_10px_25px_rgba(99,102,241,0.1)]"
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
@@ -129,13 +123,16 @@ const CustomerManagementList = ({
         <div className="flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-100">
           <button
             onClick={() => setViewMode("Grid")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
               viewMode === "Grid"
-                ? "bg-[#7C3AED] text-white shadow-lg"
-                : "text-slate-500"
+                ? "bg-linear-to-r from-[#6366f1] to-[#a855f7] text-white shadow-[0_10px_20px_-5px_rgba(99,102,241,0.4)]"
+                : "bg-white text-slate-500 border border-slate-100"
             }`}
           >
-            <LayoutGrid size={16} /> Grid
+            <Grid3X3 size={16} strokeWidth={3} />
+            <span className="text-sm font-normal font-['Arial'] leading-5 text-center">
+              Grid
+            </span>
           </button>
           <button
             onClick={() => setViewMode("Table")}
@@ -181,7 +178,6 @@ const CustomerManagementList = ({
               ))}
             </div>
           ) : (
-            /* Table View */
             <div className="bg-white rounded-4xl shadow-2xl shadow-gray-200/50 border border-gray-50 overflow-hidden">
               <div className="h-1.5 w-full bg-linear-to-r from-[#4F46E5] via-[#E11DBC] to-[#FB7185]" />
               <div className="overflow-x-auto">
@@ -189,7 +185,7 @@ const CustomerManagementList = ({
                   <thead>
                     <tr className="bg-[#F8FAFC] border-b border-slate-100">
                       <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                        ID
+                        Customer ID
                       </th>
                       <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                         Name
@@ -198,13 +194,19 @@ const CustomerManagementList = ({
                         Type
                       </th>
                       <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
-                        Contact
+                        Email
+                      </th>
+                      <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                        Phone
                       </th>
                       <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                         Address
                       </th>
                       <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
                         Status
+                      </th>
+                      <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                        Registered
                       </th>
                       <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
                         Actions
@@ -217,77 +219,106 @@ const CustomerManagementList = ({
                         key={c._id}
                         className="hover:bg-slate-50/50 transition-colors group"
                       >
-                        <td className="px-6 py-5 font-bold text-indigo-500 text-[10px] uppercase">
-                          {c._id.slice(-5)}
+                        {/* ID with light purple badge */}
+                        <td className="px-6 py-5">
+                          <span className="bg-[#EEF2FF] text-[#6366F1] px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">
+                            {c._id.slice(-4).toUpperCase()}
+                          </span>
                         </td>
+
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-[#7C3AED] flex items-center justify-center text-white text-xs font-bold">
-                              {(c.customerType === "corporate"
-                                ? c.companyName[0]
-                                : c.personId?.firstName[0]
-                              )?.toUpperCase()}
+                            <div className="w-10 h-10 rounded-full bg-[#7C3AED] flex items-center justify-center text-white shadow-lg shadow-purple-100">
+                              <User size={18} />
                             </div>
-                            <span className="text-sm font-extrabold text-slate-700 uppercase">
+                            <span className=" font-medium text-gray-800">
                               {c.customerType === "corporate"
                                 ? c.companyName
                                 : c.personId?.firstName}
                             </span>
                           </div>
                         </td>
+
                         <td className="px-6 py-5">
                           <span
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-2 w-fit uppercase ${getTypeStyles(c.customerType)}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-2 w-fit text-white shadow-sm uppercase ${
+                              c.customerType === "domestic"
+                                ? "bg-linear-to-r from-[#00A3FF] to-[#0066FF]"
+                                : c.customerType === "corporate"
+                                  ? "bg-linear-to-r from-[#E11DBC] to-[#FB7185]"
+                                  : "bg-linear-to-r from-[#00C853] to-[#009624]"
+                            }`}
                           >
                             {getTypeIcon(c.customerType)} {c.customerType}
                           </span>
                         </td>
+
+                        {/* Separate Email */}
                         <td className="px-6 py-5">
-                          <div className="text-[11px] font-bold text-slate-500">
-                            <div className="flex items-center gap-1">
-                              <Mail size={12} className="text-blue-400" />{" "}
-                              {c.contactId?.emailId}
-                            </div>
-                            <div className="flex items-center gap-1 mt-1">
-                              <Phone size={12} className="text-pink-400" />{" "}
-                              {c.contactId?.mobileNumber}
-                            </div>
+                          <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500">
+                            <Mail size={14} className="text-[#3B82F6]" />
+                            {c.contactId?.emailId}
                           </div>
                         </td>
-                        <td className="px-6 py-5 text-xs font-bold text-slate-500">
-                          <span className="truncate block max-w-[150px]">
-                            {c.addressId?.address}
-                          </span>
+
+                        {/* Separate Phone */}
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500">
+                            <Phone size={14} className="text-[#A855F7]" />
+                            {c.contactId?.mobileNumber}
+                          </div>
                         </td>
+
+                        {/* Address with Logo */}
+                        <td className="px-6 py-5">
+                          <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500">
+                            <MapPin size={14} className="text-[#10B981]" />
+                            <span className="truncate max-w-[150px]">
+                              {c.addressId?.address}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Status */}
                         <td className="px-6 py-5">
                           <span
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm flex items-center gap-1.5 text-white ${c.isActive ? "bg-[#00D169]" : "bg-slate-300"}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm flex items-center gap-1.5 text-white w-fit ${c.isActive ? "bg-[#00D169]" : "bg-slate-300"}`}
                           >
-                            <Check size={12} strokeWidth={4} />{" "}
+                            <Check size={12} strokeWidth={4} />
                             {c.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
+
                         <td className="px-6 py-5">
-                          <div className="flex justify-center gap-2">
-                            <button
-                              onClick={() => handleEdit(c._id)} // Table Edit Trigger
-                              className="p-2 rounded-lg border border-slate-100 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
-                            >
-                              <SquarePen size={16} />
-                            </button>
-                            <button
-                              disabled={isDeleting === c._id}
-                              onClick={() => handleDelete(c._id)}
-                              className="p-2 rounded-lg border border-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all disabled:opacity-50"
-                            >
-                              {isDeleting === c._id ? (
-                                <Loader2 size={16} className="animate-spin" />
-                              ) : (
-                                <Trash2 size={16} />
-                              )}
-                            </button>
+                          <div className="flex items-center gap-2 text-[12px] font-bold text-slate-400">
+                            <Calendar size={14} />
+                            {new Date(c.createdAt).toLocaleDateString("en-GB")}
                           </div>
                         </td>
+
+                        <div className="flex justify-center gap-2 mt-5">
+                          <button
+                            onClick={() => handleEdit(c._id)}
+                            className="group flex items-center gap-2 px-4 py-2 border border-[#EEF2FF] rounded-xl text-slate-700 text-xs font-bold transition-all duration-300 bg-white hover:bg-linear-to-r hover:from-[#2563eb] hover:to-[#0891b2] hover:text-white hover:border-transparent hover:shadow-md active:scale-95"
+                          >
+                            <SquarePen
+                              size={14}
+                              className="text-slate-500 group-hover:text-white transition-colors"
+                            />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDelete(c._id)}
+                            className="group flex items-center gap-2 px-4 py-2 border border-[#EEF2FF] rounded-xl text-slate-700 text-xs font-bold transition-all duration-300 bg-white hover:bg-linear-to-r hover:from-[#e11d48] hover:to-[#db2777] hover:text-white hover:border-transparent hover:shadow-md active:scale-95"
+                          >
+                            <Trash2
+                              size={14}
+                              className="text-slate-500 group-hover:text-white transition-colors"
+                            />
+                            <span>Delete</span>
+                          </button>
+                        </div>
                       </tr>
                     ))}
                   </tbody>

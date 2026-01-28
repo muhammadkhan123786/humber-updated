@@ -48,24 +48,38 @@ const InfoRow = ({
     </span>
   </div>
 );
-
 const ActionButton = ({
   icon: Icon,
   label,
   onClick,
+  variant = "edit",
 }: {
   icon: LucideIcon;
   label: string;
   onClick?: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className="flex-1 flex items-center justify-center gap-2 py-3 border border-[#EEF2FF] rounded-2xl text-slate-700 text-sm font-bold hover:bg-slate-50 hover:border-indigo-200 transition-all active:scale-95 shadow-sm"
-  >
-    <Icon size={18} className="text-[#4F46E5]" /> {label}
-  </button>
-);
+  variant?: "edit" | "delete";
+}) => {
+  const hoverBg =
+    variant === "edit"
+      ? "hover:bg-gradient-to-r hover:from-[#2563eb] hover:to-[#0891b2]" // Matches image_3f0d80.png blue hover
+      : "hover:bg-gradient-to-r hover:from-[#e11d48] hover:to-[#db2777]"; // Matches image_3f0e3a.png pink hover
 
+  return (
+    <button
+      onClick={onClick}
+      className={`group flex-1 flex items-center justify-center gap-2 py-3 border border-[#EEF2FF] rounded-2xl text-slate-700 text-sm font-bold transition-all duration-300 active:scale-95 shadow-sm bg-white ${hoverBg} hover:text-white hover:border-transparent`}
+    >
+      {/* FIX: Removed text-[#4F46E5] and text-[#E11DBC].
+         Now using text-slate-600 for a neutral look by default.
+      */}
+      <Icon
+        size={18}
+        className="transition-colors duration-300 text-slate-600 group-hover:text-white"
+      />
+      <span className="font-['Arial'] leading-5">{label}</span>
+    </button>
+  );
+};
 const CustomerCard: React.FC<CustomerCardProps> = ({
   name,
   id,
@@ -90,11 +104,13 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
   const currentType = typeConfig[type];
 
   return (
-    <div className="relative bg-white rounded-[2.5rem] shadow-2xl shadow-gray-200/50 border border-gray-50 w-full max-w-[400px] overflow-hidden">
-      <div className="h-1.5 w-full bg-linear-to-r from-[#4F46E5] via-[#E11DBC] to-[#FB7185]" />
+    <div
+      className="relative bg-white rounded-lg shadow-2xl shadow-gray-200/50 border border-gray-50 w-full max-w-[400px] overflow-hidden
+  transition-transform duration-300 ease-out hover:scale-[1.03]"
+    >
+      <div className="h-1 w-full bg-linear-to-r from-[#4F46E5] via-[#E11DBC] to-[#FB7185]" />
 
       <div className="p-8">
-        {/* Header: Profile Icon & Name */}
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-full bg-[#7C3AED] flex items-center justify-center text-white shadow-lg shadow-purple-100">
             <User size={32} />
@@ -150,8 +166,18 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          <ActionButton icon={SquarePen} label="Edit" onClick={onEdit} />
-          <ActionButton icon={Trash2} label="Delete" onClick={onDelete} />
+          <ActionButton
+            icon={SquarePen}
+            label="Edit"
+            onClick={onEdit}
+            variant="edit"
+          />
+          <ActionButton
+            icon={Trash2}
+            label="Delete"
+            onClick={onDelete}
+            variant="delete"
+          />
         </div>
       </div>
     </div>
