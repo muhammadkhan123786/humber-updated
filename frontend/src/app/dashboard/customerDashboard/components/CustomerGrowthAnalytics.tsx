@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import {
   AreaChart,
   Area,
@@ -11,49 +11,45 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { LayoutDashboard, Calendar, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { getAlls } from "../../../../helper/apiHelper";
 
 type ViewType = "Daily" | "Weekly" | "Monthly" | "Custom";
 
-interface ApiDataPoint {
-  period: string;
-  total: number;
-  domestic: number;
-  corporate: number;
-}
-
 const CustomerGrowthAnalytics: React.FC = () => {
-  const [view, setView] = useState<ViewType>("Daily");
+  const [view, setView] = useState<ViewType>("Weekly");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+
+  const COLORS = {
+    individual: "#6366f1",
+    corporate: "#ff7d1a",
+    total: "#9366ff",
+  };
 
   const fetchChartData = useCallback(
     async (filter: string, from?: string, to?: string) => {
       setLoading(true);
       try {
         let url = `/customers/summary?filter=${filter.toLowerCase()}`;
-        if (filter === "Custom" && from && to) {
+        if (filter === "Custom" && from && to)
           url = `/customers/summary?from=${from}&to=${to}`;
-        }
 
         const response: any = await getAlls(url);
-
         const chartArray = Array.isArray(response)
           ? response
           : response?.data || [];
 
-        const formattedData = chartArray.map((item: ApiDataPoint) => ({
-          name: formatPeriod(item.period, filter),
-          individual: item.domestic,
-          corporate: item.corporate,
-          total: item.total,
-        }));
-
-        setData(formattedData);
+        setData(
+          chartArray.map((item: any) => ({
+            name: formatPeriod(item.period, filter),
+            individual: item.domestic,
+            corporate: item.corporate,
+            total: item.total,
+          })),
+        );
       } catch (error) {
-        console.error("Error fetching chart data:", error);
+        console.error("Error:", error);
         setData([]);
       } finally {
         setLoading(false);
@@ -69,49 +65,47 @@ const CustomerGrowthAnalytics: React.FC = () => {
         day: "numeric",
       });
     }
-    return period; // Weekly/Monthly ke liye API format hi sahi hai
+    return period;
   };
 
   useEffect(() => {
-    if (view !== "Custom") {
-      fetchChartData(view);
-    }
+    if (view !== "Custom") fetchChartData(view);
   }, [view, fetchChartData]);
 
-  const handleCustomFilter = () => {
-    if (dateRange.from && dateRange.to) {
-      fetchChartData("Custom", dateRange.from, dateRange.to);
-    }
-  };
-
   return (
-    <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-gray-200/50 border border-gray-50 mt-10">
-      <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+    <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-gray-200/50 border border-gray-50 mt-10">
+      <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 px-2">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <LayoutDashboard className="text-[#7C3AED]" size={24} />
-            <h2 className="text-2xl font-black text-[#7C3AED] tracking-tight">
+            {/* PUBLIC IMAGE ICON */}
+            <img
+              src="/graph.PNG"
+              alt="Graph Icon"
+              className="w-[18px] h-[18px]"
+            />
+
+            <h2 className="text-xl font-bold text-[#8b5cf6] tracking-tight">
               Customer Growth Analytics
             </h2>
           </div>
-          <p className="text-slate-400 font-bold text-xs tracking-wide uppercase">
-            {loading ? "Updating Trends..." : "Real-time acquisition data"}
+
+          <p className="text-slate-500 text-sm font-medium">
+            Track customer acquisition trends
           </p>
         </div>
 
-        <div className="bg-slate-50 p-1.5 rounded-2xl flex gap-1 border border-slate-100 overflow-x-auto">
+        <div className="bg-slate-50 p-1.5 rounded-2xl flex gap-1 border border-slate-100">
           {(["Daily", "Weekly", "Monthly", "Custom"] as ViewType[]).map(
             (type) => (
               <button
                 key={type}
                 onClick={() => setView(type)}
-                className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
+                className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   view === type
-                    ? "bg-linear-to-r from-[#4F46E5] to-[#7C3AED] text-white shadow-lg"
-                    : "text-slate-500 hover:text-slate-800"
+                    ? "bg-[#8b5cf6] text-white shadow-lg shadow-purple-200"
+                    : "text-slate-500 hover:bg-white"
                 }`}
               >
-                {type === "Custom" && <Calendar size={14} />}
                 {type}
               </button>
             ),
@@ -119,69 +113,47 @@ const CustomerGrowthAnalytics: React.FC = () => {
         </div>
       </div>
 
-      <AnimatePresence>
-        {view === "Custom" && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="flex flex-wrap items-center gap-6 mb-8 p-6 bg-slate-50 rounded-3xl border border-slate-100"
-          >
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-black text-slate-500 uppercase">
-                From:
-              </span>
-              <input
-                type="date"
-                onChange={(e) =>
-                  setDateRange({ ...dateRange, from: e.target.value })
-                }
-                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-black text-slate-500 uppercase">
-                To:
-              </span>
-              <input
-                type="date"
-                onChange={(e) =>
-                  setDateRange({ ...dateRange, to: e.target.value })
-                }
-                className="bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-700 outline-none"
-              />
-            </div>
-            <button
-              onClick={handleCustomFilter}
-              className="bg-[#4F46E5] text-white px-6 py-2 rounded-xl text-xs font-black shadow-md hover:scale-105 transition-transform"
-            >
-              Apply Filter
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div className="h-[350px] w-full relative">
+      {/* GRAPH CONTAINER - FIXED MARGINS TO SHOW ALL TEXT */}
+      <div className="h-[420px] w-full relative p-6 bg-white rounded-4xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.06)] border border-slate-50/50">
         {loading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-3xl">
-            <Loader2 className="animate-spin text-[#4F46E5]" size={40} />
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-4xl">
+            <Loader2 className="animate-spin text-[#6366f1]" size={40} />
           </div>
         )}
 
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart
+            data={data}
+            margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+          >
             <defs>
-              <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#4F46E5" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#4F46E5" stopOpacity={0} />
-              </linearGradient>
               <linearGradient id="colorInd" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#7C3AED" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#7C3AED" stopOpacity={0} />
+                <stop
+                  offset="5%"
+                  stopColor={COLORS.individual}
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="95%"
+                  stopColor={COLORS.individual}
+                  stopOpacity={0}
+                />
               </linearGradient>
               <linearGradient id="colorCorp" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F97316" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
+                <stop
+                  offset="5%"
+                  stopColor={COLORS.corporate}
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="95%"
+                  stopColor={COLORS.corporate}
+                  stopOpacity={0}
+                />
+              </linearGradient>
+              <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={COLORS.total} stopOpacity={0.4} />
+                <stop offset="95%" stopColor={COLORS.total} stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -193,66 +165,78 @@ const CustomerGrowthAnalytics: React.FC = () => {
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 800 }}
+              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 600 }}
               dy={15}
+              padding={{ left: 10, right: 10 }}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 800 }}
+              tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 600 }}
+              dx={-10}
             />
             <Tooltip
               contentStyle={{
-                borderRadius: "20px",
+                borderRadius: "16px",
                 border: "none",
-                boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)",
-                padding: "15px",
+                boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                padding: "12px",
               }}
             />
             <Area
               type="monotone"
-              dataKey="total"
-              stroke="#4F46E5"
-              strokeWidth={4}
-              fill="url(#colorTotal)"
-              animationDuration={1500}
-            />
-            <Area
-              type="monotone"
               dataKey="individual"
-              stroke="#7C3AED"
-              strokeWidth={4}
+              stroke={COLORS.individual}
+              strokeWidth={3}
               fill="url(#colorInd)"
-              animationDuration={1500}
             />
             <Area
               type="monotone"
               dataKey="corporate"
-              stroke="#F97316"
-              strokeWidth={4}
+              stroke={COLORS.corporate}
+              strokeWidth={3}
               fill="url(#colorCorp)"
-              animationDuration={1500}
+            />
+            <Area
+              type="monotone"
+              dataKey="total"
+              stroke={COLORS.total}
+              strokeWidth={3}
+              fill="url(#colorTotal)"
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="flex justify-center flex-wrap items-center gap-8 mt-12 border-t border-slate-50 pt-8">
-        {[
-          { color: "#7C3AED", label: "Individual (Domestic)" },
-          { color: "#F97316", label: "Corporate" },
-          { color: "#4F46E5", label: "Total Growth" },
-        ].map((item, idx) => (
-          <div key={idx} className="flex items-center gap-2.5">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-xs font-black text-slate-600 uppercase tracking-tighter">
-              {item.label}
-            </span>
-          </div>
-        ))}
+      {/* CENTERED LEGEND */}
+      <div className="flex justify-center flex-wrap items-center gap-8 mt-8">
+        <div className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: COLORS.individual }}
+          />
+          <span className="text-sm font-semibold text-[#6366f1]">
+            Individual Customers
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: COLORS.corporate }}
+          />
+          <span className="text-sm font-semibold text-[#ff7d1a]">
+            Corporate Customers
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: COLORS.total }}
+          />
+          <span className="text-sm font-semibold text-[#9366ff]">
+            Total Customers
+          </span>
+        </div>
       </div>
     </div>
   );

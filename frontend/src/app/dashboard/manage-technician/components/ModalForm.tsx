@@ -10,13 +10,19 @@ import {
   Briefcase,
   Landmark,
   Upload,
-  Heart,
   CheckCircle2,
   CalendarDays,
+  Users,
+  Mail,
+  Phone,
+  SquarePen,
+  PoundSterling,
+  Clock,
+  Paperclip,
+  Check,
 } from "lucide-react";
 import FormSection from "../../suppliers/components/FormSection";
 import FormField from "../../suppliers/components/FormInput";
-// import { ITechnician } from "../../../../../../common/technician-updated/ITechnician.interface";
 
 interface ModalFormProps {
   onClose: () => void;
@@ -53,16 +59,9 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     }
   }, [isEditMode, initialData]);
 
-  const addDocument = () =>
-    setDocuments([...documents, { id: Date.now(), file: null }]);
-
   const removeDocument = (id: number) =>
     documents.length > 1 &&
     setDocuments(documents.filter((doc) => doc.id !== id));
-
-  const handleTriggerUpload = (id: number) => {
-    fileInputRefs.current[id]?.click();
-  };
 
   const handlePreviewDocument = (doc: {
     file: File | null;
@@ -84,36 +83,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     }
   };
 
-  const handleFileChange = (
-    id: number,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setDocuments((prev) =>
-        prev.map((doc) =>
-          doc.id === id
-            ? { ...doc, file: selectedFile, existingUrl: undefined }
-            : doc,
-        ),
-      );
-    }
-  };
-
-  const getDocumentDisplay = (doc: {
-    file: File | null;
-    existingUrl?: string;
-  }) => {
-    if (doc.file) {
-      return `Selected: ${doc.file.name}`;
-    }
-    if (doc.existingUrl) {
-      const fileName = doc.existingUrl.split("/").pop();
-      return `Existing: ${fileName}`;
-    }
-    return "PDF, JPG or PNG (Max. 10MB)";
-  };
-
   const [dropdowns, setDropdowns] = useState({
     contractTypes: [],
     serviceTypesMaster: [],
@@ -130,11 +99,15 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
       try {
         const [contractRes, serviceMasterRes, deptRes] = await Promise.all([
-          fetch(`${baseUrl}/contract-types?filter=all`, { headers }).then((r) => r.json()),
-          fetch(`${baseUrl}/service-types-master?filter=all`, { headers }).then((r) =>
+          fetch(`${baseUrl}/contract-types?filter=all`, { headers }).then((r) =>
             r.json(),
           ),
-          fetch(`${baseUrl}/departments?filter=all`, { headers }).then((r) => r.json()),
+          fetch(`${baseUrl}/service-types-master?filter=all`, { headers }).then(
+            (r) => r.json(),
+          ),
+          fetch(`${baseUrl}/departments?filter=all`, { headers }).then((r) =>
+            r.json(),
+          ),
         ]);
 
         if (!isMounted) return;
@@ -196,8 +169,26 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     bankAccountNumber: "",
     taxId: "",
 
-    // Availability
-    dutyRoster: [] as Array<{
+    // Availability - YAHAN INITIALIZE KARO
+    dutyRoster: [
+      { day: "Sunday", isActive: false, startTime: "09:00", endTime: "17:00" },
+      { day: "Monday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      { day: "Tuesday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      {
+        day: "Wednesday",
+        isActive: true,
+        startTime: "09:00",
+        endTime: "17:00",
+      },
+      { day: "Thursday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      { day: "Friday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      {
+        day: "Saturday",
+        isActive: false,
+        startTime: "09:00",
+        endTime: "17:00",
+      },
+    ] as Array<{
       day: string;
       isActive: boolean;
       startTime: string;
@@ -278,7 +269,8 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       };
 
       // Populate form data
-      setFormData({
+      setFormData((prev) => ({
+        ...prev, // IMPORTANT: Pehle ki values preserve karo
         firstName: person.firstName || "",
         middleName: person.middleName || "",
         lastName: person.lastName || "",
@@ -310,10 +302,9 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         healthInsuranceDetails: additionalInfo.healthInsuranceDetails || "",
         additionalNotes: additionalInfo.additionalNotes || "",
         technicianStatus: initialData.technicianStatus || "Available",
-      });
+      }));
     }
   }, [isEditMode, initialData]);
-
   const handleChange = (e: any) => {
     const { name, type, value, selectedOptions } = e.target;
 
@@ -325,7 +316,21 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+  const handleMultipleFiles = (files: File[]) => {
+    if (files.length === 0) return;
 
+    const existingDocs = documents.filter(
+      (doc) => doc.existingUrl && !doc.file,
+    );
+
+    const newDocuments = files.map((file, index) => ({
+      id: Date.now() + index,
+      file: file,
+      existingUrl: undefined,
+    }));
+
+    setDocuments([...existingDocs, ...newDocuments]);
+  };
   const handleTimeChange = (
     day: string,
     field: "startTime" | "endTime",
@@ -562,8 +567,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     "flex items-center gap-2 text-md font-bold text-slate-800 border-b border-slate-50 pb-2 mb-4";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div className="fixed  inset-0 z-50 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -572,21 +576,20 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
       />
 
-      {/* Modal Container */}
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+        className="relative w-full  max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
       >
-        {/* Header */}
         <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-white">
           <div>
-            <h2 className="text-xl font-bold text-[#E7000B]">
+            <h2 className="font-semibold text-2xl bg-linear-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
               {isEditMode ? "Update Technician" : "Register New Technician"}
             </h2>
             <p className="text-slate-400 text-sm font-medium">
-              Complete technician profile and HR onboarding
+              Complete technician profile with HR information, documents, and
+              duty roster
             </p>
           </div>
           <button
@@ -598,33 +601,32 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         </div>
 
         <form onSubmit={handleSubmit}>
-          {/* Scrollable Form Body */}
-          <div className="p-6 max-h-[75vh] overflow-y-auto space-y-10 custom-scrollbar">
-            {/* HR Info Alert */}
-            <div className="p-4 rounded-2xl bg-orange-50/50 border border-orange-100 flex gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#F54900] flex items-center justify-center text-white shrink-0 shadow-md">
-                <User size={20} />
-              </div>
-              <div>
-                <h4 className="font-bold text-[#F54900] text-sm">
-                  Complete HR Onboarding Form
-                </h4>
-                <p className="text-slate-500 font-medium text-[10px] leading-relaxed">
-                  Fill in all required fields marked with *. The form includes:
-                  Personal details, Google Places address lookup, multi-document
-                  upload, weekly duty roster, salary configuration, and
-                  comprehensive HR information..
-                </p>
+          <div className="p-6 max-h-[75vh]  overflow-y-auto space-y-10 custom-scrollbar">
+            <div className="w-full max-w-[835px] min-h-24 px-5 py-4 bg-linear-to-r from-[#FFF7F4] via-[#FFF3F3] to-[#FFF0F6] rounded-2xl  outline-2 -outline-offset-2 outline-[#FFD9C7] flex flex-col justify-center">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-linear-to-br from-[#FF5100] to-[#FF2E00] rounded-full flex justify-center items-center shadow-sm shrink-0">
+                  <div className="w-5 h-5 flex items-center justify-center text-white">
+                    <Users size={20} strokeWidth={2.5} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-[#1F2937] text-base font-bold font-['Arial'] leading-6">
+                    Complete HR Onboarding Form
+                  </h3>
+
+                  <p className="text-[#374151] text-sm font-normal font-['Arial'] leading-5">
+                    Fill in all required fields marked with
+                    <span className="text-[#E11D48] font-bold mx-0.5">*</span>.
+                    The form includes: Personal details, Google Places address
+                    lookup, multi-document upload, weekly duty roster, salary
+                    configuration, and comprehensive HR information.
+                  </p>
+                </div>
               </div>
             </div>
 
-            <FormSection
-              icon={User}
-              number={1}
-              title="Personal Information"
-              theme="red"
-            >
-              {/* Name Row */}
+            <FormSection icon={User} title="Personal Information" theme="red">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <FormField
                   label="First Name *"
@@ -632,6 +634,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="John"
+                  hoverColor="orange"
                   required
                 />
                 <FormField
@@ -639,6 +642,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   name="middleName"
                   value={formData.middleName}
                   onChange={handleChange}
+                  hoverColor="orange"
                   placeholder="Michael"
                 />
                 <FormField
@@ -646,40 +650,44 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   name="lastName"
                   value={formData.lastName}
                   onChange={handleChange}
+                  hoverColor="orange"
                   placeholder="Smith"
                   required
                 />
               </div>
 
-              {/* Contact Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <FormField
                   label="Email Address *"
                   name="emailAddress"
+                  labelIcon={Mail}
                   type="email"
                   value={formData.emailAddress}
                   onChange={handleChange}
                   placeholder="technician@example.com"
+                  hoverColor="blue"
                   required
                 />
                 <FormField
                   label="Phone Number *"
                   name="phoneNumber"
+                  labelIcon={Phone}
                   type="text"
                   value={formData.phoneNumber}
                   onChange={handleChange}
                   placeholder="+1 (555) 123-4567"
+                  hoverColor="purple"
                   required
                 />
               </div>
 
-              {/* Date of Birth and Employee ID Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   label="Date of Birth"
                   name="dateOfBirth"
                   type="date"
                   value={formData.dateOfBirth}
+                  hoverColor="pink"
                   onChange={handleChange}
                 />
                 <FormField
@@ -687,16 +695,15 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   name="employeeId"
                   value={formData.employeeId}
                   onChange={handleChange}
+                  hoverColor="blue"
                   placeholder="EMP-001"
                   className="[&_input]:bg-[#F0FDFF]"
                 />
               </div>
             </FormSection>
 
-            {/* 2. Address & Location */}
             <FormSection
               icon={MapPin}
-              number={2}
               title="Address Information"
               theme="green"
             >
@@ -707,6 +714,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                 onChange={handleChange}
                 placeholder="Start typing address... (e.g., 123 Main St)"
                 className="mb-4"
+                hoverColor="green"
                 required
               />
 
@@ -737,6 +745,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.city}
                   onChange={handleChange}
                   placeholder="Enter city"
+                  hoverColor="blue"
                   required
                 />
                 <FormField
@@ -746,6 +755,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.postcode}
                   onChange={handleChange}
                   placeholder="Enter postcode"
+                  hoverColor="purple"
                   required
                 />
               </div>
@@ -754,7 +764,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
             {/* 3. Employment Details */}
             <FormSection
               icon={Briefcase}
-              number={3}
               title="Employment Details"
               theme="blue"
             >
@@ -780,6 +789,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.contractTypeId}
                   onChange={handleChange}
                   options={dropdowns.contractTypes}
+                  hoverColor="indigo"
                   required
                 />
 
@@ -806,14 +816,11 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               />
             </FormSection>
 
-            {/* 4. Salary & Compensation */}
             <FormSection
-              icon={Landmark}
-              number={4}
+              icon={PoundSterling}
               title="Salary & Compensation"
               theme="green"
             >
-              {/* Compensation Info Box */}
               <div className="p-3 bg-[#EBFFF3] border border-[#C6F6D5] rounded-xl flex items-center gap-3 text-[#16A34A] text-[12px] font-bold mb-4">
                 <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
                   <Landmark size={14} />
@@ -839,6 +846,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                       onChange={handleChange}
                       placeholder="5000"
                       className="[&_input]:pl-10 [&_input]:text-xl [&_input]:font-bold [&_input]:bg-[#F0FDFF] [&_input]:border-[#B2EBF2]"
+                      hoverColor="green"
                       required
                     />
                     <span className="absolute left-4 top-[43px] text-[#16A34A] font-bold text-lg">
@@ -850,73 +858,70 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   </p>
                 </div>
 
-                {/* Payment Frequency Toggle Buttons */}
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
-                    <CalendarDays size={14} className="text-blue-500" /> Payment
-                    Frequency *
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 text-[14px] font-semibold text-[#1F2937]">
+                    <Calendar size={18} className="text-[#2563EB]" />
+                    Payment Frequency <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex gap-2">
+
+                  <div className="flex gap-3">
                     {[
                       {
                         label: "Daily",
-                        color: "from-blue-500 to-cyan-400",
-                        bg: "bg-blue-50",
-                        text: "text-blue-600",
-                        icon: "text-blue-500",
+                        activeBg:
+                          "bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] border-transparent text-white", //
+                        hoverBorder: "hover:border-[#3B82F6]",
+                        icon: Calendar,
+                        iconColor: "text-blue-500",
                       },
                       {
                         label: "Weekly",
-                        color: "from-purple-600 to-pink-500",
-                        bg: "bg-purple-50",
-                        text: "text-purple-600",
-                        icon: "text-purple-500",
+                        activeBg:
+                          "bg-gradient-to-r from-[#C026D3] to-[#F43F5E] border-transparent text-white", //
+                        hoverBorder: "hover:border-[#C026D3]",
+                        icon: CalendarDays,
+                        iconColor: "text-purple-600",
                       },
                       {
                         label: "Monthly",
-                        color: "from-orange-500 to-yellow-400",
-                        bg: "bg-orange-50",
-                        text: "text-orange-600",
-                        icon: "text-orange-500",
+                        activeBg: "bg-[#00C964] border-transparent text-white", //
+                        hoverBorder: "hover:border-[#00C964]",
+                        icon: CalendarDays,
+                        iconColor: "text-green-600",
                       },
-                    ].map((freq) => (
-                      <button
-                        key={freq.label}
-                        type="button"
-                        onClick={() => {
-                          setPaymentFreq(freq.label);
-                          setFormData((prev) => ({
-                            ...prev,
-                            paymentFrequency: freq.label,
-                          }));
-                        }}
-                        className={`flex-1 flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border transition-all h-[74px] ${
-                          paymentFreq === freq.label
-                            ? `bg-linear-to-br ${freq.color} border-transparent text-white shadow-lg scale-[1.02]`
-                            : `bg-white border-slate-200 text-slate-400 hover:border-slate-300`
-                        }`}
-                      >
-                        <div
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            paymentFreq === freq.label
-                              ? "bg-white/20"
-                              : `${freq.bg} border border-slate-100 shadow-sm`
+                    ].map((freq) => {
+                      const isSelected = paymentFreq === freq.label;
+                      const Icon = freq.icon;
+
+                      return (
+                        <button
+                          key={freq.label}
+                          type="button"
+                          onClick={() => setPaymentFreq(freq.label)}
+                          className={`flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 h-[100px] shadow-sm ${
+                            isSelected
+                              ? freq.activeBg
+                              : `bg-white border-[#F3F4F6] text-[#6B7280] ${freq.hoverBorder}`
                           }`}
                         >
-                          <Calendar
-                            size={18}
-                            className={
-                              paymentFreq === freq.label
-                                ? "text-white"
-                                : freq.icon
-                            }
-                          />
-                        </div>
-                        <span className="text-[11px] font-bold">
-                          {freq.label}
-                        </span>
-                      </button>
-                    ))}
+                          <div className="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm border border-slate-100">
+                            <Icon
+                              size={22}
+                              // Icon color remains consistent for selection
+                              className={`${isSelected ? freq.iconColor : "text-[#6B7280]"}`}
+                            />
+                          </div>
+
+                          <span
+                            className={`text-[13px] font-bold ${
+                              isSelected ? "text-white" : "text-[#374151]"
+                            }`}
+                          >
+                            {freq.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -929,6 +934,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.bankAccountNumber}
                   onChange={handleChange}
                   placeholder="1234567890"
+                  hoverColor="blue"
                   className="[&_input]:bg-[#F8FAFF] [&_input]:border-[#EEF2FF]"
                 />
                 <FormField
@@ -942,11 +948,11 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               </div>
             </FormSection>
 
-            {/* 5. Availability & Duty Roster */}
             <section className="space-y-4">
-              <h3 className={sectionTitleStyle}>
-                <div className="w-1 h-4 bg-[#A855F7] rounded-full" />
-                Availability & Duty Roster
+              <h3 className={`${sectionTitleStyle} flex items-center gap-2`}>
+                <Clock size={18} className="text-[#A855F7]" />
+
+                <span>Availability & Duty Roster</span>
               </h3>
               <div className="space-y-2">
                 {formData.dutyRoster.map((dayData) => (
@@ -1010,133 +1016,314 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                 ))}
               </div>
             </section>
-
             {/* 6. Document Upload */}
             <section className="space-y-3">
               <h3 className={sectionTitleStyle}>
-                <div className="w-1 h-4 bg-cyan-500 rounded-full" />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
                 <span className="text-slate-800 text-sm flex items-center gap-2">
-                  Document Upload (Multi-File)
+                  Document Upload (Multi-File Support)
                 </span>
               </h3>
 
-              <div className="p-2 bg-[#EBFAFF] border border-[#BEE3F8] rounded-lg flex items-center gap-2 text-slate-700 text-[10px] font-bold">
-                <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
-                  <Upload size={12} className="text-cyan-600" />
+              <div className="p-6 rounded-2xl border-2 border-slate-100 hover:border-cyan-100 transition-all">
+                <div className="text-center mb-6 bg-linear-to-br from-cyan-50 to-blue-50 border border-cyan-100 rounded-xl py-3 px-4">
+                  <p className="text-slate-700 text-sm font-medium">
+                    <Paperclip className="inline-block w-4 h-4 mr-2 text-slate-900" />
+                    Upload multiple documents:{" "}
+                    <span className="font-bold">
+                      Resume, Certifications, ID Proof, Licenses, Background
+                      Check, Training Certificates, etc.
+                    </span>
+                  </p>
                 </div>
-                <p className="leading-tight">
-                  Upload documents:{" "}
-                  <span className="font-medium text-slate-500">
-                    Resume, Certs, ID, Licenses, etc.
-                  </span>
-                </p>
-              </div>
 
-              {/* Document Upload Fields */}
-              <div className="space-y-4">
-                {documents.map((doc, index) => (
-                  <div
-                    key={doc.id}
-                    className="p-4 border border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                <div
+                  className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center bg-linear-to-br from-cyan-200 to-blue-200  cursor-pointer hover:border-cyan-400 hover:bg-slate-50/80 transition-all duration-300"
+                  onClick={() => {
+                    if (documents.length > 0) {
+                      const input = fileInputRefs.current[documents[0]?.id];
+                      if (input) {
+                        input.click();
+                      }
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add(
+                      "border-cyan-500",
+                      "bg-cyan-50/20",
+                    );
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove(
+                      "border-cyan-500",
+                      "bg-cyan-50/20",
+                    );
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.remove(
+                      "border-cyan-500",
+                      "bg-cyan-50/20",
+                    );
+
+                    if (e.dataTransfer.files.length > 0) {
+                      const files = Array.from(e.dataTransfer.files);
+                      handleMultipleFiles(files);
+                    }
+                  }}
+                >
+                  <motion.div
+                    className="h-20 w-20 rounded-2xl bg-linear-to-br from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center shadow-lg mx-auto mb-4 relative overflow-hidden group"
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.7, ease: "easeInOut" }}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`p-3 rounded-xl border border-slate-200 shadow-sm ${doc.file || doc.existingUrl ? "bg-cyan-500 text-white" : "bg-white text-cyan-600"}`}
-                        >
-                          <Upload size={20} />
-                        </div>
-                        <div>
-                          <label className="text-[13px] font-bold text-slate-700 mb-1">
-                            {index === 0
-                              ? "Technician Documents"
-                              : `Additional Document ${index + 1}`}
-                          </label>
-                          <p className="text-[12px] text-slate-500 font-medium truncate max-w-[250px]">
-                            {getDocumentDisplay(doc)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="file"
-                          className="hidden"
-                          ref={(el) => {
-                            fileInputRefs.current[doc.id] = el;
-                          }}
-                          onChange={(e) => handleFileChange(doc.id, e)}
-                          accept=".pdf,.jpg,.jpeg,.png"
-                        />
-                        {(doc.file || doc.existingUrl) && (
-                          <button
-                            type="button"
-                            onClick={() => handlePreviewDocument(doc)}
-                            className="px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm font-bold text-blue-700 hover:bg-blue-100 shadow-sm"
-                          >
-                            Preview
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleTriggerUpload(doc.id)}
-                          className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm"
-                        >
-                          {doc.file || doc.existingUrl
-                            ? "Change File"
-                            : "Choose File"}
-                        </button>
-                        {index > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => removeDocument(doc.id)}
-                            className="p-2.5 bg-rose-50 rounded-lg hover:bg-rose-100 text-rose-500 border border-rose-100"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
+                    <div className="absolute inset-0 bg-linear-to-br from-cyan-200 to-blue-200 opacity-0 group-hover:opacity-30 transition-opacity" />
+                    <Upload size={32} className="text-white relative z-10" />
+                  </motion.div>
+
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">
+                    Click to Upload Multiple Documents
+                  </h4>
+
+                  <p className="text-slate-500 text-sm mb-6">or drag & drop</p>
+
+                  <div className="mb-4">
+                    <p className="text-slate-700 text-sm font-medium mb-1">
+                      PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
+                    </p>
+                    <div className="flex items-center justify-center gap-4 text-xs text-green-600 font-medium">
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 size={12} />
+                        Select multiple files at once
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 size={12} />
+                        No file limit
+                      </span>
                     </div>
                   </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addDocument}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-cyan-600 bg-white rounded-xl hover:bg-cyan-50 border border-dashed border-cyan-200 w-full justify-center mt-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+
+                  <button
+                    type="button"
+                    className="px-8 py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition-all duration-300 inline-flex items-center gap-2 shadow-sm hover:shadow"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (documents.length > 0) {
+                        const input = fileInputRefs.current[documents[0].id];
+                        if (input) {
+                          input.click();
+                        }
+                      }
+                    }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Add Another Document
-                </button>
+                    Browse Files
+                  </button>
+
+                  <input
+                    type="file"
+                    className="hidden"
+                    ref={(el) => {
+                      if (documents.length > 0) {
+                        fileInputRefs.current[documents[0].id] = el;
+                      }
+                    }}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files.length > 0) {
+                        const files = Array.from(e.target.files);
+                        handleMultipleFiles(files);
+                      }
+                    }}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    multiple={true}
+                  />
+                </div>
+
+                {documents.filter((doc) => doc.file || doc.existingUrl).length >
+                  0 && (
+                  <div className="mt-8">
+                    <h5 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                      <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
+                      Selected Documents (
+                      {
+                        documents.filter((doc) => doc.file || doc.existingUrl)
+                          .length
+                      }
+                      )
+                    </h5>
+
+                    <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                      {documents
+                        .filter((doc) => doc.file || doc.existingUrl)
+                        .map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="bg-slate-50 rounded-lg border border-slate-200 p-3 hover:border-slate-300 transition-all"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <div
+                                  className={`p-2 rounded-md ${doc.file ? "bg-blue-100" : "bg-green-100"}`}
+                                >
+                                  {doc.file?.name
+                                    ?.toLowerCase()
+                                    .endsWith(".pdf") ? (
+                                    <svg
+                                      className="w-5 h-5 text-red-500"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  ) : doc.file?.name
+                                      ?.toLowerCase()
+                                      .match(/\.(jpg|jpeg|png)$/) ? (
+                                    <svg
+                                      className="w-5 h-5 text-blue-500"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      className="w-5 h-5 text-purple-500"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm font-medium text-slate-800 truncate">
+                                      {doc.file
+                                        ? doc.file.name
+                                        : doc.existingUrl?.split("/").pop()}
+                                    </span>
+                                    {doc.file && (
+                                      <span className="text-xs font-medium px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                                        New
+                                      </span>
+                                    )}
+                                    {!doc.file && doc.existingUrl && (
+                                      <span className="text-xs font-medium px-2 py-0.5 bg-green-100 text-green-700 rounded">
+                                        Existing
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="flex items-center gap-3 text-xs text-slate-500">
+                                    <span>
+                                      {doc.file
+                                        ? `${(doc.file.size / 1024).toFixed(0)} KB`
+                                        : "Uploaded"}
+                                    </span>
+                                    <span>•</span>
+                                    <span>
+                                      {doc.file?.name
+                                        ?.split(".")
+                                        .pop()
+                                        ?.toUpperCase() ||
+                                        doc.existingUrl
+                                          ?.split(".")
+                                          .pop()
+                                          ?.toUpperCase() ||
+                                        "FILE"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handlePreviewDocument(doc)}
+                                  className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  title="Preview"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    />
+                                  </svg>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeDocument(doc.id)}
+                                  className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="Remove"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
-
             {/* 7. Additional Information */}
             <FormSection
-              icon={Heart}
-              number={7}
+              icon={SquarePen}
               title="Additional Information"
               theme="rose"
             >
@@ -1148,6 +1335,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.emergencyContactName}
                   onChange={handleChange}
                   placeholder="Contact person name"
+                  hoverColor="pink"
                 />
                 <FormField
                   label="Emergency Contact Phone"
@@ -1155,6 +1343,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                   value={formData.emergencyContactPhone}
                   onChange={handleChange}
                   placeholder="+1 (555) 999-8888"
+                  hoverColor="pink"
                 />
               </div>
 
@@ -1186,29 +1375,41 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               <div
                 className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
                   technicianStatus
-                    ? "bg-[#EBFFF3] border-[#C6F6D5]"
+                    ? "bg-[#F0FFF4] border-[#22C55E]/30 ring-1 ring-[#22C55E]/10" // Matches the soft green outline in image_ced1f2.png
                     : "bg-slate-50 border-slate-200"
                 }`}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-11 h-11 rounded-2xl flex items-center justify-center ${
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
                       technicianStatus
-                        ? "bg-[#22C55E] text-white shadow-lg shadow-green-100"
-                        : "bg-slate-200 text-slate-400"
+                        ? "bg-[#00C951] text-white shadow-lg shadow-green-100" // Vibrant green from image_ced1f2.png
+                        : "bg-slate-400 text-white shadow-md shadow-slate-200" // Grey circle from image_ced1d0.png
                     }`}
                   >
-                    <CheckCircle2 size={24} />
+                    {/* Changed icons to match the screenshot circular style */}
+                    {technicianStatus ? (
+                      <Check size={22} strokeWidth={3} />
+                    ) : (
+                      <X size={20} strokeWidth={3} />
+                    )}
                   </div>
                   <div>
-                    <h4 className="text-[15px] font-bold text-slate-800 tracking-tight">
+                    <h4 className="text-[15px] font-bold text-[#1E293B] tracking-tight">
                       Technician Status
                     </h4>
-                    <p className="text-[12px] text-slate-500 font-medium">
-                      Active and can be assigned to jobs
+                    <p
+                      className={`text-[12px] font-medium transition-colors ${
+                        technicianStatus ? "text-slate-600" : "text-slate-500"
+                      }`}
+                    >
+                      {technicianStatus
+                        ? "Active and can be assigned to jobs"
+                        : "Inactive and cannot be assigned"}
                     </p>
                   </div>
                 </div>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -1220,13 +1421,13 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
                         : "Busy",
                     }));
                   }}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${
-                    technicianStatus ? "bg-[#22C55E]" : "bg-slate-300"
+                  className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${
+                    technicianStatus ? "bg-[#00C951]" : "bg-slate-300"
                   }`}
                 >
                   <div
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                      technicianStatus ? "right-1" : "left-1 shadow-sm"
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${
+                      technicianStatus ? "left-7" : "left-1 shadow-sm"
                     }`}
                   />
                 </button>
@@ -1238,14 +1439,17 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3.5 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-all text-sm border border-slate-200"
+              className="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-[#00C951] hover:text-white hover:border-[#00C951] transition-all duration-300 text-sm shadow-sm"
             >
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-2 py-3.5 rounded-xl font-bold bg-linear-to-r from-[#F54900] via-[#E7000B] to-[#E60076] text-white shadow-lg shadow-red-200 hover:opacity-90 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              // Changed flex-2 to flex-1 so both buttons have the same size
+              // Gradient matches image_cecdd3.png
+              className="flex-1 py-3.5 rounded-xl font-bold bg-gradient-to-r from-[#FF5C00] via-[#E7000B] to-[#D8006F] text-white shadow-lg shadow-red-100 hover:opacity-95 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting
                 ? "Processing..."
