@@ -67,6 +67,8 @@ import techniciansRouter from "./routes/technicians/technicians.routes";
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
 import grnRoutes from "./routes/grn.routes";
 import goodsReturnRoutes from "./routes/goodsReturn.routes";
+import documentNumberRoutes from "./routes/document-numbers.routes";
+import productRoutes from "./routes/product.routes";
 
 
 // Create express app
@@ -300,6 +302,10 @@ app.use(
   productAttributesRoutes,
 );
 
+app.use(
+  `${process.env.API_PREFIX}/products`,
+  productRoutes,
+);
 
 app.use(
   `${process.env.API_PREFIX}/ai`,
@@ -325,6 +331,8 @@ app.use(
   
   goodsReturnRoutes,
 );
+
+app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 
 // Health check route
 app.get("/health", (_req, res) => {

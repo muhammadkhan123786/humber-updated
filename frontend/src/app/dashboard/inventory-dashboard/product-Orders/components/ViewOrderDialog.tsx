@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/form/Dialog';
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
-import { PurchaseOrder } from '../types/purchaseOrders';
+import { PurchaseOrder, Supplier } from '../types/purchaseOrders';
 import { getStatusColor, getStatusIcon } from '../utils/purchaseOrderUtils';
 import { Building2, Truck, Calendar, Package, Download } from 'lucide-react';
 import * as React from 'react';
@@ -26,6 +26,12 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
   onExport
 }) => {
   if (!order) return null;
+
+  const isSupplierObject = (
+  supplier: string | Supplier
+): supplier is Supplier => {
+  return typeof supplier === 'object' && supplier !== null;
+};
 
   const StatusIcon = getStatusIcon(order.status);
    const [exportFilters, setExportFilters] = useState({
@@ -89,8 +95,17 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
                 <Building2 className="h-5 w-5 text-emerald-600" />
                 <p className="text-sm text-gray-600">Supplier</p>
               </div>
-              <p className="font-semibold text-gray-900">{order.supplier}</p>
-              <p className="text-sm text-gray-600 mt-1">{order.supplierContact}</p>
+             {isSupplierObject(order.supplier) && (
+  <>
+    <p className="font-medium text-gray-900">
+      {order.supplier.operationalInformation.orderContactName}
+    </p>
+    <p className="text-sm text-gray-500">
+      {order.supplier.operationalInformation.orderContactEmail}
+    </p>
+  </>
+)}
+
             </div>
             
             <div className="p-4 bg-white rounded-lg border-2 border-gray-100">

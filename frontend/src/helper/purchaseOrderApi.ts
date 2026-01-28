@@ -1,7 +1,10 @@
 import axios from "axios";
 import { IPurchaseOrder, IPurchaseOrderItem } from "../../../common/IPurchase.order.interface";
+import { ISupplier } from "@common/suppliers/ISuppliers.interface";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders`;
+const API_URL1 = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers`;
+
 
 interface PurchaseOrderResponse {
   data: IPurchaseOrder[];
@@ -287,4 +290,24 @@ export const validatePurchaseOrderItems = (items: IPurchaseOrderItem[]): string[
   });
 
   return errors;
+};
+
+
+
+export const fetchSuppliers = async (
+  page = 1,
+  limit = 10,
+  ): Promise<ISupplier> => {
+  const params: any = {
+    userId: getUserId(),
+    page,
+    limit,
+  };
+
+  const res = await axios.get(API_URL1, {
+    ...getAuthConfig(),
+    params,
+  });
+  console.log("supp", res);
+  return res.data.data;
 };

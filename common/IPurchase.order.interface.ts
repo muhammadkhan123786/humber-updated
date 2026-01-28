@@ -11,7 +11,6 @@ export interface IPurchaseOrderItem {
 export interface IPurchaseOrder<TUserId = string> extends IBaseEntity<TUserId> {
   orderNumber: string;
   supplier: string;
-  supplierContact: string;
   orderDate: Date;
   expectedDelivery: Date;
   status: 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
@@ -25,7 +24,7 @@ export interface IPurchaseOrder<TUserId = string> extends IBaseEntity<TUserId> {
 // DTO for creating purchase order
 export interface CreatePurchaseOrderDTO {
   supplier: string;
-  supplierContact: string;
+  
   expectedDelivery: Date | string;
   items: IPurchaseOrderItem[];
   notes?: string;
@@ -37,7 +36,7 @@ export interface CreatePurchaseOrderDTO {
 // DTO for updating purchase order
 export interface UpdatePurchaseOrderDTO {
   supplier?: string;
-  supplierContact?: string;
+
   expectedDelivery?: Date | string;
   status?: 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
   items?: IPurchaseOrderItem[];

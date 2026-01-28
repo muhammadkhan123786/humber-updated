@@ -38,7 +38,7 @@ export const GoodsReturnGridView: React.FC<GoodsReturnGridViewProps> = ({
     >
       {returns.map((grtn, index) => (
         <GoodsReturnCard
-          key={grtn.id}
+          key={grtn._id}
           grtn={grtn}
           index={index}
           onView={onView}

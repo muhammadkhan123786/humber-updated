@@ -1,5 +1,5 @@
 'use client';
-
+import { useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/form/Dialog';
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
@@ -30,6 +30,32 @@ export const ViewGRNDialog: React.FC<ViewGRNDialogProps> = ({
     alert('PDF export functionality would be implemented here');
   };
 
+  console.log("Viewing GRN:", grn);
+const totals = React.useMemo(() => {
+  return grn.items.reduce(
+    (acc, item) => {
+      const received = item.receivedQuantity ?? 0;
+      const accepted = item.acceptedQuantity ?? 0;
+      const rejected = item.rejectedQuantity ?? 0;
+      const damaged = item.damageQuantity ?? 0;
+
+      acc.ordered += received + accepted + rejected + damaged;
+      acc.received += received;
+      acc.accepted += accepted;
+      acc.rejected += rejected;
+
+      return acc;
+    },
+    {
+      ordered: 0,
+      received: 0,
+      accepted: 0,
+      rejected: 0,
+    }
+  );
+}, [grn.items]);
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -47,15 +73,15 @@ export const ViewGRNDialog: React.FC<ViewGRNDialogProps> = ({
           <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
             <div>
               <p className="text-sm text-gray-600">Purchase Order</p>
-              <p className="font-semibold text-gray-900">{grn.purchaseOrderNumber}</p>
+              <p className="font-semibold text-gray-900"> {grn?.purchaseOrderId?.orderNumber}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Supplier</p>
-              <p className="font-semibold text-gray-900">{grn.supplier}</p>
+              <p className="font-semibold text-gray-900">{grn.purchaseOrderId?.supplier.contactInformation.primaryContactName}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Received Date</p>
-              <p className="font-semibold text-gray-900">{grn.receivedDate.toLocaleDateString()}</p>
+              <p className="font-semibold text-gray-900"> {new Date(grn.purchaseOrderId?.expectedDelivery).toLocaleDateString()}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Received By</p>
@@ -64,32 +90,36 @@ export const ViewGRNDialog: React.FC<ViewGRNDialogProps> = ({
           </div>
 
           {/* Summary */}
-          <div className="grid grid-cols-4 gap-4">
-            <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white border-0">
-              <CardContent className="p-4">
-                <p className="text-sm text-white/80 mb-1">Total Ordered</p>
-                <p className="text-3xl font-bold">{grn.totalOrdered}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white border-0">
-              <CardContent className="p-4">
-                <p className="text-sm text-white/80 mb-1">Total Received</p>
-                <p className="text-3xl font-bold">{grn.totalReceived}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-green-500 to-emerald-500 text-white border-0">
-              <CardContent className="p-4">
-                <p className="text-sm text-white/80 mb-1">Accepted</p>
-                <p className="text-3xl font-bold">{grn.totalAccepted}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-br from-red-500 to-rose-500 text-white border-0">
-              <CardContent className="p-4">
-                <p className="text-sm text-white/80 mb-1">Rejected</p>
-                <p className="text-3xl font-bold">{grn.totalRejected}</p>
-              </CardContent>
-            </Card>
-          </div>
+        <div className="grid grid-cols-4 gap-4">
+  <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 text-white border-0">
+    <CardContent className="p-4">
+      <p className="text-sm text-white/80 mb-1">Total Ordered</p>
+      <p className="text-3xl font-bold">{totals.ordered}</p>
+    </CardContent>
+  </Card>
+
+  <Card className="bg-gradient-to-br from-purple-500 to-fuchsia-500 text-white border-0">
+    <CardContent className="p-4">
+      <p className="text-sm text-white/80 mb-1">Total Received</p>
+      <p className="text-3xl font-bold">{totals.received}</p>
+    </CardContent>
+  </Card>
+
+  <Card className="bg-gradient-to-br from-green-500 to-emerald-500 text-white border-0">
+    <CardContent className="p-4">
+      <p className="text-sm text-white/80 mb-1">Accepted</p>
+      <p className="text-3xl font-bold">{totals.accepted}</p>
+    </CardContent>
+  </Card>
+
+  <Card className="bg-gradient-to-br from-red-500 to-rose-500 text-white border-0">
+    <CardContent className="p-4">
+      <p className="text-sm text-white/80 mb-1">Rejected</p>
+      <p className="text-3xl font-bold">{totals.rejected}</p>
+    </CardContent>
+  </Card>
+</div>
+
 
           {/* Items */}
           <div>

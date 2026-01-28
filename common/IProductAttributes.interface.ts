@@ -14,8 +14,8 @@ export interface IAttribute<TUserId = string, TAttributeId = string>
   extends IBaseEntity<TUserId> {
   attributeName: string;
   type: AttributeType;
-  categoryId?: string | null; // Add this
-  isForSubcategories?: boolean; // Add this
+  categoryId?: string | null; 
+  isForSubcategories?: boolean; 
    options?: { label: string; value: string }[];
   isRequired?: boolean;
   status?: "active" | "inactive";

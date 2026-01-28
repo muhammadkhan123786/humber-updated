@@ -16,7 +16,7 @@ interface ImageUploadSectionProps {
   onFilesUpload: (files: FileList) => void;
   onRemoveImage: (index: number, imageId: string) => void;
   isAnalyzing: boolean;
-  analyzeImage: (imageId: string) => Promise<void>;
+  
 }
 
 export function ImageUploadSection({
@@ -24,7 +24,7 @@ export function ImageUploadSection({
   onFilesUpload,
   onRemoveImage,
   isAnalyzing,
-  analyzeImage
+  
 }: ImageUploadSectionProps) {
   const [isDragging, setIsDragging] = useState(false);
 

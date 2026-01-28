@@ -18,6 +18,7 @@ import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { PricingStep } from "./steps/PricingStep";
 import { InventoryStep } from "./steps/InventoryStep";
 import { SpecificationsStep } from "./steps/SpecificationsStep";
+import { createProduct } from "@/helper/products";
 
 export default function AddProductForm() {
   const {
@@ -33,7 +34,6 @@ export default function AddProductForm() {
     images,
     newTag,
     dropdowns,
-    dropdownLoading,
     getSelectedCategory,
     getAllFields,
     handleInputChange,
@@ -70,23 +70,20 @@ export default function AddProductForm() {
       reorderPoint: "",
       stockLocation: "",
       warehouse: "",
-      binLocation: "",
-      weight: "",
-      length: "",
-      width: "",
-      height: "",
-      color: "",
-      material: "",
+      binLocation: "",      
       warranty: "",
       warrantyPeriod: "",
       condition: "new",
       status: "active",
-      featured: false,
-      metaTitle: "",
-      metaDescription: "",
-      metaKeywords: "",
+      featured: false,     
     },
-    onSubmit: (data) => {
+    onSubmit: async(data) => {
+      try {
+        const res = await createProduct(data);
+        console.log("Product created successfully:", res);
+      } catch (error) {
+        console.error("Error submitting product data:", error);
+      }
       console.log("Product data submitted:", data);
     },
     categories: [], // Pass empty array initially, will be fetched in hook
@@ -183,7 +180,6 @@ export default function AddProductForm() {
         );
 
       case 5:
-        const selectedCategory = getSelectedCategory();
         const selectedLevel1 = selectedPath[0] || "";
         const selectedLevel2 = selectedPath[1] || "";
         const selectedLevel3 = selectedPath[2] || "";
@@ -240,8 +236,7 @@ export default function AddProductForm() {
           currentStep={currentStep}
           totalSteps={STEPS.length}
           onPrev={prevStep}
-          onNext={nextStep}
-          onSubmit={handleSubmit}
+          onNext={nextStep}        
         />
       </form>
     </div>

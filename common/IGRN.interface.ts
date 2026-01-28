@@ -1,18 +1,25 @@
+interface Supplier {
+  _id: string;
+  contactInformation: {
+    primaryContactName: string;
+    email?: string;
+    phone?: string;
+  };
+}
 export interface GoodsReceivedItem {
-  purchaseOrderItemId: string;
-
+  purchaseOrderItemId?: string;
   productName: string;
   sku: string;
-
-  orderedQuantity: number;  
-
+  orderedQuantity: number;
   receivedQuantity: number;
   acceptedQuantity: number;
   rejectedQuantity: number;
   damageQuantity: number;
-
-  condition: 'good' | 'damaged' | 'expired' | 'other';
+  unitPrice?: number;
+  condition: "good" | "damaged" | "expired" | "other";
   notes?: string;
+  _id?: string;
+  supplier?: Supplier;
 }
 
 export interface IGoodsReceivedNote {
@@ -35,11 +42,10 @@ export interface IGoodsReceivedNote {
   totalAccepted: number;
   totalRejected: number;
 
-  status: 'draft' | 'completed';
+  status: "draft" | "completed";
   notes?: string;
   signature?: string;
 
   createdAt: Date;
   updatedAt: Date;
 }
-

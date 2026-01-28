@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/form/Select';
-import { PurchaseOrder } from '../types/purchaseOrders';
+import { PurchaseOrder, Supplier } from '../types/purchaseOrders';
 import { getStatusColor, getStatusIcon } from '../utils/purchaseOrderUtils';
 import { Calendar, Truck, Eye, Edit, Trash2 } from 'lucide-react';
 import * as React from 'react';
@@ -28,11 +28,15 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
   onStatusChange
 }) => {
   const StatusIcon = getStatusIcon(order.status);
-  console.log("order", order);
+const isSupplierObject = (
+  supplier: string | Supplier
+): supplier is Supplier => {
+  return typeof supplier === 'object' && supplier !== null;
+};
 
   return (
     <motion.tr
-      key={order.id}
+      key={order._id}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.3 + index * 0.05 }}
@@ -48,20 +52,29 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
       </td>
       <td className="p-4">
         <div>
-          <p className="font-medium text-gray-900">{order.supplier}</p>
-          <p className="text-sm text-gray-500">{order.supplierContact}</p>
+         {isSupplierObject(order.supplier) && (
+  <>
+    <p className="font-medium text-gray-900">
+      {order.supplier.operationalInformation.orderContactName}
+    </p>
+    <p className="text-sm text-gray-500">
+      {order.supplier.operationalInformation.orderContactEmail}
+    </p>
+  </>
+)}
+
         </div>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
-          <span className="text-gray-700 text-sm">{order?.orderDate}</span>
+          <span className="text-gray-700 text-sm">{new Date(order.orderDate as any).toLocaleDateString("en-GB")}</span>
         </div>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Truck className="h-4 w-4 text-emerald-600" />
-          <span className="text-gray-700 text-sm">{order?.expectedDelivery}</span>
+          <span className="text-gray-700 text-sm">{new Date(order?.expectedDelivery as any).toLocaleDateString("en-GB"  )}</span>
         </div>
       </td>
       <td className="p-4">

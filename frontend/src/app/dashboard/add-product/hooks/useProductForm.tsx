@@ -36,7 +36,7 @@ interface Attribute {
   type: "text" | "number" | "select" | "checkbox" | "radio";
   options?: DropdownOption[];
   required?: boolean;
-  parentCategoryId: string;
+  categoryId: string;
 }
 
 export function useProductForm({
@@ -98,26 +98,54 @@ export function useProductForm({
     loadDropdowns();
   }, [currentStep]);
 
+useEffect(() => {
+  if (currentStep !== 1) return;
+  if (!selectedPath.length) {
+    setAttributes([]);
+    return;
+  }
 
-  useEffect(() => {
-    if (currentStep !== 1) return; // attributes step
-    if (!selectedPath.length) return;
+  const loadAttributes = async () => {
+    try {
+      const res = await fetchAttributes(
+        1,
+        100,
+        "",
+        selectedPath.join(",")
+      );
 
-    const categoryIds = selectedPath; // 👈 inheritance
+      const allAttributes: Attribute[] = res.data || [];
 
-    const loadAttributes = async () => {
-      try {
-        console.log("Fetching attributes for categories", categoryIds);
-        const data = await fetchAttributes(1, 100, "", categoryIds);
-        console.log("Fetched attributes for categories", categoryIds, data);
-        setAttributes(data.data);
-      } catch (err) {
-        console.error("Attribute fetch failed", err);
-      }
-    };
+      const selectedCategoryId = selectedPath.at(-1);
 
-    loadAttributes();
-  }, [currentStep, selectedPath]);
+      // 🔥 FINAL RULE
+      const filteredAttributes = allAttributes.filter((attr) => {
+        // 1️⃣ Attributes directly for selected category
+        if (attr.categoryId === selectedCategoryId) return true;
+
+        // 2️⃣ Parent attributes allowed ONLY if isForSubcategories = true
+        if (
+          attr.isForSubcategories &&
+          selectedPath.includes(attr.categoryId)
+        ) {
+          return true;
+        }
+
+        return false;
+      });
+
+      setAttributes(filteredAttributes);
+    } catch (err) {
+      console.error("Attribute fetch failed", err);
+      setAttributes([]);
+    }
+  };
+
+  loadAttributes();
+}, [currentStep, selectedPath]);
+
+
+
 
 
   useEffect(() => {
@@ -190,12 +218,19 @@ export function useProductForm({
     return fields;
   }, [selectedCategories]);
 
-  const nextStep = useCallback(() => {
+const nextStep = useCallback(
+  (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();        
+    e.stopPropagation();       
+
     if (currentStep < 5) {
-      setCurrentStep(currentStep + 1);
+      setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [currentStep]);
+  },
+  [currentStep]
+);
+
 
   const prevStep = useCallback(() => {
     if (currentStep > 1) {
@@ -221,7 +256,6 @@ export function useProductForm({
     [],
   );
 
-  console.log("dynamicFields", dynamicFields);
   const addTag = useCallback(() => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setTags((prev) => [...prev, newTag.trim()]);

@@ -5,28 +5,35 @@ export interface PurchaseOrderItem {
   sku: string;
   quantity: number;
   receivedQuantity: number;
+  rejectedQuantity: number;
   unitPrice: number;
   totalPrice: number;
 }
 
 export interface PurchaseOrder {
-  id: string;
+  _id: string;
   orderNumber: string;
-  supplier: string;
   supplierContact: string;
   orderDate: Date;
   expectedDelivery: Date;
-  status: 'ordered' | 'received' | 'cancelled' | 'pending';
-  deliveryStatus: 'not-delivered' | 'partially-delivered' | 'fully-delivered';
+  status:
+    | "ordered"
+    | "received"
+    | "cancelled"
+    | "pending"
+    | "approved"
+    | "draft";
+  deliveryStatus: "not-delivered" | "partially-delivered" | "fully-delivered";
   items: PurchaseOrderItem[];
   subtotal: number;
   tax: number;
   total: number;
   notes: string;
+  supplier: Supplier;
 }
 
 export interface GoodsReceivedNoteItem {
-  id: string;
+  id?: string;
   purchaseOrderItemId: string;
   productName: string;
   sku: string;
@@ -36,15 +43,23 @@ export interface GoodsReceivedNoteItem {
   rejectedQuantity: number;
   damageQuantity: number;
   unitPrice: number;
-  condition: 'good' | 'damaged' | 'defective';
+  condition: "good" | "damaged" | "defective";
   notes: string;
 }
 
+interface Supplier {
+  _id: string;
+  contactInformation: {
+    primaryContactName: string;
+    email?: string;
+    phone?: string;
+  };
+}
+
 export interface GoodsReceivedNote {
-  id: string;
+  _id: string;
   grnNumber: string;
-  purchaseOrderId: string;
-  purchaseOrderNumber: string;
+  purchaseOrderId: PurchaseOrder;
   supplier: string;
   receivedDate: Date;
   receivedBy: string;
@@ -53,7 +68,7 @@ export interface GoodsReceivedNote {
   totalReceived: number;
   totalAccepted: number;
   totalRejected: number;
-  status: 'draft' | 'completed' | 'discrepancy';
+  status: "draft" | "completed" | "discrepancy";
   notes: string;
   signature?: string;
 }
@@ -67,7 +82,7 @@ export interface ReceivingItem {
   acceptedQuantity: number;
   rejectedQuantity: number;
   damageQuantity: number;
-  condition: 'good' | 'damaged' | 'defective';
+  condition: "good" | "damaged" | "defective";
   notes: string;
   unitPrice: number;
   isManual?: boolean;

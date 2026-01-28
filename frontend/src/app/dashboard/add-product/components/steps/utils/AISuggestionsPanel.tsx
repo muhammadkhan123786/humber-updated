@@ -26,7 +26,6 @@ export function AISuggestionsPanel({
   onClose
 }: AISuggestionsPanelProps) {
   const [appliedFields, setAppliedFields] = useState<Set<string>>(new Set());
-
   if (!suggestions) return null;
 
   const handleApply = (field: string, value: string) => {
@@ -54,6 +53,7 @@ export function AISuggestionsPanel({
     >
       {/* Close button */}
       <button
+      type="button"
         onClick={onClose}
         className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
       >
@@ -75,6 +75,7 @@ export function AISuggestionsPanel({
           </div>
         </div>
         <button
+        type="button"
           onClick={handleApplyAll}
           className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all flex items-center gap-2"
         >
@@ -96,6 +97,7 @@ export function AISuggestionsPanel({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.1 }}
                 onClick={() => onAddTag(tag)}
+                type="button"
                 className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium border border-green-300 hover:bg-green-200 transition-colors flex items-center gap-1"
               >
                 <Tag className="h-3 w-3" />
@@ -156,6 +158,7 @@ export function AISuggestionsPanel({
                   ? "bg-green-600 text-white"
                   : "bg-green-500 text-white hover:bg-green-600"
               }`}
+              type="button"
             >
               {isApplied("keywords") ? "✓ Applied" : "Apply"}
             </button>

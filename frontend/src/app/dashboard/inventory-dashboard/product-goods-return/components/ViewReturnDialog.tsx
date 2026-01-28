@@ -72,7 +72,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
                 <Calendar className="h-4 w-4 text-indigo-500" />
                 <span>Return Date</span>
               </div>
-              <p className="font-medium text-gray-900">{grtn.returnDate.toLocaleDateString()}</p>
+              <p className="font-medium text-gray-900">{new Date(grtn.returnDate).toLocaleDateString()}</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -184,7 +184,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
                 </div>
                 <div className="text-right">
                   <p className="text-4xl font-bold text-orange-900">£{grtn.totalAmount.toFixed(2)}</p>
-                  <p className="text-sm text-orange-700">Created: {grtn.createdAt.toLocaleDateString()}</p>
+                  <p className="text-sm text-orange-700">Created: {new Date(grtn.returnDate).toLocaleDateString()}</p>
                 </div>
               </div>
             </CardContent>

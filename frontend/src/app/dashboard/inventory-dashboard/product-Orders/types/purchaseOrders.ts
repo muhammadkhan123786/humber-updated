@@ -7,11 +7,20 @@ export interface PurchaseOrderItem {
   totalPrice: number;
 }
 
+export interface Supplier {
+  _id: string;
+  operationalInformation: {
+    orderContactName: string;
+    orderContactEmail: string;
+  };
+}
+
+
 export interface PurchaseOrder {
-  id: string;
+  _id: string;
   orderNumber: string;
-  supplier: string;
-  supplierContact: string;
+   supplier: string | Supplier;
+  orderContactEmail: string;
   orderDate: Date;
   expectedDelivery: Date;
   status: 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
@@ -38,7 +47,7 @@ export interface PurchaseOrderStats {
 
 export interface OrderFormData {
   supplier: string;
-  supplierContact: string;
+  orderContactEmail: string;
   expectedDelivery: string;
   notes: string;
 }

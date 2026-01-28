@@ -86,6 +86,7 @@ export class PurchaseOrderCustomController {
       });
     }
   };
+  
 
   /**
    * Get purchase order statistics for dashboard
@@ -159,49 +160,49 @@ export class PurchaseOrderCustomController {
   /**
    * Export purchase orders to CSV
    */
-  exportToCSV = async (req: Request, res: Response) => {
-    try {
-      const { userId, status, startDate, endDate, supplier } = req.query;
+  // exportToCSV = async (req: Request, res: Response) => {
+  //   try {
+  //     const { userId, status, startDate, endDate, supplier } = req.query;
 
-      if (!userId || !Types.ObjectId.isValid(userId as string)) {
-        return res.status(400).json({ success: false, message: "Valid userId required" });
-      }
+  //     if (!userId || !Types.ObjectId.isValid(userId as string)) {
+  //       return res.status(400).json({ success: false, message: "Valid userId required" });
+  //     }
 
-      const filters: any = {
-        userId: new Types.ObjectId(userId as string),
-        isDeleted: false
-      };
+  //     const filters: any = {
+  //       userId: new Types.ObjectId(userId as string),
+  //       isDeleted: false
+  //     };
 
-      if (status && status !== 'all') filters.status = status;
-      if (supplier) filters.supplier = { $regex: supplier, $options: 'i' };
-      if (startDate || endDate) {
-        filters.orderDate = {};
-        if (startDate) filters.orderDate.$gte = new Date(startDate as string);
-        if (endDate) filters.orderDate.$lte = new Date(endDate as string);
-      }
+  //     if (status && status !== 'all') filters.status = status;
+  //     if (supplier) filters.supplier = { $regex: supplier, $options: 'i' };
+  //     if (startDate || endDate) {
+  //       filters.orderDate = {};
+  //       if (startDate) filters.orderDate.$gte = new Date(startDate as string);
+  //       if (endDate) filters.orderDate.$lte = new Date(endDate as string);
+  //     }
 
-      const orders = await PurchaseOrder.find(filters).sort({ orderDate: -1 });
+  //     const orders = await PurchaseOrder.find(filters).sort({ orderDate: -1 });
 
-      // Generate CSV
-      const csvHeader = 'Order Number,Supplier,Contact,Order Date,Expected Delivery,Status,Subtotal,Tax,Total,Notes\n';
-      const csvRows = orders.map(order => {
-        const orderDate = new Date(order.orderDate).toISOString().split('T')[0];
-        const expectedDelivery = new Date(order.expectedDelivery).toISOString().split('T')[0];
-        return `"${order.orderNumber}","${order.supplier}","${order.supplierContact}","${orderDate}","${expectedDelivery}","${order.status}",${order.subtotal},${order.tax},${order.total},"${order.notes || ''}"`;
-      }).join('\n');
+  //     // Generate CSV
+  //     const csvHeader = 'Order Number,Supplier,Contact,Order Date,Expected Delivery,Status,Subtotal,Tax,Total,Notes\n';
+  //     const csvRows = orders.map(order => {
+  //       const orderDate = new Date(order.orderDate).toISOString().split('T')[0];
+  //       const expectedDelivery = new Date(order.expectedDelivery).toISOString().split('T')[0];
+  //       return `"${order.orderNumber}","${order.supplier}","${order.supplierContact}","${orderDate}","${expectedDelivery}","${order.status}",${order.subtotal},${order.tax},${order.total},"${order.notes || ''}"`;
+  //     }).join('\n');
 
-      const csv = csvHeader + csvRows;
+  //     const csv = csvHeader + csvRows;
 
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename=purchase-orders.csv');
-      res.status(200).send(csv);
-    } catch (err: any) {
-      res.status(500).json({ 
-        success: false, 
-        message: err.message || "Failed to export orders" 
-      });
-    }
-  };
+  //     res.setHeader('Content-Type', 'text/csv');
+  //     res.setHeader('Content-Disposition', 'attachment; filename=purchase-orders.csv');
+  //     res.status(200).send(csv);
+  //   } catch (err: any) {
+  //     res.status(500).json({ 
+  //       success: false, 
+  //       message: err.message || "Failed to export orders" 
+  //     });
+  //   }
+  // };
 
   /**
    * Bulk update purchase orders

@@ -1,10 +1,14 @@
-import { CategoryNode } from '../data/categoryTree';
+
 
 export interface DynamicField {
+  _id?: string;
   name: string;
   label: string;
   type: string;
   options?: string[];
+  attributeName?: string;
+  isRequired?: boolean;
+  attributes?: Record<string, any>;
 }
 
 export interface CategorySelection {

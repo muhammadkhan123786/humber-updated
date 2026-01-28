@@ -528,8 +528,9 @@ import {
   OrderItemForm,
 } from '../app/dashboard/inventory-dashboard/product-Orders/types/purchaseOrders';
 import { IPurchaseOrder, IPurchaseOrderItem } from "../../../common/IPurchase.order.interface";
-import { suppliersList } from '../app/dashboard/inventory-dashboard/product-Orders/data/suppliers';
+// import { suppliersList } from '../app/dashboard/inventory-dashboard/product-Orders/data/suppliers';
 import * as PurchaseOrderAPI from '../helper/purchaseOrderApi';
+import { ISupplier } from '@common/suppliers/ISuppliers.interface';
 
 export const usePurchaseOrders = () => {
   const [orders, setOrders] = useState<IPurchaseOrder[]>([]);
@@ -538,7 +539,7 @@ export const usePurchaseOrders = () => {
   const [editingOrder, setEditingOrder] = useState<IPurchaseOrder | null>(null);
   const [orderForm, setOrderForm] = useState<OrderFormData>({
     supplier: '',
-    supplierContact: '',
+    orderContactEmail: '',
     expectedDelivery: '',
     notes: ''
   });
@@ -556,13 +557,15 @@ export const usePurchaseOrders = () => {
   const [orderNumber, setOrderNumber] = useState<string>("");
   const [loadingOrderNumber, setLoadingOrderNumber] = useState(false);
 
+  const [suppliersList, setSupplierList] = useState<ISupplier>([]);
+
 
   // Fetch orders from backend
   const fetchOrdersData = async () => {
     try {
       setLoading(true);
       const statusFilter = selectedStatus !== 'all' ? selectedStatus : undefined;
-      const response = await PurchaseOrderAPI.fetchOrders(page, limit, searchTerm, statusFilter);
+      const response = await PurchaseOrderAPI.fetchOrders(page, limit);
       setOrders(response.data || []);
       setTotal(response.total || 0);
     } catch (error) {
@@ -572,6 +575,19 @@ export const usePurchaseOrders = () => {
       setLoading(false);
     }
   };
+ 
+  useEffect( () => {
+     const fetchSuppliers = async () => {
+   try {
+     const res = await PurchaseOrderAPI.fetchSuppliers();
+     setSupplierList(res)
+    console.log("supp", res)
+   } catch (error) {
+    console.log("Error in fetching in Supplier", error)
+   }
+  }
+  fetchSuppliers();
+  }, [])
 
   //  fetch Auto Number
   useEffect(() => {
@@ -593,6 +609,7 @@ export const usePurchaseOrders = () => {
 
   useEffect(() => {
     fetchOrdersData();
+    
   }, [page, searchTerm, selectedStatus]);
 
   // Calculate statistics
@@ -656,7 +673,7 @@ export const usePurchaseOrders = () => {
 
   // Save order (create or update)
   const handleSaveOrder = async () => {
-    if (!orderForm.supplier || !orderForm.supplierContact || !orderForm.expectedDelivery) {
+    if (!orderForm.supplier || !orderForm.expectedDelivery) {
       toast.error('Please fill in all required fields');
       return false;
     }
@@ -680,8 +697,7 @@ export const usePurchaseOrders = () => {
       if (editingOrder && editingOrder._id) {
         // Update existing order
         const updatePayload: Partial<IPurchaseOrder> = {
-          supplier: orderForm.supplier,
-          supplierContact: orderForm.supplierContact,
+          supplier: orderForm.supplier,          
           expectedDelivery: new Date(orderForm.expectedDelivery),
           items: orderItems,
           subtotal,
@@ -696,8 +712,7 @@ export const usePurchaseOrders = () => {
         // Create new order
         const newOrder: Partial<IPurchaseOrder> = {
           orderNumber: orderNumber,
-          supplier: orderForm.supplier,
-          supplierContact: orderForm.supplierContact,
+           supplier: orderForm.supplier,
           expectedDelivery: new Date(orderForm.expectedDelivery),
           status: 'draft',
           items: orderItems,
@@ -728,7 +743,7 @@ export const usePurchaseOrders = () => {
     setEditingOrder(null);
     setOrderForm({
       supplier: '',
-      supplierContact: '',
+      orderContactEmail: '',
       expectedDelivery: '',
       notes: ''
     });
@@ -772,7 +787,7 @@ export const usePurchaseOrders = () => {
     setEditingOrder(order);
     setOrderForm({
       supplier: order.supplier,
-      supplierContact: order.supplierContact,
+      orderContactEmail: order.orderContactEmail,
       expectedDelivery: new Date(order.expectedDelivery).toISOString().split('T')[0],
       notes: order.notes || ''
     });

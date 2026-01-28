@@ -9,6 +9,7 @@ interface CustomButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
   fullWidth?: boolean;
   // Allows passing custom tailwind classes for height, width, or colors
   className?: string; 
+  type?: 'button' | 'submit' | 'reset';
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
@@ -20,6 +21,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   fullWidth = false,
   className = '',
   disabled,
+  type = 'button',
   ...props
 }) => {
   
@@ -41,9 +43,11 @@ const CustomButton: React.FC<CustomButtonProps> = ({
     md: "px-6 py-2.5 text-sm", // Matches your image
     lg: "px-8 py-3 text-base",
   };
-
+console.log("type", type);
   return (
     <button
+    {...props}
+       type={type}
       className={`
         ${baseStyles} 
         ${variants[variant]} 
@@ -52,7 +56,7 @@ const CustomButton: React.FC<CustomButtonProps> = ({
         ${className}
       `}
       disabled={isLoading || disabled}
-      {...props}
+     
     >
       {isLoading ? (
         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

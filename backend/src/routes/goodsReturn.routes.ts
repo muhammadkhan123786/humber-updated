@@ -1,4 +1,3 @@
-// routes/goodsReturn.routes.ts
 import { Router } from "express";
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { GenericService } from "../services/generic.crud.services";

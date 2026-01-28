@@ -16,9 +16,9 @@ interface ProductInformationCardProps {
     modelNumber: string;
     description: string;
     shortDescription: string;
-    keywords: string; // Comma-separated string for input
+    keywords: string;
   };
-  tags: string[]; // Array of tags
+  tags: string[]; 
   newTag: string;
   onInputChange: (field: string, value: string) => void;
   onAddTag: () => void;
@@ -36,7 +36,6 @@ export function ProductInformationCard({
   onNewTagChange
 }: ProductInformationCardProps) {
   const [keywordInput, setKeywordInput] = useState("");
-  const [keywordTags, setKeywordTags] = useState<string[]>([]);
 
   // Convert keywords string to array for display
   const keywordsArray = formData.keywords

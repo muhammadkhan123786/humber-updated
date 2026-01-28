@@ -1,6 +1,7 @@
-// schemas/goodsReturn.schema.ts
 import { Schema, SchemaDefinition } from "mongoose";
 import { z } from "zod";
+import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
+
 
 export const GoodsReturnItemSchema = new Schema(
   {
@@ -18,6 +19,7 @@ export const GoodsReturnItemSchema = new Schema(
 );
 
 export const GoodsReturnSchema: SchemaDefinition = {
+    ...commonSchema,
   grnNumber: { type: String, required: true },
   grnReference: { type: String, required: true },
   returnNumber: { type: String, required: true, unique: true },
@@ -26,8 +28,8 @@ export const GoodsReturnSchema: SchemaDefinition = {
   returnedBy: { type: String, required: true },
   status: {
     type: String,
-    enum: ["draft", "approved", "in-transit", "returned", "closed"],
-    default: "draft",
+    enum: ["all", "pending", "approved", "in-transit", "completed", "rejected"],
+    default: "pending",
   },
   returnReason: { type: String, required: true },
   items: [GoodsReturnItemSchema],
@@ -54,13 +56,14 @@ export const GoodsReturnItemValidation = z.object({
 });
 
 export const CreateGoodsReturnValidation = z.object({
+    ...commonSchemaValidation,
   grnNumber: z.string(),
   grnReference: z.string(),
   returnNumber: z.string(),
   supplier: z.string(),
   returnDate: z.coerce.date(),
   returnedBy: z.string().min(2),
-  status: z.enum(["draft", "approved", "in-transit", "returned", "closed"]).optional(),
+  status: z.enum(["all", "pending", "approved", "in-transit", "completed", "rejected"]).optional(),
   returnReason: z.string().min(2),
   items: z.array(GoodsReturnItemValidation).min(1),
   totalAmount: z.number().min(0),

@@ -17,17 +17,21 @@ export const analyzeImagesWithGemini = async (
     }
   }));
 
-  const prompt = `
-Analyze all provided product images carefully.
-Combine details from all images.
+const prompt = `
+Analyze all provided product images as a single product collection.
+Look for details like color, material, brand, usage, and style across ALL images.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON in this exact structure:
 {
-  "shortDescription": "string (max 15 words)",
-  "description": "string",
-  "tags": ["array", "of", "strings"],
-  "keywords": "comma separated keywords"
+  "shortDescription": "Summarize the product briefly based on all views.",
+  "description": "Provide a detailed description combining features seen in all images.",
+  "tags": ["Provide 8-10 UNIQUE, diverse tags (e.g., category, material, color, style)"],
+  "keywords": "comma, separated, unique, keywords"
 }
+
+Constraints: 
+- Do NOT repeat the same word in the tags array.
+- Ensure tags are relevant to the specific product shown.
 `;
 
   const result = await model.generateContent([

@@ -32,14 +32,14 @@ export interface GoodsReturnNoteItem {
 }
 
 export interface IGoodsReturnNote {
-  id: string;
+  _id: string;
   grnNumber: string;
   grnReference: string; // e.g. GRN-001 / PO-001
   returnNumber: string;
   supplier: string;
   returnDate: Date;
   returnedBy: string;
-  status: "draft" | "approved" | "in-transit" | "returned" | "closed";
+  status: "all" | "pending"| "approved" | "in-transit" | "completed" | "rejected";
   returnReason: string;
   items: GoodsReturnNoteItem[];
   totalAmount: number;

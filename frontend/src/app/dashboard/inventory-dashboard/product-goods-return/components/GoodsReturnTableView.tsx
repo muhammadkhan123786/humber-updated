@@ -93,7 +93,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-4 w-4 text-indigo-500" />
-                        <span className="text-gray-700">{grtn.returnDate.toLocaleDateString()}</span>
+                        <span className="text-gray-700">{grtn.returnDate}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

@@ -20,11 +20,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// If you have these reusable components, import them:
-import { Checkbox } from "@/components/form/Checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/form/RadioGroupItem";
-// import { DatePicker } from "@/components/form/DatePicker";
-
 export const renderDynamicField = (
   field: any,
   value: any,
@@ -148,15 +143,6 @@ export const renderDynamicField = (
               className={`border-2 pl-10 ${getBorderColor("date")}`}
             />
           </div>
-          
-          {/* Alternative: If you have a DatePicker component */}
-          {/* 
-          <DatePicker
-            value={value}
-            onChange={onChange}
-            className={`border-2 ${getBorderColor("date")}`}
-          />
-          */}
         </motion.div>
       );
 
@@ -242,121 +228,120 @@ export const renderDynamicField = (
       );
 
     case "checkbox":
-      // If you have a reusable Checkbox component, use it:
-      
+      // Fixed checkbox implementation with proper multi-select support
       return (
-        <motion.div className="space-y-3">
-          {field.options?.map((opt: any) => (
-            <Checkbox
-              key={getOptionValue(opt)}
-              checked={value === getOptionValue(opt)}
-              onCheckedChange={() => onChange(getOptionValue(opt))}
-              label={getOptionLabel(opt)}
-            />
-          ))}
-        </motion.div>
-      );
-      
-      
-      // Current implementation:
-      return (
-        <motion.div className="space-y-3">
-          {field.options?.map((opt: any) => {
-            const optValue = getOptionValue(opt);
-            const isChecked = value === optValue;
-            
-            return (
-              <motion.label
-                key={optValue}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={getFieldBackground("checkbox", isChecked)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-all ${
-                    isChecked
-                      ? 'border-amber-500 bg-amber-500 text-white'
-                      : 'border-gray-300 bg-white'
-                  }`}>
-                    {isChecked && (
-                      <CheckCircle className="h-3 w-3" />
-                    )}
+        <motion.div className="flex flex-wrap gap-3">
+          {field.options && field.options.length > 0 ? (
+            field.options.map((opt: any) => {
+              const optValue = getOptionValue(opt);
+              // Support both single value and array of values
+              const isChecked = Array.isArray(value) 
+                ? value.includes(optValue) 
+                : value === optValue;
+              
+              const handleCheckboxChange = () => {
+                if (Array.isArray(value)) {
+                  // Multi-select mode
+                  if (isChecked) {
+                    onChange(value.filter((v: any) => v !== optValue));
+                  } else {
+                    onChange([...value, optValue]);
+                  }
+                } else {
+                  // Single-select mode (toggle on/off)
+                  onChange(isChecked ? null : optValue);
+                }
+              };
+              
+              return (
+                <motion.label
+                  key={optValue}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={getFieldBackground("checkbox", isChecked)}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`font-medium ${
+                      isChecked ? 'text-amber-700' : 'text-gray-700'
+                    }`}>
+                      {getOptionLabel(opt)}
+                    </span>
+                    <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                      isChecked
+                        ? 'border-amber-500 bg-amber-500 text-white'
+                        : 'border-gray-300 bg-white'
+                    }`}>
+                      {isChecked && (
+                        <CheckCircle className="h-3.5 w-3.5" />
+                      )}
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={handleCheckboxChange}
+                      className="sr-only"
+                      aria-label={getOptionLabel(opt)}
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => onChange(optValue)}
-                    className="hidden"
-                  />
-                  <span className={`font-medium ${
-                    isChecked ? 'text-amber-700' : 'text-gray-700'
-                  }`}>
-                    {getOptionLabel(opt)}
-                  </span>
-                </div>
-              </motion.label>
-            );
-          })}
+                </motion.label>
+              );
+            })
+          ) : (
+            <div className="text-sm text-gray-500 italic p-3 bg-gray-50 rounded-lg border border-gray-200">
+              No options available for this field
+            </div>
+          )}
         </motion.div>
       );
 
     case "radio":
-      // If you have a reusable RadioGroup component, use it:
-      
       return (
-        <RadioGroup value={value || ""} onValueChange={onChange}>
-          {field.options?.map((opt: any) => (
-            <RadioGroupItem
-              key={getOptionValue(opt)}
-              value={getOptionValue(opt)}
-              label={getOptionLabel(opt)}
-            />
-          ))}
-        </RadioGroup>
-      );
-      
-      
-      // Current implementation:
-      return (
-        <motion.div className="space-y-3">
-          {field.options?.map((opt: any) => {
-            const optValue = getOptionValue(opt);
-            const isSelected = value === optValue;
-            
-            return (
-              <motion.label
-                key={optValue}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={getFieldBackground("radio", isSelected)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                    isSelected
-                      ? 'border-pink-500 bg-pink-500'
-                      : 'border-gray-300 bg-white'
-                  }`}>
-                    {isSelected && (
-                      <div className="h-2 w-2 rounded-full bg-white"></div>
-                    )}
+        <motion.div className="flex flex-wrap gap-3">
+          {field.options && field.options.length > 0 ? (
+            field.options.map((opt: any) => {
+              const optValue = getOptionValue(opt);
+              const isSelected = value === optValue;
+              
+              return (
+                <motion.label
+                  key={optValue}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={getFieldBackground("radio", isSelected)}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className={`font-medium ${
+                      isSelected ? 'text-pink-700' : 'text-gray-700'
+                    }`}>
+                      {getOptionLabel(opt)}
+                    </span>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
+                      isSelected
+                        ? 'border-pink-500 bg-pink-500'
+                        : 'border-gray-300 bg-white'
+                    }`}>
+                      {isSelected && (
+                        <div className="h-2.5 w-2.5 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <input
+                      type="radio"
+                      name={`radio-${field._id}`}
+                      value={optValue}
+                      checked={isSelected}
+                      onChange={() => onChange(optValue)}
+                      className="sr-only"
+                      aria-label={getOptionLabel(opt)}
+                    />
                   </div>
-                  <input
-                    type="radio"
-                    name={`radio-${field._id}`}
-                    value={optValue}
-                    checked={isSelected}
-                    onChange={() => onChange(optValue)}
-                    className="hidden"
-                  />
-                  <span className={`font-medium ${
-                    isSelected ? 'text-pink-700' : 'text-gray-700'
-                  }`}>
-                    {getOptionLabel(opt)}
-                  </span>
-                </div>
-              </motion.label>
-            );
-          })}
+                </motion.label>
+              );
+            })
+          ) : (
+            <div className="text-sm text-gray-500 italic p-3 bg-gray-50 rounded-lg border border-gray-200">
+              No options available for this field
+            </div>
+          )}
         </motion.div>
       );
 

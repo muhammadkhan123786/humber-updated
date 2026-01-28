@@ -27,7 +27,7 @@ export const fetchAttributes = async (
   page = 1,
   limit = 10,
   search = "",
-  categoryIds: string[] = [],
+  categoryIds: string,
 ): Promise<AttributeResponse> => {
    const res = await axios.get(API_URL, {
     ...getAuthConfig(),

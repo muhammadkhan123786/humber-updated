@@ -18,7 +18,7 @@ export default function GoodsReceivedPage() {
   const [viewingGRN, setViewingGRN] = useState<GoodsReceivedNote | null>(null);
 
   const {
-    filteredGRNs,
+    grns,
     stats,
     searchTerm,
     setSearchTerm,
@@ -34,10 +34,10 @@ export default function GoodsReceivedPage() {
     newProduct,
     setNewProduct,
     availablePOs,
-    statuses,
+    // statuses,
     handleUpdateItem,
     handleAddManualProduct,
-    handleRemoveItem,
+    // handleRemoveItem,
     handleCreateGRN,
     resetForm
   } = useGoodsReceived();
@@ -59,7 +59,7 @@ export default function GoodsReceivedPage() {
 
   const handleCreateAndClose = () => {
     handleCreateGRN();
-    setIsCreateDialogOpen(false);
+    // setIsCreateDialogOpen(false);
   };
 
   const handleCloseCreateDialog = () => {
@@ -100,11 +100,11 @@ export default function GoodsReceivedPage() {
         onSearchChange={setSearchTerm}
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
-        statuses={statuses}
+        // statuses={statuses}
       />
       
       <GRNTable
-        grns={filteredGRNs}
+        grns={grns}
         onView={handleOpenViewGRN}
         onDownload={handleDownloadGRN}
       />
@@ -120,12 +120,12 @@ export default function GoodsReceivedPage() {
         grnNotes={grnNotes}
         onGRNNotesChange={setGRNNotes}
         receivingItems={receivingItems}
-        onUpdateItem={handleUpdateItem}
-        onRemoveItem={handleRemoveItem}
-        newProduct={newProduct}
-        onNewProductChange={setNewProduct}
+        // onUpdateItem={handleUpdateItem}
+        // onRemoveItem={handleRemoveItem}
+        // newProduct={newProduct}
+        // onNewProductChange={setNewProduct}
         onAddManualProduct={handleAddManualProduct}
-        availablePOs={availablePOs}
+        // availablePOs={availablePOs}
         onCreateGRN={handleCreateAndClose}
         onCancel={handleCloseCreateDialog}
       />
