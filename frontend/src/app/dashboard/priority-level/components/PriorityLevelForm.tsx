@@ -21,8 +21,15 @@ interface IPriorityFormData {
 }
 
 const PRESET_COLORS = [
-  "#EF4444", "#F97316", "#F59E0B", "#10B981", "#06B6D4", "#3B82F6",
-  "#6366F1", "#8B5CF6", "#D946EF", "#F43F5E", "#64748B", "#475569",
+  "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)", // Sunset
+  "linear-gradient(135deg, #FF8C00 0%, #FFA500 100%)", // Orange
+  "linear-gradient(135deg, #F09819 0%, #EDDE5D 100%)", // Gold
+  "linear-gradient(135deg, #1D976C 0%, #93F9B9 100%)", // Emerald
+  "linear-gradient(135deg, #00B4DB 0%, #0083B0 100%)", // Ocean
+  "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)", // Royal
+  "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)", // Violet
+  "linear-gradient(135deg, #f953c6 0%, #b91d73 100%)", // Pink
+  "linear-gradient(135deg, #485563 0%, #29323c 100%)", // Slate
 ];
 
 // 2. Schema with coercion
@@ -97,7 +104,11 @@ const PriorityLevelForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
     } catch (error: any) {
       // --- Error Handling Logic Start ---
       let errorMessage = "Error saving data";
+       console.log("Caught Error:", error);
+       if(!error.success){
+        errorMessage = error.message || errorMessage;
 
+       }
       if (error.response?.data?.message) {
         const rawMessage = error.response.data.message;
         console.log("Raw Error Message:", rawMessage);
@@ -169,18 +180,20 @@ const PriorityLevelForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
         <div className="space-y-3">
           <label className="block text-sm font-semibold text-gray-700">Label Color *</label>
           <div className="grid grid-cols-6 gap-3">
-            {PRESET_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                onClick={() => setValue("backgroundColor", color)}
-                className={`w-10 h-10 rounded-xl border-2 shadow-sm flex items-center justify-center transition-all ${selectedColor === color ? "border-gray-800 scale-110" : "border-white"
-                  }`}
-                style={{ backgroundColor: color }}
-              >
-                {selectedColor === color && <Check size={18} className="text-white drop-shadow-md" />}
-              </button>
-            ))}
+           {PRESET_COLORS.map((color) => (
+  <button
+    key={color}
+    type="button"
+    onClick={() => setValue("backgroundColor", color)}
+    className={`w-10 h-10 rounded-xl border-2 shadow-sm flex items-center justify-center transition-all ${
+      selectedColor === color ? "border-gray-800 scale-110" : "border-white"
+    }`}
+    // CHANGE: Use 'background' instead of 'backgroundColor'
+    style={{ background: color }} 
+  >
+    {selectedColor === color && <Check size={18} className="text-white drop-shadow-md" />}
+  </button>
+))}
           </div>
         </div>
 

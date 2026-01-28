@@ -51,12 +51,12 @@ const FormField: React.FC<FormFieldProps> = ({
      min,
   max,
     className:
-      "w-full bg-white border border-[#d0d5dd] rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-purple-400 transition-all",
+      "w-full h-9 bg-gray-100 rounded-[10px] border border-black/0 px-4 py-1 outline-none focus:ring-2 focus:ring-purple-400 transition-all",
   };
 
   return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label className="text-[14px] font-medium text-[#475467]">{label}</label>
+    <div className={`flex flex-col ${className}`}>
+      <label className="text-[14px] font-medium text-black">{label}</label>
       <div className="relative">
         {type === "select" ? (
           <>
@@ -93,7 +93,7 @@ const FormField: React.FC<FormFieldProps> = ({
         ) : type === "textarea" ? (
           <textarea
             {...(commonProps as any)}
-            className={`${commonProps.className} min-h-[120px] py-3 resize-none`}
+            className={`${commonProps.className} min-h-16 py-2 px-3 resize-none`}
           />
         ) : (
           <input {...commonProps} type={type} defaultValue={defaultValue} />

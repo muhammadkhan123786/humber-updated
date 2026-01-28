@@ -7,15 +7,18 @@ interface FormSectionProps {
   title: string;
   children: React.ReactNode;
   theme:
-    | "blue"
-    | "purple"
-    | "green"
-    | "orange"
-    | "red"
-    | "indigo"
-    | "sky"
-    | "teal"
-    | "rose";
+  | "blue"
+  | "purple"
+  | "green"
+  | "orange"
+  | "red"
+  | "indigo"
+  | "sky"
+  | "teal"
+  | "rose";
+  // Added new optional props
+  headerClassName?: string;
+  iconClassName?: string;
 }
 
 const FormSection: React.FC<FormSectionProps> = ({
@@ -24,6 +27,8 @@ const FormSection: React.FC<FormSectionProps> = ({
   title,
   children,
   theme,
+  headerClassName, // Destructure new prop
+  iconClassName,   // Destructure new prop
 }) => {
   const themes = {
     blue: "bg-blue-50/40 border-blue-50 text-blue-700 icon-blue-600",
@@ -38,22 +43,21 @@ const FormSection: React.FC<FormSectionProps> = ({
   };
 
   const selectedTheme = themes[theme];
-  const iconColor = selectedTheme
+  // Existing icon color logic
+  const defaultIconColor = selectedTheme
     .split(" ")
     .find((c) => c.startsWith("icon-"))
     ?.replace("icon-", "");
 
   return (
-    <div className="bg-white rounded-4xl shadow-sm border border-slate-100 overflow-hidden">
-      <div
-        className={`flex items-center gap-2.5 p-5 border-b ${selectedTheme}`}
-      >
-        <Icon size={18} className={iconColor} />
-        <h3 className="text-[13px] font-black uppercase tracking-wider">
+    <div className="bg-white rounded-b-2xl  shadow-md border border-slate-100 overflow-hidden">
+      <div className={`flex items-center gap-2 p-6 pb-1.5! ${headerClassName || 'bg-linear-to-r from-blue-50 to-cyan-50'}`}>
+        <Icon size={20} className={`${iconClassName || defaultIconColor}`} />
+        <h4 className="text-xl font-semibold tracking-wide">
           {number}. {title}
-        </h3>
+        </h4>
       </div>
-      <div className="p-8">{children}</div>
+      <div className="p-6">{children}</div>
     </div>
   );
 };
