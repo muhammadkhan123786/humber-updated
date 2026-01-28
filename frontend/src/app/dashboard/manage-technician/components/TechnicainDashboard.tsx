@@ -4,15 +4,13 @@ import MetricCard from "../../customerDashboard/components/MetricCard";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
-  Users,
   UserCheck,
   Briefcase,
   Star,
   Loader2,
-  Navigation,
-  Files,
-  Calendar,
   Settings,
+  User,
+  UserStar,
 } from "lucide-react";
 import ModalForm from "./ModalForm";
 import ManageTechnicianList from "./ManageTechnicianList";
@@ -113,7 +111,7 @@ const TechnicianDashboard = () => {
   };
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="p-2 bg-slate-50 min-h-screen">
       <AnimatePresence>
         {isModalOpen && (
           <ModalForm
@@ -141,7 +139,7 @@ const TechnicianDashboard = () => {
               Technician Management
             </h1>
             <p className="opacity-90 text-base font-semibold tracking-wide">
-              Manage technical workforce and monitor performance
+              Manage your technical workforce
             </p>
           </div>
         </div>
@@ -160,46 +158,64 @@ const TechnicianDashboard = () => {
           Register New Technician
         </button>
       </div>
-      <div className="mb-8 bg-white border border-orange-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="bg-orange-600 p-3 rounded-full text-white">
-            <Users size={20} fill="white" />
+      <div className="w-full h-20 pl-4 bg-linear-to-r from-orange-50 via-red-50 to-pink-50 rounded-2xl shadow-lg border-l-4 border-orange-500 flex items-center justify-between overflow-hidden">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-500 rounded-full flex justify-center items-center shadow-md">
+            <UserStar size={20} className="text-white" fill="white" />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-800">
+
+          <div className="flex flex-col">
+            <h3 className="text-gray-800 text-sm font-bold font-sans leading-tight">
               Complete HR System
             </h3>
-            <p className="text-[11px] text-slate-400 font-medium">
+            <p className="text-gray-600 text-xs font-normal font-sans leading-tight">
               Name fields • Google Places • Multi-upload • Duty roster • Salary
               • HR features
             </p>
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold border border-blue-100">
-            <Navigation size={12} fill="currentColor" /> Auto-fill Address
+        <div className="hidden lg:flex items-center gap-2 pr-4">
+          <div className="px-3 py-1 bg-blue-100 rounded-full flex items-center gap-1.5 border border-blue-200">
+            <span className="text-[10px]">📍</span>
+            <span className="text-blue-700 text-xs font-medium font-sans">
+              Auto-fill Address
+            </span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-bold border border-cyan-100">
-            <Files size={12} fill="currentColor" /> Multi-Documents
+
+          <div className="px-3 py-1 bg-cyan-100 rounded-full flex items-center gap-1.5 border border-cyan-200">
+            <span className="text-[10px]">📎</span>
+            <span className="text-cyan-700 text-xs font-medium font-sans">
+              Multi-Documents
+            </span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-full text-[10px] font-bold border border-purple-100">
-            <Calendar size={12} fill="currentColor" /> Weekly Schedule
+
+          <div className="px-3 py-1 bg-purple-100 rounded-full flex items-center gap-1.5 border border-purple-200">
+            <span className="text-[10px]">📅</span>
+            <span className="text-purple-700 text-xs font-medium font-sans">
+              Weekly Schedule
+            </span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-600 rounded-full text-[10px] font-bold border border-green-100">
-            <Settings size={12} fill="currentColor" /> Salary Config
+
+          <div className="px-3 py-1 bg-green-100 rounded-full flex items-center gap-1.5 border border-green-200">
+            <span className="text-[10px]">💰</span>
+            <span className="text-green-700 text-xs font-medium font-sans">
+              Salary Config
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-6 mb-16">
+      <div className="grid grid-cols-4  gap-2 mb-16 mt-4 ">
         <MetricCard
           title="Total Technicians"
           value={loading ? "..." : summary?.total?.current || 0}
           percentage={summary?.total?.percentage || "0"}
           isPositive={true}
-          icon={Users}
-          gradient="bg-gradient-to-br from-[#FF512F] to-[#DD2476]"
+          icon={User}
+          gradient="bg-gradient-to-br from-orange-500 via-red-500 to-pink-500"
+          width="w-66"
+          height="h-48"
         />
         <MetricCard
           title="Available Now"
@@ -207,7 +223,9 @@ const TechnicianDashboard = () => {
           percentage={summary?.active?.percentage || "0"}
           isPositive={true}
           icon={UserCheck}
-          gradient="bg-gradient-to-br from-[#11998e] to-[#38ef7d]"
+          gradient="bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500"
+          width="w-66"
+          height="h-48"
         />
         <MetricCard
           title="Active Jobs"
@@ -216,14 +234,18 @@ const TechnicianDashboard = () => {
           isPositive={false}
           icon={Briefcase}
           gradient="bg-gradient-to-br from-[#2193b0] to-[#6dd5ed]"
+          width="w-66"
+          height="h-48"
         />
         <MetricCard
           title="Avg. Rating"
           value="4.85"
-          percentage="+2.1"
+          percentage="2.1"
           isPositive={true}
           icon={Star}
-          gradient="bg-gradient-to-br from-[#ee0979] to-[#ff6a00]"
+          gradient="bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500"
+          width="w-66"
+          height="h-48"
         />
       </div>
 

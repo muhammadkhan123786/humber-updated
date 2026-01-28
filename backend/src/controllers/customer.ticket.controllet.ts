@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 
-import { generateTicketCode } from "../utils/generateTicketCode";
+import { generateTicketCode } from "../utils/generate.AutoCode.Counter";
 import { TicketStatus } from "../models/ticket-management-system-models/ticket.status.models";
 import { customerTicketBase } from "../models/ticket-management-system-models/customer.ticket.base.models";
 import { CustomerTicketStatus } from "../models/ticket-management-system-models/customer.ticket.status.manager.models";
