@@ -326,7 +326,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/register-driver`,
-  //adminProtecter,
+  adminProtecter,
   driverRouter,
 
 );
