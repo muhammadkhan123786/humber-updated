@@ -76,7 +76,7 @@ const FormField: React.FC<FormFieldProps> = ({
     className: [
       "w-full h-9 bg-gray-100",
       "border border-[#d0d5dd]",
-      "rounded-xl px-4 py-3",
+      "rounded-xl px-4 ",
       "outline-none transition-all",
       !disabled && hoverClassMap[hoverColor],
       "focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white",

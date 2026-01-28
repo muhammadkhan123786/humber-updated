@@ -135,7 +135,7 @@ const TechnicianDashboard = () => {
             </motion.div>
           </div>
           <div>
-            <h1 className="text-4xl font-black tracking-tight mb-1">
+            <h1 className="text-4xl font-bold text-white drop-shadow-lg">
               Technician Management
             </h1>
             <p className="opacity-90 text-base font-semibold tracking-wide">
