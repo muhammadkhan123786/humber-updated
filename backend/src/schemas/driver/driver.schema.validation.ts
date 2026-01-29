@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createDriverSchema = z.object({
-
+    driverPhoto: z.string().min(1, "Please upload your photo."),
     personalInfo: z.object({
         firstName: z.string().min(2),
         lastName: z.string().min(2)

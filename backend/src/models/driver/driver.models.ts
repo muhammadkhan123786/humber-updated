@@ -1,7 +1,7 @@
 import { Document, Schema, Types, model } from "mongoose";
 import { IDriverCreateDTO } from "../../../../common/mobile-app-interfaces/driver-interfaces/IDriver.register.interface";
 
-export type driverSchemaDoc = IDriverCreateDTO<string[], string[], string[], string[], string[], string[], Types.ObjectId> & Document;
+export type driverSchemaDoc = IDriverCreateDTO<string[], string[], string[], string[], string[], string[], Types.ObjectId, string> & Document;
 
 const DriverSchema = new Schema<driverSchemaDoc>(
     {
@@ -55,7 +55,7 @@ const DriverSchema = new Schema<driverSchemaDoc>(
             backgroundChecks: [String],
             otherDocuments: [String]
         },
-
+        driverPhoto: { type: String },
         isActive: { type: Boolean, default: true },
         isDeleted: { type: Boolean, default: false },
         isDefault: { type: Boolean, default: false },
