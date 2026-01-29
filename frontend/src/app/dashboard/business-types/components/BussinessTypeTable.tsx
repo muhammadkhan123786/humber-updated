@@ -4,6 +4,7 @@ import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Briefcase, Trash2 } from "lucide-react";
 import { IBusinessTypes } from "../../../../../../common/suppliers/IBusiness.types.interface";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (IBusinessTypes & { _id: string })[];
@@ -40,9 +41,9 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <Briefcase size={18} />
               </div>
-              
+
               {/* Status Toggle Switch */}
-              <StatusBadge 
+              <StatusBadge
                 isActive={!!item.isActive}
                 onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
                 editable={!item.isDefault}
@@ -66,7 +67,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
                   onClick={() => onEdit(item)}
                   className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50  hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
                 >
-                    Edit
+                  Edit
                 </button>
                 <button
                   onClick={() => {
@@ -77,7 +78,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
                     onDelete(item._id);
                   }}
                   className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  title="Delete"  
+                  title="Delete"
                 >
                   <Trash2 size={20} />
                 </button>
@@ -124,7 +125,7 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge 
+                <StatusBadge
                   isActive={!!item.isActive}
                   onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
                   editable={!item.isDefault}
@@ -132,10 +133,13 @@ const BussinessTypeTable = ({ data, displayView, onEdit, onDelete, onStatusChang
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="business type" // Modal mein likha aayega
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault)
-                      return alert("Default types cannot be deleted.");
+                    if (item.isDefault) {
+                      // Aap yahan toast.error use kar sakte hain
+                      return toast.error("Default types cannot be deleted.");
+                    }
                     onDelete(item._id);
                   }}
                 />
