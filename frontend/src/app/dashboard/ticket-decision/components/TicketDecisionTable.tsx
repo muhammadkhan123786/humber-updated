@@ -15,6 +15,22 @@ interface Props {
   themeColor: string;
 }
 
+// Helper to get gradient
+const getGradient = (hex: string) => {
+  if (!hex) return '#3b82f6';
+  // Check if it's already a gradient (if stored that way in future)
+  if (hex.startsWith('linear')) return hex;
+  
+  // Same logic as form
+  const adjust = (color: string, amount: number) => {
+      // Basic hex validation/cleaning
+      const c = color.replace('#', '');
+      if (c.length !== 6) return color;
+      return '#' + c.replace(/../g, co => ('0'+Math.min(255, Math.max(0, parseInt(co, 16) + amount)).toString(16)).substr(-2));
+  }
+  return `linear-gradient(135deg, ${hex}, ${adjust(hex, -40)})`;
+};
+
 const TicketDecisionTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   // Card View
   if (displayView === "card") {
@@ -23,7 +39,7 @@ const TicketDecisionTable = ({ data, displayView, onEdit, onDelete, onStatusChan
         {data.map((item) => (
           <div
             key={item._id}
-            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform ${
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
               !item.isActive ? "opacity-60" : ""
             }`}
           >
@@ -31,7 +47,7 @@ const TicketDecisionTable = ({ data, displayView, onEdit, onDelete, onStatusChan
             <div className="p-4 flex items-start justify-between bg-white">
               <div 
                 className="p-3 rounded-xl text-white shadow-sm"
-                style={{ backgroundColor: item.color || '#3b82f6' }}
+                style={{ background: getGradient(item.color) }}
               >
                 <Gavel size={18} />
               </div>
@@ -102,7 +118,7 @@ const TicketDecisionTable = ({ data, displayView, onEdit, onDelete, onStatusChan
               <td className="px-6 py-4">
                 <div 
                     className="p-3 rounded-lg w-fit text-white shadow-sm"
-                    style={{ backgroundColor: item.color || '#3b82f6' }}
+                    style={{ background: getGradient(item.color) }}
                 >
                   <Gavel size={18} />
                 </div>

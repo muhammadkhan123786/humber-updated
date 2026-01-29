@@ -46,7 +46,18 @@ const TicketDecisionForm = ({ editingData, onClose, themeColor }: Props) => {
         },
     });
 
-    const isDefaultValue = useWatch({ control, name: "isDefault" });
+
+    const selectedColor = useWatch({ control, name: "color" });
+    
+    // Helper to generate gradient
+    const getGradient = (hex: string) => {
+        if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) return hex;
+        // Simple darken logic for gradient
+        const adjust = (color: string, amount: number) => {
+            return '#' + color.replace(/^#/, '').replace(/../g, c => ('0'+Math.min(255, Math.max(0, parseInt(c, 16) + amount)).toString(16)).substr(-2));
+        }
+        return `linear-gradient(135deg, ${hex}, ${adjust(hex, -40)})`;
+    };
 
     useEffect(() => {
         if (editingData) {
@@ -98,23 +109,41 @@ const TicketDecisionForm = ({ editingData, onClose, themeColor }: Props) => {
                 />
 
                 <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">Color Code *</label>
-                    <div className="flex gap-2">
-                         <div className="relative w-12 h-full overflow-hidden rounded-lg border border-gray-200">
-                             <input
-                                 type="color"
-                                 className="absolute -top-2 -left-2 w-20 h-20 p-0 border-0 cursor-pointer"
-                                 {...register("color")}
-                             />
-                         </div>
-                        <div className="flex-1">
-                             <input 
-                                 type="text" 
-                                 className={`w-full px-4 py-3 rounded-xl bg-gray-50 border outline-none transition-all text-gray-700 ${errors.color ? 'border-red-500 ring-red-100' : 'border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400'}`}
-                                 placeholder="#000000"
-                                 {...register("color")}
-                            />
-                             {errors.color && <p className="text-red-500 text-xs mt-1">{errors.color.message}</p>}
+                    <label className="text-sm font-semibold text-gray-700">Color Gradient *</label>
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 space-y-3">
+                        <div className="flex gap-3 items-center">
+                             {/* Color Picker */}
+                             <div className="relative w-14 h-14 overflow-hidden rounded-xl border-2 border-white shadow-md ring-1 ring-gray-200 transition-transform hover:scale-105 active:scale-95 cursor-pointer">
+                                 <input
+                                     type="color"
+                                     className="absolute -top-4 -left-4 w-24 h-24 p-0 border-0 cursor-pointer"
+                                     {...register("color")}
+                                 />
+                             </div>
+                            
+                             {/* Hex Input */}
+                            <div className="flex-1">
+                                 <input 
+                                     type="text" 
+                                     className={`w-full px-4 py-3 rounded-xl bg-white border outline-none transition-all text-gray-700 font-mono ${errors.color ? 'border-red-500 ring-red-100' : 'border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400'}`}
+                                     placeholder="#000000"
+                                     {...register("color")}
+                                />
+                                 {errors.color && <p className="text-red-500 text-xs mt-1">{errors.color.message}</p>}
+                            </div>
+
+                            {/* Preview Section */}
+                            <div 
+                                className="h-12 w-24 rounded-xl shadow-sm border border-gray-100 flex items-center justify-center text-[10px] text-white font-bold tracking-wide uppercase"
+                                style={{ background: getGradient(selectedColor) }}
+                            >
+                                Preview
+                            </div>
+                        </div>
+
+                        {/* Generated Code Display */}
+                        <div className="text-xs text-gray-400 font-mono bg-white px-3 py-2 rounded-lg border border-gray-100 truncate">
+                            {getGradient(selectedColor)}
                         </div>
                     </div>
                 </div>
@@ -128,7 +157,7 @@ const TicketDecisionForm = ({ editingData, onClose, themeColor }: Props) => {
                                 label="Active"
                                 checked={field.value}
                                 onChange={field.onChange}
-                                disabled={isDefaultValue}
+                               
                             />
                         )}
                     />
