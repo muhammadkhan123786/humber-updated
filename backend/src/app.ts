@@ -68,6 +68,7 @@ import technicianJobsRouter from "./routes/technician-jobs/technician.jobs.route
 import autoCodeGeneratorRouter from "./routes/auto-code-generator/auto.code.generator.routes";
 import driverRouter from "./routes/driver/driver.routes";
 import otpRouter from "./routes/otp-routes/mobile.otp.routes";
+import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
 
 // Create express app
 const app: Application = express();
@@ -339,7 +340,13 @@ app.use(
 
 );
 
-//28-01-2026
+//29-01-2026
+app.use(
+  `${process.env.API_PREFIX}/ticket-decision`,
+  adminProtecter,
+  ticketDecisionRouter,
+
+);
 
 
 //Muhammad Imran code ended here.
