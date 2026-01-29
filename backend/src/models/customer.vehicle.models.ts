@@ -28,7 +28,6 @@ const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
 
         serialNumber: {
             type: String,
-            required: true,
             trim: true,
         },
 
@@ -40,17 +39,17 @@ const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
 
         purchaseDate: {
             type: Date,
-            required: true,
+
         },
 
         warrantyStartDate: {
             type: Date,
-            required: true,
+
         },
 
         warrantyEndDate: {
             type: Date,
-            required: true,
+
         },
 
         vehiclePhoto: {
