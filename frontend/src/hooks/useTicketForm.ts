@@ -23,16 +23,20 @@ export const useTicketForm = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Dropdown States
   const [customers, setCustomers] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [priorities, setPriorities] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
+  const [decisions, setDecisions] = useState<any[]>([]);
+  const [mobilityParts, setMobilityParts] = useState<any[]>([]);
+
   const [defaultTicketStatusId, setDefaultTicketStatusId] =
     useState<string>("");
 
   const form = useForm<TicketFormData>({
-    resolver: zodResolver(ticketFormSchema) as unknown as any,
+    resolver: zodResolver(ticketFormSchema) as any,
     defaultValues: {
       ticketSource: "Phone",
       location: "Workshop",
@@ -44,10 +48,16 @@ export const useTicketForm = () => {
       vehicleRepairVideoURL: "",
       issue_Details: "",
       ticketStatusId: "",
+      productOwnership: "Customer Product",
+      investigationReportData: "",
+      investigationParts: [],
+      isEmailSendReport: false,
     },
     mode: "onBlur",
   });
+
   const router = useRouter();
+
   const setEditData = useCallback(
     (ticket: any) => {
       if (!ticket) return;
@@ -66,15 +76,22 @@ export const useTicketForm = () => {
           ticket.ticketStatusId?._id || ticket.ticketStatusId || "",
         userId: ticket.userId?._id || ticket.userId || "",
         address: ticket.address || "",
-      assignedTechnicianId: Array.isArray(ticket.assignedTechnicianId)
-  ? ticket.assignedTechnicianId.map((t: any) => t._id || t)
-  : [],
-
+        assignedTechnicianId: Array.isArray(ticket.assignedTechnicianId)
+          ? ticket.assignedTechnicianId.map((t: any) => t._id || t)
+          : [],
         vehicleRepairVideoURL: ticket.vehicleRepairVideoURL || "",
-
         vehicleRepairImages: ticket.vehicleRepairImages || [],
-
         vehicleRepairImagesFile: [],
+        // New Fields reset logic
+        productOwnership: ticket.productOwnership || "Customer Product",
+        productSerialNumber: ticket.productSerialNumber || "",
+        purchaseDate: ticket.purchaseDate
+          ? new Date(ticket.purchaseDate).toISOString().split("T")[0]
+          : undefined,
+        decisionId: ticket.decisionId?._id || ticket.decisionId || "",
+        investigationReportData: ticket.investigationReportData || "",
+        investigationParts: ticket.investigationParts || [],
+        isEmailSendReport: Boolean(ticket.isEmailSendReport),
       });
     },
     [form],
@@ -113,33 +130,39 @@ export const useTicketForm = () => {
           getAlls("/ticket-status"),
           getAlls("/technicians"),
           getAlls("/customer-vehicle-register"),
+          getAlls("/ticket-decision"),
+          getAlls("/mobility-parts"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
           setCustomers(
             (results[0].value?.data ?? []).filter((i: any) => i.isActive),
           );
-
         if (results[1].status === "fulfilled")
           setPriorities(
             (results[1].value?.data ?? []).filter((i: any) => i.isActive),
           );
-
         if (results[3].status === "fulfilled")
           setTechnicians(
             (results[3].value?.data ?? []).filter((i: any) => i.isActive),
           );
-
         if (results[4].status === "fulfilled")
           setVehicles(
             (results[4].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[5].status === "fulfilled")
+          setDecisions(
+            (results[5].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[6].status === "fulfilled")
+          setMobilityParts(
+            (results[6].value?.data ?? []).filter((i: any) => i.isActive),
           );
 
         if (results[2].status === "fulfilled") {
           const statusData = (results[2].value?.data ?? []).filter(
             (i: any) => i.isActive,
           );
-
           setStatuses(statusData);
 
           if (!editingId) {
@@ -174,7 +197,6 @@ export const useTicketForm = () => {
 
       const formData = new FormData();
 
-      // Basic Fields
       formData.append("ticketSource", data.ticketSource);
       formData.append("customerId", data.customerId);
       formData.append("vehicleId", data.vehicleId);
@@ -187,19 +209,40 @@ export const useTicketForm = () => {
       );
       formData.append("userId", data.userId);
 
+      formData.append("productOwnership", data.productOwnership);
+      formData.append(
+        "investigationReportData",
+        data.investigationReportData || "",
+      );
+      formData.append("isEmailSendReport", String(data.isEmailSendReport));
+
+      if (data.productSerialNumber)
+        formData.append("productSerialNumber", data.productSerialNumber);
+      if (data.purchaseDate)
+        formData.append("purchaseDate", data.purchaseDate.toString());
+      if (data.decisionId) formData.append("decisionId", data.decisionId);
       if (data.address) formData.append("address", data.address);
- if (data.assignedTechnicianId && data.assignedTechnicianId.length > 0) {
-      data.assignedTechnicianId.forEach((techId, index) => {
-        formData.append(`assignedTechnicianId[${index}]`, techId);
-      });
-    }
+
+      // Investigation Parts (Array stringified for Multipart)
+      if (data.investigationParts && data.investigationParts.length > 0) {
+        formData.append(
+          "investigationParts",
+          JSON.stringify(data.investigationParts),
+        );
+      }
+
+      if (data.assignedTechnicianId && data.assignedTechnicianId.length > 0) {
+        data.assignedTechnicianId.forEach((techId, index) => {
+          formData.append(`assignedTechnicianId[${index}]`, techId);
+        });
+      }
 
       if (!editingId) {
         formData.append("ticketCode", generateTicketCode());
       }
+
       const rawImages = data.vehicleRepairImages || [];
       const imagesArray = Array.isArray(rawImages) ? rawImages : [rawImages];
-
       const existingImages = imagesArray.filter(
         (path: string) => typeof path === "string" && !path.startsWith("blob:"),
       );
@@ -233,8 +276,7 @@ export const useTicketForm = () => {
       });
 
       if (res.data.success) {
-        const message = editingId ? "Ticket updated!" : "Ticket created!";
-        alert(message);
+        alert(editingId ? "Ticket updated!" : "Ticket created!");
         clearEdit();
         router.push("/dashboard/ticket-masterdata/allTickets");
       }
@@ -257,6 +299,8 @@ export const useTicketForm = () => {
     priorities,
     statuses,
     technicians,
+    decisions,
+    mobilityParts,
     editingId,
     setEditData,
     clearEdit,

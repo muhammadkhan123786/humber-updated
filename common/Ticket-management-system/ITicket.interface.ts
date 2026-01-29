@@ -4,10 +4,10 @@ export type RepairLocation = "Workshop" | "On-Site" | "Mobile Service";
 export type ProductOwnerShip = "Customer Product" | "Company product";
 
 export interface investigationParts<TPARTID = string> {
-  partId: TPARTID,
-  quantity: number,
-  unitCost: number,
-  total: number
+  partId: TPARTID;
+  quantity: number;
+  unitCost: number;
+  total: number;
 }
 export interface CustomerTicketBase<
   TUSERID = string,
@@ -17,7 +17,7 @@ export interface CustomerTicketBase<
   TTICKETSTATUSID = string,
   TTECHID = string[],
   TDECISIONID = string,
-  TPARTID = string
+  TPARTID = string,
 > extends IBaseEntity<TUSERID> {
   ticketSource: TicketSource;
   customerId: TCUSTOMERID;
@@ -32,12 +32,12 @@ export interface CustomerTicketBase<
   vehicleRepairImages?: string[];
   vehicleRepairImagesFile?: File[];
   vehicleRepairVideoURL?: string;
-  //new 
+  //new
   productOwnership: ProductOwnerShip;
   productSerialNumber?: string;
   purchaseDate?: Date;
   decisionId?: TDECISIONID;
   investigationReportData: string;
-  investigationParts?: investigationParts<TPARTID>[],
-  isEmailSendReport: boolean
+  investigationParts?: investigationParts<TPARTID>[];
+  isEmailSendReport: boolean;
 }
