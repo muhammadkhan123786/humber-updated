@@ -1,4 +1,4 @@
-export interface IDriverCreateDTO<TDriverLicense = File[], TGovernmentId = File[], TVehicleRegister = File[], TInsuranceCertificates = File[], TBackgroundChecks = File[], TOtherDocuments = File[], TAccountId = string> {
+export interface IDriverCreateDTO<TDriverLicense = File[], TGovernmentId = File[], TVehicleRegister = File[], TInsuranceCertificates = File[], TBackgroundChecks = File[], TOtherDocuments = File[], TAccountId = string, TDRIVERPHOTO = File> {
     personalInfo: {
         firstName: string;
         lastName: string;
@@ -51,6 +51,7 @@ export interface IDriverCreateDTO<TDriverLicense = File[], TGovernmentId = File[
         otherDocuments?: TOtherDocuments;
     };
     role?: string;
+    driverPhoto: TDRIVERPHOTO;
 
     isActive: boolean;
     isDeleted: boolean;

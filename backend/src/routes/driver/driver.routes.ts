@@ -14,6 +14,11 @@ import { createOrUpdateAccount } from "../../middleware/create.account.middlewar
 
 const driverUploadsUpload = createUploader([
     {
+        name: "driverPhoto",
+        maxCount: 1,
+        mimeTypes: ["image/jpeg", "image/png"],
+    },
+    {
         name: "driverLicense",
         maxCount: 100,
         mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
@@ -63,8 +68,8 @@ driverRouter.get("/:id", driverController.getById);
 driverRouter.post(
     "/",
     driverUploadsUpload,
-    mapUploadedFilesToBody("/uploads", { driverLicense: "driverLicense", governmentId: "governmentId", vehicleRegister: "vehicleRegister", backgroundChecks: "backgroundChecks", otherDocuments: "otherDocuments" }, [
-        "driverLicense", "governmentId", "vehicleRegister", "backgroundChecks", "otherDocuments"
+    mapUploadedFilesToBody("/uploads", { driverLicense: "driverLicense", governmentId: "governmentId", vehicleRegister: "vehicleRegister", backgroundChecks: "backgroundChecks", otherDocuments: "otherDocuments", driverPhoto: "driverPhoto" }, [
+        "driverLicense", "governmentId", "vehicleRegister", "backgroundChecks", "otherDocuments", "driverPhoto"
     ]),
     validateData(createDriverSchema),
     createOrUpdateAccount,
@@ -74,8 +79,8 @@ driverRouter.post(
 driverRouter.put(
     "/:id",
     driverUploadsUpload,
-    mapUploadedFilesToBody("/uploads", { driverLicense: "driverLicense", governmentId: "governmentId", vehicleRegister: "vehicleRegister", backgroundChecks: "backgroundChecks", otherDocuments: "otherDocuments" }, [
-        "driverLicense", "governmentId", "vehicleRegister", "backgroundChecks", "otherDocuments"
+    mapUploadedFilesToBody("/uploads", { driverLicense: "driverLicense", governmentId: "governmentId", vehicleRegister: "vehicleRegister", backgroundChecks: "backgroundChecks", otherDocuments: "otherDocuments", driverPhoto: "driverPhoto" }, [
+        "driverLicense", "governmentId", "vehicleRegister", "backgroundChecks", "otherDocuments", "driverPhoto"
     ]),
     validateData(createDriverSchema),
     createOrUpdateAccount,
