@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { SchemaDefinition, Types } from "mongoose";
-import { CustomerTicketBase } from "../../../../common/Ticket-management-system/ITicket.interface";
+import { Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
+
 
 export const customerTicketBaseSchema = {
   ...commonSchema,
@@ -44,10 +44,22 @@ export const customerTicketBaseSchema = {
   },
 
   address: { type: String },
+
+  productOwnership: { type: String, enum: ["Customer Product", "Company product"], required: true },
+  productSerialNumber: { type: String },
+  purchaseDate: { type: Date },
+  decisionId: { type: Types.ObjectId, ref: "TicketDecision" },
+
+
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
   ...commonSchemaValidation,
+  productOwnership: z.enum(["Customer Product", "Company product"]),
+  productSerialNumber: z.string().optional(),
+  purchaseDate: z.date().optional(),
+
+  decisionId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Please Select valid decision Id.").optional(),
 
   ticketCode: z.string().min(1, "ticketCode is required"),
 

@@ -8,7 +8,8 @@ export interface CustomerTicketBase<
   TVEHICLEID = string,
   TURGENCEID = string,
   TTICKETSTATUSID = string,
-  TTECHID = string[]
+  TTECHID = string[],
+  TDECISIONID = string,
 > extends IBaseEntity<TUSERID> {
   ticketSource: TicketSource;
   customerId: TCUSTOMERID;
@@ -23,8 +24,10 @@ export interface CustomerTicketBase<
   vehicleRepairImages?: string[];
   vehicleRepairImagesFile?: File[];
   vehicleRepairVideoURL?: string;
+  //new 
   productOwnership: ProductOwnerShip;
   productSerialNumber?: string;
-  purchaseDate?: string;
+  purchaseDate?: Date;
+  decisionId?: TDECISIONID;
 
 }
