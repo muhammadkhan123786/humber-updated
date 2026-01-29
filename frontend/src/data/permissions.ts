@@ -38,7 +38,8 @@ import {
   CreditCard,
   HandCoins,
   FileText,
-  ClipboardCheck
+  ClipboardCheck,
+  Gavel
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -205,6 +206,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
       { _id: nanoid(), label: "Technician Service Types", href: "/dashboard/technician-service", icon: Wrench, roleId: [1] },
       { _id: nanoid(), label: "Technician Inspection", href: "/dashboard/technician-inspection", icon: ClipboardCheck, roleId: [1] },
       { _id: nanoid(), label: "Technician Job Status", href: "/dashboard/technician-job-status", icon: Activity, roleId: [1] },
+      { _id: nanoid(), label: "Ticket Decisions", href: "/dashboard/ticket-decision", icon: Gavel, roleId: [1] },
     ],
   },
 
