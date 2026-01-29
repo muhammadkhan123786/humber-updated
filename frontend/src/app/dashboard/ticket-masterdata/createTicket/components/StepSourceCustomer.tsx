@@ -81,7 +81,7 @@ const StepSourceCustomer = ({ form, customers }: any) => {
                   key={item.id}
                   type="button"
                   onClick={() => form.setValue("ticketSource", item.id)}
-                  className={`relative h-[120px] w-full rounded-2xl p-5 text-left transition-all duration-300 ${
+                  className={`relative h-24 w-full rounded-2xl p-5 text-left transition-all duration-300 ${
                     isActive
                       ? `bg-linear-to-br ${item.activeGradient} text-white shadow-lg scale-[1.02]`
                       : "bg-white border border-gray-100 text-gray-500 hover:border-gray-200"

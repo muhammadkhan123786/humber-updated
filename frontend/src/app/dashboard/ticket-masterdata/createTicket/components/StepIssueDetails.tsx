@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import Image from "next/image";
-import { Info, Upload, X } from "lucide-react";
+import { Check, Info, Upload, X } from "lucide-react";
 import { Controller } from "react-hook-form";
 
 interface Props {
@@ -109,18 +109,14 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
                 {...field}
                 required
                 className="
-          w-full mt-2 p-6
-          rounded-3xl
-          bg-[#F8FAFF]
-          border border-[#EEF2FF]
-          text-[#1E293B] font-medium
-          outline-none
-          focus:ring-2 focus:ring-orange-100
-          focus:border-orange-300
-          min-h-[150px]
-          resize-none
-          placeholder:text-slate-400
-        "
+    flex w-full min-h-16 px-3 py-2
+    rounded-md border-2 border-orange-100 bg-input-background
+    text-base md:text-sm outline-none transition-colors
+    placeholder:text-muted-foreground
+    hover:border-orange-300
+    focus:border-blue-400 focus:ring-[3px] focus:ring-blue-400/20
+    resize-none disabled:cursor-not-allowed disabled:opacity-50
+  "
                 placeholder="Describe the issue in detail..."
               />
             )}
@@ -135,6 +131,73 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
           </div>
         </div>
 
+        <div className="space-y-4 ">
+          {/* Header Label */}
+          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
+            Decision (Optional)
+          </label>
+
+          <div className="flex flex-col gap-3">
+            <div className="self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-2 border-gray-200 bg-white inline-flex flex-col justify-center items-start hover:border-orange-300 transition-all cursor-pointer">
+              <div className="self-stretch inline-flex justify-start items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex justify-center items-center shrink-0">
+                  <span className="text-gray-600 text-lg font-normal">✓</span>
+                </div>
+                <div className="flex-1 inline-flex flex-col justify-start items-start">
+                  <div className="text-gray-700 text-base font-bold font-['Arial'] leading-6">
+                    Covered under Warranty/Insurance
+                  </div>
+                  <div className="text-gray-500 text-sm font-normal font-['Arial'] leading-5">
+                    No charge to customer
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-transparent bg-linear-to-r from-blue-500 to-cyan-500 shadow-lg inline-flex flex-col justify-center items-start cursor-pointer">
+              <div className="self-stretch inline-flex justify-start items-center gap-3">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex justify-center items-center shrink-0">
+                  <span className="text-white text-lg font-normal">£</span>
+                </div>
+                <div className="flex-1 inline-flex flex-col justify-start items-start">
+                  <div className="text-white text-base font-bold font-['Arial'] leading-6">
+                    Chargeable Repair
+                  </div>
+                  <div className="text-white/80 text-sm font-normal font-['Arial'] leading-5">
+                    Customer will be charged
+                  </div>
+                </div>
+                <Check size={20} className="text-white" />
+              </div>
+            </div>
+
+            <div className="self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-2 border-gray-200 bg-white inline-flex flex-col justify-center items-start hover:border-orange-300 transition-all cursor-pointer">
+              <div className="self-stretch inline-flex justify-start items-center gap-3">
+                <div className="w-8 h-8 bg-gray-100 rounded-full flex justify-center items-center shrink-0">
+                  <span className="text-gray-600 text-lg font-normal">⚡</span>
+                </div>
+                <div className="flex-1 inline-flex flex-col justify-start items-start">
+                  <div className="text-gray-700 text-base font-bold font-['Arial'] leading-6">
+                    Mixed
+                  </div>
+                  <div className="text-gray-500 text-sm font-normal font-['Arial'] leading-5">
+                    Partial warranty/insurance coverage
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Link */}
+          <div className="flex justify-center mt-2">
+            <button
+              type="button"
+              className="text-gray-400 text-sm font-medium hover:text-gray-600 transition-colors"
+            >
+              Clear Decision
+            </button>
+          </div>
+        </div>
         <div className="space-y-4">
           <label className="block text-sm font-bold text-gray-700 ml-1">
             Upload Photos or Videos (Optional)

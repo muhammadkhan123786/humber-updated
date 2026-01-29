@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
+import ProblemInvestigation from "./ProblemInvestigation";
 
 interface CreateTicketProps {
   editMode?: boolean;
@@ -27,6 +28,11 @@ const steps = [
   { id: 2, label: "Product", color: "from-[#AD46FF] to-[#F6339A]" },
   { id: 3, label: "Issue Details", color: "from-[#FF6900] to-[#FB2C36]" },
   { id: 4, label: "Location & Priority", color: "from-[#00C950] to-[#00BC7D]" },
+  {
+    id: 5,
+    label: "Problem Investigation",
+    color: "from-[#4F39F6] to-[#9810FA]",
+  },
 ];
 
 const CreateTicket = ({
@@ -119,11 +125,12 @@ const CreateTicket = ({
     }
 
     if (currentStep === 4) return !!(values.location && values.priorityId);
+    if (currentStep === 5) return true;
     return false;
   };
 
   const handleNextStep = () => {
-    if (currentStep === 4) {
+    if (currentStep === 5) {
       handleFinalSubmit();
     } else if (isStepValid()) {
       setCurrentStep((prev) => prev + 1);
@@ -139,10 +146,10 @@ const CreateTicket = ({
   };
 
   return (
-    <div className="min-h-screen px-4 md:px-8 pb-12 bg-[#F8F9FD] bg-fixed">
-      <div className="max-w-5xl mx-auto pt-10">
+    <div className="min-h-screen px-4 md:px-8 pb-12  ">
+      <div className="max-w-5xl mx-auto ">
         {/* Header Section */}
-        <div className="max-w-5xl mx-auto pt-10 pl-6 md:px-0">
+        <div className="max-w-5xl mx-auto pl-6 md:px-0">
           <div className="flex flex-col items-start">
             <div className="flex items-center px-9 gap-4 mb-1">
               <button
@@ -163,7 +170,7 @@ const CreateTicket = ({
                   WebkitTextFillColor: "transparent",
                   fontFamily: "Arial, sans-serif",
                   fontSize: "30px",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   lineHeight: "36px",
                 }}
               >
@@ -172,7 +179,7 @@ const CreateTicket = ({
             </div>
 
             <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm  tracking-widest">
-              Step {currentStep} of 4
+              Step {currentStep} of 5
             </p>
           </div>
         </div>
@@ -196,7 +203,15 @@ const CreateTicket = ({
                   {currentStep > step.id ? (
                     <Check size={24} strokeWidth={3} />
                   ) : (
-                    <span className="font-bold text-lg">{step.id}</span>
+                    <span
+                      className={`font-semibold text-lg ${
+                        currentStep >= step.id
+                          ? "text-white"
+                          : "w-12 h-12 rounded-full flex items-center justify-center border-2  bg-white border-gray-300 text-gray-400"
+                      }`}
+                    >
+                      {step.id}
+                    </span>
                   )}
                 </div>
 
@@ -285,6 +300,8 @@ const CreateTicket = ({
               isLoading={isLoading}
             />
           )}
+
+          {currentStep === 5 && <ProblemInvestigation form={form} />}
         </div>
 
         <div className="flex items-center justify-between mt-8 px-2">
@@ -312,7 +329,7 @@ const CreateTicket = ({
             } bg-linear-to-r ${steps[currentStep - 1].color}`}
           >
             <span className="text-sm">
-              {currentStep === 4
+              {currentStep === 5
                 ? isUpdating
                   ? "Update Ticket"
                   : "Create Ticket"
