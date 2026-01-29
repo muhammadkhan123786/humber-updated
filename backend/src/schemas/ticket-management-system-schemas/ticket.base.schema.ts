@@ -50,6 +50,17 @@ export const customerTicketBaseSchema = {
   purchaseDate: { type: Date },
   decisionId: { type: Types.ObjectId, ref: "TicketDecision" },
 
+  investigationReportData: { type: String, required: true },
+  investigationParts: [
+    {
+      partName: { type: String, required: true },
+      partNumber: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      unitCost: { type: Number, required: true },
+    },
+  ],
+  isEmailSendReport: { type: Boolean, default: false },
+
 
 };
 

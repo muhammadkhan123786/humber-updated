@@ -69,6 +69,7 @@ import autoCodeGeneratorRouter from "./routes/auto-code-generator/auto.code.gene
 import driverRouter from "./routes/driver/driver.routes";
 import otpRouter from "./routes/otp-routes/mobile.otp.routes";
 import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
+import partsRouter from "./routes/master-data-routes/parts.routes";
 
 // Create express app
 const app: Application = express();
@@ -346,6 +347,12 @@ app.use(
   adminProtecter,
   ticketDecisionRouter,
 
+);
+
+app.use(
+  `${process.env.API_PREFIX}/mobility-parts`,
+  adminProtecter,
+  partsRouter,
 );
 
 
