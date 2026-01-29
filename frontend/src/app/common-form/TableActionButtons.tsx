@@ -5,10 +5,11 @@ import { Edit2, Trash2, AlertTriangle, X } from "lucide-react";
 interface ActionProps {
   onEdit: () => void;
   onDelete: () => void;
-  itemName?: string; // Optional: Modal mein name dikhane ke liye
+  itemName?: string; 
+  fullWidth?: boolean;
 }
 
-export const TableActionButton = ({ onEdit, onDelete, itemName = "item" }: ActionProps) => {
+export const TableActionButton = ({ onEdit, onDelete, itemName = "item", fullWidth = false }: ActionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleDeleteClick = () => {
@@ -18,10 +19,12 @@ export const TableActionButton = ({ onEdit, onDelete, itemName = "item" }: Actio
 
   return (
     <>
-      <div className="flex justify-center gap-3">
+      <div className={`flex ${fullWidth ? "w-full gap-2" : "justify-center gap-3"}`}>
         <button
           onClick={onEdit}
-          className="flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-100 bg-blue-50 rounded-xl transition-all font-semibold"
+          className={`flex items-center gap-1.5 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-100 bg-blue-50 rounded-xl transition-all font-semibold ${
+            fullWidth ? "flex-1 justify-center" : ""
+          }`}
           title="Edit"
         >
           <Edit2 size={18} /> Edit
