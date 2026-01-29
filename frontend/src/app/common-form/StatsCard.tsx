@@ -1,5 +1,5 @@
 "use client";
-import React, { useState,ReactNode } from "react";
+import React, { useState, ReactNode } from "react";
 import { Users, CheckCircle, XCircle } from "lucide-react";
 
 interface StatsCardsProps {
@@ -39,7 +39,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Total Card */}
             <div
                 onClick={() => handleFilterClick('all')}
@@ -53,7 +53,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({
                             {/* Agar icons pass kiya hai toh wo dikhao, warna default Users icon */}
                             {icons?.total || <Users size={24} className="text-white" />}
                         </div>
-                        <div className="text-4xl font-black">{totalCount}</div>
+                        <div className="text-4xl font-bold">{totalCount}</div>
                         <p className="text-blue-50 text-sm">{labels.total}</p>
                     </div>
                     <div>
@@ -63,7 +63,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({
                     </div>
                 </div>
                 {activeFilter === 'all' && (
-                    <div className="mt-3 text-xs text-blue-100">✓ Filtered</div>
+                    <div className=" text-xs text-blue-100">✓ Filtered</div>
                 )}
             </div>
 
@@ -76,9 +76,10 @@ const StatsCards: React.FC<StatsCardsProps> = ({
                     }`}>
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col gap-2">
-                       <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
                             {icons?.active || <CheckCircle size={24} className="text-white" />}
-                        </div>                       <div className="text-4xl font-black">{activeCount}</div>
+                        </div>
+                        <div className="text-4xl font-bold">{activeCount}</div>
                         <p className="text-green-50 text-sm">{labels.active}</p>
                     </div>
                     <div>
@@ -103,7 +104,8 @@ const StatsCards: React.FC<StatsCardsProps> = ({
                     <div className="flex flex-col gap-2">
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
                             {icons?.inactive || <XCircle size={24} className="text-white" />}
-                        </div>                       <div className="text-4xl font-black">{inactiveCount}</div>
+                        </div>
+                        <div className="text-4xl font-bold">{inactiveCount}</div>
                         <p className="text-pink-50 text-sm">{labels.inactive}</p>
                     </div>
                     <div>
