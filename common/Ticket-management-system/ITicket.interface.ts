@@ -38,6 +38,6 @@ export interface CustomerTicketBase<
   purchaseDate?: Date;
   decisionId?: TDECISIONID;
   investigationReportData: string;
-  investigationParts: investigationParts<TPARTID>[],
+  investigationParts?: investigationParts<TPARTID>[],
   isEmailSendReport: boolean
 }

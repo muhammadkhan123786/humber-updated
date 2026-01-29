@@ -2,6 +2,12 @@ import { z } from "zod";
 import { Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
+export const InvestigationPartSchema = z.object({
+  partId: z.instanceof(Types.ObjectId),
+  quantity: z.number().positive(),
+  unitCost: z.number().nonnegative(),
+  total: z.number().nonnegative(),
+});
 
 export const customerTicketBaseSchema = {
   ...commonSchema,
@@ -53,10 +59,10 @@ export const customerTicketBaseSchema = {
   investigationReportData: { type: String, required: true },
   investigationParts: [
     {
-      partName: { type: String, required: true },
-      partNumber: { type: String, required: true },
-      quantity: { type: Number, required: true },
+      partId: { type: Types.ObjectId, required: true },
+      quantity: { type: String, required: true },
       unitCost: { type: Number, required: true },
+      total: { type: Number, required: true },
     },
   ],
   isEmailSendReport: { type: Boolean, default: false },
@@ -69,6 +75,9 @@ export const customerTicketBaseSchemaValidation = z.object({
   productOwnership: z.enum(["Customer Product", "Company product"]),
   productSerialNumber: z.string().optional(),
   purchaseDate: z.date().optional(),
+  investigationParts: z.array(InvestigationPartSchema).optional(),
+
+  isEmailSendReport: z.boolean().optional(),
 
   decisionId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Please Select valid decision Id.").optional(),
 

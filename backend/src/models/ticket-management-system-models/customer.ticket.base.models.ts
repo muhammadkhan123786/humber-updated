@@ -11,6 +11,7 @@ export type customerTicketBaseDoc = CustomerTicketBase<
   Types.ObjectId,
   Types.ObjectId,
   Types.ObjectId[],
+  Types.ObjectId,
   Types.ObjectId
 > &
   Document;
