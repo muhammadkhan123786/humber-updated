@@ -55,6 +55,8 @@ const CreateTicket = ({
     vehicles,
     priorities,
     technicians,
+    decisions, // Added new data
+    mobilityParts, // Added new data
     statuses,
     setError,
     setSuccess,
@@ -92,13 +94,20 @@ const CreateTicket = ({
   }, [initialEditMode, initialData, editingId, setEditData]);
 
   const handleFinalSubmit = async () => {
+    console.log("=== FINAL SUBMIT TRIGGERED ===");
+    console.log("Current Step:", currentStep);
+    console.log("Form State:", form.formState);
+    console.log("Form Errors:", form.formState.errors);
     try {
       const isValid = await form.trigger();
       if (!isValid) {
+        console.log("Form validation result:", isValid);
         setError("Please check the form for errors.");
+
         return;
       }
       const formData = form.getValues();
+      console.log("Form values to submit:", formData);
       await handleSubmit(formData);
 
       if (!isUpdating) {
@@ -116,7 +125,13 @@ const CreateTicket = ({
     const values = form.watch();
 
     if (currentStep === 1) return !!(values.customerId && values.ticketSource);
-    if (currentStep === 2) return !!values.vehicleId;
+    if (currentStep === 2) {
+      return !!(
+        values.vehicleId &&
+        values.productSerialNumber &&
+        values.purchaseDate
+      );
+    }
 
     if (currentStep === 3) {
       return !!(
@@ -125,7 +140,9 @@ const CreateTicket = ({
     }
 
     if (currentStep === 4) return !!(values.location && values.priorityId);
-    if (currentStep === 5) return true;
+    if (currentStep === 5) {
+      return !!form.watch("investigationReportData");
+    }
     return false;
   };
 
@@ -217,7 +234,7 @@ const CreateTicket = ({
 
                 <div className="absolute top-[62px] w-32 text-center">
                   <span
-                    className={`text-sm font-medium   ${
+                    className={`text-sm font-medium    ${
                       currentStep >= step.id ? "text-gray-900" : "text-gray-400"
                     }`}
                   >
@@ -286,7 +303,11 @@ const CreateTicket = ({
             />
           )}
           {currentStep === 3 && (
-            <StepIssueDetails form={form} isLoading={isLoading} />
+            <StepIssueDetails
+              form={form}
+              isLoading={isLoading}
+              decisions={decisions}
+            />
           )}
           {currentStep === 4 && (
             <StepLocationPriority
@@ -301,7 +322,9 @@ const CreateTicket = ({
             />
           )}
 
-          {currentStep === 5 && <ProblemInvestigation form={form} />}
+          {currentStep === 5 && (
+            <ProblemInvestigation form={form} mobilityParts={mobilityParts} />
+          )}
         </div>
 
         <div className="flex items-center justify-between mt-8 px-2">

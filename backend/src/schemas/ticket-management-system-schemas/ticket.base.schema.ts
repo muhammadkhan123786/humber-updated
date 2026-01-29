@@ -3,7 +3,8 @@ import { Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
 export const InvestigationPartSchema = z.object({
-  partId: z.instanceof(Types.ObjectId),
+  partId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid partId"),
+
   quantity: z.number().positive(),
   unitCost: z.number().nonnegative(),
   total: z.number().nonnegative(),
@@ -51,7 +52,11 @@ export const customerTicketBaseSchema = {
 
   address: { type: String },
 
-  productOwnership: { type: String, enum: ["Customer Product", "Company product"], required: true },
+  productOwnership: {
+    type: String,
+    enum: ["Customer Product", "Company product"],
+    required: true,
+  },
   productSerialNumber: { type: String },
   purchaseDate: { type: Date },
   decisionId: { type: Types.ObjectId, ref: "TicketDecision" },
@@ -66,8 +71,6 @@ export const customerTicketBaseSchema = {
     },
   ],
   isEmailSendReport: { type: Boolean, default: false },
-
-
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
@@ -76,10 +79,15 @@ export const customerTicketBaseSchemaValidation = z.object({
   productSerialNumber: z.string().optional(),
   purchaseDate: z.date().optional(),
   investigationParts: z.array(InvestigationPartSchema).optional(),
-
+  investigationReportData: z
+    .string()
+    .min(1, "Investigation Data Report Required."),
   isEmailSendReport: z.boolean().optional(),
 
-  decisionId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Please Select valid decision Id.").optional(),
+  decisionId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Please Select valid decision Id.")
+    .optional(),
 
   ticketCode: z.string().min(1, "ticketCode is required"),
 
@@ -109,9 +117,7 @@ export const customerTicketBaseSchemaValidation = z.object({
 
   address: z.string().optional(),
   assignedTechnicianId: z
-    .array(
-      z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Technician ID")
-    )
+    .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Technician ID"))
     .optional()
     .default([]),
 

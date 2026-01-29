@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import { Loader2, Building2, User, Check } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { Controller } from "react-hook-form";
-
 import { CustomSelect } from "../../../../common-form/CustomSelect";
 
 interface StepProductProps {
@@ -24,12 +23,14 @@ const StepProduct: React.FC<StepProductProps> = ({
   const {
     watch,
     setValue,
+    register,
     formState: { errors },
   } = form;
 
   const selectedVehicleId = watch("vehicleId");
   const selectedCustomerId = watch("customerId");
-  const productOwnership = watch("productOwnership") || "company"; // Default to company
+  // FIX: Set default to "Customer Product" (matching schema)
+  const productOwnership = watch("productOwnership") || "Customer Product";
 
   const vehicleDetails = vehicles.find((v) => v._id === selectedVehicleId);
   const selectedCustomer = customers.find(
@@ -127,10 +128,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                     label: "Model",
                     value: vehicleDetails.vehicleModelId?.modelName,
                   },
-                  {
-                    label: "Ownership Status",
-                    value: ownershipTypeDescription,
-                  },
                 ].map((item, index) => (
                   <div
                     key={index}
@@ -153,31 +150,39 @@ const StepProduct: React.FC<StepProductProps> = ({
           </div>
         )}
 
+        {/* Product Ownership Toggle - FIXED VALUES */}
         <div className="space-y-4">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Product Ownership *
           </label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
-              onClick={() => setValue("productOwnership", "company")}
+              onClick={() =>
+                setValue("productOwnership", "Company product", {
+                  // CHANGED
+                  shouldValidate: true,
+                })
+              }
               className={`relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                productOwnership === "company"
+                productOwnership === "Company product" // CHANGED
                   ? "bg-linear-to-br from-blue-500 to-cyan-500 border-transparent text-white shadow-lg scale-[1.02]"
                   : "bg-white border-gray-100 text-gray-600 hover:border-gray-200"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors duration-300 ${
-                  productOwnership === "company" ? "bg-white/20" : "bg-gray-100"
+                  productOwnership === "Company product" // CHANGED
+                    ? "bg-white/20"
+                    : "bg-gray-100"
                 }`}
               >
                 🏢
               </div>
               <div className="flex-1">
-                <p className="font-bold text-sm">Our Product</p>
+                <p className="font-bold text-sm">Company Product</p>
                 <p
                   className={`text-xs ${
-                    productOwnership === "company"
+                    productOwnership === "Company product" // CHANGED
                       ? "text-white/80"
                       : "text-gray-400"
                   }`}
@@ -185,7 +190,7 @@ const StepProduct: React.FC<StepProductProps> = ({
                   Owned by company
                 </p>
               </div>
-              {productOwnership === "company" && (
+              {productOwnership === "Company product" && ( // CHANGED
                 <Check
                   size={20}
                   className="text-white animate-in zoom-in duration-300"
@@ -193,18 +198,22 @@ const StepProduct: React.FC<StepProductProps> = ({
               )}
             </div>
 
-            {/* Customer Product Box */}
             <div
-              onClick={() => setValue("productOwnership", "customer")}
+              onClick={() =>
+                setValue("productOwnership", "Customer Product", {
+                  // CHANGED
+                  shouldValidate: true,
+                })
+              }
               className={`relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                productOwnership === "customer"
+                productOwnership === "Customer Product" // CHANGED
                   ? "bg-linear-to-br from-purple-500 to-pink-500 border-transparent text-white shadow-lg scale-[1.02]"
                   : "bg-white border-gray-100 text-gray-600 hover:border-gray-200"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors duration-300 ${
-                  productOwnership === "customer"
+                  productOwnership === "Customer Product" // CHANGED
                     ? "bg-white/20"
                     : "bg-gray-100"
                 }`}
@@ -215,7 +224,7 @@ const StepProduct: React.FC<StepProductProps> = ({
                 <p className="font-bold text-sm">Customer Product</p>
                 <p
                   className={`text-xs ${
-                    productOwnership === "customer"
+                    productOwnership === "Customer Product" // CHANGED
                       ? "text-white/80"
                       : "text-gray-400"
                   }`}
@@ -223,7 +232,7 @@ const StepProduct: React.FC<StepProductProps> = ({
                   Owned by customer
                 </p>
               </div>
-              {productOwnership === "customer" && (
+              {productOwnership === "Customer Product" && ( // CHANGED
                 <Check
                   size={20}
                   className="text-white animate-in zoom-in duration-300"
@@ -233,28 +242,35 @@ const StepProduct: React.FC<StepProductProps> = ({
           </div>
         </div>
 
-        {/* Serial Number Input */}
+        {/* Serial Number Input - Fixed field name */}
         <div className="space-y-4">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Serial Number *
           </label>
           <input
-            // {...form.register("serialNumber")}
+            {...register("productSerialNumber", { required: true })}
             type="text"
             placeholder="Enter serial number (e.g., SN-2024-001)"
-            className="flex h-12 w-full rounded-md border-2 border-purple-100 bg-gray-50/50 px-3 py-1 text-base md:text-sm outline-none transition-all hover:border-pink-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+            className={`flex h-12 w-full rounded-md border-2 bg-gray-50/50 px-3 py-1 text-base md:text-sm outline-none transition-all hover:border-pink-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 ${
+              errors.productSerialNumber
+                ? "border-red-400"
+                : "border-purple-100"
+            }`}
           />
         </div>
 
+        {/* Purchase Date Input */}
         <div className="space-y-4">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Purchase Date *
           </label>
           <div className="relative">
             <input
-              {...form.register("purchaseDate")}
+              {...register("purchaseDate", { required: true })} // Removed required validation
               type="date"
-              className="flex h-12 w-full rounded-md border-2 border-purple-100 bg-gray-50/50 px-3 py-1 text-base md:text-sm outline-none transition-all hover:border-pink-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+              className={`flex h-12 w-full rounded-md border-2 bg-gray-50/50 px-3 py-1 text-base md:text-sm outline-none transition-all hover:border-pink-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 ${
+                errors.purchaseDate ? "border-red-400" : "border-purple-100"
+              }`}
             />
           </div>
         </div>

@@ -10,25 +10,24 @@ interface Props {
   onBack?: () => void;
   form: any;
   isLoading: boolean;
+  decisions: any[];
 }
 
-const StepIssueDetails: React.FC<Props> = ({ form }) => {
+const StepIssueDetails: React.FC<Props> = ({ form, decisions }) => {
   const { control, watch, setValue } = form;
 
   const images = watch("vehicleRepairImages") || [];
-  const videos = watch("vehicleRepairVideo") || [];
+  // Use watch to get current value, default to null if not set
+  const selectedDecisionId = watch("decisionId") || null;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || "http://localhost:4000";
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter((f) => f.type.startsWith("image/"));
-    const videoFiles = files.filter((f) => f.type.startsWith("video/"));
 
     const newImageUrls = imageFiles.map((f) => URL.createObjectURL(f));
-    const newVideoUrls = videoFiles.map((f) => URL.createObjectURL(f));
 
     if (newImageUrls.length > 0) {
       setValue("vehicleRepairImages", [...images, ...newImageUrls], {
@@ -41,28 +40,15 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
         { shouldValidate: true },
       );
     }
-
-    if (newVideoUrls.length > 0) {
-      setValue("vehicleRepairVideo", [...videos, ...newVideoUrls], {
-        shouldValidate: true,
-      });
-      setValue(
-        "vehicleRepairVideoFile",
-        [...(watch("vehicleRepairVideoFile") || []), ...videoFiles],
-        { shouldValidate: true },
-      );
-    }
   };
 
   const removeImage = (index: number) => {
     const targetImage = images[index];
-
     const newImages = images.filter((_: string, i: number) => i !== index);
     setValue("vehicleRepairImages", newImages, { shouldValidate: true });
 
     if (targetImage.startsWith("blob:")) {
       const currentFiles = watch("vehicleRepairImagesFile") || [];
-
       const blobIndex = images
         .slice(0, index)
         .filter((img: string) => img.startsWith("blob:")).length;
@@ -107,16 +93,7 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
             render={({ field }) => (
               <textarea
                 {...field}
-                required
-                className="
-    flex w-full min-h-16 px-3 py-2
-    rounded-md border-2 border-orange-100 bg-input-background
-    text-base md:text-sm outline-none transition-colors
-    placeholder:text-muted-foreground
-    hover:border-orange-300
-    focus:border-blue-400 focus:ring-[3px] focus:ring-blue-400/20
-    resize-none disabled:cursor-not-allowed disabled:opacity-50
-  "
+                className="flex w-full min-h-16 px-3 py-2 rounded-md border-2 border-orange-100 bg-white text-base md:text-sm outline-none transition-colors placeholder:text-muted-foreground hover:border-orange-300 focus:border-blue-400 focus:ring-[3px] focus:ring-blue-400/20 resize-none"
                 placeholder="Describe the issue in detail..."
               />
             )}
@@ -131,78 +108,78 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
           </div>
         </div>
 
-        <div className="space-y-4 ">
-          {/* Header Label */}
+        {/* Dynamic Decisions Section */}
+        <div className="space-y-4">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Decision (Optional)
           </label>
 
           <div className="flex flex-col gap-3">
-            <div className="self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-2 border-gray-200 bg-white inline-flex flex-col justify-center items-start hover:border-orange-300 transition-all cursor-pointer">
-              <div className="self-stretch inline-flex justify-start items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex justify-center items-center shrink-0">
-                  <span className="text-gray-600 text-lg font-normal">✓</span>
-                </div>
-                <div className="flex-1 inline-flex flex-col justify-start items-start">
-                  <div className="text-gray-700 text-base font-bold font-['Arial'] leading-6">
-                    Covered under Warranty/Insurance
-                  </div>
-                  <div className="text-gray-500 text-sm font-normal font-['Arial'] leading-5">
-                    No charge to customer
-                  </div>
-                </div>
-              </div>
-            </div>
+            {decisions?.map((item: any) => {
+              const itemId = item.id || item._id;
+              // STRICT CHECK: Only true if there is a selected ID AND it matches the item ID
+              const isSelected =
+                !!selectedDecisionId && selectedDecisionId === itemId;
 
-            <div className="self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-transparent bg-linear-to-r from-blue-500 to-cyan-500 shadow-lg inline-flex flex-col justify-center items-start cursor-pointer">
-              <div className="self-stretch inline-flex justify-start items-center gap-3">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex justify-center items-center shrink-0">
-                  <span className="text-white text-lg font-normal">£</span>
-                </div>
-                <div className="flex-1 inline-flex flex-col justify-start items-start">
-                  <div className="text-white text-base font-bold font-['Arial'] leading-6">
-                    Chargeable Repair
+              return (
+                <div
+                  key={itemId}
+                  onClick={() =>
+                    setValue("decisionId", itemId, { shouldValidate: true })
+                  }
+                  style={{ backgroundColor: isSelected ? item.color : "white" }}
+                  className={`self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-2 transition-all cursor-pointer inline-flex flex-col justify-center items-start ${
+                    isSelected
+                      ? "border-transparent shadow-lg"
+                      : "border-gray-200 hover:border-orange-300"
+                  }`}
+                >
+                  <div className="self-stretch inline-flex justify-start items-center gap-3">
+                    <div
+                      className={`w-8 h-8 rounded-full flex justify-center items-center shrink-0 ${isSelected ? "bg-white/20" : "bg-gray-100"}`}
+                    >
+                      <span
+                        className={`${isSelected ? "text-white" : "text-gray-600"} text-lg font-normal`}
+                      >
+                        {item.decision?.toLowerCase().includes("approve")
+                          ? "✓"
+                          : "⚡"}
+                      </span>
+                    </div>
+                    <div className="flex-1 inline-flex flex-col justify-start items-start">
+                      <div
+                        className={`${isSelected ? "text-white" : "text-gray-700"} text-base font-bold font-['Arial'] leading-6`}
+                      >
+                        {item.decision}
+                      </div>
+                      <div
+                        className={`${isSelected ? "text-white/80" : "text-gray-500"} text-sm font-normal font-['Arial'] leading-5`}
+                      >
+                        {item.description}
+                      </div>
+                    </div>
+                    {isSelected && <Check size={20} className="text-white" />}
                   </div>
-                  <div className="text-white/80 text-sm font-normal font-['Arial'] leading-5">
-                    Customer will be charged
-                  </div>
                 </div>
-                <Check size={20} className="text-white" />
-              </div>
-            </div>
-
-            <div className="self-stretch min-h-20 pl-4 pr-6 py-4 rounded-2xl border-2 border-gray-200 bg-white inline-flex flex-col justify-center items-start hover:border-orange-300 transition-all cursor-pointer">
-              <div className="self-stretch inline-flex justify-start items-center gap-3">
-                <div className="w-8 h-8 bg-gray-100 rounded-full flex justify-center items-center shrink-0">
-                  <span className="text-gray-600 text-lg font-normal">⚡</span>
-                </div>
-                <div className="flex-1 inline-flex flex-col justify-start items-start">
-                  <div className="text-gray-700 text-base font-bold font-['Arial'] leading-6">
-                    Mixed
-                  </div>
-                  <div className="text-gray-500 text-sm font-normal font-['Arial'] leading-5">
-                    Partial warranty/insurance coverage
-                  </div>
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
 
-          {/* Footer Link */}
           <div className="flex justify-center mt-2">
             <button
               type="button"
+              onClick={() => setValue("decisionId", null)}
               className="text-gray-400 text-sm font-medium hover:text-gray-600 transition-colors"
             >
               Clear Decision
             </button>
           </div>
         </div>
+
         <div className="space-y-4">
           <label className="block text-sm font-bold text-gray-700 ml-1">
             Upload Photos or Videos (Optional)
           </label>
-
           <div
             onClick={() => fileInputRef.current?.click()}
             className="relative w-full h-48 rounded-3xl border-2 border-dashed border-[#FF6900]/30 bg-[#FFF9F5] flex flex-col items-center justify-center cursor-pointer hover:bg-[#FFF4ED] transition-all"
@@ -223,7 +200,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
               if (!isLocalBlob && !isFullUrl) {
                 displayUrl = `${BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`;
               }
-
               return (
                 <div
                   key={`${displayUrl}-${index}`}
@@ -243,17 +219,11 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
                   >
                     <X size={14} />
                   </button>
-                  {!isLocalBlob && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-[8px] text-white text-center py-1 font-bold">
-                      EXISTING
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
         </div>
-
         <input
           type="file"
           ref={fileInputRef}
