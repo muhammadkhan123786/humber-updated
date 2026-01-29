@@ -31,10 +31,10 @@ export const generateEmployeeCode = async (): Promise<string> => {
   );
 
   if (!counter) {
-    throw new Error("Failed to generate ticket sequence");
+    throw new Error("Failed to employee code sequence");
   }
   console.log("counter", counter);
-  return `Employee-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `Emp-${year}-${String(counter.seq).padStart(6, "0")}`;
 };
 
 export const generateTechnicianJobCode = async (): Promise<string> => {
@@ -63,10 +63,10 @@ export const generateSupplierCode = async (): Promise<string> => {
   );
 
   if (!counter) {
-    throw new Error("Failed to Technician Job Code sequence");
+    throw new Error("Failed to Supplier Code sequence");
   }
 
-  return `JOB-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `SUP-${year}-${String(counter.seq).padStart(6, "0")}`;
 };
 
 export const generateCustomerInvoiceCode = async (): Promise<string> => {
@@ -79,7 +79,7 @@ export const generateCustomerInvoiceCode = async (): Promise<string> => {
   );
 
   if (!counter) {
-    throw new Error("Failed to Technician Job Code sequence");
+    throw new Error("Failed to Customer Invoice Code sequence");
   }
 
   return `INV-${year}-${String(counter.seq).padStart(6, "0")}`;
