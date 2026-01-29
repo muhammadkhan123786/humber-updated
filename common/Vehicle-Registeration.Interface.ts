@@ -14,12 +14,12 @@ export interface ICustomerVehicleRegInterface<
 
     vehicleModelId: TVehicleModelId;
 
-    serialNumber: string;
+    serialNumber?: string;
     vehicleType: VehicleType;
 
-    purchaseDate: Date;
-    warrantyStartDate: Date;
-    warrantyEndDate: Date;
+    purchaseDate?: Date;
+    warrantyStartDate?: Date;
+    warrantyEndDate?: Date;
 
     vehiclePhoto?: string;
     vehiclePhotoFile?: File;
