@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { IServiceType } from "../types";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const schema = z.object({
   MasterServiceType: z.string().min(1, "Service type name is required."),
@@ -25,11 +25,15 @@ interface Props {
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
-  apiUrl: string;
 }
 
-const ServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
-  const { register, handleSubmit, reset, control, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+const ServicesForm = ({ editingData, onClose, themeColor }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/service-types-master",
+    "serviceTypes",
+    "Service Type"
+  );
+  const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { MasterServiceType: "", description: "", isActive: true, isDefault: false },
   });
@@ -48,20 +52,17 @@ const ServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: P
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem(apiUrl, editingData._id, payload);
-      } else {
-        await createItem(apiUrl, payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        { onSuccess: onClose }
+      );
+    } else {
+      createItem(payload, { onSuccess: onClose });
     }
   };
 
@@ -84,7 +85,7 @@ const ServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: P
           )} />
         </div>
 
-        <FormButton type="submit" label={editingData ? "Update Service" : "Create"} icon={<Save size={20} />} loading={isSubmitting} themeColor={themeColor} onCancel={onClose} />
+        <FormButton type="submit" label={editingData ? "Update Service" : "Create"} icon={<Save size={20} />} loading={isSaving} themeColor={themeColor} onCancel={onClose} />
       </form>
     </FormModal>
   );

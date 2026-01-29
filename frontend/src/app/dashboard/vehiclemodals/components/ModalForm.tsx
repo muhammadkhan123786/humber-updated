@@ -8,8 +8,9 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem, getAll } from "@/helper/apiHelper";
+import { getAll } from "@/helper/apiHelper";
 import { IVehicleModel } from "../types";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const modelSchema = z.object({
   brandId: z.string().min(1, "Please select a brand"),
@@ -27,8 +28,14 @@ interface Props {
   themeColor: string;
 }
 
-const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
   const [brands, setBrands] = useState<{ _id: string; brandName: string }[]>([]);
+
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/vechilemodel",
+    "vehicleModels",
+    "Vehicle Model"
+  );
 
   const {
     register,
@@ -36,7 +43,7 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(modelSchema),
     defaultValues: {
@@ -71,20 +78,17 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/vechilemodel", editingData._id, payload);
-      } else {
-        await createItem("/vechilemodel", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving model");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        { onSuccess: onClose }
+      );
+    } else {
+      createItem(payload, { onSuccess: onClose });
     }
   };
 
@@ -164,7 +168,7 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
           type="submit"
           label={editingData ? "Update Model" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />
