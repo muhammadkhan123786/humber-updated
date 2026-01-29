@@ -117,7 +117,8 @@ const TicketDecisionForm = ({ editingData, onClose, themeColor }: Props) => {
                                  <input
                                      type="color"
                                      className="absolute -top-4 -left-4 w-24 h-24 p-0 border-0 cursor-pointer"
-                                     {...register("color")}
+                                     value={selectedColor || "#000000"}
+                                     onChange={(e) => setValue("color", e.target.value, { shouldValidate: true, shouldDirty: true })}
                                  />
                              </div>
                             
@@ -128,6 +129,7 @@ const TicketDecisionForm = ({ editingData, onClose, themeColor }: Props) => {
                                      className={`w-full px-4 py-3 rounded-xl bg-white border outline-none transition-all text-gray-700 font-mono ${errors.color ? 'border-red-500 ring-red-100' : 'border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-400'}`}
                                      placeholder="#000000"
                                      {...register("color")}
+                                     value={selectedColor || ""}
                                 />
                                  {errors.color && <p className="text-red-500 text-xs mt-1">{errors.color.message}</p>}
                             </div>

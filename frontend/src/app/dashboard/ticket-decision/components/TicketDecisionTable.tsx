@@ -39,7 +39,7 @@ const TicketDecisionTable = ({ data, displayView, onEdit, onDelete, onStatusChan
         {data.map((item) => (
           <div
             key={item._id}
-            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${
               !item.isActive ? "opacity-60" : ""
             }`}
           >
