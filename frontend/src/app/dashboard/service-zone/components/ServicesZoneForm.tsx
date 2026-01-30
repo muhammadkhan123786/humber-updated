@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 import { IServicesZones } from "../../../../../../common/service.zones.interface";
 
 const zoneSchema = z.object({
@@ -19,15 +20,23 @@ const zoneSchema = z.object({
 
 type FormData = z.infer<typeof zoneSchema>;
 
+type ServiceZoneWithId = IServicesZones & { _id: string };
+
 interface Props {
-  editingData: IServicesZones | null;
+  editingData: ServiceZoneWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
-const ServiceZoneForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-  const { register, handleSubmit, control, reset, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+const ServiceZoneForm = ({ editingData, onClose, themeColor }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/services-zones",
+    "serviceZones",
+    "Service Zone"
+  );
+
+  const { register, handleSubmit, control, reset, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(zoneSchema),
     defaultValues: {
       serviceZone: "",
@@ -49,20 +58,31 @@ const ServiceZoneForm = ({ editingData, onClose, onRefresh, themeColor }: Props)
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/services-zones", editingData._id, payload);
-      } else {
-        await createItem("/services-zones", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Operation failed");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating service zone");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating service zone");
+        }
+      });
     }
   };
 
@@ -114,7 +134,7 @@ const ServiceZoneForm = ({ editingData, onClose, onRefresh, themeColor }: Props)
           type="submit"
           label={editingData ? "Update Zone" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

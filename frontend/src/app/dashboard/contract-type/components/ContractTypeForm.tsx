@@ -1,6 +1,5 @@
 "use client";
 import { useEffect } from "react";
-import axios from "axios";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, FileText } from "lucide-react";
@@ -9,6 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 import { IContract } from "../../../../../../common/master-interfaces/IContract.type.interface";
 
 const contractTypeSchemaValidation = z.object({
@@ -19,22 +20,29 @@ const contractTypeSchemaValidation = z.object({
 
 type FormData = z.infer<typeof contractTypeSchemaValidation>;
 
+type ContractTypeWithId = IContract & { _id: string; isActive?: boolean; isDefault?: boolean };
+
 interface Props {
-    editingData: (IContract & { _id?: string; isActive?: boolean; isDefault?: boolean }) | null;
+    editingData: ContractTypeWithId | null;
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
-    apiUrl: string;
 }
 
-const ContractTypeForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
+const ContractTypeForm = ({ editingData, onClose, themeColor }: Props) => {
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/contract-types",
+        "contractTypes",
+        "Contract Type"
+    );
+
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(contractTypeSchemaValidation),
         defaultValues: {
@@ -57,25 +65,31 @@ const ContractTypeForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl 
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const token = localStorage.getItem("token");
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving data");
+        if (editingData?._id) {
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    },
+                    onError: (error: any) => {
+                        toast.error(error.response?.data?.message || "Error updating contract type");
+                    }
+                }
+            );
+        } else {
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                },
+                onError: (error: any) => {
+                    toast.error(error.response?.data?.message || "Error creating contract type");
+                }
+            });
         }
     };
 
@@ -127,7 +141,7 @@ const ContractTypeForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl 
                     type="submit"
                     label={editingData ? "Update Contract" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

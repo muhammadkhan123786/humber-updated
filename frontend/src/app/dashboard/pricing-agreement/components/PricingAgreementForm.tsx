@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 import { IPricingAgreement } from "../../../../../../common/suppliers/IPricing.agreement.interface";
 
 const pricingAgreementSchemaValidation = z.object({
@@ -19,21 +20,29 @@ const pricingAgreementSchemaValidation = z.object({
 
 type FormData = z.infer<typeof pricingAgreementSchemaValidation>;
 
+type PricingAgreementWithId = IPricingAgreement & { _id: string };
+
 interface Props {
-  editingData: (IPricingAgreement & { _id?: string }) | null;
+  editingData: PricingAgreementWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
-const PricingAgreementForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const PricingAgreementForm = ({ editingData, onClose, themeColor }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/pricing-agreement",
+    "pricingAgreements",
+    "Pricing Agreement"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(pricingAgreementSchemaValidation),
     defaultValues: {
@@ -56,20 +65,31 @@ const PricingAgreementForm = ({ editingData, onClose, onRefresh, themeColor }: P
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/pricing-agreement", editingData._id, payload);
-      } else {
-        await createItem("/pricing-agreement", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating pricing agreement");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating pricing agreement");
+        }
+      });
     }
   };
 
@@ -119,11 +139,11 @@ const PricingAgreementForm = ({ editingData, onClose, onRefresh, themeColor }: P
 
        <FormButton
                     type="submit"
-                    label={editingData ? "Update Service" : "Create"} // Changed to "Create" to match image
+                    label={editingData ? "Update Service" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
-                    onCancel={onClose} // This triggers the new right-aligned design
+                    onCancel={onClose}
                 />
       </form>
     </FormModal>

@@ -2,7 +2,7 @@
 import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
-import { Star, AlertTriangle, Trash2 } from "lucide-react";
+import { Star, } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 interface Props {

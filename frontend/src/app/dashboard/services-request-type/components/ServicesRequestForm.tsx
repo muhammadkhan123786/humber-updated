@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 
 const schema = z.object({
     serviceRequestType: z.string().min(1, "Request type name is required."),
@@ -18,15 +19,23 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+type ServiceRequestTypeWithId = { _id: string; serviceRequestType: string; isActive: boolean; isDefault: boolean };
+
 interface Props {
-    editingData: any;
+    editingData: ServiceRequestTypeWithId | null;
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
 }
 
-const ServiceRequestForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-    const { register, handleSubmit, reset, control, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+const ServiceRequestForm = ({ editingData, onClose, themeColor }: Props) => {
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/service-request-type",
+        "serviceRequestTypes",
+        "Service Request Type"
+    );
+
+    const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
         defaultValues: { serviceRequestType: "", isActive: true, isDefault: false },
     });
@@ -44,29 +53,33 @@ const ServiceRequestForm = ({ editingData, onClose, onRefresh, themeColor }: Pro
     }, [editingData, reset]);
 
    const onSubmit = async (values: FormData) => {
-    try {
-        // localStorage se user ID nikalain
         const userStr = localStorage.getItem("user");
         const user = userStr ? JSON.parse(userStr) : {};
-        const userId = user.id || user._id;
-
-        // Backend ko bhejne ke liye data prepare karein
-        const payload = {
-            ...values,
-            userId: userId // Agar backend ko userId chahiye toh ye lazmi hai
-        };
+        const payload = { ...values, userId: user.id || user._id };
 
         if (editingData?._id) {
-            await updateItem("/service-request-type", editingData._id, payload);
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    },
+                    onError: (error: any) => {
+                        toast.error(error.response?.data?.message || "Error updating service request type");
+                    }
+                }
+            );
         } else {
-            await createItem("/service-request-type", payload);
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                },
+                onError: (error: any) => {
+                    toast.error(error.response?.data?.message || "Error creating service request type");
+                }
+            });
         }
-        onRefresh();
-        onClose();
-    } catch (error: any) {
-        alert(error.response?.data?.message || "Error saving data");
-    }
-};
+    };
 
     return (
         <FormModal title={editingData ? "Edit Request Type" : "Add Request Type"} icon={<Settings2 size={24} />} onClose={onClose} themeColor={themeColor}>
@@ -80,7 +93,7 @@ const ServiceRequestForm = ({ editingData, onClose, onRefresh, themeColor }: Pro
                         <FormToggle label="Default" checked={field.value} onChange={(val) => { field.onChange(val); if (val) setValue("isActive", true); }} />
                     )} />
                 </div>
-                <FormButton type="submit" label={editingData ? "Update Type" : "Create"} icon={<Save size={20} />} loading={isSubmitting} themeColor={themeColor} onCancel={onClose} />
+                <FormButton type="submit" label={editingData ? "Update Type" : "Create"} icon={<Save size={20} />} loading={isSaving} themeColor={themeColor} onCancel={onClose} />
             </form>
         </FormModal>
     );

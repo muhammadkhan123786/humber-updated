@@ -4,6 +4,7 @@ import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Settings, Trash2 } from "lucide-react";
 import { ITechnicianServiceType } from "../../../../../../common/master-interfaces/IService.type.interface";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (ITechnicianServiceType & { _id: string })[];
@@ -31,7 +32,9 @@ const TechnicianServiceTable = ({ data, displayView, onEdit, onDelete, onStatusC
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
           >
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
@@ -50,19 +53,18 @@ const TechnicianServiceTable = ({ data, displayView, onEdit, onDelete, onStatusC
                 {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
               </h3>
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="flex-1 text-sm py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => !item.isDefault ? onDelete(item._id) : alert("Default types cannot be deleted.")}
-                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                >
-                  <Trash2 size={20} />
-                </button>
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="service type"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) {
+                      return toast.error("Default types cannot be deleted.");
+                    }
+                    onDelete(item._id);
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -76,10 +78,10 @@ const TechnicianServiceTable = ({ data, displayView, onEdit, onDelete, onStatusC
       <table className="w-full text-left min-w-max">
         <thead className="bg-[#ECFEFF] border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Service Type</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Service Type</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -105,8 +107,14 @@ const TechnicianServiceTable = ({ data, displayView, onEdit, onDelete, onStatusC
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="service type"
                   onEdit={() => onEdit(item)}
-                  onDelete={() => !item.isDefault ? onDelete(item._id) : alert("Default types cannot be deleted.")}
+                  onDelete={() => {
+                    if (item.isDefault) {
+                      return toast.error("Default cannot be deleted.");
+                    }
+                    onDelete(item._id);
+                  }}
                 />
               </td>
             </tr>

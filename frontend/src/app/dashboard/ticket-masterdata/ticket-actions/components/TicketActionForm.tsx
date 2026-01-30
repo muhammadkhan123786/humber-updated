@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 import { ITicketActions } from "../../../../../../../common/Ticket-management-system/ITicketActions.interface";
 
 const ticketActionFormSchema = z.object({
@@ -24,8 +25,10 @@ const ticketActionFormSchema = z.object({
 
 type TicketActionFormData = z.infer<typeof ticketActionFormSchema>;
 
+type TicketActionWithId = ITicketActions & { _id: string };
+
 interface Props {
-  editingData: (ITicketActions & { _id?: string }) | null;
+  editingData: TicketActionWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
@@ -34,16 +37,21 @@ interface Props {
 const TicketActionForm = ({
   editingData,
   onClose,
-  onRefresh,
   themeColor,
 }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/ticket-actions",
+    "ticketActions",
+    "Ticket Action"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<TicketActionFormData>({
     resolver: zodResolver(ticketActionFormSchema),
     defaultValues: {
@@ -69,22 +77,31 @@ const TicketActionForm = ({
   }, [editingData, reset]);
 
   const onSubmit = async (values: TicketActionFormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/ticket-actions", editingData._id, payload);
-      } else {
-        await createItem("/ticket-actions", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(
-        error.response?.data?.message || error.message || "Error saving action"
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating action");
+          }
+        }
       );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating action");
+        }
+      });
     }
   };
 
@@ -147,7 +164,7 @@ const TicketActionForm = ({
           type="submit"
           label={editingData ? "Update Action" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />
