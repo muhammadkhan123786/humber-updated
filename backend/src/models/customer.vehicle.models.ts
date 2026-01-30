@@ -3,7 +3,7 @@ import { ICustomerVehicleRegInterface } from "../../../common/Vehicle-Registerat
 import { commonSchema } from "../schemas/shared/common.schema";
 
 
-export type CustomerVehicleDoc = ICustomerVehicleRegInterface<Types.ObjectId, Types.ObjectId, Types.ObjectId> & Document;
+export type CustomerVehicleDoc = ICustomerVehicleRegInterface<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId> & Document;
 
 const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
     {
@@ -20,6 +20,10 @@ const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
             required: true,
         },
 
+        customerId: { type: Schema.Types.ObjectId, ref: "CustomerBase" },
+
+        isVehicleCompanyOwned: { type: Boolean, default: false },
+
         vehicleModelId: {
             type: Schema.Types.ObjectId,
             ref: "VechicleModel",
@@ -30,6 +34,10 @@ const CustomerVehicleSchema = new Schema<CustomerVehicleDoc>(
             type: String,
             trim: true,
         },
+
+        colorId: { type: Schema.Types.ObjectId, ref: "Color" },
+        productName: { type: String },
+        year: { type: String },
 
         vehicleType: {
             type: String,

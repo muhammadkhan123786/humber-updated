@@ -2,11 +2,12 @@ import { IBaseEntity } from "./Base.Interface";
 
 export type VehicleType = "Scooter" | "Mobility Vehicle";
 
-
 export interface ICustomerVehicleRegInterface<
     TUserId = string,
     TVehicleBrandId = string,
     TVehicleModelId = string,
+    TCUSTOMERID = string,
+    TCOLORID = string
 
 > extends IBaseEntity<TUserId> {
 
@@ -24,5 +25,12 @@ export interface ICustomerVehicleRegInterface<
     vehiclePhoto?: string;
     vehiclePhotoFile?: File;
     note?: string;
+    customerId: TCUSTOMERID;
+    isVehicleCompanyOwned: boolean;
+
+    colorId?: TCOLORID;
+    productName?: string;
+    year?: string;
+
 }
 
