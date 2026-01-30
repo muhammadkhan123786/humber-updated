@@ -133,56 +133,35 @@ export const STEPS: Step[] = [
     bgGradient: 'from-blue-50 via-cyan-50 to-sky-50',
     borderGradient: 'from-blue-500 via-cyan-500 to-sky-500'
   },
+  // { 
+  //   number: 3, 
+  //   title: 'Pricing', 
+  //   icon: DollarSign, 
+  //   color: 'green',
+  //   gradient: 'from-green-600 to-emerald-600',
+  //   bgGradient: 'from-green-50 via-emerald-50 to-teal-50',
+  //   borderGradient: 'from-green-500 via-emerald-500 to-teal-500'
+  // },
+  // { 
+  //   number: 4, 
+  //   title: 'Inventory', 
+  //   icon: Warehouse, 
+  //   color: 'orange',
+  //   gradient: 'from-orange-600 to-amber-600',
+  //   bgGradient: 'from-orange-50 via-amber-50 to-yellow-50',
+  //   borderGradient: 'from-orange-500 via-amber-500 to-yellow-500'
+  // },
   { 
     number: 3, 
-    title: 'Pricing', 
-    icon: DollarSign, 
-    color: 'green',
-    gradient: 'from-green-600 to-emerald-600',
-    bgGradient: 'from-green-50 via-emerald-50 to-teal-50',
-    borderGradient: 'from-green-500 via-emerald-500 to-teal-500'
-  },
-  { 
-    number: 4, 
-    title: 'Inventory', 
-    icon: Warehouse, 
+    title: 'Specifications', 
+    icon: Ruler, 
     color: 'orange',
     gradient: 'from-orange-600 to-amber-600',
     bgGradient: 'from-orange-50 via-amber-50 to-yellow-50',
     borderGradient: 'from-orange-500 via-amber-500 to-yellow-500'
-  },
-  { 
-    number: 5, 
-    title: 'Specifications', 
-    icon: Ruler, 
-    color: 'rose',
-    gradient: 'from-rose-600 to-pink-600',
-    bgGradient: 'from-rose-50 via-pink-50 to-red-50',
-    borderGradient: 'from-rose-500 via-pink-500 to-red-500'
   }
 ];
 
-export const WAREHOUSE_OPTIONS: WarehouseOption[] = [
-  { value: '', label: '-- Select Warehouse --' },
-  { value: 'main', label: 'Main Warehouse' },
-  { value: 'north', label: 'North Depot' },
-  { value: 'south', label: 'South Depot' },
-  { value: 'showroom', label: 'Showroom' }
-];
-
-export const STATUS_OPTIONS: StatusOption[] = [
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' },
-  { value: 'discontinued', label: 'Discontinued' },
-  { value: 'out-of-stock', label: 'Out of Stock' }
-];
-
-export const CONDITION_OPTIONS: ConditionOption[] = [
-  { value: 'new', label: 'New' },
-  { value: 'refurbished', label: 'Refurbished' },
-  { value: 'used', label: 'Used' },
-  { value: 'damaged', label: 'Damaged' }
-];
 
 // Import icons dynamically
 import { 

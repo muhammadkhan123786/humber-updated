@@ -1,54 +1,13 @@
-import { useState, useCallback, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
-import { ImageUploadSection } from "./utils/ImageUploadSection";
-import { AISuggestionsPanel } from "./utils/AISuggestionsPanel";
-import { ProductInformationCard } from "./utils/ProductInformationCard";
+import { useState, useCallback, useEffect, ReactNode } from "react";
+import { ProductInformationCard } from "../utils/ProductInformationCard";
+import {
+  BASE_URL,
+  BasicInfoStepProps,
+  UploadedImage,
+  AIResponse,
+} from "../../types/product";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-interface BasicInfoStepProps {
-  formData: {
-    productName: string;
-    sku: string;
-    barcode: string;
-    brand: string;
-    manufacturer: string;
-    modelNumber: string;
-    description: string;
-    shortDescription: string;
-    keywords: string;
-  };
-  tags: string[];
-  images: string[];
-  newTag: string;
-  onInputChange: (field: string, value: string) => void;
-  onAddTag: () => void;
-  onRemoveTag: (tag: string) => void;
-  onNewTagChange: (value: string) => void;
-  onImageUpload: (files: FileList | File[]) => void;
-  onRemoveImage: (index: number) => void;
-  isUploading?: boolean;
-}
-
-interface UploadedImage {
-  id: string;
-  preview: string;
-  file?: File; // Store the actual file for AI analysis
-  progress: number;
-  isUploading: boolean;
-}
-
-interface AIResponse {
-  success: boolean;
-  imageCount: number;
-  ai: {
-    shortDescription: string;
-    description: string;
-    tags: string[];
-    keywords: string;
-  };
-}
-
+type Props = BasicInfoStepProps;
 export function BasicInfoStep({
   formData,
   tags,
@@ -60,8 +19,8 @@ export function BasicInfoStep({
   onNewTagChange,
   onImageUpload,
   onRemoveImage,
-  isUploading: parentIsUploading = false
-}: BasicInfoStepProps) {
+  isUploading: parentIsUploading = false,
+}: Props) {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [aiSuggestions, setAiSuggestions] = useState<{
     tags: string[];
@@ -78,7 +37,7 @@ export function BasicInfoStep({
         id: `img-init-${index}`,
         preview: img,
         progress: 100,
-        isUploading: false
+        isUploading: false,
       }));
       setUploadedImages(initialImages);
     }
@@ -88,7 +47,7 @@ export function BasicInfoStep({
   const handleAnalyzeWithAI = async () => {
     // Collect all files currently in state
     const filesToAnalyze = uploadedImages
-      .map(img => img.file)
+      .map((img) => img.file)
       .filter((file): file is File => !!file);
 
     if (filesToAnalyze.length === 0) {
@@ -100,130 +59,103 @@ export function BasicInfoStep({
 
     try {
       const data = new FormData();
-      filesToAnalyze.forEach(file => data.append('images', file));
+      filesToAnalyze.forEach((file) => data.append("images", file));
 
       const response = await fetch(`${BASE_URL}/ai`, {
-        method: 'POST',
+        method: "POST",
         body: data,
       });
 
       const result: AIResponse = await response.json();
       if (result.success && result.ai) {
         // 1. Remove duplicates from AI tags immediately
-        const uniqueTags = Array.from(new Set(result.ai.tags.map(t => t.trim())));
-        
+        const uniqueTags = Array.from(
+          new Set(result.ai.tags.map((t) => t.trim())),
+        );
+
         const suggestions = {
           ...result.ai,
-          tags: uniqueTags
+          tags: uniqueTags,
         };
 
         setAiSuggestions(suggestions);
 
         // 2. Auto-fill form if empty
-        if (!formData.description) onInputChange("description", suggestions.description);
-        if (!formData.shortDescription) onInputChange("shortDescription", suggestions.shortDescription);
+        if (!formData.description)
+          onInputChange("description", suggestions.description);
+        if (!formData.shortDescription)
+          onInputChange("shortDescription", suggestions.shortDescription);
         if (!formData.keywords) onInputChange("keywords", suggestions.keywords);
       }
     } catch (error) {
-      console.error('AI Analysis failed:', error);
+      console.error("AI Analysis failed:", error);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const handleFilesUpload = useCallback(async (files: FileList) => {
-    const imageFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
-    if (imageFiles.length === 0) return;
+  const handleFilesUpload = useCallback(
+    async (files: FileList) => {
+      const imageFiles = Array.from(files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
+      if (imageFiles.length === 0) return;
 
-    // Create local previews and keep track of files
-    const newImages: UploadedImage[] = imageFiles.map((file, index) => ({
-      id: `img-${Date.now()}-${index}`,
-      preview: URL.createObjectURL(file),
-      file: file,
-      progress: 100,
-      isUploading: false,
-    }));
+      // Create local previews and keep track of files
+      const newImages: UploadedImage[] = imageFiles.map((file, index) => ({
+        id: `img-${Date.now()}-${index}`,
+        preview: URL.createObjectURL(file),
+        file: file,
+        progress: 100,
+        isUploading: false,
+      }));
 
-    setUploadedImages(prev => [...prev, ...newImages]);
-    
-    // Upload to parent/cloud storage
-    await onImageUpload(imageFiles);
-  }, [onImageUpload]);
+      setUploadedImages((prev) => [...prev, ...newImages]);
 
-  const handleRemoveImage = useCallback((index: number, imageId: string) => {
-    const img = uploadedImages.find(i => i.id === imageId);
-    if (img?.preview.startsWith('blob:')) URL.revokeObjectURL(img.preview);
-    
-    onRemoveImage(index);
-    setUploadedImages(prev => prev.filter(i => i.id !== imageId));
-  }, [uploadedImages, onRemoveImage]);
+      // Upload to parent/cloud storage
+      await onImageUpload(imageFiles);
+    },
+    [onImageUpload],
+  );
 
-const applyAllSuggestions = useCallback(() => {
-  if (!aiSuggestions) return;
+  const handleRemoveImage = useCallback(
+    (index: number, imageId: string) => {
+      const img = uploadedImages.find((i) => i.id === imageId);
+      if (img?.preview.startsWith("blob:")) URL.revokeObjectURL(img.preview);
 
-  // 1. Update text fields
-  onInputChange("description", aiSuggestions.description);
-  onInputChange("shortDescription", aiSuggestions.shortDescription);
-  onInputChange("keywords", aiSuggestions.keywords);
+      onRemoveImage(index);
+      setUploadedImages((prev) => prev.filter((i) => i.id !== imageId));
+    },
+    [uploadedImages, onRemoveImage],
+  );
 
-  // 2. Add all tags at once (Professional Way)
-  if (aiSuggestions.tags.length > 0) {
-    // If your parent has a bulk add function:
-    // onAddMultipleTags(aiSuggestions.tags); 
-    
-    // OR if you must use your existing props:
-    aiSuggestions.tags.forEach(tag => {
-      if (!tags.includes(tag)) {
-        onNewTagChange(tag);
-        onAddTag();
-      }
-    });
-  }
+  const applyAllSuggestions = useCallback(() => {
+    if (!aiSuggestions) return;
 
-  setAiSuggestions(null);
-}, [aiSuggestions, onInputChange, tags, onNewTagChange, onAddTag]);
+    // 1. Update text fields
+    onInputChange("description", aiSuggestions.description);
+    onInputChange("shortDescription", aiSuggestions.shortDescription);
+    onInputChange("keywords", aiSuggestions.keywords);
+
+    // 2. Add all tags at once (Professional Way)
+    if (aiSuggestions.tags.length > 0) {
+      // If your parent has a bulk add function:
+      // onAddMultipleTags(aiSuggestions.tags);
+
+      // OR if you must use your existing props:
+      aiSuggestions.tags.forEach((tag) => {
+        if (!tags.includes(tag)) {
+          onNewTagChange(tag);
+          onAddTag();
+        }
+      });
+    }
+
+    setAiSuggestions(null);
+  }, [aiSuggestions, onInputChange, tags, onNewTagChange, onAddTag]);
 
   return (
-    <div className="space-y-4">
-      <ImageUploadSection
-        uploadedImages={uploadedImages}
-        onFilesUpload={handleFilesUpload}
-        onRemoveImage={handleRemoveImage}
-        isAnalyzing={isAnalyzing}
-       
-      />
-
-      {/* Manual Trigger for AI - Better for Multi-image Context */}
-      {uploadedImages.length > 0 && !aiSuggestions && (
-        <div className="flex justify-center">
-          <button
-            onClick={handleAnalyzeWithAI}
-            disabled={isAnalyzing}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-400 transition-colors flex items-center gap-2"
-          >
-            {isAnalyzing ? (
-              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : "✨"}
-            {isAnalyzing ? "Analyzing All Images..." : "Generate AI Description & Tags"}
-          </button>
-        </div>
-      )}
-
-      <AnimatePresence>
-        {aiSuggestions && (
-          <AISuggestionsPanel
-            suggestions={aiSuggestions}
-            onApplySuggestion={onInputChange}
-            onApplyAll={applyAllSuggestions}
-            onAddTag={(tag) => {
-              onNewTagChange(tag);
-              onAddTag();
-            }}
-            onClose={() => setAiSuggestions(null)}
-          />
-        )}
-      </AnimatePresence>
-
+    <>
       <ProductInformationCard
         formData={formData}
         tags={tags}
@@ -232,7 +164,8 @@ const applyAllSuggestions = useCallback(() => {
         onAddTag={onAddTag}
         onRemoveTag={onRemoveTag}
         onNewTagChange={onNewTagChange}
+        images={images}
       />
-    </div>
+    </>
   );
 }

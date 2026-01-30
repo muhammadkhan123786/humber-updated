@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Badge } from "@/components/form/Badge";
 import { CheckCircle, ChevronRight } from "lucide-react";
-import { CategoryNode } from "../../types/product";
+import { LEVEL_STYLES, CategoryStepProps } from "../../types/product";
 
 import {
   Select,
@@ -10,36 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/form/Select";
-
-interface CategoryStepProps {
-  categories: CategoryNode[];
-  selectedPath: string[];
-  selectedCategories: CategoryNode[];
-  getCategoriesAtLevel: (level: number) => CategoryNode[];
-  handleCategorySelect: (level: number, value: string) => void;
-}
-
-/* 🎨 Level-based styling (same as static UI) */
-const LEVEL_STYLES = [
-  {
-    badge: "bg-purple-500 text-white",
-    border: "border-purple-300",
-    focus: "focus:border-purple-500 focus:ring-purple-200",
-    label: "Main Category",
-  },
-  {
-    badge: "bg-cyan-500 text-white",
-    border: "border-cyan-300",
-    focus: "focus:border-cyan-500 focus:ring-cyan-200",
-    label: "Subcategory",
-  },
-  {
-    badge: "bg-teal-500 text-white",
-    border: "border-teal-300",
-    focus: "focus:border-teal-500 focus:ring-teal-200",
-    label: "Sub-subcategory",
-  },
-];
 
 export function CategoryStep({
   categories,
@@ -76,28 +46,6 @@ export function CategoryStep({
                 <Badge className={style.badge}>Level {level + 1}</Badge>
                 {style.label}
               </label>
-
-              {/* <select
-                value={safeSelectedPath[level] || ''}
-                onChange={(e) =>
-                  handleCategorySelect && handleCategorySelect(level, e.target.value)
-                }
-                className={`
-                  w-full px-4 py-3 border-2 rounded-lg
-                  outline-none transition-all bg-white
-                  ${style.border}
-                  focus:ring-2 ${style.focus}
-                `}
-              >
-                <option value="">
-                  -- Select {style.label} --
-                </option>
-                {options.map(cat => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.categoryName}
-                  </option>
-                ))}
-              </select> */}
 
               <Select
                 value={safeSelectedPath[level] || ""}

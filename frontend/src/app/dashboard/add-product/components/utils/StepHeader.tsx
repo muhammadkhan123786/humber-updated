@@ -13,7 +13,7 @@ interface StepCardProps {
   borderGradient: string;
 }
 
-export function StepCard({ 
+export function StepHeader({ 
   children, 
   title, 
   subtitle, 
@@ -50,9 +50,7 @@ export function StepCard({
               <p className="text-sm text-gray-600">{subtitle}</p>
             </div>
           </div>
-         {
-          children
-         }
+         
         </CardContent>
       </Card>
     </motion.div>

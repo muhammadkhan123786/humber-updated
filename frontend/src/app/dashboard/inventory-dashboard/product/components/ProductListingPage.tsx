@@ -29,6 +29,7 @@ import { useProductFilters } from "@/hooks/useProductFilters";
 import { Product, ProductStats } from "../types/product";
 import { sampleProducts } from "../data/sampleProducts";
 import { toast } from "sonner";
+import { createProduct } from "@/helper/products";
 
 export default function ProductListingPage() {
   // State
