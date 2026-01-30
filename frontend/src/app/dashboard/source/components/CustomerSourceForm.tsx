@@ -8,7 +8,7 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
 import { ICustomerSource } from "../../../../../../common/ICustomerSource";
 
 // Validation Schema
@@ -27,14 +27,20 @@ interface Props {
     themeColor: string;
 }
 
-const CustomerSourceForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const CustomerSourceForm = ({ editingData, onClose, themeColor }: Props) => {
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/customer-source",
+        "customerSources",
+        "Customer Source"
+    );
+
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(customerSourceSchemaValidation),
         defaultValues: {
@@ -58,20 +64,25 @@ const CustomerSourceForm = ({ editingData, onClose, onRefresh, themeColor }: Pro
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await updateItem("/customer-source", editingData._id, payload);
-            } else {
-                await createItem("/customer-source", payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving customer source");
+        if (editingData?._id) {
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    }
+                }
+            );
+        } else {
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                }
+            });
         }
     };
 
@@ -125,7 +136,7 @@ const CustomerSourceForm = ({ editingData, onClose, onRefresh, themeColor }: Pro
                     type="submit"
                     label={editingData ? "Update Source" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

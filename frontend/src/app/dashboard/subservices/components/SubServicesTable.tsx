@@ -1,9 +1,9 @@
 "use client";
-import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
-import { Star, Layers, Trash2 } from "lucide-react";
+import { Star, Layers } from "lucide-react";
 import { ISubServicesInterface } from "../../../../../../common/ISubServices.interface";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (ISubServicesInterface & { _id: string })[];
@@ -33,21 +33,22 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, onStatusChange 
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300   hover:border-blue-400 transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
           >
-            {/* Header Section with Icon and Status Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <Layers size={18} />
               </div>
+              
               <StatusBadge 
-                isActive={!!item.isActive} 
+                isActive={!!item.isActive}
                 onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
                 editable={!item.isDefault}
               />
             </div>
 
-            {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
@@ -67,32 +68,18 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, onStatusChange 
                 <p className="text-lg font-bold text-gray-700 mt-1">${item.cost || 0}</p>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="sub-service"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
                     if (item.isDefault) {
-                      alert("Default records cannot be deleted.");
-                      return;
+                      return toast.error("Default records cannot be deleted.");
                     }
                     onDelete(item._id);
                   }}
-                  className={`p-2 bg-gray-50 rounded-lg transition-all ${
-                    item.isDefault 
-                      ? "text-gray-200 cursor-not-allowed" 
-                      : "text-gray-400 hover:text-red-600 hover:bg-red-50"
-                  }`}
-                  title="Delete"
-                  disabled={item.isDefault}
-                >
-                  <Trash2 size={20} />
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -109,27 +96,27 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, onStatusChange 
 
   // Table View (Default)
   return (
-    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden rounded-xl">
-      <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200">
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
+      <table className="w-full text-[16px]! text-left min-w-max">
+        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Sub-Service</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Category</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Cost</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Sub-Service</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Category</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Cost</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors group">
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
               <td className="px-6 py-4">
-                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white group-hover:scale-110 transition-transform`}>
+                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
                   <Layers size={18} />
                 </div>
               </td>
-              <td className="px-6 py-4 font-bold text-gray-900">
+              <td className="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   {item.subServiceName}
                   {item.isDefault && (
@@ -157,9 +144,10 @@ const SubServicesTable = ({ data, displayView, onEdit, onDelete, onStatusChange 
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="sub-service"
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault) return alert("Default records cannot be deleted.");
+                    if (item.isDefault) return toast.error("Default records cannot be deleted.");
                     onDelete(item._id!);
                   }}
                 />
