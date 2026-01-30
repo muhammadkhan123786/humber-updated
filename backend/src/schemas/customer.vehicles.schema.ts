@@ -27,6 +27,14 @@ export const customerVehicleSchemaValidation = z.object({
 
     vehiclePhoto: z.string().optional(),
     note: z.string().max(1500).optional(),
+
+    customerId: objectIdSchema,
+    isVehicleCompanyOwned: z.boolean().default(false),
+
+    colorId: objectIdSchema,
+    productName: z.string().optional(),
+    year: z.string().optional(),
+
 });
 
 export const createCustomerVehicleSchemaValidation = customerVehicleSchemaValidation;
