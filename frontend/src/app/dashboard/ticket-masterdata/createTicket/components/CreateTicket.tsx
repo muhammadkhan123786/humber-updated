@@ -8,15 +8,7 @@ import StepSourceCustomer from "./StepSourceCustomer";
 import StepProduct from "./StepProduct";
 import StepIssueDetails from "./StepIssueDetails";
 import StepLocationPriority from "./StepLocationPriority";
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CheckCircle,
-  Loader2,
-} from "lucide-react";
-import ProblemInvestigation from "./ProblemInvestigation";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
 interface CreateTicketProps {
   editMode?: boolean;
@@ -28,11 +20,6 @@ const steps = [
   { id: 2, label: "Product", color: "from-[#AD46FF] to-[#F6339A]" },
   { id: 3, label: "Issue Details", color: "from-[#FF6900] to-[#FB2C36]" },
   { id: 4, label: "Location & Priority", color: "from-[#00C950] to-[#00BC7D]" },
-  {
-    id: 5,
-    label: "Problem Investigation",
-    color: "from-[#4F39F6] to-[#9810FA]",
-  },
 ];
 
 const CreateTicket = ({
@@ -49,15 +36,15 @@ const CreateTicket = ({
     form,
     handleSubmit,
     isLoading,
-    error,
-    success,
     customers,
     vehicles,
     priorities,
     technicians,
-    decisions, // Added new data
-    mobilityParts, // Added new data
+    decisions,
     statuses,
+    brands,
+    models,
+    colors,
     setError,
     setSuccess,
     editingId,
@@ -94,20 +81,13 @@ const CreateTicket = ({
   }, [initialEditMode, initialData, editingId, setEditData]);
 
   const handleFinalSubmit = async () => {
-    console.log("=== FINAL SUBMIT TRIGGERED ===");
-    console.log("Current Step:", currentStep);
-    console.log("Form State:", form.formState);
-    console.log("Form Errors:", form.formState.errors);
     try {
       const isValid = await form.trigger();
       if (!isValid) {
-        console.log("Form validation result:", isValid);
         setError("Please check the form for errors.");
-
         return;
       }
       const formData = form.getValues();
-      console.log("Form values to submit:", formData);
       await handleSubmit(formData);
 
       if (!isUpdating) {
@@ -121,6 +101,7 @@ const CreateTicket = ({
       setError(err.message || "An unexpected error occurred.");
     }
   };
+
   const isStepValid = () => {
     const values = form.watch();
 
@@ -140,14 +121,13 @@ const CreateTicket = ({
     }
 
     if (currentStep === 4) return !!(values.location && values.priorityId);
-    if (currentStep === 5) {
-      return !!form.watch("investigationReportData");
-    }
+
     return false;
   };
 
   const handleNextStep = () => {
-    if (currentStep === 5) {
+    // 2. logic updated: Step 4 is now the final step
+    if (currentStep === 4) {
       handleFinalSubmit();
     } else if (isStepValid()) {
       setCurrentStep((prev) => prev + 1);
@@ -163,9 +143,8 @@ const CreateTicket = ({
   };
 
   return (
-    <div className="min-h-screen px-4 md:px-8 pb-12  ">
-      <div className="max-w-5xl mx-auto ">
-        {/* Header Section */}
+    <div className="min-h-screen px-4 md:px-8 pb-12">
+      <div className="max-w-5xl mx-auto">
         <div className="max-w-5xl mx-auto pl-6 md:px-0">
           <div className="flex flex-col items-start">
             <div className="flex items-center px-9 gap-4 mb-1">
@@ -174,7 +153,6 @@ const CreateTicket = ({
                   router.push("/dashboard/ticket-masterdata/allTickets")
                 }
                 className="text-[#4F39F6] hover:bg-blue-50 rounded-full transition-colors shrink-0"
-                aria-label="Go back"
               >
                 <ArrowLeft size={22} strokeWidth={2.5} />
               </button>
@@ -185,7 +163,6 @@ const CreateTicket = ({
                     "linear-gradient(90deg, #4F39F6 0%, #9810FA 100%)",
                   WebkitBackgroundClip: "text",
                   WebkitTextFillColor: "transparent",
-                  fontFamily: "Arial, sans-serif",
                   fontSize: "30px",
                   fontWeight: 600,
                   lineHeight: "36px",
@@ -195,13 +172,14 @@ const CreateTicket = ({
               </h1>
             </div>
 
-            <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm  tracking-widest">
-              Step {currentStep} of 5
+            {/* 3. Updated UI label to "Step X of 4" */}
+            <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm tracking-widest">
+              Step {currentStep} of 4
             </p>
           </div>
         </div>
 
-        {/* Progress Bar Section */}
+        {/* Progress Bar */}
         <div className="mb-20">
           <div className="flex items-center justify-between pr-12 relative">
             {steps.map((step, index) => (
@@ -211,7 +189,7 @@ const CreateTicket = ({
               >
                 <div
                   style={{ width: "52.8px", height: "52.8px" }}
-                  className={`rounded-full flex   justify-center items-center shrink-0 shadow-md transition-all duration-500 bg-linear-to-br ${
+                  className={`rounded-full flex justify-center items-center shrink-0 shadow-md transition-all duration-500 bg-linear-to-br ${
                     currentStep >= step.id
                       ? step.color
                       : "from-gray-200 to-gray-300"
@@ -221,11 +199,7 @@ const CreateTicket = ({
                     <Check size={24} strokeWidth={3} />
                   ) : (
                     <span
-                      className={`font-semibold text-lg ${
-                        currentStep >= step.id
-                          ? "text-white"
-                          : "w-12 h-12 rounded-full flex items-center justify-center border-2  bg-white border-gray-300 text-gray-400"
-                      }`}
+                      className={`font-semibold text-lg ${currentStep >= step.id ? "text-white" : "text-gray-400"}`}
                     >
                       {step.id}
                     </span>
@@ -234,9 +208,7 @@ const CreateTicket = ({
 
                 <div className="absolute top-[62px] w-32 text-center">
                   <span
-                    className={`text-sm font-medium    ${
-                      currentStep >= step.id ? "text-gray-900" : "text-gray-400"
-                    }`}
+                    className={`text-sm font-medium ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}
                   >
                     {step.label}
                   </span>
@@ -267,23 +239,7 @@ const CreateTicket = ({
           </div>
         </div>
 
-        {/* Notifications */}
-        <div className="max-w-md mx-auto">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3">
-              <AlertCircle className="text-red-500 shrink-0" size={20} />
-              <p className="text-red-600 font-semibold text-sm">{error}</p>
-            </div>
-          )}
-          {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
-              <CheckCircle className="text-green-500 shrink-0" size={20} />
-              <p className="text-green-600 font-semibold text-sm">{success}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Form Content Card */}
+        {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-xl border border-white/60 overflow-hidden relative">
           {(isLoading || isFetching) && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-50 flex items-center justify-center">
@@ -299,6 +255,9 @@ const CreateTicket = ({
               form={form}
               vehicles={vehicles}
               customers={customers}
+              brands={brands}
+              models={models}
+              colors={colors}
               isLoadingVehicles={isLoading}
             />
           )}
@@ -309,6 +268,7 @@ const CreateTicket = ({
               decisions={decisions}
             />
           )}
+          {/* 4. Removed the step 5 component block */}
           {currentStep === 4 && (
             <StepLocationPriority
               form={form}
@@ -321,21 +281,14 @@ const CreateTicket = ({
               isLoading={isLoading}
             />
           )}
-
-          {currentStep === 5 && (
-            <ProblemInvestigation form={form} mobilityParts={mobilityParts} />
-          )}
         </div>
 
+        {/* Navigation Buttons */}
         <div className="flex items-center justify-between mt-8 px-2">
           <button
             type="button"
             onClick={handlePreviousStep}
-            className={`flex items-center gap-2 px-6 py-3 font-bold transition-all duration-300 ${
-              currentStep === 1
-                ? "text-[#1E293B]/60 hover:text-[#4F39F6]"
-                : "text-[#1E293B]/60 hover:text-[#4F39F6]"
-            }`}
+            className="flex items-center gap-2 px-6 py-3 font-bold text-[#1E293B]/60 hover:text-[#4F39F6]"
           >
             <ArrowLeft size={18} strokeWidth={2.5} />
             <span className="text-sm">Previous</span>
@@ -352,7 +305,7 @@ const CreateTicket = ({
             } bg-linear-to-r ${steps[currentStep - 1].color}`}
           >
             <span className="text-sm">
-              {currentStep === 5
+              {currentStep === 4
                 ? isUpdating
                   ? "Update Ticket"
                   : "Create Ticket"

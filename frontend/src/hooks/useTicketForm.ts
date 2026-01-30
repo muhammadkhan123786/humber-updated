@@ -31,6 +31,9 @@ export const useTicketForm = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [decisions, setDecisions] = useState<any[]>([]);
   const [mobilityParts, setMobilityParts] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [models, setModels] = useState<any[]>([]);
+  const [colors, setColors] = useState<any[]>([]);
 
   const [defaultTicketStatusId, setDefaultTicketStatusId] =
     useState<string>("");
@@ -132,6 +135,9 @@ export const useTicketForm = () => {
           getAlls("/customer-vehicle-register"),
           getAlls("/ticket-decision"),
           getAlls("/mobility-parts"),
+          getAlls("/vehiclebrand"),
+          getAlls("/vechilemodel"),
+          getAlls("/colors"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
@@ -157,6 +163,18 @@ export const useTicketForm = () => {
         if (results[6].status === "fulfilled")
           setMobilityParts(
             (results[6].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[7].status === "fulfilled")
+          setBrands(
+            (results[7].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[8].status === "fulfilled")
+          setModels(
+            (results[8].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[9].status === "fulfilled")
+          setColors(
+            (results[9].value?.data ?? []).filter((i: any) => i.isActive),
           );
 
         if (results[2].status === "fulfilled") {
@@ -297,6 +315,9 @@ export const useTicketForm = () => {
     customers,
     vehicles,
     priorities,
+    brands,
+    models,
+    colors,
     statuses,
     technicians,
     decisions,
