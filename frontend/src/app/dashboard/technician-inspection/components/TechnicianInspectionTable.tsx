@@ -4,6 +4,7 @@ import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, ClipboardCheck, Trash2 } from "lucide-react";
 import { ITechnicianInspectionList } from "../../../../../../common/master-interfaces/ITechnician.inspection.list.interface";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (ITechnicianInspectionList & { _id: string })[];
@@ -27,48 +28,75 @@ const getIconGradient = (index: number) => {
 const TechnicianInspectionTable = ({ data, displayView, onEdit, onDelete, onStatusChange }: Props) => {
   if (displayView === "card") {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-3 ">
         {data.map((item, index) => (
-          <div key={item._id} className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform">
+          <div
+            key={item._id}
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
+          >
+            {/* Header Section with Icon and Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
                 <ClipboardCheck size={18} />
               </div>
-              <StatusBadge 
+
+              {/* Status Toggle Switch */}
+              <StatusBadge
                 isActive={!!item.isActive}
                 onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
                 editable={!item.isDefault}
               />
             </div>
+
+            {/* Content Section */}
             <div className="px-4 pb-4 space-y-3">
-              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                {item.technicianInspection}
-                {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
-              </h3>
-              <div className="flex gap-2 pt-4">
-                <button onClick={() => onEdit(item)} className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600">
-                    Edit
-                </button>
-                <button onClick={() => !item.isDefault ? onDelete(item._id) : alert("Default items cannot be deleted.")} className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
-                  <Trash2 size={20} />
-                </button>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  {item.technicianInspection}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
+                </h3>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="inspection"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) {
+                      return toast.error("Default items cannot be deleted.");
+                    }
+                    onDelete(item._id);
+                  }}
+                />
               </div>
             </div>
           </div>
         ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">📭</div>
+            <p>No inspection items found.</p>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
-      <table className="w-full text-[16px] text-left min-w-max">
-        <thead className="bg-[#ECFEFF] text-[#364153] border-b-2 border-gray-200 sticky top-0">
+      <table className="w-full text-[16px]! text-left min-w-max">
+        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Inspection Name</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Inspection Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -79,27 +107,42 @@ const TechnicianInspectionTable = ({ data, displayView, onEdit, onDelete, onStat
                   <ClipboardCheck size={18} />
                 </div>
               </td>
-              <td className="px-6 py-4 font-bold text-gray-900">
+              <td className="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   {item.technicianInspection}
-                  {item.isDefault && <Star size={16} className="text-yellow-500 fill-yellow-500" />}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge 
+                <StatusBadge
                   isActive={!!item.isActive}
                   onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
                   editable={!item.isDefault}
                 />
               </td>
               <td className="px-6 py-4 text-center">
-                <TableActionButton 
-                    onEdit={() => onEdit(item)} 
-                    onDelete={() => item.isDefault ? alert("Default items cannot be deleted.") : onDelete(item._id)} 
+                <TableActionButton
+                  itemName="inspection"
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) {
+                      return toast.error("Default items cannot be deleted.");
+                    }
+                    onDelete(item._id);
+                  }}
                 />
               </td>
             </tr>
           ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center py-10 text-gray-400">
+                No inspection items found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

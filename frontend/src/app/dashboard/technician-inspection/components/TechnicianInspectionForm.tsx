@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { ITechnicianInspectionList } from "../../../../../../common/master-interfaces/ITechnician.inspection.list.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 // Inside TechnicianInspectionForm.tsx
 const inspectionSchemaValidation = z.object({
@@ -28,15 +28,15 @@ interface Props {
     themeColor: string;
 }
 
-const TechnicianInspectionForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-    const {
-        register,
-        handleSubmit,
-        reset,
-        control,
-        setValue,
-        formState: { errors, isSubmitting },
-    } = useForm<FormData>({
+const TechnicianInspectionForm = ({ editingData, onClose, themeColor }: Props) => {
+    // Hook call
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/technician-inspection",
+        "technicianInspections",
+        "Technician Inspection"
+    );
+
+    const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(inspectionSchemaValidation),
         defaultValues: {
             technicianInspection: "",
@@ -58,28 +58,32 @@ const TechnicianInspectionForm = ({ editingData, onClose, onRefresh, themeColor 
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = {
+            ...values,
+            userId: user.id || user._id,
+            isDeleted: false,
+            technicianInspectionDescription: values.technicianInspectionDescription || ""
+        };
 
-            const payload = {
-                ...values,
-                userId: user.id || user._id,
-                isDeleted: false,
-                // Add this line to satisfy the backend validation
-                technicianInspectionDescription: values.technicianInspectionDescription || ""
-            };
-
-            if (editingData?._id) {
-                await updateItem("/technician-inspection", editingData._id, payload);
-            } else {
-                await createItem("/technician-inspection", payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            console.error("Backend Validation Error:", error.response?.data);
-            alert(error.response?.data?.message || "Error saving data");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                }
+            });
         }
     };
 
@@ -137,7 +141,7 @@ const TechnicianInspectionForm = ({ editingData, onClose, onRefresh, themeColor 
                     type="submit"
                     label={editingData ? "Update Inspection" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "../../../../../helper/apiHelper";
 import { ITicketStatus } from "../../../../../../../common/Ticket-management-system/ITicketStatus.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const ticketStatusFormSchema = z.object({
   code: z.string().trim().min(1, "Status code is required"),
@@ -31,16 +31,22 @@ interface Props {
 const TicketStatusForm = ({
   editingData,
   onClose,
-  onRefresh,
   themeColor,
 }: Props) => {
+  // Hook call
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/ticket-status",
+    "ticketStatuses",
+    "Ticket Status"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<TicketStatusFormData>({
     resolver: zodResolver(ticketStatusFormSchema),
     defaultValues: {
@@ -67,20 +73,27 @@ const TicketStatusForm = ({
   }, [editingData, reset]);
 
   const onSubmit = async (values: TicketStatusFormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/ticket-status", editingData._id, payload);
-      } else {
-        await createItem("/ticket-status", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      // Update Mutation
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          }
+        }
+      );
+    } else {
+      // Create Mutation
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        }
+      });
     }
   };
 
@@ -153,7 +166,7 @@ const TicketStatusForm = ({
           type="submit"
           label={editingData ? "Update Status" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />
