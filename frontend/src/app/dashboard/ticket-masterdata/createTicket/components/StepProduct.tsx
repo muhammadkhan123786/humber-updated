@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Loader2, Check } from "lucide-react";
 import { Controller } from "react-hook-form";
 import { CustomSelect } from "../../../../common-form/CustomSelect";
@@ -12,13 +12,18 @@ interface StepProductProps {
   vehicles: any[];
   isLoadingVehicles: boolean;
   customers: any[];
+  brands: any[];
+  models: any[];
+  colors: any[];
 }
 
 const StepProduct: React.FC<StepProductProps> = ({
   form,
   vehicles,
   isLoadingVehicles,
-  customers,
+  brands,
+  models,
+  colors,
 }) => {
   const {
     watch,
@@ -28,26 +33,47 @@ const StepProduct: React.FC<StepProductProps> = ({
   } = form;
 
   const selectedVehicleId = watch("vehicleId");
-  const selectedCustomerId = watch("customerId");
-  // FIX: Set default to "Customer Product" (matching schema)
   const productOwnership = watch("productOwnership") || "Customer Product";
 
+  // LOGIC: Watch the selected Brand (Make) ID from the manual form
+  const selectedManualMake = watch("manualMake");
+
   const vehicleDetails = vehicles.find((v) => v._id === selectedVehicleId);
-  const selectedCustomer = customers.find(
-    (c: any) => c._id === selectedCustomerId,
-  );
 
-  const ownershipTypeDescription =
-    selectedCustomer?.customerType === "domestic"
-      ? "Customer Owned"
-      : selectedCustomer?.customerType === "corporate"
-        ? "Company Owned"
-        : "";
-
+  // --- MAP OPTIONS ---
   const vehicleOptions = vehicles.map((v: any) => ({
     id: v._id,
     label: `${v.vehicleBrandId?.brandName} (${v.vehicleModelId?.modelName})`,
   }));
+
+  const brandOptions = brands.map((b: any) => ({
+    id: b._id,
+    label: b.brandName,
+  }));
+
+  // LOGIC: Filter models based on selected brand ID, similar to your BrandModelInfo component
+  const filteredModelOptions = useMemo(() => {
+    if (!selectedManualMake) return [];
+
+    return models
+      .filter((m: any) => {
+        // Handle both object and string formats for brandId to find match
+        const brandId =
+          typeof m.brandId === "object" ? m.brandId?._id : m.brandId;
+        return brandId === selectedManualMake;
+      })
+      .map((m: any) => ({
+        id: m._id,
+        label: m.modelName,
+      }));
+  }, [models, selectedManualMake]);
+
+  const colorOptions = colors.map((c: any) => ({
+    id: c._id,
+    label: c.colorName,
+  }));
+
+  const inputClassName = `h-11 px-4 bg-white rounded-xl border border-purple-100 text-sm outline-none transition-all hover:border-purple-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20`;
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
@@ -78,79 +104,8 @@ const StepProduct: React.FC<StepProductProps> = ({
           </div>
         </div>
       </div>
-
       <div className="p-10 space-y-8">
-        {/* Select Mobility Scooter */}
-        <div className="space-y-4">
-          <label className="flex items-center gap-2 text-indigo-950 text-base font-medium font-['Arial'] leading-6">
-            Select Mobility Scooter *
-            {isLoadingVehicles && (
-              <Loader2 className="animate-spin text-[#AD46FF]" size={18} />
-            )}
-          </label>
-
-          <Controller
-            name="vehicleId"
-            control={form.control}
-            render={({ field }) => (
-              <CustomSelect
-                options={vehicleOptions}
-                value={field.value}
-                onChange={(id: string) => {
-                  field.onChange(id);
-                }}
-                placeholder={
-                  isLoadingVehicles
-                    ? "Searching records..."
-                    : "Select a product"
-                }
-                error={!!errors.vehicleId}
-              />
-            )}
-          />
-        </div>
-
-        {vehicleDetails && (
-          <div className="space-y-4 animate-in fade-in duration-500">
-            <div className="self-stretch w-full px-6 pt-6 pb-6 bg-linear-to-br from-purple-50 to-pink-50 rounded-2xl outline-1 outline-offset-1 outline-purple-100 flex flex-col justify-start items-start gap-4">
-              <div className="self-stretch h-5 inline-flex justify-start items-start">
-                <div className="flex-1 text-purple-900 text-sm font-bold font-['Arial'] leading-5">
-                  Product Details
-                </div>
-              </div>
-              <div className="self-stretch grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[
-                  {
-                    label: "Make",
-                    value: vehicleDetails.vehicleBrandId?.brandName,
-                  },
-                  {
-                    label: "Model",
-                    value: vehicleDetails.vehicleModelId?.modelName,
-                  },
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="px-3 py-3 bg-white/60 rounded-xl flex flex-col justify-start items-start gap-1 border border-white/40 shadow-sm"
-                  >
-                    <div className="self-stretch h-4 inline-flex justify-start items-start">
-                      <div className="flex-1 text-purple-600 text-xs font-normal font-['Arial'] leading-4">
-                        {item.label}
-                      </div>
-                    </div>
-                    <div className="self-stretch min-h-5 inline-flex justify-start items-start">
-                      <div className="flex-1 text-gray-700 text-sm font-normal font-['Arial'] capitalize leading-5 truncate">
-                        {item.value || "Not Set"}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Product Ownership Toggle - FIXED VALUES */}
+        {/* Product Ownership Toggle */}
         <div className="space-y-4">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Product Ownership *
@@ -159,118 +114,228 @@ const StepProduct: React.FC<StepProductProps> = ({
             <div
               onClick={() =>
                 setValue("productOwnership", "Company product", {
-                  // CHANGED
                   shouldValidate: true,
                 })
               }
               className={`relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                productOwnership === "Company product" // CHANGED
+                productOwnership === "Company product"
                   ? "bg-linear-to-br from-blue-500 to-cyan-500 border-transparent text-white shadow-lg scale-[1.02]"
                   : "bg-white border-gray-100 text-gray-600 hover:border-gray-200"
               }`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors duration-300 ${
-                  productOwnership === "Company product" // CHANGED
-                    ? "bg-white/20"
-                    : "bg-gray-100"
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${productOwnership === "Company product" ? "bg-white/20" : "bg-gray-100"}`}
               >
                 🏢
               </div>
               <div className="flex-1">
                 <p className="font-bold text-sm">Company Product</p>
                 <p
-                  className={`text-xs ${
-                    productOwnership === "Company product" // CHANGED
-                      ? "text-white/80"
-                      : "text-gray-400"
-                  }`}
+                  className={`text-xs ${productOwnership === "Company product" ? "text-white/80" : "text-gray-400"}`}
                 >
                   Owned by company
                 </p>
               </div>
-              {productOwnership === "Company product" && ( // CHANGED
-                <Check
-                  size={20}
-                  className="text-white animate-in zoom-in duration-300"
-                />
+              {productOwnership === "Company product" && (
+                <Check size={20} className="text-white animate-in zoom-in" />
               )}
             </div>
 
             <div
               onClick={() =>
                 setValue("productOwnership", "Customer Product", {
-                  // CHANGED
                   shouldValidate: true,
                 })
               }
               className={`relative flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                productOwnership === "Customer Product" // CHANGED
+                productOwnership === "Customer Product"
                   ? "bg-linear-to-br from-purple-500 to-pink-500 border-transparent text-white shadow-lg scale-[1.02]"
                   : "bg-white border-gray-100 text-gray-600 hover:border-gray-200"
               }`}
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-xl transition-colors duration-300 ${
-                  productOwnership === "Customer Product" // CHANGED
-                    ? "bg-white/20"
-                    : "bg-gray-100"
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${productOwnership === "Customer Product" ? "bg-white/20" : "bg-gray-100"}`}
               >
                 👤
               </div>
               <div className="flex-1">
                 <p className="font-bold text-sm">Customer Product</p>
                 <p
-                  className={`text-xs ${
-                    productOwnership === "Customer Product" // CHANGED
-                      ? "text-white/80"
-                      : "text-gray-400"
-                  }`}
+                  className={`text-xs ${productOwnership === "Customer Product" ? "text-white/80" : "text-gray-400"}`}
                 >
                   Owned by customer
                 </p>
               </div>
-              {productOwnership === "Customer Product" && ( // CHANGED
-                <Check
-                  size={20}
-                  className="text-white animate-in zoom-in duration-300"
-                />
+              {productOwnership === "Customer Product" && (
+                <Check size={20} className="text-white animate-in zoom-in" />
               )}
             </div>
           </div>
         </div>
 
-        {/* Serial Number Input - Fixed field name */}
-        <div className="space-y-4">
-          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
-            Serial Number *
-          </label>
-          <input
-            {...register("productSerialNumber", { required: true })}
-            type="text"
-            placeholder="Enter serial number (e.g., SN-2024-001)"
-            className={`flex h-12 w-full rounded-md border-2 bg-gray-50/50 px-3 py-1 text-base md:text-sm outline-none transition-all hover:border-pink-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 ${
-              errors.productSerialNumber
-                ? "border-red-400"
-                : "border-purple-100"
-            }`}
-          />
-        </div>
+        {/* MANUAL FORM FOR CUSTOMER PRODUCT */}
+        {productOwnership === "Customer Product" && (
+          <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
+            <div className="self-stretch w-full px-6 pt-6 pb-6 bg-linear-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 flex flex-col gap-4">
+              <div className="text-purple-900 text-sm font-bold font-['Arial']">
+                Enter Product Details Manually
+              </div>
 
-        {/* Purchase Date Input */}
-        <div className="space-y-4">
-          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
-            Purchase Date *
-          </label>
-          <div className="relative">
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-indigo-950 text-base font-medium">
+                    Product Name *
+                  </label>
+                  <input
+                    {...register("manualProductName")}
+                    placeholder="e.g., Pride Go-Go Elite Traveller"
+                    className={inputClassName}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* BRAND SELECT */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-indigo-950 text-base font-medium">
+                      Make *
+                    </label>
+                    <Controller
+                      name="manualMake"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CustomSelect
+                          options={brandOptions}
+                          value={field.value}
+                          onChange={(val: any) => {
+                            field.onChange(val);
+                            setValue("manualModel", "");
+                          }}
+                          placeholder="Select Make"
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-indigo-950 text-base font-medium">
+                      Model *
+                    </label>
+                    <Controller
+                      name="manualModel"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CustomSelect
+                          options={filteredModelOptions} // Logic: Use filtered options
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={
+                            selectedManualMake
+                              ? "Select Model"
+                              : "Select Make first"
+                          }
+                          disabled={!selectedManualMake}
+                        />
+                      )}
+                    />
+                  </div>
+                  {/* YEAR INPUT */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-indigo-950 text-base font-medium">
+                      Year *
+                    </label>
+                    <input
+                      {...register("manualYear")}
+                      placeholder="e.g., 2023"
+                      className={inputClassName}
+                    />
+                  </div>
+                  {/* COLOR SELECT */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-indigo-950 text-base font-medium">
+                      Color *
+                    </label>
+                    <Controller
+                      name="manualColor"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CustomSelect
+                          options={colorOptions}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Select Color"
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* COMPANY PRODUCT DROPDOWN */}
+        {productOwnership === "Company product" && (
+          <div className="space-y-4 animate-in fade-in duration-500">
+            <label className="flex items-center gap-2 text-indigo-950 text-base font-medium leading-6">
+              Select Mobility Scooter *
+              {isLoadingVehicles && (
+                <Loader2 className="animate-spin text-[#AD46FF]" size={18} />
+              )}
+            </label>
+            <Controller
+              name="vehicleId"
+              control={form.control}
+              render={({ field }) => (
+                <CustomSelect
+                  options={vehicleOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder={
+                    isLoadingVehicles ? "Searching..." : "Select a product"
+                  }
+                  error={!!errors.vehicleId}
+                />
+              )}
+            />
+            {vehicleDetails && (
+              <div className="self-stretch w-full px-6 pt-6 pb-6 bg-linear-to-br from-purple-50 to-pink-50 rounded-2xl border border-purple-100 grid grid-cols-2 gap-3">
+                <div className="px-3 py-3 bg-white rounded-xl border border-white/40 shadow-sm">
+                  <div className="text-purple-600 text-xs">Make</div>
+                  <div className="text-gray-700 text-sm font-bold">
+                    {vehicleDetails.vehicleBrandId?.brandName}
+                  </div>
+                </div>
+                <div className="px-3 py-3 bg-white rounded-xl border border-white/40 shadow-sm">
+                  <div className="text-purple-600 text-xs">Model</div>
+                  <div className="text-gray-700 text-sm font-bold">
+                    {vehicleDetails.vehicleModelId?.modelName}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Common Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-indigo-950 text-base font-medium">
+              Serial Number *
+            </label>
             <input
-              {...register("purchaseDate", { required: true })} // Removed required validation
+              {...register("productSerialNumber", { required: true })}
+              placeholder="SN-2024-001"
+              className={`${inputClassName} w-full ${errors.productSerialNumber ? "border-red-400" : ""}`}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-indigo-950 text-base font-medium">
+              Purchase Date *
+            </label>
+            <input
+              {...register("purchaseDate", { required: true })}
               type="date"
-              className={`flex h-12 w-full rounded-md border-2 bg-gray-50/50 px-3 py-1 text-base md:text-sm outline-none transition-all hover:border-pink-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 ${
-                errors.purchaseDate ? "border-red-400" : "border-purple-100"
-              }`}
+              className={`${inputClassName} w-full ${errors.purchaseDate ? "border-red-400" : ""}`}
             />
           </div>
         </div>

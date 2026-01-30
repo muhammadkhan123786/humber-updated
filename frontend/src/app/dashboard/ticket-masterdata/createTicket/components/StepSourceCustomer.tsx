@@ -115,10 +115,11 @@ const StepSourceCustomer = ({ form, customers }: any) => {
             control={form.control}
             render={({ field }) => (
               <CustomSelect
+                isSearchable={true}
                 options={customerOptions}
                 value={field.value}
                 onChange={(id: string) => field.onChange(id)}
-                placeholder="Select a customer"
+                placeholder="Search and select a customer"
                 error={!!errors.customerId}
               />
             )}
