@@ -42,14 +42,14 @@ export interface IDriverCreateDTO<TDriverLicense = File[], TGovernmentId = File[
         relationship: string;
     };
 
-    documents?: {
-        driverLicense?: TDriverLicense;
-        governmentId?: TGovernmentId;
-        vehicleRegister?: TVehicleRegister;
-        insuranceCertificates?: TInsuranceCertificates;
-        backgroundChecks?: TBackgroundChecks;
-        otherDocuments?: TOtherDocuments;
-    };
+
+    driverLicense?: TDriverLicense;
+    governmentId?: TGovernmentId;
+    vehicleRegister?: TVehicleRegister;
+    insuranceCertificates?: TInsuranceCertificates;
+    backgroundChecks?: TBackgroundChecks;
+    otherDocuments?: TOtherDocuments;
+
     role?: string;
     driverPhoto: TDRIVERPHOTO;
 
