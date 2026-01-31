@@ -14,19 +14,24 @@ import {
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface StatusOption {
+  value: string;
+  label: string;
+}
+
 interface GRNFiltersProps {
   searchTerm: string;
-  // onSearchChange: (value: string) => void;
+  onSearchChange: (value: string) => void;
   selectedStatus: string;
-  // onStatusChange: (value: string) => void;
-  statuses: string[];
+  onStatusChange: (value: string) => void;
+  statuses: StatusOption[];
 }
 
 export const GRNFilters: React.FC<GRNFiltersProps> = ({
   searchTerm,
-  // onSearchChange,
+  onSearchChange,
   selectedStatus,
-  // onStatusChange,
+  onStatusChange,
   statuses
 }) => {
   return (
@@ -45,7 +50,7 @@ export const GRNFilters: React.FC<GRNFiltersProps> = ({
               <Input
                 placeholder="Search by GRN number, PO number, or supplier..."
                 value={searchTerm}
-                // onChange={(e) => onSearchChange(e.target.value)}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className={cn(
                   'pl-10 h-12 border-2 border-[#cffafe]',
                   'hover:border-[#a5f3fc] focus:border-[#06b6d4] transition-colors'
@@ -56,18 +61,19 @@ export const GRNFilters: React.FC<GRNFiltersProps> = ({
             {/* Status Select */}
             <Select
               value={selectedStatus}
-              // onValueChange={(value) => onStatusChange(value)}
+              onValueChange={(value) => onStatusChange(value)}
             >
               <SelectTrigger className="h-12 w-[200px] border-2 border-[#cffafe]">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
 
               <SelectContent>
-                {statuses?.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status === 'all'
-                      ? 'All Status'
-                      : status.charAt(0).toUpperCase() + status.slice(1)}
+                {statuses?.map((statusOption) => (
+                  <SelectItem 
+                    key={statusOption.value} 
+                    value={statusOption.value}
+                  >
+                    {statusOption.label}
                   </SelectItem>
                 ))}
               </SelectContent>

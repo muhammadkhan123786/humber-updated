@@ -257,17 +257,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
 import {
   GoodsReceivedNote,
   PurchaseOrder,
-  ReceivingItem,
-  
   GRNStats,
+  NewProductForm,
+  GoodsReceivedNoteItem as GRNItem
 } from "@/app/dashboard/inventory-dashboard/product-goods-received/types/goodsReceived";
 
-import { IGoodsReceivedNote, GoodsReceivedItem } from "../../../common/IGRN.interface";
-import { IPurchaseOrder } from "../../../common/IPurchase.order.interface";
 import {
   fetchGRNs,
   createGRN,
@@ -277,33 +274,16 @@ import {
 
 import { fetchOrders } from "../helper/purchaseOrderApi";
 
- interface NewProductForm {
-  productName: string;
-  sku: string;
-  orderedQuantity: number;
-  receivedQuantity: number;
-  unitPrice: number;
+export interface GoodsReceivedNoteItem extends GRNItem {
+  id?: string;
 }
-export interface GoodsReceivedNoteItem {
-id: string;
-  purchaseOrderItemId: string;
-  productName: string;
-  sku: string;
-  orderedQuantity: number;
-  receivedQuantity: number;
-  acceptedQuantity: number;
-  rejectedQuantity: number;
-  damageQuantity: number;
-  unitPrice: number;
-  condition: 'good' | 'damaged' | 'defective';
-  notes: string;
-}
+
 export const useGoodsReceived = () => {
   /* =========================================================
    * SERVER STATE
    * ======================================================= */
-  const [grns, setGrns] = useState<IGoodsReceivedNote[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<IPurchaseOrder[]>([]);
+  const [grns, setGrns] = useState<GoodsReceivedNote[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [grnNumber, setGRNNumber] = useState("");
   const [grnReference, setGRNReference] = useState("");
@@ -323,9 +303,10 @@ export const useGoodsReceived = () => {
   const [selectedPO, setSelectedPO] = useState<string>("");
   const [receivedBy, setReceivedBy] = useState("");
   const [grnNotes, setGRNNotes] = useState("");
-  const [receivingItems, setReceivingItems] = useState<ReceivingItem[]>([]);
+  const [receivingItems, setReceivingItems] = useState<GoodsReceivedNoteItem[]>([]);
 
   const [newProduct, setNewProduct] = useState<NewProductForm>({
+    purchaseOrderItemId: "",
     productName: "",
     sku: "",
     orderedQuantity: 0,
@@ -347,8 +328,9 @@ export const useGoodsReceived = () => {
 
       setGrns(grnRes.data);
       setTotal(grnRes.total);
-      setPurchaseOrders(poRes.data);
+       setPurchaseOrders(poRes.data as unknown as PurchaseOrder[]);
     } catch (error) {
+      console.error("Failed to load GRNs:", error);
       toast.error("Failed to load Goods Received Notes");
     } finally {
       setLoading(false);
@@ -366,9 +348,9 @@ export const useGoodsReceived = () => {
         const grnRefRes = await fetchNextDocumentNumber("GRN_REFERENCE");
         setGRNNumber(grnNumRes.nextNumber);
         setGRNReference(grnRefRes.nextNumber);
-        
       } catch (err) {
         console.error("Failed to fetch document numbers", err);
+        toast.error("Failed to fetch document numbers");
       }
     })();
   }, []);
@@ -393,21 +375,23 @@ export const useGoodsReceived = () => {
    * AVAILABLE PURCHASE ORDERS
    * ======================================================= */
   const availablePOs = useMemo(() => {
-    return purchaseOrders.filter((po) => po.status === "draft");
+    return purchaseOrders.filter(
+      po => po.status?.toLowerCase().trim() === "received"
+    );
   }, [purchaseOrders]);
-
 
   /* =========================================================
    * HANDLE PO SELECTION
    * ======================================================= */
   const handleSelectPO = (poId: string) => {
     setSelectedPO(poId);
-
     const po = purchaseOrders.find((p) => p._id === poId);
+    
     if (!po) return;
 
     // Build receiving items from PO items
-    const items: GoodsReceivedItem[] = po.items.map((item) => ({
+    const items: GoodsReceivedNoteItem[] = po.items.map((item) => ({
+      purchaseOrderItemId: item._id,
       productName: item.productName,
       sku: item.sku,
       orderedQuantity: item.quantity,
@@ -415,7 +399,7 @@ export const useGoodsReceived = () => {
       acceptedQuantity: 0,
       rejectedQuantity: 0,
       damageQuantity: 0,
-      condition: "good",
+      condition: "good" as const,
       notes: "",
       unitPrice: item.unitPrice,
     }));
@@ -427,13 +411,13 @@ export const useGoodsReceived = () => {
    * UPDATE RECEIVING ITEM
    * ======================================================= */
   const handleUpdateItem = (
-    itemId: string,
-    field: keyof ReceivingItem,
+    purchaseOrderItemId: string,
+    field: keyof GoodsReceivedNoteItem,
     value: any,
   ) => {
     setReceivingItems((items) =>
       items.map((item) => {
-        if (item.id !== itemId) return item;
+        if (item.purchaseOrderItemId !== purchaseOrderItemId) return item;
 
         const updated = { ...item, [field]: value };
 
@@ -457,36 +441,44 @@ export const useGoodsReceived = () => {
       return;
     }
 
+    // Filter out items with zero received quantity
+    const validItems = receivingItems.filter((i) => i.receivedQuantity > 0);
+    
+    if (validItems.length === 0) {
+      toast.error("At least one item must have received quantity greater than 0");
+      return;
+    }
+
     const payload: Partial<GoodsReceivedNote> = {
       purchaseOrderId: selectedPO,
       grnNumber,
       receivedBy,
       notes: grnNotes,
-      items: receivingItems.filter((i) => i.receivedQuantity > 0),
+      items: validItems,
     };
 
     try {
-     
-
       setLoading(true);
-       await createGRN(payload);
+      await createGRN(payload);
       toast.success("Goods Received Note created");
       resetForm();
-    } catch {
+      loadGRNs(); // Refresh the list
+    } catch (error) {
+      console.error("Failed to create GRN:", error);
       toast.error("Failed to create GRN");
     } finally {
       setLoading(false);
     }
   };
 
-    const handleAddManualProduct = async() => {
-    if (!newProduct.productName || !newProduct.sku || !newProduct.orderedQuantity || !newProduct.receivedQuantity || !newProduct.unitPrice) {
-      toast.error('Please fill in all product fields');
+  const handleAddManualProduct = () => {
+    if (!newProduct.productName || !newProduct.sku || newProduct.orderedQuantity <= 0 || newProduct.receivedQuantity <= 0 || newProduct.unitPrice <= 0) {
+      toast.error('Please fill in all product fields with valid values');
       return;
     }
 
-
-    const manualItem: GoodsReceivedNoteItem = {     
+    const manualItem: GoodsReceivedNoteItem = {
+      purchaseOrderItemId: `manual-${Date.now()}`,
       productName: newProduct.productName,
       sku: newProduct.sku,
       orderedQuantity: newProduct.orderedQuantity,
@@ -501,6 +493,7 @@ export const useGoodsReceived = () => {
 
     setReceivingItems(prev => [...prev, manualItem]);
     setNewProduct({
+      purchaseOrderItemId: "",
       productName: '',
       sku: '',
       orderedQuantity: 0,
@@ -510,6 +503,7 @@ export const useGoodsReceived = () => {
     
     toast.success('Product added successfully!');
   };
+
   /* =========================================================
    * DELETE GRN
    * ======================================================= */
@@ -532,11 +526,12 @@ export const useGoodsReceived = () => {
     setGRNNotes("");
     setReceivingItems([]);
     setNewProduct({
+      purchaseOrderItemId: "",
       productName: "",
       sku: "",
-      orderedQuantity: "",
-      receivedQuantity: "",
-      unitPrice: "",
+      orderedQuantity: 0,
+      receivedQuantity: 0,
+      unitPrice: 0,
     });
   };
 
@@ -552,6 +547,8 @@ export const useGoodsReceived = () => {
     loading,
     page,
     total,
+    grnNumber,
+    grnReference,
 
     // filters
     searchTerm,
@@ -573,11 +570,12 @@ export const useGoodsReceived = () => {
     setNewProduct,
 
     // actions
-    setSelectedPO: handleSelectPO,
+    handleSelectPO,
     handleUpdateItem,
     handleCreateGRN,
     handleDeleteGRN,
     resetForm,
-    handleAddManualProduct
+    handleAddManualProduct,
+    loadGRNs
   };
 };

@@ -12,6 +12,14 @@ import { useGoodsReceived } from '@/hooks/useGoodsReceived';
 import { GoodsReceivedNote } from '../types/goodsReceived';
 import { toast } from 'sonner';
 
+// Add statuses constant
+const statuses = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'draft', label: 'Draft' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'discrepancy', label: 'Discrepancy' },
+];
+
 export default function GoodsReceivedPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -25,7 +33,7 @@ export default function GoodsReceivedPage() {
     selectedStatus,
     setSelectedStatus,
     selectedPO,
-    setSelectedPO,
+    handleSelectPO,
     receivedBy,
     setReceivedBy,
     grnNotes,
@@ -34,12 +42,11 @@ export default function GoodsReceivedPage() {
     newProduct,
     setNewProduct,
     availablePOs,
-    // statuses,
     handleUpdateItem,
     handleAddManualProduct,
-    // handleRemoveItem,
     handleCreateGRN,
-    resetForm
+    resetForm,
+    loadGRNs
   } = useGoodsReceived();
 
   const handleOpenCreateGRN = () => {
@@ -53,13 +60,16 @@ export default function GoodsReceivedPage() {
   };
 
   const handleDownloadGRN = (grn: GoodsReceivedNote) => {
-    // In a real app, this would download the GRN as PDF
     toast.info(`Downloading GRN: ${grn.grnNumber}`);
   };
 
-  const handleCreateAndClose = () => {
-    handleCreateGRN();
-    // setIsCreateDialogOpen(false);
+  const handleCreateAndClose = async () => {
+    try {
+      await handleCreateGRN();
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to create GRN:", error);
+    }
   };
 
   const handleCloseCreateDialog = () => {
@@ -100,7 +110,7 @@ export default function GoodsReceivedPage() {
         onSearchChange={setSearchTerm}
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
-        // statuses={statuses}
+        statuses={statuses}
       />
       
       <GRNTable
@@ -114,20 +124,20 @@ export default function GoodsReceivedPage() {
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         selectedPO={selectedPO}
-        onSelectPO={setSelectedPO}
+        onSelectPO={handleSelectPO}
         receivedBy={receivedBy}
         onReceivedByChange={setReceivedBy}
         grnNotes={grnNotes}
         onGRNNotesChange={setGRNNotes}
         receivingItems={receivingItems}
-        // onUpdateItem={handleUpdateItem}
-        // onRemoveItem={handleRemoveItem}
-        // newProduct={newProduct}
-        // onNewProductChange={setNewProduct}
+        onUpdateItem={handleUpdateItem as any}
+        newProduct={newProduct}
+        onNewProductChange={setNewProduct}
         onAddManualProduct={handleAddManualProduct}
-        // availablePOs={availablePOs}
+        availablePOs={availablePOs}
         onCreateGRN={handleCreateAndClose}
         onCancel={handleCloseCreateDialog}
+        
       />
 
       <ViewGRNDialog

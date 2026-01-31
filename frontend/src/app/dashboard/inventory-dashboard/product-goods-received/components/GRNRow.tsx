@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/form/CustomButton";
 import { Badge } from "@/components/form/Badge";
-import { GoodsReceivedNote } from "../types/goodsReceived";
+import { GoodsReceivedNote, PurchaseOrder } from "../types/goodsReceived";
 import {
   getStatusColor,
   getStatusIcon,
@@ -64,20 +64,22 @@ export const GRNRow: React.FC<GRNRowProps> = ({
             "bg-gradient-to-r from-emerald-100 to-teal-100",
           )}
         >
-          {grn?.purchaseOrderId?.orderNumber}
+           {(grn.purchaseOrderId as PurchaseOrder)?.orderNumber}
 
         </span>
       </td>
       <td className="p-4">
         <p className="font-medium text-gray-900">
-          {grn.purchaseOrderId?.supplier.contactInformation.primaryContactName}
+        {(grn.purchaseOrderId as PurchaseOrder)?.supplier?.contactInformation?.primaryContactName}
         </p>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
           <span className="text-gray-700 text-sm">
-            {new Date(grn.purchaseOrderId?.expectedDelivery).toLocaleDateString()}
+           {(grn.purchaseOrderId as PurchaseOrder)?.expectedDelivery 
+        ? new Date((grn.purchaseOrderId as PurchaseOrder).expectedDelivery).toLocaleDateString()
+        : 'No date'}
           </span>
         </div>
       </td>

@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
 import { Card, CardContent } from '@/components/form/Card';
-import { GoodsReceivedNote } from '../types/goodsReceived';
+import { GoodsReceivedNote, PurchaseOrder } from '../types/goodsReceived';
 import { getStatusColor, getStatusIcon } from '../utils/goodsReceivedUtils';
 import { Calendar, User, Download, Package } from 'lucide-react';
 import * as React from 'react';
@@ -29,7 +29,7 @@ export const ViewGRNDialog: React.FC<ViewGRNDialogProps> = ({
     // In a real app, this would generate and download a PDF
     alert('PDF export functionality would be implemented here');
   };
-
+const purchaseOrder = grn.purchaseOrderId as PurchaseOrder;
   console.log("Viewing GRN:", grn);
 const totals = React.useMemo(() => {
   return grn.items.reduce(
@@ -70,24 +70,35 @@ const totals = React.useMemo(() => {
 
         <div className="space-y-6">
           {/* GRN Info */}
-          <div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-            <div>
-              <p className="text-sm text-gray-600">Purchase Order</p>
-              <p className="font-semibold text-gray-900"> {grn?.purchaseOrderId?.orderNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Supplier</p>
-              <p className="font-semibold text-gray-900">{grn.purchaseOrderId?.supplier.contactInformation.primaryContactName}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Received Date</p>
-              <p className="font-semibold text-gray-900"> {new Date(grn.purchaseOrderId?.expectedDelivery).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Received By</p>
-              <p className="font-semibold text-gray-900">{grn.receivedBy}</p>
-            </div>
-          </div>
+       
+
+
+<div className="grid grid-cols-2 gap-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+  <div>
+    <p className="text-sm text-gray-600">Purchase Order</p>
+    <p className="font-semibold text-gray-900">
+      {purchaseOrder?.orderNumber}
+    </p>
+  </div>
+  <div>
+    <p className="text-sm text-gray-600">Supplier</p>
+    <p className="font-semibold text-gray-900">
+      {purchaseOrder?.supplier?.contactInformation?.primaryContactName}
+    </p>
+  </div>
+  <div>
+    <p className="text-sm text-gray-600">Expected Delivery</p>
+    <p className="font-semibold text-gray-900">
+      {purchaseOrder?.expectedDelivery
+        ? new Date(purchaseOrder.expectedDelivery).toLocaleDateString()
+        : 'No date'}
+    </p>
+  </div>
+  <div>
+    <p className="text-sm text-gray-600">Received By</p>
+    <p className="font-semibold text-gray-900">{grn.receivedBy}</p>
+  </div>
+</div>
 
           {/* Summary */}
         <div className="grid grid-cols-4 gap-4">
@@ -142,7 +153,7 @@ const totals = React.useMemo(() => {
                 </thead>
                 <tbody>
                   {grn.items.map(item => (
-                    <tr key={item.id} className="border-t border-gray-100">
+                    <tr key={item._id!} className="border-t border-gray-100">
                       <td className="p-3">
                         <p className="font-medium">{item.productName}</p>
                         <p className="text-xs text-gray-500 font-mono">{item.sku}</p>

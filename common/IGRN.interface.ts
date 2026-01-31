@@ -23,29 +23,22 @@ export interface GoodsReceivedItem {
 }
 
 export interface IGoodsReceivedNote {
-  id: string;
-
+  _id: string;
   grnNumber: string;
   purchaseOrderId: string;
   purchaseOrderNumber: string;
-
   supplierId: string;
   supplierName: string;
-
   receivedDate: Date;
   receivedBy: string;
-
   items: GoodsReceivedItem[];
-
   totalOrdered: number;
   totalReceived: number;
   totalAccepted: number;
   totalRejected: number;
-
   status: "draft" | "completed";
   notes?: string;
   signature?: string;
-
   createdAt: Date;
   updatedAt: Date;
 }
