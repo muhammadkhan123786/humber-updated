@@ -70,9 +70,6 @@ const customerTicketBaseController = new AdvancedGenericController({
         { path: "contactId" },
       ],
     },
-    {
-      path: "investigationParts.partId",
-    },
   ],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],

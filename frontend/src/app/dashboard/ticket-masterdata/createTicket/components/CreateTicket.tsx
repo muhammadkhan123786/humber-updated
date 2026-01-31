@@ -40,9 +40,9 @@ const CreateTicket = ({
     vehicles,
     priorities,
     technicians,
-    decisions,
     statuses,
     brands,
+    handleAddVehicle,
     models,
     colors,
     setError,
@@ -81,9 +81,16 @@ const CreateTicket = ({
   }, [initialEditMode, initialData, editingId, setEditData]);
 
   const handleFinalSubmit = async () => {
+    console.log("handleFinalSubmit called");
+    console.log("Current step:", currentStep);
+    console.log("Form values:", form.getValues());
     try {
-      const isValid = await form.trigger();
+      const isValid = await form.trigger(undefined, { shouldFocus: true });
+      console.log("Form validation result:", isValid);
+
       if (!isValid) {
+        const errors = form.formState.errors;
+        console.log("Form errors:", errors);
         setError("Please check the form for errors.");
         return;
       }
@@ -107,11 +114,38 @@ const CreateTicket = ({
 
     if (currentStep === 1) return !!(values.customerId && values.ticketSource);
     if (currentStep === 2) {
-      return !!(
-        values.vehicleId &&
-        values.productSerialNumber &&
-        values.purchaseDate
-      );
+      if (!values.customerId) {
+        console.log("Step 2 invalid: No customer selected");
+        return false;
+      }
+
+      // If vehicle is selected from dropdown, that's sufficient
+      if (values.vehicleId) {
+        console.log("Step 2 valid: Vehicle selected from dropdown");
+        return true;
+      }
+
+      // If no vehicle selected, check if we're in manual mode
+      // Check if any manual field is being filled (partial entry)
+      const isManualMode =
+        values.manualProductName || values.manualMake || values.manualModel;
+
+      if (isManualMode) {
+        // For manual entry, require all necessary fields
+        return Boolean(
+          values.vehicleType &&
+          values.manualProductName &&
+          values.manualMake &&
+          values.manualModel &&
+          values.manualYear &&
+          values.manualColor &&
+          values.productSerialNumber &&
+          values.purchaseDate,
+        );
+      }
+
+      // If neither dropdown selected nor manual mode started, it's invalid
+      return false;
     }
 
     if (currentStep === 3) {
@@ -126,7 +160,6 @@ const CreateTicket = ({
   };
 
   const handleNextStep = () => {
-    // 2. logic updated: Step 4 is now the final step
     if (currentStep === 4) {
       handleFinalSubmit();
     } else if (isStepValid()) {
@@ -259,14 +292,11 @@ const CreateTicket = ({
               models={models}
               colors={colors}
               isLoadingVehicles={isLoading}
+              handleAddVehicle={handleAddVehicle}
             />
           )}
           {currentStep === 3 && (
-            <StepIssueDetails
-              form={form}
-              isLoading={isLoading}
-              decisions={decisions}
-            />
+            <StepIssueDetails form={form} isLoading={isLoading} />
           )}
           {/* 4. Removed the step 5 component block */}
           {currentStep === 4 && (
