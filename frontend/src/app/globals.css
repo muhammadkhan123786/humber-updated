@@ -3,6 +3,7 @@
 
 @import "tailwindcss";
 
+
 /* 1. Override Radix UI's internal font variable */
 :root, .radix-themes {
   --default-font-family: Arial, Helvetica, sans-serif !important;
@@ -17,6 +18,8 @@
 body {
   font-family: Arial, Helvetica, sans-serif !important;
 }
+
+
 
 
 /* @theme {

@@ -69,6 +69,7 @@ import grnRoutes from "./routes/grn.routes";
 import goodsReturnRoutes from "./routes/goodsReturn.routes";
 import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
+import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 
 
 // Create express app
@@ -280,7 +281,7 @@ app.use(
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
-app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
+app.use(`${process.env.API_PREFIX}/icons`,  iconsRouter);
 
 //16-02-2026
 app.use(`${process.env.API_PREFIX}/suppliers`,  SupplierRouters);
@@ -331,6 +332,11 @@ app.use(
   
   goodsReturnRoutes,
 );
+
+app.use(
+  `${process.env.API_PREFIX}/marketplace-templates`,
+  marketplaceTemplateRoutes,
+)
 
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 

@@ -1,8 +1,18 @@
+import { col } from 'framer-motion/client';
 import { getAll } from "./apiHelper";
 
 interface DropdownOption {
   value: string;
-  label: string;
+  label: string;  
+}
+// Color dropdown needs colorCode
+export interface ColorDropdownOption extends DropdownOption {
+  colorCode: string;
+}
+
+// Icon dropdown needs icon array
+export interface IconDropdownOption extends DropdownOption {
+  icon: string[];
 }
 
 export interface DropdownData {
@@ -18,6 +28,8 @@ export interface DropdownData {
   units: DropdownOption[];
   fetchWherehouesStatus: DropdownOption[];
   fetchWherehoues: DropdownOption[];
+  fetchColors: ColorDropdownOption[];
+  fetchIcons: IconDropdownOption[];
 }
 
 export class DropdownService {
@@ -51,6 +63,8 @@ export class DropdownService {
         this.fetchUnits(),
         this.fetchWherehoues(),
         this.fetchWherehouesStatus(),
+        this.fetchColors(),
+        this.fetchIcons(),
       ]);
 
       return {
@@ -66,6 +80,8 @@ export class DropdownService {
         units,
         fetchWherehoues: warehouses,
         fetchWherehouesStatus: warehouseStatus,
+        fetchColors: colors,
+        fetchIcons: [], 
       };
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
@@ -179,9 +195,9 @@ export class DropdownService {
     }
   }
 
-  private static async fetchColors(): Promise<DropdownOption[]> {
+  private static async fetchColors(): Promise<ColorDropdownOption[]> {
     try {
-      const response = await getAll<{ _id: string; colorName: string }>(
+      const response = await getAll<{ _id: string; colorName: string, colorCode: string }>(
         "/colors",
         { limit: 100 }
       );
@@ -189,6 +205,7 @@ export class DropdownService {
       return response.data.map((item) => ({
         value: item._id,
         label: item.colorName,
+        colorCode: item.colorCode,
       }));
     } catch (error) {
       console.error("Error fetching colors:", error);
@@ -339,6 +356,25 @@ export class DropdownService {
     }
   }
 
+private static async fetchIcons(): Promise<IconDropdownOption[]> {
+  try {
+    const response = await getAll<{
+      _id: string;
+      icon: string[];
+      iconName: string;
+    }>("/icons", { limit: 100 });
+      return response.data.map((item) => ({
+        value: item._id,
+        label: item.iconName,
+         icon: item.icon, 
+      }));
+  } catch (error) {
+    console.error("Error fetching icons:", error);
+    return [];
+  }
+}
+
+
 
   // DO NOT create a new class
 // ADD this method inside existing DropdownService class
@@ -374,6 +410,21 @@ static async fetchOnlyWarehouse() {
     };
   } catch (error) {
     console.error("Error fetching only warehouse dropdowns", error);
+    throw error;
+  }
+}
+
+static async fetchColorsAndIcons() {
+  try {
+   ;
+    const colors = await this.fetchColors();
+    const icons = await this.fetchIcons();
+    return {
+      colors,
+      icons,
+    };
+  } catch (error) {
+    console.error("Error fetching only colors and icons dropdowns", error);
     throw error;
   }
 }
