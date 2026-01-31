@@ -4,19 +4,19 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/form/Select';
-import { PurchaseOrder, Supplier } from '../types/purchaseOrders';
+import { IPurchaseOrder, ISupplier } from '../types/purchaseOrders';
 import { getStatusColor, getStatusIcon } from '../utils/purchaseOrderUtils';
 import { Calendar, Truck, Eye, Edit, Trash2 } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface PurchaseOrderRowProps {
-  order: PurchaseOrder;
+  order: IPurchaseOrder;
   index: number;
-  onView: (order: PurchaseOrder) => void;
-  onEdit: (order: PurchaseOrder) => void;
+  onView: (order: IPurchaseOrder) => void;
+  onEdit: (order: IPurchaseOrder) => void;
   onDelete: (orderId: string) => void;
-  onStatusChange: (orderId: string, newStatus: PurchaseOrder['status']) => void;
+  onStatusChange: (orderId: string, newStatus: IPurchaseOrder['status']) => void;
 }
 
 export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
@@ -29,8 +29,8 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
 }) => {
   const StatusIcon = getStatusIcon(order.status);
 const isSupplierObject = (
-  supplier: string | Supplier
-): supplier is Supplier => {
+  supplier: string | ISupplier
+): supplier is ISupplier => {
   return typeof supplier === 'object' && supplier !== null;
 };
 
@@ -88,7 +88,7 @@ const isSupplierObject = (
       <td className="p-4">
         <Select
           value={order.status}
-          onValueChange={(value) => onStatusChange(order._id, value as PurchaseOrder['status'])}
+          onValueChange={(value) => onStatusChange(order._id!, value as IPurchaseOrder['status'])}
         >
           <SelectTrigger className={cn(
             "w-40 border-0 font-medium shadow-sm text-white",
@@ -130,7 +130,7 @@ const isSupplierObject = (
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onDelete(order._id)}
+            onClick={() => onDelete(order._id!)}
             className="hover:bg-red-50 hover:text-red-600"
           >
             <Trash2 className="h-4 w-4" />

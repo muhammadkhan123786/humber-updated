@@ -6,12 +6,14 @@ export interface IPurchaseOrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  orderContactEmail?: string;
 }
 
 export interface IPurchaseOrder<TUserId = string> extends IBaseEntity<TUserId> {
   orderNumber: string;
   supplier: string;
   orderDate: Date;
+  orderContactEmail: string;
   expectedDelivery: Date;
   status: 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
   items: IPurchaseOrderItem[];

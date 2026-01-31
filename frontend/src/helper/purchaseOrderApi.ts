@@ -1,6 +1,6 @@
 import axios from "axios";
 import { IPurchaseOrder, IPurchaseOrderItem } from "../../../common/IPurchase.order.interface";
-import { ISupplier } from "@common/suppliers/ISuppliers.interface";
+import { ISupplier, PurchaseOrderFilters } from "../app/dashboard/inventory-dashboard/product-Orders/types/purchaseOrders";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders`;
 const API_URL1 = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers`;
@@ -13,12 +13,7 @@ interface PurchaseOrderResponse {
   limit: number;
 }
 
-interface PurchaseOrderFilters {
-  status?: string;
-  startDate?: string;
-  endDate?: string;
-  supplier?: string;
-}
+
 
 const getAuthConfig = () => {
   const token = localStorage.getItem("token");
@@ -297,7 +292,7 @@ export const validatePurchaseOrderItems = (items: IPurchaseOrderItem[]): string[
 export const fetchSuppliers = async (
   page = 1,
   limit = 10,
-  ): Promise<ISupplier> => {
+  ): Promise<ISupplier[]> => {
   const params: any = {
     userId: getUserId(),
     page,

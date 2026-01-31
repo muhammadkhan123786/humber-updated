@@ -3,14 +3,14 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/form/Card';
 import { PurchaseOrderRow } from './PurchaseOrderRow';
-import { PurchaseOrder } from '../types/purchaseOrders';
+import { IPurchaseOrder } from '../types/purchaseOrders';
 
 interface PurchaseOrdersTableProps {
-  orders: PurchaseOrder[];
-  onView: (order: PurchaseOrder) => void;
-  onEdit: (order: PurchaseOrder) => void;
+  orders: IPurchaseOrder[];
+  onView: (order: IPurchaseOrder) => void;
+  onEdit: (order: IPurchaseOrder) => void;
   onDelete: (orderId: string) => void;
-  onStatusChange: (orderId: string, newStatus: PurchaseOrder['status']) => void;
+  onStatusChange: (orderId: string, newStatus: IPurchaseOrder['status']) => void;
 }
 
 export const PurchaseOrdersTable: React.FC<PurchaseOrdersTableProps> = ({

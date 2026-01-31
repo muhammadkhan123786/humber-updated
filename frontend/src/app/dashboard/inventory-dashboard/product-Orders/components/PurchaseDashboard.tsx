@@ -10,7 +10,7 @@ import { PurchaseOrderForm } from './PurchaseOrderForm';
 import { ViewOrderDialog } from './ViewOrderDialog';
 import { DeleteOrderDialog } from './DeleteOrderDialog';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
-import { IPurchaseOrder } from '../../../../../common/IPurchase.order.interface';
+import { IPurchaseOrder } from '../types/purchaseOrders';
 
 export default function PurchaseOrdersPage() {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);

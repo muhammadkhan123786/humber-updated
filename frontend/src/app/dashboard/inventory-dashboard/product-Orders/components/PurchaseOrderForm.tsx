@@ -13,10 +13,7 @@ import { Button } from "@/components/form/CustomButton";
 import { Input } from "@/components/form/Input";
 import { Label } from "@/components/form/Label";
 import { Textarea } from "@/components/form/Textarea";
-import {
-  IPurchaseOrder,
-  IPurchaseOrderItem,
-} from "../../../../../../../common/IPurchase.order.interface";
+import { IPurchaseOrder, IPurchaseOrderItem } from "../types/purchaseOrders";
 import { OrderFormData, OrderItemForm } from "../types/purchaseOrders";
 import { Plus, Trash2, Building2, Truck, Box } from "lucide-react";
 
@@ -70,31 +67,29 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSupplierChange = (supplierId: string) => {
-   
     const selectedSupplier = suppliers.find((s) => s._id === supplierId);
-   
+
     onOrderFormChange({
       ...orderForm,
-       supplier: supplierId, 
+      supplier: supplierId,
       orderContactEmail:
         selectedSupplier?.operationalInformation?.orderContactEmail || "",
     });
   };
 
   const handleSave = async () => {
-  setIsSaving(true);
-  try {
-    
-    const success = await onSaveOrder();
-    if (!success) {
-      console.error("Save failed");
+    setIsSaving(true);
+    try {
+      const success = await onSaveOrder();
+      if (!success) {
+        console.error("Save failed");
+      }
+    } catch (err) {
+      console.error("Error saving order:", err);
+    } finally {
+      setIsSaving(false);
     }
-  } catch (err) {
-    console.error("Error saving order:", err);
-  } finally {
-    setIsSaving(false);
-  }
-};
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,10 +150,10 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 >
                   <option value="">Select a supplier...</option>
                   {suppliers.map((supplier) => (
-    <option key={supplier._id} value={supplier._id}>
-      {supplier?.operationalInformation?.orderContactName}
-    </option>
-  ))}
+                    <option key={supplier._id} value={supplier._id}>
+                      {supplier?.operationalInformation?.orderContactName}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-2">
