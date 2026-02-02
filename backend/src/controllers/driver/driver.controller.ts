@@ -19,7 +19,7 @@ export const createDriver = async (req: Request, res: Response) => {
                 ...req.body.driverLicenseDetails,
                 expiryDate: new Date(req.body.driverLicenseDetails.expiryDate),
             },
-            documents: req.body.documents || {},
+
         };
 
         // Create driver
@@ -56,10 +56,7 @@ export const updateDriver = async (req: Request, res: Response) => {
                     ? new Date(req.body.driverLicenseDetails.expiryDate)
                     : existingDriver.driverLicenseDetails.expiryDate,
             },
-            documents: {
-                ...existingDriver.documents,
-                ...req.body.documents,
-            },
+
         };
 
         const driver = await DriverModel.findByIdAndUpdate(driverId, updatedData, { new: true });
