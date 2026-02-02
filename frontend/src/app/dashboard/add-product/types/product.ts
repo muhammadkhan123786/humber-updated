@@ -70,6 +70,7 @@ export interface Attribute {
   options?: DropdownOption[];
   required?: boolean;
   categoryId: string;
+  isForSubcategories: boolean;
 }
 
 

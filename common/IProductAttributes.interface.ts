@@ -10,7 +10,7 @@ export type AttributeType =
   | "radio"
   | "textarea";
 
-export interface IAttribute<TUserId = string, TAttributeId = string>
+export interface IAttribute<TUserId = string>
   extends IBaseEntity<TUserId> {
   attributeName: string;
   type: AttributeType;

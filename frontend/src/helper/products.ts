@@ -54,6 +54,7 @@
     ...payload,
     userId,
   };
+  console.log("Creating product with payload:", completePayload);
     const res = await axios.post(API_URL, completePayload, getAuthConfig());
     return res.data;
   };

@@ -1,6 +1,5 @@
 "use client";
-import { useState, useCallback, useEffect, useMemo } from "react"; // Added useMemo
-import { toast } from "sonner";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { CategoryNode, UseProductFormProps, Attribute, DropdownOption, FourDropdownData } from "../types/product";
 import {
   getCategoriesAtLevel,
@@ -9,9 +8,44 @@ import {
 import { fetchCategories } from "@/hooks/useCategory";
 import { DropdownService } from "@/helper/dropdown.service";
 import { fetchAttributes } from "@/hooks/useAttributes";
-import { useVariants } from './useVariants';
+import { createProduct } from "@/helper/products";
+import {  toast } from 'sonner';
+// ─── Shared variant types (import these in AttributesAndPricingStep too) ────
+export interface MarketplacePricing {
+  id: string;
+  marketplaceId: string;
+  marketplaceName: string;
+  costPrice: number;
+  sellingPrice: number;
+  retailPrice: number;
+  discountPercentage: number;
+  taxId: string;
+  taxRate: number;
+  vatExempt: boolean;
+}
 
-
+export interface ProductVariant {
+  id: string;
+  sku: string;
+  attributes: Record<string, any>;
+  marketplacePricing: MarketplacePricing[];
+  stockQuantity: number;
+  minStockLevel: number;
+  maxStockLevel: number;
+  reorderPoint: number;
+  stockLocation: string;
+  warehouseId: string;
+  binLocation: string;
+  productStatusId: string;
+  conditionId: string;
+  warehouseStatusId: string;
+  featured: boolean;
+  safetyStock?: number;
+  leadTimeDays?: number;
+  warranty: string;
+  warrantyPeriod: string;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function useProductForm({
   initialData,
@@ -27,9 +61,11 @@ export function useProductForm({
   const [fetchedCategories, setFetchedCategories] =
     useState<CategoryNode[]>(categories);
   const [formData, setFormData] = useState(initialData);
-  // const [variants, setVariants] = useState<any[]>([]);
 
-  const [dropdowns, setDropdowns] = useState<FourDropdownData>({});
+  // ✅ Lifted up from AttributesAndPricingStep
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+
+const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
   const [dropdownLoading, setDropdownLoading] = useState(false);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
 
@@ -40,18 +76,6 @@ export function useProductForm({
     { value: "extended", label: "Extended Warranty" },
     { value: "lifetime", label: "Lifetime Warranty" },
   ];
-
-  const {
-    variants,
-    generatedCombinations,
-    addVariant,
-    bulkGenerateVariants,
-    updateVariantPricing,
-    updateVariantStock,
-    getVariantByAttributes,
-    getTotalStock,
-    setVariants
-  } = useVariants();
 
   useEffect(() => {
     const loadDropdowns = async () => {
@@ -96,6 +120,7 @@ export function useProductForm({
       return;
     }
 
+    
     const loadAttributes = async () => {
       try {
         const res = await fetchAttributes(1, 100, "", selectedPath.join(","));
@@ -104,12 +129,9 @@ export function useProductForm({
         console.log("Fetched attributes:", allAttributes);
         const selectedCategoryId = selectedPath.at(-1);
 
-        // 🔥 FINAL RULE
         const filteredAttributes = allAttributes.filter((attr) => {
-          // 1️⃣ Attributes directly for selected category
           if (attr.categoryId === selectedCategoryId) return true;
 
-          // 2️⃣ Parent attributes allowed ONLY if isForSubcategories = true
           if (
             attr.isForSubcategories &&
             selectedPath.includes(attr.categoryId)
@@ -135,7 +157,7 @@ export function useProductForm({
       try {
         const data = await fetchCategories();
         console.log("Fetched categories:", data);
-        setFetchedCategories(data.data || []); // Added fallback
+        setFetchedCategories(data.data as CategoryNode[] || []);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -143,7 +165,6 @@ export function useProductForm({
     fetchCategoriesData();
   }, []);
 
-  /*  Handle category select (N-level safe) */
   const handleCategorySelect = useCallback((level: number, value: string) => {
     setSelectedPath((prev) => {
       const next = prev.slice(0, level);
@@ -152,12 +173,10 @@ export function useProductForm({
     });
   }, []);
 
-  /*  Selected category path - using useMemo to memoize */
   const selectedCategories = useMemo(() => {
     return getSelectedCategoryPath(fetchedCategories || [], selectedPath);
   }, [fetchedCategories, selectedPath]);
 
-  /*  Get categories at specific level */
   const getCategoriesAtLevelFromHook = useCallback(
     (level: number) => {
       if (!fetchedCategories || !Array.isArray(fetchedCategories)) {
@@ -175,28 +194,21 @@ export function useProductForm({
     [fetchedCategories, selectedPath],
   );
 
-  /* ✅ Get selected category node */
   const getSelectedCategory = useCallback(
     (level?: number) => {
       if (selectedCategories.length === 0) return null;
 
       if (level !== undefined) {
-        // Return category at specific level (for old usage)
         return selectedCategories[level] || null;
       }
 
-      // Return the last selected category (for new usage)
       return selectedCategories[selectedCategories.length - 1];
     },
     [selectedCategories],
   );
 
-  /* ✅ Dynamic fields from all selected levels */
   const getAllFields = useCallback(() => {
     const fields: any[] = [];
-    // selectedCategories.forEach(cat => {
-    //   if (cat.fields) fields.push(...cat.fields);
-    // });
     return fields;
   }, [selectedCategories]);
 
@@ -250,7 +262,6 @@ export function useProductForm({
 
   const handleImageUpload = useCallback((files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    // Convert files to base64 or URLs (simulating upload)
     const newImages = fileArray.map((file) => URL.createObjectURL(file));
     setImages((prev) => [...prev, ...newImages]);
   }, []);
@@ -259,147 +270,87 @@ export function useProductForm({
     setImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  // const handleSubmit = useCallback(
-  //   (e: React.FormEvent<HTMLFormElement>) => {
-  //     e.preventDefault();
-  //     const keywordsArray = (formData.keywords as string)
-  //       .split(",")
-  //       .map((keyword: string) => keyword.trim())
-  //       .filter((keyword: string) => keyword.length > 0);
+  // ✅ handleSubmit now includes variants with your structured schema
+ const handleSubmit = useCallback(
+ async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
 
-  //     // Combine all data
-  //     const finalData = {
-  //       ...formData,
-  //       dynamicFields,
-  //       categoryPath: selectedPath,
-  //       finalCategoryId: selectedPath.at(-1),
-  //       tags,
-  //       images,
-  //       keywords: keywordsArray,
-  //       variants: variants.map(v => ({
-  //       sku: v.sku, // Link identifier
-  //       attributes: v.attributes, // DYNAMIC ATTRIBUTES MODAL
-        
-  //       pricing: v.marketplacePricing.map((p: any) => ({ // PRICING MODAL
-  //         marketplaceId: p.marketplaceId,
-  //         price: p.sellingPrice,
-  //         taxId: p.taxId,
-  //         currency: p.currency
-  //       })),
-  //       inventory: { // STOCK MODAL
-  //         quantity: v.stockQuantity,
-  //         warehouseId: v.warehouseId,
-  //         statusId: v.productStatusId,
-  //         conditionId: v.conditionId
-  //       }
-  //     }))
+    const keywordsArray = (formData.keywords as string)
+      .split(",")
+      .map(k => k.trim())
+      .filter(Boolean);
 
-  //     };
+    const finalData = {
+      // ── Product Info ─────────────────────────
+      productName: formData.productName,
+      sku: formData.sku,
+      barcode: formData.barcode,
+      brand: formData.brand,
+      manufacturer: formData.manufacturer,
+      modelNumber: formData.modelNumber,
+      description: formData.description,
+      shortDescription: formData.shortDescription,
+      keywords: keywordsArray,
+      tags,
+      images,
 
-  //     console.log("Product data submitted:", finalData); // This will show all data in console
-  //     onSubmit(finalData);
+      categoryId: selectedPath.at(-1),
+      categoryPath: selectedPath,
 
-  //     toast.success("Product created successfully!");
-  //   },
-  //   [formData, dynamicFields, selectedPath, tags, images, onSubmit],
-  // );
+      // ── Variants → attributes (BACKEND NAME) ──
+      attributes: variants.map(v => ({
+        sku: v.sku,
+        attributes: v.attributes,
 
- 
-  // Enhanced handleSubmit for variants
-  const handleSubmit = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      
-      const keywordsArray = (formData.keywords as string)
-        .split(",")
-        .map((keyword: string) => keyword.trim())
-        .filter((keyword: string) => keyword.length > 0);
-
-      // Transform variants to match your modeling structure
-      const transformedVariants = variants.map(variant => ({
-        // Attributes modal data
-        attributes: variant.attributes,
-        sku: variant.sku,
-        
-        // Pricing modal data (linked to attributes)
-        pricing: variant.pricing.map(p => ({
+        pricing: v.marketplacePricing.map(p => ({
           marketplaceId: p.marketplaceId,
-          price: p.price,
-          taxId: p.taxId,
-          currency: p.currency,
-          compareAtPrice: p.compareAtPrice,
-          isActive: p.isActive
+          marketplaceName: p.marketplaceName,
+          costPrice: p.costPrice,
+          sellingPrice: p.sellingPrice,
+          retailPrice: p.retailPrice,
+          discountPercentage: p.discountPercentage,
+          taxId: p.taxId || null, // ✅ IMPORTANT
+          taxRate: p.taxRate,
+          vatExempt: p.vatExempt,
         })),
-        
-        // Stock modal data (linked to attributes)
-        stock: variant.stock.map(s => ({
-          warehouseId: s.warehouseId,
-          quantity: s.quantity,
-          statusId: s.statusId,
-          conditionId: s.conditionId,
-          location: s.location,
-          reorderPoint: s.reorderPoint
-        })),
-        
-        // Additional variant info
-        isActive: variant.isActive,
-        images: variant.images,
-        barcode: variant.barcode,
-        weight: variant.weight,
-        dimensions: variant.dimensions
-      }));
 
-      // Combine all data
-      const finalData = {
-        // Product Info
-        ...formData,
-        dynamicFields,
-        categoryPath: selectedPath,
-        finalCategoryId: selectedPath.at(-1),
-        tags,
-        images,
-        keywords: keywordsArray,
-        
-        // Variants structure
-        variants: transformedVariants,
-        
-        // Summary stats
-        variantCount: variants.length,
-        totalStock: variants.reduce((total, v) => 
-          total + v.stock.reduce((sum, s) => sum + s.quantity, 0), 0
-        ),
-        activeVariants: variants.filter(v => v.isActive).length,
-        
-        // Pricing summary
-        pricingSummary: variants.reduce((acc, variant) => {
-          variant.pricing.forEach(p => {
-            if (!acc[p.marketplaceId]) {
-              acc[p.marketplaceId] = {
-                minPrice: p.price,
-                maxPrice: p.price,
-                averagePrice: p.price
-              };
-            } else {
-              acc[p.marketplaceId].minPrice = Math.min(acc[p.marketplaceId].minPrice, p.price);
-              acc[p.marketplaceId].maxPrice = Math.max(acc[p.marketplaceId].maxPrice, p.price);
-            }
-          });
-          return acc;
-        }, {} as Record<string, any>)
-      };
+        stock: {
+          stockQuantity: v.stockQuantity,
+          minStockLevel: v.minStockLevel,
+          maxStockLevel: v.maxStockLevel,
+          reorderPoint: v.reorderPoint,
+          safetyStock: v.safetyStock,
+          leadTimeDays: v.leadTimeDays,
+          stockLocation: v.stockLocation,
+          warehouseId: v.warehouseId,
+          binLocation: v.binLocation,
+          productStatusId: v.productStatusId,
+          conditionId: v.conditionId,
+          // warehouseStatusId: v.warehouseStatusId,
+          featured: v.featured,
+        },
 
-      console.log("Product data with variants:", finalData);
-      onSubmit(finalData);
-      toast.success("Product created successfully!");
-    },
-    [formData, dynamicFields, selectedPath, tags, images, variants, onSubmit]
-  );
- 
+        warranty: {
+          warrantyType: v.warranty,
+          warrantyPeriod: v.warrantyPeriod,
+        },
+      })),
+    };
+
+    console.log("✅ Product data submitted:", finalData);
+     const res = await createProduct(finalData);
+    onSubmit(finalData);
+    toast.success("Product created successfully!");
+  },
+  [formData, selectedPath, tags, images, variants, onSubmit],
+);
+
+
   return {
     currentStep,
     formData,
     selectedPath,
-    fetchedCategories: fetchedCategories || [], // Ensure it's always an array
+    fetchedCategories: fetchedCategories || [],
     selectedCategories,
     getCategoriesAtLevel: getCategoriesAtLevelFromHook,
     handleCategorySelect,
@@ -424,16 +375,8 @@ export function useProductForm({
     setDynamicFields,
     attributes,
     getWarrantyOptions,
-    
-
+    // ✅ Exposed for AttributesAndPricingStep
     variants,
-    generatedCombinations,
-    addVariant,
-    bulkGenerateVariants,
-    updateVariantPricing,
-    updateVariantStock,
-    getVariantByAttributes,
-    getTotalStock,
-    setVariants
+    setVariants,
   };
 }

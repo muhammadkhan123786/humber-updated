@@ -1,4 +1,4 @@
-import { updateProductSchema } from './../schemas/product.schema';
+import { createProductValidation } from './../schemas/product.schema';
 import { Router } from "express";
 import { GenericService } from "../services/generic.crud.services";
 import { ProductDoc, ProductModal } from '../models/product.models';
@@ -11,7 +11,7 @@ const productsBaseService = new GenericService<ProductDoc>(ProductModal);
 const productController = new AdvancedGenericController({
     service: productsBaseService,
     populate: ["userId"],
-    validationSchema: updateProductSchema, 
+    validationSchema: createProductValidation, 
 });
 
 productRoutes.get("/", productController.getAll);

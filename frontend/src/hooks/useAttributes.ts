@@ -1,11 +1,12 @@
 "use client";
 import axios from "axios";
 import { IAttribute } from "../../../common/IProductAttributes.interface";
+import { Attribute } from "../app/dashboard/add-product/types/product";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/product-attributes`;
 
 interface AttributeResponse {
-  data: IAttribute[];
+  data: Attribute[];
   total: number;
   page: number;
   limit: number;
@@ -40,6 +41,20 @@ export const fetchAttributes = async (
     },
     paramsSerializer: params =>
       new URLSearchParams(params as any).toString(),
+  });
+  return res.data;
+};
+
+export const fetchAttributesss = async (
+  
+): Promise<AttributeResponse> => {
+   const res = await axios.get(API_URL, {
+    ...getAuthConfig(),
+    params: {
+      userId: getUserId(),
+      
+    },
+   
   });
   return res.data;
 };

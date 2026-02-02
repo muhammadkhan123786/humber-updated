@@ -17,7 +17,7 @@ export const GoodsReturnGridView: React.FC<GoodsReturnGridViewProps> = ({
   onView,
   onDownload
 }) => {
-  if (returns.length === 0) {
+  if (returns?.length === 0) {
     return (
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
         <CardContent className="p-12 text-center">
@@ -36,7 +36,7 @@ export const GoodsReturnGridView: React.FC<GoodsReturnGridViewProps> = ({
       transition={{ delay: 0.3 }}
       className="grid grid-cols-1 gap-6"
     >
-      {returns.map((grtn, index) => (
+      {returns?.map((grtn, index) => (
         <GoodsReturnCard
           key={grtn._id}
           grtn={grtn}

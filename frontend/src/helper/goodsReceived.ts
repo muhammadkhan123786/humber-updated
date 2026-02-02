@@ -67,6 +67,14 @@ export const deleteGRN = async (id: string): Promise<void> => {
   await axios.delete(`${API_URL}/${id}`, getAuthConfig());
 };
 
+
+/* ---------------- fetchGRNById ---------------- */
+
+export const fetchGRNById = async (id: string): Promise<GoodsReceivedNote> => {
+  const res = await axios.get(`${API_URL}/${id}`, getAuthConfig());
+  return res.data;
+}
+
 /* ---------------- GENERATE NEXT NUMBER ---------------- */
 export const fetchNextDocumentNumber = async (
   type: "GRN" | "GRN_REFERENCE" | "RETURN"

@@ -179,15 +179,14 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
-import { GoodsReturnNote, GRNForReturn, ReturningItem, ReturnStats } from "../app/dashboard/inventory-dashboard/product-goods-return/types/goodsReturn";
+import { GoodsReturnNote, GRNForReturn, ReturningItem, ReturnStats, CreateGoodsReturnDto } from "../app/dashboard/inventory-dashboard/product-goods-return/types/goodsReturn";
 import {
   fetchGoodsReturns,
   createGoodsReturn,
   updateGoodsReturn,
   deleteGoodsReturn,
-  fetchAvailableGRNs,
-  
 } from "../helper/goodsReturn";
+import { fetchGRNs } from "../helper/goodsReceived";
 
 export const useGoodsReturn = () => {
   const [goodsReturnNotes, setGoodsReturnNotes] = useState<GoodsReturnNote[]>([]);
@@ -205,11 +204,16 @@ export const useGoodsReturn = () => {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
 
+  // For GRNs we use a separate search/page state so that
+  // typing in the main search box doesn't re-fetch the GRN dropdown list.
+  const [grnPage] = useState(1);
+  const [grnLimit] = useState(50); // load more at once so the dropdown is useful
+
   // ------------------- Load Goods Return Notes -------------------
   const loadGoodsReturns = async () => {
     try {
-      const res = await fetchGoodsReturns(page, limit, searchTerm, selectedStatus);
-      setGoodsReturnNotes(res.data);
+      const res = await fetchGoodsReturns(page, limit, searchTerm);
+      setGoodsReturnNotes(res.data as GoodsReturnNote[]);
       setTotal(res.total);
     } catch (err) {
       console.error(err);
@@ -217,22 +221,37 @@ export const useGoodsReturn = () => {
     }
   };
 
-  // ------------------- Load Available GRNs -------------------
+  // ------------------- Load Available GRNs (runs once on mount) -------------------
   const loadAvailableGRNs = async () => {
     try {
-      const grns = await fetchAvailableGRNs();
-      console.log("grns", grns);
-      setAvailableGRNs(grns);
+      const grns = await fetchGRNs(grnPage, grnLimit, "");
+      // Normalise every item so we always work with `.id` internally.
+      // The API returns `_id`; we map it to `id` here once so the
+      // rest of the code doesn't have to guess.
+      const normalised = (grns.data as any[]).map((grn) => ({
+        ...grn,
+        id: grn._id ?? grn.id, // prefer _id if present, fall back to id
+        items: (grn.items || []).map((item: any) => ({
+          ...item,
+          id: item._id ?? item.id,
+        })),
+      }));
+      setAvailableGRNs(normalised as GRNForReturn[]);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load available GRNs");
     }
   };
 
+  // Goods-return list reacts to pagination / search / status changes.
   useEffect(() => {
     loadGoodsReturns();
-    loadAvailableGRNs();
   }, [page, limit, searchTerm, selectedStatus]);
+
+  // GRN dropdown is loaded once on mount only.
+  useEffect(() => {
+    loadAvailableGRNs();
+  }, []);
 
   // ------------------- Statistics -------------------
   const stats: ReturnStats = useMemo(() => ({
@@ -244,96 +263,117 @@ export const useGoodsReturn = () => {
   }), [goodsReturnNotes]);
 
   // ------------------- Filtered Returns -------------------
-  // const filteredReturns = useMemo(() => {
-  //   return goodsReturnNotes.filter(grtn => {
-  //     const matchesSearch =
-  //       grtn.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //       grtn.grnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //       grtn.supplier.toLowerCase().includes(searchTerm.toLowerCase());
-  //     const matchesStatus = selectedStatus === "all" || grtn.status === selectedStatus;
-  //     return matchesSearch && matchesStatus;
-  //   });
-  // }, [goodsReturnNotes, searchTerm, selectedStatus]);
-
-    const filteredReturns = useMemo(() => {
+  const filteredReturns = useMemo(() => {
     return goodsReturnNotes.filter(grtn => {
-      const matchesSearch = 
-        grtn.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        grtn.grnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        grtn.supplier.toLowerCase().includes(searchTerm.toLowerCase());
-      // const matchesStatus = selectedStatus === 'all' || grtn.status === selectedStatus;
-      return matchesSearch;
+      // const matchesSearch =
+      //   grtn.returnNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      //   grtn.grnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      //   grtn.supplier.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        !selectedStatus ||
+        selectedStatus === "all" ||
+        grtn.status === selectedStatus;
+      return  matchesStatus;
     });
   }, [goodsReturnNotes, searchTerm, selectedStatus]);
+
   // ------------------- Handle GRN Selection -------------------
+  // This is called from the <Select> with the value that was set on <SelectItem>,
+  // which is grn.id (after normalisation above).
   const handleGRNSelection = (grnId: string) => {
     const grn = availableGRNs.find(g => g.id === grnId);
-    if (grn) {
-      setSelectedGRN(grnId);
-      setReturningItems(grn.items.map(item => ({
-        id: item.id,
+
+    if (!grn) {
+      // Safety net – should never happen after normalisation, but guard anyway.
+      toast.error("Selected GRN not found. Please try again.");
+      return;
+    }
+
+    setSelectedGRN(grnId);
+    setReturningItems(
+      grn.items.map(item => ({
+        _id: item.id,
         productName: item.productName,
         sku: item.sku,
-        receivedQuantity: item.acceptedQuantity,
+        receivedQuantity: item.acceptedQuantity ?? item.receivedQuantity ?? 0,
         returnQuantity: 0,
         returnReason: "damaged",
         condition: "",
         notes: "",
         unitPrice: item.unitPrice,
-      })));
-    }
+      }))
+    );
   };
 
   // ------------------- Update Returning Item -------------------
   const handleUpdateItemReturn = (itemId: string, field: string, value: any) => {
-    setReturningItems(prev => prev.map(item =>
-      item.id === itemId ? { ...item, [field]: value } : item
-    ));
+    setReturningItems(prev =>
+      prev.map(item => {
+        if (item._id !== itemId) return item;
+
+        // Clamp returnQuantity so it can never exceed receivedQuantity or go below 0.
+        if (field === "returnQuantity") {
+          const clamped = Math.min(
+            item.receivedQuantity,
+            Math.max(0, typeof value === "number" ? value : parseInt(value) || 0)
+          );
+          return { ...item, returnQuantity: clamped };
+        }
+
+        return { ...item, [field]: value };
+      })
+    );
   };
 
   // ------------------- Create Return Note -------------------
   const handleCreateReturn = async () => {
     if (!selectedGRN) return toast.error("Please select a GRN");
-    if (!returnedBy) return toast.error("Please enter who is processing the return");
+    if (!returnedBy.trim()) return toast.error("Please enter who is processing the return");
 
     const itemsToReturn = returningItems.filter(item => item.returnQuantity > 0);
-    if (itemsToReturn.length === 0) return toast.error("Please specify at least one item to return");
+    if (itemsToReturn.length === 0)
+      return toast.error("Please specify at least one item to return");
 
     for (const item of itemsToReturn) {
       if (item.returnQuantity > item.receivedQuantity) {
-        return toast.error(`Return quantity for ${item.productName} cannot exceed received quantity`);
+        return toast.error(
+          `Return quantity for "${item.productName}" cannot exceed received quantity (${item.receivedQuantity})`
+        );
       }
       if (!item.returnReason) {
-        return toast.error(`Please select return reason for ${item.productName}`);
+        return toast.error(`Please select a return reason for "${item.productName}"`);
       }
     }
 
-    const totalAmount = itemsToReturn.reduce((sum, item) => sum + (item.returnQuantity * item.unitPrice), 0);
+    const totalAmount = itemsToReturn.reduce(
+      (sum, item) => sum + item.returnQuantity * item.unitPrice,
+      0
+    );
 
-    const payload: Partial<GoodsReturnNote> = {
-      grnId: selectedGRN,
-      returnedBy,
-      returnReason: returnReason || "General return",
-      notes: returnNotes,
-      items: itemsToReturn.map(item => ({
-        id: item.id,
-        productName: item.productName,
-        sku: item.sku,
-        receivedQuantity: item.receivedQuantity,
-        returnQuantity: item.returnQuantity,
-        returnReason: item.returnReason,
-        condition: item.condition,
-        unitPrice: item.unitPrice,
-        totalPrice: item.returnQuantity * item.unitPrice,
-        notes: item.notes,
-      })),
-      totalAmount,
-    };
+    
+  const payload: Partial<CreateGoodsReturnDto> = {
+  grnId: selectedGRN,
+  returnedBy,
+  returnReason: returnReason || "General return",
+  notes: returnNotes,
+
+  items: itemsToReturn.map(item => ({
+    returnQty: item.returnQuantity,
+    totalAmount: item.returnQuantity * item.unitPrice,
+    itemsNotes: item.notes,
+   
+  })),
+};
+
 
     try {
+      console.log("Creating Goods Return Note with items:", payload);
       const newReturn = await createGoodsReturn(payload);
-      setGoodsReturnNotes(prev => [newReturn, ...prev]);
-      toast.success(`Goods Return Note ${newReturn.returnNumber} created successfully`);
+      toast.success(`Goods Return Note created successfully`);
+
+      // Refresh the list from the server so the new note appears.
+      await loadGoodsReturns();
+
       resetForm();
     } catch (err) {
       console.error(err);
@@ -345,8 +385,10 @@ export const useGoodsReturn = () => {
   const handleUpdateReturn = async (id: string, payload: Partial<GoodsReturnNote>) => {
     try {
       const updated = await updateGoodsReturn(id, payload);
-      setGoodsReturnNotes(prev => prev.map(g => g.id === id ? updated : g));
       toast.success(`Goods Return Note ${updated.returnNumber} updated successfully`);
+
+      // Refresh so the UI reflects the change.
+      await loadGoodsReturns();
     } catch (err) {
       console.error(err);
       toast.error("Failed to update goods return note");
@@ -357,7 +399,8 @@ export const useGoodsReturn = () => {
   const handleDeleteReturn = async (id: string) => {
     try {
       await deleteGoodsReturn(id);
-      setGoodsReturnNotes(prev => prev.filter(g => g.id !== id));
+      // Optimistic removal is fine for delete.
+      setGoodsReturnNotes(prev => prev.filter(g => g._id !== id));
       toast.success("Goods Return Note deleted successfully");
     } catch (err) {
       console.error(err);
@@ -406,6 +449,6 @@ export const useGoodsReturn = () => {
     setPage,
     limit,
     setLimit,
-    total
+    total,
   };
 };

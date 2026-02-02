@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import { IGoodsReturnNote, GRNForReturn } from "../../../common/IGoodsReturn.interface";
+import { CreateGoodsReturnDto } from "../app/dashboard/inventory-dashboard/product-goods-return/types/goodsReturn";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/goods-return-notice`;
 
@@ -55,9 +56,17 @@ export const fetchGoodsReturns = async (
 
 // Create a new return note
 export const createGoodsReturn = async (
-  payload: Partial<IGoodsReturnNote>
-): Promise<IGoodsReturnNote> => {
-  const res = await axios.post(API_URL, payload, getAuthConfig());
+  payload: Partial<CreateGoodsReturnDto>
+): Promise<CreateGoodsReturnDto> => {
+
+  const userId = getUserId();
+  console.log("user", userId);
+  const createGoods = {
+    ... payload,
+    userId
+  }
+  const res = await axios.post(API_URL, createGoods, getAuthConfig());
+  console.log("Created Goods Return Note:", res.data);
   return res.data;
 };
 

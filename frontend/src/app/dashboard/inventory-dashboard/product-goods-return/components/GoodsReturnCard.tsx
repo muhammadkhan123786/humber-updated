@@ -27,7 +27,7 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
 
   return (
     <motion.div
-      key={grtn.id}
+      key={grtn._id}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.3 + index * 0.05 }}
@@ -76,7 +76,7 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-indigo-500" />
               <span className="text-gray-600">Return Date:</span>
-              <span className="font-medium text-gray-900">{grtn.returnDate}</span>
+              <span className="font-medium text-gray-900"> {grtn.returnDate.toLocaleDateString()}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-green-500" />

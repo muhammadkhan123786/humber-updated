@@ -348,7 +348,7 @@ export function VariantManager({
             {/* Sort By */}
             <Select
               value={sortBy}
-              onValueChange={setSortBy}
+              // onValueChange={setSortBy}
             >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Sort by" />

@@ -12,7 +12,7 @@ export interface GoodsReturnNoteItem {
 }
 
 export interface GoodsReturnNote {
-  id: string;
+  _id: string;
   grnNumber: string;
   grnReference: string;
   returnNumber: string;
@@ -25,12 +25,21 @@ export interface GoodsReturnNote {
   totalAmount: number;
   notes: string;
   createdAt: Date;
+  grnId: string;
 }
 
 export interface GRNForReturn {
   id: string;
   grnNumber: string;
   poNumber: string;
+   purchaseOrderId?: {
+    supplier?: {
+      contactInformation?: {
+        primaryContactName?: string;
+      };
+    };
+  };
+  createdAt: Date;
   supplier: string;
   receivedDate: Date;
   items: Array<{
@@ -44,7 +53,7 @@ export interface GRNForReturn {
 }
 
 export interface ReturningItem {
-  id: string;
+  _id: string;
   productName: string;
   sku: string;
   receivedQuantity: number;
@@ -61,4 +70,19 @@ export interface ReturnStats {
   inTransitReturns: number;
   completedReturns: number;
   totalReturnValue: number;
+}
+
+
+export interface CreateGoodsReturnItemDto {
+  returnQty: number;
+  totalAmount: number;
+  itemsNotes?: string;
+}
+
+export interface CreateGoodsReturnDto {
+  grnId: string;
+  returnedBy: string;
+  returnReason: string;
+  notes?: string;
+  items: CreateGoodsReturnItemDto[];
 }

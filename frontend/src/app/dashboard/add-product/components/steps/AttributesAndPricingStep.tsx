@@ -2,8 +2,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/form/Badge';
 import { Card, CardContent } from '@/components/form/Card';
 import {
-  Star, Plus, Trash2,Ruler,
-  Info, CheckCircle, AlertCircle, Edit, Save, Store, ShoppingBag, Eye, EyeOff
+  Star, Plus, Trash2, Ruler,
+  Info, CheckCircle, AlertCircle, Save, Store, ShoppingBag, EyeOff
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,55 +23,12 @@ import {
 } from "@/components/form/Select";
 import InfoBoxSection from '../sections/InfoBoxSection';
 
-// Marketplace pricing interface
-interface MarketplacePricing {
-  id: string;
-  marketplaceId: string;
-  marketplaceName: string;
-  costPrice: string;
-  sellingPrice: string;
-  retailPrice: string;
-  discountPercentage: string;
-  taxId: string;
-  taxRate: string;
-  vatExempt: boolean;
-}
-
-interface ProductVariant {
-  id: string;
-  sku: string; // Moved to top level
-  attributes: Record<string, any>;
-
-  // Marketplace-specific pricing (array)
-  marketplacePricing: MarketplacePricing[];
-
-  // Inventory (common across all marketplaces)
-  stockQuantity: string;
-  minStockLevel: string;
-  maxStockLevel: string;
-  reorderPoint: string;
-  stockLocation: string;
-  warehouseId: string;
-  binLocation: string;
-  productStatusId: string;
-  conditionId: string;
-  warehouseStatusId: string;
-  featured: boolean;
-  safetyStock?: string;
-  leadTimeDays?: string;
-
-  // Warranty
-  warranty: string;
-  warrantyPeriod: string;
-}
+// ✅ Import shared types from hook — single source of truth
+import { ProductVariant, MarketplacePricing } from '../../hooks/useProductForm';
 
 interface AttributesAndPricingStepProps {
-  selectedLevel1: string;
-  selectedLevel2: string;
-  selectedLevel3: string;
   dynamicFields: Record<string, any>;
   formData: any;
-  getSelectedCategory: (level: 1 | 2 | 3) => { name: string } | null;
   onDynamicFieldChange: (fieldName: string, value: any) => void;
   onInputChange: (field: string, value: string) => void;
   attributes: any[];
@@ -81,58 +38,52 @@ interface AttributesAndPricingStepProps {
   warehouseStatus: any[];
   productStatus: any[];
   conditions: any[];
-  marketplaces?: any[]; // NEW: Marketplaces dropdown data
+  marketplaces?: any[];
+  warrantyOptions?: any[];
+  getAllFields?: () => any[];
+  variants: ProductVariant[];
+  setVariants: React.Dispatch<React.SetStateAction<ProductVariant[]>>;
 }
 
 export function AttributesAndPricingStep({
-  selectedLevel1,
-  selectedLevel2,
-  selectedLevel3,
-  dynamicFields,
-  formData,
-  getSelectedCategory,
-  onDynamicFieldChange,
-  onInputChange,
+ 
   attributes = [],
-  currencies = [],
+  
   taxes = [],
   warehouses = [],
   warehouseStatus = [],
   productStatus = [],
   conditions = [],
-  marketplaces = [], // NEW
+  marketplaces = [],
+  // ✅ Receive from parent instead of local useState
+  variants,
+  setVariants,
 }: AttributesAndPricingStepProps) {
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  // ── local UI state only (nothing that needs to reach handleSubmit) ──────
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null);
-
-  // Current marketplace being configured
   const [selectedMarketplace, setSelectedMarketplace] = useState<string>('');
   const [currentMarketplacePricing, setCurrentMarketplacePricing] = useState<Partial<MarketplacePricing>>({
     marketplaceId: '',
     marketplaceName: '',
-    costPrice: '',
-    sellingPrice: '',
-    retailPrice: '',
-    discountPercentage: '',
+    costPrice: 0,
+    sellingPrice: 0,
+    retailPrice: 0,
+    discountPercentage: 0,
     taxId: '',
-    taxRate: '',
+    taxRate: 0,
     vatExempt: false,
   });
-
-  // Added marketplace pricing for current variant
   const [addedMarketplacePricing, setAddedMarketplacePricing] = useState<MarketplacePricing[]>([]);
-
-  // Show/hide pricing form
   const [showPricingForm, setShowPricingForm] = useState(false);
 
   const [currentVariant, setCurrentVariant] = useState<Partial<ProductVariant>>({
     sku: '',
     attributes: {},
     marketplacePricing: [],
-    stockQuantity: '',
-    minStockLevel: '',
-    maxStockLevel: '',
-    reorderPoint: '',
+    stockQuantity: 0,
+    minStockLevel: 0,
+    maxStockLevel: 0,
+    reorderPoint: 0,
     stockLocation: '',
     warehouseId: '',
     binLocation: '',
@@ -140,17 +91,16 @@ export function AttributesAndPricingStep({
     conditionId: '',
     warehouseStatusId: '',
     featured: false,
-    safetyStock: '',
-    leadTimeDays: '',
+    safetyStock: 0,
+    leadTimeDays: 0,
     warranty: '',
     warrantyPeriod: '',
   });
 
   const hasDynamicFields = attributes && attributes.length > 0;
-
   const currencySymbol = '£';
 
-  // Handle attribute value change
+  // ── attribute change ────────────────────────────────────────────────────
   const handleAttributeChange = (fieldId: string, value: any) => {
     setCurrentVariant(prev => ({
       ...prev,
@@ -161,7 +111,7 @@ export function AttributesAndPricingStep({
     }));
   };
 
-  // Handle field change for inventory
+  // ── inventory / warranty field change ───────────────────────────────────
   const handleVariantFieldChange = (field: string, value: any) => {
     setCurrentVariant(prev => ({
       ...prev,
@@ -169,35 +119,31 @@ export function AttributesAndPricingStep({
     }));
   };
 
-  // Handle marketplace selection
+  // ── marketplace selection ───────────────────────────────────────────────
   const handleMarketplaceSelect = (marketplaceId: string) => {
-    const marketplace = marketplaces.find(m => m.value === marketplaceId);
+    const marketplace = marketplaces.find((m: any) => m.value === marketplaceId);
     setSelectedMarketplace(marketplaceId);
     setShowPricingForm(true);
 
-    // Check if pricing already exists for this marketplace
     const existingPricing = addedMarketplacePricing.find(p => p.marketplaceId === marketplaceId);
 
     if (existingPricing) {
-      // Edit existing pricing
       setCurrentMarketplacePricing(existingPricing);
     } else {
-      // New pricing
       setCurrentMarketplacePricing({
         marketplaceId: marketplaceId,
         marketplaceName: marketplace?.label || '',
-        costPrice: '',
-        sellingPrice: '',
-        retailPrice: '',
-        discountPercentage: '',
+        costPrice: 0,
+        sellingPrice: 0,
+        retailPrice: 0,
+        discountPercentage: 0,
         taxId: '',
-        taxRate: '',
+        taxRate: 0,
         vatExempt: false,
       });
     }
   };
 
-  // Handle marketplace pricing field change
   const handleMarketplacePricingChange = (field: string, value: any) => {
     setCurrentMarketplacePricing(prev => ({
       ...prev,
@@ -205,16 +151,14 @@ export function AttributesAndPricingStep({
     }));
   };
 
-  // Handle tax selection for marketplace pricing
   const handleTaxChange = (value: string) => {
     setCurrentMarketplacePricing(prev => ({
       ...prev,
       taxId: value,
-      taxRate: ''
+      taxRate: 0
     }));
   };
 
-  // Handle VAT exempt toggle
   const handleVatExemptChange = (checked: boolean) => {
     setCurrentMarketplacePricing(prev => ({
       ...prev,
@@ -222,109 +166,103 @@ export function AttributesAndPricingStep({
     }));
   };
 
-  // Add marketplace pricing
+  // ── add / remove marketplace pricing ────────────────────────────────────
   const addMarketplacePricing = () => {
-    // Validation
     if (!currentMarketplacePricing.costPrice || !currentMarketplacePricing.sellingPrice) {
       alert('Please fill in Cost Price and Selling Price');
       return;
     }
 
-    const newPricing: MarketplacePricing = {
-      id: `pricing-${Date.now()}`,
-      marketplaceId: currentMarketplacePricing.marketplaceId || '',
-      marketplaceName: currentMarketplacePricing.marketplaceName || '',
-      costPrice: currentMarketplacePricing.costPrice || '',
-      sellingPrice: currentMarketplacePricing.sellingPrice || '',
-      retailPrice: currentMarketplacePricing.retailPrice || '',
-      discountPercentage: currentMarketplacePricing.discountPercentage || '',
-      taxId: currentMarketplacePricing.taxId || '',
-      taxRate: currentMarketplacePricing.taxRate || '',
-      vatExempt: currentMarketplacePricing.vatExempt || false,
-    };
+  const newPricing: MarketplacePricing = {
+  id: `pricing-${Date.now()}`,
+  marketplaceId: currentMarketplacePricing.marketplaceId || '',
+  marketplaceName: currentMarketplacePricing.marketplaceName || '',
+  costPrice: Number(currentMarketplacePricing.costPrice || 0),
+  sellingPrice: Number(currentMarketplacePricing.sellingPrice || 0),
+  retailPrice: Number(currentMarketplacePricing.retailPrice || 0),
+  discountPercentage: Number(currentMarketplacePricing.discountPercentage || 0),
+  taxId: currentMarketplacePricing.taxId || '',
+  taxRate: Number(currentMarketplacePricing.taxRate || 0),
+  vatExempt: currentMarketplacePricing.vatExempt || false,
+};
 
-    // Check if updating existing
+
     const existingIndex = addedMarketplacePricing.findIndex(
       p => p.marketplaceId === currentMarketplacePricing.marketplaceId
     );
 
     if (existingIndex > -1) {
-      // Update existing
       setAddedMarketplacePricing(prev =>
         prev.map((p, i) => i === existingIndex ? newPricing : p)
       );
     } else {
-      // Add new
       setAddedMarketplacePricing(prev => [...prev, newPricing]);
     }
 
-    // Reset form and hide
     setCurrentMarketplacePricing({
       marketplaceId: '',
       marketplaceName: '',
-      costPrice: '',
-      sellingPrice: '',
-      retailPrice: '',
-      discountPercentage: '',
+      costPrice: 0,
+      sellingPrice: 0,
+      retailPrice: 0,
+      discountPercentage: 0,
       taxId: '',
-      taxRate: '',
+      taxRate: 0,
       vatExempt: false,
     });
     setSelectedMarketplace('');
     setShowPricingForm(false);
   };
 
-  // Remove marketplace pricing
   const removeMarketplacePricing = (marketplaceId: string) => {
     setAddedMarketplacePricing(prev => prev.filter(p => p.marketplaceId !== marketplaceId));
   };
 
-  // Add complete variant
+  // ── add / update variant → writes into the LIFTED setVariants ───────────
   const addVariant = () => {
-    // Validate required attributes
     const missingRequired = attributes
-      .filter(attr => attr.isRequired)
-      .filter(attr => !currentVariant.attributes?.[attr._id!]);
+      .filter((attr: any) => attr.isRequired)
+      .filter((attr: any) => !currentVariant.attributes?.[attr._id!]);
 
     if (missingRequired.length > 0) {
-      alert(`Please fill in required attributes: ${missingRequired.map(a => a.attributeName).join(', ')}`);
+      alert(`Please fill in required attributes: ${missingRequired.map((a: any) => a.attributeName).join(', ')}`);
       return;
     }
 
-    // Validate marketplace pricing
     if (addedMarketplacePricing.length === 0) {
       alert('Please add pricing for at least one marketplace');
       return;
     }
 
-    // Validate stock
     if (!currentVariant.stockQuantity) {
       alert('Please fill in Stock Quantity');
       return;
     }
 
-    const newVariant: ProductVariant = {
-      id: editingVariantId || `variant-${Date.now()}`,
-      sku: currentVariant.sku || '',
-      attributes: currentVariant.attributes || {},
-      marketplacePricing: addedMarketplacePricing,
-      stockQuantity: currentVariant.stockQuantity || '',
-      minStockLevel: currentVariant.minStockLevel || '',
-      maxStockLevel: currentVariant.maxStockLevel || '',
-      reorderPoint: currentVariant.reorderPoint || '',
-      stockLocation: currentVariant.stockLocation || '',
-      warehouseId: currentVariant.warehouseId || '',
-      binLocation: currentVariant.binLocation || '',
-      productStatusId: currentVariant.productStatusId || '',
-      conditionId: currentVariant.conditionId || '',
-      warehouseStatusId: currentVariant.warehouseStatusId || '',
-      featured: currentVariant.featured || false,
-      safetyStock: currentVariant.safetyStock || '',
-      leadTimeDays: currentVariant.leadTimeDays || '',
-      warranty: currentVariant.warranty || '',
-      warrantyPeriod: currentVariant.warrantyPeriod || '',
-    };
+  const newVariant: ProductVariant = {
+  id: editingVariantId || `variant-${Date.now()}`,
+  sku: currentVariant.sku || '',
+  attributes: currentVariant.attributes || {},
+  marketplacePricing: addedMarketplacePricing,
+  stockQuantity: Number(currentVariant.stockQuantity || 0),
+  minStockLevel: Number(currentVariant.minStockLevel || 0),
+  maxStockLevel: Number(currentVariant.maxStockLevel || 0),
+  reorderPoint: Number(currentVariant.reorderPoint || 0),
+  safetyStock: Number(currentVariant.safetyStock || 0),
+  leadTimeDays: Number(currentVariant.leadTimeDays || 0),
+  stockLocation: currentVariant.stockLocation || '',
+  warehouseId: currentVariant.warehouseId || '',
+  binLocation: currentVariant.binLocation || '',
+  productStatusId: currentVariant.productStatusId || '',
+  conditionId: currentVariant.conditionId || '',
+  warehouseStatusId: currentVariant.warehouseStatusId || '',
+  featured: currentVariant.featured || false,
+  warranty: currentVariant.warranty || '',
+  warrantyPeriod: currentVariant.warrantyPeriod || '',
+};
 
+
+    // ✅ Writing to the LIFTED setter — hook's handleSubmit will see this
     if (editingVariantId) {
       setVariants(prev => prev.map(v => v.id === editingVariantId ? newVariant : v));
       setEditingVariantId(null);
@@ -332,20 +270,19 @@ export function AttributesAndPricingStep({
       setVariants(prev => [...prev, newVariant]);
     }
 
-    // Reset everything
     resetForm();
   };
 
-  // Reset form
+  // ── reset local form UI ─────────────────────────────────────────────────
   const resetForm = () => {
     setCurrentVariant({
       sku: '',
       attributes: {},
       marketplacePricing: [],
-      stockQuantity: '',
-      minStockLevel: '',
-      maxStockLevel: '',
-      reorderPoint: '',
+      stockQuantity: 0,
+      minStockLevel: 0,
+      maxStockLevel: 0,
+      reorderPoint: 0,
       stockLocation: '',
       warehouseId: '',
       binLocation: '',
@@ -353,8 +290,8 @@ export function AttributesAndPricingStep({
       conditionId: '',
       warehouseStatusId: '',
       featured: false,
-      safetyStock: '',
-      leadTimeDays: '',
+      safetyStock: 0,
+      leadTimeDays: 0,
       warranty: '',
       warrantyPeriod: '',
     });
@@ -362,43 +299,42 @@ export function AttributesAndPricingStep({
     setCurrentMarketplacePricing({
       marketplaceId: '',
       marketplaceName: '',
-      costPrice: '',
-      sellingPrice: '',
-      retailPrice: '',
-      discountPercentage: '',
+      costPrice: 0,
+      sellingPrice: 0,
+      retailPrice: 0,
+      discountPercentage: 0,
       taxId: '',
-      taxRate: '',
+      taxRate: 0,
       vatExempt: false,
     });
     setSelectedMarketplace('');
     setShowPricingForm(false);
   };
 
-  // Edit variant
+  // ── edit variant (populates local form from existing variant) ───────────
   const editVariant = (variant: ProductVariant) => {
     setCurrentVariant(variant);
     setAddedMarketplacePricing(variant.marketplacePricing || []);
     setEditingVariantId(variant.id);
   };
 
-  // Delete variant
+  // ── delete variant → writes into the LIFTED setVariants ─────────────────
   const deleteVariant = (id: string) => {
     if (confirm('Are you sure you want to delete this variant?')) {
       setVariants(prev => prev.filter(v => v.id !== id));
     }
   };
 
-  // Cancel editing
   const cancelEdit = () => {
     resetForm();
     setEditingVariantId(null);
   };
 
-  // Get available marketplaces (not yet added)
   const availableMarketplaces = marketplaces.filter(
-    m => !addedMarketplacePricing.find(p => p.marketplaceId === m.value)
+    (m: any) => !addedMarketplacePricing.find(p => p.marketplaceId === m.value)
   );
 
+  // ─── RENDER ─────────────────────────────────────────────────────────────
   return (
     <motion.div
       key="step3"
@@ -429,7 +365,7 @@ export function AttributesAndPricingStep({
                 Product Variants Configuration
               </h2>
               <p className="text-sm text-gray-600">
-               Configure attributes, variants, pricing and stock
+                Configure attributes, variants, pricing and stock
               </p>
             </div>
           </div>
@@ -441,13 +377,13 @@ export function AttributesAndPricingStep({
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div >
+              <div>
                 <h4 className="text-md font-bold text-gray-800 mb-6 flex items-center gap-2">
                   <Star className="h-5 w-5 text-orange-500" />
                   {editingVariantId ? 'Edit Product Variant' : 'Add New Product Variant'}
                 </h4>
 
-                {/* SKU - Top Priority */}
+                {/* SKU */}
                 <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200">
                   <label className="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
                     <ShoppingBag className="h-4 w-4 text-blue-600" />
@@ -517,7 +453,7 @@ export function AttributesAndPricingStep({
                           <SelectValue placeholder="Choose a marketplace..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableMarketplaces.map((marketplace) => (
+                          {availableMarketplaces.map((marketplace: any) => (
                             <SelectItem key={marketplace.value} value={marketplace.value}>
                               <div className="flex items-center gap-2">
                                 <Store className="h-4 w-4 text-green-600" />
@@ -535,8 +471,8 @@ export function AttributesAndPricingStep({
                     <div className="space-y-3 mb-4">
                       <AnimatePresence>
                         {addedMarketplacePricing.map((pricing, index) => {
-                          const cost = parseFloat(pricing.costPrice || '0');
-                          const selling = parseFloat(pricing.sellingPrice || '0');
+                          const cost = pricing.costPrice || 0;
+                          const selling = pricing.sellingPrice || 0;
                           const profit = selling - cost;
                           const margin = selling > 0 ? (profit / selling) * 100 : 0;
 
@@ -582,7 +518,7 @@ export function AttributesAndPricingStep({
                                     </div>
                                   </div>
 
-                                  {pricing.discountPercentage && parseFloat(pricing.discountPercentage) > 0 && (
+                                  {pricing.discountPercentage && pricing.discountPercentage > 0 && (
                                     <div className="mt-2">
                                       <Badge className="bg-orange-500 text-white text-xs">
                                         {pricing.discountPercentage}% Discount
@@ -607,7 +543,7 @@ export function AttributesAndPricingStep({
                     </div>
                   )}
 
-                  {/* Pricing Form (shown when marketplace selected) */}
+                  {/* Pricing Form */}
                   <AnimatePresence>
                     {showPricingForm && (
                       <motion.div
@@ -630,12 +566,12 @@ export function AttributesAndPricingStep({
                                 setCurrentMarketplacePricing({
                                   marketplaceId: '',
                                   marketplaceName: '',
-                                  costPrice: '',
-                                  sellingPrice: '',
-                                  retailPrice: '',
-                                  discountPercentage: '',
+                                  costPrice: 0,
+                                  sellingPrice: 0,
+                                  retailPrice: 0,
+                                  discountPercentage: 0,
                                   taxId: '',
-                                  taxRate: '',
+                                  taxRate: 0,
                                   vatExempt: false,
                                 });
                               }}
@@ -679,7 +615,7 @@ export function AttributesAndPricingStep({
                     )}
                   </AnimatePresence>
 
-                  {/* Message when all marketplaces added */}
+                  {/* All marketplaces added message */}
                   {availableMarketplaces.length === 0 && addedMarketplacePricing.length > 0 && (
                     <div className="p-4 bg-green-100 rounded-lg border-2 border-green-300">
                       <p className="text-sm font-semibold text-green-800 flex items-center gap-2">
@@ -771,7 +707,7 @@ export function AttributesAndPricingStep({
             </motion.div>
           )}
 
-          {/* Variants Table */}
+          {/* Variants Summary Table — reads from the LIFTED variants prop */}
           {variants.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -802,17 +738,12 @@ export function AttributesAndPricingStep({
                 onEditVariant={editVariant}
                 onDeleteVariant={deleteVariant}
               />
-
             </motion.div>
           )}
 
-       <InfoBoxSection />
-
+          <InfoBoxSection />
         </CardContent>
       </Card>
     </motion.div>
   );
 }
-
-
-

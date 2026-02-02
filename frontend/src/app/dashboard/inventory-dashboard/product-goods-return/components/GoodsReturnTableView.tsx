@@ -61,7 +61,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                 const StatusIcon = getStatusIcon(grtn.status);
                 return (
                   <motion.tr
-                    key={grtn.id}
+                    key={grtn._id!}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 + index * 0.05 }}
@@ -93,7 +93,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-4 w-4 text-indigo-500" />
-                        <span className="text-gray-700">{grtn.returnDate}</span>
+                        <span className="text-gray-700">{new Date(grtn.returnDate).toLocaleDateString()}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">

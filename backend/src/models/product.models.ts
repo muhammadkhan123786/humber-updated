@@ -1,8 +1,8 @@
-import { Document, Model, model, Schema } from "mongoose";
+import { Document, Model, model, Schema, HydratedDocument  } from "mongoose";
 import { IProduct } from "../../../common/IProduct.interface";
 import { ProductSchema } from "../schemas/product.schema";
 
-export type ProductDoc = IProduct & Document;
+export type ProductDoc = HydratedDocument <IProduct> & Document;
 
 const productDbSchema = new Schema<ProductDoc>(
   ProductSchema,

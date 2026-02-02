@@ -8,12 +8,12 @@ interface MarketplacePricing {
   id: string;
   marketplaceId: string;
   marketplaceName: string;
-  costPrice: string;
-  sellingPrice: string;
-  retailPrice: string;
-  discountPercentage: string;
+  costPrice: number;
+  sellingPrice: number;
+  retailPrice: number;
+  discountPercentage: number;
   taxId: string;
-  taxRate: string;
+  taxRate: number;
   vatExempt: boolean;
 }
 
@@ -22,10 +22,10 @@ interface ProductVariant {
   sku: string;
   attributes: Record<string, any>;
   marketplacePricing: MarketplacePricing[];
-  stockQuantity: string;
-  minStockLevel: string;
-  maxStockLevel: string;
-  reorderPoint: string;
+  stockQuantity: number;
+  minStockLevel: number;
+  maxStockLevel: number;
+  reorderPoint: number;
   stockLocation: string;
   warehouseId: string;
   binLocation: string;
@@ -33,8 +33,8 @@ interface ProductVariant {
   conditionId: string;
   warehouseStatusId: string;
   featured: boolean;
-  safetyStock?: string;
-  leadTimeDays?: string;
+  safetyStock?: number;
+  leadTimeDays?: number;
   warranty: string;
   warrantyPeriod: string;
 }
@@ -85,8 +85,8 @@ export function VariantSummary({
   };
 
   const calculatePricing = (pricing: MarketplacePricing) => {
-    const cost = parseFloat(pricing.costPrice || '0');
-    const selling = parseFloat(pricing.sellingPrice || '0');
+    const cost = (pricing.costPrice || 0);
+    const selling = (pricing.sellingPrice || 0);
     const profit = selling - cost;
     const margin = selling > 0 ? (profit / selling) * 100 : 0;
 
@@ -99,7 +99,7 @@ export function VariantSummary({
       <AnimatePresence>
         {variants.map((variant, index) => {
           const isExpanded = expandedVariants.has(variant.id);
-          const isLowStock = parseInt(variant.stockQuantity) < parseInt(variant.minStockLevel || '0');
+          const isLowStock = (variant.stockQuantity) < (variant.minStockLevel || 0);
 
           return (
             <motion.div
@@ -284,7 +284,7 @@ export function VariantSummary({
                                     </div>
                                   </div>
 
-                                  {pricing.discountPercentage && parseFloat(pricing.discountPercentage) > 0 && (
+                                  {pricing.discountPercentage && pricing.discountPercentage > 0 && (
                                     <div className="mt-2">
                                       <Badge className="bg-orange-500 text-white text-xs">
                                         {pricing.discountPercentage}% Discount
@@ -365,7 +365,7 @@ export function VariantSummary({
                   <div>
                     <p className="text-xs text-gray-600">Total Stock</p>
                     <p className="text-2xl font-bold text-green-900">
-                      {variants.reduce((sum, v) => sum + parseInt(v.stockQuantity || '0'), 0)}
+                      {variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0)}
                     </p>
                   </div>
                   <div>
