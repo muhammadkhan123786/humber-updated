@@ -9,7 +9,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 
 // Validation Schema
 const iconSchemaValidation = z.object({
@@ -21,15 +22,23 @@ const iconSchemaValidation = z.object({
 
 type FormData = z.infer<typeof iconSchemaValidation>;
 
+type IconWithId = IIcons & { _id: string };
+
 interface Props {
-  editingData: (IIcons & { _id?: string }) | null;
+  editingData: IconWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
-const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const IconsForm = ({ editingData, onClose, themeColor }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/icons",
+    "icons",
+    "Icon"
+  );
 
   const {
     register,
@@ -37,7 +46,7 @@ const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(iconSchemaValidation),
     defaultValues: {
@@ -75,21 +84,31 @@ const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   };
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/icons", editingData._id, payload);
-      } else {
-        await createItem("/icons", payload);
-      }
-      
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving icon");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating icon");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating icon");
+        }
+      });
     }
   };
 
@@ -186,7 +205,7 @@ const IconsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
           type="submit" 
           label={editingData ? "Update Icon" : "Create"} 
           icon={<Save size={20} />} 
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

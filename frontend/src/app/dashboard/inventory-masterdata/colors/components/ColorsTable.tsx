@@ -1,10 +1,10 @@
 "use client";
-
 import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Palette, Trash2 } from "lucide-react";
 import { IColor } from "../../../../../../../common/IColor.interface";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (IColor & { _id: string })[];
@@ -33,7 +33,9 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, onStatusChange, them
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className={`bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
           >
             <div className="p-4 flex items-start justify-between bg-white">
               <div 
@@ -54,20 +56,16 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, onStatusChange, them
               </h3>
               <p className="text-xs font-mono text-gray-500 uppercase">{item.colorCode}</p>
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="flex-1 py-2 text-sm bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-semibold transition-all"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => !item.isDefault && onDelete(item._id)}
-                  className={`p-2 rounded-lg transition-all ${item.isDefault ? 'opacity-20 cursor-not-allowed' : 'bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
-                  disabled={item.isDefault}
-                >
-                  <Trash2 size={20} />
-                </button>
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="color"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) return toast.error("Default color cannot be deleted.");
+                    onDelete(item._id);
+                  }}
+                />
               </div>
             </div>
           </div>
@@ -114,9 +112,10 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, onStatusChange, them
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="color"
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault) return alert("Default cannot be deleted.");
+                    if (item.isDefault) return toast.error("Default cannot be deleted.");
                     onDelete(item._id);
                   }}
                 />

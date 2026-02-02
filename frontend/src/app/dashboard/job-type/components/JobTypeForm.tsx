@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "../../../../helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 import { IJobTypes } from "../../../../../../common/IJob.types.interface";
 
 const jobTypeSchemaValidation = z.object({
@@ -19,21 +20,29 @@ const jobTypeSchemaValidation = z.object({
 
 type FormData = z.infer<typeof jobTypeSchemaValidation>;
 
+type JobTypeWithId = IJobTypes & { _id: string };
+
 interface Props {
-  editingData: (IJobTypes & { _id?: string }) | null;
+  editingData: JobTypeWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
-const JobTypeForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const JobTypeForm = ({ editingData, onClose, themeColor }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/job-types",
+    "jobTypes",
+    "Job Type"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(jobTypeSchemaValidation),
     defaultValues: { jobTypeName: "", isActive: true, isDefault: false },
@@ -52,20 +61,31 @@ const JobTypeForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => 
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/job-types", editingData._id, payload);
-      } else {
-        await createItem("/job-types", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating job type");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating job type");
+        }
+      });
     }
   };
 
@@ -117,7 +137,7 @@ const JobTypeForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => 
           type="submit"
           label={editingData ? "Update Job Type" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

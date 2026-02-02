@@ -9,8 +9,11 @@ import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormSelect } from "@/app/common-form/FormSelect";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem, getAlls } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
+import { getAlls } from "@/helper/apiHelper";
 import { IDepartments } from "../../../../../../../common/Ticket-management-system/IDepartment.interface";
+import { IPopulatedTicketType } from "./TicketTypeTable";
 
 const ticketTypeFormSchema = z.object({
   code: z.string().trim().min(1, "Enter code please"),
@@ -22,8 +25,22 @@ const ticketTypeFormSchema = z.object({
 
 type TicketTypeFormData = z.infer<typeof ticketTypeFormSchema>;
 
-export default function TicketTypeForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: any) {
+interface Props {
+  editingData: IPopulatedTicketType | null;
+  onClose: () => void;
+  onRefresh: () => void;
+  themeColor: string;
+  apiUrl: string;
+}
+
+export default function TicketTypeForm({ editingData, onClose, themeColor, apiUrl }: Props) {
   const [departments, setDepartments] = useState<{label: string, value: string}[]>([]);
+
+  const { createItem, updateItem, isSaving } = useFormActions(
+    apiUrl,
+    "ticketTypes",
+    "Ticket Type"
+  );
 
   const { 
     register, 
@@ -31,7 +48,7 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
     reset, 
     control, 
     setValue, 
-    formState: { errors, isSubmitting } 
+    formState: { errors } 
   } = useForm<TicketTypeFormData>({
     resolver: zodResolver(ticketTypeFormSchema),
     defaultValues: { code: "", label: "", departmentId: "", isActive: true, isDefault: false }
@@ -59,18 +76,30 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
   }, [editingData, reset]);
 
   const onSubmit = async (values: TicketTypeFormData) => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const payload = { ...values, code: values.code.toUpperCase(), userId: user.id || user._id };
-      
-      editingData?._id 
-        ? await updateItem(apiUrl, editingData._id, payload)
-        : await createItem(apiUrl, payload);
-        
-      onRefresh();
-      onClose();
-    } catch (err: any) {
-      alert(err.message || "Error saving data");
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const payload = { ...values, code: values.code.toUpperCase(), userId: user.id || user._id };
+    
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating ticket type");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating ticket type");
+        }
+      });
     }
   };
 
@@ -113,10 +142,10 @@ export default function TicketTypeForm({ editingData, onClose, onRefresh, themeC
         <FormButton 
           type="submit" 
           label={editingData ? "Update Type" : "Create"} 
-          loading={isSubmitting} 
+          loading={isSaving} 
           icon={<Save size={20} />} 
           themeColor={themeColor} 
-          onCancel={onClose} // Triggers the correct right-aligned footer layout
+          onCancel={onClose}
         />
       </form>
     </FormModal>

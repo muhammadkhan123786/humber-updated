@@ -4,6 +4,7 @@ import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Share2, Trash2 } from "lucide-react";
 import { ICustomerSource } from "../../../../../../common/ICustomerSource";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (ICustomerSource & { _id: string })[];
@@ -31,7 +32,9 @@ const CustomerSourceTable = ({ data, displayView, onEdit, onDelete, onStatusChan
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
           >
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
@@ -54,26 +57,18 @@ const CustomerSourceTable = ({ data, displayView, onEdit, onDelete, onStatusChan
                 </h3>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="customer source"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
                     if (item.isDefault) {
-                      alert("Default sources cannot be deleted.");
-                      return;
+                      return toast.error("Default sources cannot be deleted.");
                     }
                     onDelete(item._id);
                   }}
-                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  title="Delete"
-                >
-                  <Trash2 size={20} />
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -89,14 +84,14 @@ const CustomerSourceTable = ({ data, displayView, onEdit, onDelete, onStatusChan
   }
 
   return (
-    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
-      <table className="w-full text-[16px]! text-left">
-        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200">
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
+      <table className="w-full text-[16px]! text-left min-w-max">
+        <thead className="bg-[#ECFEFF] text-[#364153]! border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Source Name</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Source Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -107,7 +102,7 @@ const CustomerSourceTable = ({ data, displayView, onEdit, onDelete, onStatusChan
                   <Share2 size={18} />
                 </div>
               </td>
-              <td className="px-6 py-4 font-bold text-gray-900">
+              <td className="px-6 py-4 font-bold text-gray-900 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                   {item.customerSource}
                   {item.isDefault && (
@@ -124,10 +119,12 @@ const CustomerSourceTable = ({ data, displayView, onEdit, onDelete, onStatusChan
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="customer source"
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault)
-                      return alert("Default sources cannot be deleted.");
+                    if (item.isDefault) {
+                      return toast.error("Default sources cannot be deleted.");
+                    }
                     onDelete(item._id);
                   }}
                 />

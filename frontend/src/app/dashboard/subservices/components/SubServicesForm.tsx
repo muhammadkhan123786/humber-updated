@@ -10,7 +10,7 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -30,11 +30,17 @@ interface Props {
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
-  apiUrl: string;
 }
 
-const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
+const SubServicesForm = ({ editingData, onClose, themeColor }: Props) => {
   const [masterServices, setMasterServices] = useState<any[]>([]);
+
+  // Using useFormActions hook like Business Type module
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/sub-services",
+    "subServices",
+    "Sub-Service"
+  );
 
   const {
     register,
@@ -42,7 +48,7 @@ const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(subServiceSchemaValidation),
     defaultValues: {
@@ -88,23 +94,27 @@ const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        // Using apiHelper updateItem
-        await updateItem(apiUrl, editingData._id, payload);
-      } else {
-        // Using apiHelper createItem
-        await createItem(apiUrl, payload);
-      }
-      
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      // Update using hook
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          }
+        }
+      );
+    } else {
+      // Create using hook
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        }
+      });
     }
   };
 
@@ -200,7 +210,7 @@ const SubServicesForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }
           type="submit"
           label={editingData ? "Update Sub-Service" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

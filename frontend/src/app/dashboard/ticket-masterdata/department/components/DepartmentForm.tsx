@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 import { IDepartments } from "../../../../../../../common/Ticket-management-system/IDepartment.interface";
 
 const departmentSchema = z.object({
@@ -19,16 +20,24 @@ const departmentSchema = z.object({
 
 type FormData = z.infer<typeof departmentSchema>;
 
+type DepartmentWithId = IDepartments & { _id: string };
+
 interface Props {
-    editingData: (IDepartments & { _id?: string }) | null;
+    editingData: DepartmentWithId | null;
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
     apiUrl: string;
 }
 
-const DepartmentForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }: Props) => {
-    const { register, handleSubmit, reset, control, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+const DepartmentForm = ({ editingData, onClose, themeColor, apiUrl }: Props) => {
+    const { createItem, updateItem, isSaving } = useFormActions(
+        apiUrl,
+        "departments",
+        "Department"
+    );
+
+    const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(departmentSchema),
         defaultValues: { departmentName: "", isActive: true, isDefault: false },
     });
@@ -46,20 +55,31 @@ const DepartmentForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }:
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await updateItem(apiUrl, editingData._id, payload);
-            } else {
-                await createItem(apiUrl, payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving department");
+        if (editingData?._id) {
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    },
+                    onError: (error: any) => {
+                        toast.error(error.response?.data?.message || "Error updating department");
+                    }
+                }
+            );
+        } else {
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                },
+                onError: (error: any) => {
+                    toast.error(error.response?.data?.message || "Error creating department");
+                }
+            });
         }
     };
 
@@ -104,7 +124,7 @@ const DepartmentForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl }:
                     type="submit"
                     label={editingData ? "Update Department" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

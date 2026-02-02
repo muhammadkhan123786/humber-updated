@@ -1,148 +1,107 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { Globe, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
-// Import common components
+import { useState, useMemo, useEffect } from "react";
+import { Globe, Plus, Search, Loader2, LayoutGrid, Table2 } from "lucide-react";
 import StatsCards from "@/app/common-form/StatsCard"; 
 import CountryTable from "./CountryTable";
 import CountryForm from "./CountryForm";
 import Pagination from "@/components/ui/Pagination";
-import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { ICountry } from "../../../../../../common/Country.interface";
-import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
+import { useFormActions } from "@/hooks/useFormActions";
+import { getAll } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
-
 type CountryWithId = ICountry & { _id: string };
 
 export default function VehicleCountryClient() {
-  const [dataList, setDataList] = useState<CountryWithId[]>([]);
-  const [filteredDataList, setFilteredDataList] = useState<CountryWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<CountryWithId | null>(null);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-  const [totalCount, setTotalCount] = useState(0);
+
+  // Stats States
   const [totalActiveCount, setTotalActiveCount] = useState(0);
   const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
-  const fetchData = useCallback(async (page = 1, search = "") => {
-    try {
-      setLoading(true);
-      const res = await getAll<CountryWithId>("/country", {
-        page: page.toString(),
-        limit: "12",
-        search: search.trim(),
-      });
-      setDataList(res.data || []);
-      setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 12) || 1);
-      setCurrentPage(page);
+  const { 
+    data, 
+    total, 
+    isLoading, 
+    deleteItem, 
+    updateItem 
+  } = useFormActions<CountryWithId>(
+    "/country", 
+    "countries", 
+    "Country", 
+    currentPage, 
+    searchTerm
+  );
 
-      // Fetch ALL data without pagination to get accurate active/inactive counts
-      const allDataRes = await getAll<CountryWithId>("/country", {
-        limit: "1000", // Get all data
-        search: search.trim(),
-      });
-
-      // Track total counts across ALL data
-      setTotalCount(res.total || 0);
-      setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
-      setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-      setDataList([]);
-      setFilteredDataList([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Filter logic based on status
+  // Stats Logic: Accurate global counts
   useEffect(() => {
-    if (filterStatus === 'all') {
-      setFilteredDataList(dataList);
-    } else if (filterStatus === 'active') {
-      setFilteredDataList(dataList.filter((d) => d.isActive));
-    } else if (filterStatus === 'inactive') {
-      setFilteredDataList(dataList.filter((d) => !d.isActive));
-    }
-  }, [filterStatus, dataList]);
+    const fetchStats = async () => {
+      try {
+        const allDataRes = await getAll<CountryWithId>("/country", {
+          limit: "1000", 
+          search: searchTerm.trim(),
+        });
+        setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+        setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
+      } catch (err) {
+        console.error("Stats Fetch Error:", err);
+      }
+    };
+    fetchStats();
+  }, [data, searchTerm]); 
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchData(1, searchTerm);
-    }, 400);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, fetchData]);
+  const filteredDataList = useMemo(() => {
+    if (filterStatus === 'all') return data;
+    return data.filter((d) => (filterStatus === 'active' ? d.isActive : !d.isActive));
+  }, [filterStatus, data]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this country?")) return;
-    try {
-      await deleteItem("/country", id);
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Delete Error:", error);
-      alert("Failed to delete item.");
-    }
+  const handleDelete = (id: string) => {
+    deleteItem(id);
   };
 
-const handleStatusChange = (id: string, newStatus: boolean) => {
-  handleOptimisticStatusUpdate(
-    id,
-    newStatus,
-    "/country", 
-    setDataList,
-    setTotalActiveCount,
-    setTotalInactiveCount,
-    updateItem
-  );
-};
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+    updateItem({ id, payload: { isActive: newStatus } });
+  };
 
-  const totalCountries = totalCount;
-  const activeCountries = totalActiveCount;
-  const inactiveCountries = totalInactiveCount;
+  const totalPages = Math.ceil(total / 12) || 1;
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen ">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
-          <div className="flex items-center gap-4">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-6 md:p-7 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slideInLeft">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <AnimatedIcon icon={<Globe size={32} className="text-white" />} />
-            <div>
-              <h1 className="text-4xl font-bold">Countries</h1>
-              <p className="text-blue-100 text-lg">Manage global location categories</p>
+            <div className="flex-1 md:flex-none">
+              <h1 className="text-3xl md:text-4xl font-bold">Countries</h1>
+              <p className="text-blue-100 text-sm md:text-lg">Manage global location categories</p>
             </div>
           </div>
           <button
-            onClick={() => {
-              setEditingData(null);
-              setShowForm(true);
-            }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            onClick={() => { setEditingData(null); setShowForm(true); }}
+            className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
             <Plus size={22} /> Add Country
           </button>
         </div>
 
         <StatsCards 
-          totalCount={totalCountries}
-          activeCount={activeCountries}
-          inactiveCount={inactiveCountries}
+          totalCount={total}
+          activeCount={totalActiveCount}
+          inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
           labels={{
             total: "Total Countries",
             active: "Active Countries",
             inactive: "Inactive Countries"
           }}
-          icons={{
-            total: <Globe size={24} />,
-          }}
+          icons={{ total: <Globe size={24} /> }}
         />
 
         {/* Search Bar */}
@@ -153,41 +112,36 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             placeholder="Search country name..."
             className="w-full outline-none text-lg"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+            }}
           />
         </div>
 
         <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! ">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 mb-6">
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Country List
-              </h2>
+              <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Country List</h2>
               <p className="text-sm text-gray-500">Configure countries for addresses and international services</p>
             </div>
 
-            <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
+            <div className="flex gap-2 bg-linear-to-r from-blue-50 to-cyan-50 p-1 rounded-lg border border-blue-200 w-full md:w-auto">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-blue-600 hover:bg-[#10b981]"
                 }`}
               >
-                <Grid3x3 size={16} />
-                <span className="hidden sm:inline text-sm">Grid</span>
+                <LayoutGrid size={16} /> <span className="text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-blue-600 hover:bg-[#10b981]"
                 }`}
               >
-                <List size={16} />
-                <span className="hidden sm:inline text-sm">Table</span>
+                <Table2 size={16} /> <span className="text-sm">Table</span>
               </button>
             </div>
           </div>
@@ -196,12 +150,12 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             <CountryForm
               editingData={editingData}
               onClose={() => setShowForm(false)}
-              onRefresh={() => fetchData(currentPage, searchTerm)}
+              onRefresh={() => {}} 
               themeColor={THEME_COLOR}
             />
           )}
 
-          {loading ? (
+          {isLoading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
               <p className="mt-4 text-gray-400 font-medium">Loading countries...</p>
@@ -210,24 +164,14 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             <>
               {filterStatus !== 'all' && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-                  <span className="text-sm text-blue-700 font-medium">
-                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Countries ({filteredDataList.length})
-                  </span>
-                  <button
-                    onClick={() => setFilterStatus('all')}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
-                  >
-                    Clear Filter
-                  </button>
+                  <span className="text-sm text-blue-700 font-medium">Showing {filterStatus} ({filteredDataList.length})</span>
+                  <button onClick={() => setFilterStatus('all')} className="text-xs text-blue-600 hover:text-blue-800 font-bold">Clear Filter</button>
                 </div>
               )}
               <CountryTable
                 data={filteredDataList}
                 displayView={displayView}
-                onEdit={(item) => {
-                  setEditingData(item);
-                  setShowForm(true);
-                }}
+                onEdit={(item) => { setEditingData(item); setShowForm(true); }}
                 onDelete={handleDelete}
                 onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
@@ -237,7 +181,7 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={(page) => fetchData(page, searchTerm)}
+                    onPageChange={(page) => setCurrentPage(page)}
                   />
                 </div>
               )}

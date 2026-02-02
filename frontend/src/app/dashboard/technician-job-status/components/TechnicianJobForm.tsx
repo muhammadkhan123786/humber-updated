@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { ITechnicianJobStatus } from "../../../../../../common/technician-jobs/ITechnician.activity.status.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const statusSchemaValidation = z.object({
     technicianJobStatus: z.string().min(1, "Job status name is required."),
@@ -26,15 +26,15 @@ interface Props {
     themeColor: string;
 }
 
-const TechnicianJobForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-    const {
-        register,
-        handleSubmit,
-        reset,
-        control,
-        setValue,
-        formState: { errors, isSubmitting },
-    } = useForm<FormData>({
+const TechnicianJobForm = ({ editingData, onClose, themeColor }: Props) => {
+    // Hook call
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/technician-job-status",
+        "technicianJobStatuses",
+        "Technician Job Status"
+    );
+
+    const { register, handleSubmit, reset, control, setValue, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(statusSchemaValidation),
         defaultValues: {
             technicianJobStatus: "",
@@ -56,20 +56,27 @@ const TechnicianJobForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id, isDeleted: false };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id, isDeleted: false };
 
-            if (editingData?._id) {
-                await updateItem("/technician-job-status", editingData._id, payload);
-            } else {
-                await createItem("/technician-job-status", payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving status");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                }
+            });
         }
     };
 
@@ -121,7 +128,7 @@ const TechnicianJobForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
                     type="submit"
                     label={editingData ? "Update Status" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

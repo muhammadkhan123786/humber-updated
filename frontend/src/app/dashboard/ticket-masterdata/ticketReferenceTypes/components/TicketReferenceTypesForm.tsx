@@ -7,9 +7,10 @@ import { z } from "zod";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
-import { createItem, updateItem } from "../../../../../helper/apiHelper";
-import { ITicketReferenceTypes } from "../../../../../../../common/Ticket-management-system/ITicket.reference.types.interface";
 import { FormButton } from "@/app/common-form/FormButton";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
+import { ITicketReferenceTypes } from "../../../../../../../common/Ticket-management-system/ITicket.reference.types.interface";
 
 const formSchema = z.object({
   code: z
@@ -24,8 +25,10 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+type TicketReferenceTypeWithId = ITicketReferenceTypes & { _id: string };
+
 interface Props {
-  editingData: (ITicketReferenceTypes & { _id?: string }) | null;
+  editingData: TicketReferenceTypeWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
@@ -34,16 +37,21 @@ interface Props {
 const TicketReferenceTypesForm = ({
   editingData,
   onClose,
-  onRefresh,
   themeColor,
 }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/ticket-reference-types",
+    "ticketReferenceTypes",
+    "Ticket Reference Type"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: { code: "", label: "", isActive: true, isDefault: false },
@@ -66,20 +74,31 @@ const TicketReferenceTypesForm = ({
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/ticket-reference-types", editingData._id, payload);
-      } else {
-        await createItem("/ticket-reference-types", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating reference type");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating reference type");
+        }
+      });
     }
   };
 
@@ -139,7 +158,7 @@ const TicketReferenceTypesForm = ({
           type="submit"
           label={editingData ? "Update Reference Type" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

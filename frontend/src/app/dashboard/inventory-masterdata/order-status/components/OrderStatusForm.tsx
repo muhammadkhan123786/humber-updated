@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { IOrderStatus } from "../../../../../../../common/order.status.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 // Validation Schema
 const orderStatusSchemaValidation = z.object({
@@ -23,18 +23,24 @@ type FormData = z.infer<typeof orderStatusSchemaValidation>;
 interface Props {
     editingData: (IOrderStatus & { _id?: string }) | null;
     onClose: () => void;
-    onRefresh: () => void;
+    onRefresh: () => void; // Optional in usage
     themeColor: string;
 }
 
-const OrderStatusForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const OrderStatusForm = ({ editingData, onClose, themeColor }: Props) => {
+    // Use the hook for mutations
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/order-status",
+        "orderStatus",
+        "Order Status"
+    );
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(orderStatusSchemaValidation),
         defaultValues: {
@@ -58,20 +64,27 @@ const OrderStatusForm = ({ editingData, onClose, onRefresh, themeColor }: Props)
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await updateItem("/order-status", editingData._id, payload);
-            } else {
-                await createItem("/order-status", payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving status");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose(); // List will refresh automatically
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose(); // List will refresh automatically
+                }
+            });
         }
     };
 
@@ -123,7 +136,7 @@ const OrderStatusForm = ({ editingData, onClose, onRefresh, themeColor }: Props)
                     type="submit"
                     label={editingData ? "Update Status" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

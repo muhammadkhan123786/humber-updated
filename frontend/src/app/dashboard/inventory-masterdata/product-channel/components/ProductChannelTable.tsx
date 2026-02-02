@@ -4,6 +4,7 @@ import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Tv, Trash2 } from "lucide-react";
 import { IChannel } from "../../../../../../../common/IChannel.interface";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: (IChannel & { _id: string })[];
@@ -31,7 +32,9 @@ const ProductChannelTable = ({ data, displayView, onEdit, onDelete, onStatusChan
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className={`bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
           >
             <div className="p-4 flex items-start justify-between bg-white">
               <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
@@ -52,23 +55,18 @@ const ProductChannelTable = ({ data, displayView, onEdit, onDelete, onStatusChan
                 )}
               </h3>
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
-                    if (item.isDefault) return alert("Default channels cannot be deleted.");
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="product channel"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) {
+                      return toast.error("Default channels cannot be deleted.");
+                    }
                     onDelete(item._id);
                   }}
-                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  title="Delete"
-                >
-                  <Trash2 size={20} />
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -119,9 +117,10 @@ const ProductChannelTable = ({ data, displayView, onEdit, onDelete, onStatusChan
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="product channel"
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
-                    if (item.isDefault) return alert("Default channels cannot be deleted.");
+                    if (item.isDefault) return toast.error("Default channels cannot be deleted.");
                     onDelete(item._id);
                   }}
                 />

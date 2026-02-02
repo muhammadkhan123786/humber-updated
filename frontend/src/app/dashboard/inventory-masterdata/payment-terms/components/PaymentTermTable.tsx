@@ -3,6 +3,7 @@ import React from "react";
 import { Trash2, Star, CalendarClock } from "lucide-react";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
+import { toast } from "react-hot-toast";
 
 interface Props {
   data: any[];
@@ -32,7 +33,9 @@ const PaymentTermTable = ({ data, displayView, onEdit, onDelete, onStatusChange,
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className={`bg-white rounded-3xl border-2 border-blue-200 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 cursor-pointer transform ${
+              !item.isActive ? "opacity-60" : ""
+            }`}
           >
             {/* Header Section with Icon and Toggle */}
             <div className="p-4 flex items-start justify-between bg-white">
@@ -63,26 +66,18 @@ const PaymentTermTable = ({ data, displayView, onEdit, onDelete, onStatusChange,
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => onEdit(item)}
-                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="payment term"
+                  fullWidth={true}
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
                     if (item.isDefault) {
-                      alert("Default payment terms cannot be deleted.");
-                      return;
+                      return toast.error("Default payment terms cannot be deleted.");
                     }
                     onDelete(item._id);
                   }}
-                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  title="Delete"
-                >
-                  <Trash2 size={20} />
-                </button>
+                />
               </div>
             </div>
           </div>
@@ -138,10 +133,11 @@ const PaymentTermTable = ({ data, displayView, onEdit, onDelete, onStatusChange,
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
+                  itemName="payment term"
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault)
-                      return alert("Default payment terms cannot be deleted.");
+                      return toast.error("Default payment terms cannot be deleted.");
                     onDelete(item._id);
                   }}
                 />

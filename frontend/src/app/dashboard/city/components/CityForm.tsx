@@ -9,7 +9,7 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
 import { ICityInterface } from "../../../../../../common/City.interface";
 
 // Validation Schema
@@ -29,7 +29,12 @@ interface Props {
     themeColor: string;
 }
 
-const CityForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const CityForm = ({ editingData, onClose, themeColor }: Props) => {
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/city",
+        "cities",
+        "City"
+    );
     const [countries, setCountries] = useState<any[]>([]);
     const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -39,7 +44,7 @@ const CityForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(citySchemaValidation),
         defaultValues: {
@@ -82,20 +87,25 @@ const CityForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await updateItem("/city", editingData._id, payload);
-            } else {
-                await createItem("/city", payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving city data");
+        if (editingData?._id) {
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose();
+                    }
+                }
+            );
+        } else {
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose();
+                }
+            });
         }
     };
 
@@ -171,7 +181,7 @@ const CityForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
                     type="submit"
                     label={editingData ? "Update City" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

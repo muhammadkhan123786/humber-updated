@@ -8,7 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
 
 // 1. Define the interface strictly
 interface IPriorityFormData {
@@ -42,23 +43,32 @@ const prioritySchemaValidation = z.object({
   isDefault: z.boolean(),
 });
 
+interface IPriorityLevelWithId extends IPriorityFormData {
+  _id?: string;
+}
+
 interface Props {
-  editingData: any | null;
+  editingData: IPriorityLevelWithId | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
-const PriorityLevelForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const PriorityLevelForm = ({ editingData, onClose, themeColor }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/service-request-prioprity-level",
+    "priorityLevels",
+    "Priority Level"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<IPriorityFormData>({
-    // FIX: Cast the resolver to 'any' or 'Resolver<IPriorityFormData>' to stop the TFieldValues conflict
     resolver: zodResolver(prioritySchemaValidation) as any,
     defaultValues: {
       serviceRequestPrioprity: "",
@@ -87,52 +97,49 @@ const PriorityLevelForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
   }, [editingData, reset]);
 
   const onSubmit: SubmitHandler<IPriorityFormData> = async (values) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        const response= await updateItem("/service-request-prioprity-level", editingData._id, payload);
-        console.log("Update Response:", response);
-      } else {
-       const response = await createItem("/service-request-prioprity-level", payload);
-       console.log("Create Response:", response);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      // --- Error Handling Logic Start ---
-      let errorMessage = "Error saving data";
-       console.log("Caught Error:", error);
-       if(!error.success){
-        errorMessage = error.message || errorMessage;
-
-       }
-      if (error.response?.data?.message) {
-        const rawMessage = error.response.data.message;
-        console.log("Raw Error Message:", rawMessage);
-
-        // Check if it's a MongoDB Duplicate Key Error (E11000)
-        if (rawMessage.includes("E11000") && rawMessage.includes("index")) {
-          errorMessage = `Duplicate Index Error: The index number "${values.index}" is already in use. Please use a different number.`;
-        }
-        // Check if it's a Zod Validation Error (JSON string from backend)
-        else if (rawMessage.startsWith("[") || rawMessage.includes("code")) {
-          try {
-            const parsedError = JSON.parse(rawMessage);
-            errorMessage = parsedError[0]?.message || "Validation failed";
-          } catch (e) {
-            errorMessage = rawMessage;
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            let errorMessage = "Error updating priority level";
+            if (error.response?.data?.message) {
+              const rawMessage = error.response.data.message;
+              if (rawMessage.includes("E11000") && rawMessage.includes("index")) {
+                errorMessage = `Duplicate Index Error: The index number "${values.index}" is already in use.`;
+              } else {
+                errorMessage = rawMessage;
+              }
+            }
+            toast.error(errorMessage);
           }
         }
-        else {
-          errorMessage = rawMessage;
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          let errorMessage = "Error creating priority level";
+          if (error.response?.data?.message) {
+            const rawMessage = error.response.data.message;
+            if (rawMessage.includes("E11000") && rawMessage.includes("index")) {
+              errorMessage = `Duplicate Index Error: The index number "${values.index}" is already in use.`;
+            } else {
+              errorMessage = rawMessage;
+            }
+          }
+          toast.error(errorMessage);
         }
-      }
-
-      alert(errorMessage);
-      // --- Error Handling Logic End ---
+      });
     }
   };
 
@@ -230,7 +237,7 @@ const PriorityLevelForm = ({ editingData, onClose, onRefresh, themeColor }: Prop
           type="submit"
           label={editingData ? "Update Priority" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

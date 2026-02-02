@@ -4,18 +4,14 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GitCompare, Loader2, Save } from "lucide-react";
 import { z } from "zod";
-
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormSelect } from "@/app/common-form/FormSelect";
 import { FormButton } from "@/app/common-form/FormButton";
 import { FormToggle } from "@/app/common-form/FormToggle";
-
-import {
-  createItem,
-  updateItem,
-  getAll,
-} from "../../../../../helper/apiHelper";
+import { useFormActions } from "@/hooks/useFormActions";
+import { toast } from "react-hot-toast";
+import { getAll } from "../../../../../helper/apiHelper";
 import { ITicketStatus } from "../../../../../../../common/Ticket-management-system/ITicketStatus.interface";
 import { ITicketActions } from "../../../../../../../common/Ticket-management-system/ITicketActions.interface";
 import { ITicketType } from "../../../../../../../common/Ticket-management-system/ITicketType.interface";
@@ -51,7 +47,6 @@ interface Props {
 const TicketTransitionForm = ({
   editingData,
   onClose,
-  onRefresh,
   themeColor,
 }: Props) => {
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -65,13 +60,19 @@ const TicketTransitionForm = ({
     types: [],
   });
 
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/ticket-transition-setup",
+    "ticketTransitions",
+    "Ticket Transition"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<TransitionFormData>({
     resolver: zodResolver(transitionSchema),
     defaultValues: {
@@ -130,20 +131,31 @@ const TicketTransitionForm = ({
   }, [editingData, reset, loadingOptions]);
 
   const onSubmit = async (values: TransitionFormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/ticket-transition-setup", editingData._id, payload);
-      } else {
-        await createItem("/ticket-transition-setup", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving transition");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+          onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Error updating transition");
+          }
+        }
+      );
+    } else {
+      createItem(payload, {
+        onSuccess: () => {
+          onClose();
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Error creating transition");
+        }
+      });
     }
   };
 
@@ -249,13 +261,9 @@ const TicketTransitionForm = ({
 
             <FormButton
               type="submit"
-              label={
-                editingData
-                  ? "Update Transition Rule"
-                  : "Create"
-              }
+              label={editingData ? "Update Transition Rule" : "Create"}
               icon={<Save size={20} />}
-              loading={isSubmitting}
+              loading={isSaving}
               themeColor={themeColor}
               onCancel={onClose}
             />
