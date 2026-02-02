@@ -10,7 +10,7 @@ interface Props {
   onBack?: () => void;
   form: any;
   isLoading: boolean;
-  decisions?: any[]; // Keep optional for compatibility
+  decisions?: any[];
 }
 
 const StepIssueDetails: React.FC<Props> = ({ form }) => {
@@ -116,7 +116,7 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
       <div className="p-10 space-y-8">
         {/* Description Section */}
         <div className="space-y-3">
-          <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
+          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Fault or Accident Description{" "}
             <span className="text-red-500">*</span>
           </label>
@@ -131,10 +131,33 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
               />
             )}
           />
+
+          {/* The Note Section matching image_0e8501.png */}
+          <div className="flex items-center gap-2 text-slate-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span className="text-xs font-normal font-['Arial']">
+              Provide as much detail as possible to help technicians understand
+              the issue
+            </span>
+          </div>
         </div>
         <div className="space-y-4">
-          <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
-            Decision Selection(optional)
+          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
+            Decision (optional)
           </label>
 
           <div className="flex flex-col gap-3">
@@ -162,10 +185,9 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
                     {item.icon}
                   </div>
 
-                  {/* Text Labels */}
                   <div className="flex-1">
                     <div
-                      className={`text-base font-bold font-['Arial'] ${
+                      className={`text-base font-medium font-['Arial'] ${
                         isSelected ? "text-white" : "text-gray-700"
                       }`}
                     >
@@ -180,7 +202,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
                     </div>
                   </div>
 
-                  {/* Checkmark */}
                   {isSelected && (
                     <div className="bg-white/20 rounded-full p-1">
                       <Check size={18} className="text-white" strokeWidth={3} />

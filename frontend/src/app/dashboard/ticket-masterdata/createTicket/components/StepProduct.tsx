@@ -933,7 +933,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Make
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.vehicleBrandId?.brandName || "N/A"}
               </div>
             </div>
@@ -943,7 +943,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Model
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.vehicleModelId?.modelName || "N/A"}
               </div>
             </div>
@@ -953,7 +953,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Vehicle Type
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.vehicleType || "N/A"}
               </div>
             </div>
@@ -963,7 +963,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Serial No.
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.serialNumber || "N/A"}
               </div>
             </div>
@@ -973,7 +973,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Purchase Date
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.purchaseDate
                   ? new Date(vehicleDetails.purchaseDate).toLocaleDateString()
                   : "N/A"}
@@ -985,7 +985,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Ownership
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.isVehicleCompanyOwned
                   ? "Company Owned"
                   : "Customer Owned"}

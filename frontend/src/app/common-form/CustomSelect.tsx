@@ -33,10 +33,9 @@ export const CustomSelect = ({
     }
   };
 
-  // Fixed Toggle Logic: Reset search here instead of useEffect
   const toggleDropdown = () => {
     if (isOpen) {
-      setSearchTerm(""); // Clean search when closing
+      setSearchTerm("");
     }
     setIsOpen(!isOpen);
   };
@@ -44,7 +43,6 @@ export const CustomSelect = ({
   useLayoutEffect(() => {
     if (isOpen) {
       updatePosition();
-      // Use requestAnimationFrame or a small timeout for focus
       const timer = setTimeout(() => searchInputRef.current?.focus(), 10);
       window.addEventListener("scroll", updatePosition, true);
       window.addEventListener("resize", updatePosition);
@@ -64,7 +62,7 @@ export const CustomSelect = ({
         !containerRef.current.contains(e.target as Node)
       ) {
         setIsOpen(false);
-        setSearchTerm(""); // Clean search when clicking outside
+        setSearchTerm("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -76,7 +74,7 @@ export const CustomSelect = ({
   return (
     <div className="relative w-full" ref={containerRef}>
       <div
-        onClick={toggleDropdown} // Use the new toggle function
+        onClick={toggleDropdown}
         className={`w-full h-10 px-3 bg-gray-100 rounded-[10px] flex items-center justify-between cursor-pointer transition-all border-2
           ${isOpen ? "border-purple-400 bg-white" : error ? "border-red-400" : "border-purple-100"}`}
       >
@@ -131,14 +129,14 @@ export const CustomSelect = ({
                       e.stopPropagation();
                       onChange(opt.id);
                       setIsOpen(false);
-                      setSearchTerm(""); // Clean search after selection
+                      setSearchTerm("");
                     }}
                     className="w-full group flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#10B981] mb-0.5 text-left"
                   >
                     <span
-                      className={`text-sm truncate flex-1 ${
+                      className={`text-sm truncate flex-1 whitespace-pre-line ${
                         value === opt.id
-                          ? "font-bold text-[#10B981] group-hover:text-white"
+                          ? "font-bold text-[#10B981] group-hover:text-white "
                           : "text-indigo-950 group-hover:text-white"
                       }`}
                     >

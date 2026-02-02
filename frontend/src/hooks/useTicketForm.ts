@@ -256,7 +256,7 @@ export const useTicketForm = () => {
     return () => subscription.unsubscribe();
   }, [form, fetchVehiclesForCustomer]);
 
-  const handleSubmit = async (data: TicketFormData) => {
+  const handleSubmit = async (data: TicketFormData): Promise<any> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -264,7 +264,6 @@ export const useTicketForm = () => {
 
       const formData = new FormData();
 
-      // Required fields from your schema
       formData.append("ticketSource", data.ticketSource);
       formData.append("customerId", data.customerId);
       formData.append("vehicleId", data.vehicleId);
@@ -348,11 +347,11 @@ export const useTicketForm = () => {
       console.log("API Response:", res.data);
 
       if (res.data?.success) {
-        alert(editingId ? "Ticket updated!" : "Ticket created!");
         clearEdit();
-        router.push("/dashboard/ticket-masterdata/allTickets");
+        return res.data;
       } else {
         setError(res.data?.message || "Submission failed");
+        return res.data;
       }
     } catch (err: any) {
       console.error("Error submitting form:", err);
