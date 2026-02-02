@@ -144,7 +144,7 @@ const ManageTechnicianList = ({
                         </div>
                         <div className="text-[10px] text-slate-400 flex items-center gap-2 whitespace-nowrap">
                           <MapPin size={12} className="text-slate-400" />{" "}
-                          {tech.addressId?.city}
+                          {tech.addressId?.address}
                         </div>
                       </td>
 
@@ -322,7 +322,8 @@ const ManageTechnicianList = ({
                 <div className="flex items-center gap-3 px-3 py-2.5 bg-linear-to-r from-green-50 to-emerald-50 rounded-xl text-xs text-gray-700 border border-green-100/50">
                   <MapPin size={14} className="text-green-500" />
                   <span className="truncate">
-                    {tech.addressId?.city || "123 Tech Street, San Francisco"}
+                    {tech.addressId?.address ||
+                      "123 Tech Street, San Francisco"}
                   </span>
                 </div>
               </div>
@@ -368,6 +369,7 @@ const ManageTechnicianList = ({
 
               <div className="flex gap-2">
                 <button
+                  onClick={() => onEdit(tech)}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white text-slate-600 rounded-xl text-xs font-bold border border-slate-200 transition-all duration-300
     hover:bg-[#007bff] hover:text-white hover:border-[#007bff] hover:shadow-[0px_4px_12px_rgba(0,123,255,0.3)]"
                 >
@@ -375,6 +377,7 @@ const ManageTechnicianList = ({
                 </button>
 
                 <button
+                  onClick={() => onDelete(tech._id)}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white text-slate-600 rounded-xl text-xs font-bold border border-slate-200 transition-all duration-300
     hover:bg-[#e60050] hover:text-white hover:border-[#e60050] hover:shadow-[0px_4px_12px_rgba(230,0,80,0.3)]"
                 >

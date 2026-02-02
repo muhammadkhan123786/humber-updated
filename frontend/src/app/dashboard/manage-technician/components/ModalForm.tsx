@@ -1,43 +1,26 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  X,
-  User,
-  Calendar,
-  MapPin,
-  Globe,
-  Briefcase,
-  Landmark,
-  Upload,
-  CheckCircle2,
-  CalendarDays,
-  Users,
-  Mail,
-  Phone,
-  SquarePen,
-  PoundSterling,
-  Clock,
-  Paperclip,
-  Check,
-  Award,
-} from "lucide-react";
-import FormSection from "../../suppliers/components/FormSection";
-import FormField from "../../suppliers/components/FormInput";
-import useGoogleMapLoad from "@/hooks/useGoogleMapLoad"; // Add this import
-
+import { X, Users } from "lucide-react";
+import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
+import PersonalInfoSection from "./PersonalInfoSection";
+import AddressSection from "./AddressSection";
+import EmploymentSection from "./EmploymentSection";
+import SalarySection from "./SalarySection";
+import AvailabilitySection from "./AvailabilitySection";
+import DocumentUploadSection from "./DocumentUploadSection";
+import AdditionalInfoSection from "./AdditionalInfoSection";
+import FormActions from "./FormActions";
+import DocumentPreviewModal from "./DocumentPreviewModal";
 interface ModalFormProps {
   onClose: () => void;
   initialData?: any;
 }
-
 const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   const isEditMode = !!initialData;
   const [paymentFreq, setPaymentFreq] = useState("Monthly");
   const [activeDays, setActiveDays] = useState<string[]>([]);
   const [technicianStatus, setTechnicianStatus] = useState(true);
-
-  // Add Google Maps loader
   const googleMapLoader = useGoogleMapLoad();
 
   const [documents, setDocuments] = useState<
@@ -45,7 +28,64 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   >([]);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewType, setPreviewType] = useState<"image" | "pdf">("image");
-  const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dropdowns, setDropdowns] = useState({
+    contractTypes: [],
+    serviceTypesMaster: [],
+    departments: [],
+  });
+  const [formData, setFormData] = useState({
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    emailAddress: "",
+    phoneNumber: "",
+    dateOfBirth: "",
+    employeeId: "",
+    streetAddress: "",
+    city: "",
+    postcode: "",
+    latitude: 0,
+    longitude: 0,
+    dateOfJoining: "",
+    contractTypeId: "",
+    departmentId: "",
+    specializationIds: [] as string[],
+    salary: "",
+    paymentFrequency: "Monthly",
+    bankAccountNumber: "",
+    taxId: "",
+    dutyRoster: [
+      { day: "Sunday", isActive: false, startTime: "09:00", endTime: "17:00" },
+      { day: "Monday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      { day: "Tuesday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      {
+        day: "Wednesday",
+        isActive: true,
+        startTime: "09:00",
+        endTime: "17:00",
+      },
+      { day: "Thursday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      { day: "Friday", isActive: true, startTime: "09:00", endTime: "17:00" },
+      {
+        day: "Saturday",
+        isActive: false,
+        startTime: "09:00",
+        endTime: "17:00",
+      },
+    ] as Array<{
+      day: string;
+      isActive: boolean;
+      startTime: string;
+      endTime: string;
+    }>,
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    healthInsuranceDetails: "",
+    additionalNotes: "",
+    technicianStatus: "Available",
+  });
 
   useEffect(() => {
     if (isEditMode && initialData?.technicianDocuments) {
@@ -76,7 +116,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
     const autocomplete = new google.maps.places.Autocomplete(input, {
       types: ["address"],
-      componentRestrictions: { country: "uk" }, // UK addresses only
+      componentRestrictions: { country: "uk" },
     });
 
     const listener = autocomplete.addListener("place_changed", () => {
@@ -96,17 +136,12 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
           const city =
             result.address_components?.find((c) => c.types.includes("locality"))
               ?.long_name ?? "";
-          const country =
-            result.address_components?.find((c) => c.types.includes("country"))
-              ?.long_name ?? "";
 
-          // Update form data
           setFormData((prev) => ({
             ...prev,
             streetAddress: address,
             city: city,
             postcode: postalCode,
-            // You can add these hidden fields if needed
             ...(result.geometry?.location && {
               latitude: result.geometry.location.lat(),
               longitude: result.geometry.location.lng(),
@@ -117,39 +152,9 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     });
 
     return () => {
-      listener.remove(); // cleanup listener
+      listener.remove();
     };
   }, [googleMapLoader]);
-
-  const removeDocument = (id: number) =>
-    documents.length > 1 &&
-    setDocuments(documents.filter((doc) => doc.id !== id));
-
-  const handlePreviewDocument = (doc: {
-    file: File | null;
-    existingUrl?: string;
-  }) => {
-    let urlToPreview = "";
-    if (doc.file) {
-      urlToPreview = URL.createObjectURL(doc.file);
-    } else if (doc.existingUrl) {
-      urlToPreview = doc.existingUrl.startsWith("http")
-        ? doc.existingUrl
-        : `${process.env.NEXT_PUBLIC_IMAGE_URL}${doc.existingUrl}`;
-    }
-
-    if (urlToPreview) {
-      const ext = urlToPreview.toLowerCase().split(".").pop();
-      setPreviewType(ext === "pdf" ? "pdf" : "image");
-      setPreviewUrl(urlToPreview);
-    }
-  };
-
-  const [dropdowns, setDropdowns] = useState({
-    contractTypes: [],
-    serviceTypesMaster: [],
-    departments: [],
-  });
 
   useEffect(() => {
     let isMounted = true;
@@ -202,82 +207,15 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       isMounted = false;
     };
   }, []);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [formData, setFormData] = useState({
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    emailAddress: "",
-    phoneNumber: "",
-    dateOfBirth: "",
-    employeeId: "",
-
-    // Address Information
-    streetAddress: "",
-    city: "",
-    postcode: "",
-    latitude: 0, // Added for Google Maps
-    longitude: 0, // Added for Google Maps
-
-    // Employment Details
-    dateOfJoining: "",
-    contractTypeId: "",
-    departmentId: "",
-    specializationIds: [] as string[],
-
-    // Salary & Compensation
-    salary: "",
-    paymentFrequency: "Monthly",
-    bankAccountNumber: "",
-    taxId: "",
-
-    // Availability
-    dutyRoster: [
-      { day: "Sunday", isActive: false, startTime: "09:00", endTime: "17:00" },
-      { day: "Monday", isActive: true, startTime: "09:00", endTime: "17:00" },
-      { day: "Tuesday", isActive: true, startTime: "09:00", endTime: "17:00" },
-      {
-        day: "Wednesday",
-        isActive: true,
-        startTime: "09:00",
-        endTime: "17:00",
-      },
-      { day: "Thursday", isActive: true, startTime: "09:00", endTime: "17:00" },
-      { day: "Friday", isActive: true, startTime: "09:00", endTime: "17:00" },
-      {
-        day: "Saturday",
-        isActive: false,
-        startTime: "09:00",
-        endTime: "17:00",
-      },
-    ] as Array<{
-      day: string;
-      isActive: boolean;
-      startTime: string;
-      endTime: string;
-    }>,
-
-    // Additional Information
-    emergencyContactName: "",
-    emergencyContactPhone: "",
-    healthInsuranceDetails: "",
-    additionalNotes: "",
-    technicianStatus: "Available",
-  });
-
   useEffect(() => {
     if (isEditMode && initialData) {
       console.log("Edit data received:", initialData);
 
-      // Extract data from nested API response
       const person = initialData.personId || {};
       const contact = initialData.contactId || {};
       const address = initialData.addressId || {};
       const additionalInfo = initialData.additionalInformation || {};
 
-      // Map duty roster and active days
       const mappedDutyRoster =
         initialData.dutyRoster?.map((item: any) => ({
           day: item.day,
@@ -286,13 +224,11 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
           endTime: item.endTime || "17:00",
         })) || [];
 
-      // Set active days based on duty roster
       const activeDayNames = mappedDutyRoster
         .filter((item: any) => item.isActive)
         .map((item: any) => item.day);
       setActiveDays(activeDayNames);
 
-      // Initialize dutyRoster with ALL days
       const allDays = [
         "Sunday",
         "Monday",
@@ -313,26 +249,21 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         };
       });
 
-      // Set payment frequency
       setPaymentFreq(initialData.paymentFrequency || "Monthly");
 
-      // Set technician status
       const isAvailable = initialData.technicianStatus === "Available";
       setTechnicianStatus(isAvailable);
 
-      // Map specialization IDs
       const specializationIds = Array.isArray(initialData.specializationIds)
         ? initialData.specializationIds.map((item: any) => item._id)
         : [];
 
-      // Format dates
       const formatDate = (dateString: string) => {
         if (!dateString) return "";
         const date = new Date(dateString);
         return date.toISOString().split("T")[0];
       };
 
-      // Populate form data
       setFormData((prev) => ({
         ...prev,
         firstName: person.firstName || "",
@@ -342,27 +273,22 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
         phoneNumber: contact.mobileNumber || contact.phoneNumber || "",
         dateOfBirth: formatDate(initialData.dateOfBirth),
         employeeId: initialData.employeeId || "",
-
         streetAddress: address.address || "",
         city: address.city || "",
         postcode: address.zipCode || "",
         latitude: address.latitude || 0,
         longitude: address.longitude || 0,
-
         dateOfJoining: formatDate(initialData.dateOfJoining),
         contractTypeId:
           initialData.contractTypeId?._id || initialData.contractTypeId || "",
         departmentId:
           initialData.departmentId?._id || initialData.departmentId || "",
         specializationIds: specializationIds,
-
         salary: initialData.salary?.toString() || "",
         paymentFrequency: initialData.paymentFrequency || "Monthly",
         bankAccountNumber: initialData.bankAccountNumber || "",
         taxId: initialData.taxId || "",
-
         dutyRoster: completeDutyRoster,
-
         emergencyContactName: additionalInfo.emergencyContactName || "",
         emergencyContactPhone: additionalInfo.emergencyContactNumber || "",
         healthInsuranceDetails: additionalInfo.healthInsuranceDetails || "",
@@ -384,6 +310,10 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const removeDocument = (id: number) =>
+    documents.length > 1 &&
+    setDocuments(documents.filter((doc) => doc.id !== id));
+
   const handleMultipleFiles = (files: File[]) => {
     if (files.length === 0) return;
 
@@ -398,6 +328,26 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     }));
 
     setDocuments([...existingDocs, ...newDocuments]);
+  };
+
+  const handlePreviewDocument = (doc: {
+    file: File | null;
+    existingUrl?: string;
+  }) => {
+    let urlToPreview = "";
+    if (doc.file) {
+      urlToPreview = URL.createObjectURL(doc.file);
+    } else if (doc.existingUrl) {
+      urlToPreview = doc.existingUrl.startsWith("http")
+        ? doc.existingUrl
+        : `${process.env.NEXT_PUBLIC_IMAGE_URL}${doc.existingUrl}`;
+    }
+
+    if (urlToPreview) {
+      const ext = urlToPreview.toLowerCase().split(".").pop();
+      setPreviewType(ext === "pdf" ? "pdf" : "image");
+      setPreviewUrl(urlToPreview);
+    }
   };
 
   const handleTimeChange = (
@@ -429,7 +379,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate address
     if (!formData.streetAddress) {
       alert("Please enter a valid address.");
       return;
@@ -488,7 +437,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       formDataToSend.append("address[country]", "UK");
       formDataToSend.append("address[userId]", currentUserId);
 
-      // Add latitude and longitude if available
       if (formData.latitude && formData.longitude) {
         formDataToSend.append(
           "address[latitude]",
@@ -584,6 +532,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
           }
         });
       }
+
       console.log("FormData entries:");
       for (const [key, value] of (formDataToSend as any).entries()) {
         if (value instanceof File) {
@@ -653,10 +602,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     }
   };
 
-  const sectionTitleStyle =
-    "flex items-center gap-2 text-md font-bold text-slate-800 border-b border-slate-50 pb-2 mb-4";
-
-  // Show loading state while Google Maps is loading
   if (!googleMapLoader && !isEditMode) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -709,7 +654,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
         <form onSubmit={handleSubmit}>
           <div className="p-6 space-y-10">
-            <div className="w-full max-w-[835px] min-h-24 px-5 py-4 bg-linear-to-r from-[#FFF7F4] via-[#FFF3F3] to-[#FFF0F6] rounded-2xl  outline-2 -outline-offset-2 outline-[#FFD9C7] flex flex-col justify-center">
+            <div className="w-full max-w-[835px] min-h-24 px-5 py-4 bg-linear-to-r from-[#FFF7F4] via-[#FFF3F3] to-[#FFF0F6] rounded-2xl outline-2 -outline-offset-2 outline-[#FFD9C7] flex flex-col justify-center">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-linear-to-br from-[#FF5100] to-[#FF2E00] rounded-full flex justify-center items-center shadow-sm shrink-0">
                   <div className="w-5 h-5 flex items-center justify-center text-white">
@@ -733,986 +678,66 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               </div>
             </div>
 
-            <FormSection
-              icon={User}
-              title="Personal Information"
-              theme="red"
-              iconClassName="text-red-500 "
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <FormField
-                  label="First Name *"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  placeholder="John"
-                  hoverColor="orange"
-                  required
-                />
-                <FormField
-                  label="Middle Name"
-                  name="middleName"
-                  value={formData.middleName}
-                  onChange={handleChange}
-                  hoverColor="orange"
-                  placeholder="Michael"
-                />
-                <FormField
-                  label="Last Name *"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  hoverColor="orange"
-                  placeholder="Smith"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <FormField
-                  label="Email Address *"
-                  name="emailAddress"
-                  labelIcon={Mail}
-                  type="email"
-                  value={formData.emailAddress}
-                  onChange={handleChange}
-                  placeholder="technician@example.com"
-                  hoverColor="blue"
-                  required
-                />
-                <FormField
-                  label="Phone Number *"
-                  name="phoneNumber"
-                  labelIcon={Phone}
-                  type="text"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  placeholder="+1 (555) 123-4567"
-                  hoverColor="purple"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  label="Date of Birth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  hoverColor="pink"
-                  onChange={handleChange}
-                />
-                <FormField
-                  label="Employee ID"
-                  name="employeeId"
-                  value={formData.employeeId}
-                  onChange={handleChange}
-                  hoverColor="blue"
-                  placeholder="EMP-001"
-                  className="[&_input]:bg-[#F0FDFF]"
-                />
-              </div>
-            </FormSection>
-
-            {/* Address Information Section - Updated with Google Maps */}
-            <FormSection
-              icon={MapPin}
-              title="Address Information"
-              theme="green"
-              iconClassName="text-green-500 "
-            >
-              <div className="space-y-2 mb-4">
-                <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
-                  Street Address *
-                </label>
-                <input
-                  id="street-address-input"
-                  name="streetAddress"
-                  value={formData.streetAddress}
-                  onChange={handleChange}
-                  placeholder="Start typing address... (UK addresses only)"
-                  className="w-full h-9 px-4 bg-[#F0FDF4] border border-[#DCFCE7] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981]/10 focus:border-[#10B981] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
-                  required
-                />
-                <p className="text-xs text-slate-500 ml-1">
-                  Start typing your UK address and select from suggestions
-                </p>
-              </div>
-
-              {/* Info Box */}
-              <div className="p-3.5 rounded-xl bg-[#EBFFF3] border border-[#C6F6D5] flex gap-3 items-center mb-4">
-                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm">
-                  <Globe size={14} className="text-[#16A34A]" />
-                </div>
-                <p className="text-[12px] font-bold text-[#16A34A] leading-tight">
-                  Google Places Integration:{" "}
-                  <span className="font-medium text-slate-500">
-                    City and postcode will auto-populate when you select an
-                    address.
-                  </span>
-                  <br />
-                  <span className="text-[#22C55E] font-bold">
-                    Demo: Type 123 to see auto-fill in action
-                  </span>
-                </p>
-              </div>
-
-              {/* City and Postcode Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
-                    City *
-                  </label>
-                  <input
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Auto-filled from address"
-                    className="w-full h-9 px-4 bg-[#F0F9FF] border border-[#DBEAFE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/10 focus:border-[#3B82F6] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
-                    required
-                    readOnly
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
-                    Postcode *
-                  </label>
-                  <input
-                    name="postcode"
-                    value={formData.postcode}
-                    onChange={handleChange}
-                    placeholder="Auto-filled from address"
-                    className="w-full h-9 px-4 bg-[#FDF2F8] border border-[#FCE7F3] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EC4899]/10 focus:border-[#EC4899] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
-                    required
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              {/* Hidden fields for coordinates */}
-              <div className="hidden">
-                <input
-                  type="hidden"
-                  name="latitude"
-                  value={formData.latitude}
-                />
-                <input
-                  type="hidden"
-                  name="longitude"
-                  value={formData.longitude}
-                />
-              </div>
-            </FormSection>
-
-            {/* 3. Employment Details */}
-            <FormSection
-              icon={Briefcase}
-              title="Employment Details"
-              theme="blue"
-              iconClassName="text-blue-500 "
-            >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-1.5">
-                    Date of Joining *
-                  </label>
-                  <input
-                    type="date"
-                    name="dateOfJoining"
-                    value={formData.dateOfJoining}
-                    onChange={handleChange}
-                    className="w-full h-9 px-4 bg-[#F8FAFF] border  rounded-xl focus:outline-none focus:ring-2 focus:ring-[#E7000B]/10 focus:border-blue-500 transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm border-blue-2"
-                    required
-                  />
-                </div>
-
-                <FormField
-                  label="Contract Type *"
-                  name="contractTypeId"
-                  type="select"
-                  value={formData.contractTypeId}
-                  onChange={handleChange}
-                  options={dropdowns.contractTypes}
-                  hoverColor="indigo"
-                  required
-                />
-
-                <FormField
-                  label="Department"
-                  name="departmentId"
-                  type="select"
-                  value={formData.departmentId}
-                  onChange={handleChange}
-                  options={dropdowns.departments}
-                />
-              </div>
-
-              {/* Specialization */}
-              <FormField
-                label="Specialization *"
-                name="specializationIds"
-                type="select"
-                multiple={true}
-                value={formData.specializationIds}
-                onChange={handleChange}
-                options={dropdowns.serviceTypesMaster}
-                required
-              />
-            </FormSection>
-
-            <FormSection
-              icon={PoundSterling}
-              title="Salary & Compensation"
-              theme="green"
-              iconClassName="text-green-500 "
-            >
-              <div className="p-3 bg-[#EBFFF3] border border-[#C6F6D5] rounded-xl flex items-center gap-3 text-[#16A34A] text-[12px] font-bold mb-4">
-                <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
-                  <Landmark size={14} />
-                </div>
-                <p>
-                  Compensation Structure:{" "}
-                  <span className="font-medium text-slate-500">
-                    Enter the base salary amount and select payment frequency
-                    (daily, weekly, or monthly)
-                  </span>
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
-                {/* Salary Amount Input with Currency Symbol */}
-                <div className="space-y-1.5">
-                  <div className="relative ">
-                    <FormField
-                      label="Salary Amount *"
-                      name="salary"
-                      type="number"
-                      value={formData.salary}
-                      onChange={handleChange}
-                      placeholder="5000"
-                      className="[&_input]:pl-10 [&_input]:text-xl [&_input]:font-bold [&_input]:bg-[#F0FDFF] [&_input]:border-[#B2EBF2]"
-                      hoverColor="green"
-                      required
-                    />
-                    <span className="absolute left-4 top-[30px] text-[#16A34A] font-bold text-lg">
-                      £
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 ml-1">
-                    Enter base compensation amount
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="flex items-center gap-2 text-[14px] font-semibold text-[#1F2937]">
-                    <Calendar size={18} className="text-[#2563EB]" />
-                    Payment Frequency <span className="text-red-500">*</span>
-                  </label>
-
-                  <div className="flex gap-3">
-                    {[
-                      {
-                        label: "Daily",
-                        activeBg:
-                          "bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] text-white outline-transparent shadow-lg shadow-blue-200/50",
-                        hoverBorder: "hover:outline-blue-400 hover:bg-blue-50",
-                        icon: ({ size }: { size?: number }) => (
-                          <span
-                            style={{ fontSize: size }}
-                            className="leading-none"
-                          >
-                            📅
-                          </span>
-                        ),
-                      },
-                      {
-                        label: "Weekly",
-                        activeBg:
-                          "bg-gradient-to-r from-[#C026D3] to-[#F43F5E] text-white outline-transparent shadow-lg shadow-purple-200/50",
-                        hoverBorder:
-                          "hover:outline-purple-400 hover:bg-pink-50",
-                        icon: ({ size }: { size?: number }) => (
-                          <span
-                            style={{ fontSize: size }}
-                            className="leading-none"
-                          >
-                            📆
-                          </span>
-                        ),
-                      },
-                      {
-                        label: "Monthly",
-                        activeBg:
-                          "bg-gradient-to-br from-emerald-500 to-green-500 text-white outline-transparent shadow-lg shadow-green-200/50",
-                        hoverBorder:
-                          "hover:outline-emerald-400 hover:bg-emerald-100",
-                        icon: ({ size }: { size?: number }) => (
-                          <span
-                            style={{ fontSize: size }}
-                            className="leading-none"
-                          >
-                            🗓️
-                          </span>
-                        ),
-                      },
-                    ].map((freq) => {
-                      const isSelected = paymentFreq === freq.label;
-                      const Icon = freq.icon;
-
-                      return (
-                        <button
-                          key={freq.label}
-                          type="button"
-                          onClick={() => setPaymentFreq(freq.label)}
-                          className={`w-32 h-20 px-3.5 pt-3.5 pb-0.5 rounded-2xl outline-2 -outline-offset-2 transition-all duration-300 flex flex-col justify-start items-center gap-1 ${
-                            isSelected
-                              ? freq.activeBg
-                              : `bg-white outline-gray-200 text-gray-400 ${freq.hoverBorder}`
-                          }`}
-                        >
-                          <div className="self-stretch h-8 flex items-center justify-center">
-                            <Icon size={24} />
-                          </div>
-
-                          <div className="self-stretch h-4 flex items-center justify-center">
-                            <span
-                              className={`text-xs font-bold font-['Arial'] leading-4 ${
-                                isSelected ? "text-white" : "text-gray-700"
-                              }`}
-                            >
-                              {freq.label}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Banking Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  label="Bank Account Number"
-                  name="bankAccountNumber"
-                  value={formData.bankAccountNumber}
-                  onChange={handleChange}
-                  placeholder="1234567890"
-                  hoverColor="blue"
-                  className="[&_input]:bg-[#F8FAFF] [&_input]:border-[#EEF2FF]"
-                />
-                <FormField
-                  label="Tax ID / SSN"
-                  name="taxId"
-                  value={formData.taxId}
-                  onChange={handleChange}
-                  placeholder="XXX-XX-XXXX"
-                  className="[&_input]:bg-[#F5F5F5] [&_input]:border-slate-200"
-                />
-              </div>
-            </FormSection>
-
-            <section className="space-y-4">
-              <h3 className={`${sectionTitleStyle} flex items-center gap-2`}>
-                <Clock size={18} className="text-[#A855F7]" />
-
-                <span>Availability & Duty Roster</span>
-              </h3>
-              <div className="space-y-2">
-                {formData.dutyRoster.map((dayData) => (
-                  <div
-                    key={dayData.day}
-                    className={`flex flex-wrap items-center justify-between p-3 rounded-2xl border transition-all ${dayData.isActive ? "bg-[#F0FDF4] border-[#DCFCE7]" : "bg-slate-50 border-slate-100 opacity-60"}`}
-                  >
-                    <div className="flex items-center gap-3 min-w-[120px]">
-                      <button
-                        type="button"
-                        onClick={() => toggleDay(dayData.day)}
-                        className={`w-10 h-5 rounded-full relative transition-colors ${dayData.isActive ? "bg-[#22C55E]" : "bg-slate-300"}`}
-                      >
-                        <div
-                          className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${dayData.isActive ? "right-1" : "left-1"}`}
-                        />
-                      </button>
-                      <span className="text-sm font-bold text-slate-700">
-                        {dayData.day}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">
-                          Start
-                        </span>
-                        <input
-                          type="time"
-                          value={dayData.startTime}
-                          onChange={(e) =>
-                            handleTimeChange(
-                              dayData.day,
-                              "startTime",
-                              e.target.value,
-                            )
-                          }
-                          className="bg-white border border-slate-200 rounded-lg p-1.5 text-[12px] font-bold text-slate-600 focus:ring-1 focus:ring-[#22C55E] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!dayData.isActive}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">
-                          End
-                        </span>
-                        <input
-                          type="time"
-                          value={dayData.endTime}
-                          onChange={(e) =>
-                            handleTimeChange(
-                              dayData.day,
-                              "endTime",
-                              e.target.value,
-                            )
-                          }
-                          className="bg-white border border-slate-200 rounded-lg p-1.5 text-[12px] font-bold text-slate-600 focus:ring-1 focus:ring-[#22C55E] outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={!dayData.isActive}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Rest of the form remains exactly the same... */}
-            {/* 6. Document Upload */}
-            <section className="space-y-3">
-              <h3 className={sectionTitleStyle}>
-                <svg
-                  className="text-blue-600"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                <span className="text-slate-800 text-sm flex items-center gap-2">
-                  Document Upload (Multi-File Support)
-                </span>
-              </h3>
-
-              <div className="p-6 rounded-2xl border-2 border-slate-100 hover:border-cyan-100 transition-all">
-                <div className="self-stretch w-full flex flex-col justify-start items-start gap-3">
-                  {/* Top Info Bar */}
-                  <div className="self-stretch px-4 py-3 bg-linear-to-r from-cyan-50 to-blue-50 rounded-xl  outline-1 -outline-offset-1 outline-cyan-200 flex flex-col justify-start items-start">
-                    <div className="self-stretch inline-flex justify-start items-center gap-2">
-                      <span className="text-gray-700 text-base">📎</span>
-                      <div className="inline-flex flex-wrap gap-1 text-gray-700 text-sm">
-                        <span className="font-normal">
-                          Upload multiple documents:
-                        </span>
-                        <span className="font-bold">
-                          Resume, Certifications, ID Proof, Licenses, Background
-                          Check, Training Certificates, etc.
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Main Upload Area */}
-                  <div
-                    className="self-stretch min-h-72 relative bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-50 rounded-2xl  outline-2 outline-offset-2 outline-cyan-300 overflow-hidden cursor-pointer transition-all duration-300 hover:outline-cyan-400 group"
-                    onClick={() => {
-                      if (documents.length > 0) {
-                        const input = fileInputRefs.current[documents[0]?.id];
-                        if (input) input.click();
-                      }
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.add(
-                        "outline-cyan-500",
-                        "bg-cyan-100/50",
-                      );
-                    }}
-                    onDragLeave={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove(
-                        "outline-cyan-500",
-                        "bg-cyan-100/50",
-                      );
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.currentTarget.classList.remove(
-                        "outline-cyan-500",
-                        "bg-cyan-100/50",
-                      );
-                      if (e.dataTransfer.files.length > 0) {
-                        const files = Array.from(e.dataTransfer.files);
-                        handleMultipleFiles(files);
-                      }
-                    }}
-                  >
-                    <div className="absolute inset-0 opacity-40 bg-linear-to-br from-cyan-200 to-blue-200 pointer-events-none" />
-
-                    {/* Content Container */}
-                    <div className="relative z-10 flex flex-col items-center justify-center p-8 gap-6 text-center">
-                      {/* Animated Icon Container */}
-                      <motion.div
-                        className="h-20 w-20 rounded-2xl bg-linear-to-br from-cyan-500 via-blue-500 to-indigo-500 flex items-center justify-center shadow-lg overflow-hidden"
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.7, ease: "easeInOut" }}
-                      >
-                        <Upload size={32} className="text-white" />
-                      </motion.div>
-
-                      {/* Text Content */}
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap items-center justify-center gap-2">
-                          <h4 className="text-xl font-bold text-gray-800">
-                            Click to Upload Multiple Documents
-                          </h4>
-                          <span className="px-3 py-1 bg-cyan-500 text-white text-sm font-bold rounded-full">
-                            or drag & drop
-                          </span>
-                        </div>
-
-                        <p className="text-gray-600 text-sm">
-                          PDF, DOC, DOCX, JPG, PNG (Max 10MB per file)
-                        </p>
-
-                        <div className="flex items-center justify-center gap-4 text-xs text-cyan-700">
-                          <span className="flex items-center gap-1">
-                            ✓ Select multiple files at once
-                          </span>
-                          <span className="flex items-center gap-1">
-                            • ✓ No file limit
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <button
-                        type="button"
-                        className="px-6 py-2 bg-linear-to-r from-cyan-600 to-blue-600 text-white font-medium rounded-[10px] shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (documents.length > 0) {
-                            const input =
-                              fileInputRefs.current[documents[0].id];
-                            if (input) input.click();
-                          }
-                        }}
-                      >
-                        <Upload size={16} />
-                        Browse Files
-                      </button>
-
-                      {/* Hidden Input */}
-                      <input
-                        type="file"
-                        className="hidden"
-                        ref={(el) => {
-                          if (documents.length > 0) {
-                            fileInputRefs.current[documents[0].id] = el;
-                          }
-                        }}
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files.length > 0) {
-                            const files = Array.from(e.target.files);
-                            handleMultipleFiles(files);
-                          }
-                        }}
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                        multiple
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {documents.filter((doc) => doc.file || doc.existingUrl).length >
-                  0 && (
-                  <div className="mt-8">
-                    <h5 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-cyan-500 rounded-full"></div>
-                      Selected Documents (
-                      {
-                        documents.filter((doc) => doc.file || doc.existingUrl)
-                          .length
-                      }
-                      )
-                    </h5>
-
-                    <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                      {documents
-                        .filter((doc) => doc.file || doc.existingUrl)
-                        .map((doc) => (
-                          <div
-                            key={doc.id}
-                            className="bg-slate-50 rounded-lg border border-slate-200 p-3 hover:border-slate-300 transition-all"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div
-                                  className={`p-2 rounded-md ${doc.file ? "bg-blue-100" : "bg-green-100"}`}
-                                >
-                                  {doc.file?.name
-                                    ?.toLowerCase()
-                                    .endsWith(".pdf") ? (
-                                    <svg
-                                      className="w-5 h-5 text-red-500"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                  ) : doc.file?.name
-                                      ?.toLowerCase()
-                                      .match(/\.(jpg|jpeg|png)$/) ? (
-                                    <svg
-                                      className="w-5 h-5 text-blue-500"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                  ) : (
-                                    <svg
-                                      className="w-5 h-5 text-purple-500"
-                                      fill="currentColor"
-                                      viewBox="0 0 20 20"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                  )}
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-sm font-medium text-slate-800 truncate">
-                                      {doc.file
-                                        ? doc.file.name
-                                        : doc.existingUrl?.split("/").pop()}
-                                    </span>
-                                    {doc.file && (
-                                      <span className="text-xs font-medium px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                                        New
-                                      </span>
-                                    )}
-                                    {!doc.file && doc.existingUrl && (
-                                      <span className="text-xs font-medium px-2 py-0.5 bg-green-100 text-green-700 rounded">
-                                        Existing
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <div className="flex items-center gap-3 text-xs text-slate-500">
-                                    <span>
-                                      {doc.file
-                                        ? `${(doc.file.size / 1024).toFixed(0)} KB`
-                                        : "Uploaded"}
-                                    </span>
-                                    <span>•</span>
-                                    <span>
-                                      {doc.file?.name
-                                        ?.split(".")
-                                        .pop()
-                                        ?.toUpperCase() ||
-                                        doc.existingUrl
-                                          ?.split(".")
-                                          .pop()
-                                          ?.toUpperCase() ||
-                                        "FILE"}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handlePreviewDocument(doc)}
-                                  className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                  title="Preview"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                    />
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                    />
-                                  </svg>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => removeDocument(doc.id)}
-                                  className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                  title="Remove"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M6 18L18 6M6 6l12 12"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* 7. Additional Information - Rest of the form remains the same */}
-            <FormSection
-              icon={Award}
-              title="Additional Information"
-              theme="rose"
-              iconClassName="text-rose-500 "
-            >
-              {/* Emergency Contact Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <FormField
-                  label="Emergency Contact Name"
-                  name="emergencyContactName"
-                  value={formData.emergencyContactName}
-                  onChange={handleChange}
-                  placeholder="Contact person name"
-                  hoverColor="pink"
-                />
-                <FormField
-                  label="Emergency Contact Phone"
-                  name="emergencyContactPhone"
-                  value={formData.emergencyContactPhone}
-                  onChange={handleChange}
-                  placeholder="+1 (555) 999-8888"
-                  hoverColor="pink"
-                />
-              </div>
-
-              {/* Health Insurance Field */}
-              <div className="mb-4">
-                <FormField
-                  label="Health Insurance Details"
-                  name="healthInsuranceDetails"
-                  value={formData.healthInsuranceDetails}
-                  onChange={handleChange}
-                  placeholder="Insurance provider and policy number"
-                />
-              </div>
-
-              {/* Additional Notes Textarea */}
-              <div className="mb-6">
-                <FormField
-                  label="Additional Notes"
-                  name="additionalNotes"
-                  type="textarea"
-                  value={formData.additionalNotes}
-                  onChange={handleChange}
-                  placeholder="Any additional information about the technician..."
-                  className="[&_textarea]:h-24 [&_textarea]:resize-none"
-                />
-              </div>
-
-              {/* Technician Status Toggle Card */}
-              <div
-                className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
-                  technicianStatus
-                    ? "bg-[#F0FFF4] border-[#22C55E]/30 ring-1 ring-[#22C55E]/10"
-                    : "bg-slate-50 border-slate-200"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${
-                      technicianStatus
-                        ? "bg-[#00C951] text-white shadow-lg shadow-green-100"
-                        : "bg-slate-400 text-white shadow-md shadow-slate-200"
-                    }`}
-                  >
-                    {technicianStatus ? (
-                      <Check size={22} strokeWidth={3} />
-                    ) : (
-                      <X size={20} strokeWidth={3} />
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="text-[15px] font-bold text-[#1E293B] tracking-tight">
-                      Technician Status
-                    </h4>
-                    <p
-                      className={`text-[12px] font-medium transition-colors ${
-                        technicianStatus ? "text-slate-600" : "text-slate-500"
-                      }`}
-                    >
-                      {technicianStatus
-                        ? "Active and can be assigned to jobs"
-                        : "Inactive and cannot be assigned"}
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTechnicianStatus(!technicianStatus);
-                    setFormData((prev) => ({
-                      ...prev,
-                      technicianStatus: !technicianStatus
-                        ? "Available"
-                        : "Busy",
-                    }));
-                  }}
-                  className={`w-12 h-6 rounded-full relative transition-colors duration-300 ${
-                    technicianStatus ? "bg-[#00C951]" : "bg-slate-300"
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${
-                      technicianStatus ? "left-7" : "left-1 shadow-sm"
-                    }`}
-                  />
-                </button>
-              </div>
-            </FormSection>
+            <PersonalInfoSection
+              formData={formData}
+              handleChange={handleChange}
+            />
+            <AddressSection
+              formData={formData}
+              handleChange={handleChange}
+              googleMapLoader={googleMapLoader}
+            />
+            <EmploymentSection
+              formData={formData}
+              handleChange={handleChange}
+              dropdowns={dropdowns}
+            />
+            <SalarySection
+              formData={formData}
+              handleChange={handleChange}
+              paymentFreq={paymentFreq}
+              setPaymentFreq={setPaymentFreq}
+            />
+            <AvailabilitySection
+              formData={formData}
+              activeDays={activeDays}
+              toggleDay={toggleDay}
+              handleTimeChange={handleTimeChange}
+            />
+            <DocumentUploadSection
+              documents={documents}
+              handleMultipleFiles={handleMultipleFiles}
+              removeDocument={removeDocument}
+              handlePreviewDocument={handlePreviewDocument}
+            />
+            <AdditionalInfoSection
+              formData={formData}
+              handleChange={handleChange}
+              technicianStatus={technicianStatus}
+              setTechnicianStatus={setTechnicianStatus}
+            />
           </div>
 
-          <div className="p-6 bg-slate-50 flex gap-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3.5 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-[#00C951] hover:text-white hover:border-[#00C951] transition-all duration-300 text-sm shadow-sm"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={isSubmitting || (!googleMapLoader && !isEditMode)}
-              className="flex-1 py-3.5 rounded-xl font-bold bg-linear-to-r from-[#FF5C00] via-[#E7000B] to-[#D8006F] text-white shadow-lg shadow-red-100 hover:opacity-95 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting
-                ? "Processing..."
-                : isEditMode
-                  ? "Update Technician"
-                  : "Register Technician"}
-            </button>
-          </div>
+          <FormActions
+            onClose={onClose}
+            isSubmitting={isSubmitting}
+            isEditMode={isEditMode}
+            googleMapLoader={googleMapLoader}
+          />
         </form>
       </motion.div>
 
-      {/* Document Preview Modal - Remains the same */}
       {previewUrl && (
-        <div className="fixed inset-0 bg-black/50 z-60 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200">
-              <h2 className="text-xl font-bold text-slate-900">
-                Document Preview
-              </h2>
-              <button
-                onClick={() => {
-                  setPreviewUrl(null);
-                  if (previewUrl?.startsWith("blob:")) {
-                    URL.revokeObjectURL(previewUrl);
-                  }
-                }}
-                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <svg
-                  className="w-6 h-6 text-slate-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1 overflow-auto bg-slate-50 p-6">
-              {previewType === "image" ? (
-                <div className="flex items-center justify-center h-full">
-                  <img
-                    src={previewUrl}
-                    alt="Document Preview"
-                    className="max-w-full max-h-full object-contain rounded-lg"
-                  />
-                </div>
-              ) : (
-                <iframe
-                  src={previewUrl}
-                  className="w-full h-full rounded-lg"
-                  title="PDF Preview"
-                />
-              )}
-            </div>
-            <div className="flex items-center justify-end p-6 border-t border-slate-200 gap-3">
-              <a
-                href={previewUrl}
-                download
-                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                Download
-              </a>
-              <button
-                onClick={() => {
-                  setPreviewUrl(null);
-                  if (previewUrl?.startsWith("blob:")) {
-                    URL.revokeObjectURL(previewUrl);
-                  }
-                }}
-                className="px-6 py-2.5 bg-slate-200 text-slate-900 rounded-lg font-semibold hover:bg-slate-300 transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <DocumentPreviewModal
+          previewUrl={previewUrl}
+          previewType={previewType}
+          onClose={() => {
+            setPreviewUrl(null);
+            if (previewUrl?.startsWith("blob:")) {
+              URL.revokeObjectURL(previewUrl);
+            }
+          }}
+        />
       )}
     </div>
   );

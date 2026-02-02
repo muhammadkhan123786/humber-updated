@@ -21,6 +21,12 @@ export const customerTicketBaseSchema = {
     required: true,
   },
 
+  decisionId: {
+    type: String,
+    enum: ["Covered", "Chargeable", "Mixed"],
+    required: false,
+  },
+
   ticketStatusId: { type: Types.ObjectId, ref: "TicketStatus", required: true },
 
   customerId: { type: Types.ObjectId, ref: "CustomerBase", required: true },
@@ -57,37 +63,13 @@ export const customerTicketBaseSchema = {
     enum: ["Customer Product", "Company product"],
     required: true,
   },
-  productSerialNumber: { type: String },
-  purchaseDate: { type: Date },
-  decisionId: { type: Types.ObjectId, ref: "TicketDecision" },
-
-  investigationReportData: { type: String, required: true },
-  investigationParts: [
-    {
-      partId: { type: Types.ObjectId, required: true },
-      quantity: { type: String, required: true },
-      unitCost: { type: Number, required: true },
-      total: { type: Number, required: true },
-    },
-  ],
-  isEmailSendReport: { type: Boolean, default: false },
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
   ...commonSchemaValidation,
   productOwnership: z.enum(["Customer Product", "Company product"]),
-  productSerialNumber: z.string().optional(),
-  purchaseDate: z.date().optional(),
-  investigationParts: z.array(InvestigationPartSchema).optional(),
-  investigationReportData: z
-    .string()
-    .min(1, "Investigation Data Report Required."),
-  isEmailSendReport: z.boolean().optional(),
 
-  decisionId: z
-    .string()
-    .regex(/^[0-9a-fA-F]{24}$/, "Please Select valid decision Id.")
-    .optional(),
+  decisionId: z.enum(["Covered", "Chargeable", "Mixed"]),
 
   ticketCode: z.string().min(1, "ticketCode is required"),
 

@@ -29,12 +29,14 @@ interface Props {
 }
 
 const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
-  const [brands, setBrands] = useState<{ _id: string; brandName: string }[]>([]);
+  const [brands, setBrands] = useState<{ _id: string; brandName: string }[]>(
+    [],
+  );
 
   const { createItem, updateItem, isSaving } = useFormActions(
     "/vechilemodel",
     "vehicleModels",
-    "Vehicle Model"
+    "Vehicle Model",
   );
 
   const {
@@ -59,7 +61,9 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await getAll<any>("/vehiclebrand?filter=all", { isActive: "true" });
+        const res = await getAll<any>("/vehiclebrand?filter=all", {
+          isActive: "true",
+        });
         setBrands(res.data || []);
       } catch (error) {
         console.error("Error fetching brands:", error);
@@ -69,7 +73,10 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
 
     if (editingData) {
       reset({
-        brandId: typeof editingData.brandId === "object" ? editingData.brandId._id : editingData.brandId,
+        brandId:
+          typeof editingData.brandId === "object"
+            ? editingData.brandId._id
+            : editingData.brandId,
         modelName: editingData.modelName,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
@@ -83,10 +90,7 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
     const payload = { ...values, userId: user.id || user._id };
 
     if (editingData?._id) {
-      updateItem(
-        { id: editingData._id, payload },
-        { onSuccess: onClose }
-      );
+      updateItem({ id: editingData._id, payload }, { onSuccess: onClose });
     } else {
       createItem(payload, { onSuccess: onClose });
     }
@@ -100,7 +104,6 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
-        {/* Brand Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Select Brand *
@@ -121,11 +124,12 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
             ))}
           </select>
           {errors.brandId && (
-            <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>
+            <p className="text-red-500 text-xs mt-1">
+              {errors.brandId.message}
+            </p>
           )}
         </div>
 
-        {/* Model Name */}
         <FormInput
           label="Model Name *"
           placeholder="e.g. Corolla, Civic..."

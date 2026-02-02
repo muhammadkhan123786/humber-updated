@@ -9,6 +9,8 @@ export interface investigationParts<TPARTID = string> {
   unitCost: number;
   total: number;
 }
+
+export type Decisions = "Covered" | "Chargeable" | "Mixed";
 export interface CustomerTicketBase<
   TUSERID = string,
   TCUSTOMERID = string,
@@ -16,8 +18,6 @@ export interface CustomerTicketBase<
   TURGENCEID = string,
   TTICKETSTATUSID = string,
   TTECHID = string[],
-  TDECISIONID = string,
-  TPARTID = string,
 > extends IBaseEntity<TUSERID> {
   ticketSource: TicketSource;
   customerId: TCUSTOMERID;
@@ -34,10 +34,10 @@ export interface CustomerTicketBase<
   vehicleRepairVideoURL?: string;
   //new
   productOwnership: ProductOwnerShip;
-  productSerialNumber?: string;
-  purchaseDate?: Date;
-  decisionId?: TDECISIONID;
-  investigationReportData: string;
-  investigationParts?: investigationParts<TPARTID>[];
-  isEmailSendReport: boolean;
+  // productSerialNumber?: string;
+  //purchaseDate?: Date;
+  decisionId?: Decisions;
+  // investigationReportData: string;
+  //  investigationParts?: investigationParts<TPARTID>[];
+  // isEmailSendReport: boolean;
 }

@@ -70,6 +70,7 @@ import driverRouter from "./routes/driver/driver.routes";
 import otpRouter from "./routes/otp-routes/mobile.otp.routes";
 import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
 import partsRouter from "./routes/master-data-routes/parts.routes";
+import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
 
 // Create express app
 const app: Application = express();
@@ -354,6 +355,15 @@ app.use(
   adminProtecter,
   partsRouter,
 );
+
+//30-01-2026
+app.use(
+  `${process.env.API_PREFIX}/insurance-companies`,
+  adminProtecter,
+  insuranceCompaniesRouter,
+
+);
+
 
 
 //Muhammad Imran code ended here.

@@ -65,17 +65,6 @@ export const ticketFormSchema = z.object({
       message: "Invalid date format",
     }),
 
-  decisionId: z
-    .string()
-    .optional()
-    .refine((val) => !val || objectIdRegex.test(val), {
-      message: "Invalid Decision Selection",
-    }),
-
-  investigationReportData: z
-    .string()
-    .min(1, "Investigation report is required"),
-
   investigationParts: z
     .array(
       z.object({
@@ -89,8 +78,14 @@ export const ticketFormSchema = z.object({
     )
     .optional()
     .default([]),
-
+  decisionId: z.enum(["Covered", "Chargeable", "Mixed"]).optional(),
   isEmailSendReport: z.boolean().default(false),
   total: z.coerce.number().nonnegative().optional(),
+  manualProductName: z.string().optional(),
+  manualMake: z.string().optional(),
+  manualModel: z.string().optional(),
+  manualYear: z.string().optional(),
+  manualColor: z.string().optional(),
+  vehicleType: z.string().optional(),
 });
 export type TicketFormData = z.infer<typeof ticketFormSchema>;

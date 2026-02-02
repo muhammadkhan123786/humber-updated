@@ -46,15 +46,13 @@ const DriverSchema = new Schema<driverSchemaDoc>(
             phoneNumber: String,
             relationship: String
         },
-
-        documents: {
-            driverLicense: [String],
-            governmentId: [String],
-            vehicleRegister: [String],
-            insuranceCertificates: [String],
-            backgroundChecks: [String],
-            otherDocuments: [String]
-        },
+        driverLicense: [String],
+        governmentId: [String],
+        vehicleRegister: [String],
+        insuranceCertificates: [String],
+        backgroundChecks: [String],
+        otherDocuments: [String]
+        ,
         driverPhoto: { type: String },
         isActive: { type: Boolean, default: true },
         isDeleted: { type: Boolean, default: false },
