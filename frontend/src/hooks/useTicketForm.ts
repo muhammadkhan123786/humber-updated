@@ -28,57 +28,37 @@ export const useTicketForm = () => {
   const [priorities, setPriorities] = useState<any[]>([]);
   const [statuses, setStatuses] = useState<any[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
+
+  const [mobilityParts, setMobilityParts] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
+  const [models, setModels] = useState<any[]>([]);
+  const [colors, setColors] = useState<any[]>([]);
+
   const [defaultTicketStatusId, setDefaultTicketStatusId] =
     useState<string>("");
 
   const form = useForm<TicketFormData>({
-    resolver: zodResolver(ticketFormSchema) as unknown as any,
+    resolver: zodResolver(ticketFormSchema) as any,
     defaultValues: {
       ticketSource: "Phone",
       location: "Workshop",
       userId: "",
-      assignedTechnicianId: null,
+      assignedTechnicianId: [],
       vehicleRepairImages: [],
       vehicleRepairImagesFile: [],
       address: "",
       vehicleRepairVideoURL: "",
       issue_Details: "",
       ticketStatusId: "",
+      productSerialNumber: "",
+      purchaseDate: "",
+      decisionId: undefined,
+      productOwnership: "Company product",
     },
     mode: "onBlur",
   });
+
   const router = useRouter();
-  const setEditData = useCallback(
-    (ticket: any) => {
-      if (!ticket) return;
-
-      const id = ticket._id || ticket.id;
-      setEditingId(id);
-
-      form.reset({
-        ticketSource: ticket.ticketSource || "Phone",
-        customerId: ticket.customerId?._id || ticket.customerId || "",
-        vehicleId: ticket.vehicleId?._id || ticket.vehicleId || "",
-        issue_Details: ticket.issue_Details || "",
-        location: ticket.location || "Workshop",
-        priorityId: ticket.priorityId?._id || ticket.priorityId || "",
-        ticketStatusId:
-          ticket.ticketStatusId?._id || ticket.ticketStatusId || "",
-        userId: ticket.userId?._id || ticket.userId || "",
-        address: ticket.address || "",
-        assignedTechnicianId:
-          ticket.assignedTechnicianId?._id ||
-          ticket.assignedTechnicianId ||
-          null,
-        vehicleRepairVideoURL: ticket.vehicleRepairVideoURL || "",
-
-        vehicleRepairImages: ticket.vehicleRepairImages || [],
-
-        vehicleRepairImagesFile: [],
-      });
-    },
-    [form],
-  );
 
   const clearEdit = () => {
     setEditingId(null);
@@ -93,6 +73,88 @@ export const useTicketForm = () => {
     return { Authorization: `Bearer ${cleanToken}` };
   };
 
+  const fetchVehiclesForCustomer = useCallback(async (customerId: string) => {
+    if (!customerId) {
+      setVehicles([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      const [customerOwnedRes, companyOwnedRes] = await Promise.all([
+        axios.get(
+          `${baseUrl}/customer-vehicle-register/customer-owned-vehicles/${customerId}`,
+          {
+            headers: getAuthHeader(),
+          },
+        ),
+        axios.get(
+          `${baseUrl}/customer-vehicle-register/company-owned-vehicles/${customerId}`,
+          {
+            headers: getAuthHeader(),
+          },
+        ),
+      ]);
+
+      const customerVehicles = customerOwnedRes.data?.success
+        ? customerOwnedRes.data.data
+        : [];
+      const companyVehicles = companyOwnedRes.data?.success
+        ? companyOwnedRes.data.data
+        : [];
+
+      const allVehicles = [...customerVehicles, ...companyVehicles];
+      setVehicles(allVehicles);
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+      setVehicles([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  const setEditData = useCallback(
+    (ticket: any) => {
+      if (!ticket) return;
+
+      const id = ticket._id || ticket.id;
+      setEditingId(id);
+
+      const customerId = ticket.customerId?._id || ticket.customerId || "";
+      const vehicleId = ticket.vehicleId?._id || ticket.vehicleId || "";
+      if (customerId) {
+        fetchVehiclesForCustomer(customerId).then(() => {
+          form.reset({
+            ticketSource: ticket.ticketSource || "Phone",
+            customerId,
+            vehicleId,
+            issue_Details: ticket.issue_Details || "",
+            location: ticket.location || "Workshop",
+            priorityId: ticket.priorityId?._id || ticket.priorityId || "",
+            ticketStatusId:
+              ticket.ticketStatusId?._id || ticket.ticketStatusId || "",
+            userId: ticket.userId?._id || ticket.userId || "",
+            address: ticket.address || "",
+            assignedTechnicianId: Array.isArray(ticket.assignedTechnicianId)
+              ? ticket.assignedTechnicianId.map((t: any) => t._id || t)
+              : [],
+            vehicleRepairVideoURL: ticket.vehicleRepairVideoURL || "",
+            vehicleRepairImages: ticket.vehicleRepairImages || [],
+            vehicleRepairImagesFile: [],
+            productOwnership: ticket.productOwnership || "Customer Product",
+            decisionId: ticket.decisionId || undefined,
+          });
+        });
+      }
+
+      if (customerId) {
+        fetchVehiclesForCustomer(customerId);
+      }
+    },
+    [form, fetchVehiclesForCustomer],
+  );
   useEffect(() => {
     if (typeof window !== "undefined" && !editingId) {
       let storedUserId = localStorage.getItem("userId");
@@ -112,34 +174,51 @@ export const useTicketForm = () => {
           getAlls("/service-request-prioprity-level"),
           getAlls("/ticket-status"),
           getAlls("/technicians"),
-          getAlls("/customer-vehicle-register"),
+
+          Promise.resolve({ status: "fulfilled", value: { data: [] } }),
+          getAlls("/ticket-decision"),
+          getAlls("/mobility-parts"),
+          getAlls("/vehiclebrand"),
+          getAlls("/vechilemodel"),
+          getAlls("/colors"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
           setCustomers(
             (results[0].value?.data ?? []).filter((i: any) => i.isActive),
           );
-
         if (results[1].status === "fulfilled")
           setPriorities(
             (results[1].value?.data ?? []).filter((i: any) => i.isActive),
           );
-
         if (results[3].status === "fulfilled")
           setTechnicians(
             (results[3].value?.data ?? []).filter((i: any) => i.isActive),
           );
 
-        if (results[4].status === "fulfilled")
-          setVehicles(
-            (results[4].value?.data ?? []).filter((i: any) => i.isActive),
+        setVehicles([]);
+
+        if (results[6].status === "fulfilled")
+          setMobilityParts(
+            (results[6].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[7].status === "fulfilled")
+          setBrands(
+            (results[7].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[8].status === "fulfilled")
+          setModels(
+            (results[8].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        if (results[9].status === "fulfilled")
+          setColors(
+            (results[9].value?.data ?? []).filter((i: any) => i.isActive),
           );
 
         if (results[2].status === "fulfilled") {
           const statusData = (results[2].value?.data ?? []).filter(
             (i: any) => i.isActive,
           );
-
           setStatuses(statusData);
 
           if (!editingId) {
@@ -157,6 +236,7 @@ export const useTicketForm = () => {
           }
         }
       } catch (err) {
+        console.log(err);
         setError("Failed to load initial form data");
       } finally {
         setIsLoading(false);
@@ -166,6 +246,16 @@ export const useTicketForm = () => {
     fetchDropdownData();
   }, [form, editingId]);
 
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === "customerId" && value.customerId) {
+        fetchVehiclesForCustomer(value.customerId);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, fetchVehiclesForCustomer]);
+
   const handleSubmit = async (data: TicketFormData) => {
     try {
       setIsLoading(true);
@@ -174,7 +264,7 @@ export const useTicketForm = () => {
 
       const formData = new FormData();
 
-      // Basic Fields
+      // Required fields from your schema
       formData.append("ticketSource", data.ticketSource);
       formData.append("customerId", data.customerId);
       formData.append("vehicleId", data.vehicleId);
@@ -186,17 +276,33 @@ export const useTicketForm = () => {
         data.ticketStatusId || defaultTicketStatusId,
       );
       formData.append("userId", data.userId);
-
+      if (data.decisionId) {
+        formData.append("decisionId", data.decisionId);
+      }
       if (data.address) formData.append("address", data.address);
-      if (data.assignedTechnicianId)
-        formData.append("assignedTechnicianId", data.assignedTechnicianId);
+      if (data.productSerialNumber) {
+        formData.append("productSerialNumber", data.productSerialNumber);
+      }
 
+      if (data.purchaseDate) {
+        formData.append("purchaseDate", data.purchaseDate.toString());
+      }
+
+      if (data.productOwnership) {
+        formData.append("productOwnership", data.productOwnership);
+      }
+
+      if (data.assignedTechnicianId && data.assignedTechnicianId.length > 0) {
+        data.assignedTechnicianId.forEach((techId, index) => {
+          formData.append(`assignedTechnicianId[${index}]`, techId);
+        });
+      }
       if (!editingId) {
         formData.append("ticketCode", generateTicketCode());
       }
+
       const rawImages = data.vehicleRepairImages || [];
       const imagesArray = Array.isArray(rawImages) ? rawImages : [rawImages];
-
       const existingImages = imagesArray.filter(
         (path: string) => typeof path === "string" && !path.startsWith("blob:"),
       );
@@ -219,6 +325,16 @@ export const useTicketForm = () => {
         ? `${baseUrl}/customer-tickets/${editingId}`
         : `${baseUrl}/customer-tickets`;
 
+      console.log("Submitting ticket data:", {
+        customerId: data.customerId,
+        vehicleId: data.vehicleId,
+        decisionId: data.decisionId,
+
+        productSerialNumber: data.productSerialNumber,
+        purchaseDate: data.purchaseDate,
+        productOwnership: data.productOwnership,
+      });
+
       const res = await axios({
         method: editingId ? "put" : "post",
         url: apiEndpoint,
@@ -229,16 +345,93 @@ export const useTicketForm = () => {
         },
       });
 
-      if (res.data.success) {
-        const message = editingId ? "Ticket updated!" : "Ticket created!";
-        alert(message);
+      console.log("API Response:", res.data);
+
+      if (res.data?.success) {
+        alert(editingId ? "Ticket updated!" : "Ticket created!");
         clearEdit();
         router.push("/dashboard/ticket-masterdata/allTickets");
+      } else {
+        setError(res.data?.message || "Submission failed");
       }
     } catch (err: any) {
+      console.error("Error submitting form:", err);
       setError(
         err.response?.data?.message || err.message || "Submission failed",
       );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddVehicle = async (vehicleData: any) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const payload = {
+        userId: vehicleData.userId || form.getValues("userId"),
+        customerId: vehicleData.customerId || form.getValues("customerId"),
+        vehicleBrandId: vehicleData.vehicleBrandId || vehicleData.manualMake,
+        vehicleModelId: vehicleData.vehicleModelId || vehicleData.manualModel,
+        colorId: vehicleData.colorId || vehicleData.manualColor,
+        serialNumber:
+          vehicleData.serialNumber || form.getValues("productSerialNumber"),
+        productName:
+          vehicleData.productName || form.getValues("manualProductName"),
+        year: vehicleData.year || form.getValues("manualYear"),
+        vehicleType: vehicleData.vehicleType || "Mobility Vehicle",
+        isVehicleCompanyOwned:
+          vehicleData.isVehicleCompanyOwned ||
+          form.getValues("productOwnership") === "Company product",
+        purchaseDate:
+          vehicleData.purchaseDate || form.getValues("purchaseDate"),
+      };
+
+      console.log("Adding vehicle with payload:", payload);
+
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      const res = await axios({
+        method: "post",
+        url: `${baseUrl}/customer-vehicle-register`,
+        data: payload,
+        headers: {
+          ...getAuthHeader(),
+        },
+      });
+
+      console.log("API Response:", res.data);
+
+      if (res.data?.success) {
+        const newVehicle = res.data.data;
+        const customerId = form.getValues("customerId");
+        if (customerId) {
+          await fetchVehiclesForCustomer(customerId);
+        }
+        form.setValue("vehicleId", newVehicle._id);
+        form.setValue("manualProductName", "");
+        form.setValue("manualMake", "");
+        form.setValue("manualModel", "");
+        form.setValue("manualYear", "");
+        form.setValue("manualColor", "");
+        form.setValue("vehicleType", "");
+
+        setSuccess("Vehicle added successfully!");
+        return newVehicle;
+      } else {
+        setError(res.data?.message || "Failed to add vehicle");
+        return null;
+      }
+    } catch (err: any) {
+      console.error("Error adding vehicle:", err);
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Vehicle registration failed",
+      );
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -252,8 +445,14 @@ export const useTicketForm = () => {
     customers,
     vehicles,
     priorities,
+    brands,
+    models,
+    colors,
     statuses,
     technicians,
+
+    mobilityParts,
+    handleAddVehicle,
     editingId,
     setEditData,
     clearEdit,

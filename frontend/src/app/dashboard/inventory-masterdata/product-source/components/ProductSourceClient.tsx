@@ -1,88 +1,250 @@
 "use client";
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { Search, Plus, Database, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Database, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
+import StatsCards from "@/app/common-form/StatsCard";
 import ProductSourceTable from "./ProductSourceTable";
 import ProductSourceForm from "./ProductSourceForm";
+import Pagination from "@/components/ui/Pagination";
+import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IProductSource } from "../../../../../../../common/IProduct.source.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
-const THEME_COLOR = "#FE6B1D";
-const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/product-source`;
+const THEME_COLOR = "var(--primary-gradient)";
+const API_URL = "/product-source";
+
+type ProductSourceWithId = IProductSource & { _id: string };
 
 export default function ProductSourceClient() {
-  const [dataList, setDataList] = useState<IProductSource[]>([]);
+  const [dataList, setDataList] = useState<ProductSourceWithId[]>([]);
+  const [filteredDataList, setFilteredDataList] = useState<ProductSourceWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [editingData, setEditingData] = useState<IProductSource | null>(null);
+  const [editingData, setEditingData] = useState<ProductSourceWithId | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [displayView, setDisplayView] = useState<"table" | "card">("table");
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const res = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { userId: savedUser.id || savedUser._id, search: searchTerm }
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+
+      const res = await getAll<ProductSourceWithId>(API_URL, {
+        page: page.toString(),
+        limit: "12",
+        search: search.trim(),
+        userId: user.id || user._id,
       });
-      setDataList(res.data.data || []);
-    } catch (err) { console.error(err); } finally { setLoading(false); }
+      
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await getAll<ProductSourceWithId>(API_URL, {
+        limit: "1000", // Get all data
+        search: search.trim(),
+        userId: user.id || user._id,
+      });
+
+      setDataList(res.data || []);
+      setFilteredDataList(res.data || []);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
+      setCurrentPage(page);
+      
+      // Track total counts across ALL data
+      setTotalCount(res.total || 0);
+      setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setDataList([]);
+      setFilteredDataList([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Filter data based on status when filterStatus changes
+  useEffect(() => {
+    if (filterStatus === 'all') {
+      setFilteredDataList(dataList);
+    } else if (filterStatus === 'active') {
+      setFilteredDataList(dataList.filter((d) => d.isActive));
+    } else if (filterStatus === 'inactive') {
+      setFilteredDataList(dataList.filter((d) => !d.isActive));
+    }
+  }, [filterStatus, dataList]);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchData(1, searchTerm);
+    }, 400);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, fetchData]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this product source?")) return;
+    try {
+      await deleteItem(API_URL, id);
+      fetchData(currentPage, searchTerm);
+    } catch (error) {
+      console.error("Delete Error:", error);
+      alert("Failed to delete item.");
+    }
   };
 
-  useEffect(() => { fetchData(); }, [searchTerm]);
+const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call: Optimistic, fast, and clean!
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    API_URL, 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold flex items-center gap-3 text-[#FE6B1D]">
-            <Database size={36} /> Product Sources
-          </h1>
-          <p className="text-gray-500">Manage where your products are coming from</p>
+    <div className="min-h-screen p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+          <div className="flex items-center gap-4">
+            <AnimatedIcon icon={<Database size={32} className="text-white" />} />
+            <div>
+              <h1 className="text-4xl font-bold">Product Sources</h1>
+              <p className="text-blue-100 text-lg">Manage where your products are coming from</p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setEditingData(null); setShowForm(true); }}
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus size={22} /> Add Source
+          </button>
         </div>
-        <button 
-          onClick={() => { setEditingData(null); setShowForm(true); }} 
-          className="flex items-center gap-2 text-white px-6 py-3 rounded-xl font-bold bg-[#FE6B1D] shadow-lg transition-transform active:scale-95"
-        >
-          <Plus size={22} /> Add Source
-        </button>
+
+        {/* Stats Cards */}
+        <StatsCards 
+          totalCount={totalCount}
+          activeCount={totalActiveCount}
+          inactiveCount={totalInactiveCount}
+          onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Product Sources",
+            active: "Active Sources",
+            inactive: "Inactive Sources"
+          }}
+          icons={{
+            total: <Database size={24} />,
+          }}
+        />
+
+        {/* Search Bar */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
+          <Search className="text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search product source name..."
+            className="w-full outline-none text-lg"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! ">
+          <div className="flex justify-between items-center mb-6">
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+                Source Management
+              </h2>
+              <p className="text-sm text-gray-500">Configure product source locations and suppliers</p>
+            </div>
+
+            <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
+              <button
+                onClick={() => setDisplayView("card")}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                  displayView === "card"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <Grid3x3 size={16} />
+                <span className="hidden sm:inline text-sm">Grid</span>
+              </button>
+              <button
+                onClick={() => setDisplayView("table")}
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
+                  displayView === "table"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <List size={16} />
+                <span className="hidden sm:inline text-sm">Table</span>
+              </button>
+            </div>
+          </div>
+
+          {showForm && (
+            <ProductSourceForm
+              editingData={editingData}
+              onClose={() => setShowForm(false)}
+              onRefresh={() => fetchData(currentPage, searchTerm)}
+              themeColor={THEME_COLOR}
+              apiUrl={API_URL}
+            />
+          )}
+
+          {loading ? (
+            <div className="flex flex-col justify-center items-center py-20">
+              <Loader2 className="animate-spin text-blue-600" size={48} />
+              <p className="mt-4 text-gray-400 font-medium">Loading sources...</p>
+            </div>
+          ) : (
+            <>
+              {/* Filter Status Display */}
+              {filterStatus !== 'all' && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+                  <span className="text-sm text-blue-700 font-medium">
+                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
+                  </span>
+                  <button
+                    onClick={() => setFilterStatus('all')}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-bold"
+                  >
+                    Clear Filter
+                  </button>
+                </div>
+              )}
+              <ProductSourceTable
+                data={filteredDataList}
+                displayView={displayView}
+                onEdit={(item) => { setEditingData(item); setShowForm(true); }}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                themeColor={THEME_COLOR}
+              />
+              {filteredDataList.length > 0 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={(page) => fetchData(page, searchTerm)}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-
-      <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100 focus-within:ring-2 focus-within:ring-orange-500 transition-all">
-        <Search className="text-gray-400" size={20} />
-        <input 
-          type="text" 
-          placeholder="Search by source name..." 
-          className="w-full outline-none" 
-          onChange={(e) => setSearchTerm(e.target.value)} 
-        />
-      </div>
-
-      {(showForm || editingData) && (
-        <ProductSourceForm 
-          editingData={editingData} 
-          onClose={() => { setShowForm(false); setEditingData(null); }} 
-          onRefresh={fetchData} 
-          themeColor={THEME_COLOR} 
-          apiUrl={API_URL} 
-        />
-      )}
-
-      {loading ? (
-        <div className="py-20 flex justify-center"><Loader2 className="animate-spin text-orange-500" size={48} /></div>
-      ) : (
-        <ProductSourceTable 
-          data={dataList} 
-          onEdit={setEditingData} 
-          onDelete={async (id) => {
-            if (confirm("Delete this source?")) {
-              await axios.delete(`${API_URL}/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
-              fetchData();
-            }
-          }} 
-          themeColor={THEME_COLOR} 
-        />
-      )}
     </div>
   );
 }

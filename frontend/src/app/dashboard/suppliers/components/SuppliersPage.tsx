@@ -9,14 +9,17 @@ import {
   Edit2,
   Trash2,
   Mail,
-  CheckCircle2,
   AlertCircle,
   MapPin,
   Clock,
   Loader2,
+  CircleCheckBig,
+  Phone,
+  Eye,
 } from "lucide-react";
 import SupplierForm from "./SupplierForm";
 import axios from "axios";
+import SupplierView from "./SupplierView";
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const SuppliersPage = () => {
@@ -25,6 +28,7 @@ const SuppliersPage = () => {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedSupplier, setSelectedSupplier] = useState<any>(null); // New state
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
 
   const fetchSuppliers = async () => {
@@ -187,7 +191,7 @@ const SuppliersPage = () => {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-[#f8fafc]">
+    <div className="min-h-screen">
       <AnimatePresence mode="wait">
         {view === "list" ? (
           <motion.div
@@ -197,67 +201,80 @@ const SuppliersPage = () => {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-8"
           >
-            <div className="bg-linear-to-r from-[#6366f1] via-[#a855f7] to-[#ec4899] p-8 rounded-[2.5rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden">
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md border border-white/20">
-                  <Building2 size={32} />
+            <div className="relative w-full h-32 pl-8 pr-12 bg-linear-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl flex items-center justify-between overflow-hidden">
+              <div className="flex items-center gap-2">
+                <div className="relative flex justify-center items-center h-20 w-20">
+                  <div className="flex justify-center items-center animate-[spin_13s_linear_infinite]">
+                    <div className="absolute w-16 h-16 bg-white/20 rounded-2xl backdrop-blur-sm border border-white/10 rotate-[59.56deg]" />
+
+                    <div className="relative z-10">
+                      <Building2 size={36} className="text-white" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-4xl font-bold tracking-tight">
+
+                <div className="flex flex-col">
+                  <h1 className="text-white text-4xl font-bold font-sans leading-tight drop-shadow-md">
                     Suppliers
                   </h1>
-                  <p className="opacity-80">Manage your supplier database</p>
+                  <p className="text-white/90 text-lg font-normal font-sans">
+                    Manage your supplier database
+                  </p>
                 </div>
               </div>
+
               <button
                 onClick={() => {
                   setEditData(null);
                   setView("form");
                 }}
-                className="bg-white text-[#a855f7] px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg hover:scale-105 transition-transform"
+                className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-[10px] text-purple-600 font-semibold shadow-lg hover:bg-gray-50 transition-colors active:scale-95"
               >
-                <Plus size={20} /> Add Supplier
+                <Plus size={18} strokeWidth={3} />
+                <span className="text-sm">Add Supplier</span>
               </button>
+
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl pointer-events-none" />
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <StatCard
                 title="Total Suppliers"
                 value={stats.total}
-                color="#0ea5e9"
-                icon={<Building2 size={48} />}
+                gradient="from-blue-500 to-cyan-500"
+                icon={Building2}
               />
               <StatCard
                 title="Active"
                 value={stats.active}
-                color="#10b981"
-                icon={<CheckCircle2 size={48} />}
+                gradient="from-emerald-500 to-green-500"
+                icon={CircleCheckBig}
               />
               <StatCard
                 title="Inactive"
                 value={stats.inactive}
-                color="#f59e0b"
-                icon={<AlertCircle size={48} />}
+                gradient="from-orange-500 to-amber-500"
+                icon={AlertCircle}
               />
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-              <div className="relative mb-6">
+            <div className="self-stretch h-20 px-6 flex items-center bg-white rounded-2xl shadow-lg mb-6">
+              <div className="relative w-full">
                 <Search
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   size={20}
                 />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by business name or email..."
-                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-purple-400"
+                  placeholder="Search by name, ID, or email..."
+                  className="w-full h-9 pl-10 pr-3 bg-gray-100 rounded-[10px] border border-transparent focus:border-gray-200 focus:bg-white outline-none text-sm text-gray-700 transition-all"
                 />
               </div>
+            </div>
 
+            <div className="bg-white  shadow-sm">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                   <Loader2 className="animate-spin mb-2" size={40} />
@@ -265,36 +282,54 @@ const SuppliersPage = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-separate border-spacing-y-3">
-                    <thead>
-                      <tr className="text-slate-400 text-[11px] font-bold uppercase tracking-[0.2em]">
-                        <th className="pb-4 pl-6">ID</th>
-                        <th className="pb-4">Business Name</th>
-                        <th className="pb-4">Contact</th>
-                        <th className="pb-4">Location</th>
-                        <th className="pb-4">Products</th>
-                        <th className="pb-4 text-center">Status</th>
-                        <th className="pb-4 text-right pr-6">Actions</th>
+                  <table className="w-full text-left ">
+                    <thead className="bg-linear-to-r from-indigo-50 to-purple-50">
+                      <tr className="text-[11px] font-bold uppercase tracking-wide">
+                        <th className="px-6 py-4">Supplier ID</th>
+                        <th className="px-6 py-4">Business Name</th>
+                        <th className="px-6 py-4">Contact</th>
+                        <th className="px-6 py-4">Location</th>
+                        <th className="px-6 py-4">Products</th>
+                        <th className="px-6 py-4">Payment Terms</th>
+                        <th className="px-6 py-4 text-center">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-gray-200">
                       {filteredSuppliers.map((sup) => (
                         <tr
                           key={sup._id}
-                          className="bg-slate-50/50 hover:bg-white hover:shadow-md transition-all group"
+                          className="bg-slate-50/50 hover:bg-white hover:shadow-md transition-all group "
                         >
                           <td className="py-5 pl-6 rounded-l-3xl font-medium text-slate-500">
-                            #{sup._id.slice(-4).toUpperCase()}
+                            <div className="leading-tight">
+                              <div className="font-semibold text-slate-700">
+                                SUP-{sup._id.slice(-4).toUpperCase()}
+                              </div>
+                              <div className="text-[11px] text-slate-400">
+                                {
+                                  new Date(sup.createdAt)
+                                    .toISOString()
+                                    .split("T")[0]
+                                }
+                              </div>
+                            </div>
                           </td>
+
                           <td className="py-5">
                             <div className="font-bold text-slate-800">
                               {sup.supplierIdentification?.legalBusinessName}
                             </div>
-                            <span className="text-[9px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded font-black uppercase">
+                            <p className="text-xs text-gray-500">
+                              {sup.supplierIdentification?.tradingName || "N/A"}
+                            </p>
+
+                            <span className="text-xs bg-indigo-600 text-white px-3 py-1 font-medium rounded-full ">
                               {sup.supplierIdentification?.businessTypeId
                                 ?.businessTypeName || "N/A"}
                             </span>
                           </td>
+
                           <td className="py-5">
                             <div className="text-sm font-medium text-slate-700">
                               {sup.contactInformation?.primaryContactName}
@@ -303,7 +338,12 @@ const SuppliersPage = () => {
                               <Mail size={12} />{" "}
                               {sup.contactInformation?.emailAddress}
                             </div>
+                            <div className="text-xs text-slate-400 flex items-center gap-1">
+                              <Phone size={12} />{" "}
+                              {sup.contactInformation?.phoneNumber}
+                            </div>
                           </td>
+
                           <td className="py-5">
                             <div className="text-xs text-slate-600 flex items-center gap-1">
                               <MapPin size={14} className="text-slate-400" />
@@ -314,6 +354,7 @@ const SuppliersPage = () => {
                                 "UK"}
                             </div>
                           </td>
+
                           <td className="py-5">
                             <div className="text-xs font-medium text-slate-700">
                               {sup.productServices?.typeOfServiceId
@@ -324,14 +365,36 @@ const SuppliersPage = () => {
                               {sup.productServices?.leadTimes} days lead
                             </div>
                           </td>
+
+                          <td className="py-5">
+                            <div className="text-sm font-bold text-slate-800">
+                              {sup.commercialTerms?.paymentTermsId
+                                ?.paymentTerm || "N/A"}
+                            </div>
+                            <div className="text-xs text-slate-400 capitalize">
+                              {sup.financialInformation?.paymentMethodId
+                                ?.paymentMethodName || "N/A"}
+                            </div>
+                          </td>
+
                           <td className="py-5 text-center">
                             <span
-                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${sup.isActive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}
+                              className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                                sup.isActive
+                                  ? "bg-green-100 text-green-600"
+                                  : "bg-red-100 text-red-600"
+                              }`}
                             >
                               {sup.isActive ? "active" : "inactive"}
                             </span>
                           </td>
                           <td className="py-5 pr-6 rounded-r-3xl text-right">
+                            <button
+                              onClick={() => setSelectedSupplier(sup)}
+                              className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+                            >
+                              <Eye size={18} />
+                            </button>
                             <button
                               onClick={() => handleEdit(sup)}
                               className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
@@ -351,6 +414,12 @@ const SuppliersPage = () => {
                   </table>
                 </div>
               )}
+              {selectedSupplier && (
+                <SupplierView
+                  supplier={selectedSupplier}
+                  onClose={() => setSelectedSupplier(null)}
+                />
+              )}
             </div>
           </motion.div>
         ) : (
@@ -367,17 +436,24 @@ const SuppliersPage = () => {
   );
 };
 
-const StatCard = ({ title, value, color, icon }: any) => (
+const StatCard = ({ title, value, gradient, icon: Icon }: any) => (
   <div
-    style={{ backgroundColor: color }}
-    className="p-6 rounded-4xl text-white shadow-xl flex justify-between items-center relative overflow-hidden group"
+    className={`relative p-6 rounded-2xl text-white shadow-lg overflow-hidden group
+    transition-all duration-300 ease-out
+    hover:shadow-2xl hover:-translate-y-3 hover:scale-[1.02]
+    bg-linear-to-br ${gradient}`}
   >
-    <div>
-      <p className="text-sm font-medium opacity-80">{title}</p>
-      <h2 className="text-5xl font-bold mt-1 tracking-tighter">{value}</h2>
-    </div>
-    <div className="opacity-20 group-hover:scale-110 transition-transform">
-      {icon}
+    <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-colors" />
+
+    <div className="flex justify-between items-end relative z-10">
+      <div>
+        <p className="text-white text-sm font-medium tracking-wide">{title}</p>
+        <h2 className="text-4xl font-bold mt-1 tracking-tight">{value}</h2>
+      </div>
+
+      <div className="text-white/80 group-hover:scale-110 group-hover:text-white transition-all duration-300 ease-out">
+        <Icon size={44} strokeWidth={1.5} />
+      </div>
     </div>
   </div>
 );

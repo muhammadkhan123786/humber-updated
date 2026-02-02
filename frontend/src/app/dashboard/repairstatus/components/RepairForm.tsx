@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { IRepairStatus } from "../types";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const repairStatusSchemaValidation = z.object({
   repairStatus: z.string().min(1, "Status name is required."),
@@ -26,14 +26,20 @@ interface Props {
   themeColor: string;
 }
 
-const RepairForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const RepairForm = ({ editingData, onClose, themeColor }: Props) => {
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/repairstatus",
+    "repairStatuses",
+    "Repair Status"
+  );
+
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(repairStatusSchemaValidation),
     defaultValues: {
@@ -56,20 +62,17 @@ const RepairForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/repairstatus", editingData._id, payload);
-      } else {
-        await createItem("/repairstatus", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      updateItem(
+        { id: editingData._id, payload },
+        { onSuccess: onClose }
+      );
+    } else {
+      createItem(payload, { onSuccess: onClose });
     }
   };
 
@@ -121,7 +124,7 @@ const RepairForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
           type="submit"
           label={editingData ? "Update Status" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

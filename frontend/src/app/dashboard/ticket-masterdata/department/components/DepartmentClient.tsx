@@ -7,6 +7,8 @@ import DepartmentForm from "./DepartmentForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IDepartments } from "../../../../../../../common/Ticket-management-system/IDepartment.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 const API_URL = "/departments";
@@ -24,6 +26,9 @@ export default function DepartmentClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -33,15 +38,23 @@ export default function DepartmentClient() {
       
       const res = await getAll<DepartmentWithId>(API_URL, {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
+        search: search.trim(),
+        userId: user.id || user._id,
+      });
+      const allDataRes = await getAll<DepartmentWithId>(API_URL, {
+        limit: "1000",
         search: search.trim(),
         userId: user.id || user._id,
       });
 
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
+      setTotalCount(res.total || 0);
+      setTotalActiveCount(allDataRes.data?.filter(d => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter(d => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -80,35 +93,30 @@ export default function DepartmentClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem(API_URL, id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+const handleStatusChange = (id: string, newStatus: boolean) => {
+  // Generic function call jo status update ko smooth banaye ga
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    API_URL, // Yahan directly API_URL variable pass kar dein
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
-  const totalCount = dataList.length;
-  const activeCount = dataList.filter((d) => d.isActive).length;
-  const inactiveCount = dataList.filter((d) => !d.isActive).length;
+  const statsTotal = totalCount;
+  const statsActive = totalActiveCount;
+  const statsInactive = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Building2 size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<Building2 size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Departments</h1>
               <p className="text-blue-100 text-lg">Organize your team into functional units</p>
@@ -116,7 +124,7 @@ export default function DepartmentClient() {
           </div>
           <button
             onClick={() => { setEditingData(null); setShowForm(true); }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Department
           </button>
@@ -124,10 +132,18 @@ export default function DepartmentClient() {
 
         {/* Reusable Stats Cards Component with Filter */}
         <StatsCards 
-          totalCount={totalCount}
-          activeCount={activeCount}
-          inactiveCount={inactiveCount}
+          totalCount={statsTotal}
+          activeCount={statsActive}
+          inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Departments",
+            active: "Active Departments",
+            inactive: "Inactive Departments"
+          }}
+          icons={{
+            total: <Building2 size={24} />,
+          }}
         />
 
         {/* Search Bar */}

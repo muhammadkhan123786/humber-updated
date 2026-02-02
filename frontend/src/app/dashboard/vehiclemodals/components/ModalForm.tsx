@@ -8,8 +8,9 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem, getAll } from "@/helper/apiHelper";
+import { getAll } from "@/helper/apiHelper";
 import { IVehicleModel } from "../types";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const modelSchema = z.object({
   brandId: z.string().min(1, "Please select a brand"),
@@ -27,8 +28,16 @@ interface Props {
   themeColor: string;
 }
 
-const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-  const [brands, setBrands] = useState<{ _id: string; brandName: string }[]>([]);
+const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
+  const [brands, setBrands] = useState<{ _id: string; brandName: string }[]>(
+    [],
+  );
+
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/vechilemodel",
+    "vehicleModels",
+    "Vehicle Model",
+  );
 
   const {
     register,
@@ -36,7 +45,7 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(modelSchema),
     defaultValues: {
@@ -52,7 +61,9 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await getAll<any>("/vehiclebrand", { isActive: "true" });
+        const res = await getAll<any>("/vehiclebrand?filter=all", {
+          isActive: "true",
+        });
         setBrands(res.data || []);
       } catch (error) {
         console.error("Error fetching brands:", error);
@@ -62,7 +73,10 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
 
     if (editingData) {
       reset({
-        brandId: typeof editingData.brandId === "object" ? editingData.brandId._id : editingData.brandId,
+        brandId:
+          typeof editingData.brandId === "object"
+            ? editingData.brandId._id
+            : editingData.brandId,
         modelName: editingData.modelName,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
@@ -71,20 +85,14 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await updateItem("/vechilemodel", editingData._id, payload);
-      } else {
-        await createItem("/vechilemodel", payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving model");
+    if (editingData?._id) {
+      updateItem({ id: editingData._id, payload }, { onSuccess: onClose });
+    } else {
+      createItem(payload, { onSuccess: onClose });
     }
   };
 
@@ -96,7 +104,6 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
-        {/* Brand Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Select Brand *
@@ -117,11 +124,12 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
             ))}
           </select>
           {errors.brandId && (
-            <p className="text-red-500 text-xs mt-1">{errors.brandId.message}</p>
+            <p className="text-red-500 text-xs mt-1">
+              {errors.brandId.message}
+            </p>
           )}
         </div>
 
-        {/* Model Name */}
         <FormInput
           label="Model Name *"
           placeholder="e.g. Corolla, Civic..."
@@ -164,7 +172,7 @@ const ModalForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
           type="submit"
           label={editingData ? "Update Model" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

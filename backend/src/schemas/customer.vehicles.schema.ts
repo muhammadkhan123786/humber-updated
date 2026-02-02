@@ -17,16 +17,24 @@ export const customerVehicleSchemaValidation = z.object({
 
     vehicleModelId: objectIdSchema,
 
-    serialNumber: z.string().min(3).max(100),
+    serialNumber: z.string().optional(),
 
     vehicleType: vehicleTypeSchema,
 
-    purchaseDate: z.coerce.date(),
-    warrantyStartDate: z.coerce.date(),
-    warrantyEndDate: z.coerce.date(),
+    purchaseDate: z.coerce.date().optional(),
+    warrantyStartDate: z.coerce.date().optional(),
+    warrantyEndDate: z.coerce.date().optional(),
 
     vehiclePhoto: z.string().optional(),
     note: z.string().max(1500).optional(),
+
+    customerId: objectIdSchema,
+    isVehicleCompanyOwned: z.boolean().default(false),
+
+    colorId: objectIdSchema,
+    productName: z.string().optional(),
+    year: z.string().optional(),
+
 });
 
 export const createCustomerVehicleSchemaValidation = customerVehicleSchemaValidation;

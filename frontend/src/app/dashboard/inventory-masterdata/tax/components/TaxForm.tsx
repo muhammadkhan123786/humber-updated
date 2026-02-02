@@ -1,163 +1,188 @@
 "use client";
-import React, { useState } from "react";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Receipt } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
 import { ITax } from "../../../../../../../common/ITax.interface";
-import { FormModal } from "../../../../common-form/FormModal";
-import { FormInput } from "../../../../common-form/FormInput";
-import { FormToggle } from "../../../../common-form/FormToggle";
-import { createTax, updateTax } from "@/hooks/useTax";
-import axios from "axios";
+
+const taxSchemaValidation = z.object({
+    taxName: z.string().min(1, "Tax name is required."),
+    percentage: z.number().min(0, "Percentage must be 0 or greater."),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    isActive: z.boolean(),
+    isDefault: z.boolean(),
+}).refine(
+    (data) => {
+        if (data.startDate && data.endDate) {
+            return new Date(data.startDate) <= new Date(data.endDate);
+        }
+        return true;
+    },
+    { message: "End Date cannot be before Start Date.", path: ["endDate"] }
+);
+
+type FormData = z.infer<typeof taxSchemaValidation>;
 
 interface Props {
-  editingData: ITax | null;
-  onClose: () => void;
-  onRefresh: () => void;
-  themeColor: string;
-  apiUrl?: string;
+    editingData: (ITax & { _id?: string }) | null;
+    onClose: () => void;
+    onRefresh: () => void;
+    themeColor: string;
+    apiUrl?: string;
 }
 
-interface TaxFormState {
-  taxName: string;
-  percentage: number;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  isDefault: boolean;
-}
+const TaxForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/tax" }: Props) => {
+    const {
+        register,
+        handleSubmit,
+        reset,
+        control,
+        setValue,
+        formState: { errors, isSubmitting },
+    } = useForm<FormData>({
+        resolver: zodResolver(taxSchemaValidation),
+        defaultValues: {
+            taxName: "",
+            percentage: 0,
+            startDate: "",
+            endDate: "",
+            isActive: true,
+            isDefault: false,
+        },
+    });
 
-const TaxForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-  const [formData, setFormData] = useState<TaxFormState>(() => ({
-    taxName: editingData?.taxName || "",
-    percentage: editingData?.percentage || 0,
-    startDate: editingData?.startDate
-      ? new Date(editingData.startDate).toISOString().split("T")[0]
-      : "",
-    endDate: editingData?.endDate
-      ? new Date(editingData.endDate).toISOString().split("T")[0]
-      : "",
-    isActive: editingData?.isActive ?? true,
-    isDefault: editingData?.isDefault ?? false,
-  }));
+    const isDefaultValue = useWatch({ control, name: "isDefault" });
 
-  const [dateError, setDateError] = useState<string>("");
+    useEffect(() => {
+        if (editingData) {
+            reset({
+                taxName: editingData.taxName,
+                percentage: editingData.percentage || 0,
+                startDate: editingData.startDate
+                    ? new Date(editingData.startDate).toISOString().split("T")[0]
+                    : "",
+                endDate: editingData.endDate
+                    ? new Date(editingData.endDate).toISOString().split("T")[0]
+                    : "",
+                isActive: Boolean(editingData.isActive),
+                isDefault: Boolean(editingData.isDefault),
+            });
+        }
+    }, [editingData, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const onSubmit = async (values: FormData) => {
+        try {
+            const userStr = localStorage.getItem("user");
+            const user = userStr ? JSON.parse(userStr) : {};
+            const payload = {
+                ...values,
+                userId: user.id || user._id,
+                startDate: values.startDate ? new Date(values.startDate) : undefined,
+                endDate: values.endDate ? new Date(values.endDate) : undefined,
+            };
 
-    // Reset previous error
-    setDateError("");
-
-    // Date validation
-    if (formData.startDate && formData.endDate) {
-      const start = new Date(formData.startDate);
-      const end = new Date(formData.endDate);
-      if (end < start) {
-        setDateError("End Date cannot be before Start Date.");
-        return;
-      }
-    }
-
-    try {
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const payload = {
-        ...formData,
-        userId: savedUser.id || savedUser._id,
-        startDate: formData.startDate
-          ? new Date(formData.startDate)
-          : undefined,
-        endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      };
-      if (editingData && editingData._id) {
-        await updateTax(editingData._id, payload);
-      } else {
-        await createTax(payload);
-      }
-      onRefresh();
-      onClose();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        alert(err.response?.data?.message || "Operation failed");
-      } else if (err instanceof Error) {
-        alert(err.message);
-      } else {
-        alert("Operation failed");
-      }
-    }
-  };
-
-  return (
-    <FormModal
-      title={editingData ? "Edit Tax" : "Add New Tax"}
-      icon={<Receipt size={24} />}
-      onClose={onClose}
-      themeColor={themeColor}
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <FormInput
-          label="Tax Name"
-          value={formData.taxName}
-          onChange={(e) =>
-            setFormData({ ...formData, taxName: e.target.value })
-          }
-          required
-        />
-        <FormInput
-          label="Percentage (%)"
-          type="number"
-          step="0.01"
-          value={formData.percentage}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              percentage: parseFloat(e.target.value) || 0,
-            })
-          }
-          required
-        />
-        <div className="grid grid-cols-2 gap-4">
-          <FormInput
-            label="Start Date"
-            type="date"
-            value={formData.startDate}
-            onChange={(e) =>
-              setFormData({ ...formData, startDate: e.target.value })
+            if (editingData?._id) {
+                await updateItem(apiUrl, editingData._id, payload);
+            } else {
+                await createItem(apiUrl, payload);
             }
-          />
-          <FormInput
-            label="End Date"
-            type="date"
-            value={formData.endDate}
-            onChange={(e) =>
-              setFormData({ ...formData, endDate: e.target.value })
-            }
-          />
-        </div>
-        {dateError && <p className="text-red-500 text-sm">{dateError}</p>}{" "}
-        {/* <-- show error */}
-        <div className="flex gap-4">
-          <FormToggle
-            label="Active"
-            checked={formData.isActive}
-            onChange={(val) => setFormData({ ...formData, isActive: val })}
-            disabled={formData.isDefault}
-          />
-          <FormToggle
-            label="Default"
-            checked={formData.isDefault}
-            onChange={(val) => setFormData({ ...formData, isDefault: val })}
-          />
-        </div>
-        <button
-          type="submit"
-          className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-          style={{ backgroundColor: themeColor }}
+            onRefresh();
+            onClose();
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Error saving data");
+        }
+    };
+
+    return (
+        <FormModal
+            title={editingData ? "Edit Tax" : "Add New Tax"}
+            icon={<Receipt size={24} />}
+            onClose={onClose}
+            themeColor={themeColor}
         >
-          <Save size={20} />
-          {editingData ? "Update Tax" : "Save Tax"}
-        </button>
-      </form>
-    </FormModal>
-  );
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
+                <FormInput
+                    label="Tax Name *"
+                    placeholder="e.g. VAT, Sales Tax"
+                    {...register("taxName")}
+                    error={errors.taxName?.message}
+                />
+
+                <FormInput
+                    label="Percentage (%) *"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 5.00"
+                    {...register("percentage", { valueAsNumber: true })}
+                    error={errors.percentage?.message}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput
+                        label="Start Date"
+                        type="date"
+                        {...register("startDate")}
+                        error={errors.startDate?.message}
+                    />
+                    <FormInput
+                        label="End Date"
+                        type="date"
+                        {...register("endDate")}
+                        error={errors.endDate?.message}
+                    />
+                </div>
+
+                {errors.endDate && (
+                    <p className="text-red-500 text-sm">End Date cannot be before Start Date.</p>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                    <Controller
+                        control={control}
+                        name="isActive"
+                        render={({ field }) => (
+                            <FormToggle
+                                label="Active"
+                                checked={field.value}
+                                onChange={field.onChange}
+                                disabled={isDefaultValue}
+                            />
+                        )}
+                    />
+                    <Controller
+                        control={control}
+                        name="isDefault"
+                        render={({ field }) => (
+                            <FormToggle
+                                label="Default"
+                                checked={field.value}
+                                onChange={(val) => {
+                                    field.onChange(val);
+                                    if (val) setValue("isActive", true);
+                                }}
+                            />
+                        )}
+                    />
+                </div>
+
+                <FormButton
+                    type="submit"
+                    label={editingData ? "Update Tax" : "Create"}
+                    icon={<Save size={20} />}
+                    loading={isSubmitting}
+                    themeColor={themeColor}
+                    onCancel={onClose}
+                />
+            </form>
+        </FormModal>
+    );
 };
 
 export default TaxForm;

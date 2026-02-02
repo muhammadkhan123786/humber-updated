@@ -1,57 +1,75 @@
 "use client";
-
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Box } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
 import { IWarehouseStatus } from "../../../../../../../common/IWarehouse.status.interface";
-import { FormModal } from "../../../../common-form/FormModal";
-import { FormInput } from "../../../../common-form/FormInput";
-import { FormToggle } from "../../../../common-form/FormToggle";
-import {
-  createWarehouseStatus,
-  updateWarehouseStatus,
-} from "@/hooks/useWareHouse.Status";
-import axios from "axios";
+
+const warehouseStatusSchema = z.object({
+  wareHouseStatus: z.string().min(1, "Warehouse status name is required."),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof warehouseStatusSchema>;
 
 interface Props {
-  editingData: IWarehouseStatus | null;
+  editingData: (IWarehouseStatus & { _id?: string }) | null;
   onClose: () => void;
   onRefresh: () => void;
   themeColor: string;
 }
 
-const WareHouseForm = ({
-  editingData,
-  onClose,
-  onRefresh,
-  themeColor,
-}: Props) => {
-  const [formData, setFormData] = useState({
-    wareHouseStatus: editingData?.wareHouseStatus || "",
-    isActive: editingData?.isActive ?? true,
-    isDefault: editingData?.isDefault ?? false,
+const WareHouseForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(warehouseStatusSchema),
+    defaultValues: {
+      wareHouseStatus: "",
+      isActive: true,
+      isDefault: false,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
+
+  useEffect(() => {
+    if (editingData) {
+      reset({
+        wareHouseStatus: editingData.wareHouseStatus,
+        isActive: Boolean(editingData.isActive),
+        isDefault: Boolean(editingData.isDefault),
+      });
+    }
+  }, [editingData, reset]);
+
+  const onSubmit = async (values: FormData) => {
     try {
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const payload = {
-        ...formData,
-        userId: savedUser.id || savedUser._id,
-      };
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
 
       if (editingData?._id) {
-        await updateWarehouseStatus(editingData._id, payload);
+        await updateItem("/warehouse-status", editingData._id, payload);
       } else {
-        await createWarehouseStatus(payload);
+        await createItem("/warehouse-status", payload);
       }
       onRefresh();
       onClose();
-    } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? err.response?.data?.message
-        : "Operation failed";
-      alert(msg);
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving data");
     }
   };
 
@@ -62,37 +80,51 @@ const WareHouseForm = ({
       onClose={onClose}
       themeColor={themeColor}
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
         <FormInput
-          label="Warehouse Status Name"
-          placeholder="e.g. Available, Out of Stock, Reserved"
-          value={formData.wareHouseStatus}
-          onChange={(e) =>
-            setFormData({ ...formData, wareHouseStatus: e.target.value })
-          }
-          required
+          label="Warehouse Status Name *"
+          placeholder="e.g. Available, Out of Stock"
+          {...register("wareHouseStatus")}
+          error={errors.wareHouseStatus?.message}
         />
-        <div className="flex gap-6">
-          <FormToggle
-            label="Active"
-            checked={formData.isActive}
-            onChange={(val) => setFormData({ ...formData, isActive: val })}
-            disabled={formData.isDefault}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <FormToggle
+                label="Active"
+                checked={field.value}
+                onChange={field.onChange}
+                disabled={isDefaultValue}
+              />
+            )}
           />
-          <FormToggle
-            label="Default"
-            checked={formData.isDefault}
-            onChange={(val) => setFormData({ ...formData, isDefault: val })}
+          <Controller
+            control={control}
+            name="isDefault"
+            render={({ field }) => (
+              <FormToggle
+                label="Default"
+                checked={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true);
+                }}
+              />
+            )}
           />
         </div>
-        <button
+
+        <FormButton
           type="submit"
-          className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
-          style={{ backgroundColor: themeColor }}
-        >
-          <Save size={20} />
-          {editingData ? "Update Status" : "Save Status"}
-        </button>
+          label={editingData ? "Update Status" : "Create"}
+          icon={<Save size={20} />}
+          loading={isSubmitting}
+          themeColor={themeColor}
+          onCancel={onClose}
+        />
       </form>
     </FormModal>
   );

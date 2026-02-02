@@ -1,6 +1,7 @@
 import { IBaseEntity } from "../Base.Interface";
 
 export interface ISupplier<TUSERID = string, TBusinessTypeId = string, TJobTitleId = string, ICityId = string, TCountryId = string, TPaymentCurrencyId = string, TPaymentMethodId = string, TTypeOfServiceId = string, TProductCategoryIds = string[], TPaymentTermsId = string, TPricingAgreementId = string> extends IBaseEntity<TUSERID> {
+    supplierCode?: string;
     supplierIdentification: {
         legalBusinessName: string;
         tradingName?: string;

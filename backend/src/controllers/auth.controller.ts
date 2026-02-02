@@ -1,14 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
 import { Roles, User } from '../models/user.models';
 import { hashPassword, comparePassword, generateToken } from '../services/auth.service';
+import { DriverModel } from '../models/driver/driver.models';
 
 //this is middleware. common for register all user.
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
         const { emailId, password, confirmPassword, role } = req.body;
-
-
         // Check if user exists
         const existingUser = await User.findOne({ email: emailId });
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
@@ -54,12 +53,39 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({ message: `Email ${email} does not exist. Invalid credentials.` });
         }
 
+        if (!user.isActive) { return res.status(400).json({ message: `Email ${email} your email is not active/verified. Please contact website administrator.` }); }
         const isMatch = await comparePassword(password, user.password!);
         if (!isMatch) {
             return res.status(400).json({ message: 'Invalid password. Please check.' });
         }
-
         const token = generateToken({ userId: user._id.toString(), email: user.email, role: user.role });
+
+        if (user.role === "Driver") {
+            const driver = await DriverModel.findOne({ accountId: user._id });
+
+            if (!driver) {
+                return res.status(404).json({
+                    message: "Driver profile not found for this account"
+                });
+            }
+            if (!driver.isVerified) {
+                return res.status(404).json({
+                    message: "Your account is not verified yet. please wait or contact website admin."
+                });
+            }
+
+            return res.status(200).json({
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    driverId: driver._id,
+                    isApproved: driver.isVerified,
+                },
+                token
+            });
+        }
+
 
         return res.status(200).json({
             user: {
@@ -101,3 +127,4 @@ export const setupPassword = async (req: Request, res: Response) => {
         res.status(500).json({ message: error.message });
     }
 };
+

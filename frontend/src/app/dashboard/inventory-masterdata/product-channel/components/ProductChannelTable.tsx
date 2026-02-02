@@ -1,69 +1,142 @@
-import { Edit2, Trash2, Star, Tv } from "lucide-react";
-import { StatusBadge } from "@/app/common-form/StatusBadge";
-import { IChannel } from "../../../../../../../common/IChannel.interface";
+"use client";
+import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
+import { StatusBadge } from "@/app/common-form/StatusBadge";
+import { Star, Tv, Trash2 } from "lucide-react";
+import { IChannel } from "../../../../../../../common/IChannel.interface";
 
-interface TableProps {
-    data: IChannel[];
-    onEdit: (item: IChannel) => void;
-    onDelete: (id: string) => void;
-    themeColor: string;
+interface Props {
+  data: (IChannel & { _id: string })[];
+  displayView: "table" | "card";
+  onEdit: (item: IChannel & { _id: string }) => void;
+  onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
+  themeColor: string;
 }
 
-export default function ProductChannelTable({ data, onEdit, onDelete, themeColor }: TableProps) {
+const getIconGradient = (index: number) => {
+  const gradients = [
+    "bg-gradient-to-br from-blue-400 to-blue-600",
+    "bg-gradient-to-br from-orange-400 to-red-600",
+    "bg-gradient-to-br from-green-400 to-emerald-600",
+    "bg-gradient-to-br from-purple-400 to-pink-600",
+  ];
+  return gradients[index % gradients.length];
+};
+
+const ProductChannelTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
+  if (displayView === "card") {
     return (
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            <table className="w-full text-left">
-                <thead className="text-white" style={{ backgroundColor: themeColor }}>
-                    <tr>
-                        <th className="px-6 py-4 text-center w-20">Icon</th>
-                        <th className="px-6 py-4">Channel Name</th>
-                        <th className="px-6 py-4 text-center">Status</th>
-                        <th className="px-6 py-4 text-center">Default</th>
-                        <th className="px-6 py-4 text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                    {data.length > 0 ? (
-                        data.map((item: IChannel) => (
-                            <tr key={(item as any)._id} className="hover:bg-orange-50 transition-colors">
-                                <td className="px-6 py-4 text-center">
-                                    <div className="p-2 bg-blue-50 text-blue-500 rounded-lg inline-block"><Tv size={18} /></div>
-                                </td>
-                                <td className="px-6 py-4 font-bold text-gray-800">{item.channelName}</td>
-                                <td className="px-6 py-4 text-center">
-                                    <StatusBadge isActive={!!item.isActive} />
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    {item.isDefault ? (
-                                        <Star size={20} className="inline text-yellow-500 fill-yellow-500" />
-                                    ) : (
-                                        <span className="text-gray-300">-</span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                    <TableActionButton
-                                        onEdit={() => onEdit(item)}
-                                        onDelete={() => {
-                                            if (item.isDefault) {
-                                                alert("Default item cannot be deleted.");
-                                                return;
-                                            }
-                                            onDelete(item._id!);
-                                        }}
-                                    />
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan={5} className="px-6 py-12 text-center text-gray-400 italic">
-                                No product channels found.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data.map((item, index) => (
+          <div
+            key={item._id}
+            className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+          >
+            <div className="p-4 flex items-start justify-between bg-white">
+              <div className={`${getIconGradient(index)} p-3 rounded-xl text-white`}>
+                <Tv size={18} />
+              </div>
+              <StatusBadge 
+                isActive={!!item.isActive}
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
+            </div>
+
+            <div className="px-4 pb-4 space-y-3">
+              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                {item.channelName}
+                {item.isDefault && (
+                  <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                )}
+              </h3>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={() => onEdit(item)}
+                  className="flex-1 flex text-sm items-center justify-center gap-1 py-1 px-3 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg font-semibold transition-all hover:text-blue-600"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    if (item.isDefault) return alert("Default channels cannot be deleted.");
+                    onDelete(item._id);
+                  }}
+                  className="p-2 bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  title="Delete"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {data.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-400">
+            <div className="text-5xl mb-3">📺</div>
+            <p>No product channels found.</p>
+          </div>
+        )}
+      </div>
     );
-}
+  }
+
+  return (
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
+      <table className="w-full text-[16px] text-left min-w-max">
+        <thead className="bg-[#ECFEFF] border-b-2 border-orange-100 sticky top-0">
+          <tr>
+            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Channel Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {data.map((item, index) => (
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
+              <td className="px-6 py-4">
+                <div className={`${getIconGradient(index)} p-3 rounded-lg w-fit text-white`}>
+                  <Tv size={18} />
+                </div>
+              </td>
+              <td className="px-6 py-4 font-bold text-gray-900">
+                <div className="flex items-center gap-2">
+                  {item.channelName}
+                  {item.isDefault && (
+                    <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <StatusBadge 
+                  isActive={!!item.isActive}
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
+              </td>
+              <td className="px-6 py-4 text-center">
+                <TableActionButton
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => {
+                    if (item.isDefault) return alert("Default channels cannot be deleted.");
+                    onDelete(item._id);
+                  }}
+                />
+              </td>
+            </tr>
+          ))}
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center py-10 text-gray-400">No channels found.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default ProductChannelTable;

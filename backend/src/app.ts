@@ -62,6 +62,16 @@ import iconsRouter from "./routes/master-data-routes/icons.routes";
 import SupplierRouters from "./routes/suppliers/supplier.routes";
 import contractTypeRouter from "./routes/master-data-routes/contract.types.routes";
 import techniciansRouter from "./routes/technicians/technicians.routes";
+import technicianServiceTypeRouter from "./routes/master-data-routes/technician.service.types.routes";
+import technicianInspectionListRouter from "./routes/master-data-routes/technician.inspection.list.routes";
+import technicianJobStatusRouter from "./routes/master-data-routes/technician.jobs.status.routes";
+import technicianJobsRouter from "./routes/technician-jobs/technician.jobs.routes";
+import autoCodeGeneratorRouter from "./routes/auto-code-generator/auto.code.generator.routes";
+import driverRouter from "./routes/driver/driver.routes";
+import otpRouter from "./routes/otp-routes/mobile.otp.routes";
+import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
+import partsRouter from "./routes/master-data-routes/parts.routes";
+import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
 
 
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
@@ -251,7 +261,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/customer-tickets`,
-  adminProtecter,
+  // adminProtecter,
   customerTicketBaseRouter,
 );
 
@@ -292,6 +302,79 @@ app.use(
   adminProtecter,
   contractTypeRouter,
 );
+
+//23-01-2026 
+app.use(
+  `${process.env.API_PREFIX}/technician-service-types`,
+  adminProtecter,
+  technicianServiceTypeRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-inspection`,
+  adminProtecter,
+  technicianInspectionListRouter,
+);
+
+
+app.use(
+  `${process.env.API_PREFIX}/technician-job-status`,
+  adminProtecter,
+  technicianJobStatusRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-jobs`,
+  adminProtecter,
+  technicianJobsRouter,
+);
+
+//26-01-2026 
+app.use(
+  `${process.env.API_PREFIX}/auto-generate-codes`,
+  adminProtecter,
+  autoCodeGeneratorRouter,
+
+);
+
+app.use(
+  `${process.env.API_PREFIX}/register-driver`,
+  // adminProtecter,
+  driverRouter,
+
+);
+
+//27-01-2026 
+app.use(
+  `${process.env.API_PREFIX}/forget-password`,
+  //adminProtecter,
+  otpRouter,
+
+);
+
+//29-01-2026
+app.use(
+  `${process.env.API_PREFIX}/ticket-decision`,
+  adminProtecter,
+  ticketDecisionRouter,
+
+);
+
+app.use(
+  `${process.env.API_PREFIX}/mobility-parts`,
+  adminProtecter,
+  partsRouter,
+);
+
+//30-01-2026
+app.use(
+  `${process.env.API_PREFIX}/insurance-companies`,
+  adminProtecter,
+  insuranceCompaniesRouter,
+
+);
+
+
 
 //Muhammad Imran code ended here.
 

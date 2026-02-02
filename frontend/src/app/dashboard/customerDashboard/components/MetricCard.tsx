@@ -2,15 +2,19 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, TrendingUp } from "lucide-react";
 
 interface MetricProps {
   title: string;
   value: string | number;
-  percentage: string;
+  percentage: string | number;
   isPositive: boolean;
   icon: LucideIcon;
   gradient: string;
+  className?: string;
+  // Dynamic dimensions props
+  width?: string;
+  height?: string;
 }
 
 const MetricCard: React.FC<MetricProps> = ({
@@ -20,66 +24,96 @@ const MetricCard: React.FC<MetricProps> = ({
   isPositive,
   icon: Icon,
   gradient,
+  className = "",
+  width = "w-[210px]", // Default width
+  height = "h-[200px]", // Default height
 }) => {
   return (
-    <motion.div
-      whileHover="hover"
-      initial="initial"
-      className={`relative flex flex-col justify-between p-6 rounded-[2.5rem] w-64 h-52 text-white shadow-xl overflow-hidden transition-transform hover:scale-105 ${gradient}`}
-    >
-      {/* --- Slow Motion Shine Layer --- */}
-      <motion.div
-        variants={{
-          initial: { x: "-150%", skewX: "-20deg" },
-          hover: { x: "150%", skewX: "-20deg" },
-        }}
-        transition={{
-          duration: 1.8, // 0.75 se barha kar 1.8 kar diya taake slow guzre
-          ease: "easeInOut",
-        }}
-        className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/25 to-transparent z-0 pointer-events-none"
+    <div className={`relative ${width} ${height} group ${className}`}>
+      {/* Background Glow */}
+      <div
+        className={`absolute inset-0 ${gradient} opacity-20 blur-xl rounded-2xl pointer-events-none transition-opacity duration-300 group-hover:opacity-40`}
       />
 
-      <div className="relative z-10 flex justify-between items-start">
-        <h3 className="text-[11px] font-bold uppercase tracking-wider opacity-90 leading-tight w-2/3">
-          {title}
-        </h3>
+      <motion.div
+        initial="initial"
+        whileHover="hover"
+        variants={{
+          initial: { scale: 1, y: 0 },
+          hover: { scale: 1.04, y: -5 },
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className={`relative ${gradient} w-full h-full rounded-2xl shadow-2xl overflow-hidden z-10 cursor-pointer`}
+      >
+        {/* Shine Animation */}
+        <motion.div
+          variants={{
+            initial: { x: "-150%", skewX: "-20deg" },
+            hover: { x: "150%", skewX: "-20deg" },
+          }}
+          transition={{ duration: 1.5, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent z-20 pointer-events-none"
+        />
 
-        {/* Glassmorphism Icon Box */}
-        <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg overflow-hidden">
-          <motion.div
-            variants={{
-              initial: { rotate: 0 },
-              hover: { rotate: 360 },
-            }}
-            transition={{
-              duration: 0.8, // Icon rotation ko bhi thora slow kiya hai matching ke liye
-              ease: "easeInOut",
-            }}
-            className="flex items-center justify-center"
-          >
-            <Icon size={22} strokeWidth={2.5} />
-          </motion.div>
+        {/* Decorative Dots */}
+        <div className="absolute right-[18px] top-[8px] flex gap-1 z-10">
+          <div className="w-2 h-2 bg-white/40 rounded-full" />
+          <div className="w-2 h-2 bg-white/30 rounded-full" />
+          <div className="w-2 h-2 bg-white/20 rounded-full" />
         </div>
-      </div>
 
-      <div className="relative z-10">
-        <div className="text-5xl font-bold mb-4 tracking-tighter">{value}</div>
-
-        <div className="flex items-center gap-2">
-          <div className="bg-white/20 px-4 py-1.5 rounded-2xl backdrop-blur-xl border border-white/20 flex items-center gap-1.5 text-[11px] font-bold shadow-sm">
-            <span>{isPositive ? "↗" : "↘"}</span>
-            {isPositive ? "+" : ""}
-            {percentage}%
+        {/* Main Content (Top Section) */}
+        <div className="absolute left-[24px] top-[24px] right-[24px] flex justify-between items-start">
+          <div className="flex flex-col gap-3">
+            <h3 className="text-white/90 text-[13px] font-normal uppercase leading-5 tracking-tight font-['Arial'] max-w-[100px]">
+              {title}
+            </h3>
+            <div className="text-white text-4xl font-bold leading-10 font-['Arial'] drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]">
+              {value}
+            </div>
           </div>
-          <span className="text-[9px] font-medium opacity-80 leading-3">
-            vs last
-            <br />
-            month
-          </span>
+
+          {/* Icon Box */}
+          <div className="w-16 h-16 bg-white/20 rounded-2xl border border-white/30 flex items-center justify-center backdrop-blur-md shadow-xl shrink-0">
+            <motion.div
+              variants={{
+                initial: { rotate: 0 },
+                hover: { rotate: 360 },
+              }}
+              transition={{ duration: 0.8, ease: "linear" }}
+            >
+              <Icon size={28} className="text-white" />
+            </motion.div>
+          </div>
         </div>
-      </div>
-    </motion.div>
+
+        {/* Bottom Stats Section - Positioned relative to bottom */}
+        <div className="absolute left-6 bottom-8 right-6 flex justify-between items-center">
+          {/* Percentage Pill */}
+          <div className="h-10 px-3 bg-white/25 rounded-2xl border border-white/30 flex items-center gap-2 backdrop-blur-lg shadow-lg">
+            <div
+              className={`flex items-center justify-center ${!isPositive ? "rotate-180" : ""}`}
+            >
+              <span className="text-white">
+                <TrendingUp size={18} />
+              </span>
+            </div>
+            <span className="text-white text-base font-bold font-['Arial']">
+              {isPositive ? "+" : ""}
+              {percentage}%
+            </span>
+          </div>
+
+          {/* vs last month text */}
+          <div className="text-white/80 text-xs font-normal font-['Arial'] leading-4 text-right">
+            vs last <br /> month
+          </div>
+        </div>
+
+        {/* Decorative Bottom Bar */}
+        <div className="absolute left-0 bottom-0 w-full h-1 bg-white/30" />
+      </motion.div>
+    </div>
   );
 };
 

@@ -1,7 +1,14 @@
 import { z } from "zod";
-import { SchemaDefinition, Types } from "mongoose";
-import { CustomerTicketBase } from "../../../../common/Ticket-management-system/ITicket.interface";
+import { Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
+
+export const InvestigationPartSchema = z.object({
+  partId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid partId"),
+
+  quantity: z.number().positive(),
+  unitCost: z.number().nonnegative(),
+  total: z.number().nonnegative(),
+});
 
 export const customerTicketBaseSchema = {
   ...commonSchema,
@@ -12,6 +19,12 @@ export const customerTicketBaseSchema = {
     type: String,
     enum: ["Phone", "Online Portal", "Walk-in"],
     required: true,
+  },
+
+  decisionId: {
+    type: String,
+    enum: ["Covered", "Chargeable", "Mixed"],
+    required: false,
   },
 
   ticketStatusId: { type: Types.ObjectId, ref: "TicketStatus", required: true },
@@ -38,16 +51,25 @@ export const customerTicketBaseSchema = {
 
   vehicleRepairVideoURL: { type: String },
   assignedTechnicianId: {
-    type: Types.ObjectId,
+    type: [Types.ObjectId],
     ref: "Technicians",
-    default: null,
+    default: [],
   },
 
   address: { type: String },
+
+  productOwnership: {
+    type: String,
+    enum: ["Customer Product", "Company product"],
+    required: true,
+  },
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
   ...commonSchemaValidation,
+  productOwnership: z.enum(["Customer Product", "Company product"]),
+
+  decisionId: z.enum(["Covered", "Chargeable", "Mixed"]),
 
   ticketCode: z.string().min(1, "ticketCode is required"),
 
@@ -77,10 +99,9 @@ export const customerTicketBaseSchemaValidation = z.object({
 
   address: z.string().optional(),
   assignedTechnicianId: z
-    .string()
-    .regex(/^[0-9a-fA-F]{24}$/, "Invalid Technician ID")
-    .nullable()
-    .optional(),
+    .array(z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Technician ID"))
+    .optional()
+    .default([]),
 
   vehicleRepairImages: z.array(z.string()).optional(),
 

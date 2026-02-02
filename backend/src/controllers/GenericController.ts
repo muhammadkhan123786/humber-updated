@@ -49,6 +49,7 @@ export class AdvancedGenericController<T extends Document> {
                 sortBy = "createdAt",
                 order = "desc",
                 search,
+                filter, // <-- new query param
                 ...rawFilters
             } = req.query;
 
@@ -88,17 +89,27 @@ export class AdvancedGenericController<T extends Document> {
                 }
             });
 
-            const total = await this.options.service
-                .getQuery(queryFilters)
-                .countDocuments();
 
-            let query = this.options.service.getQuery(queryFilters, {
+            let { query, total, activeCount, inactiveCount } = await this.options.service.getQuery(queryFilters, {
                 populate: this.options.populate,
             });
 
             const sortOption: any = {};
             sortOption[sortBy as string] = order === "asc" ? 1 : -1;
 
+            // ✅ Check if filter=all, then skip pagination
+            if (filter === "all") {
+                const data = await query.sort(sortOption).find({ isActive: true }).exec();
+                return res.status(200).json({
+                    success: true,
+                    total,
+                    page: 1,
+                    limit: total,
+                    data,
+                });
+            }
+
+            // 🔹 Normal pagination
             const data = await query
                 .sort(sortOption)
                 .skip((pageNumber - 1) * pageSize)
@@ -108,6 +119,8 @@ export class AdvancedGenericController<T extends Document> {
             res.status(200).json({
                 success: true,
                 total,
+                activeCount,
+                inactiveCount,
                 page: pageNumber,
                 limit: pageSize,
                 data,
@@ -119,19 +132,6 @@ export class AdvancedGenericController<T extends Document> {
             });
         }
     };
-
-
-    //get for drop down 
-    getAllForDropDown = async (req: Request, res: Response) => {
-        try {
-            const { sortBy = "createdAt", order = "desc", search, ...rawFilters } = req.query;
-
-        } catch (err: any) {
-            res.status(500).json({ success: false, message: err.message || "Failed to fetch documents" });
-        }
-    };
-
-
     // GET BY ID
     getById = async (req: Request, res: Response) => {
         try {

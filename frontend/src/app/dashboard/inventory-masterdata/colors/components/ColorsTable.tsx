@@ -7,10 +7,11 @@ import { Star, Palette, Trash2 } from "lucide-react";
 import { IColor } from "../../../../../../../common/IColor.interface";
 
 interface Props {
-  data: IColor[];
+  data: (IColor & { _id: string })[];
   displayView: "table" | "card";
-  onEdit: (item: IColor) => void;
+  onEdit: (item: IColor & { _id: string }) => void;
   onDelete: (id: string) => void;
+  onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
@@ -24,7 +25,7 @@ const getIconGradient = (index: number) => {
   return gradients[index % gradients.length];
 };
 
-const ColorsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props) => {
+const ColorsTable = ({ data, displayView, onEdit, onDelete, onStatusChange, themeColor }: Props) => {
   
   if (displayView === "card") {
     return (
@@ -32,15 +33,18 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props)
         {data.map((item, index) => (
           <div
             key={item._id}
-            className="bg-white rounded-3xl border-2 border-orange-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-orange-300 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
+            className="bg-white rounded-3xl border-2 border-blue-100 overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:border-blue-400 hover:scale-105 hover:-translate-y-3 cursor-pointer transform"
           >
             <div className="p-4 flex items-start justify-between bg-white">
-              {/* Visual color preview instead of just an icon */}
               <div 
                 className="w-12 h-12 rounded-xl shadow-inner border-4 border-white"
                 style={{ backgroundColor: item.colorCode }}
               />
-              <StatusBadge isActive={!!item.isActive} />
+              <StatusBadge 
+                isActive={!!item.isActive} 
+                onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                editable={!item.isDefault}
+              />
             </div>
 
             <div className="px-4 pb-4 space-y-1">
@@ -53,12 +57,12 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props)
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={() => onEdit(item)}
-                  className="flex-1 py-2 text-sm bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg font-semibold transition-all"
+                  className="flex-1 py-2 text-sm bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg font-semibold transition-all"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => !item.isDefault && item._id && onDelete(item._id)}
+                  onClick={() => !item.isDefault && onDelete(item._id)}
                   className={`p-2 rounded-lg transition-all ${item.isDefault ? 'opacity-20 cursor-not-allowed' : 'bg-gray-50 text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
                   disabled={item.isDefault}
                 >
@@ -73,19 +77,19 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props)
   }
 
   return (
-    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-hidden">
-      <table className="w-full text-left">
-        <thead className="bg-[#FFF5F0] border-b-2 border-gray-200">
+    <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
+      <table className="w-full text-[16px]! text-left min-w-max">
+        <thead className="bg-[#ECFEFF] border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700 w-24">Preview</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Name & Code</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Preview</th>
+            <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Name & Code</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {data.map((item, index) => (
-            <tr key={item._id} className="hover:bg-[#FFF5F0] transition-colors">
+          {data.map((item) => (
+            <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
               <td className="px-6 py-4">
                 <div 
                   className="w-10 h-10 rounded-full border-2 border-white shadow-md"
@@ -102,14 +106,18 @@ const ColorsTable = ({ data, displayView, onEdit, onDelete, themeColor }: Props)
                 </div>
               </td>
               <td className="px-6 py-4 text-center">
-                <StatusBadge isActive={!!item.isActive} />
+                <StatusBadge 
+                  isActive={!!item.isActive} 
+                  onChange={(newStatus) => onStatusChange?.(item._id, newStatus)}
+                  editable={!item.isDefault}
+                />
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault) return alert("Default cannot be deleted.");
-                    if (item._id) onDelete(item._id);
+                    onDelete(item._id);
                   }}
                 />
               </td>

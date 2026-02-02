@@ -2,12 +2,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Briefcase, Plus, Search, Loader2, Grid3x3, List } from "lucide-react";
 // Import common components
-import StatsCards from "@/app/common-form/StatsCard"; 
+import StatsCards from "@/app/common-form/StatsCard";
 import JobTypeTable from "./JobTypeTable";
 import JobTypeForm from "./JobTypeForm";
 import Pagination from "@/components/ui/Pagination";
 import { getAll, deleteItem, updateItem } from "@/helper/apiHelper";
 import { IJobTypes } from "../../../../../../common/IJob.types.interface";
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -24,19 +26,32 @@ export default function JobTypeClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
       setLoading(true);
       const res = await getAll<JobTypeWithId>("/job-types", {
         page: page.toString(),
-        limit: "10",
+        limit: "12",
         search: search.trim(),
       });
       setDataList(res.data || []);
       setFilteredDataList(res.data || []);
-      setTotalPages(Math.ceil(res.total / 10) || 1);
+      setTotalPages(Math.ceil(res.total / 12) || 1);
       setCurrentPage(page);
+
+      // Fetch ALL data without pagination to get accurate active/inactive counts
+      const allDataRes = await getAll<JobTypeWithId>("/job-types", {
+        limit: "1000",
+        search: search.trim(),
+      });
+
+      setTotalCount(res.total || 0);
+      setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+      setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
     } catch (err) {
       console.error("Fetch Error:", err);
       setDataList([]);
@@ -75,36 +90,30 @@ export default function JobTypeClient() {
     }
   };
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      await updateItem("/job-types", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+    handleOptimisticStatusUpdate(
+      id,
+      newStatus,
+      "/job-types",
+      setDataList,
+      setTotalActiveCount,
+      setTotalInactiveCount,
+      updateItem
+    );
   };
 
   // Stats calculation
-  const totalCount = dataList.length;
-  const activeCount = dataList.filter((d) => d.isActive).length;
-  const inactiveCount = dataList.filter((d) => !d.isActive).length;
+  const statsTotal = totalCount;
+  const statsActive = totalActiveCount;
+  const statsInactive = totalInactiveCount;
 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <Briefcase size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<Briefcase size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Job Types</h1>
               <p className="text-blue-100 text-lg">Define employment categories (e.g. Full-time, Remote)</p>
@@ -115,18 +124,26 @@ export default function JobTypeClient() {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Job Type
           </button>
         </div>
 
         {/* Stats Cards with Filter functionality */}
-        <StatsCards 
-          totalCount={totalCount}
-          activeCount={activeCount}
-          inactiveCount={inactiveCount}
+        <StatsCards
+          totalCount={statsTotal}
+          activeCount={statsActive}
+          inactiveCount={statsInactive}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Job Types",
+            active: "Active Types",
+            inactive: "Inactive Types"
+          }}
+          icons={{
+            total: <Briefcase size={24} />,
+          }}
         />
 
         {/* Search Bar */}
@@ -153,22 +170,20 @@ export default function JobTypeClient() {
             <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "card"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "card"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <Grid3x3 size={16} />
                 <span className="hidden sm:inline text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${
-                  displayView === "table"
+                className={`px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-all ${displayView === "table"
                     ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 <List size={16} />
                 <span className="hidden sm:inline text-sm">Table</span>

@@ -8,8 +8,12 @@ import { customerTicketBaseSchemaValidation } from "../../schemas/ticket-managem
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
-import { generateTicketCode } from "../../utils/generateTicketCode";
+import { generateTicketCode } from "../../utils/generate.AutoCode.Counter";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
+import {
+  getTicketCountByStatus,
+  getUnassignedTickets,
+} from "../../controllers/customer.ticket.controllet";
 
 const repairVehicleUpload = createUploader([
   {
@@ -44,10 +48,41 @@ const customerTicketBaseController = new AdvancedGenericController({
     "vehicleId",
     "priorityId",
     "ticketStatusId",
+    {
+      path: "customerId",
+      populate: {
+        path: "personId",
+      },
+    },
+    {
+      path: "assignedTechnicianId",
+      populate: [{ path: "personId" }],
+    },
+    {
+      path: "vehicleId",
+      populate: [{ path: "vehicleBrandId" }, { path: "vehicleModelId" }],
+    },
+    {
+      path: "customerId",
+      populate: [
+        { path: "personId" },
+        { path: "addressId" },
+        { path: "contactId" },
+      ],
+    },
   ],
   validationSchema: customerTicketBaseSchemaValidation,
   searchFields: ["ticketCode"],
 });
+
+customerTicketBaseRouter.get(
+  "/unassigned-technician-tickets",
+  getUnassignedTickets,
+);
+customerTicketBaseRouter.get(
+  "/ticket-count-status-wise",
+  getTicketCountByStatus,
+);
 
 customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
@@ -62,7 +97,23 @@ customerTicketBaseRouter.post(
       const code = await generateTicketCode();
       if (!req.body) req.body = {};
       req.body.ticketCode = code;
-      console.log("[TICKET POST] Generated ticketCode:", code);
+      req.body.purchaseDate = new Date(req.body.purchaseDate);
+      console.log("Body Report: ", req.body);
+      if (typeof req.body.investigationParts === "string") {
+        try {
+          req.body.investigationParts = JSON.parse(req.body.investigationParts);
+        } catch {
+          return res
+            .status(400)
+            .json({ message: "Invalid investigationParts JSON" });
+        }
+      }
+
+      if (req.body.isEmailSendReport !== undefined) {
+        req.body.isEmailSendReport =
+          req.body.isEmailSendReport === "true" ||
+          req.body.isEmailSendReport === true;
+      }
 
       next();
     } catch (error) {
@@ -82,8 +133,41 @@ customerTicketBaseRouter.put(
     vehicleRepairImagesFile: "vehicleRepairImages",
   }),
   normalizeArrays(["vehicleRepairImages"]),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (!req.body) req.body = {};
+
+      if (req.body.purchaseDate) {
+        req.body.purchaseDate = new Date(req.body.purchaseDate);
+      }
+
+      if (typeof req.body.investigationParts === "string") {
+        try {
+          req.body.investigationParts = JSON.parse(req.body.investigationParts);
+        } catch {
+          return res
+            .status(400)
+            .json({ message: "Invalid investigationParts JSON" });
+        }
+      }
+
+      if (req.body.isEmailSendReport !== undefined) {
+        req.body.isEmailSendReport =
+          req.body.isEmailSendReport === "true" ||
+          req.body.isEmailSendReport === true;
+      }
+
+      next();
+    } catch (error) {
+      console.error("[TICKET PUT ERROR]:", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to update ticket" });
+    }
+  },
   customerTicketBaseController.update,
 );
+
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
 
 export default customerTicketBaseRouter;

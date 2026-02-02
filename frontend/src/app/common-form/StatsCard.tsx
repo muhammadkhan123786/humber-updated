@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { Users, Shield, Building2 } from "lucide-react";
+import React, { useState, ReactNode } from "react";
+import { Users, CheckCircle, XCircle } from "lucide-react";
 
 interface StatsCardsProps {
     totalCount: number;
@@ -11,6 +11,11 @@ interface StatsCardsProps {
         active?: string;
         inactive?: string;
     };
+    icons?: {
+        total?: ReactNode;
+        active?: ReactNode;
+        inactive?: ReactNode;
+    };
     onFilterChange?: (filter: 'all' | 'active' | 'inactive') => void;
 }
 
@@ -19,10 +24,11 @@ const StatsCards: React.FC<StatsCardsProps> = ({
     activeCount,
     inactiveCount,
     labels = {
-        total: "Total Business Types",
+        total: "Total Types",
         active: "Active Types",
         inactive: "Inactive Types",
     },
+    icons,
     onFilterChange,
 }) => {
     const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -33,19 +39,21 @@ const StatsCards: React.FC<StatsCardsProps> = ({
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Total Card */}
-            <div 
+            <div
                 onClick={() => handleFilterClick('all')}
-                className={`rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${
-                    activeFilter === 'all' 
-                        ? 'bg-linear-to-br from-blue-500 to-blue-700 ' 
-                        : 'bg-linear-to-br from-blue-400 to-blue-600'
-                }`}>
-                <div className="flex justify-between items-start mb-4">
+                className={`rounded-2xl p-5 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${activeFilter === 'all'
+                    ? 'bg-linear-to-br from-blue-500 to-cyan-500 '
+                    : 'bg-linear-to-br from-blue-400 to-blue-600'
+                    }`}>
+                <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col gap-2">
-                        <Users size={32} className="text-white/90" />
-                        <div className="text-4xl font-black">{totalCount}</div>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            {/* Agar icons pass kiya hai toh wo dikhao, warna default Users icon */}
+                            {icons?.total || <Users size={24} className="text-white" />}
+                        </div>
+                        <div className="text-4xl font-bold">{totalCount}</div>
                         <p className="text-blue-50 text-sm">{labels.total}</p>
                     </div>
                     <div>
@@ -55,22 +63,23 @@ const StatsCards: React.FC<StatsCardsProps> = ({
                     </div>
                 </div>
                 {activeFilter === 'all' && (
-                    <div className="mt-3 text-xs text-blue-100">✓ Filtered</div>
+                    <div className=" text-xs text-blue-100">✓ Filtered</div>
                 )}
             </div>
 
             {/* Active Card */}
-            <div 
+            <div
                 onClick={() => handleFilterClick('active')}
-                className={`rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${
-                    activeFilter === 'active' 
-                        ? 'bg-linear-to-br from-green-500 to-emerald-700 ring-4 ring-green-300' 
-                        : 'bg-linear-to-br from-green-400 to-emerald-600'
-                }`}>
-                <div className="flex justify-between items-start mb-4">
+                className={`rounded-2xl p-5 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${activeFilter === 'active'
+                    ? 'bg-linear-to-br from-green-500 to-emerald-500 ring-4 ring-green-300'
+                    : 'bg-linear-to-br from-green-400 to-emerald-600'
+                    }`}>
+                <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col gap-2">
-                        <Shield size={32} className="text-white/90" />
-                        <div className="text-4xl font-black">{activeCount}</div>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            {icons?.active || <CheckCircle size={24} className="text-white" />}
+                        </div>
+                        <div className="text-4xl font-bold">{activeCount}</div>
                         <p className="text-green-50 text-sm">{labels.active}</p>
                     </div>
                     <div>
@@ -85,17 +94,18 @@ const StatsCards: React.FC<StatsCardsProps> = ({
             </div>
 
             {/* Inactive Card */}
-            <div 
+            <div
                 onClick={() => handleFilterClick('inactive')}
-                className={`rounded-3xl p-6 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${
-                    activeFilter === 'inactive' 
-                        ? 'bg-linear-to-br from-pink-500 to-purple-700 ring-4 ring-pink-300' 
-                        : 'bg-linear-to-br from-pink-400 to-purple-600'
-                }`}>
-                <div className="flex justify-between items-start mb-4">
+                className={`rounded-2xl p-5 text-white shadow-lg hover:shadow-2xl transition-all hover:scale-105 hover:-translate-y-1 cursor-pointer transform ${activeFilter === 'inactive'
+                    ? 'bg-linear-to-br from-purple-500 to-pink-500 ring-4 ring-pink-300'
+                    : 'bg-linear-to-br from-purple-500 to-pink-600'
+                    }`}>
+                <div className="flex justify-between items-start mb-2">
                     <div className="flex flex-col gap-2">
-                        <Building2 size={32} className="text-white/90" />
-                        <div className="text-4xl font-black">{inactiveCount}</div>
+                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                            {icons?.inactive || <XCircle size={24} className="text-white" />}
+                        </div>
+                        <div className="text-4xl font-bold">{inactiveCount}</div>
                         <p className="text-pink-50 text-sm">{labels.inactive}</p>
                     </div>
                     <div>

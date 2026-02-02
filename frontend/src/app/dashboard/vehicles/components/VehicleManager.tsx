@@ -6,7 +6,6 @@ import { ICustomerVehicleRegInterface } from "../../../../../../common/Vehicle-R
 
 import VehicleIdentification from "./VehicleIdentification";
 import BrandModelInfo from "./BrandModelInfo";
-import WarrantyHistory from "./WarrantyHistory";
 import VehicleNotes from "./VehicleNotes";
 
 interface VehicleManagerProps {
@@ -14,18 +13,19 @@ interface VehicleManagerProps {
   onSuccess: () => void;
 }
 
-export default function VehicleManager({ editId, onSuccess }: VehicleManagerProps) {
+export default function VehicleManager({
+  editId,
+  onSuccess,
+}: VehicleManagerProps) {
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
-  const [formData, setFormData] = useState<Partial<ICustomerVehicleRegInterface>>({
+  const [formData, setFormData] = useState<
+    Partial<ICustomerVehicleRegInterface>
+  >({
     vehicleType: "Scooter",
     vehicleBrandId: "",
     vehicleModelId: "",
-    serialNumber: "",
-    purchaseDate: new Date(),
-    warrantyStartDate: new Date(),
-    warrantyEndDate: new Date(),
     note: "",
     vehiclePhoto: "",
   });
@@ -38,22 +38,22 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
       const fetchVehicleDetails = async () => {
         try {
           const token = localStorage.getItem("token");
-          const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const res = await axios.get(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/customer-vehicle-register/${editId}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
 
           const data = res.data.data || res.data;
 
           setFormData({
             ...data,
-            // Backend agar object bhej raha hai toh ID extract karein
+
             vehicleBrandId: data.vehicleBrandId?._id || data.vehicleBrandId,
             vehicleModelId: data.vehicleModelId?._id || data.vehicleModelId,
-            // Dates handling
-            purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : new Date(),
-            warrantyStartDate: data.warrantyStartDate ? new Date(data.warrantyStartDate) : new Date(),
-            warrantyEndDate: data.warrantyEndDate ? new Date(data.warrantyEndDate) : new Date(),
-            vehiclePhoto: data.vehiclePhoto || ""
+
+            vehiclePhoto: data.vehiclePhoto || "",
           });
         } catch (error) {
           console.error("Error fetching vehicle details:", error);
@@ -66,8 +66,10 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
 
   const handleSave = async () => {
     // Validation: customerId yahan se remove kar di gayi hai
-    if (!formData.vehicleBrandId || !formData.vehicleModelId || !formData.serialNumber) {
-      alert("Please fill all required fields: Brand, Model, and Serial Number.");
+    if (!formData.vehicleBrandId || !formData.vehicleModelId) {
+      alert(
+        "Please fill all required fields: Brand, Model, and Serial Number.",
+      );
       return;
     }
 
@@ -79,20 +81,9 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
       data.append("vehicleBrandId", formData.vehicleBrandId as string);
       data.append("vehicleModelId", formData.vehicleModelId as string);
       data.append("vehicleType", formData.vehicleType as string);
-      data.append("serialNumber", formData.serialNumber as string);
+
       data.append("note", formData.note || "");
 
-      const formatDate = (dateValue: any) => {
-        if (!dateValue) return "";
-        const d = new Date(dateValue);
-        return isNaN(d.getTime()) ? "" : d.toISOString();
-      };
-
-      data.append("purchaseDate", formatDate(formData.purchaseDate));
-      data.append("warrantyStartDate", formatDate(formData.warrantyStartDate));
-      data.append("warrantyEndDate", formatDate(formData.warrantyEndDate));
-
-      // Image Handling
       if (formData.vehiclePhotoFile) {
         data.append("vehiclePhotoFile", formData.vehiclePhotoFile);
       }
@@ -113,14 +104,21 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
       });
 
       if (res.status === 201 || res.status === 200) {
-        alert(editId ? "Vehicle Updated Successfully!" : "Vehicle Registered Successfully!");
+        alert(
+          editId
+            ? "Vehicle Updated Successfully!"
+            : "Vehicle Registered Successfully!",
+        );
         onSuccess();
       }
-
     } catch (error: any) {
       console.error("Error saving vehicle:", error);
       const errorData = error.response?.data?.message;
-      alert(typeof errorData === 'string' ? errorData : "Failed to save vehicle profile.");
+      alert(
+        typeof errorData === "string"
+          ? errorData
+          : "Failed to save vehicle profile.",
+      );
     } finally {
       setLoading(false);
     }
@@ -146,7 +144,7 @@ export default function VehicleManager({ editId, onSuccess }: VehicleManagerProp
 
       <VehicleIdentification formData={formData} setFormData={setFormData} />
       <BrandModelInfo formData={formData} setFormData={setFormData} />
-      <WarrantyHistory formData={formData} setFormData={setFormData} />
+      {/* <WarrantyHistory formData={formData} setFormData={setFormData} /> */}
       <VehicleNotes formData={formData} setFormData={setFormData} />
 
       <div className="fixed bottom-6 right-8 z-50 animate-float">

@@ -9,14 +9,14 @@
   --default-font-family: Arial, Helvetica, sans-serif !important;
 }
 
-/* 2. Force the font on every single element */
-*, *::before, *::after {
-  font-family: Arial, Helvetica, sans-serif !important;
+*,
+*::before,
+*::after {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
 }
 
-/* 3. Specifically target the body for good measure */
 body {
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
 }
 
 
@@ -142,33 +142,94 @@ body {
 /* ========== UTILITY CLASSES USING CSS VARIABLES ========== */
 
 /* Text Colors */
-.text-bg { color: var(--background); }
-.text-fg { color: var(--foreground); }
-.text-card { color: var(--card); }
-.text-card-fg { color: var(--card-foreground); }
-.text-primary { color: var(--primary); }
-.text-primary-fg { color: var(--primary-foreground); }
-.text-muted { color: var(--muted-foreground); }
-.text-chart-axis { color: var(--chart-axis); }
+
+
+.text-bg {
+  color: var(--background);
+}
+
+.text-fg {
+  color: var(--foreground);
+}
+
+.text-card {
+  color: var(--card);
+}
+
+.text-card-fg {
+  color: var(--card-foreground);
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-primary-fg {
+  color: var(--primary-foreground);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.text-chart-axis {
+  color: var(--chart-axis);
+}
 
 /* Background Colors */
-.bg-bg { background-color: var(--background); }
-.bg-card { background-color: var(--card); }
-.bg-primary { background-color: var(--primary); }
-.bg-secondary { background-color: var(--secondary); }
-.bg-muted { background-color: var(--muted); }
-.bg-accent { background-color: var(--accent); }
-.bg-chart-tooltip { background-color: var(--chart-tooltip-bg); }
+.bg-bg {
+  background-color: var(--background);
+}
+
+.bg-card {
+  background-color: var(--card);
+}
+
+.bg-primary {
+  background-color: var(--primary);
+}
+
+.bg-secondary {
+  background-color: var(--secondary);
+}
+
+.bg-muted {
+  background-color: var(--muted);
+}
+
+.bg-accent {
+  background-color: var(--accent);
+}
+
+.bg-chart-tooltip {
+  background-color: var(--chart-tooltip-bg);
+}
 
 /* Border Colors */
-.border-border { border-color: var(--border); }
-.border-input { border-color: var(--input); }
-.border-chart-tooltip { border-color: var(--chart-tooltip-border); }
+.border-border {
+  border-color: var(--border);
+}
+
+.border-input {
+  border-color: var(--input);
+}
+
+.border-chart-tooltip {
+  border-color: var(--chart-tooltip-border);
+}
 
 /* Chart Specific */
-.chart-bar-active { fill: var(--chart-bar-active); }
-.chart-bar-inactive { fill: var(--chart-bar-inactive); }
-.chart-grid { stroke: var(--chart-grid); }
+.chart-bar-active {
+  fill: var(--chart-bar-active);
+}
+
+.chart-bar-inactive {
+  fill: var(--chart-bar-inactive);
+}
+
+.chart-grid {
+  stroke: var(--chart-grid);
+}
 
 /* Custom Classes */
 .signHeading {
@@ -234,6 +295,7 @@ body {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -245,6 +307,7 @@ body {
     opacity: 0;
     transform: scale(0.8);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -256,6 +319,7 @@ body {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -267,6 +331,7 @@ body {
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -274,18 +339,24 @@ body {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
 }
 
 @keyframes glow {
-  0%, 100% {
+
+  0%,
+  100% {
     box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
   }
+
   50% {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
   }
@@ -327,6 +398,7 @@ body {
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
 }
+
 :root {
   --primary-gradient: linear-gradient(135deg, #155DFC 0%, #009689 100%);
   --primary-solid: #155DFC;

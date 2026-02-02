@@ -1,13 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import { useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, Palette, Pipette } from "lucide-react";
+import { z } from "zod";
+import { FormModal } from "@/app/common-form/FormModal";
+import { FormInput } from "@/app/common-form/FormInput";
+import { FormToggle } from "@/app/common-form/FormToggle";
+import { FormButton } from "@/app/common-form/FormButton";
+import { createItem, updateItem } from "@/helper/apiHelper";
 import { IColor } from "../../../../../../../common/IColor.interface";
-import { FormModal } from "../../../../common-form/FormModal";
-import { FormInput } from "../../../../common-form/FormInput";
-import { FormToggle } from "../../../../common-form/FormToggle";
-import { createColor, updateColor } from "@/hooks/useColors";
-import axios from "axios";
+
+// Validation Schema
+const colorSchemaValidation = z.object({
+  colorName: z.string().min(1, "Color name is required."),
+  colorCode: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid hex code"),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
+
+type FormData = z.infer<typeof colorSchemaValidation>;
 
 interface Props {
   editingData: IColor | null;
@@ -17,34 +30,52 @@ interface Props {
 }
 
 const ColorsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
-  const [formData, setFormData] = useState({
-    colorName: editingData?.colorName || "",
-    colorCode: editingData?.colorCode || "#FE6B1D", // Default color
-    isActive: editingData?.isActive ?? true,
-    isDefault: editingData?.isDefault ?? false,
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({
+    resolver: zodResolver(colorSchemaValidation),
+    defaultValues: {
+      colorName: "",
+      colorCode: "#FE6B1D",
+      isActive: true,
+      isDefault: false,
+    },
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isDefaultValue = useWatch({ control, name: "isDefault" });
+  const colorCodeValue = useWatch({ control, name: "colorCode" });
+
+  useEffect(() => {
+    if (editingData) {
+      reset({
+        colorName: editingData.colorName,
+        colorCode: editingData.colorCode,
+        isActive: Boolean(editingData.isActive),
+        isDefault: Boolean(editingData.isDefault),
+      });
+    }
+  }, [editingData, reset]);
+
+  const onSubmit = async (values: FormData) => {
     try {
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const payload = {
-        ...formData,
-        userId: savedUser.id || savedUser._id,
-      };
+      const userStr = localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : {};
+      const payload = { ...values, userId: user.id || user._id };
 
       if (editingData?._id) {
-        await updateColor(editingData._id, payload);
+        await updateItem("/colors", editingData._id, payload);
       } else {
-        await createColor(payload);
+        await createItem("/colors", payload);
       }
       onRefresh();
       onClose();
-    } catch (err) {
-      const errorMsg = axios.isAxiosError(err)
-        ? err.response?.data?.message
-        : "Operation failed";
-      alert(errorMsg);
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Error saving data");
     }
   };
 
@@ -55,16 +86,14 @@ const ColorsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
       onClose={onClose}
       themeColor={themeColor}
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Color Name Input */}
           <FormInput
-            label="Color Name"
+            label="Color Name *"
             placeholder="e.g. Royal Blue"
-            value={formData.colorName}
-            onChange={(e) =>
-              setFormData({ ...formData, colorName: e.target.value })
-            }
-            required
+            {...register("colorName")}
+            error={errors.colorName?.message}
           />
 
           {/* Color Picker Section */}
@@ -73,45 +102,72 @@ const ColorsForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
               <Pipette size={16} /> Select Color
             </label>
             <div className="flex items-center gap-3 h-[50px]">
-              <input
-                type="color"
-                value={formData.colorCode}
-                onChange={(e) => setFormData({ ...formData, colorCode: e.target.value })}
-                className="w-16 h-full p-1 rounded-lg border border-gray-200 cursor-pointer bg-white"
-              />
-              <input
-                type="text"
-                value={formData.colorCode}
-                onChange={(e) => setFormData({ ...formData, colorCode: e.target.value })}
-                className="flex-1 h-full px-3 border border-gray-200 rounded-lg outline-none font-mono uppercase text-sm focus:ring-2 focus:ring-orange-300"
-                placeholder="#000000"
+              <Controller
+                control={control}
+                name="colorCode"
+                render={({ field }) => (
+                  <>
+                    <input
+                      type="color"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="w-16 h-full p-1 rounded-lg border border-gray-200 cursor-pointer bg-white"
+                    />
+                    <input
+                      type="text"
+                      value={field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      className="flex-1 h-full px-3 border border-gray-200 rounded-lg outline-none font-mono uppercase text-sm focus:ring-2 focus:ring-orange-300"
+                      placeholder="#000000"
+                    />
+                  </>
+                )}
               />
             </div>
+            {errors.colorCode && (
+              <span className="text-red-500 text-xs">{errors.colorCode.message}</span>
+            )}
           </div>
         </div>
 
-        <div className="flex gap-6 p-4 bg-gray-50 rounded-xl">
-          <FormToggle
-            label="Active Status"
-            checked={formData.isActive}
-            onChange={(val) => setFormData({ ...formData, isActive: val })}
-            disabled={formData.isDefault}
+        {/* Status Toggles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 bg-gray-50 p-4 rounded-xl">
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <FormToggle
+                label="Active Status"
+                checked={field.value}
+                onChange={field.onChange}
+                disabled={isDefaultValue}
+              />
+            )}
           />
-          <FormToggle
-            label="Set as Default"
-            checked={formData.isDefault}
-            onChange={(val) => setFormData({ ...formData, isDefault: val })}
+          <Controller
+            control={control}
+            name="isDefault"
+            render={({ field }) => (
+              <FormToggle
+                label="Set as Default"
+                checked={field.value}
+                onChange={(val) => {
+                  field.onChange(val);
+                  if (val) setValue("isActive", true);
+                }}
+              />
+            )}
           />
         </div>
 
-        <button
+        <FormButton
           type="submit"
-          className="w-full text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all hover:opacity-90"
-          style={{ backgroundColor: themeColor }}
-        >
-          <Save size={20} />
-          {editingData ? "Update Color" : "Save Color"}
-        </button>
+          label={editingData ? "Update Color" : "Save Color"}
+          icon={<Save size={20} />}
+          loading={isSubmitting}
+          themeColor={themeColor}
+          onCancel={onClose}
+        />
       </form>
     </FormModal>
   );

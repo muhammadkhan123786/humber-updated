@@ -57,7 +57,7 @@ const CityForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
         const fetchCountries = async () => {
             try {
                 const token = localStorage.getItem("token");
-                const res = await axios.get(`${BASE_URL}/country`, {
+                const res = await axios.get(`${BASE_URL}/country?filter=all`, {
                     headers: { Authorization: `Bearer ${token}` },
                     params: { isActive: true, isDeleted: false }
                 });

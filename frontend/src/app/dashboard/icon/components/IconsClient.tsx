@@ -8,6 +8,8 @@ import Pagination from "@/components/ui/Pagination";
 import { IIcons } from "../../../../../../common/master-interfaces/IIcons.interface";
 import { fetchIcons, deleteIcon } from "@/hooks/useIcons";
 import { updateItem } from "@/helper/apiHelper"; // Ensure this is imported
+import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
+import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -22,6 +24,9 @@ export default function IconsClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalActiveCount, setTotalActiveCount] = useState(0);
+  const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
   const fetchData = useCallback(async (page = 1, search = "") => {
     try {
@@ -30,8 +35,14 @@ export default function IconsClient() {
       if (res?.data) {
         setDataList(res.data);
         setFilteredDataList(res.data);
-        setTotalPages(Math.ceil(res.total / 10) || 1);
+        setTotalPages(Math.ceil(res.total / 12) || 1);
         setCurrentPage(page);
+
+        // Fetch ALL data without pagination to get accurate active/inactive counts
+        const allDataRes = await fetchIcons(1, 1000, search);
+        setTotalCount(res.total || 0);
+        setTotalActiveCount(allDataRes.data?.filter((d: IIcons) => d.isActive).length || 0);
+        setTotalInactiveCount(allDataRes.data?.filter((d: IIcons) => !d.isActive).length || 0);
       }
     } catch (err) {
       setDataList([]);
@@ -59,22 +70,18 @@ export default function IconsClient() {
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm, fetchData]);
 
-  const handleStatusChange = async (id: string, newStatus: boolean) => {
-    try {
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      
-      await updateItem("/icons", id, {
-        isActive: newStatus,
-        userId: user.id || user._id,
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Status Update Error:", error);
-      alert("Failed to update status.");
-      fetchData(currentPage, searchTerm);
-    }
-  };
+ const handleStatusChange = (id: string, newStatus: boolean) => {
+  // 1 line code for icons module
+  handleOptimisticStatusUpdate(
+    id,
+    newStatus,
+    "/icons", 
+    setDataList,
+    setTotalActiveCount,
+    setTotalInactiveCount,
+    updateItem
+  );
+};
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this icon?")) return;
@@ -88,11 +95,9 @@ export default function IconsClient() {
     <div className="min-h-screen p-6 bg-gray-50/50">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-7 text-white shadow-lg flex justify-between items-center animate-slideInLeft">
           <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-3 rounded-2xl backdrop-blur">
-              <IconLib size={32} className="text-white" />
-            </div>
+            <AnimatedIcon icon={<IconLib size={32} className="text-white" />} />
             <div>
               <h1 className="text-4xl font-bold">Icon Gallery</h1>
               <p className="text-blue-100 text-lg">Upload and manage system icons</p>
@@ -100,7 +105,7 @@ export default function IconsClient() {
           </div>
           <button
             onClick={() => { setEditingData(null); setShowForm(true); }}
-            className="flex items-center gap-2 text-blue-600 bg-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 text-blue-600 bg-white px-5 py-2 rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
           >
             <Plus size={22} /> Add Icon
           </button>
@@ -108,10 +113,18 @@ export default function IconsClient() {
 
         {/* Stats Cards with Filter Trigger */}
         <StatsCards
-          totalCount={dataList.length}
-          activeCount={dataList.filter(d => d.isActive).length}
-          inactiveCount={dataList.filter(d => !d.isActive).length}
+          totalCount={totalCount}
+          activeCount={totalActiveCount}
+          inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
+          labels={{
+            total: "Total Icons",
+            active: "Active Icons",
+            inactive: "Inactive Icons"
+          }}
+          icons={{
+            total: <IconLib size={24} />,
+          }}
         />
 
         {/* Search Bar */}

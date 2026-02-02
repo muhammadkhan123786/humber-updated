@@ -10,7 +10,7 @@ export type customerTicketBaseDoc = CustomerTicketBase<
   Types.ObjectId,
   Types.ObjectId,
   Types.ObjectId,
-  Types.ObjectId
+  Types.ObjectId[]
 > &
   Document;
 
@@ -18,11 +18,11 @@ const customerTicketBaseDbSchema = new Schema<customerTicketBaseDoc>(
   {
     ...customerTicketBaseSchema,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const customerTicketBase: Model<customerTicketBaseDoc> =
   model<customerTicketBaseDoc>(
     "customerTicketBase",
-    customerTicketBaseDbSchema
+    customerTicketBaseDbSchema,
   );

@@ -1,4 +1,4 @@
-import { string, z } from "zod";
+import { z } from "zod";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
@@ -32,20 +32,20 @@ export const ticketFormSchema = z.object({
     }),
 
   ticketCode: z.string().optional(),
-
   address: z.string().optional(),
 
   vehicleRepairImages: z
     .union([z.array(z.string()), z.string().transform(() => []), z.undefined()])
     .optional(),
 
-  vehicleRepairImagesFile: z.array(z.instanceof(File)).optional(),
-
+  vehicleRepairImagesFile: z.array(z.any()).optional(),
   vehicleRepairVideo: z.array(z.any()).optional(),
-
   vehicleRepairVideoURL: z.string().optional(),
 
-  assignedTechnicianId: z.string().nullable().optional(),
+  assignedTechnicianId: z
+    .array(z.string().regex(objectIdRegex, "Invalid Technician ID"))
+    .optional()
+    .default([]),
 
   userId: z
     .string()
@@ -53,6 +53,39 @@ export const ticketFormSchema = z.object({
       message: "Valid user ID is required",
     })
     .or(z.literal("")),
-});
 
+  productOwnership: z.enum(["Customer Product", "Company product"]),
+
+  productSerialNumber: z.string().optional(),
+
+  purchaseDate: z
+    .string()
+    .optional()
+    .refine((val) => !val || !isNaN(Date.parse(val)), {
+      message: "Invalid date format",
+    }),
+
+  investigationParts: z
+    .array(
+      z.object({
+        partId: z.string().regex(objectIdRegex).optional(),
+        partName: z.string().optional(),
+        partNumber: z.string().optional(),
+        quantity: z.coerce.number().positive().default(1),
+        unitCost: z.coerce.number().nonnegative().default(0),
+        total: z.coerce.number().nonnegative().default(0),
+      }),
+    )
+    .optional()
+    .default([]),
+  decisionId: z.enum(["Covered", "Chargeable", "Mixed"]).optional(),
+  isEmailSendReport: z.boolean().default(false),
+  total: z.coerce.number().nonnegative().optional(),
+  manualProductName: z.string().optional(),
+  manualMake: z.string().optional(),
+  manualModel: z.string().optional(),
+  manualYear: z.string().optional(),
+  manualColor: z.string().optional(),
+  vehicleType: z.string().optional(),
+});
 export type TicketFormData = z.infer<typeof ticketFormSchema>;

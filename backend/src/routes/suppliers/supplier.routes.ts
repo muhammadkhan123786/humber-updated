@@ -11,6 +11,7 @@ import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { resolveBusinessAddressRefs } from "../../middleware/resolveBusinessAddressRefs";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
 import { parseNestedFormData } from "../../middleware/parseFormDataJson";
+import { assignSupplierCode } from "../../middleware/supplier.middleware";
 
 const supplierUploads = createUploader([
   {
@@ -72,6 +73,7 @@ SupplierRouters.post(
   supplierLogging,
   resolveBusinessAddressRefs,
   normalizeArrays(["complianceDocumentation.businessRegistrationCertificates"]),
+  assignSupplierCode,
   SupplierController.create,
 );
 
