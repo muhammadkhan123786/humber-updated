@@ -1,12 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Check, SendHorizontal, FileText } from "lucide-react";
+import axios from "axios";
 
 interface SuccessPopupProps {
   isOpen: boolean;
   onClose: () => void;
   message?: string;
   ticketData?: {
-    id: string;
+    id?: string;
+    mongoId: string;
+    ticketCode: string;
     customer: string;
     product: string;
     serialNumber: string;
@@ -21,15 +24,57 @@ const SuccessPopup = ({
   onClose,
   message,
   ticketData,
-  onSendForApproval,
+
   onSkipForNow,
 }: SuccessPopupProps) => {
+  const [isSending, setIsSending] = useState(false);
+
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:4000/api";
+
+  const handleSendEmail = async () => {
+    if (!ticketData?.mongoId) {
+      console.error("MongoDB Ticket ID is missing");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${apiBaseUrl}/customer-tickets/send-customer-ticket-copy`,
+        { ticketId: ticketData.mongoId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.status === 200) {
+        console.log("Email sent successfully");
+        alert("Email sent successfully to the customer.");
+      } else {
+        console.error("Failed to send email", response.data);
+        alert("Failed to send email. Please try again later.");
+      }
+    } catch (error) {
+      console.error("Error sending email", error);
+      alert(
+        "An error occurred while sending the email. Please try again later.",
+      );
+    } finally {
+      setIsSending(false);
+      onClose();
+    }
+  };
+
   if (!isOpen) return null;
 
-  console.log("SuccessPopup ticketData:", ticketData); // Debugging log to check ticketData received by SuccessPopup
+  console.log("SuccessPopup ticketData:", ticketData);
 
   const displayData = ticketData || {
-    id: "T-2026-Pending",
+    ticketCode: "T-2026-Pending",
     customer: "N/A",
     product: "N/A",
     serialNumber: "N/A",
@@ -49,7 +94,8 @@ const SuccessPopup = ({
               {message || "Ticket Created Successfully!"}
             </h2>
             <p className="text-white/90 mt-1">
-              Ticket ID: <span className="font-bold">{displayData.id}</span>
+              Ticket ID:{" "}
+              <span className="font-bold">{displayData.ticketCode}</span>
             </p>
           </div>
         </div>
@@ -108,21 +154,15 @@ const SuccessPopup = ({
 
           <div className="grid grid-cols-2 gap-4">
             <button
-              onClick={() => {
-                if (onSendForApproval) {
-                  onSendForApproval();
-                } else {
-                  console.log("Sending for approval...");
-                  onClose();
-                }
-              }}
-              className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-transparent bg-linear-to-br from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg"
+              onClick={handleSendEmail}
+              disabled={isSending}
+              className={`flex flex-col items-center text-center p-4 rounded-xl border-2 border-transparent bg-linear-to-br from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg ${isSending ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               <SendHorizontal size={24} className="mb-2" />
               <div className="flex flex-col">
                 <span className="font-bold text-base">Send for Approval</span>
                 <span className="text-xs opacity-80 mt-1">
-                  Email customer now
+                  {isSending ? "Sending..." : "Email customer now"}
                 </span>
               </div>
             </button>

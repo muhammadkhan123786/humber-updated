@@ -543,13 +543,8 @@ const CreateTicket = ({
               : "Ticket Created Successfully!"
           }
           ticketData={{
-            id:
-              generatedTicketCode ||
-              ticketResponse?.ticketCode ||
-              ticketResponse?._id ||
-              ticketResponse?.id ||
-              (isUpdating ? "Updated Ticket" : "New Ticket"),
-
+            mongoId: ticketResponse?._id,
+            ticketCode: ticketResponse?.ticketCode || generatedTicketCode,
             customer: customerInfo,
             product: productInfo.product,
             serialNumber: productInfo.serialNumber,
@@ -557,10 +552,6 @@ const CreateTicket = ({
           }}
           onClose={() => {
             setShowSuccessPopup(false);
-            router.push("/dashboard/ticket-masterdata/allTickets");
-          }}
-          onSendForApproval={() => {
-            console.log("Sending for approval...");
             router.push("/dashboard/ticket-masterdata/allTickets");
           }}
         />
