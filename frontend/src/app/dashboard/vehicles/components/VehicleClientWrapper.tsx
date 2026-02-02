@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import VehicleList from "./VehicleList";
 import VehicleManager from "./VehicleManager";
 import VehicleDetails from "./VehicleDetails";
@@ -31,30 +30,20 @@ export default function VehicleClientWrapper() {
                 : "Enter the details below to update the vehicle profile."}
             </p>
           </div>
-
-          <button
-            onClick={() => {
-              setView(view === "list" ? "add" : "list");
-              setSelectedVehicleId(null);
-            }}
-            className={`${
-              view === "list"
-                ? "bg-linear-to-r from-orange-500 to-red-600 text-white hover:shadow-xl"
-                : "bg-white text-purple-600 border-2 border-white hover:bg-blue-50"
-            } px-8 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all hover:scale-105 active:scale-95`}
-          >
-            {view === "list" ? (
-              <>
-                <Plus size={20} /> Add New Vehicle
-              </>
-            ) : (
-              <>Back to List</>
-            )}
-          </button>
+          {view !== "list" && (
+            <button
+              onClick={() => {
+                setView("list");
+                setSelectedVehicleId(null);
+              }}
+              className="bg-white text-purple-600 border-2 border-white px-8 py-3 rounded-2xl font-bold shadow-lg transition-all hover:scale-105 active:scale-95 hover:bg-blue-50"
+            >
+              Back to List
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Logic to Switch Components */}
       {view === "list" ? (
         <VehicleList
           displayView={displayView}
