@@ -8,7 +8,7 @@ import StepSourceCustomer from "./StepSourceCustomer";
 import StepProduct from "./StepProduct";
 import StepIssueDetails from "./StepIssueDetails";
 import StepLocationPriority from "./StepLocationPriority";
-import SuccessPopup from "./SuccessPopup";
+import SuccessPopup from "./SuccessPopup"; // ADDED IMPORT
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
 interface CreateTicketProps {
@@ -32,7 +32,9 @@ const CreateTicket = ({
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isFetching, setIsFetching] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false); // ADDED STATE
+  const [submittedFormData, setSubmittedFormData] = useState<any>(null); // ADDED STATE
+  const [ticketResponse, setTicketResponse] = useState<any>(null); // ADDED STATE
 
   const router = useRouter();
   const {
@@ -82,20 +84,44 @@ const CreateTicket = ({
       setEditData(initialData);
     }
   }, [initialEditMode, initialData, editingId, setEditData]);
+
   const handleFinalSubmit = async () => {
+    console.log("handleFinalSubmit called");
+    console.log("Current step:", currentStep);
+    console.log("Form values:", form.getValues());
+
     try {
       const isValid = await form.trigger(undefined, { shouldFocus: true });
+      console.log("Form validation result:", isValid);
 
       if (!isValid) {
+        const errors = form.formState.errors;
+        console.log("Form errors:", errors);
         setError("Please check the form for errors.");
         return;
       }
 
       const formData = form.getValues();
+      console.log("🎯 FORM VALUES FOR SUBMIT:", formData);
+
+      // Save form data for success popup
+      setSubmittedFormData(formData);
+
       const result = await handleSubmit(formData);
+      console.log("API Response:", result);
 
       if (result && result.success) {
+        // Save the API response data
+        setTicketResponse(result.data);
         setShowSuccessPopup(true);
+
+        if (!isUpdating) {
+          setTimeout(() => {
+            form.reset();
+            setCurrentStep(1);
+            setSuccess(null);
+          }, 3000);
+        }
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -111,15 +137,20 @@ const CreateTicket = ({
         console.log("Step 2 invalid: No customer selected");
         return false;
       }
+
+      // If vehicle is selected from dropdown, that's sufficient
       if (values.vehicleId) {
         console.log("Step 2 valid: Vehicle selected from dropdown");
         return true;
       }
 
+      // If no vehicle selected, check if we're in manual mode
+      // Check if any manual field is being filled (partial entry)
       const isManualMode =
         values.manualProductName || values.manualMake || values.manualModel;
 
       if (isManualMode) {
+        // For manual entry, require all necessary fields
         return Boolean(
           values.vehicleType &&
           values.manualProductName &&
@@ -193,14 +224,15 @@ const CreateTicket = ({
               </h1>
             </div>
 
-            <p className="ml-10 text-gray-400 font-normal text-md mb-12 px-8 text-sm tracking-widest">
+            <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm tracking-widest">
               Step {currentStep} of 4
             </p>
           </div>
         </div>
+
         {/* Progress Bar */}
         <div className="mb-20">
-          <div className="flex items-center  justify-between pr-12 relative">
+          <div className="flex items-center justify-between pr-12 relative">
             {steps.map((step, index) => (
               <div
                 key={step.id}
@@ -208,12 +240,11 @@ const CreateTicket = ({
               >
                 <div
                   style={{ width: "52.8px", height: "52.8px" }}
-                  className={`rounded-full flex justify-center items-center shrink-0 shadow-md
-  transition-all duration-300 ease-out
-  hover:scale-110 hover:shadow-lg
-  bg-linear-to-br ${
-    currentStep >= step.id ? step.color : "from-gray-200 to-gray-300"
-  } text-white`}
+                  className={`rounded-full flex justify-center items-center shrink-0 shadow-md transition-all duration-500 bg-linear-to-br ${
+                    currentStep >= step.id
+                      ? step.color
+                      : "from-gray-200 to-gray-300"
+                  } text-white`}
                 >
                   {currentStep > step.id ? (
                     <Check size={24} strokeWidth={3} />
@@ -258,6 +289,7 @@ const CreateTicket = ({
             ))}
           </div>
         </div>
+
         {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-xl border border-white/60 overflow-hidden relative">
           {(isLoading || isFetching) && (
@@ -284,7 +316,6 @@ const CreateTicket = ({
           {currentStep === 3 && (
             <StepIssueDetails form={form} isLoading={isLoading} />
           )}
-          {/* 4. Removed the step 5 component block */}
           {currentStep === 4 && (
             <StepLocationPriority
               form={form}
@@ -298,6 +329,7 @@ const CreateTicket = ({
             />
           )}
         </div>
+
         {/* Navigation Buttons */}
         <div className="flex items-center justify-between mt-8 px-2">
           <button
@@ -313,7 +345,7 @@ const CreateTicket = ({
             type="button"
             onClick={handleNextStep}
             disabled={!isStepValid() || isLoading}
-            className={`flex items-center justify-center gap-3 px-7 py-2.5 font-medium text-white transition-all duration-300 rounded-[10px] ${
+            className={`flex items-center justify-center gap-3 px-10 py-3 font-bold text-white transition-all duration-300 rounded-[10px] ${
               isStepValid()
                 ? "hover:opacity-90 hover:scale-[1.02] shadow-lg"
                 : "grayscale opacity-50 cursor-not-allowed"
@@ -332,13 +364,40 @@ const CreateTicket = ({
 
         <SuccessPopup
           isOpen={showSuccessPopup}
-          message={isUpdating ? "Ticket Updated!" : "Ticket Created!"}
+          message={
+            isUpdating
+              ? "Ticket Updated Successfully!"
+              : "Ticket Created Successfully!"
+          }
           ticketData={{
-            id: "T-2026-Generated",
-            customer: form.getValues().customerId || "Selected Customer",
-            product: form.getValues().manualProductName || "Product Detail",
-            serialNumber: form.getValues().productSerialNumber || "N/A",
-            urgency: "Emergency",
+            id: ticketResponse?.id,
+
+            customer:
+              ticketResponse?.customer?.companyName ||
+              ticketResponse?.customer?.personId?.firstName ||
+              customers?.find((c) => c._id === submittedFormData?.customerId)
+                ?.personId?.firstName ||
+              "Unknown Customer",
+
+            product:
+              ticketResponse?.product ||
+              submittedFormData?.manualProductName ||
+              vehicles?.find((v) => v._id === submittedFormData?.vehicleId)
+                ?.productName ||
+              "No Product Specified",
+
+            serialNumber:
+              ticketResponse?.serialNumber ||
+              submittedFormData?.productSerialNumber ||
+              vehicles?.find((v) => v._id === submittedFormData?.vehicleId)
+                ?.serialNumber ||
+              "No Serial Number",
+
+            urgency:
+              ticketResponse?.urgency ||
+              priorities?.find((p) => p._id === submittedFormData?.priorityId)
+                ?.serviceRequestPrioprity ||
+              "No Priority Set",
           }}
           onClose={() => {
             setShowSuccessPopup(false);
@@ -346,7 +405,6 @@ const CreateTicket = ({
           }}
           onSendForApproval={() => {
             console.log("Sending for approval...");
-            // Approval logic here
             router.push("/dashboard/ticket-masterdata/allTickets");
           }}
         />

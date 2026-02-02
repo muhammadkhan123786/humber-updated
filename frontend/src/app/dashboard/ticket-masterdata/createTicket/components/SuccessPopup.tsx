@@ -26,6 +26,8 @@ const SuccessPopup = ({
 }: SuccessPopupProps) => {
   if (!isOpen) return null;
 
+  console.log("SuccessPopup ticketData:", ticketData); // Debugging log to check ticketData received by SuccessPopup
+
   const displayData = ticketData || {
     id: "T-2026-Pending",
     customer: "N/A",
@@ -38,15 +40,15 @@ const SuccessPopup = ({
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 overflow-y-auto">
       <div className="bg-white rounded-[28px] w-full max-w-[600px] max-h-[95vh] flex flex-col overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-[#00C950] p-6 flex items-center gap-5 text-white shrink-0">
+        <div className="bg-linear-to-r from-green-500 to-emerald-500 p-6 flex items-center gap-5 text-white shrink-0">
           <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center border border-white/40 shrink-0">
             <Check size={32} strokeWidth={3} />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight">
+            <h2 className="text-2xl font-bold">
               {message || "Ticket Created Successfully!"}
             </h2>
-            <p className="opacity-90 text-base font-medium">
+            <p className="text-white/90 mt-1">
               Ticket ID: <span className="font-bold">{displayData.id}</span>
             </p>
           </div>
@@ -54,45 +56,39 @@ const SuccessPopup = ({
 
         {/* Content Area */}
         <div className="p-6 md:p-8 overflow-y-auto flex-1">
-          {/* Ticket Summary Section */}
           <div className="mb-8">
             <div className="border-t border-gray-200 my-4"></div>
-            <h3 className="text-[#1E293B] font-bold text-xl mb-4 text-center uppercase tracking-wider">
-              TICKET SUMMARY
-            </h3>
+            <p className="text-sm font-semibold text-blue-900 mb-2">
+              Ticket Information
+            </p>
 
-            {/* Ticket Information - Dynamic values */}
             <div className="space-y-4 mb-6">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 font-medium">Customer:</span>
-                <span className="text-gray-900 font-bold text-lg">
-                  {displayData.customer}
-                </span>
+                <span className="text-blue-700 font-medium">Customer:</span>
+                <span className="text-gray-700 ">{displayData.customer}</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 font-medium">Product:</span>
-                <span className="text-gray-900 font-bold text-lg">
-                  {displayData.product}
-                </span>
+                <span className="text-blue-700 font-medium">Product:</span>
+                <span className="text-gray-700 ">{displayData.product}</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 font-medium">Serial No:</span>
-                <span className="text-gray-900 font-bold text-lg">
+                <span className="text-blue-700 font-medium">Serial No:</span>
+                <span className="text-gray-700 ">
                   {displayData.serialNumber}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 font-medium">Urgency:</span>
+                <span className="text-blue-700 font-medium">Urgency:</span>
                 <span
-                  className={`font-bold text-lg ${
+                  className={`text-gray-700 ${
                     displayData.urgency.toLowerCase() === "emergency"
-                      ? "text-red-600"
+                      ? "text-gray-600"
                       : displayData.urgency.toLowerCase() === "high"
-                        ? "text-orange-600"
-                        : "text-green-600"
+                        ? "text-gray-600"
+                        : "text-gray-600"
                   }`}
                 >
                   {displayData.urgency}
@@ -101,19 +97,18 @@ const SuccessPopup = ({
             </div>
           </div>
 
-          {/* Approval Question */}
-          <div className="mb-8 text-center">
-            <h4 className="text-gray-900 font-bold text-xl mb-3">
-              Send for customer approval?
-            </h4>
-            <p className="text-gray-500 text-base leading-relaxed max-w-md mx-auto">
-              The customer will receive an email with investigation reports.
+          <div className="space-y-3 mb-5">
+            <label className="flex items-center gap-2 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 text-base font-semibold">
+              Would you like to send this ticket to the customer for approval?
+            </label>
+            <p className="text-sm text-gray-600">
+              The customer will receive an email with the ticket details
+              including the investigation report, required parts, and estimated
+              costs.
             </p>
           </div>
 
-          {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-4">
-            {/* Send for Approval Button */}
             <button
               onClick={() => {
                 if (onSendForApproval) {
@@ -123,9 +118,9 @@ const SuccessPopup = ({
                   onClose();
                 }
               }}
-              className="flex flex-col items-center justify-center gap-2 py-5 px-4 bg-[#1E293B] text-white rounded-[20px] hover:bg-black transition-all hover:shadow-lg active:scale-[0.97]"
+              className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-transparent bg-linear-to-br from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg"
             >
-              <SendHorizontal size={24} />
+              <SendHorizontal size={24} className="mb-2" />
               <div className="flex flex-col">
                 <span className="font-bold text-base">Send for Approval</span>
                 <span className="text-xs opacity-80 mt-1">
@@ -134,7 +129,6 @@ const SuccessPopup = ({
               </div>
             </button>
 
-            {/* Skip for Now Button */}
             <button
               onClick={() => {
                 if (onSkipForNow) {
@@ -143,9 +137,9 @@ const SuccessPopup = ({
                   onClose();
                 }
               }}
-              className="flex flex-col items-center justify-center gap-2 py-5 px-4 bg-gray-50 border border-gray-200 text-gray-700 rounded-[20px] hover:bg-white hover:border-gray-300 hover:text-gray-900 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center text-center p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 transition-all duration-300"
             >
-              <FileText size={24} />
+              <FileText size={24} className="mb-2 text-gray-400" />
               <div className="flex flex-col">
                 <span className="font-bold text-base">Skip for Now</span>
                 <span className="text-xs text-gray-500 mt-1">
