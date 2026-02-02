@@ -17,7 +17,12 @@ interface CreateTicketProps {
 }
 
 const steps = [
-  { id: 1, label: "Source & Customer", color: "from-[#2B7FFF] to-[#00B8DB]" },
+  {
+    id: 1,
+    label: "Source &\nCustomer",
+    color: "from-[#2B7FFF] to-[#00B8DB]",
+  },
+
   { id: 2, label: "Product", color: "from-[#AD46FF] to-[#F6339A]" },
   { id: 3, label: "Issue Details", color: "from-[#FF6900] to-[#FB2C36]" },
   { id: 4, label: "Location & Priority", color: "from-[#00C950] to-[#00BC7D]" },
@@ -426,7 +431,7 @@ const CreateTicket = ({
 
                 <div className="absolute top-[62px] w-32 text-center">
                   <span
-                    className={`text-sm font-medium ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}
+                    className={`text-sm font-medium  whitespace-pre-line ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}
                   >
                     {step.label}
                   </span>
