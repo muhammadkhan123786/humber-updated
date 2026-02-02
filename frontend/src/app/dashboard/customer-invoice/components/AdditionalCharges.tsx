@@ -9,7 +9,7 @@ const AdditionalCharges: React.FC = () => {
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [discountType, setDiscountType] = useState<string>("percentage");
   const [isVatExempt, setIsVatExempt] = useState<boolean>(true);
-  const [vatRate, setVatRate] = useState<number>(20); // Default 20%
+  const [vatRate, setVatRate] = useState<number>(20);
 
   const discountOptions = [
     { id: "percentage", label: "Percentage (%)" },
@@ -31,7 +31,6 @@ const AdditionalCharges: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-6">
-        {/* Callout Fee Section */}
         <div className="flex flex-col gap-2">
           <label className="text-indigo-950 text-sm font-medium">
             Callout Fee (£)
@@ -48,7 +47,6 @@ const AdditionalCharges: React.FC = () => {
 
         <div className="h-px w-full bg-indigo-600/10" />
 
-        {/* Discount Section */}
         <div className="flex flex-col gap-3">
           <label className="text-indigo-950 text-sm font-medium">
             Discount
@@ -85,7 +83,6 @@ const AdditionalCharges: React.FC = () => {
 
         <div className="h-px w-full bg-indigo-600/10" />
 
-        {/* VAT Settings Section */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <span className="text-indigo-950 text-sm font-medium">
@@ -105,15 +102,13 @@ const AdditionalCharges: React.FC = () => {
           </div>
 
           {isVatExempt ? (
-            /* VAT Exempt Applied */
-            <div className="h-12 px-4 rounded-xl bg-green-50 outline outline-2 outline-green-200 text-green-700 flex items-center gap-3 transition-all duration-300">
+            <div className="h-12 px-4 rounded-xl bg-green-50 outline-2 outline-green-200 text-green-700 flex items-center gap-3 transition-all duration-300">
               <CheckCircle2 size={20} className="text-green-600" />
               <span className="text-sm">
                 VAT exemption applied for eligible customer
               </span>
             </div>
           ) : (
-            /* VAT Rate Input and Amount Display */
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
               <div className="flex flex-col gap-2">
                 <label className="text-indigo-950 text-xs font-medium">
