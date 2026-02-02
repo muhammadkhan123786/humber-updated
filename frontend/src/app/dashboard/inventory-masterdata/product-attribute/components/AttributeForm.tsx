@@ -133,6 +133,7 @@ console.log("error", errors)
         isForSubcategories: data.isForSubcategories,
         isDefault: data.isDefault,
         userId: savedUser.id || savedUser._id,
+        options: data.options || [],
 
       };
     console.log("Data", data);

@@ -17,7 +17,7 @@ export function StatsGrid({ marketplaces }: StatsGridProps) {
         value={activeCount}
         icon={Power}
         color="green"
-        gradient="from-green-100 to-emerald-100"
+        gradient="bg-gradient-to-br from-blue-100 to-indigo-100"
         delay={0.1}
       />
 
@@ -26,7 +26,7 @@ export function StatsGrid({ marketplaces }: StatsGridProps) {
         value={marketplaces.length}
         icon={Store}
         color="blue"
-        gradient="from-blue-100 to-indigo-100"
+        gradient="bg-gradient-to-br from-green-100 to-emerald-100"
         delay={0.15}
       />
 
@@ -35,7 +35,7 @@ export function StatsGrid({ marketplaces }: StatsGridProps) {
         value={defaultMarketplace?.name || 'None'}
         icon={Star}
         color="yellow"
-        gradient="from-yellow-100 to-orange-100"
+        gradient="bg-gradient-to-br from-yellow-100 to-orange-100"
         delay={0.2}
         isText
       />

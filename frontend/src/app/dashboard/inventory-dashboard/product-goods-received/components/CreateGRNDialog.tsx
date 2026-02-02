@@ -1,15 +1,31 @@
-'use client';
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/form/Dialog';
-import { Button } from '@/components/form/CustomButton';
-import { Input } from '@/components/form/Input';
-import { Label } from '@/components/form/Label';
-import { Badge } from '@/components/form/Badge';
-import { Textarea } from '@/components/form/Textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/form/Select';
-import { PurchaseOrder, ReceivingItem, NewProductForm } from '../types/goodsReceived';
-import { Plus, CheckCircle2, Package } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/form/Dialog";
+import { Button } from "@/components/form/CustomButton";
+import { Input } from "@/components/form/Input";
+import { Label } from "@/components/form/Label";
+import { Badge } from "@/components/form/Badge";
+import { Textarea } from "@/components/form/Textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/form/Select";
+import {
+  PurchaseOrder,
+  GoodsReceivedNoteItem,
+  NewProductForm,
+} from "../types/goodsReceived";
+import { Plus, CheckCircle2, Package } from "lucide-react";
 
 interface CreateGRNDialogProps {
   open: boolean;
@@ -20,9 +36,9 @@ interface CreateGRNDialogProps {
   onReceivedByChange: (value: string) => void;
   grnNotes: string;
   onGRNNotesChange: (value: string) => void;
-  receivingItems: ReceivingItem[];
+  receivingItems: GoodsReceivedNoteItem[];
   onUpdateItem: (itemId: string, field: string, value: any) => void;
-  onRemoveItem: (itemId: string) => void;
+  // onRemoveItem: (itemId: string) => void;
   newProduct: NewProductForm;
   onNewProductChange: (data: NewProductForm) => void;
   onAddManualProduct: () => void;
@@ -42,17 +58,17 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
   onGRNNotesChange,
   receivingItems,
   onUpdateItem,
-  onRemoveItem,
   newProduct,
   onNewProductChange,
   onAddManualProduct,
   availablePOs,
   onCreateGRN,
-  onCancel
+  onCancel,
 }) => {
+  console.log("Rendering CreateGRNDialog with availablePOs:", availablePOs);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
             Create Goods Received Note
@@ -72,9 +88,10 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                   <SelectValue placeholder="Choose a PO..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {availablePOs.map(po => (
-                    <SelectItem key={po.id} value={po.id}>
-                      {po.orderNumber} - {po.supplier} ({po.deliveryStatus?.replace('-', ' ')})
+                  {availablePOs?.map((po) => (
+                    <SelectItem key={po._id} value={po._id}>
+                      {po.orderNumber} -{" "}
+                      {po?.supplier.contactInformation?.primaryContactName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -103,28 +120,52 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gradient-to-r from-blue-50 to-cyan-50">
-                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">Product</th>
-                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">SKU</th>
-                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">Ordered</th>
-                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">Received</th>
-                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">Accepted</th>
-                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">Rejected</th>
-                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">Damaged</th>
-                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">Condition</th>
-                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">Notes</th>
+                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">
+                        Product
+                      </th>
+                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">
+                        SKU
+                      </th>
+                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">
+                        Ordered
+                      </th>
+                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">
+                        Received
+                      </th>
+                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">
+                        Accepted
+                      </th>
+                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">
+                        Rejected
+                      </th>
+                      <th className="text-center p-3 font-semibold text-gray-700 text-sm">
+                        Damaged
+                      </th>
+                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">
+                        Condition
+                      </th>
+                      <th className="text-left p-3 font-semibold text-gray-700 text-sm">
+                        Notes
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {receivingItems.map(item => (
-                      <tr key={item.id} className="border-t border-gray-100">
+                    {receivingItems?.map((item) => (
+                      <tr key={item._id} className="border-t border-gray-100">
                         <td className="p-3">
-                          <p className="font-medium text-sm">{item.productName}</p>
+                          <p className="font-medium text-sm">
+                            {/* {item?.productName} */}
+                          </p>
                         </td>
                         <td className="p-3">
-                          <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{item.sku}</span>
+                          <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+                            {item.sku}
+                          </span>
                         </td>
                         <td className="p-3 text-center">
-                          <Badge className="bg-blue-100 text-blue-700 border-blue-200">{item.orderedQuantity}</Badge>
+                          <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                            {item.orderedQuantity}
+                          </Badge>
                         </td>
                         <td className="p-3">
                           <Input
@@ -132,12 +173,20 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             min="0"
                             max={item.orderedQuantity}
                             value={item.receivedQuantity}
-                            onChange={(e) => onUpdateItem(item.id, 'receivedQuantity', e.target.value)}
+                            onChange={(e) =>
+                              onUpdateItem(
+                                item._id!,
+                                "receivedQuantity",
+                                Number(e.target.value),
+                              )
+                            }
                             className="w-20 text-center border-2 border-blue-100"
                           />
                         </td>
                         <td className="p-3 text-center">
-                          <Badge className="bg-green-100 text-green-700 border-green-200">{item.acceptedQuantity}</Badge>
+                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                            {item.acceptedQuantity}
+                          </Badge>
                         </td>
                         <td className="p-3">
                           <Input
@@ -145,7 +194,13 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             min="0"
                             max={item.receivedQuantity}
                             value={item.rejectedQuantity}
-                            onChange={(e) => onUpdateItem(item.id, 'rejectedQuantity', e.target.value)}
+                            onChange={(e) =>
+                              onUpdateItem(
+                                item._id!,
+                                "rejectedQuantity",
+                                Number(e.target.value)
+                              )
+                            }
                             className="w-20 text-center border-2 border-red-100"
                           />
                         </td>
@@ -155,14 +210,22 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             min="0"
                             max={item.receivedQuantity}
                             value={item.damageQuantity}
-                            onChange={(e) => onUpdateItem(item.id, 'damageQuantity', e.target.value)}
+                            onChange={(e) =>
+                              onUpdateItem(
+                                item._id!,
+                                "damageQuantity",
+                                Number(e.target.value),
+                              )
+                            }
                             className="w-20 text-center border-2 border-orange-100"
                           />
                         </td>
                         <td className="p-3">
-                          <Select 
-                            value={item.condition} 
-                            onValueChange={(value) => onUpdateItem(item.id, 'condition', value)}
+                          <Select
+                            value={item.condition}
+                            onValueChange={(value) =>
+                              onUpdateItem(item._id!, "condition", value)
+                            }
                           >
                             <SelectTrigger className="w-32 h-8 text-xs">
                               <SelectValue />
@@ -170,14 +233,18 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             <SelectContent>
                               <SelectItem value="good">Good</SelectItem>
                               <SelectItem value="damaged">Damaged</SelectItem>
-                              <SelectItem value="defective">Defective</SelectItem>
+                              <SelectItem value="defective">
+                                Defective
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
                         <td className="p-3">
                           <Input
                             value={item.notes}
-                            onChange={(e) => onUpdateItem(item.id, 'notes', e.target.value)}
+                            onChange={(e) =>
+                              onUpdateItem(item._id!, "notes", e.target.value)
+                            }
                             placeholder="Optional notes..."
                             className="w-40 text-xs border-2 border-gray-100"
                           />
@@ -198,8 +265,13 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 <Label htmlFor="productName">Part Name</Label>
                 <Input
                   id="productName"
-                  value={newProduct.productName}
-                  onChange={(e) => onNewProductChange({ ...newProduct, productName: e.target.value })}
+                  value={newProduct?.productName}
+                  onChange={(e) =>
+                    onNewProductChange({
+                      ...newProduct,
+                      productName: e.target.value,
+                    })
+                  }
                   placeholder="Enter part name"
                   className="border-2 border-blue-100 hover:border-blue-300 focus:border-blue-400"
                 />
@@ -208,8 +280,10 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 <Label htmlFor="sku">SKU</Label>
                 <Input
                   id="sku"
-                  value={newProduct.sku}
-                  onChange={(e) => onNewProductChange({ ...newProduct, sku: e.target.value })}
+                  value={newProduct?.sku}
+                  onChange={(e) =>
+                    onNewProductChange({ ...newProduct, sku: e.target.value })
+                  }
                   placeholder="Enter SKU"
                   className="border-2 border-blue-100 hover:border-blue-300 focus:border-blue-400"
                 />
@@ -218,8 +292,14 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 <Label htmlFor="orderedQuantity">Ordered Quantity</Label>
                 <Input
                   id="orderedQuantity"
-                  value={newProduct.orderedQuantity}
-                  onChange={(e) => onNewProductChange({ ...newProduct, orderedQuantity: e.target.value })}
+                  type="number"
+                  value={newProduct?.orderedQuantity}
+                  onChange={(e) =>
+                    onNewProductChange({
+                      ...newProduct,
+                      orderedQuantity: Number(e.target.value),
+                    })
+                  }
                   placeholder="Enter ordered quantity"
                   className="border-2 border-blue-100 hover:border-blue-300 focus:border-blue-400"
                 />
@@ -228,8 +308,14 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 <Label htmlFor="receivedQuantity">Received Quantity</Label>
                 <Input
                   id="receivedQuantity"
-                  value={newProduct.receivedQuantity}
-                  onChange={(e) => onNewProductChange({ ...newProduct, receivedQuantity: e.target.value })}
+                  type="number"
+                  value={newProduct?.receivedQuantity}
+                  onChange={(e) =>
+                    onNewProductChange({
+                      ...newProduct,
+                      receivedQuantity: Number(e.target.value),
+                    })
+                  }
                   placeholder="Enter received quantity"
                   className="border-2 border-blue-100 hover:border-blue-300 focus:border-blue-400"
                 />
@@ -238,8 +324,14 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 <Label htmlFor="unitPrice">Unit Price</Label>
                 <Input
                   id="unitPrice"
-                  value={newProduct.unitPrice}
-                  onChange={(e) => onNewProductChange({ ...newProduct, unitPrice: e.target.value })}
+                  type="number"
+                  value={newProduct?.unitPrice}
+                  onChange={(e) =>
+                    onNewProductChange({
+                      ...newProduct,
+                      unitPrice: Number(e.target.value),
+                    })
+                  }
                   placeholder="Enter unit price"
                   className="border-2 border-blue-100 hover:border-blue-300 focus:border-blue-400"
                 />
@@ -273,7 +365,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onCreateGRN}
             className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700"
           >

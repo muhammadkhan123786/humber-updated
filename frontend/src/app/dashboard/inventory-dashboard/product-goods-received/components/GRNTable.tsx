@@ -16,7 +16,8 @@ export const GRNTable: React.FC<GRNTableProps> = ({
   onView,
   onDownload
 }) => {
-  if (grns.length === 0) {
+
+  if (grns?.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -52,9 +53,9 @@ export const GRNTable: React.FC<GRNTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {grns.map((grn, index) => (
+              {grns?.map((grn, index) => (
                 <GRNRow
-                  key={grn.id}
+                  key={grn._id}
                   grn={grn}
                   index={index}
                   onView={onView}

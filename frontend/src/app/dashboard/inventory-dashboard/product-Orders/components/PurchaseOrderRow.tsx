@@ -4,19 +4,19 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/form/Select';
-import { PurchaseOrder } from '../types/purchaseOrders';
+import { IPurchaseOrder, ISupplier } from '../types/purchaseOrders';
 import { getStatusColor, getStatusIcon } from '../utils/purchaseOrderUtils';
 import { Calendar, Truck, Eye, Edit, Trash2 } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface PurchaseOrderRowProps {
-  order: PurchaseOrder;
+  order: IPurchaseOrder;
   index: number;
-  onView: (order: PurchaseOrder) => void;
-  onEdit: (order: PurchaseOrder) => void;
+  onView: (order: IPurchaseOrder) => void;
+  onEdit: (order: IPurchaseOrder) => void;
   onDelete: (orderId: string) => void;
-  onStatusChange: (orderId: string, newStatus: PurchaseOrder['status']) => void;
+  onStatusChange: (orderId: string, newStatus: IPurchaseOrder['status']) => void;
 }
 
 export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
@@ -28,10 +28,15 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
   onStatusChange
 }) => {
   const StatusIcon = getStatusIcon(order.status);
+const isSupplierObject = (
+  supplier: string | ISupplier
+): supplier is ISupplier => {
+  return typeof supplier === 'object' && supplier !== null;
+};
 
   return (
     <motion.tr
-      key={order.id}
+      key={order._id}
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.3 + index * 0.05 }}
@@ -47,20 +52,29 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
       </td>
       <td className="p-4">
         <div>
-          <p className="font-medium text-gray-900">{order.supplier}</p>
-          <p className="text-sm text-gray-500">{order.supplierContact}</p>
+         {isSupplierObject(order.supplier) && (
+  <>
+    <p className="font-medium text-gray-900">
+      {order.supplier.operationalInformation.orderContactName}
+    </p>
+    <p className="text-sm text-gray-500">
+      {order.supplier.operationalInformation.orderContactEmail}
+    </p>
+  </>
+)}
+
         </div>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-gray-500" />
-          <span className="text-gray-700 text-sm">{order.orderDate.toLocaleDateString()}</span>
+          <span className="text-gray-700 text-sm">{new Date(order.orderDate as any).toLocaleDateString("en-GB")}</span>
         </div>
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Truck className="h-4 w-4 text-emerald-600" />
-          <span className="text-gray-700 text-sm">{order.expectedDelivery.toLocaleDateString()}</span>
+          <span className="text-gray-700 text-sm">{new Date(order?.expectedDelivery as any).toLocaleDateString("en-GB"  )}</span>
         </div>
       </td>
       <td className="p-4">
@@ -69,12 +83,12 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
         </Badge>
       </td>
       <td className="p-4">
-        <span className="font-semibold text-emerald-600 text-lg">£{order.total.toFixed(2)}</span>
+        <span className="font-semibold text-emerald-600 text-lg">£{order.total}</span>
       </td>
       <td className="p-4">
         <Select
           value={order.status}
-          onValueChange={(value) => onStatusChange(order.id, value as PurchaseOrder['status'])}
+          onValueChange={(value) => onStatusChange(order._id!, value as IPurchaseOrder['status'])}
         >
           <SelectTrigger className={cn(
             "w-40 border-0 font-medium shadow-sm text-white",
@@ -116,7 +130,7 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => onDelete(order.id)}
+            onClick={() => onDelete(order._id!)}
             className="hover:bg-red-50 hover:text-red-600"
           >
             <Trash2 className="h-4 w-4" />

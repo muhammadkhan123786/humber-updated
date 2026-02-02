@@ -21,10 +21,10 @@ import {
 } from '@/components/form/Select';
 import { Save } from 'lucide-react';
 import { 
-  FormData, 
-  AVAILABLE_ICONS, 
-  AVAILABLE_COLORS, 
-  AVAILABLE_FIELDS 
+  FormData,   
+  AVAILABLE_FIELDS,
+  ColorOption,
+  IconOption
 } from '../data/marketplaceTemplates';
 
 interface AddEditDialogProps {
@@ -34,17 +34,33 @@ interface AddEditDialogProps {
   onClose: () => void;
   onSubmit: () => void;
   onFormChange: (data: FormData) => void;
+  colors: ColorOption[];
+  icons: IconOption[];
 }
 
 export function AddEditDialog({
   isOpen,
   isEdit,
   formData,
+  colors,
+  icons,
   onClose,
   onSubmit,
-  onFormChange
+  onFormChange,
 }: AddEditDialogProps) {
   const [fieldSearch, setFieldSearch] = useState('');
+
+  // Helper function to get the correct image URL
+  const getImageUrl = (iconPath: string) => {
+    if (!iconPath) return '';
+    
+    // Remove '/api' from the base URL for static file serving
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const staticBaseUrl = baseUrl.replace('/api', '');
+    
+    // Construct the full URL
+    return `${staticBaseUrl}${iconPath}`;
+  };
 
   const toggleFieldSelection = (field: string) => {
     if (formData.fields.includes(field)) {
@@ -60,9 +76,39 @@ export function AddEditDialog({
     }
   };
 
+  const handleColorChange = (value: string) => {
+    const selectedColor = colors.find(c => c.value === value);
+    onFormChange({ 
+      ...formData, 
+      color: value,
+      colorCode: selectedColor?.colorCode || '#6366f1'
+    });
+  };
+
+  const handleIconChange = (value: string) => {
+    const selectedIcon = icons.find(i => i.value === value);
+    onFormChange({ 
+      ...formData, 
+      icon: value,
+      iconUrl: selectedIcon?.icon?.[0] || ''
+    });
+  };
+
   const filteredFields = AVAILABLE_FIELDS.filter(field =>
     field.label.toLowerCase().includes(fieldSearch.toLowerCase())
   );
+
+  // Get current icon URL for display
+  const getCurrentIconUrl = () => {
+    if (formData.iconUrl) {
+      return formData.iconUrl;
+    }
+    const currentIcon = icons.find(i => i.value === formData.icon);
+    return currentIcon?.icon?.[0] || '';
+  };
+
+  const currentIconUrl = getCurrentIconUrl();
+  const fullIconUrl = getImageUrl(currentIconUrl);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -87,6 +133,7 @@ export function AddEditDialog({
               placeholder="e.g., Amazon, eBay, Custom Store"
               value={formData.name}
               onChange={(e) => onFormChange({ ...formData, name: e.target.value })}
+              className='px-2'
             />
           </div>
 
@@ -119,32 +166,98 @@ export function AddEditDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Icon</Label>
-              <Select value={formData.icon} onValueChange={(value) => onFormChange({ ...formData, icon: value })}>
+              <Select
+                value={formData.icon}
+                onValueChange={handleIconChange}
+              >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select icon">
+                    {currentIconUrl ? (
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={fullIconUrl}
+                          alt="Selected icon"
+                          className="h-5 w-5 object-contain"
+                          onError={(e) => {
+                            console.error('Icon failed to load:', fullIconUrl);
+                            e.currentTarget.style.border = '1px solid red';
+                          }}
+                        />
+                        <span className="text-sm">
+                          {icons.find(i => i.value === formData.icon)?.label || 'Select icon'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500">Select icon</span>
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
+
                 <SelectContent>
-                  {AVAILABLE_ICONS.map(icon => (
-                    <SelectItem key={icon} value={icon}>
-                      <span className="text-2xl">{icon}</span>
-                    </SelectItem>
-                  ))}
+                  {icons.length === 0 ? (
+                    <div className="p-2 text-sm text-gray-500">No icons available</div>
+                  ) : (
+                    icons.map((item) => {
+                      const iconPath = item.icon?.[0] || '';
+                      const iconFullUrl = getImageUrl(iconPath);
+                      
+                      return (
+                        <SelectItem key={item.value} value={item.value}>
+                          <div className="flex items-center gap-2">
+                            {iconPath ? (
+                              <img
+                                src={iconFullUrl}
+                                alt={item.label}
+                                className="h-6 w-6 object-contain"
+                                onError={(e) => {
+                                  console.error('Dropdown icon failed:', iconFullUrl);
+                                  // Replace with placeholder on error
+                                  e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Ccircle cx="12" cy="12" r="10"%3E%3C/circle%3E%3Ctext x="12" y="16" text-anchor="middle" font-size="12"%3E?%3C/text%3E%3C/svg%3E';
+                                }}
+                              />
+                            ) : (
+                              <div className="h-6 w-6 bg-gray-200 rounded flex items-center justify-center text-xs">
+                                ?
+                              </div>
+                            )}
+                            <span className="text-sm">{item.label}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label>Color Theme</Label>
-              <Select value={formData.color} onValueChange={(value) => onFormChange({ ...formData, color: value })}>
+              <Select
+                value={formData.color}
+                onValueChange={handleColorChange}
+              >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-4 w-16 rounded"
+                        style={{ backgroundColor: formData.colorCode }}
+                      ></div>
+                      <span className="text-xs">
+                        {colors.find(c => c.value === formData.color)?.label || 'Select color'}
+                      </span>
+                    </div>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {AVAILABLE_COLORS.map((color, index) => (
-                    <SelectItem key={color} value={color}>
+                  {colors.map((color) => (
+                    <SelectItem key={color.value} value={color.value}>
                       <div className="flex items-center gap-2">
-                        <div className={`h-4 w-16 rounded bg-gradient-to-r ${color}`}></div>
-                        <span className="text-xs">Theme {index + 1}</span>
+                        <div
+                          className="h-4 w-16 rounded"
+                          style={{ backgroundColor: color.colorCode }}
+                        ></div>
+                        <span className="text-xs">{color.label}</span>
                       </div>
                     </SelectItem>
                   ))}
@@ -156,9 +269,30 @@ export function AddEditDialog({
           {/* Preview */}
           <div className="border rounded-lg p-4 bg-gray-50">
             <Label className="mb-2 block">Preview</Label>
-            <div className={`bg-gradient-to-r ${formData.color} p-4 rounded-lg text-white`}>
+            <div 
+              className="p-4 rounded-lg text-white"
+              style={{ 
+                background: `linear-gradient(to right, ${formData.colorCode}, ${formData.colorCode}dd)`
+              }}
+            >
               <div className="flex items-center gap-3">
-                <div className="text-3xl">{formData.icon}</div>
+                {currentIconUrl ? (
+                  <div className="h-12 w-12 bg-white/10 rounded p-2 flex items-center justify-center">
+                    <img
+                      src={fullIconUrl}
+                      alt="Preview icon"
+                      className="h-full w-full object-contain"
+                      onError={(e) => {
+                        console.error('Preview icon failed:', fullIconUrl);
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-12 w-12 bg-white/20 rounded flex items-center justify-center text-2xl">
+                    ?
+                  </div>
+                )}
                 <div>
                   <p className="font-semibold">{formData.name || 'Marketplace Name'}</p>
                   <p className="text-sm text-white/80">{formData.description || 'Description'}</p>

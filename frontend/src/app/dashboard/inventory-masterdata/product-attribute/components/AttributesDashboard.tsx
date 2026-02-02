@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import RotatingIcon from "../../components/RotatingIcon";
 import StatCard from "../../components/StatCard";
-import { fetchAttributes, deleteAttribute } from "@/hooks/useAttributes";
+import { fetchAttributesss, deleteAttribute } from "@/hooks/useAttributes";
 import { IAttribute } from "../../../../../../../common/IProductAttributes.interface";
 import { Layers, CheckCircle2, TreePine, Globe, Plus, Tag } from "lucide-react";
 import AttributeTable from "./AttributesTable";
@@ -21,8 +21,8 @@ const AttributesDashboard: React.FC = () => {
   const fetchAttributeData = async () => {
     try {
       setLoading(true);
-      const data = await fetchAttributes();
-      setAttributes(data?.data || []);
+      const data = await fetchAttributesss();
+      setAttributes(data?.data as unknown as IAttribute[] || []);
     } catch (error) {
       console.error("Failed to load attributes", error);
     } finally {

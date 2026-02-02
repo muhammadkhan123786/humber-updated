@@ -23,12 +23,12 @@ export function MarketplaceHeader({ onAddMarketplace }: MarketplaceHeaderProps) 
         </div>
 
         <Button
-          onClick={onAddMarketplace}
-          className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
-        >
-          <Plus className="h-5 w-5" />
-          Add Marketplace Type
-        </Button>
+            onClick={onAddMarketplace}
+            className="gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600"
+          >
+            <Plus className="h-5 w-5" />
+            Add Marketplace Type
+          </Button>
       </div>
     </motion.div>
   );

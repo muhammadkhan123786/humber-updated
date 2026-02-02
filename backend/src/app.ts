@@ -9,6 +9,7 @@ import authRouter from "./routes/auth.routes";
 import { adminProtecter } from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
+import aiRoutes from './routes/ai.routes';
 
 import customerSourceRouter from "./routes/customer.source.routes";
 import repairStatusRouter from "./routes/repair.status.routes";
@@ -71,6 +72,15 @@ import otpRouter from "./routes/otp-routes/mobile.otp.routes";
 import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
 import partsRouter from "./routes/master-data-routes/parts.routes";
 import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
+
+
+import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
+import grnRoutes from "./routes/grn.routes";
+import goodsReturnRoutes from "./routes/goodsReturn.routes";
+import documentNumberRoutes from "./routes/document-numbers.routes";
+import productRoutes from "./routes/product.routes";
+import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
+
 
 // Create express app
 const app: Application = express();
@@ -281,10 +291,10 @@ app.use(
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
-app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
+app.use(`${process.env.API_PREFIX}/icons`,  iconsRouter);
 
 //16-02-2026
-app.use(`${process.env.API_PREFIX}/suppliers`, adminProtecter, SupplierRouters);
+app.use(`${process.env.API_PREFIX}/suppliers`,  SupplierRouters);
 
 //20-01-2026
 app.use(
@@ -375,6 +385,44 @@ app.use(
   adminProtecter,
   productAttributesRoutes,
 );
+
+app.use(
+  `${process.env.API_PREFIX}/products`,
+  productRoutes,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/ai`,
+  
+  aiRoutes,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/purchase-orders`,
+  
+  purchaseOrderRoutes,
+);
+
+
+app.use(
+  `${process.env.API_PREFIX}/grn`,
+  
+  grnRoutes,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/goods-return-notice`,
+  
+  goodsReturnRoutes,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/marketplace-templates`,
+  marketplaceTemplateRoutes,
+)
+
+app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
+
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });

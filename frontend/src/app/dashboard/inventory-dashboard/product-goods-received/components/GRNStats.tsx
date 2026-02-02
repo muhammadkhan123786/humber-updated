@@ -11,6 +11,8 @@ interface GRNStatsProps {
   stats: GRNStats;
 }
 
+
+
 const statCards = [
   {
     key: 'totalGRNs' as const,
@@ -43,6 +45,8 @@ const statCards = [
 ];
 
 export const GRNStat: React.FC<GRNStatsProps> = ({ stats }) => {
+
+  console.log("stats", stats)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

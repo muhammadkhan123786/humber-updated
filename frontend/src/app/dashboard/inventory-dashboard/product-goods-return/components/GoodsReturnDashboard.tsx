@@ -68,6 +68,7 @@ export default function GoodsReturnPage() {
     resetForm();
   };
 
+  console.log("availableGRNs", availableGRNs)
   return (
     <div className="space-y-6 relative p-4 md:p-6">
       {/* Animated Background */}
