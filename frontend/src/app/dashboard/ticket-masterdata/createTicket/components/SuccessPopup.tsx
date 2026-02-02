@@ -54,10 +54,8 @@ const SuccessPopup = ({
           </div>
         </div>
 
-        {/* Content Area */}
         <div className="p-6 md:p-8 overflow-y-auto flex-1">
-          <div className="mb-8">
-            <div className="border-t border-gray-200 my-4"></div>
+          <div className="mb-8 p-4 bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
             <p className="text-sm font-semibold text-blue-900 mb-2">
               Ticket Information
             </p>

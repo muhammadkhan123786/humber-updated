@@ -3,7 +3,7 @@
 import { Phone, Globe, Store, UserPlus, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
-// Path check kar lein apne folder structure ke mutabiq
+
 import { CustomSelect } from "../../../../common-form/CustomSelect";
 
 const StepSourceCustomer = ({ form, customers }: any) => {

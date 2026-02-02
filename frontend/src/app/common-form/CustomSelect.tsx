@@ -136,9 +136,9 @@ export const CustomSelect = ({
                     className="w-full group flex items-center px-3 py-2.5 rounded-lg cursor-pointer hover:bg-[#10B981] mb-0.5 text-left"
                   >
                     <span
-                      className={`text-sm truncate flex-1 ${
+                      className={`text-sm truncate flex-1 whitespace-pre-line ${
                         value === opt.id
-                          ? "font-bold text-[#10B981] group-hover:text-white"
+                          ? "font-bold text-[#10B981] group-hover:text-white "
                           : "text-indigo-950 group-hover:text-white"
                       }`}
                     >

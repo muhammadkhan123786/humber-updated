@@ -10,7 +10,7 @@ interface Props {
   onBack?: () => void;
   form: any;
   isLoading: boolean;
-  decisions?: any[]; // Keep optional for compatibility
+  decisions?: any[];
 }
 
 const StepIssueDetails: React.FC<Props> = ({ form }) => {

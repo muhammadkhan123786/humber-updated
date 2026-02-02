@@ -8,7 +8,7 @@ import StepSourceCustomer from "./StepSourceCustomer";
 import StepProduct from "./StepProduct";
 import StepIssueDetails from "./StepIssueDetails";
 import StepLocationPriority from "./StepLocationPriority";
-import SuccessPopup from "./SuccessPopup"; // ADDED IMPORT
+import SuccessPopup from "./SuccessPopup";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 
 interface CreateTicketProps {
@@ -32,9 +32,13 @@ const CreateTicket = ({
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isFetching, setIsFetching] = useState(false);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false); // ADDED STATE
-  const [submittedFormData, setSubmittedFormData] = useState<any>(null); // ADDED STATE
-  const [ticketResponse, setTicketResponse] = useState<any>(null); // ADDED STATE
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [submittedFormData, setSubmittedFormData] = useState<any>(null);
+  const [ticketResponse, setTicketResponse] = useState<any>(null);
+  const [generatedTicketCode, setGeneratedTicketCode] = useState<string | null>(
+    null,
+  );
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
   const router = useRouter();
   const {
@@ -58,6 +62,47 @@ const CreateTicket = ({
 
   const isUpdating = initialEditMode || !!editingId || !!urlId;
 
+  const fetchTicketCode = async (): Promise<string> => {
+    try {
+      setIsGeneratingCode(true);
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auto-generate-codes/ticket-code`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ticket code: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.ticketCode) {
+        return data.ticketCode;
+      }
+
+      throw new Error("No ticketCode in response");
+    } catch (error) {
+      console.error("Error fetching ticket code:", error);
+
+      return `TKT-${new Date().getFullYear()}-${Math.floor(
+        Math.random() * 1000000,
+      )
+        .toString()
+        .padStart(6, "0")}`;
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
+
   useEffect(() => {
     const loadTicket = async () => {
       if (urlId && !editingId) {
@@ -66,6 +111,8 @@ const CreateTicket = ({
           const response = await getById("/customer-tickets", urlId);
           if (response?.success && response.data) {
             setEditData(response.data);
+            // Also set the submittedFormData with the loaded data for updates
+            setSubmittedFormData(response.data);
           } else {
             setError("Failed to load ticket details.");
           }
@@ -82,6 +129,8 @@ const CreateTicket = ({
   useEffect(() => {
     if (initialEditMode && initialData && !editingId) {
       setEditData(initialData);
+      // Also set the submittedFormData with the initial data for updates
+      setSubmittedFormData(initialData);
     }
   }, [initialEditMode, initialData, editingId, setEditData]);
 
@@ -104,15 +153,33 @@ const CreateTicket = ({
       const formData = form.getValues();
       console.log("🎯 FORM VALUES FOR SUBMIT:", formData);
 
-      // Save form data for success popup
+      // Save form data for success popup - BOTH FOR CREATE AND UPDATE
       setSubmittedFormData(formData);
 
-      const result = await handleSubmit(formData);
-      console.log("API Response:", result);
+      let ticketCode = generatedTicketCode;
+
+      // Only generate new code for CREATE, not for UPDATE
+      if (!isUpdating) {
+        console.log("Generating ticket code for new ticket...");
+        ticketCode = await fetchTicketCode();
+        console.log("Generated Ticket Code:", ticketCode);
+        setGeneratedTicketCode(ticketCode);
+      }
+
+      // Prepare data for submission
+      const dataToSubmit = ticketCode ? { ...formData, ticketCode } : formData;
+
+      const result = await handleSubmit(dataToSubmit);
+      console.log("Ticket submission API Response:", result);
 
       if (result && result.success) {
         // Save the API response data
-        setTicketResponse(result.data);
+        const responseData = {
+          ...result.data,
+          ticketCode: ticketCode || result.data?.ticketCode,
+        };
+
+        setTicketResponse(responseData);
         setShowSuccessPopup(true);
 
         if (!isUpdating) {
@@ -122,6 +189,8 @@ const CreateTicket = ({
             setSuccess(null);
           }, 3000);
         }
+      } else {
+        setError("Failed to create ticket. Please try again.");
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -138,19 +207,15 @@ const CreateTicket = ({
         return false;
       }
 
-      // If vehicle is selected from dropdown, that's sufficient
       if (values.vehicleId) {
         console.log("Step 2 valid: Vehicle selected from dropdown");
         return true;
       }
 
-      // If no vehicle selected, check if we're in manual mode
-      // Check if any manual field is being filled (partial entry)
       const isManualMode =
         values.manualProductName || values.manualMake || values.manualModel;
 
       if (isManualMode) {
-        // For manual entry, require all necessary fields
         return Boolean(
           values.vehicleType &&
           values.manualProductName &&
@@ -194,6 +259,109 @@ const CreateTicket = ({
     setError(null);
   };
 
+  // Helper function to get product info for success popup
+  const getProductInfoForPopup = () => {
+    // Check if we have vehicle data in the response
+    if (
+      ticketResponse?.vehicleId &&
+      typeof ticketResponse.vehicleId === "object"
+    ) {
+      return {
+        product: ticketResponse.vehicleId.productName || ticketResponse.product,
+        serialNumber:
+          ticketResponse.vehicleId.serialNumber || ticketResponse.serialNumber,
+      };
+    }
+
+    // Check if we have vehicleId in submitted form data
+    if (submittedFormData?.vehicleId) {
+      const vehicle = vehicles?.find(
+        (v) => v._id === submittedFormData.vehicleId,
+      );
+      if (vehicle) {
+        return {
+          product: vehicle.productName,
+          serialNumber: vehicle.serialNumber,
+        };
+      }
+    }
+
+    // Check for manual entry
+    if (submittedFormData?.manualProductName) {
+      return {
+        product: submittedFormData.manualProductName,
+        serialNumber: submittedFormData.productSerialNumber,
+      };
+    }
+
+    return {
+      product: "No Product Specified",
+      serialNumber: "No Serial Number",
+    };
+  };
+
+  // Helper function to get customer info for success popup
+  const getCustomerInfoForPopup = () => {
+    // Check ticket response first
+    if (ticketResponse?.customer) {
+      if (typeof ticketResponse.customer === "string") {
+        return ticketResponse.customer;
+      }
+      return (
+        ticketResponse.customer.companyName ||
+        ticketResponse.customer.personId?.firstName ||
+        "Unknown Customer"
+      );
+    }
+
+    // Check submitted form data
+    if (submittedFormData?.customerId) {
+      const customer = customers?.find(
+        (c) => c._id === submittedFormData.customerId,
+      );
+      if (customer) {
+        return (
+          customer.companyName ||
+          customer.personId?.firstName ||
+          "Unknown Customer"
+        );
+      }
+    }
+
+    return "Unknown Customer";
+  };
+
+  // Helper function to get urgency info for success popup
+  const getUrgencyInfoForPopup = () => {
+    // Check ticket response first
+    if (ticketResponse?.urgency) {
+      return ticketResponse.urgency;
+    }
+
+    if (
+      ticketResponse?.priorityId &&
+      typeof ticketResponse.priorityId === "object"
+    ) {
+      return ticketResponse.priorityId.serviceRequestPrioprity;
+    }
+
+    // Check submitted form data
+    if (submittedFormData?.priorityId) {
+      const priority = priorities?.find(
+        (p) => p._id === submittedFormData.priorityId,
+      );
+      if (priority) {
+        return priority.serviceRequestPrioprity;
+      }
+    }
+
+    return "No Priority Set";
+  };
+
+  const productInfo = getProductInfoForPopup();
+  const customerInfo = getCustomerInfoForPopup();
+  const urgencyInfo = getUrgencyInfoForPopup();
+
   return (
     <div className="min-h-screen px-4 md:px-8 pb-12">
       <div className="max-w-5xl mx-auto">
@@ -230,7 +398,6 @@ const CreateTicket = ({
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="mb-20">
           <div className="flex items-center justify-between pr-12 relative">
             {steps.map((step, index) => (
@@ -290,9 +457,8 @@ const CreateTicket = ({
           </div>
         </div>
 
-        {/* Form Content */}
         <div className="bg-white rounded-2xl shadow-xl border border-white/60 overflow-hidden relative">
-          {(isLoading || isFetching) && (
+          {(isLoading || isFetching || isGeneratingCode) && (
             <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-50 flex items-center justify-center">
               <Loader2 className="text-[#4F39F6] animate-spin" size={40} />
             </div>
@@ -330,7 +496,6 @@ const CreateTicket = ({
           )}
         </div>
 
-        {/* Navigation Buttons */}
         <div className="flex items-center justify-between mt-8 px-2">
           <button
             type="button"
@@ -344,12 +509,16 @@ const CreateTicket = ({
           <button
             type="button"
             onClick={handleNextStep}
-            disabled={!isStepValid() || isLoading}
-            className={`flex items-center justify-center gap-3 px-10 py-3 font-bold text-white transition-all duration-300 rounded-[10px] ${
-              isStepValid()
-                ? "hover:opacity-90 hover:scale-[1.02] shadow-lg"
-                : "grayscale opacity-50 cursor-not-allowed"
-            } bg-linear-to-r ${steps[currentStep - 1].color}`}
+            disabled={!isStepValid() || isLoading || isGeneratingCode}
+            className={`flex items-center justify-center gap-3
+    h-9 px-4 py-2
+    font-bold text-white transition-all duration-300 rounded-[10px]
+    ${
+      isStepValid() && !isGeneratingCode
+        ? "hover:opacity-90 hover:scale-[1.02] shadow-lg"
+        : "grayscale opacity-50 cursor-not-allowed"
+    }
+    bg-linear-to-r ${steps[currentStep - 1].color}`}
           >
             <span className="text-sm">
               {currentStep === 4
@@ -361,7 +530,6 @@ const CreateTicket = ({
             <ArrowRight size={18} strokeWidth={2.5} />
           </button>
         </div>
-
         <SuccessPopup
           isOpen={showSuccessPopup}
           message={
@@ -370,34 +538,17 @@ const CreateTicket = ({
               : "Ticket Created Successfully!"
           }
           ticketData={{
-            id: ticketResponse?.id,
+            id:
+              generatedTicketCode ||
+              ticketResponse?.ticketCode ||
+              ticketResponse?._id ||
+              ticketResponse?.id ||
+              (isUpdating ? "Updated Ticket" : "New Ticket"),
 
-            customer:
-              ticketResponse?.customer?.companyName ||
-              ticketResponse?.customer?.personId?.firstName ||
-              customers?.find((c) => c._id === submittedFormData?.customerId)
-                ?.personId?.firstName ||
-              "Unknown Customer",
-
-            product:
-              ticketResponse?.product ||
-              submittedFormData?.manualProductName ||
-              vehicles?.find((v) => v._id === submittedFormData?.vehicleId)
-                ?.productName ||
-              "No Product Specified",
-
-            serialNumber:
-              ticketResponse?.serialNumber ||
-              submittedFormData?.productSerialNumber ||
-              vehicles?.find((v) => v._id === submittedFormData?.vehicleId)
-                ?.serialNumber ||
-              "No Serial Number",
-
-            urgency:
-              ticketResponse?.urgency ||
-              priorities?.find((p) => p._id === submittedFormData?.priorityId)
-                ?.serviceRequestPrioprity ||
-              "No Priority Set",
+            customer: customerInfo,
+            product: productInfo.product,
+            serialNumber: productInfo.serialNumber,
+            urgency: urgencyInfo,
           }}
           onClose={() => {
             setShowSuccessPopup(false);
