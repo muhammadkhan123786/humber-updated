@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Types } from "mongoose";
 
 import { generateTicketCode } from "../utils/generate.AutoCode.Counter";
 import { TicketStatus } from "../models/ticket-management-system-models/ticket.status.models";
@@ -6,6 +7,7 @@ import { customerTicketBase } from "../models/ticket-management-system-models/cu
 import { CustomerTicketStatus } from "../models/ticket-management-system-models/customer.ticket.status.manager.models";
 import { CustomerBase } from "../models/customer.models";
 import { Technicians } from "../models/technician-models/technician.models";
+import { sendEmailTemplate } from "../utils/sendEmailUtil";
 
 const calculatePercentage = (current = 0, last = 0) => {
     if (last === 0 && current > 0) return 100;
@@ -341,4 +343,89 @@ export const getTicketCountByStatus = async (req: Request, res: Response) => {
     }
 };
 
+//send ticket copy to customer 
+interface IPopulatedLabel {
+    _id: Types.ObjectId;
+    label: string;
+}
 
+export const sendTicketDetailsToCustomer = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const { ticketId } = req.body;
+
+        if (!ticketId) {
+            return res.status(400).json({
+                success: false,
+                message: "ticketId is required",
+            });
+        }
+
+        const ticket = await customerTicketBase
+            .findOne({ _id: ticketId, isDeleted: false })
+            .populate<{ ticketStatusId: IPopulatedLabel }>("ticketStatusId", "label")
+            .populate<{ priorityId: IPopulatedLabel }>("priorityId", "label")
+            .populate({
+                path: "customerId",
+                populate: [
+                    { path: "personId", select: "firstName lastName" },
+                    { path: "contactId", select: "emailId" },
+                ],
+            })
+            .populate("vehicleId", "serialNumber vehicleType");
+
+
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                message: "Ticket not found",
+            });
+        }
+
+        // ✅ Safe access
+        const customer: any = ticket.customerId;
+        const person = customer?.personId;
+        const contact = customer?.contactId;
+
+        if (!contact?.emailId) {
+            return res.status(400).json({
+                success: false,
+                message: "Customer email not found",
+            });
+        }
+
+        // ✅ FIXED: ticketStatusId.label (NOT ticket.label)
+        const emailHtml = `
+      <h3>Hello ${person?.firstName ?? "Customer"},</h3>
+      <p>Your service ticket has been created successfully.</p>
+
+      <p>
+        <b>Ticket Code:</b> ${ticket.ticketCode}<br/>
+        <b>Issue:</b> ${ticket.issue_Details}<br/>
+        <b>Status:</b> ${ticket.ticketStatusId?.label ?? "Pending"}<br/>
+        <b>Priority:</b> ${ticket.priorityId?.label ?? "Normal"}<br/>
+      </p>
+
+      <p>Our technician will contact you shortly.</p>
+
+      <br/>
+      <p>Regards,<br/><b>Humber Mobility Support</b></p>
+    `;
+
+        await sendEmailTemplate(contact.emailId, emailHtml, `Ticket Created - ${ticket.ticketCode}`);
+
+        return res.status(200).json({
+            success: true,
+            message: "Ticket details sent to customer successfully",
+        });
+    } catch (err) {
+        console.error("sendTicketDetailsToCustomer error:", err);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to send ticket details to customer.",
+        });
+    }
+};
