@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import AdminDashboard from "./components/admindashboard/AdminDashboard";
-import TechnicianDashboard from "./techniciandashboard/TechnicianDashboard";
+import TechnicianDashboard from "./techniciandashboard/components/TechnicianDashboard";
 
 export default function Dashboard() {
     const [roleId, setRoleId] = useState<number | null>(null);
