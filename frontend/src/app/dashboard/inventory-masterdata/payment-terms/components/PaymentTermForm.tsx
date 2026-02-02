@@ -2,13 +2,13 @@
 import React, { useEffect } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Save, FileText } from "lucide-react";
 import { z } from "zod";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const paymentTermSchemaValidation = z.object({
   paymentTerm: z.string().min(1, "Payment term name is required."),
@@ -22,25 +22,28 @@ type FormData = z.infer<typeof paymentTermSchemaValidation>;
 interface Props {
   editingData: (any & { _id?: string }) | null;
   onClose: () => void;
-  onRefresh: () => void;
+  onRefresh: () => void; // Optional in usage
   themeColor: string;
-  apiUrl: string;
 }
 
 const PaymentTermForm = ({
   editingData,
   onClose,
-  onRefresh,
   themeColor,
-  apiUrl,
 }: Props) => {
+  // Use the hook for mutations
+  const { createItem, updateItem, isSaving } = useFormActions(
+    "/payment-terms",
+    "paymentTerms",
+    "Payment Term"
+  );
   const {
     register,
     handleSubmit,
     reset,
     control,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(paymentTermSchemaValidation),
     defaultValues: {
@@ -65,25 +68,27 @@ const PaymentTermForm = ({
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    try {
-      const token = localStorage.getItem("token");
-      const userStr = localStorage.getItem("user");
-      const user = userStr ? JSON.parse(userStr) : {};
-      const payload = { ...values, userId: user.id || user._id };
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : {};
+    const payload = { ...values, userId: user.id || user._id };
 
-      if (editingData?._id) {
-        await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      } else {
-        await axios.post(apiUrl, payload, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-      onRefresh();
-      onClose();
-    } catch (error: any) {
-      alert(error.response?.data?.message || "Error saving data");
+    if (editingData?._id) {
+      // Update Mutation
+      updateItem(
+        { id: editingData._id, payload },
+        {
+          onSuccess: () => {
+            onClose(); // List will refresh automatically
+          }
+        }
+      );
+    } else {
+      // Create Mutation
+      createItem(payload, {
+        onSuccess: () => {
+          onClose(); // List will refresh automatically
+        }
+      });
     }
   };
 
@@ -146,7 +151,7 @@ const PaymentTermForm = ({
           type="submit"
           label={editingData ? "Update Term" : "Create"}
           icon={<Save size={20} />}
-          loading={isSubmitting}
+          loading={isSaving}
           themeColor={themeColor}
           onCancel={onClose}
         />

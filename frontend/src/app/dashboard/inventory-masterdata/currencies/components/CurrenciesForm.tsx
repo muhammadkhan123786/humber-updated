@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { ICurrency } from "../../../../../../../common/ICurrency.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const currencySchemaValidation = z.object({
     currencyName: z.string().min(1, "Currency name is required."),
@@ -23,18 +23,24 @@ type FormData = z.infer<typeof currencySchemaValidation>;
 interface Props {
     editingData: (ICurrency & { _id?: string }) | null;
     onClose: () => void;
-    onRefresh: () => void;
+    onRefresh: () => void; // Optional in usage
     themeColor: string;
 }
 
-const CurrenciesForm = ({ editingData, onClose, onRefresh, themeColor }: Props) => {
+const CurrenciesForm = ({ editingData, onClose, themeColor }: Props) => {
+    // Use the hook for mutations
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/currencies",
+        "currencies",
+        "Currency"
+    );
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(currencySchemaValidation),
         defaultValues: {
@@ -59,20 +65,27 @@ const CurrenciesForm = ({ editingData, onClose, onRefresh, themeColor }: Props) 
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await updateItem("/currencies", editingData._id, payload);
-            } else {
-                await createItem("/currencies", payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving currency data");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose(); // List will refresh automatically
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose(); // List will refresh automatically
+                }
+            });
         }
     };
 
@@ -131,7 +144,7 @@ const CurrenciesForm = ({ editingData, onClose, onRefresh, themeColor }: Props) 
                     type="submit"
                     label={editingData ? "Update Currency" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

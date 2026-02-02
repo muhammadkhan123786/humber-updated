@@ -2,7 +2,6 @@
 import React, { useEffect } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Save, ClipboardCheck } from "lucide-react";
 import { z } from "zod";
 import { FormInput } from "@/app/common-form/FormInput";
@@ -10,6 +9,7 @@ import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormButton } from "@/app/common-form/FormButton";
 import { IItemsConditions } from "../../../../../../../common/IItems.conditions.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const itemConditionSchemaValidation = z.object({
     itemConditionName: z.string().min(1, "Condition name is required."),
@@ -22,19 +22,24 @@ type FormData = z.infer<typeof itemConditionSchemaValidation>;
 interface FormProps {
     editingData: IItemsConditions | null;
     onClose: () => void;
-    onRefresh: () => void;
+    onRefresh: () => void; // Optional in usage
     themeColor: string;
-    apiUrl: string;
 }
 
-export default function ItemConditionForm({ editingData, onClose, onRefresh, themeColor, apiUrl }: FormProps) {
+export default function ItemConditionForm({ editingData, onClose, themeColor }: FormProps) {
+    // Use the hook for mutations
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/items-conditions",
+        "itemConditions",
+        "Item Condition"
+    );
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(itemConditionSchemaValidation),
         defaultValues: {
@@ -57,25 +62,27 @@ export default function ItemConditionForm({ editingData, onClose, onRefresh, the
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const token = localStorage.getItem("token");
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await axios.put(`${apiUrl}/${editingData._id}`, payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            } else {
-                await axios.post(apiUrl, payload, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving data");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose(); // List will refresh automatically
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose(); // List will refresh automatically
+                }
+            });
         }
     };
 
@@ -127,7 +134,7 @@ export default function ItemConditionForm({ editingData, onClose, onRefresh, the
                     type="submit"
                     label={editingData ? "Update Condition" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

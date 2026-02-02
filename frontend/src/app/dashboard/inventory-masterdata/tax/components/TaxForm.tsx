@@ -8,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { ITax } from "../../../../../../../common/ITax.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const taxSchemaValidation = z.object({
     taxName: z.string().min(1, "Tax name is required."),
@@ -35,17 +35,22 @@ interface Props {
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
-    apiUrl?: string;
 }
 
-const TaxForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/tax" }: Props) => {
+const TaxForm = ({ editingData, onClose, themeColor }: Props) => {
+    // Use the hook for mutations
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/tax",
+        "taxes",
+        "Tax"
+    );
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(taxSchemaValidation),
         defaultValues: {
@@ -78,25 +83,32 @@ const TaxForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/tax" 
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = {
-                ...values,
-                userId: user.id || user._id,
-                startDate: values.startDate ? new Date(values.startDate) : undefined,
-                endDate: values.endDate ? new Date(values.endDate) : undefined,
-            };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = {
+            ...values,
+            userId: user.id || user._id,
+            startDate: values.startDate ? new Date(values.startDate) : undefined,
+            endDate: values.endDate ? new Date(values.endDate) : undefined,
+        };
 
-            if (editingData?._id) {
-                await updateItem(apiUrl, editingData._id, payload);
-            } else {
-                await createItem(apiUrl, payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving data");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose(); // List will refresh automatically
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose(); // List will refresh automatically
+                }
+            });
         }
     };
 
@@ -176,7 +188,7 @@ const TaxForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/tax" 
                     type="submit"
                     label={editingData ? "Update Tax" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />

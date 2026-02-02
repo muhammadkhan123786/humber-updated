@@ -1,129 +1,76 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import { Search, Plus, ClipboardCheck, Loader2, LayoutGrid, LayoutList } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, Plus, ClipboardCheck, Loader2, LayoutGrid, Table2 } from "lucide-react";
 import StatsCards from "@/app/common-form/StatsCard";
 import ItemConditionTable from "./ItemConditionTable";
 import ItemConditionForm from "./ItemConditionForm";
 import Pagination from "@/components/ui/Pagination";
 import { IItemsConditions } from "../../../../../../../common/IItems.conditions.interface";
-import { handleOptimisticStatusUpdate } from "@/app/common-form/formUtils";
-import { updateItem } from "@/helper/apiHelper";
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
+import { useFormActions } from "@/hooks/useFormActions";
+import { getAll } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
-const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/items-conditions`;
 
 type ItemConditionWithId = IItemsConditions & { _id: string };
 
 export default function ItemConditionClient() {
-  const [dataList, setDataList] = useState<ItemConditionWithId[]>([]);
-  const [filteredDataList, setFilteredDataList] = useState<ItemConditionWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<ItemConditionWithId | null>(null);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [displayView, setDisplayView] = useState<"table" | "card">("table");
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-  const [totalCount, setTotalCount] = useState(0);
+
+  // Stats States
   const [totalActiveCount, setTotalActiveCount] = useState(0);
   const [totalInactiveCount, setTotalInactiveCount] = useState(0);
 
-  const fetchData = useCallback(async (page = 1, search = "") => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
-      
-      const res = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          userId: savedUser.id || savedUser._id,
-          search: search.trim(),
-          page: page.toString(),
-          limit: "12"
-        }
-      });
-      
-      setDataList(res.data.data || []);
-      setFilteredDataList(res.data.data || []);
-      setTotalPages(Math.ceil((res.data.total || 0) / 12) || 1);
-      setCurrentPage(page);
-      
-      // Fetch ALL data without pagination to get accurate active/inactive counts
-      const allDataRes = await axios.get(API_URL, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: {
-          userId: savedUser.id || savedUser._id,
-          search: search.trim(),
-          limit: "1000"
-        }
-      });
-      
-      // Track total counts across ALL data
-      setTotalCount(res.data.total || 0);
-      setTotalActiveCount(allDataRes.data.data?.filter((d: ItemConditionWithId) => d.isActive).length || 0);
-      setTotalInactiveCount(allDataRes.data.data?.filter((d: ItemConditionWithId) => !d.isActive).length || 0);
-    } catch (err) {
-      console.error("Fetch Error:", err);
-      setDataList([]);
-      setFilteredDataList([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { 
+    data, 
+    total, 
+    isLoading, 
+    deleteItem, 
+    updateItem 
+  } = useFormActions<ItemConditionWithId>(
+    "/items-conditions", 
+    "itemConditions", 
+    "Item Condition", 
+    currentPage, 
+    searchTerm
+  );
 
-  // Filter data based on status when filterStatus changes
+  // Stats Logic: Accurate global counts
   useEffect(() => {
-    if (filterStatus === 'all') {
-      setFilteredDataList(dataList);
-    } else if (filterStatus === 'active') {
-      setFilteredDataList(dataList.filter((d) => d.isActive));
-    } else if (filterStatus === 'inactive') {
-      setFilteredDataList(dataList.filter((d) => !d.isActive));
-    }
-  }, [filterStatus, dataList]);
+    const fetchStats = async () => {
+      try {
+        const allDataRes = await getAll<ItemConditionWithId>("/items-conditions", {
+          limit: "1000", 
+          search: searchTerm.trim(),
+        });
+        setTotalActiveCount(allDataRes.data?.filter((d) => d.isActive).length || 0);
+        setTotalInactiveCount(allDataRes.data?.filter((d) => !d.isActive).length || 0);
+      } catch (err) {
+        console.error("Stats Fetch Error:", err);
+      }
+    };
+    fetchStats();
+  }, [data, searchTerm]);
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchData(1, searchTerm);
-    }, 400);
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, fetchData]);
+  const filteredDataList = useMemo(() => {
+    if (filterStatus === 'all') return data;
+    return data.filter((d) => (filterStatus === 'active' ? d.isActive : !d.isActive));
+  }, [filterStatus, data]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this condition?")) return;
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchData(currentPage, searchTerm);
-    } catch (error) {
-      console.error("Delete Error:", error);
-      alert("Failed to delete item.");
-    }
+  const handleDelete = (id: string) => {
+    deleteItem(id);
   };
 
-const handleStatusChange = (id: string, newStatus: boolean) => {
-  // Generic function call: Instant UI update with zero flicker!
-  handleOptimisticStatusUpdate(
-    id,
-    newStatus,
-    API_URL, 
-    setDataList,
-    setTotalActiveCount,
-    setTotalInactiveCount,
-    updateItem
-  );
-};
+  const handleStatusChange = (id: string, newStatus: boolean) => {
+    updateItem({ id, payload: { isActive: newStatus } });
+  };
 
-  // Calculate stats for the component
-  const totalConditions = totalCount;
-  const activeConditions = totalActiveCount;
-  const inactiveConditions = totalInactiveCount;
+  const totalPages = Math.ceil(total / 12) || 1;
 
   return (
     <div className="min-h-screen p-6">
@@ -138,11 +85,8 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             </div>
           </div>
           <button
-            onClick={() => {
-              setEditingData(null);
-              setShowForm(true);
-            }}
-            className="flex items-center justify-center gap-2 text-blue-600 bg-white px-5 py- rounded-2xl font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
+            onClick={() => { setEditingData(null); setShowForm(true); }}
+            className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
             <Plus size={22} /> Add Condition
           </button>
@@ -150,18 +94,16 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
 
         {/* Reusable Stats Cards Component with Filter */}
         <StatsCards 
-          totalCount={totalConditions}
-          activeCount={activeConditions}
-          inactiveCount={inactiveConditions}
+          totalCount={total}
+          activeCount={totalActiveCount}
+          inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
           labels={{
             total: "Total Item Conditions",
             active: "Active Conditions",
             inactive: "Inactive Conditions"
           }}
-          icons={{
-            total: <ClipboardCheck size={24} />,
-          }}
+          icons={{ total: <ClipboardCheck size={24} /> }}
         />
 
         {/* Search Bar */}
@@ -172,7 +114,10 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             placeholder="Search condition name..."
             className="w-full outline-none text-lg"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
         </div>
 
@@ -185,28 +130,22 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
               <p className="text-sm text-gray-500">Configure item conditions for inventory management</p>
             </div>
 
-            <div className="flex gap-2 bg-linear-to-r from-gray-100 to-gray-200 rounded-xl p-1 w-full md:w-auto">
+            <div className="flex gap-2 bg-linear-to-r from-blue-50 to-cyan-50 p-1 rounded-lg border border-blue-200 w-full md:w-auto">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                  displayView === "card"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-blue-600 hover:bg-[#10b981]"
                 }`}
               >
-                <LayoutGrid size={16} />
-                <span className="text-sm">Grid</span>
+                <LayoutGrid size={16} /> <span className="text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                  displayView === "table"
-                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
-                    : "text-gray-600 hover:text-gray-900"
+                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600 hover:text-blue-600 hover:bg-[#10b981]"
                 }`}
               >
-                <LayoutList size={16} />
-                <span className="text-sm">Table</span>
+                <Table2 size={16} /> <span className="text-sm">Table</span>
               </button>
             </div>
           </div>
@@ -215,13 +154,12 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
             <ItemConditionForm
               editingData={editingData}
               onClose={() => setShowForm(false)}
-              onRefresh={() => fetchData(currentPage, searchTerm)}
+              onRefresh={() => {}}
               themeColor={THEME_COLOR}
-              apiUrl={API_URL}
             />
           )}
 
-          {loading ? (
+          {isLoading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
               <p className="mt-4 text-gray-400 font-medium">Loading conditions...</p>
@@ -232,7 +170,7 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
               {filterStatus !== 'all' && (
                 <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
                   <span className="text-sm text-blue-700 font-medium">
-                    Showing {filterStatus === 'active' ? 'Active' : 'Inactive'} Items ({filteredDataList.length})
+                    Showing {filterStatus} ({filteredDataList.length})
                   </span>
                   <button
                     onClick={() => setFilterStatus('all')}
@@ -245,10 +183,7 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
               <ItemConditionTable
                 data={filteredDataList}
                 displayView={displayView}
-                onEdit={(item) => {
-                  setEditingData(item);
-                  setShowForm(true);
-                }}
+                onEdit={(item) => { setEditingData(item); setShowForm(true); }}
                 onDelete={handleDelete}
                 onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
@@ -258,7 +193,7 @@ const handleStatusChange = (id: string, newStatus: boolean) => {
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={(page) => fetchData(page, searchTerm)}
+                    onPageChange={(page) => setCurrentPage(page)}
                   />
                 </div>
               )}

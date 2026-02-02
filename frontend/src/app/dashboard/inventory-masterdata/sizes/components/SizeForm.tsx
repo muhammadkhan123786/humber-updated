@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +8,8 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { createItem, updateItem } from "@/helper/apiHelper";
 import { ISize } from "../../../../../../../common/ISize.interface";
+import { useFormActions } from "@/hooks/useFormActions";
 
 const sizeSchemaValidation = z.object({
     size: z.string().min(1, "Size is required."),
@@ -25,17 +24,22 @@ interface Props {
     onClose: () => void;
     onRefresh: () => void;
     themeColor: string;
-    apiUrl?: string;
 }
 
-const SizeForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/sizes" }: Props) => {
+const SizeForm = ({ editingData, onClose, themeColor }: Props) => {
+    // Use the hook for mutations
+    const { createItem, updateItem, isSaving } = useFormActions(
+        "/sizes",
+        "sizes",
+        "Size"
+    );
     const {
         register,
         handleSubmit,
         reset,
         control,
         setValue,
-        formState: { errors, isSubmitting },
+        formState: { errors },
     } = useForm<FormData>({
         resolver: zodResolver(sizeSchemaValidation),
         defaultValues: {
@@ -58,20 +62,27 @@ const SizeForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/size
     }, [editingData, reset]);
 
     const onSubmit = async (values: FormData) => {
-        try {
-            const userStr = localStorage.getItem("user");
-            const user = userStr ? JSON.parse(userStr) : {};
-            const payload = { ...values, userId: user.id || user._id };
+        const userStr = localStorage.getItem("user");
+        const user = userStr ? JSON.parse(userStr) : {};
+        const payload = { ...values, userId: user.id || user._id };
 
-            if (editingData?._id) {
-                await updateItem(apiUrl, editingData._id, payload);
-            } else {
-                await createItem(apiUrl, payload);
-            }
-            onRefresh();
-            onClose();
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Error saving data");
+        if (editingData?._id) {
+            // Update Mutation
+            updateItem(
+                { id: editingData._id, payload },
+                {
+                    onSuccess: () => {
+                        onClose(); // List will refresh automatically
+                    }
+                }
+            );
+        } else {
+            // Create Mutation
+            createItem(payload, {
+                onSuccess: () => {
+                    onClose(); // List will refresh automatically
+                }
+            });
         }
     };
 
@@ -123,7 +134,7 @@ const SizeForm = ({ editingData, onClose, onRefresh, themeColor, apiUrl = "/size
                     type="submit"
                     label={editingData ? "Update Size" : "Create"}
                     icon={<Save size={20} />}
-                    loading={isSubmitting}
+                    loading={isSaving}
                     themeColor={themeColor}
                     onCancel={onClose}
                 />
