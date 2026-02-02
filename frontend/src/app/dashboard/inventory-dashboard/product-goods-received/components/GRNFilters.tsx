@@ -14,12 +14,17 @@ import {
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface StatusOption {
+  value: string;
+  label: string;
+}
+
 interface GRNFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   selectedStatus: string;
   onStatusChange: (value: string) => void;
-  statuses: string[];
+  statuses: StatusOption[];
 }
 
 export const GRNFilters: React.FC<GRNFiltersProps> = ({
@@ -63,11 +68,12 @@ export const GRNFilters: React.FC<GRNFiltersProps> = ({
               </SelectTrigger>
 
               <SelectContent>
-                {statuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status === 'all'
-                      ? 'All Status'
-                      : status.charAt(0).toUpperCase() + status.slice(1)}
+                {statuses?.map((statusOption) => (
+                  <SelectItem 
+                    key={statusOption.value} 
+                    value={statusOption.value}
+                  >
+                    {statusOption.label}
                   </SelectItem>
                 ))}
               </SelectContent>

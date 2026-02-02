@@ -1,32 +1,66 @@
-'use client';
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/form/Dialog';
-import { Button } from '@/components/form/CustomButton';
-import { Badge } from '@/components/form/Badge';
-import { PurchaseOrder } from '../types/purchaseOrders';
-import { getStatusColor, getStatusIcon } from '../utils/purchaseOrderUtils';
-import { Building2, Truck, Calendar, Package, Download } from 'lucide-react';
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+"use client";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/form/Dialog";
+import { Button } from "@/components/form/CustomButton";
+import { Badge } from "@/components/form/Badge";
+import { IPurchaseOrder, ISupplier } from "../types/purchaseOrders";
+import { getStatusColor, getStatusIcon } from "../utils/purchaseOrderUtils";
+import { Building2, Truck, Calendar, Package, Download } from "lucide-react";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface ViewOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  order: PurchaseOrder | null;
+  order: IPurchaseOrder | null;
+  onExport: (filters?: any) => Promise<boolean>;
 }
 
 export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
   open,
   onOpenChange,
-  order
+  order,
+  onExport,
 }) => {
   if (!order) return null;
 
-  const StatusIcon = getStatusIcon(order.status);
+  const isSupplierObject = (
+    supplier: string | ISupplier,
+  ): supplier is ISupplier => {
+    return typeof supplier === "object" && supplier !== null;
+  };
 
+  const StatusIcon = getStatusIcon(order.status);
+  const [exportFilters, setExportFilters] = useState({
+    status: "",
+    startDate: "",
+    endDate: "",
+    supplier: "",
+  });
+
+  const handleExportSubmit = async () => {
+    try {
+      const success = await onExport(order);
+      if (success) {
+        setExportFilters({
+          status: "",
+          startDate: "",
+          endDate: "",
+          supplier: "",
+        });
+      }
+    } finally {
+    }
+  };
   const handleExportPDF = () => {
     // In a real app, this would generate and download a PDF
-    alert('PDF export functionality would be implemented here');
+    alert("PDF export functionality would be implemented here");
   };
 
   return (
@@ -42,15 +76,19 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
           {/* Header Info */}
           <div className="flex items-start justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border-2 border-emerald-100">
             <div>
-              <p className="text-2xl font-bold text-gray-900">{order.orderNumber}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {order.orderNumber}
+              </p>
               <p className="text-sm text-gray-600 mt-1">
-                Order Date: {order.orderDate.toLocaleDateString()}
+                Order Date: {new Date(order.orderDate).toLocaleDateString()}
               </p>
             </div>
-            <div className={cn(
-              "px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-white",
-              `bg-gradient-to-r ${getStatusColor(order.status)}`
-            )}>
+            <div
+              className={cn(
+                "px-4 py-2 rounded-lg font-semibold flex items-center gap-2 text-white",
+                `bg-gradient-to-r ${getStatusColor(order.status)}`,
+              )}
+            >
               <StatusIcon className="h-5 w-5" />
               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
             </div>
@@ -63,16 +101,26 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
                 <Building2 className="h-5 w-5 text-emerald-600" />
                 <p className="text-sm text-gray-600">Supplier</p>
               </div>
-              <p className="font-semibold text-gray-900">{order.supplier}</p>
-              <p className="text-sm text-gray-600 mt-1">{order.supplierContact}</p>
+              {isSupplierObject(order.supplier) && (
+                <>
+                  <p className="font-medium text-gray-900">
+                    {order.supplier.operationalInformation.orderContactName}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {order.supplier.operationalInformation.orderContactEmail}
+                  </p>
+                </>
+              )}
             </div>
-            
+
             <div className="p-4 bg-white rounded-lg border-2 border-gray-100">
               <div className="flex items-center gap-2 mb-2">
                 <Truck className="h-5 w-5 text-emerald-600" />
                 <p className="text-sm text-gray-600">Expected Delivery</p>
               </div>
-              <p className="font-semibold text-gray-900">{order.expectedDelivery.toLocaleDateString()}</p>
+              <p className="font-semibold text-gray-900">
+                {new Date(order.expectedDelivery).toLocaleDateString()}
+              </p>
             </div>
           </div>
 
@@ -82,21 +130,27 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
               <p className="text-sm text-gray-600 mb-1">Order Date</p>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-blue-600" />
-                <p className="font-semibold text-gray-900">{order.orderDate.toLocaleDateString()}</p>
+                <p className="font-semibold text-gray-900">
+                  Order Date: {new Date(order.orderDate).toLocaleDateString()}
+                </p>
               </div>
             </div>
-            
+
             <div className="p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-100">
               <p className="text-sm text-gray-600 mb-1">Items Count</p>
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-purple-600" />
-                <p className="font-semibold text-gray-900">{order.items.length} items</p>
+                <p className="font-semibold text-gray-900">
+                  {order.items.length} items
+                </p>
               </div>
             </div>
-            
+
             <div className="p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-2 border-amber-100">
               <p className="text-sm text-gray-600 mb-1">Order Status</p>
-              <Badge className={`bg-gradient-to-r ${getStatusColor(order.status)} text-white`}>
+              <Badge
+                className={`bg-gradient-to-r ${getStatusColor(order.status)} text-white`}
+              >
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </Badge>
             </div>
@@ -109,39 +163,72 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-700">Product</th>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-700">SKU</th>
-                    <th className="text-center p-3 text-sm font-semibold text-gray-700">Qty</th>
-                    <th className="text-right p-3 text-sm font-semibold text-gray-700">Unit Price</th>
-                    <th className="text-right p-3 text-sm font-semibold text-gray-700">Total</th>
+                    <th className="text-left p-3 text-sm font-semibold text-gray-700">
+                      Product
+                    </th>
+                    <th className="text-left p-3 text-sm font-semibold text-gray-700">
+                      SKU
+                    </th>
+                    <th className="text-center p-3 text-sm font-semibold text-gray-700">
+                      Qty
+                    </th>
+                    <th className="text-right p-3 text-sm font-semibold text-gray-700">
+                      Unit Price
+                    </th>
+                    <th className="text-right p-3 text-sm font-semibold text-gray-700">
+                      Total
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {order.items.map((item) => (
-                    <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <tr
+                      key={item._id}
+                      className="border-t border-gray-100 hover:bg-gray-50"
+                    >
                       <td className="p-3 text-sm">{item.productName}</td>
-                      <td className="p-3 text-sm font-mono text-gray-600">{item.sku}</td>
-                      <td className="p-3 text-sm text-center">{item.quantity}</td>
-                      <td className="p-3 text-sm text-right">£{item.unitPrice.toFixed(2)}</td>
-                      <td className="p-3 text-sm text-right font-semibold">£{item.totalPrice.toFixed(2)}</td>
+                      <td className="p-3 text-sm font-mono text-gray-600">
+                        {item.sku}
+                      </td>
+                      <td className="p-3 text-sm text-center">
+                        {item.quantity}
+                      </td>
+                      <td className="p-3 text-sm text-right">
+                        £{item.unitPrice.toFixed(2)}
+                      </td>
+                      <td className="p-3 text-sm text-right font-semibold">
+                        £{item.totalPrice.toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot className="bg-gradient-to-r from-gray-50 to-gray-100">
                   <tr>
                     <td colSpan={3}></td>
-                    <td className="p-3 text-sm font-semibold text-gray-700 text-right">Subtotal:</td>
-                    <td className="p-3 text-sm font-semibold text-right">£{order.subtotal.toFixed(2)}</td>
+                    <td className="p-3 text-sm font-semibold text-gray-700 text-right">
+                      Subtotal:
+                    </td>
+                    <td className="p-3 text-sm font-semibold text-right">
+                      £{order.subtotal.toFixed(2)}
+                    </td>
                   </tr>
                   <tr>
                     <td colSpan={3}></td>
-                    <td className="p-3 text-sm font-semibold text-gray-700 text-right">VAT (20%):</td>
-                    <td className="p-3 text-sm font-semibold text-right">£{order.tax.toFixed(2)}</td>
+                    <td className="p-3 text-sm font-semibold text-gray-700 text-right">
+                      VAT (20%):
+                    </td>
+                    <td className="p-3 text-sm font-semibold text-right">
+                      £{order.tax.toFixed(2)}
+                    </td>
                   </tr>
                   <tr className="border-t-2 border-gray-200">
                     <td colSpan={3}></td>
-                    <td className="p-3 text-lg font-bold text-gray-900 text-right">Total:</td>
-                    <td className="p-3 text-lg font-bold text-emerald-600 text-right">£{order.total.toFixed(2)}</td>
+                    <td className="p-3 text-lg font-bold text-gray-900 text-right">
+                      Total:
+                    </td>
+                    <td className="p-3 text-lg font-bold text-emerald-600 text-right">
+                      £{order.total.toFixed(2)}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -161,8 +248,8 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button 
-            onClick={handleExportPDF}
+          <Button
+            onClick={handleExportSubmit}
             className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
           >
             <Download className="h-4 w-4" />

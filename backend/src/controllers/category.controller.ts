@@ -93,6 +93,7 @@ export const getAllCategories = async (
 ) => {
   try {
     const { search, page, limit, ...rawFilters } = req.query;
+   
 
     // 1️⃣ Base filters
     const queryFilters: Record<string, any> = { isDeleted: false };
@@ -147,6 +148,43 @@ export const getAllCategories = async (
   }
 };
 
+// Backend - Add this new endpoint
+export const getCategoryChildren = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { parentId } = req.query;
+    const userId = req.query.userId as string;
+
+    // Build query
+    const queryFilters: Record<string, any> = { 
+      isDeleted: false,
+      userId: new Types.ObjectId(userId)
+    };
+
+    if (parentId) {
+      queryFilters.parentId = new Types.ObjectId(parentId as string);
+    } else {
+      queryFilters.parentId = null; // Root categories
+    }
+
+    // Fetch direct children only (flat list, no nested children)
+    const children = await Category.find(queryFilters)
+      .select('_id categoryName parentId fields isActive createdAt updatedAt')
+      .lean()
+      .exec();
+
+    res.status(200).json({
+      success: true,
+      data: children, // Return flat array, not tree
+      total: children.length
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 // export const getAllCategories = async (
 //     req: Request,

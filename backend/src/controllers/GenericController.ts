@@ -3,6 +3,9 @@ import { GenericService } from "../services/generic.crud.services";
 import { Document, PopulateOptions, Types } from "mongoose";
 import { ZodObject, ZodRawShape } from "zod";
 
+import { normalizeToStringArray } from "../utils/query.utils";
+
+
 const queryFilters: Record<string, any> = {}; // <-- new object for mongoose
 interface ControllerOptions<T extends Document> {
     service: GenericService<T>;
@@ -10,6 +13,9 @@ interface ControllerOptions<T extends Document> {
     validationSchema?: ZodObject<ZodRawShape>; // optional Zod validation
     searchFields?: string[]
 }
+
+
+
 export class AdvancedGenericController<T extends Document> {
     constructor(private options: ControllerOptions<T>) { }
     // CREATE
@@ -58,10 +64,24 @@ export class AdvancedGenericController<T extends Document> {
                     [field]: { $regex: search, $options: "i" }
                 }));
             }
-
-            // ✅ Dynamic filters
+// Added by Muzamil Hassan 
+            //  Dynamic filters 
             Object.keys(rawFilters).forEach((key) => {
                 const value = rawFilters[key];
+
+                if (key.endsWith("Ids")) {
+    const ids = normalizeToStringArray(value)
+      .filter(id => Types.ObjectId.isValid(id))
+      .map(id => new Types.ObjectId(id));
+
+    if (ids.length) {
+      queryFilters[key.replace("Ids", "Id")] = { $in: ids };
+    }
+    return;
+  }
+
+//   End of added code
+
                 if (typeof value === "string" && Types.ObjectId.isValid(value)) {
                     queryFilters[key] = new Types.ObjectId(value);
                 } else {

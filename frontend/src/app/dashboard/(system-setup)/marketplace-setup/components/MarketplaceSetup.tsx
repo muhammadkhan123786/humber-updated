@@ -1,12 +1,14 @@
 'use client'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 // Data
 import {
-  DEFAULT_MARKETPLACES,
-  initialFormData,
-  type FormData
+  getInitialFormData,
+  MarketplaceTemplate,
+  FormData,
+  ColorOption,
+  IconOption
 } from '../data/marketplaceTemplates';
 
 // Hooks
@@ -20,8 +22,6 @@ import { AddEditDialog } from '../components/AddEditDialog';
 import { DeleteDialog } from '../components/DeleteDialog';
 
 export default function MarketplaceSetup() {
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  
   const {
     marketplaces,
     editingMarketplace,
@@ -29,6 +29,9 @@ export default function MarketplaceSetup() {
     isAddDialogOpen,
     isEditDialogOpen,
     isDeleteDialogOpen,
+    colors,
+    icons,
+    loading,
     toggleActive,
     setAsDefault,
     saveMarketplace,
@@ -38,28 +41,58 @@ export default function MarketplaceSetup() {
     handleDeleteMarketplace,
     closeAddDialog,
     closeEditDialog,
-    closeDeleteDialog
-  } = useMarketplaceTemplates(DEFAULT_MARKETPLACES);
+    closeDeleteDialog,
+  } = useMarketplaceTemplates();
 
-  const handleSubmit = () => {
-    const success = saveMarketplace(formData);
+  const [formData, setFormData] = useState<FormData>(
+    getInitialFormData(colors, icons)
+  );
+
+  // Update formData when colors/icons are loaded
+  useEffect(() => {
+    if (colors.length > 0 || icons.length > 0) {
+      setFormData(getInitialFormData(colors, icons));
+    }
+  }, [colors, icons]);
+
+  const handleSubmit = async() => {
+    console.log("Submitting marketplace template:", formData);
+
+    const success = await saveMarketplace(formData);
     if (success) {
-      setFormData(initialFormData);
+      setFormData(getInitialFormData(colors, icons));
     }
   };
 
-  const handleEditClick = (marketplace: typeof DEFAULT_MARKETPLACES[0]) => {
+  const handleEditClick = (marketplace: MarketplaceTemplate) => {
     handleEditMarketplace(marketplace);
+    
+    // Find the selected color and icon to get their full data
+    const selectedColor = colors.find(c => c.value === marketplace.color);
+    const selectedIcon = icons.find(i => i.value === marketplace.icon);
+    
     setFormData({
       name: marketplace.name,
       code: marketplace.code,
       description: marketplace.description,
       color: marketplace.color,
+      colorCode: selectedColor?.colorCode || marketplace.colorCode || '#6366f1',
       icon: marketplace.icon,
+      iconUrl: selectedIcon?.icon[0] || '',
       fields: [...marketplace.fields],
       isActive: marketplace.isActive,
       isDefault: marketplace.isDefault
     });
+  };
+
+  const handleDialogClose = () => {
+    if (isEditDialogOpen) {
+      closeEditDialog();
+    } else {
+      closeAddDialog();
+    }
+    // Reset form data when closing
+    setFormData(getInitialFormData(colors, icons));
   };
 
   return (
@@ -80,9 +113,11 @@ export default function MarketplaceSetup() {
         isOpen={isAddDialogOpen || isEditDialogOpen}
         isEdit={isEditDialogOpen}
         formData={formData}
-        onClose={isEditDialogOpen ? closeEditDialog : closeAddDialog}
+        onClose={handleDialogClose}
         onSubmit={handleSubmit}
         onFormChange={setFormData}
+        colors={colors}
+        icons={icons}
       />
       
       <DeleteDialog
@@ -96,5 +131,4 @@ export default function MarketplaceSetup() {
 }
 
 // Export for use in other components
-export { DEFAULT_MARKETPLACES as marketplaceTemplates };
 export type { MarketplaceTemplate } from '../data/marketplaceTemplates';

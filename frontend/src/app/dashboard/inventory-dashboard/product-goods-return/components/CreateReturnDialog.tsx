@@ -1,16 +1,28 @@
-'use client';
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/form/Dialog';
-import { Button } from '@/components/form/CustomButton';
-import { Input } from '@/components/form/Input';
-import { Label } from '@/components/form/Label';
-import { Badge } from '@/components/form/Badge';
-import { Textarea } from '@/components/form/Textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/form/Select';
-import { Card, CardContent } from '@/components/form/Card';
-import { GRNForReturn, ReturningItem } from '../types/goodsReturn';
-import { PackageX } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/form/Dialog";
+import { Button } from "@/components/form/CustomButton";
+import { Input } from "@/components/form/Input";
+import { Label } from "@/components/form/Label";
+import { Badge } from "@/components/form/Badge";
+import { Textarea } from "@/components/form/Textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/form/Select";
+import { Card, CardContent } from "@/components/form/Card";
+import { GRNForReturn, ReturningItem } from "../types/goodsReturn";
+import { PackageX, Loader2 } from "lucide-react";
 
 interface CreateReturnDialogProps {
   open: boolean;
@@ -28,6 +40,7 @@ interface CreateReturnDialogProps {
   availableGRNs: GRNForReturn[];
   onCreateReturn: () => void;
   onCancel: () => void;
+  isLoadingItems?: boolean;   // ← new prop: true while the full GRN is being fetched
 }
 
 export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
@@ -45,13 +58,18 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
   onUpdateItem,
   availableGRNs,
   onCreateReturn,
-  onCancel
+  onCancel,
+  isLoadingItems = false,
 }) => {
-  const totalReturnValue = returningItems.reduce((sum, item) => 
-    sum + (item.returnQuantity * item.unitPrice), 0
+  const totalReturnValue = returningItems.reduce(
+    (sum, item) => sum + item.returnQuantity * item.unitPrice,
+    0,
   );
 
-  const selectedGRNData = availableGRNs.find(g => g.id === selectedGRN);
+  const canSubmit =
+    selectedGRN &&
+    returnedBy.trim() !== "" &&
+    returningItems.some((item) => item.returnQuantity > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,7 +97,10 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
               <SelectContent>
                 {availableGRNs.map((grn) => (
                   <SelectItem key={grn.id} value={grn.id}>
-                    {grn.grnNumber} - {grn.supplier} ({grn.receivedDate.toLocaleDateString()})
+                    {grn.grnNumber} -{" "}
+                    {grn.purchaseOrderId?.supplier?.contactInformation
+                      ?.primaryContactName || "Unknown Supplier"}{" "}
+                    ({new Date(grn.createdAt).toLocaleDateString()})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -116,71 +137,109 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
               <div className="space-y-2">
                 <Label>Items to Return</Label>
                 <div className="border-2 border-[#fed7aa] rounded-lg p-4 space-y-4 max-h-96 overflow-y-auto">
-                  {returningItems.map((item) => (
-                    <div key={item.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-semibold text-gray-900">{item.productName}</p>
-                          <p className="text-sm text-gray-600">SKU: {item.sku}</p>
-                          <p className="text-xs text-gray-500 mt-1">Received: {item.receivedQuantity} units</p>
-                        </div>
-                        <Badge className="bg-indigo-100 text-indigo-700">
-                          £{item.unitPrice.toFixed(2)}
-                        </Badge>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                  {/* Loading spinner — shows while fetchGRNById is running */}
+                  {isLoadingItems && (
+                    <div className="flex items-center justify-center py-8 text-gray-500">
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Loading items...
+                    </div>
+                  )}
+
+                  {/* Empty state — shows after loading is done but no items came back */}
+                  {!isLoadingItems && returningItems.length === 0 && (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      No items found for this GRN.
+                    </div>
+                  )}
+
+                  {/* The actual item cards — only rendered when we have items */}
+                  {!isLoadingItems &&
+                    returningItems.map((item) => (
+                      <div
+                        key={item._id!}
+                        className="bg-gray-50 rounded-lg p-4 space-y-3"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {item.productName}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              SKU: {item.sku}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Received: {item.receivedQuantity} units
+                            </p>
+                          </div>
+                          <Badge className="bg-indigo-100 text-indigo-700">
+                            £{item.unitPrice != null ? item.unitPrice.toFixed(2) : "0.00"}
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Return Quantity</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max={item.receivedQuantity}
+                              value={item.returnQuantity}
+                              onChange={(e) =>
+                                onUpdateItem(
+                                  item._id,
+                                  "returnQuantity",
+                                  parseInt(e.target.value) || 0,
+                                )
+                              }
+                              className="border-2 border-[#fed7aa]"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Return Reason</Label>
+                            <Select
+                              value={item.returnReason}
+                              onValueChange={(value) =>
+                                onUpdateItem(item._id, "returnReason", value)
+                              }
+                            >
+                              <SelectTrigger className="border-2 border-[#fed7aa]">
+                                <SelectValue placeholder="Select reason..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="damaged">Damaged</SelectItem>
+                                <SelectItem value="defective">Defective</SelectItem>
+                                <SelectItem value="wrong-item">Wrong Item</SelectItem>
+                                <SelectItem value="excess">Excess Quantity</SelectItem>
+                                <SelectItem value="quality-issue">Quality Issue</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
                         <div className="space-y-1">
-                          <Label className="text-xs">Return Quantity</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            max={item.receivedQuantity}
-                            value={item.returnQuantity}
-                            onChange={(e) => onUpdateItem(item.id, 'returnQuantity', parseInt(e.target.value) || 0)}
-                            className="border-2 border-[#fed7aa]"
+                          <Label className="text-xs">Condition / Notes</Label>
+                          <Textarea
+                            value={item.condition}
+                            onChange={(e) =>
+                              onUpdateItem(item._id, "condition", e.target.value)
+                            }
+                            placeholder="Describe the condition or reason for return..."
+                            className="border-2 border-[#fed7aa] min-h-20"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Return Reason</Label>
-                          <Select
-                            value={item.returnReason}
-                            onValueChange={(value) => onUpdateItem(item.id, 'returnReason', value)}
-                          >
-                            <SelectTrigger className="border-2 border-[#fed7aa]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="damaged">Damaged</SelectItem>
-                              <SelectItem value="defective">Defective</SelectItem>
-                              <SelectItem value="wrong-item">Wrong Item</SelectItem>
-                              <SelectItem value="excess">Excess Quantity</SelectItem>
-                              <SelectItem value="quality-issue">Quality Issue</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
 
-                      <div className="space-y-1">
-                        <Label className="text-xs">Condition / Notes</Label>
-                        <Textarea
-                          value={item.condition}
-                          onChange={(e) => onUpdateItem(item.id, 'condition', e.target.value)}
-                          placeholder="Describe the condition or reason for return..."
-                          className="border-2 border-[#fed7aa] min-h-20"
-                        />
+                        {item.returnQuantity > 0 && (
+                          <div className="bg-orange-50 border border-orange-200 rounded p-2 text-sm">
+                            <p className="font-medium text-orange-900">
+                              Return Value: £
+                              {item.returnQuantity > 0 && item.unitPrice != null ? (item.returnQuantity * item.unitPrice).toFixed(2) : "0.00"}
+                            </p>
+                          </div>
+                        )}
                       </div>
-
-                      {item.returnQuantity > 0 && (
-                        <div className="bg-orange-50 border border-orange-200 rounded p-2 text-sm">
-                          <p className="font-medium text-orange-900">
-                            Return Value: £{(item.returnQuantity * item.unitPrice).toFixed(2)}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
@@ -197,18 +256,21 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
               </div>
 
               {/* Total Summary */}
-              {returningItems.some(item => item.returnQuantity > 0) && (
+              {returningItems.some((item) => item.returnQuantity > 0) && (
                 <Card className="border-2 border-orange-200 bg-orange-50">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-orange-700">Total Return Value</p>
+                        <p className="text-sm text-orange-700">
+                          Total Return Value
+                        </p>
                         <p className="text-xs text-orange-600 mt-1">
-                          {returningItems.filter(i => i.returnQuantity > 0).length} item(s) selected for return
+                          {returningItems.filter((i) => i.returnQuantity > 0).length}{" "}
+                          item(s) selected for return
                         </p>
                       </div>
                       <p className="text-3xl font-bold text-orange-900">
-                        £{totalReturnValue.toFixed(2)}
+                        £{totalReturnValue}
                       </p>
                     </div>
                   </CardContent>
@@ -222,9 +284,10 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onCreateReturn}
-            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700"
+            disabled={!canSubmit || isLoadingItems}
+            className="bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <PackageX className="h-4 w-4 mr-2" />
             Create Return Note

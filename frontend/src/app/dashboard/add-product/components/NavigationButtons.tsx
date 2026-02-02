@@ -5,8 +5,8 @@ interface NavigationButtonsProps {
   currentStep: number;
   totalSteps: number;
   onPrev: () => void;
-  onNext: () => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+ onNext: (e: React.MouseEvent<HTMLButtonElement>) => void;
+ 
 }
 
 export function NavigationButtons({
@@ -14,7 +14,7 @@ export function NavigationButtons({
   totalSteps,
   onPrev,
   onNext,
-  onSubmit
+  
 }: NavigationButtonsProps) {
   return (
     <div className="flex justify-between items-center gap-4 pt-6">
@@ -55,6 +55,7 @@ export function NavigationButtons({
         </Button>
       ) : (
         <Button
+       
           type="submit"
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8"
         >

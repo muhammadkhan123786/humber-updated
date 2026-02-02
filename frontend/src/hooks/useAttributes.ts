@@ -1,11 +1,12 @@
 "use client";
 import axios from "axios";
 import { IAttribute } from "../../../common/IProductAttributes.interface";
+import { Attribute } from "../app/dashboard/add-product/types/product";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/product-attributes`;
 
 interface AttributeResponse {
-  data: IAttribute[];
+  data: Attribute[];
   total: number;
   page: number;
   limit: number;
@@ -26,18 +27,34 @@ const getUserId = () => {
 export const fetchAttributes = async (
   page = 1,
   limit = 10,
-  search = ""
+  search = "",
+  categoryIds: string,
 ): Promise<AttributeResponse> => {
-  const userId = getUserId();
-  console.log("Frontend userId:", userId);
-  const res = await axios.get(API_URL, {
+   const res = await axios.get(API_URL, {
     ...getAuthConfig(),
     params: {
       userId: getUserId(),
       page,
       limit,
       search,
+      categoryIds,
     },
+    paramsSerializer: params =>
+      new URLSearchParams(params as any).toString(),
+  });
+  return res.data;
+};
+
+export const fetchAttributesss = async (
+  
+): Promise<AttributeResponse> => {
+   const res = await axios.get(API_URL, {
+    ...getAuthConfig(),
+    params: {
+      userId: getUserId(),
+      
+    },
+   
   });
   return res.data;
 };
@@ -46,7 +63,7 @@ export const createAttribute = async (
   payload: Partial<IAttribute>
 ): Promise<IAttribute> => {
   const res = await axios.post(API_URL, payload, getAuthConfig());
-  console.log("res", res);
+ 
   return res.data;
 };
 
@@ -68,4 +85,21 @@ export const deleteAttribute = async (
 export const fetchAttributeById = async (id: string): Promise<IAttribute> => {
   const res = await axios.get(`${API_URL}/${id}`, getAuthConfig());
   return res.data;
+};
+
+
+export const fetchAttributesByCategoryIds = async (
+  categoryIds: string[]
+): Promise<IAttribute[]> => {
+  if (!categoryIds.length) return [];
+
+  const res = await axios.get(`${API_URL}/by-categories`, {
+    ...getAuthConfig(),
+    params: {
+      categoryIds: categoryIds.join(","), // 👈 important
+      userId: getUserId(),
+    },
+  });
+
+  return res.data.data; // backend should return { data: IAttribute[] }
 };

@@ -6,9 +6,10 @@ import { Badge } from '@/components/form/Badge';
 import { PurchaseOrderStats } from '../types/purchaseOrders';
 import { Receipt, Clock, Truck, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IPurchaseOrder } from '../types/purchaseOrders';
 
 interface PurchaseOrdersStatsProps {
-  stats: PurchaseOrderStats;
+ stats: PurchaseOrderStats; 
 }
 
 const statCards = [
