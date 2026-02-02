@@ -5,7 +5,7 @@ import { getCurrentTechnicianJobCode, getCurrentTicketCode, getCustomerInvoiceCu
 
 const autoCodeGeneratorRouter = Router();
 
-//ticket code.
+//techncian code.
 autoCodeGeneratorRouter.get('/techcian-code', async (req: Request, res: Response) => {
     try {
         const currentTechnicianJobCode = await getCurrentTechnicianJobCode();
@@ -15,7 +15,7 @@ autoCodeGeneratorRouter.get('/techcian-code', async (req: Request, res: Response
     }
 });
 
-//technician job code. 
+//ticket code. 
 autoCodeGeneratorRouter.get('/ticket-code', async (req: Request, res: Response) => {
     try {
         const currentTicketCode = await getCurrentTicketCode();

@@ -13,6 +13,7 @@ import { normalizeArrays } from "../../middleware/normalizeArrays";
 import {
   getTicketCountByStatus,
   getUnassignedTickets,
+  sendTicketDetailsToCustomer,
 } from "../../controllers/customer.ticket.controllet";
 
 const repairVehicleUpload = createUploader([
@@ -169,5 +170,7 @@ customerTicketBaseRouter.put(
 );
 
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
+
+customerTicketBaseRouter.post("/send-customer-ticket-copy", sendTicketDetailsToCustomer)
 
 export default customerTicketBaseRouter;

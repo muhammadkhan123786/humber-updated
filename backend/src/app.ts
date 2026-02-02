@@ -261,7 +261,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/customer-tickets`,
-  // adminProtecter,
+  adminProtecter,
   customerTicketBaseRouter,
 );
 
@@ -291,10 +291,10 @@ app.use(
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
-app.use(`${process.env.API_PREFIX}/icons`,  iconsRouter);
+app.use(`${process.env.API_PREFIX}/icons`, iconsRouter);
 
 //16-02-2026
-app.use(`${process.env.API_PREFIX}/suppliers`,  SupplierRouters);
+app.use(`${process.env.API_PREFIX}/suppliers`, SupplierRouters);
 
 //20-01-2026
 app.use(
@@ -393,26 +393,26 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/ai`,
-  
+
   aiRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/purchase-orders`,
-  
+
   purchaseOrderRoutes,
 );
 
 
 app.use(
   `${process.env.API_PREFIX}/grn`,
-  
+
   grnRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/goods-return-notice`,
-  
+
   goodsReturnRoutes,
 );
 
