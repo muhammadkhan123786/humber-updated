@@ -51,6 +51,9 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: LayoutDashboard,
     roleId: [1, 2],
   },
+
+   /* ================= Technicians Dashboard Routes ================= */
+
   {
     _id: nanoid(),
     label: "My Jobs",
@@ -58,7 +61,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: LayoutDashboard,
     roleId: [2],
   },
-
+  {
+    _id: nanoid(),
+    label:"My Tickets",
+    href:"/dashboard/my-tickets",
+    icon:Ticket,
+    roleId:[2],
+  },
   /* ================= SERVICE TICKETS ================= */
   {
     _id: nanoid(),

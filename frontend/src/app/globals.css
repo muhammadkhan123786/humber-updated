@@ -399,6 +399,21 @@ body {
   animation: glow 2s ease-in-out infinite;
 }
 
+@keyframes dropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdown 0.2s ease-out;
+}
+
 :root {
   --primary-gradient: linear-gradient(135deg, #155DFC 0%, #009689 100%);
   --primary-solid: #155DFC;
