@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketFormSchema, TicketFormData } from "../schema/ticketSchema";
 import { getAlls } from "../helper/apiHelper";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 
 const generateTicketCode = () => {
@@ -33,6 +32,7 @@ export const useTicketForm = () => {
   const [brands, setBrands] = useState<any[]>([]);
   const [models, setModels] = useState<any[]>([]);
   const [colors, setColors] = useState<any[]>([]);
+  const [insurances, setInsurances] = useState<any[]>([]);
 
   const [defaultTicketStatusId, setDefaultTicketStatusId] =
     useState<string>("");
@@ -57,8 +57,6 @@ export const useTicketForm = () => {
     },
     mode: "onBlur",
   });
-
-  const router = useRouter();
 
   const clearEdit = () => {
     setEditingId(null);
@@ -181,6 +179,7 @@ export const useTicketForm = () => {
           getAlls("/vehiclebrand"),
           getAlls("/vechilemodel"),
           getAlls("/colors"),
+          getAlls("/insurance-companies"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
@@ -214,6 +213,11 @@ export const useTicketForm = () => {
           setColors(
             (results[9].value?.data ?? []).filter((i: any) => i.isActive),
           );
+        if (results[10].status === "fulfilled") {
+          setInsurances(
+            (results[10].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        }
 
         if (results[2].status === "fulfilled") {
           const statusData = (results[2].value?.data ?? []).filter(
@@ -449,7 +453,7 @@ export const useTicketForm = () => {
     colors,
     statuses,
     technicians,
-
+    insurances,
     mobilityParts,
     handleAddVehicle,
     editingId,

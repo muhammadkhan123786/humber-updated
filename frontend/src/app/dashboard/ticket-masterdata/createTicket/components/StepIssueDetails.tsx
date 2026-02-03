@@ -2,8 +2,9 @@
 
 import React, { useRef } from "react";
 import Image from "next/image";
-import { Check, Upload, X, CheckIcon } from "lucide-react";
+import { Check, Upload, X, CheckIcon, ShieldCheck } from "lucide-react";
 import { Controller } from "react-hook-form";
+import { CustomSelect } from "@/app/common-form/CustomSelect";
 
 interface Props {
   onNext?: (formData: any) => void;
@@ -11,9 +12,10 @@ interface Props {
   form: any;
   isLoading: boolean;
   decisions?: any[];
+  insurances?: any[];
 }
 
-const StepIssueDetails: React.FC<Props> = ({ form }) => {
+const StepIssueDetails: React.FC<Props> = ({ form, insurances = [] }) => {
   const { control, watch, setValue } = form;
 
   const images = watch("vehicleRepairImages") || [];
@@ -22,7 +24,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || "http://localhost:4000";
 
-  // Static Decision Config
   const DECISION_OPTIONS = [
     {
       id: "Covered",
@@ -91,6 +92,12 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
       setValue("vehicleRepairImagesFile", newFiles, { shouldValidate: true });
     }
   };
+  const insuranceOptions = insurances
+    .filter((ins: any) => ins?.insuranceCompanyName)
+    .map((ins: any) => ({
+      id: ins._id,
+      label: ins.insuranceCompanyName,
+    }));
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
@@ -114,7 +121,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
       </div>
 
       <div className="p-10 space-y-8">
-        {/* Description Section */}
         <div className="space-y-3">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Fault or Accident Description{" "}
@@ -132,7 +138,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
             )}
           />
 
-          {/* The Note Section matching image_0e8501.png */}
           <div className="flex items-center gap-2 text-slate-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +221,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
             <div className="flex justify-center">
               <button
                 type="button"
-                // Using undefined prevents the "" type error
                 onClick={() => setValue("decisionId", undefined)}
                 className="text-gray-400 text-xs font-medium hover:text-red-500 transition-colors"
               >
@@ -225,8 +229,64 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
             </div>
           )}
         </div>
+        {(selectedDecisionId === "Covered" ||
+          selectedDecisionId === "Mixed") && (
+          <div className="space-y-4 p-6 bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2.5 bg-blue-500 rounded-full text-white shrink-0">
+                <ShieldCheck size={25} />
+              </div>
+              <div className="flex flex-col">
+                <h3 className="text-base font-semibold text-blue-900">
+                  Insurance Information
+                </h3>
+                <p className="text-blue-700 text-xs leading-relaxed">
+                  Required for warranty/insurance claims
+                </p>
+              </div>
+            </div>
 
-        {/* Upload Section */}
+            <div className="space-y-3">
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-blue-900 font-medium text-base">
+                    Insurance Company *
+                  </label>
+                  <Controller
+                    name="insuranceCompanyId"
+                    control={control}
+                    rules={{ required: "Insurance company is required" }}
+                    render={({ field, fieldState }) => (
+                      <CustomSelect
+                        options={insuranceOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select insurance company"
+                        error={fieldState.error}
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-blue-900 font-medium text-base">
+                    Insurance Reference Number *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter insurance reference number"
+                    className="w-full h-11 px-4 bg-white rounded-xl border border-blue-200 text-sm outline-none transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                  />
+                  <p className="text-blue-600 text-xs italic mt-1">
+                    This reference number will be used for insurance claim
+                    processing
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <label className="block text-sm font-bold text-gray-700 ml-1">
             Upload Photos or Videos

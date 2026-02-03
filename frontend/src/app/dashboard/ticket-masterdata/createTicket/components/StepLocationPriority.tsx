@@ -3,6 +3,7 @@
 import { Check, Wrench, Home, Truck, Users, Info, MapPin } from "lucide-react";
 
 import { Controller } from "react-hook-form";
+import ScooterDeliveryMethod from "./ScooterDeliveryMethod";
 
 const StepLocationPriority = ({
   form,
@@ -159,6 +160,8 @@ const StepLocationPriority = ({
             </p>
           </section>
         )}
+
+        <ScooterDeliveryMethod form={form} />
 
         <section className="space-y-4">
           <label className="text-[16px] font-medium text-[#1E293B] flex items-center gap-2">
