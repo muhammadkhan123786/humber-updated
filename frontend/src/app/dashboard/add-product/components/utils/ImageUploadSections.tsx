@@ -161,6 +161,7 @@ const ImageUploadSections = ({
     onInputChange("shortDescription", aiSuggestions.shortDescription);
     onInputChange("keywords", aiSuggestions.keywords);
 
+    console.log("Applying tags:", aiSuggestions.tags);
     // 2. Add all tags at once
     if (aiSuggestions.tags.length > 0) {
       aiSuggestions.tags.forEach(tag => {
@@ -194,7 +195,7 @@ const ImageUploadSections = ({
             {isAnalyzing ? (
               <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : "✨"}
-            {isAnalyzing ? "Analyzing All Images..." : "Generate AI Description & Tags"}
+            {isAnalyzing ? "Analyzing All Images..." : "Generate AI Description , KeyWord & Tags"}
           </button>
         </div>
       )}

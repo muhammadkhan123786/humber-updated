@@ -1,4 +1,4 @@
-import { Model, Types, Document, UpdateQuery, QueryFilter, PopulateOptions } from "mongoose";
+import { Model,  Types, Document, UpdateQuery, QueryFilter,  PopulateOptions } from "mongoose";
 import { z, ZodObject, ZodRawShape } from "zod";
 
 export interface CRUDOptions<T extends Document> {
@@ -19,7 +19,7 @@ function hasIsDefaultField(
 
 
 export class GenericService<T extends Document> {
-    constructor(protected readonly model: Model<T>) { }
+    constructor(public readonly model: Model<T>) { }
     async getQuery(filter: QueryFilter<T> = {}, options?: { populate?: (string | PopulateOptions)[] }) {
         let query = this.model.find(filter);
         if (options?.populate) query = query.populate(options.populate);
@@ -88,6 +88,78 @@ export class GenericService<T extends Document> {
             { $set: { isDeleted: true } }, // ✅ use $set
             { new: true }
         ).exec();
+    }
+
+
+
+      async getProductStats(filters = {}) {
+        const baseFilter = { ...filters, isDeleted: false } ;
+  console.log("🔍 getProductStats called with filters:", filters);
+        const [
+            total,
+            activeCount,
+            inactiveCount,
+            inStockCount,
+            lowStockCount,
+            outOfStockCount,
+            featuredCount
+        ] = await Promise.all([
+            // Total products
+            this.model.countDocuments(baseFilter),
+
+            // Active products
+            this.model.countDocuments({ ...baseFilter, isActive: true } ),
+
+            // Inactive products
+            this.model.countDocuments({ ...baseFilter, isActive: false } ),
+
+            // In stock (stockStatus = 'in-stock')
+            this.model.countDocuments({
+                ...baseFilter,
+                'attributes.stock.stockStatus': 'in-stock'
+            } ),
+
+            // Low stock (stockStatus = 'low-stock')
+            this.model.countDocuments({
+                ...baseFilter,
+                'attributes.stock.stockStatus': 'low-stock'
+            } ),
+
+            // Out of stock (stockQuantity = 0 or stockStatus = 'out-of-stock')
+            this.model.countDocuments({
+                ...baseFilter,
+                $or: [
+                    { 'attributes.stock.stockQuantity': 0 },
+                    { 'attributes.stock.stockStatus': 'out-of-stock' }
+                ]
+            } ),
+
+            // Featured products
+            this.model.countDocuments({
+                ...baseFilter,
+                'attributes.stock.featured': true
+            } )
+        ]);
+
+        console.log("Product Stats:", {
+            total,
+            activeCount,
+            inactiveCount,
+            inStockCount,
+            lowStockCount,
+            outOfStockCount,
+            featuredCount
+        });
+
+        return {
+            total,
+            activeCount,
+            inactiveCount,
+            inStockCount,
+            lowStockCount,
+            outOfStockCount,
+            featuredCount
+        };
     }
 
 }

@@ -3,19 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
   TagIcon,
-  Tag,
   X,
   Plus,
-  LucideIcon,
-  Icon,
 } from "lucide-react";
 import { Input } from "@/components/form/Input";
 import { Textarea } from "@/components/form/Textarea";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
+ 
 } from "@/components/form/Card";
 import { Label } from "@/components/form/Label";
 import ImageUploadSections from "./ImageUploadSections";
@@ -61,6 +57,7 @@ export function ProductInformationCard({
     .map((k) => k.trim())
     .filter((k) => k.length > 0);
 
+    console.log("tag", tags);
   const handleAddKeyword = () => {
     if (!keywordInput.trim()) return;
 
@@ -555,14 +552,13 @@ export function ProductInformationCard({
               </div>
               <div className="flex flex-wrap gap-2">
                 <AnimatePresence>
-                  {keywordsArray.map((keyword) => (
-                    <Badge>
-                      <motion.div
-                        key={keyword}
+                  {keywordsArray.map((keyword, index) => (
+                    <Badge key={`${keyword}-${index}`} className="bg-blue-100 text-blue-700 px-3 py-1.5 cursor-pointer hover:bg-blue-200">
+                      <motion.div                       
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium border border-purple-300 cursor-pointer hover:bg-purple-200 transition-colors flex items-center gap-2"
+                      className="flex items-center gap-2 "
                         onClick={() => handleRemoveKeyword(keyword)}
                       >
                         {keyword}
@@ -601,37 +597,17 @@ export function ProductInformationCard({
                   Add
                 </Button>
               </div>
-              {/* <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            className="bg-blue-100 text-blue-700 px-3 py-1.5 cursor-pointer hover:bg-blue-200"
-                            onClick={() => onRemoveTag(tag)}
-                          >
-                            {tag}
-                            <X className="h-3 w-3 ml-2" />
-                          </Badge>
-                        ))}
-                      </div> */}
-
               <div className="flex flex-wrap gap-2">
-                <AnimatePresence>
-                  {tags.map((tag) => (
-                    <Badge>
-                      <motion.div
-                        key={tag}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="bg-blue-100 text-blue-700 px-3 py-1.5 cursor-pointer hover:bg-blue-200"
-                        onClick={() => onRemoveTag(tag)}
-                      >
-                        {tag}
-                        <X className="h-3 w-3" />
-                      </motion.div>
-                    </Badge>
-                  ))}
-                </AnimatePresence>
+                {tags.map((tag, index) => (
+                  <Badge
+                    key={`${tag}-${index}`}
+                    className="bg-blue-100 text-blue-700 px-3 py-1.5 cursor-pointer hover:bg-blue-200"
+                    onClick={() => onRemoveTag(tag)}
+                  >
+                    {tag}
+                    <X className="h-3 w-3 ml-2" />
+                  </Badge>
+                ))}
               </div>
               {tags.length > 0 && (
                 <p className="text-xs text-gray-500 mt-2">

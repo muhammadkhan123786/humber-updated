@@ -19,6 +19,7 @@ export function BasicInfoStep({
   onNewTagChange,
   onImageUpload,
   onRemoveImage,
+
   isUploading: parentIsUploading = false,
 }: Props) {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);

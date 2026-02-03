@@ -256,6 +256,14 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     }
   }, [newTag, tags]);
 
+  // Add this function to your Parent Component
+const onBulkAddTags = (newTagsArray: string[]) => {
+  setTags((prevTags) => {
+    // Combine old tags and new tags, and remove duplicates
+    const combined = [...prevTags, ...newTagsArray];
+    return Array.from(new Set(combined));
+  });
+};
   const removeTag = useCallback((tagToRemove: string) => {
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   }, []);
@@ -309,7 +317,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
           sellingPrice: p.sellingPrice,
           retailPrice: p.retailPrice,
           discountPercentage: p.discountPercentage,
-          taxId: p.taxId || null, // ✅ IMPORTANT
+          taxId: p.taxId || null, 
           taxRate: p.taxRate,
           vatExempt: p.vatExempt,
         })),
@@ -337,8 +345,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
       })),
     };
 
-    console.log("✅ Product data submitted:", finalData);
-     const res = await createProduct(finalData);
+     const res = await createProduct(finalData as any);
     onSubmit(finalData);
     toast.success("Product created successfully!");
   },
@@ -362,6 +369,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     tags,
     images,
     newTag,
+    onBulkAddTags,
     handleInputChange,
     handleDynamicFieldChange,
     addTag,

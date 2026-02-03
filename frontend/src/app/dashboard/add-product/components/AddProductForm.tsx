@@ -3,8 +3,6 @@ import { AnimatePresence } from "framer-motion";
 
 // Data
 import { STEPS } from "../data/productData";
-import { createProduct } from "../../../../helper/products";
-
 // Hooks
 import { useProductForm } from "../hooks/useProductForm";
 
@@ -55,6 +53,7 @@ export default function AddProductForm() {
     prevStep,
     setNewTag,
     attributes,
+    onBulkAddTags,
     getWarrantyOptions,
     // ✅ Destructure lifted variants state
     variants,
@@ -119,14 +118,7 @@ export default function AddProductForm() {
     switch (currentStep) {
       case 1:
         return (
-          <StepCard
-            title={currentStepData.title}
-            subtitle="Select category hierarchy using dropdowns"
-            icon={currentStepData.icon}
-            gradient={currentStepData.gradient}
-            bgGradient={currentStepData.bgGradient}
-            borderGradient={currentStepData.borderGradient}
-          >
+         
             <CategoryStep
               selectedPath={selectedPath || []}
               categories={fetchedCategories || []}
@@ -134,19 +126,11 @@ export default function AddProductForm() {
               getCategoriesAtLevel={getCategoriesAtLevel}
               handleCategorySelect={handleCategorySelect}
             />
-          </StepCard>
+         
         );
 
       case 2:
-        return (
-          <StepCard
-            title={currentStepData.title}
-            subtitle="Enter basic product information"
-            icon={currentStepData.icon}
-            gradient={currentStepData.gradient}
-            bgGradient={currentStepData.bgGradient}
-            borderGradient={currentStepData.borderGradient}
-          >
+        return (          
             <BasicInfoStep
               formData={formData}
               tags={tags}
@@ -158,8 +142,9 @@ export default function AddProductForm() {
               onNewTagChange={setNewTag}
               onImageUpload={handleImageUpload}
               onRemoveImage={removeImage}
+              onBulkAddTags={onBulkAddTags}
             />
-          </StepCard>
+         
         );
 
       case 3:
