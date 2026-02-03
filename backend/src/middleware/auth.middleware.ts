@@ -82,7 +82,7 @@ export const technicianProtecter = (
             res.status(403).json({ message: "Not authorized, Technician access only" });
             return; // ✅ return void
         }
-
+       // console.log("Technician access granted");
         next(); // ✅ continue to next middleware
     } catch (error) {
         res.status(401).json({ message: "Not authorized, token invalid" });
