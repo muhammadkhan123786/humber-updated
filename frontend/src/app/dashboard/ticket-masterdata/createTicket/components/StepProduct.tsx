@@ -789,8 +789,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </div>
                     </div>
-
-                    {/* Year & Color */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-indigo-950 text-base font-medium">
@@ -838,8 +836,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </div>
                     </div>
-
-                    {/* Serial Number and Purchase Date */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-purple-100">
                       <div className="space-y-2">
                         <label className="text-indigo-950 text-base font-medium">
@@ -878,8 +874,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </div>
                     </div>
-
-                    {/* ADD VEHICLE BUTTON */}
                     <div className="flex justify-center pt-6">
                       <button
                         type="button"
@@ -904,8 +898,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </button>
                     </div>
-
-                    {/* Validation message */}
                     {!isManualFormValid && (
                       <div className="text-center text-gray-500 text-sm pt-2">
                         Please fill all required fields (*) to add vehicle
@@ -918,7 +910,6 @@ const StepProduct: React.FC<StepProductProps> = ({
           </div>
         )}
 
-        {/* Show selected vehicle details */}
         {vehicleDetails && !showManualForm && (
           <div
             className={`self-stretch w-full px-6 pt-6 pb-6 rounded-2xl border grid grid-cols-2 gap-3 ${

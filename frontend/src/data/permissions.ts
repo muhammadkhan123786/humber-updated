@@ -40,6 +40,7 @@ import {
   FileText,
   ClipboardCheck,
   Gavel,
+  Shield,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -588,6 +589,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         label: "Ticket Decisions",
         href: "/dashboard/ticket-decision",
         icon: Gavel,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Company Insurance",
+        href: "/dashboard/insurance",
+        icon: Shield,
         roleId: [1],
       },
     ],
