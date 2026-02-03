@@ -3,6 +3,7 @@ import { AuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 
+
 export const technicianTicketsController = async (
     req: AuthRequest,
     res: Response
@@ -36,38 +37,122 @@ export const technicianTicketsController = async (
         const skip = (page - 1) * limit;
         const search = (req.query.search as string) || "";
 
-        // Build search query
-        const searchQuery: any = {
-            assignedTechnicianId: { $in: [technician._id] },
-            isDeleted: false,
-        };
+        // ✅ Aggregation pipeline
+        const pipeline: any[] = [
+            {
+                $match: {
+                    assignedTechnicianId: { $in: [technician._id] },
+                    isDeleted: false,
+                },
+            },
+            // Lookup customer
+            {
+                $lookup: {
+                    from: "customers",
+                    localField: "customerId",
+                    foreignField: "_id",
+                    as: "customer",
+                },
+            },
+            { $unwind: "$customer" },
+            // Lookup person for customer
+            {
+                $lookup: {
+                    from: "persons",
+                    localField: "customer.personId",
+                    foreignField: "_id",
+                    as: "person",
+                },
+            },
+            { $unwind: "$person" },
+            // Lookup contact for customer
+            {
+                $lookup: {
+                    from: "contacts",
+                    localField: "customer.contactId",
+                    foreignField: "_id",
+                    as: "contact",
+                },
+            },
+            { $unwind: "$contact" },
+            // Lookup vehicle
+            {
+                $lookup: {
+                    from: "vehicles",
+                    localField: "vehicleId",
+                    foreignField: "_id",
+                    as: "vehicle",
+                },
+            },
+            { $unwind: "$vehicle" },
+            // Lookup priority
+            {
+                $lookup: {
+                    from: "priorities",
+                    localField: "priorityId",
+                    foreignField: "_id",
+                    as: "priority",
+                },
+            },
+            { $unwind: "$priority" },
+            // Lookup ticket status
+            {
+                $lookup: {
+                    from: "ticketstatuses",
+                    localField: "ticketStatusId",
+                    foreignField: "_id",
+                    as: "ticketStatus",
+                },
+            },
+            { $unwind: "$ticketStatus" },
+        ];
 
+        // ✅ Search filter
         if (search) {
-            searchQuery.$or = [
-                { ticketCode: { $regex: search, $options: "i" } },
-                { issue_Details: { $regex: search, $options: "i" } },
-            ];
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { ticketCode: { $regex: search, $options: "i" } },
+                        { issue_Details: { $regex: search, $options: "i" } },
+                        { "person.firstName": { $regex: search, $options: "i" } },
+                        { "person.lastName": { $regex: search, $options: "i" } },
+                    ],
+                },
+            });
         }
 
-        // ✅ Count total for pagination
-        const totalTickets = await customerTicketBase.countDocuments(searchQuery);
+        // ✅ Count total tickets
+        const countPipeline = [...pipeline, { $count: "total" }];
+        const countResult = await customerTicketBase.aggregate(countPipeline);
+        const totalTickets = countResult[0]?.total || 0;
 
-        // ✅ Fetch tickets
-        const tickets = await customerTicketBase.find(searchQuery)
-            .sort({ createdAt: -1 }) // latest tickets first
-            .skip(skip)
-            .limit(limit)
-            .populate({
-                path: "customerId",
-                select: "personId contactId",
-                populate: [
-                    { path: "personId", select: "firstName lastName" },
-                    { path: "contactId", select: "emailId" },
-                ],
-            })
-            .populate("vehicleId", "serialNumber vehicleType")
-            .populate("ticketStatusId", "label")
-            .populate("priorityId", "label");
+        // ✅ Pagination
+        pipeline.push({ $sort: { createdAt: -1 } });
+        pipeline.push({ $skip: skip });
+        pipeline.push({ $limit: limit });
+
+        // ✅ Project desired fields
+        pipeline.push({
+            $project: {
+                _id: 1,
+                ticketCode: 1,
+                issue_Details: 1,
+                location: 1,
+                assignedTechnicianId: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                customer: {
+                    firstName: "$person.firstName",
+                    lastName: "$person.lastName",
+                    email: "$contact.emailId",
+                },
+                vehicle: 1,
+                priority: "$priority.label",
+                ticketStatus: "$ticketStatus.label",
+            },
+        });
+
+        const tickets = await customerTicketBase.aggregate(pipeline);
 
         return res.status(200).json({
             success: true,
