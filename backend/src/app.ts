@@ -6,7 +6,7 @@ import "dotenv/config"; // load env variables
 // Import routes
 import shopRouter from "./routes/shop.routes";
 import authRouter from "./routes/auth.routes";
-import { adminProtecter } from "./middleware/auth.middleware";
+import { adminProtecter, technicianProtecter } from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
 import aiRoutes from './routes/ai.routes';
@@ -80,6 +80,7 @@ import goodsReturnRoutes from "./routes/goodsReturn.routes";
 import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
+import technicianRouter from "./routes/technician.routes";
 
 
 // Create express app
@@ -371,6 +372,14 @@ app.use(
   `${process.env.API_PREFIX}/insurance-companies`,
   adminProtecter,
   insuranceCompaniesRouter,
+
+);
+
+//03-02-2026 
+app.use(
+  `${process.env.API_PREFIX}/technician-dashboard`,
+  technicianProtecter,
+  technicianRouter,
 
 );
 
