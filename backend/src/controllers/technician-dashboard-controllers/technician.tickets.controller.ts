@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
-
+import mongoose from "mongoose";
 
 export const technicianTicketsController = async (
     req: AuthRequest,
@@ -13,151 +13,90 @@ export const technicianTicketsController = async (
         if (!user) {
             return res.status(400).json({
                 success: false,
-                message: "Please provide technician details.",
+                message: "Technician user not provided.",
             });
         }
-         console.log("Technician ID from token:", user); // ✅ Debug log for technician ID
-        // ✅ Find technician by accountId
+
+        // ✅ Find technician account
         const technician = await Technicians.findOne({
             accountId: user.userId,
             isDeleted: false,
             isActive: true,
-        });
+        }).select("_id");
 
         if (!technician) {
             return res.status(404).json({
                 success: false,
-                message: "Technician not found or inactive.",
+                message: "Technician not found.",
             });
         }
 
-        // ✅ Pagination & Search
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
+        // ✅ Pagination
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
         const skip = (page - 1) * limit;
         const search = (req.query.search as string) || "";
 
-        // ✅ Aggregation pipeline
-        const pipeline: any[] = [
-            {
-                $match: {
-                    assignedTechnicianId: { $in: [technician._id] },
-                    isDeleted: false,
-                },
-            },
-            // Lookup customer
-            {
-                $lookup: {
-                    from: "customers",
-                    localField: "customerId",
-                    foreignField: "_id",
-                    as: "customer",
-                },
-            },
-            { $unwind: "$customer" },
-            // Lookup person for customer
-            {
-                $lookup: {
-                    from: "persons",
-                    localField: "customer.personId",
-                    foreignField: "_id",
-                    as: "person",
-                },
-            },
-            { $unwind: "$person" },
-            // Lookup contact for customer
-            {
-                $lookup: {
-                    from: "contacts",
-                    localField: "customer.contactId",
-                    foreignField: "_id",
-                    as: "contact",
-                },
-            },
-            { $unwind: "$contact" },
-            // Lookup vehicle
-            {
-                $lookup: {
-                    from: "vehicles",
-                    localField: "vehicleId",
-                    foreignField: "_id",
-                    as: "vehicle",
-                },
-            },
-            { $unwind: "$vehicle" },
-            // Lookup priority
-            {
-                $lookup: {
-                    from: "priorities",
-                    localField: "priorityId",
-                    foreignField: "_id",
-                    as: "priority",
-                },
-            },
-            { $unwind: "$priority" },
-            // Lookup ticket status
-            {
-                $lookup: {
-                    from: "ticketstatuses",
-                    localField: "ticketStatusId",
-                    foreignField: "_id",
-                    as: "ticketStatus",
-                },
-            },
-            { $unwind: "$ticketStatus" },
-        ];
+        // ✅ Base Filter
+        const filter: any = {
+            assignedTechnicianId: new mongoose.Types.ObjectId(technician._id),
+            isDeleted: false,
+        };
 
-        // ✅ Search filter
+        // ✅ Search (INDEX FRIENDLY)
         if (search) {
-            pipeline.push({
-                $match: {
-                    $or: [
-                        { ticketCode: { $regex: search, $options: "i" } },
-                        { issue_Details: { $regex: search, $options: "i" } },
-                        { "person.firstName": { $regex: search, $options: "i" } },
-                        { "person.lastName": { $regex: search, $options: "i" } },
-                    ],
-                },
-            });
+            filter.$or = [
+                { ticketCode: { $regex: search, $options: "i" } },
+                { issue_Details: { $regex: search, $options: "i" } },
+            ];
         }
 
-        // ✅ Count total tickets
-        const countPipeline = [...pipeline, { $count: "total" }];
-        const countResult = await customerTicketBase.aggregate(countPipeline);
-        const totalTickets = countResult[0]?.total || 0;
+        // ✅ Total Count
+        const totalTickets = await customerTicketBase.countDocuments(filter);
 
-        // ✅ Pagination
-        pipeline.push({ $sort: { createdAt: -1 } });
-        pipeline.push({ $skip: skip });
-        pipeline.push({ $limit: limit });
+        // ✅ Fetch tickets
+        const tickets = await customerTicketBase
+            .find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate({
+                path: "customerId",
+                select: "personId contactId",
+                populate: [
+                    { path: "personId", select: "firstName lastName" },
+                    { path: "contactId", select: "emailId" },
+                ],
+            })
+            .populate("vehicleId", "serialNumber vehicleType")
+            .populate("priorityId", "label")
+            .populate("ticketStatusId", "label")
+            .lean();
 
-        // ✅ Project desired fields
-        pipeline.push({
-            $project: {
-                _id: 1,
-                ticketCode: 1,
-                issue_Details: 1,
-                location: 1,
-                assignedTechnicianId: 1,
-                createdAt: 1,
-                updatedAt: 1,
-                customer: {
-                    firstName: "$person.firstName",
-                    lastName: "$person.lastName",
-                    email: "$contact.emailId",
-                },
-                vehicle: 1,
-                priority: "$priority.label",
-                ticketStatus: "$ticketStatus.label",
+        // ✅ Enterprise Response Mapping
+        const formattedTickets = tickets.map((t: any) => ({
+            _id: t._id,
+            ticketCode: t.ticketCode,
+            issue_Details: t.issue_Details,
+            location: t.location,
+            createdAt: t.createdAt,
+            updatedAt: t.updatedAt,
+
+            customer: {
+                firstName: t.customerId?.personId?.firstName || "",
+                lastName: t.customerId?.personId?.lastName || "",
+                email: t.customerId?.contactId?.emailId || "",
             },
-        });
 
-        const tickets = await customerTicketBase.aggregate(pipeline);
+            vehicle: t.vehicleId,
+            priority: t.priorityId?.label || "",
+            ticketStatus: t.ticketStatusId?.label || "",
+        }));
 
         return res.status(200).json({
             success: true,
-            message: "Tickets fetched successfully",
-            tickets,
+            message: "Technician tickets fetched successfully",
+            tickets: formattedTickets,
             pagination: {
                 total: totalTickets,
                 page,
@@ -169,7 +108,7 @@ export const technicianTicketsController = async (
         console.error("Technician Ticket Error:", error);
         return res.status(500).json({
             success: false,
-            message: "Technician Tickets fetch failed due to server error.",
+            message: "Technician ticket fetch failed.",
         });
     }
 };
