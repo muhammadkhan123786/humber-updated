@@ -51,6 +51,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: LayoutDashboard,
     roleId: [1, 2],
   },
+  {
+    _id: nanoid(),
+    label: "My Jobs",
+    href: "/dashboard/jobs",
+    icon: LayoutDashboard,
+    roleId: [2],
+  },
 
   /* ================= SERVICE TICKETS ================= */
   {
@@ -113,7 +120,6 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ListTree,
         roleId: [1],
       }
-
     ],
   },
   /* ================= INVENTORY SYSTEM ================= */
@@ -177,7 +183,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: Settings,
     roleId: [1],
     subItems: [
-      { _id: nanoid(), label: "Vehicle Brands", href: "/dashboard/vehiclebrands", icon: Tag, roleId: [1] },
+      { _id: nanoid(), label: "Vehicle Makes", href: "/dashboard/vehiclebrands", icon: Tag, roleId: [1] },
       { _id: nanoid(), label: "Vehicle Models", href: "/dashboard/vehiclemodals", icon: Smartphone, roleId: [1] },
       { _id: nanoid(), label: "Repair Status", href: "/dashboard/repairstatus", icon: Activity, roleId: [1] },
       { _id: nanoid(), label: "Services", href: "/dashboard/services", icon: Wrench, roleId: [1] },
