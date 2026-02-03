@@ -44,7 +44,7 @@ const LabourSection: React.FC = () => {
   );
 
   return (
-    <div className="w-full max-w-[1260px] p-6 bg-white rounded-2xl outline  outline-purple-100 flex flex-col gap-6 font-sans">
+    <div className="w-full  p-6 bg-white rounded-2xl outline  outline-purple-100 flex flex-col gap-6 font-sans">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>

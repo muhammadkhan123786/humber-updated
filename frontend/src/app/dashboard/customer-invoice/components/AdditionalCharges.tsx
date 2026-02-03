@@ -22,7 +22,7 @@ const AdditionalCharges: React.FC = () => {
     "focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all";
 
   return (
-    <div className="w-full max-w-[1260px] bg-white rounded-2xl outline-2 outline-amber-100 p-6 flex flex-col gap-6 font-sans">
+    <div className="w-full  bg-white rounded-2xl outline-2 outline-amber-100 p-6 flex flex-col gap-6 font-sans">
       <div className="flex items-center gap-3 text-amber-600">
         <div className="p-1 rounded-md">
           <DollarSign size={20} />
