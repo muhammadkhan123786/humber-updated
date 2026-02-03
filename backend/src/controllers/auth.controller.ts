@@ -132,9 +132,12 @@ export const setupPassword = async (req: Request, res: Response) => {
 //change password controller 
 export const updatePassword = async (req: AuthRequest, res: Response) => {
     try {
-        const { currentPassword, newPassword } = req.body;
-        const userId = req.user?.id;
+        console.log("Update password request body:", req.body);
+        const {userId,currentPassword, newPassword } = req.body;
+        
+        console.log("User ID from token:", userId);
 
+        
         if (!userId || !currentPassword || !newPassword) {
             return res.status(400).json({
                 message: "currentPassword and newPassword are required.",

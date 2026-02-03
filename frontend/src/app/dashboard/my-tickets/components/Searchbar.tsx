@@ -8,7 +8,12 @@ interface DropdownOption {
   value: string
 }
 
-const Searchbar = () => {
+interface SearchbarProps {
+  viewMode: 'grid' | 'table'
+  onViewModeChange: (mode: 'grid' | 'table') => void
+}
+
+const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('All Statuses')
   const [selectedUrgency, setSelectedUrgency] = useState('All Urgencies')
@@ -16,7 +21,6 @@ const Searchbar = () => {
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [isUrgencyOpen, setIsUrgencyOpen] = useState(false)
   const [isSourceOpen, setIsSourceOpen] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
 
   const closeAllDropdowns = () => {
     setIsStatusOpen(false)
@@ -113,7 +117,7 @@ const Searchbar = () => {
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={handleToggle}
-          className={`flex items-center justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all min-w-48 h-9 focus:outline-none ${
+          className={`flex items-center font-semibold justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all min-w-48 h-9 focus:outline-none ${
             isOpen 
               ? 'border-[#4f46e5] ring-2 ring-[#4f46e5]/50' 
               : 'border-gray-300 hover:border-gray-400 focus:border-[#4f46e5] focus:ring-2 focus:ring-[#4f46e5]/50'
@@ -204,7 +208,7 @@ const Searchbar = () => {
         {/* View Toggle Buttons */}
         <div className="flex items-center gap-1 ml-auto bg-gray-100 rounded-xl p-1">
           <button
-            onClick={() => setViewMode('grid')}
+            onClick={() => onViewModeChange('grid')}
             className={`p-2 px-2.5 rounded-lg transition-colors ${
               viewMode === 'grid'
                 ? 'bg-linear-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
@@ -214,7 +218,7 @@ const Searchbar = () => {
             <Grid3x3 className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setViewMode('table')}
+            onClick={() => onViewModeChange('table')}
             className={`p-2 px-2.5 rounded-lg transition-colors ${
               viewMode === 'table'
                 ? 'bg-linear-to-r from-indigo-600 to-purple-600 text-white shadow-sm'

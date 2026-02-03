@@ -59,10 +59,14 @@ const ChangePasswordForm = ({ onClose }: Props) => {
     try {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : {};
+      const token = localStorage.getItem('token');
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/change-password`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           userId: user.id || user._id,
           currentPassword: passwords.currentPassword,
