@@ -1,6 +1,6 @@
 'use client'
 import React from 'react'
-import { Phone, Globe, MapPin, Wrench, User, Eye } from 'lucide-react'
+import { Wrench, User, Eye } from 'lucide-react'
 import { Ticket } from './TicketCard'
 
 interface TicketTableProps {
@@ -57,9 +57,6 @@ const TicketTable = ({ tickets, onViewDetails }: TicketTableProps) => {
                   Urgency
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider">
-                  Source
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider">
                   Location
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wider">
@@ -74,37 +71,36 @@ const TicketTable = ({ tickets, onViewDetails }: TicketTableProps) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {tickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-linear-to-r hover:from-gray-50 hover:to-transparent transition-all">
+              {tickets.map((ticket) => {
+                const customerName = `${ticket.customer.firstName} ${ticket.customer.lastName}`
+                const productName = ticket.vehicle.make && ticket.vehicle.model 
+                  ? `${ticket.vehicle.make} ${ticket.vehicle.model}${ticket.vehicle.year ? ` (${ticket.vehicle.year})` : ''}`
+                  : 'N/A'
+                const formattedDate = new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })
+                
+                return (
+                <tr key={ticket._id} className="hover:bg-linear-to-r hover:from-gray-50 hover:to-transparent transition-all">
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="text-sm font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{ticket.ticketId}</span>
+                    <span className="text-sm font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{ticket.ticketCode}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900">{ticket.customer}</span>
+                    <span className="text-sm font-medium text-gray-900">{customerName}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600">{ticket.product}</span>
+                    <span className="text-sm text-gray-600">{productName}</span>
                   </td>
                   <td className="px-4 py-3 max-w-xs">
-                    <span className="text-sm text-gray-600 line-clamp-2">{ticket.issue}</span>
+                    <span className="text-sm text-gray-600 line-clamp-2">{ticket.issue_Details}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-medium w-fit whitespace-nowrap text-xs text-white border-0 shadow-md ${getStatusColor(ticket.status)}`}>
-                      {ticket.status}
+                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-medium w-fit whitespace-nowrap text-xs text-white border-0 shadow-md ${getStatusColor(ticket.ticketStatus)}`}>
+                      {ticket.ticketStatus}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-md text-xs font-medium uppercase text-white ${getUrgencyColor(ticket.urgency)}`}>
-                      {ticket.urgency}
+                    <span className={`px-2 py-1 rounded-md text-xs font-medium uppercase text-white ${getUrgencyColor(ticket.priority)}`}>
+                      {ticket.priority}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      {ticket.source === 'phone' && <Phone className="w-4 h-4 text-indigo-600" />}
-                      {ticket.source === 'online' && <Globe className="w-4 h-4 text-indigo-600" />}
-                      {ticket.source === 'walk-in' && <MapPin className="w-4 h-4 text-indigo-600" />}
-                      <span className="capitalize">{ticket.source}</span>
-                    </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -113,23 +109,23 @@ const TicketTable = ({ tickets, onViewDetails }: TicketTableProps) => {
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {ticket.technician ? (
+                    {ticket.assignedTechnicianId && ticket.assignedTechnicianId.length > 0 ? (
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-indigo-600" />
-                        <span className="text-sm text-indigo-600 font-medium">{ticket.technician}</span>
+                        <span className="text-sm text-indigo-600 font-medium">Assigned</span>
                       </div>
                     ) : (
                       <span className="text-sm text-gray-400">Unassigned</span>
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="text-sm text-gray-600">{ticket.created}</span>
+                    <span className="text-sm text-gray-600">{formattedDate}</span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex justify-center">
                       <button
                         onClick={() => onViewDetails?.(ticket)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
                       >
                         <Eye className="w-4 h-4" />
                         View
@@ -137,7 +133,8 @@ const TicketTable = ({ tickets, onViewDetails }: TicketTableProps) => {
                     </div>
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

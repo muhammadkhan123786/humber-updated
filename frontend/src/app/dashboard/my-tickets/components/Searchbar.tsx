@@ -11,9 +11,20 @@ interface DropdownOption {
 interface SearchbarProps {
   viewMode: 'grid' | 'table'
   onViewModeChange: (mode: 'grid' | 'table') => void
+  onSearchChange: (search: string) => void
+  onFiltersChange: (filters: { status?: string; urgency?: string; source?: string }) => void
+  totalTickets: number
+  displayedTickets: number
 }
 
-const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
+const Searchbar = ({ 
+  viewMode, 
+  onViewModeChange, 
+  onSearchChange, 
+  onFiltersChange,
+  totalTickets,
+  displayedTickets
+}: SearchbarProps) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('All Statuses')
   const [selectedUrgency, setSelectedUrgency] = useState('All Urgencies')
@@ -66,6 +77,33 @@ const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
     { label: 'Online', value: 'online' },
     { label: 'Walk In', value: 'walk-in' },
   ]
+
+  const handleStatusChange = (value: string) => {
+    setSelectedStatus(value)
+    onFiltersChange({ 
+      status: value === 'All Statuses' ? undefined : value,
+      urgency: selectedUrgency === 'All Urgencies' ? undefined : selectedUrgency,
+      source: selectedSource === 'All Sources' ? undefined : selectedSource
+    })
+  }
+
+  const handleUrgencyChange = (value: string) => {
+    setSelectedUrgency(value)
+    onFiltersChange({ 
+      status: selectedStatus === 'All Statuses' ? undefined : selectedStatus,
+      urgency: value === 'All Urgencies' ? undefined : value,
+      source: selectedSource === 'All Sources' ? undefined : selectedSource
+    })
+  }
+
+  const handleSourceChange = (value: string) => {
+    setSelectedSource(value)
+    onFiltersChange({ 
+      status: selectedStatus === 'All Statuses' ? undefined : selectedStatus,
+      urgency: selectedUrgency === 'All Urgencies' ? undefined : selectedUrgency,
+      source: value === 'All Sources' ? undefined : value
+    })
+  }
 
   const Dropdown = ({
     options,
@@ -167,7 +205,10 @@ const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
             type="text"
             placeholder="Search tickets, customers, products..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              onSearchChange(e.target.value)
+            }}
             className="w-full h-9 pl-10 pr-3 py-1 bg-[#f3f4f6] border border-gray-300 rounded-lg placeholder:text-[#6b7280] text-sm focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-2 focus:ring-[#4f46e5]/50 transition-all"
           />
         </div>
@@ -176,7 +217,7 @@ const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
         <Dropdown
           options={statusOptions}
           selected={selectedStatus}
-          onSelect={setSelectedStatus}
+          onSelect={handleStatusChange}
           isOpen={isStatusOpen}
           setIsOpen={setIsStatusOpen}
           placeholder="All Statuses"
@@ -187,7 +228,7 @@ const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
         <Dropdown
           options={urgencyOptions}
           selected={selectedUrgency}
-          onSelect={setSelectedUrgency}
+          onSelect={handleUrgencyChange}
           isOpen={isUrgencyOpen}
           setIsOpen={setIsUrgencyOpen}
           placeholder="All Urgencies"
@@ -198,7 +239,7 @@ const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
         <Dropdown
           options={sourceOptions}
           selected={selectedSource}
-          onSelect={setSelectedSource}
+          onSelect={handleSourceChange}
           isOpen={isSourceOpen}
           setIsOpen={setIsSourceOpen}
           placeholder="All Sources"
@@ -233,7 +274,7 @@ const Searchbar = ({ viewMode, onViewModeChange }: SearchbarProps) => {
       {/* Second Row: Filter and Showing Count */}
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <Filter className="w-4 h-4" />
-        <span>Showing <span className="font-semibold text-indigo-600">3</span> of <span className="font-semibold text-gray-600">3</span> tickets</span>
+        <span>Showing <span className="font-semibold text-indigo-600">{displayedTickets}</span> of <span className="font-semibold text-gray-600">{totalTickets}</span> tickets</span>
       </div>
     </div>
   )

@@ -9,17 +9,17 @@ export const technicianTicketsController = async (
     res: Response
 ) => {
     try {
-        const user = req.body.user;
+        const user = req.user;
         if (!user) {
             return res.status(400).json({
                 success: false,
                 message: "Please provide technician details.",
             });
         }
-
+         console.log("Technician ID from token:", user); // ✅ Debug log for technician ID
         // ✅ Find technician by accountId
         const technician = await Technicians.findOne({
-            accountId: user._id,
+            accountId: user.userId,
             isDeleted: false,
             isActive: true,
         });

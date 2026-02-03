@@ -1,20 +1,27 @@
 'use client'
 import React from 'react'
-import { Clock, User, Package, Phone, Globe, MapPin, Wrench, Calendar } from 'lucide-react'
+import { Clock, User, Package, Wrench, Calendar } from 'lucide-react'
 
 export interface Ticket {
-  id: string
-  ticketId: string
-  customer: string
-  product: string
-  issue: string
-  status: 'open' | 'in progress' | 'awaiting parts' | 'completed' | 'cancelled'
-  urgency: 'low' | 'medium' | 'high' | 'emergency'
-  source: 'phone' | 'online' | 'walk-in'
-  location: 'workshop' | 'on-site'
-  technician?: string
-  technicianAvatar?: string
-  created: string
+  _id: string
+  ticketCode: string
+  customer: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+  vehicle: {
+    make?: string
+    model?: string
+    year?: number
+  }
+  issue_Details: string
+  ticketStatus: string
+  priority: string
+  location: string
+  assignedTechnicianId: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 interface TicketCardProps {
@@ -23,6 +30,11 @@ interface TicketCardProps {
 }
 
 const TicketCard = ({ ticket, onViewDetails }: TicketCardProps) => {
+  const customerName = `${ticket.customer.firstName} ${ticket.customer.lastName}`
+  const productName = ticket.vehicle.make && ticket.vehicle.model 
+    ? `${ticket.vehicle.make} ${ticket.vehicle.model}${ticket.vehicle.year ? ` (${ticket.vehicle.year})` : ''}`
+    : 'N/A'
+  const formattedDate = new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency.toLowerCase()) {
@@ -57,20 +69,20 @@ const TicketCard = ({ ticket, onViewDetails }: TicketCardProps) => {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-indigo-600" />
               <span className="text-sm font-semibold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-purple-600 hover:to-indigo-600">
-                {ticket.ticketId}
+                {ticket.ticketCode}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded-lg text-xs font-medium uppercase ${getUrgencyColor(ticket.urgency)} text-white`}>
-                {ticket.urgency}
+              <span className={`px-2 py-1 rounded-lg text-xs font-medium uppercase ${getUrgencyColor(ticket.priority)} text-white`}>
+                {ticket.priority}
               </span>
             </div>
           </div>
 
           {/* Status */}
           <div className="mb-4">
-            <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-medium w-fit whitespace-nowrap shrink-0 gap-1 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent ${getStatusColor(ticket.status)} text-white border-0 shadow-md text-xs`}>
-              {ticket.status}
+            <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 font-medium w-fit whitespace-nowrap shrink-0 gap-1 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden border-transparent ${getStatusColor(ticket.ticketStatus)} text-white border-0 shadow-md text-xs`}>
+              {ticket.ticketStatus}
             </span>
           </div>
 
@@ -78,39 +90,27 @@ const TicketCard = ({ ticket, onViewDetails }: TicketCardProps) => {
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-gray-700">
             <User className="h-4 w-4 text-indigo-600 " />
-            <span className="font-medium text-sm bg-linear-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">{ticket.customer}</span>
+            <span className="font-medium text-sm bg-linear-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent">{customerName}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <Package className="h-4 w-4 text-purple-600" />
-            <span className="text-sm">{ticket.product}</span>
+            <span className="text-sm">{productName}</span>
           </div>
         </div>
 
         {/* Issue Description */}
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{ticket.issue}</p>
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{ticket.issue_Details}</p>
 
         {/* Footer Info */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-4 text-xs text-gray-600">
           <div className="flex items-center gap-1">
-            {ticket.source === 'phone' && <Phone className="w-3.5 h-3.5 text-gray-600" />}
-            {ticket.source === 'online' && <Globe className="w-3.5 h-3.5 text-gray-600" />}
-            {ticket.source === 'walk-in' && <MapPin className="w-3.5 h-3.5 text-gray-600" />}
-            <span className="capitalize">{ticket.source}</span>
-          </div>
-          <div className="flex items-center gap-1 justify-end">
             <Wrench className="w-3.5 h-3.5 text-gray-600" />
             <span className="capitalize">{ticket.location}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 justify-end">
             <Calendar className="w-3.5 h-3.5 text-gray-600" />
-            <span>{ticket.created}</span>
+            <span>{formattedDate}</span>
           </div>
-          {ticket.technician && (
-            <div className="flex items-center gap-1 justify-end">
-              <User className="w-3.5 h-3.5 text-indigo-600" />
-              <span className='text-indigo-600'>{ticket.technician}</span>
-            </div>
-          )}
         </div>
 
         {/* Actions */}

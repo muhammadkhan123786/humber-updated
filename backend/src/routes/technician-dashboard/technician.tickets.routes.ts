@@ -2,7 +2,8 @@ import { Router } from "express";
 import { technicianTicketsController } from "../../controllers/technician-dashboard-controllers/technician.tickets.controller";
 
 
-const technicianRouter = Router();
+const technicianDashboardRouter = Router();
 
-technicianRouter.get('/technician-tickets', technicianTicketsController)
+technicianDashboardRouter.get('/technician-tickets', technicianTicketsController)
 
+export default technicianDashboardRouter;
