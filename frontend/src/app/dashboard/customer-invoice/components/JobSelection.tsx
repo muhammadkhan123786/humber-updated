@@ -48,7 +48,7 @@ const JobSelectionSection: React.FC = () => {
   }));
 
   return (
-    <div className="w-full max-w-[1212px] mx-auto  font-sans">
+    <div className="w-full  mx-auto  font-sans">
       <div className="w-full bg-white rounded-2xl outline-2 -outline-offset-2 outline-green-100 flex flex-col gap-6 p-6 shadow-sm">
         <div className="w-full flex flex-col gap-1">
           <div className="flex items-center gap-2 text-green-600">

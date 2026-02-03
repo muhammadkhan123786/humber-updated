@@ -3,7 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 
 const InvoiceSummary = () => {
   return (
-    <div className="w-full max-w-[1260px] bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl  outline-2 -outline-offset-2 outline-green-200 p-6 flex flex-col gap-6 font-sans">
+    <div className="w-full  bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl  outline-2 -outline-offset-2 outline-green-200 p-6 flex flex-col gap-6 font-sans">
       <div className="flex items-center gap-3 text-green-600">
         <div className="p-1 bg-white/50">
           <CheckCircle2 size={20} />

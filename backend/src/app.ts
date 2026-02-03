@@ -81,6 +81,7 @@ import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import technicianRouter from "./routes/technician.routes";
+import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 
 
 // Create express app
@@ -379,7 +380,7 @@ app.use(
 app.use(
   `${process.env.API_PREFIX}/technician-dashboard`,
   technicianProtecter,
-  technicianRouter,
+  technicianDashboardRouter,
 
 );
 

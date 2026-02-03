@@ -35,11 +35,11 @@ const CardSection = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 py-">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       {cards.map((card, index) => (
         <div
           key={index}
-          className={`${card.gradient} w-[280px] h-40 p-5 rounded-3xl shadow-lg flex flex-col justify-between`}
+          className={`${card.gradient} w-full h-40 p-5 rounded-3xl shadow-lg flex flex-col justify-between`}
         >
           <div className="self-stretch h-8 inline-flex justify-between items-center">
             <div className="w-8 h-8 flex items-center justify-center">
