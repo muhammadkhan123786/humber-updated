@@ -86,7 +86,7 @@ const StepLocationPriority = ({
 
       <div className="p-8 space-y-8">
         <section className="space-y-4">
-          <label className="text-sm font-bold text-[#1E293B]">
+          <label className="text-[16px] font-medium text-[#1E293B]">
             Repair Location *
           </label>
           <Controller
@@ -161,7 +161,7 @@ const StepLocationPriority = ({
         )}
 
         <section className="space-y-4">
-          <label className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+          <label className="text-[16px] font-medium text-[#1E293B] flex items-center gap-2">
             Ticket Status *
           </label>
           <Controller
@@ -202,7 +202,7 @@ const StepLocationPriority = ({
         </section>
         <div className="my-3"></div>
         <section className="space-y-4">
-          <label className="text-sm font-bold text-[#1E293B]">
+          <label className="text-[16px] font-medium text-[#1E293B]">
             Priority Level *
           </label>
           <Controller
@@ -259,7 +259,7 @@ const StepLocationPriority = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#4F39F6]">
               <Users size={18} />
-              <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
+              <label className="text-indigo-950 text-base text-[16px] font-medium font-['Arial'] leading-6">
                 Assign Technician (Optional)
               </label>
             </div>
