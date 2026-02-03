@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // Router import kiya
+import { useRouter } from "next/navigation";
 import {
   Search,
   List,
@@ -9,7 +9,7 @@ import {
   User,
   Calendar,
   Send,
-  BrickWall,
+  Table,
 } from "lucide-react";
 import { CustomSelect } from "../../../common-form/CustomSelect";
 
@@ -100,7 +100,7 @@ const InvoicesSection = () => {
               onClick={() => setViewType("grid")}
               className={`p-2.5 rounded-[10px] border transition-all ${viewType === "grid" ? "bg-indigo-600 text-white" : "bg-slate-50 border-indigo-100 text-indigo-900"}`}
             >
-              <BrickWall size={18} />
+              <Table size={18} />
             </button>
             <button
               onClick={() => setViewType("table")}
@@ -112,7 +112,6 @@ const InvoicesSection = () => {
         </div>
       </div>
 
-      {/* Table View */}
       {viewType === "table" ? (
         <div className="w-full overflow-x-auto bg-white rounded-2xl border-2 border-indigo-100 shadow-sm">
           <table className="w-full text-left border-collapse">
@@ -175,7 +174,6 @@ const InvoicesSection = () => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
-                      {/* Navigate to Page on Click */}
                       <button
                         onClick={() => handleView(inv.id)}
                         className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -209,8 +207,6 @@ const InvoicesSection = () => {
     </div>
   );
 };
-
-// InvoiceCard updated to accept onView prop
 const InvoiceCard = ({
   id,
   date,

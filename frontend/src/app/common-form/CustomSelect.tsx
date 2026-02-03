@@ -17,7 +17,6 @@ export const CustomSelect = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Logic: Filter options based on search
   const filteredOptions = options.filter((opt: any) =>
     opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Loader2, Check, Plus, Save } from "lucide-react";
 import { Controller } from "react-hook-form";
 import { CustomSelect } from "../../../../common-form/CustomSelect";
@@ -209,6 +209,9 @@ const StepProduct: React.FC<StepProductProps> = ({
       setIsAddingVehicle(false);
     }
   };
+  const companyProducts = watch("companyProducts") || [];
+  const companyProductCount = companyProducts.length;
+
   useEffect(() => {
     const currentProductOwnership =
       watch("productOwnership") || "Customer Product";
@@ -217,6 +220,23 @@ const StepProduct: React.FC<StepProductProps> = ({
       setShowManualForm(false);
     }
   }, [productOwnership, setValue, watch]);
+  const isDefaultSet = useRef(false);
+
+  useEffect(() => {
+    if (isDefaultSet.current) return;
+
+    if (companyProductCount > 0) {
+      setValue("productOwnership", "Company product");
+    } else {
+      setValue("productOwnership", "Customer Product");
+    }
+
+    isDefaultSet.current = true;
+  }, [companyProductCount, setValue]);
+
+  console.log("company products count:", customerHasVehicles);
+  console.log("productOwnership:", productOwnership);
+
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
       <div

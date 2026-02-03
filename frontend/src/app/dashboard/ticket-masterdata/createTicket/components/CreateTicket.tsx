@@ -63,6 +63,7 @@ const CreateTicket = ({
     setSuccess,
     editingId,
     setEditData,
+    insurances,
   } = useTicketForm();
 
   const isUpdating = initialEditMode || !!editingId || !!urlId;
@@ -116,7 +117,7 @@ const CreateTicket = ({
           const response = await getById("/customer-tickets", urlId);
           if (response?.success && response.data) {
             setEditData(response.data);
-            // Also set the submittedFormData with the loaded data for updates
+
             setSubmittedFormData(response.data);
           } else {
             setError("Failed to load ticket details.");
@@ -134,7 +135,7 @@ const CreateTicket = ({
   useEffect(() => {
     if (initialEditMode && initialData && !editingId) {
       setEditData(initialData);
-      // Also set the submittedFormData with the initial data for updates
+
       setSubmittedFormData(initialData);
     }
   }, [initialEditMode, initialData, editingId, setEditData]);
@@ -158,12 +159,10 @@ const CreateTicket = ({
       const formData = form.getValues();
       console.log("🎯 FORM VALUES FOR SUBMIT:", formData);
 
-      // Save form data for success popup - BOTH FOR CREATE AND UPDATE
       setSubmittedFormData(formData);
 
       let ticketCode = generatedTicketCode;
 
-      // Only generate new code for CREATE, not for UPDATE
       if (!isUpdating) {
         console.log("Generating ticket code for new ticket...");
         ticketCode = await fetchTicketCode();
@@ -171,14 +170,12 @@ const CreateTicket = ({
         setGeneratedTicketCode(ticketCode);
       }
 
-      // Prepare data for submission
       const dataToSubmit = ticketCode ? { ...formData, ticketCode } : formData;
 
       const result = await handleSubmit(dataToSubmit);
       console.log("Ticket submission API Response:", result);
 
       if (result && result.success) {
-        // Save the API response data
         const responseData = {
           ...result.data,
           ticketCode: ticketCode || result.data?.ticketCode,
@@ -232,8 +229,6 @@ const CreateTicket = ({
           values.purchaseDate,
         );
       }
-
-      // If neither dropdown selected nor manual mode started, it's invalid
       return false;
     }
 
@@ -264,9 +259,7 @@ const CreateTicket = ({
     setError(null);
   };
 
-  // Helper function to get product info for success popup
   const getProductInfoForPopup = () => {
-    // Check if we have vehicle data in the response
     if (
       ticketResponse?.vehicleId &&
       typeof ticketResponse.vehicleId === "object"
@@ -278,7 +271,6 @@ const CreateTicket = ({
       };
     }
 
-    // Check if we have vehicleId in submitted form data
     if (submittedFormData?.vehicleId) {
       const vehicle = vehicles?.find(
         (v) => v._id === submittedFormData.vehicleId,
@@ -291,7 +283,6 @@ const CreateTicket = ({
       }
     }
 
-    // Check for manual entry
     if (submittedFormData?.manualProductName) {
       return {
         product: submittedFormData.manualProductName,
@@ -305,9 +296,7 @@ const CreateTicket = ({
     };
   };
 
-  // Helper function to get customer info for success popup
   const getCustomerInfoForPopup = () => {
-    // Check ticket response first
     if (ticketResponse?.customer) {
       if (typeof ticketResponse.customer === "string") {
         return ticketResponse.customer;
@@ -319,7 +308,6 @@ const CreateTicket = ({
       );
     }
 
-    // Check submitted form data
     if (submittedFormData?.customerId) {
       const customer = customers?.find(
         (c) => c._id === submittedFormData.customerId,
@@ -484,7 +472,11 @@ const CreateTicket = ({
             />
           )}
           {currentStep === 3 && (
-            <StepIssueDetails form={form} isLoading={isLoading} />
+            <StepIssueDetails
+              form={form}
+              isLoading={isLoading}
+              insurances={insurances}
+            />
           )}
           {currentStep === 4 && (
             <StepLocationPriority
