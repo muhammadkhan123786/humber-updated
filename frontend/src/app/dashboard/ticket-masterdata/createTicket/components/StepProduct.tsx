@@ -274,7 +274,7 @@ const StepProduct: React.FC<StepProductProps> = ({
                 🏢
               </div>
               <div className="flex-1">
-                <p className="font-bold text-sm">Company Product</p>
+                <p className="font-bold text-sm">Our Product</p>
                 <p
                   className={`text-xs ${
                     productOwnership === "Company product"

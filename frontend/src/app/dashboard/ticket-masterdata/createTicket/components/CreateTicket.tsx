@@ -350,7 +350,6 @@ const CreateTicket = ({
       return ticketResponse.priorityId.serviceRequestPrioprity;
     }
 
-    // Check submitted form data
     if (submittedFormData?.priorityId) {
       const priority = priorities?.find(
         (p) => p._id === submittedFormData.priorityId,
@@ -397,7 +396,7 @@ const CreateTicket = ({
               </h1>
             </div>
 
-            <p className="ml-10 text-gray-400 font-bold mb-12 px-8 text-sm tracking-widest">
+            <p className="ml-10 text-gray-400 font-normal text-[16px] mb-12 px-8 text-sm tracking-widest">
               Step {currentStep} of 4
             </p>
           </div>
