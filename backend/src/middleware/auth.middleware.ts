@@ -233,9 +233,10 @@ export const technicianMasterProtector = async (
             token,
             process.env.JWT_SECRET as string
         ) as {
-            id: string;
+            userId: string;
             role: "Admin" | "Technician";
         };
+        console.log("decoded", decoded);
 
         // 3️⃣ Technician only
         if (decoded.role !== "Technician") {
@@ -243,14 +244,15 @@ export const technicianMasterProtector = async (
         }
 
         // 4️⃣ Fetch technician
+        console.log("decoded id", decoded.userId);
         const technician = await Technicians.findOne({
-            userId: decoded.id,
+            accountId: decoded.userId,
             isDeleted: false,
             isActive: true,
         })
             .select("_id accountId")
             .lean();
-
+        console.log("technician", technician);
         if (!technician) {
             return res.status(403).json({ message: "Technician not found or inactive" });
         }
