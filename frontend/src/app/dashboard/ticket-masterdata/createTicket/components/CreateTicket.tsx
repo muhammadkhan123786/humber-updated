@@ -40,6 +40,9 @@ const CreateTicket = ({
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [submittedFormData, setSubmittedFormData] = useState<any>(null);
   const [ticketResponse, setTicketResponse] = useState<any>(null);
+  const [popupCustomerName, setPopupCustomerName] =
+    useState<string>("Unknown Customer");
+
   const [generatedTicketCode, setGeneratedTicketCode] = useState<string | null>(
     null,
   );
@@ -183,6 +186,18 @@ const CreateTicket = ({
         };
 
         setTicketResponse(responseData);
+
+        // Resolve customer name once here
+        const resolvedCustomerName =
+          responseData.customer?.companyName ||
+          responseData.customer?.personId?.firstName ||
+          customers?.find((c) => c._id === formData.customerId)?.companyName ||
+          customers?.find((c) => c._id === formData.customerId)?.personId
+            ?.firstName ||
+          "Unknown Customer";
+
+        setPopupCustomerName(resolvedCustomerName); // ✅ use state to hold the correct value
+
         setShowSuccessPopup(true);
 
         if (!isUpdating) {
@@ -298,35 +313,6 @@ const CreateTicket = ({
       serialNumber: "No Serial Number",
     };
   };
-
-  const getCustomerInfoForPopup = () => {
-    if (ticketResponse?.customer) {
-      if (typeof ticketResponse.customer === "string") {
-        return ticketResponse.customer;
-      }
-      return (
-        ticketResponse.customer.companyName ||
-        ticketResponse.customer.personId?.firstName ||
-        "Unknown Customer"
-      );
-    }
-
-    if (submittedFormData?.customerId) {
-      const customer = customers?.find(
-        (c) => c._id === submittedFormData.customerId,
-      );
-      if (customer) {
-        return (
-          customer.companyName ||
-          customer.personId?.firstName ||
-          "Unknown Customer"
-        );
-      }
-    }
-
-    return "Unknown Customer";
-  };
-
   const getUrgencyInfoForPopup = () => {
     if (ticketResponse?.urgency) {
       return ticketResponse.urgency;
@@ -352,7 +338,7 @@ const CreateTicket = ({
   };
 
   const productInfo = getProductInfoForPopup();
-  const customerInfo = getCustomerInfoForPopup();
+
   const urgencyInfo = getUrgencyInfoForPopup();
 
   return (
@@ -538,7 +524,7 @@ const CreateTicket = ({
           ticketData={{
             mongoId: ticketResponse?._id,
             ticketCode: ticketResponse?.ticketCode || generatedTicketCode,
-            customer: customerInfo,
+            customer: popupCustomerName,
             product: productInfo.product,
             serialNumber: productInfo.serialNumber,
             urgency: urgencyInfo,
