@@ -313,36 +313,6 @@ const CreateTicket = ({
       serialNumber: "No Serial Number",
     };
   };
-
-  const getCustomerInfoForPopup = () => {
-    // priority 1: ticketResponse.customer
-    if (ticketResponse?.customer) {
-      if (typeof ticketResponse.customer === "string")
-        return ticketResponse.customer;
-      return (
-        ticketResponse.customer.companyName ||
-        ticketResponse.customer.personId?.firstName ||
-        "Unknown Customer"
-      );
-    }
-
-    // priority 2: submittedFormData.customerId
-    if (submittedFormData?.customerId) {
-      const customer = customers?.find(
-        (c) => c._id === submittedFormData.customerId,
-      );
-      if (customer)
-        return (
-          customer.companyName ||
-          customer.personId?.firstName ||
-          "Unknown Customer"
-        );
-    }
-
-    // fallback
-    return "Unknown Customer";
-  };
-
   const getUrgencyInfoForPopup = () => {
     if (ticketResponse?.urgency) {
       return ticketResponse.urgency;
@@ -368,7 +338,7 @@ const CreateTicket = ({
   };
 
   const productInfo = getProductInfoForPopup();
-  const customerInfo = getCustomerInfoForPopup();
+
   const urgencyInfo = getUrgencyInfoForPopup();
 
   return (
