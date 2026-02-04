@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { Roles } from '../models/user.models';
+import { Roles, User } from '../models/user.models';
+import { Technicians } from '../models/technician-models/technician.models';
 
 export interface AuthRequest extends Request {
     user?: any;
-    role?: Roles
+    role?: Roles;
+    technician?: any
 }
 
 //admin protector operations middleware.
@@ -82,7 +84,7 @@ export const technicianProtecter = (
             res.status(403).json({ message: "Not authorized, Technician access only" });
             return; // ✅ return void
         }
-       // console.log("Technician access granted");
+        // console.log("Technician access granted");
         next(); // ✅ continue to next middleware
     } catch (error) {
         res.status(401).json({ message: "Not authorized, token invalid" });
@@ -208,5 +210,73 @@ export const generalProtecter = (
         next();
     } catch (error) {
         return res.status(401).json({ message: "Not authorized, token invalid" });
+    }
+};
+
+//admin add user id 
+export const technicianMasterProtector = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // 1️⃣ Extract token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Token missing" });
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        // 2️⃣ Verify token
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET as string
+        ) as {
+            id: string;
+            role: "Admin" | "Technician";
+        };
+
+        // 3️⃣ Technician only
+        if (decoded.role !== "Technician") {
+            return res.status(403).json({ message: "Technician access only" });
+        }
+
+        // 4️⃣ Fetch technician
+        const technician = await Technicians.findOne({
+            userId: decoded.id,
+            isDeleted: false,
+            isActive: true,
+        })
+            .select("_id accountId")
+            .lean();
+
+        if (!technician) {
+            return res.status(403).json({ message: "Technician not found or inactive" });
+        }
+
+        // 5️⃣ Fetch MASTER ADMIN
+        const masterUser = await User.findOne({
+            _id: technician.accountId,
+            isDeleted: false,
+            isActive: true,
+        }).lean();
+
+        if (!masterUser) {
+            return res.status(403).json({ message: "Associated admin not found" });
+        }
+
+        // 6️⃣ Attach MASTER user (important)
+        req.user = masterUser;
+
+        // 7️⃣ Attach technician metadata (optional but recommended)
+        req.technician = technician;
+
+        req.role = "Technician";
+
+        next();
+    } catch (error) {
+        console.error("Technician Master Protector Error:", error);
+        return res.status(401).json({ message: "Invalid or expired token" });
     }
 };

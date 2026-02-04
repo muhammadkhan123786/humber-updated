@@ -6,7 +6,7 @@ import "dotenv/config"; // load env variables
 // Import routes
 import shopRouter from "./routes/shop.routes";
 import authRouter from "./routes/auth.routes";
-import { adminProtecter, technicianProtecter } from "./middleware/auth.middleware";
+import { adminProtecter, technicianMasterProtector, technicianProtecter } from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
 import aiRoutes from './routes/ai.routes';
@@ -384,6 +384,12 @@ app.use(
 
 );
 
+//04-02-2026
+app.use(
+  `${process.env.API_PREFIX}/master-technician-dashboard`,
+  technicianMasterProtector,
+  ticketStatusRouter,
+);
 
 
 //Muhammad Imran code ended here.
