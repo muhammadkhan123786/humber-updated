@@ -98,12 +98,23 @@ customerTicketBaseRouter.post(
       const code = await generateTicketCode();
       if (!req.body) req.body = {};
       req.body.ticketCode = code;
+      console.log("Initial Body Report: ", req.body);
+      if (req.body.vehiclePickUp === "Customer-Drop") {
+        req.body.pickUpBy = undefined;
+        req.body.externalCompanyName = undefined;
+        req.body.riderId = undefined;
+        req.body.pickUpDate = undefined;
+      }
+      if (req.body.riderId === "") {
+        delete req.body.riderId;
+      }
+      if (req.body.pickUpDate === "") {
+        delete req.body.pickUpDate;
+      }
+
       if (req.body.purchaseDate)
         req.body.purchaseDate = new Date(req.body.purchaseDate);
 
-      if (req.body.pickUpDate) {
-        req.body.pickUpDate = new Date(req.body.pickUpDate);
-      }
       console.log("Body Report: ", req.body);
       if (typeof req.body.investigationParts === "string") {
         try {
@@ -142,15 +153,24 @@ customerTicketBaseRouter.put(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (!req.body) req.body = {};
+      console.log("Body Report: ", req.body);
+      if (req.body.vehiclePickUp === "Customer-Drop") {
+        req.body.pickUpBy = undefined;
+        req.body.externalCompanyName = undefined;
+        req.body.riderId = undefined;
+        req.body.pickUpDate = undefined;
+      }
+      if (req.body.riderId === "") {
+        delete req.body.riderId;
+      }
+
+      if (req.body.riderId === "") {
+        delete req.body.riderId;
+      }
 
       if (req.body.purchaseDate) {
         req.body.purchaseDate = new Date(req.body.purchaseDate);
       }
-
-      if (req.body.pickUpDate) {
-        req.body.pickUpDate = new Date(req.body.pickUpDate);
-      }
-
       if (typeof req.body.investigationParts === "string") {
         try {
           req.body.investigationParts = JSON.parse(req.body.investigationParts);
@@ -180,6 +200,9 @@ customerTicketBaseRouter.put(
 
 customerTicketBaseRouter.delete("/:id", customerTicketBaseController.delete);
 
-customerTicketBaseRouter.post("/send-customer-ticket-copy", sendTicketDetailsToCustomer)
+customerTicketBaseRouter.post(
+  "/send-customer-ticket-copy",
+  sendTicketDetailsToCustomer,
+);
 
 export default customerTicketBaseRouter;
