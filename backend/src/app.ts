@@ -391,6 +391,12 @@ app.use(
   ticketStatusRouter,
 );
 
+app.use(
+  `${process.env.API_PREFIX}/master-ticket-urgency-technician-dashboard`,
+  technicianMasterProtector,
+  ServiceRequestPrioprityRouter,
+);
+
 
 //Muhammad Imran code ended here.
 
