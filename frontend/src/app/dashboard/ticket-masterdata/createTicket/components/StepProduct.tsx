@@ -209,8 +209,20 @@ const StepProduct: React.FC<StepProductProps> = ({
       setIsAddingVehicle(false);
     }
   };
-  const companyProducts = watch("companyProducts") || [];
-  const companyProductCount = companyProducts.length;
+
+  const companyOwnedVehicles = useMemo(() => {
+    if (!customerId) return [];
+    return vehicles.filter((v) => {
+      const vehicleCustomerId =
+        typeof v.customerId === "object" ? v.customerId?._id : v.customerId;
+
+      return (
+        v.isVehicleCompanyOwned === true && vehicleCustomerId === customerId
+      );
+    });
+  }, [vehicles, customerId]);
+
+  const companyProductCount = companyOwnedVehicles.length;
 
   useEffect(() => {
     const currentProductOwnership =
@@ -221,6 +233,11 @@ const StepProduct: React.FC<StepProductProps> = ({
     }
   }, [productOwnership, setValue, watch]);
   const isDefaultSet = useRef(false);
+  useEffect(() => {
+    if (!customerId) return;
+
+    isDefaultSet.current = false;
+  }, [customerId]);
 
   useEffect(() => {
     if (isDefaultSet.current) return;
@@ -233,9 +250,6 @@ const StepProduct: React.FC<StepProductProps> = ({
 
     isDefaultSet.current = true;
   }, [companyProductCount, setValue]);
-
-  console.log("company products count:", customerHasVehicles);
-  console.log("productOwnership:", productOwnership);
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
