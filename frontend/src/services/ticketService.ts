@@ -49,6 +49,8 @@ export const fetchTechnicianTickets = async (filters: TicketFilters = {}): Promi
     const error = await response.json().catch(() => ({ message: 'Failed to fetch tickets' }));
     throw new Error(error.message || 'Failed to fetch tickets');
   }
-
-  return response.json();
+  const data = await response.json();
+  console.log('Fetch Tickets Response:', data);
+  return data;
 };
+
