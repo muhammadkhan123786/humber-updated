@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, Filter, Grid3x3, List, Check, ChevronDown } from 'lucide-react'
 import { DropdownAnimation } from './Animation'
 
@@ -78,32 +78,32 @@ const Searchbar = ({
     { label: 'Walk In', value: 'walk-in' },
   ]
 
-  const handleStatusChange = (value: string) => {
+  const handleStatusChange = useCallback((value: string) => {
     setSelectedStatus(value)
     onFiltersChange({ 
       status: value === 'All Statuses' ? undefined : value,
       urgency: selectedUrgency === 'All Urgencies' ? undefined : selectedUrgency,
       source: selectedSource === 'All Sources' ? undefined : selectedSource
     })
-  }
+  }, [selectedUrgency, selectedSource, onFiltersChange])
 
-  const handleUrgencyChange = (value: string) => {
+  const handleUrgencyChange = useCallback((value: string) => {
     setSelectedUrgency(value)
     onFiltersChange({ 
       status: selectedStatus === 'All Statuses' ? undefined : selectedStatus,
       urgency: value === 'All Urgencies' ? undefined : value,
       source: selectedSource === 'All Sources' ? undefined : selectedSource
     })
-  }
+  }, [selectedStatus, selectedSource, onFiltersChange])
 
-  const handleSourceChange = (value: string) => {
+  const handleSourceChange = useCallback((value: string) => {
     setSelectedSource(value)
     onFiltersChange({ 
       status: selectedStatus === 'All Statuses' ? undefined : selectedStatus,
       urgency: selectedUrgency === 'All Urgencies' ? undefined : selectedUrgency,
       source: value === 'All Sources' ? undefined : value
     })
-  }
+  }, [selectedStatus, selectedUrgency, onFiltersChange])
 
   const Dropdown = ({
     options,
@@ -151,11 +151,17 @@ const Searchbar = ({
       setIsOpen(!isOpen)
     }
 
+    const handleOptionClick = useCallback((option: DropdownOption) => {
+      onSelect(option.label)
+      setIsOpen(false)
+    }, [onSelect])
+
     return (
       <div className="relative" ref={dropdownRef}>
         <button
+          type="button"
           onClick={handleToggle}
-          className={`flex items-center font-semibold justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all min-w-48 h-9 focus:outline-none ${
+          className={`flex items-center font-semibold justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all w-full md:min-w-48 h-9 focus:outline-none ${
             isOpen 
               ? 'border-[#4f46e5] ring-2 ring-[#4f46e5]/50' 
               : 'border-gray-300 hover:border-gray-400 focus:border-[#4f46e5] focus:ring-2 focus:ring-[#4f46e5]/50'
@@ -170,10 +176,8 @@ const Searchbar = ({
             {options.map((option, index) => (
               <button
                 key={option.value}
-                onClick={() => {
-                  onSelect(option.label)
-                  setIsOpen(false)
-                }}
+                type="button"
+                onClick={() => handleOptionClick(option)}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(0)}
                 className={`w-full  px-3 py-1.5 text-left text-sm flex items-center justify-between transition-colors rounded-md ${
@@ -195,11 +199,11 @@ const Searchbar = ({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      {/* First Row: Search and Filters */}
-      <div className="flex items-center gap-3 mb-4">
+    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+      {/* Search and Filters - Stack on mobile, horizontal on md+ */}
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
         {/* Search Bar */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative w-full md:flex-1 md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
@@ -214,41 +218,48 @@ const Searchbar = ({
         </div>
 
         {/* Status Dropdown */}
-        <Dropdown
-          options={statusOptions}
-          selected={selectedStatus}
-          onSelect={handleStatusChange}
-          isOpen={isStatusOpen}
-          setIsOpen={setIsStatusOpen}
-          placeholder="All Statuses"
-          closeOthers={closeOthersExceptStatus}
-        />
+        <div className="w-full md:w-auto">
+          <Dropdown
+            options={statusOptions}
+            selected={selectedStatus}
+            onSelect={handleStatusChange}
+            isOpen={isStatusOpen}
+            setIsOpen={setIsStatusOpen}
+            placeholder="All Statuses"
+            closeOthers={closeOthersExceptStatus}
+          />
+        </div>
 
         {/* Urgency Dropdown */}
-        <Dropdown
-          options={urgencyOptions}
-          selected={selectedUrgency}
-          onSelect={handleUrgencyChange}
-          isOpen={isUrgencyOpen}
-          setIsOpen={setIsUrgencyOpen}
-          placeholder="All Urgencies"
-          closeOthers={closeOthersExceptUrgency}
-        />
+        <div className="w-full md:w-auto">
+          <Dropdown
+            options={urgencyOptions}
+            selected={selectedUrgency}
+            onSelect={handleUrgencyChange}
+            isOpen={isUrgencyOpen}
+            setIsOpen={setIsUrgencyOpen}
+            placeholder="All Urgencies"
+            closeOthers={closeOthersExceptUrgency}
+          />
+        </div>
 
         {/* Source Dropdown */}
-        <Dropdown
-          options={sourceOptions}
-          selected={selectedSource}
-          onSelect={handleSourceChange}
-          isOpen={isSourceOpen}
-          setIsOpen={setIsSourceOpen}
-          placeholder="All Sources"
-          closeOthers={closeOthersExceptSource}
-        />
+        <div className="w-full md:w-auto">
+          <Dropdown
+            options={sourceOptions}
+            selected={selectedSource}
+            onSelect={handleSourceChange}
+            isOpen={isSourceOpen}
+            setIsOpen={setIsSourceOpen}
+            placeholder="All Sources"
+            closeOthers={closeOthersExceptSource}
+          />
+        </div>
 
         {/* View Toggle Buttons */}
-        <div className="flex items-center gap-1 ml-auto bg-gray-100 rounded-xl p-1">
+        <div className="flex items-center gap-1 md:ml-auto bg-gray-100 rounded-xl p-1 w-fit">
           <button
+            type="button"
             onClick={() => onViewModeChange('grid')}
             className={`p-2 px-2.5 rounded-lg transition-colors ${
               viewMode === 'grid'
@@ -259,6 +270,7 @@ const Searchbar = ({
             <Grid3x3 className="w-4 h-4" />
           </button>
           <button
+            type="button"
             onClick={() => onViewModeChange('table')}
             className={`p-2 px-2.5 rounded-lg transition-colors ${
               viewMode === 'table'
