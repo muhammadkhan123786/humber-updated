@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
+
 export const InvestigationPartSchema = z.object({
   partId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid partId"),
 
@@ -63,10 +64,45 @@ export const customerTicketBaseSchema = {
     enum: ["Customer Product", "Company product"],
     required: true,
   },
+  insuranceId: {
+    type: Types.ObjectId,
+    ref: "InsuranceCompanies",
+  },
+  insuranceReferenceNumber: {
+    type: String
+  },
+  vehiclePickUp: {
+    type: String,
+    enum: ["Customer-Drop", "Company-Pickup"],
+  },
+  pickUpDate: { type: Date },
+  pickUpBy: {
+    type: String,
+    enum: ["External Company", "Company Rider"]
+  },
+  externalCompanyName: {
+    type: String
+  },
+  riderId: { type: Types.ObjectId }
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
   ...commonSchemaValidation,
+
+  insuranceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Valid Insurance Id is required").optional(),
+
+  insuranceReferenceNumber: z.string().optional(),
+
+  vehiclePickUp: z.enum(["Customer-Drop", "Company-Pickup"]).optional(),
+
+  pickUpDate: z.date().optional(),
+
+  pickUpBy: z.enum(["External Company", "Company Rider"]).optional(),
+
+  externalCompanyName: z.string().optional(),
+
+  riderId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Valid Rider Id is required").optional(),
+
   productOwnership: z.enum(["Customer Product", "Company product"]),
 
   decisionId: z.enum(["Covered", "Chargeable", "Mixed"]),
