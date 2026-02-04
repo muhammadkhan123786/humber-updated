@@ -305,7 +305,7 @@ export const useTicketForm = () => {
         data.ticketStatusId || defaultTicketStatusId,
       );
       formData.append("userId", data.userId);
-      if (data.decisionId) {
+      if (data.decisionId && data.decisionId.trim() !== "") {
         formData.append("decisionId", data.decisionId);
       }
       if (data.address) formData.append("address", data.address);
@@ -321,6 +321,12 @@ export const useTicketForm = () => {
         );
       if (data.vehiclePickUp)
         formData.append("vehiclePickUp", data.vehiclePickUp);
+      if (data.vehiclePickUp === "Customer-Drop") {
+        formData.append("pickUpBy", ""); // Clear pickUpBy if Customer-Drop
+        formData.append("externalCompanyName", "");
+        formData.append("riderId", "");
+        formData.append("pickUpDate", "");
+      }
       if (data.pickUpDate) {
         const pickUpDateStr =
           data.pickUpDate instanceof Date

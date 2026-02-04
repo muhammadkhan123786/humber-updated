@@ -2,7 +2,6 @@ import { z } from "zod";
 import { Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 
-
 export const InvestigationPartSchema = z.object({
   partId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid partId"),
 
@@ -69,7 +68,7 @@ export const customerTicketBaseSchema = {
     ref: "InsuranceCompanies",
   },
   insuranceReferenceNumber: {
-    type: String
+    type: String,
   },
   vehiclePickUp: {
     type: String,
@@ -78,30 +77,51 @@ export const customerTicketBaseSchema = {
   pickUpDate: { type: Date },
   pickUpBy: {
     type: String,
-    enum: ["External Company", "Company Rider"]
+    enum: ["External Company", "Company Rider"],
   },
   externalCompanyName: {
-    type: String
+    type: String,
   },
-  riderId: { type: Types.ObjectId }
+  riderId: { type: Types.ObjectId },
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
   ...commonSchemaValidation,
 
-  insuranceId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Valid Insurance Id is required").optional(),
+  insuranceId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Valid Insurance Id is required")
+    .optional(),
 
   insuranceReferenceNumber: z.string().optional(),
 
   vehiclePickUp: z.enum(["Customer-Drop", "Company-Pickup"]).optional(),
 
-  pickUpDate: z.date().optional(),
+  pickUpDate: z
+    .union([z.date(), z.string(), z.null()])
+    .optional()
+    .transform((val) => {
+      if (!val || val === "") return undefined;
+      return new Date(val);
+    }),
 
-  pickUpBy: z.enum(["External Company", "Company Rider"]).optional(),
+  pickUpBy: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val === "External Company" || val === "Company Rider",
+      "Invalid pickUpBy value",
+    ),
 
   externalCompanyName: z.string().optional(),
 
-  riderId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Valid Rider Id is required").optional(),
+  riderId: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[0-9a-fA-F]{24}$/.test(val),
+      "Valid Rider Id is required",
+    ),
 
   productOwnership: z.enum(["Customer Product", "Company product"]),
 

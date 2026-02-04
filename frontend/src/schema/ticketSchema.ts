@@ -78,7 +78,11 @@ export const ticketFormSchema = z.object({
     )
     .optional()
     .default([]),
-  decisionId: z.enum(["Covered", "Chargeable", "Mixed"]).optional(),
+  decisionId: z
+    .enum(["Covered", "Chargeable", "Mixed"])
+    .optional()
+    .or(z.literal("")),
+
   isEmailSendReport: z.boolean().default(false),
   total: z.coerce.number().nonnegative().optional(),
   manualProductName: z.string().optional(),
@@ -95,7 +99,6 @@ export const ticketFormSchema = z.object({
     .or(z.literal("")),
   insuranceReferenceNumber: z.string().optional(),
 
-  //new fields for vehicle pick up
   vehiclePickUp: z.enum(["Customer-Drop", "Company-Pickup"]).optional(),
   pickUpDate: z.string().optional().or(z.date()),
   pickUpBy: z

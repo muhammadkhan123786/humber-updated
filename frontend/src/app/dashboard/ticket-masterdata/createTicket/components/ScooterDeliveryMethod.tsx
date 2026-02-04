@@ -87,20 +87,20 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
 
   // Watch values directly from form
   const vehiclePickUpValue = watch("vehiclePickUp") || "Customer-Drop";
-  const pickupByValue = watch("pickupBy") || "";
+  const pickupByValue = watch("pickUpBy") || "";
 
   // Function to handle delivery method change
   const handleDeliveryMethodChange = (methodId: string) => {
     if (methodId === "Customer-Drop") {
       // When switching to Customer-Drop, clear all pick-up related fields
       setValue("pickUpDate", "");
-      setValue("pickupBy", "");
+      setValue("pickUpBy", "");
       setValue("externalCompanyName", "");
       setValue("riderId", "");
 
       // Clear validation errors for pick-up fields
       clearErrors("pickUpDate");
-      clearErrors("pickupBy");
+      clearErrors("pickUpBy");
       clearErrors("externalCompanyName");
       clearErrors("riderId");
     }
@@ -209,7 +209,7 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
 
             {/* Pickup By - Only required for Company-Pickup */}
             <Controller
-              name="pickupBy"
+              name="pickUpBy"
               control={control}
               rules={{ required: vehiclePickUpValue === "Company-Pickup" }}
               render={() => (
@@ -230,7 +230,7 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
                           key={option.id}
                           type="button"
                           onClick={() =>
-                            setValue("pickupBy", option.id, {
+                            setValue("pickUpBy", option.id, {
                               shouldValidate: true,
                             })
                           }
@@ -272,7 +272,7 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
                       );
                     })}
                   </div>
-                  {errors.pickupBy && (
+                  {errors.pickUpBy && (
                     <p className="text-red-500 text-xs mt-1">
                       Please select who will pick up
                     </p>
@@ -280,8 +280,6 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
                 </div>
               )}
             />
-
-            {/* Conditional Fields - Only show when External Company is selected */}
             <AnimatePresence>
               {pickupByValue === "External Company" && (
                 <motion.div

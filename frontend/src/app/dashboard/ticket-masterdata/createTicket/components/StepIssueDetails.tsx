@@ -162,7 +162,7 @@ const StepIssueDetails: React.FC<Props> = ({ form, insurances = [] }) => {
         </div>
         <div className="space-y-4">
           <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
-            Decision (optional)
+            Decision *
           </label>
 
           <div className="flex flex-col gap-3">

@@ -235,7 +235,9 @@ const CreateTicket = ({
 
     if (currentStep === 3) {
       return !!(
-        values.issue_Details && values.issue_Details.trim().length >= 5
+        values.issue_Details &&
+        values.decisionId &&
+        values.issue_Details.trim().length >= 5
       );
     }
 
@@ -325,9 +327,7 @@ const CreateTicket = ({
     return "Unknown Customer";
   };
 
-  // Helper function to get urgency info for success popup
   const getUrgencyInfoForPopup = () => {
-    // Check ticket response first
     if (ticketResponse?.urgency) {
       return ticketResponse.urgency;
     }
