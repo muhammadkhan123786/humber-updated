@@ -32,6 +32,54 @@ const Searchbar = ({
   const [isStatusOpen, setIsStatusOpen] = useState(false)
   const [isUrgencyOpen, setIsUrgencyOpen] = useState(false)
   const [isSourceOpen, setIsSourceOpen] = useState(false)
+  const [statusOptions, setStatusOptions] = useState<DropdownOption[]>([
+    { label: 'All Statuses', value: 'all' }
+  ])
+
+  // Fetch status options from API
+  useEffect(() => {
+    const fetchStatusOptions = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No authentication token found')
+          return
+        }
+
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api'
+        const response = await fetch(
+          `${API_BASE_URL}/master-ticket-status-technician-dashboard?filter=all`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data) {
+            const dynamicOptions = data.data.map((status: any) => ({
+              label: status.label,
+              value: status.label.toLowerCase().replace(/ /g, '-')
+            }))
+            setStatusOptions([
+              { label: 'All Statuses', value: 'all' },
+              ...dynamicOptions
+            ])
+          }
+        } else {
+          console.error('Failed to fetch status options:', response.status)
+        }
+      } catch (error) {
+        console.error('Error fetching status options:', error)
+      }
+    }
+
+    fetchStatusOptions()
+  }, [])
 
   const closeAllDropdowns = () => {
     setIsStatusOpen(false)
@@ -53,15 +101,6 @@ const Searchbar = ({
     setIsStatusOpen(false)
     setIsUrgencyOpen(false)
   }
-
-  const statusOptions: DropdownOption[] = [
-    { label: 'All Statuses', value: 'all' },
-    { label: 'Open', value: 'open' },
-    { label: 'In Progress', value: 'in-progress' },
-    { label: 'Awaiting Parts', value: 'awaiting-parts' },
-    { label: 'Completed', value: 'completed' },
-    { label: 'Cancelled', value: 'cancelled' },
-  ]
 
   const urgencyOptions: DropdownOption[] = [
     { label: 'All Urgencies', value: 'all' },
