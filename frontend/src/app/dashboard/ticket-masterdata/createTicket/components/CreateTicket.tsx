@@ -40,6 +40,9 @@ const CreateTicket = ({
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [submittedFormData, setSubmittedFormData] = useState<any>(null);
   const [ticketResponse, setTicketResponse] = useState<any>(null);
+  const [popupCustomerName, setPopupCustomerName] =
+    useState<string>("Unknown Customer");
+
   const [generatedTicketCode, setGeneratedTicketCode] = useState<string | null>(
     null,
   );
@@ -183,6 +186,18 @@ const CreateTicket = ({
         };
 
         setTicketResponse(responseData);
+
+        // Resolve customer name once here
+        const resolvedCustomerName =
+          responseData.customer?.companyName ||
+          responseData.customer?.personId?.firstName ||
+          customers?.find((c) => c._id === formData.customerId)?.companyName ||
+          customers?.find((c) => c._id === formData.customerId)?.personId
+            ?.firstName ||
+          "Unknown Customer";
+
+        setPopupCustomerName(resolvedCustomerName); // ✅ use state to hold the correct value
+
         setShowSuccessPopup(true);
 
         if (!isUpdating) {
@@ -300,10 +315,10 @@ const CreateTicket = ({
   };
 
   const getCustomerInfoForPopup = () => {
+    // priority 1: ticketResponse.customer
     if (ticketResponse?.customer) {
-      if (typeof ticketResponse.customer === "string") {
+      if (typeof ticketResponse.customer === "string")
         return ticketResponse.customer;
-      }
       return (
         ticketResponse.customer.companyName ||
         ticketResponse.customer.personId?.firstName ||
@@ -311,19 +326,20 @@ const CreateTicket = ({
       );
     }
 
+    // priority 2: submittedFormData.customerId
     if (submittedFormData?.customerId) {
       const customer = customers?.find(
         (c) => c._id === submittedFormData.customerId,
       );
-      if (customer) {
+      if (customer)
         return (
           customer.companyName ||
           customer.personId?.firstName ||
           "Unknown Customer"
         );
-      }
     }
 
+    // fallback
     return "Unknown Customer";
   };
 
@@ -538,7 +554,7 @@ const CreateTicket = ({
           ticketData={{
             mongoId: ticketResponse?._id,
             ticketCode: ticketResponse?.ticketCode || generatedTicketCode,
-            customer: customerInfo,
+            customer: popupCustomerName,
             product: productInfo.product,
             serialNumber: productInfo.serialNumber,
             urgency: urgencyInfo,
