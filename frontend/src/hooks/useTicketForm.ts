@@ -55,6 +55,14 @@ export const useTicketForm = () => {
       purchaseDate: "",
       decisionId: undefined,
       productOwnership: "Company product",
+
+      vehiclePickUp: "Customer-Drop",
+      insuranceId: "",
+      insuranceReferenceNumber: "",
+      pickUpBy: "",
+      externalCompanyName: "",
+      riderId: "",
+      pickUpDate: "",
     },
     mode: "onBlur",
   });
@@ -144,6 +152,17 @@ export const useTicketForm = () => {
             vehicleRepairImagesFile: [],
             productOwnership: ticket.productOwnership || "Customer Product",
             decisionId: ticket.decisionId || undefined,
+
+            //new feild
+            insuranceId: ticket.insuranceId?._id || ticket.insuranceId || "",
+            insuranceReferenceNumber: ticket.insuranceReferenceNumber || "",
+            vehiclePickUp: ticket.vehiclePickUp || "Customer-Drop",
+            pickUpBy: ticket.pickUpBy || "",
+            riderId: ticket.riderId?._id || ticket.riderId || "",
+            externalCompanyName: ticket.externalCompanyName || "",
+            pickUpDate: ticket.pickUpDate
+              ? new Date(ticket.pickUpDate).toISOString().split("T")[0]
+              : "",
           });
         });
       }
@@ -293,6 +312,29 @@ export const useTicketForm = () => {
       if (data.productSerialNumber) {
         formData.append("productSerialNumber", data.productSerialNumber);
       }
+
+      if (data.insuranceId) formData.append("insuranceId", data.insuranceId);
+      if (data.insuranceReferenceNumber)
+        formData.append(
+          "insuranceReferenceNumber",
+          data.insuranceReferenceNumber,
+        );
+      if (data.vehiclePickUp)
+        formData.append("vehiclePickUp", data.vehiclePickUp);
+      if (data.pickUpDate) {
+        const pickUpDateStr =
+          data.pickUpDate instanceof Date
+            ? data.pickUpDate.toISOString()
+            : data.pickUpDate;
+        formData.append("pickUpDate", pickUpDateStr);
+      }
+
+      if (data.pickUpBy) formData.append("pickUpBy", data.pickUpBy);
+      if (data.externalCompanyName)
+        formData.append("externalCompanyName", data.externalCompanyName);
+      if (data.riderId) formData.append("riderId", data.riderId);
+
+      // end new feild
 
       if (data.purchaseDate) {
         formData.append("purchaseDate", data.purchaseDate.toString());

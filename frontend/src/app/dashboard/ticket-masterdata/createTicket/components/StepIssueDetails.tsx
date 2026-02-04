@@ -248,12 +248,13 @@ const StepIssueDetails: React.FC<Props> = ({ form, insurances = [] }) => {
 
             <div className="space-y-3">
               <div className="space-y-5">
+                {/* Insurance Company */}
                 <div className="space-y-2">
                   <label className="text-blue-900 font-medium text-base">
                     Insurance Company *
                   </label>
                   <Controller
-                    name="insuranceCompanyId"
+                    name="insuranceId"
                     control={control}
                     rules={{ required: "Insurance company is required" }}
                     render={({ field, fieldState }) => (
@@ -268,14 +269,32 @@ const StepIssueDetails: React.FC<Props> = ({ form, insurances = [] }) => {
                   />
                 </div>
 
+                {/* Insurance Reference Number */}
                 <div className="space-y-2">
                   <label className="text-blue-900 font-medium text-base">
                     Insurance Reference Number *
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Enter insurance reference number"
-                    className="w-full h-11 px-4 bg-white rounded-xl border border-blue-200 text-sm outline-none transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                  <Controller
+                    name="insuranceReferenceNumber"
+                    control={control}
+                    rules={{
+                      required: "Insurance reference number is required",
+                    }}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Enter insurance reference number"
+                          className="w-full h-11 px-4 bg-white rounded-xl border border-blue-200 text-sm outline-none transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {fieldState.error.message}
+                          </p>
+                        )}
+                      </>
+                    )}
                   />
                   <p className="text-blue-600 text-xs italic mt-1">
                     This reference number will be used for insurance claim
