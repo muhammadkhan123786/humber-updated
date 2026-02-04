@@ -98,7 +98,12 @@ customerTicketBaseRouter.post(
       const code = await generateTicketCode();
       if (!req.body) req.body = {};
       req.body.ticketCode = code;
-      req.body.purchaseDate = new Date(req.body.purchaseDate);
+      if (req.body.purchaseDate)
+        req.body.purchaseDate = new Date(req.body.purchaseDate);
+
+      if (req.body.pickUpDate) {
+        req.body.pickUpDate = new Date(req.body.pickUpDate);
+      }
       console.log("Body Report: ", req.body);
       if (typeof req.body.investigationParts === "string") {
         try {
@@ -140,6 +145,10 @@ customerTicketBaseRouter.put(
 
       if (req.body.purchaseDate) {
         req.body.purchaseDate = new Date(req.body.purchaseDate);
+      }
+
+      if (req.body.pickUpDate) {
+        req.body.pickUpDate = new Date(req.body.pickUpDate);
       }
 
       if (typeof req.body.investigationParts === "string") {
