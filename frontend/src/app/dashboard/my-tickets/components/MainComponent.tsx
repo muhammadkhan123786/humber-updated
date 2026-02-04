@@ -1,35 +1,26 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Searchbar from './Searchbar'
 import ListData from './ListData'
-import { fetchTechnicianTickets, TicketFilters } from '@/services/ticketService'
+import { fetchTechnicianTickets } from '@/services/ticketService'
 import { Ticket } from './TicketCard'
 
 const MainComponent = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
-  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [allTickets, setAllTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<TicketFilters>({
-    page: 1,
-    limit: 10,
-    search: '',
-  })
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    limit: 10,
-    pages: 0,
-  })
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filters, setFilters] = useState<{ status?: string; urgency?: string; source?: string }>({})
 
+  // Load all tickets once
   const loadTickets = async () => {
     setIsLoading(true)
     setError(null)
     
     try {
-      const response = await fetchTechnicianTickets(filters)
-      setTickets(response.tickets)
-      setPagination(response.pagination)
+      const response = await fetchTechnicianTickets({ page: 1, limit: 1000 })
+      setAllTickets(response.tickets)
     } catch (err: any) {
       setError(err.message || 'Failed to load tickets')
       console.error('Error loading tickets:', err)
@@ -40,14 +31,56 @@ const MainComponent = () => {
 
   useEffect(() => {
     loadTickets()
-  }, [filters])
+  }, [])
+
+  // Client-side filtering - no loading states!
+  const filteredTickets = useMemo(() => {
+    let result = [...allTickets]
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(ticket => 
+        ticket.ticketCode.toLowerCase().includes(query) ||
+        ticket.customer.firstName.toLowerCase().includes(query) ||
+        ticket.customer.lastName.toLowerCase().includes(query) ||
+        ticket.customer.email.toLowerCase().includes(query) ||
+        ticket.issue_Details.toLowerCase().includes(query) ||
+        ticket.vehicle.vehicleBrandId?.brandName.toLowerCase().includes(query) ||
+        ticket.vehicle.vehicleModelId?.modelName.toLowerCase().includes(query)
+      )
+    }
+
+    // Status filter
+    if (filters.status) {
+      result = result.filter(ticket => 
+        ticket.ticketStatus.toLowerCase() === filters.status?.toLowerCase()
+      )
+    }
+
+    // Urgency filter
+    if (filters.urgency) {
+      result = result.filter(ticket => 
+        ticket.priority.toLowerCase() === filters.urgency?.toLowerCase()
+      )
+    }
+
+    // Source filter
+    if (filters.source) {
+      result = result.filter(ticket => 
+        ticket.ticketSource?.toLowerCase() === filters.source?.toLowerCase()
+      )
+    }
+
+    return result
+  }, [allTickets, searchQuery, filters])
 
   const handleSearchChange = (search: string) => {
-    setFilters(prev => ({ ...prev, search, page: 1 }))
+    setSearchQuery(search)
   }
 
   const handleFiltersChange = (newFilters: { status?: string; urgency?: string; source?: string }) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 }))
+    setFilters(newFilters)
   }
 
   const handleViewDetails = (ticket: Ticket) => {
@@ -74,12 +107,12 @@ const MainComponent = () => {
           onViewModeChange={setViewMode}
           onSearchChange={handleSearchChange}
           onFiltersChange={handleFiltersChange}
-          totalTickets={pagination.total}
-          displayedTickets={tickets.length}
+          totalTickets={allTickets.length}
+          displayedTickets={filteredTickets.length}
         />
         <ListData 
           viewMode={viewMode} 
-          tickets={tickets}
+          tickets={filteredTickets}
           isLoading={isLoading}
           onViewDetails={handleViewDetails}
         />
