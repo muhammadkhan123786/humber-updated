@@ -57,6 +57,7 @@ const CreateTicket = ({
     statuses,
     brands,
     handleAddVehicle,
+    drivers,
     models,
     colors,
     setError,
@@ -486,6 +487,7 @@ const CreateTicket = ({
               customers={customers}
               statuses={statuses}
               vehicles={vehicles}
+              drivers={drivers}
               isUpdating={isUpdating}
               isLoading={isLoading}
             />

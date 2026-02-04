@@ -21,7 +21,8 @@ export interface CustomerTicketBase<
   TTICKETSTATUSID = string,
   TTECHID = string[],
   TINSURANCECOMPANYID = string,
-  TRIDERID = string
+  TRIDERID = string,
+  Pickdate = string,
 > extends IBaseEntity<TUSERID> {
   ticketSource: TicketSource;
   customerId: TCUSTOMERID;
@@ -44,11 +45,11 @@ export interface CustomerTicketBase<
   // investigationReportData: string;
   //  investigationParts?: investigationParts<TPARTID>[];
   // isEmailSendReport: boolean;
-  insuranceId?: TINSURANCECOMPANYID,
-  insuranceReferenceNumber?: string,
-  vehiclePickUp?: VehicleDropOff,
-  pickUpDate?: string,
-  pickUpBy?: PickupBy,
-  externalCompanyName?: string,
-  riderId?: TRIDERID
+  insuranceId?: TINSURANCECOMPANYID;
+  insuranceReferenceNumber?: string;
+  vehiclePickUp?: VehicleDropOff;
+  pickUpDate?: Pickdate;
+  pickUpBy?: PickupBy;
+  externalCompanyName?: string;
+  riderId?: TRIDERID;
 }

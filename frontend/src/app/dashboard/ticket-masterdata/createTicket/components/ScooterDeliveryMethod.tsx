@@ -9,11 +9,13 @@ import {
   UserCheck,
   Package,
 } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
+import { Controller, UseFormReturn } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
+import { CustomSelect } from "@/app/common-form/CustomSelect";
 
 interface ScooterDeliveryMethodProps {
   form: UseFormReturn<any>;
+  drivers: any[];
 }
 
 interface DeliveryMethod {
@@ -33,6 +35,7 @@ interface PickupByOption {
 
 const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
   form,
+  drivers,
 }) => {
   const {
     formState: { errors },
@@ -43,6 +46,10 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
   const [deliveryMethod, setDeliveryMethod] =
     useState<string>("Customer Drop-off");
   const [pickupBy, setPickupBy] = useState<string>("");
+  const riderOptions = drivers.map((d) => ({
+    id: d._id,
+    label: `${d.personalInfo.firstName} ${d.personalInfo.lastName}`,
+  }));
 
   const deliveryMethods: DeliveryMethod[] = [
     {
@@ -155,7 +162,6 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
             </div>
 
             <div className="space-y-6">
-              {/* Pick-up Date */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Calendar size={16} className="text-teal-600" />
@@ -175,8 +181,6 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
                   </p>
                 )}
               </div>
-
-              {/* Pick-up By Selection */}
               <div className="space-y-3">
                 <label className="text-teal-900 font-medium">
                   Pick-up By *
@@ -184,7 +188,7 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {pickupByOptions.map((option, index) => {
                     const OptionIcon = option.icon;
-                    // First option gets violet gradient, second gets emerald gradient
+
                     const activeGradient =
                       index === 0
                         ? "bg-linear-to-br from-violet-500 to-purple-500"
@@ -294,17 +298,21 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
                           Select Rider *
                         </label>
                       </div>
-                      <select
-                        {...register("riderId", {
-                          required: pickupBy === "Own Rider",
-                        })}
-                        className="w-full h-11 px-4 bg-white rounded-xl border border-teal-200 text-sm outline-none transition-all hover:border-teal-400 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20"
-                      >
-                        <option value="">Choose an available rider</option>
-                        <option value="rider1">John Doe</option>
-                        <option value="rider2">Jane Smith</option>
-                        <option value="rider3">Mike Johnson</option>
-                      </select>
+                      <Controller
+                        name="riderId"
+                        control={form.control}
+                        rules={{ required: pickupBy === "Own Rider" }}
+                        render={({ field }) => (
+                          <CustomSelect
+                            options={riderOptions}
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Choose an available rider"
+                            error={errors.riderId}
+                            isSearchable={true}
+                          />
+                        )}
+                      />
                       <p className="text-teal-600 text-xs italic mt-1">
                         Only available riders are shown
                       </p>

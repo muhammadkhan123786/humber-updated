@@ -33,6 +33,7 @@ export const useTicketForm = () => {
   const [models, setModels] = useState<any[]>([]);
   const [colors, setColors] = useState<any[]>([]);
   const [insurances, setInsurances] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   const [defaultTicketStatusId, setDefaultTicketStatusId] =
     useState<string>("");
@@ -180,6 +181,7 @@ export const useTicketForm = () => {
           getAlls("/vechilemodel"),
           getAlls("/colors"),
           getAlls("/insurance-companies"),
+          getAlls("/register-driver"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
@@ -201,6 +203,11 @@ export const useTicketForm = () => {
           setMobilityParts(
             (results[6].value?.data ?? []).filter((i: any) => i.isActive),
           );
+        if (results[4].status === "fulfilled") {
+          setDrivers(
+            (results[4].value?.data ?? []).filter((d: any) => d.isActive),
+          );
+        }
         if (results[7].status === "fulfilled")
           setBrands(
             (results[7].value?.data ?? []).filter((i: any) => i.isActive),
@@ -452,6 +459,7 @@ export const useTicketForm = () => {
     models,
     colors,
     statuses,
+    drivers,
     technicians,
     insurances,
     mobilityParts,
