@@ -12,6 +12,7 @@ const StepLocationPriority = ({
   customers,
   statuses,
   vehicles,
+  drivers,
 }: any) => {
   const {
     control,
@@ -161,7 +162,7 @@ const StepLocationPriority = ({
           </section>
         )}
 
-        <ScooterDeliveryMethod form={form} />
+        <ScooterDeliveryMethod form={form} drivers={drivers} />
 
         <section className="space-y-4">
           <label className="text-[16px] font-medium text-[#1E293B] flex items-center gap-2">
