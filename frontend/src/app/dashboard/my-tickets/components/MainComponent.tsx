@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import Searchbar from './Searchbar'
 import ListData from './ListData'
+import TicketDetailsPopup from './TicketDetailsPopup'
 import { fetchTechnicianTickets } from '@/services/ticketService'
 import { Ticket } from './TicketCard'
 
@@ -12,6 +13,8 @@ const MainComponent = () => {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState<{ status?: string; urgency?: string; source?: string }>({})
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [isPopupOpen, setIsPopupOpen] = useState(false)
 
   // Load all tickets once
   const loadTickets = async () => {
@@ -84,8 +87,13 @@ const MainComponent = () => {
   }
 
   const handleViewDetails = (ticket: Ticket) => {
-    console.log('View ticket details:', ticket)
-    // TODO: Implement view details modal or navigation
+    setSelectedTicket(ticket)
+    setIsPopupOpen(true)
+  }
+
+  const handleClosePopup = () => {
+    setIsPopupOpen(false)
+    setTimeout(() => setSelectedTicket(null), 300) // Clear after animation
   }
 
   return (
@@ -117,6 +125,13 @@ const MainComponent = () => {
           onViewDetails={handleViewDetails}
         />
       </div>
+
+      {/* Ticket Details Popup */}
+      <TicketDetailsPopup
+        ticket={selectedTicket}
+        isOpen={isPopupOpen}
+        onClose={handleClosePopup}
+      />
     </div>
   )
 }

@@ -35,6 +35,9 @@ const Searchbar = ({
   const [statusOptions, setStatusOptions] = useState<DropdownOption[]>([
     { label: 'All Statuses', value: 'all' }
   ])
+  const [urgencyOptions, setUrgencyOptions] = useState<DropdownOption[]>([
+    { label: 'All Urgencies', value: 'all' }
+  ])
 
   // Fetch status options from API
   useEffect(() => {
@@ -81,6 +84,58 @@ const Searchbar = ({
     fetchStatusOptions()
   }, [])
 
+  // Fetch urgency options from API
+  useEffect(() => {
+    const fetchUrgencyOptions = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No authentication token found')
+          return
+        }
+
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api'
+        const response = await fetch(
+          `${API_BASE_URL}/master-ticket-urgency-technician-dashboard?filter=all`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+
+          console.log('Urgency API Response:', data)
+
+          if (data.success && data.data && Array.isArray(data.data)) {
+            console.log('Raw Urgency Data:', data.data)
+            const dynamicOptions = data.data
+              .filter((urgency: any) => urgency && urgency.serviceRequestPrioprity) // Filter out undefined/null values
+              .map((urgency: any) => ({
+                label: urgency.serviceRequestPrioprity,
+                value: urgency.serviceRequestPrioprity.toLowerCase().replace(/ /g, '-')
+              }))
+            console.log('Dynamic Urgency Options:', dynamicOptions)
+            setUrgencyOptions([
+              { label: 'All Urgencies', value: 'all' },
+              ...dynamicOptions
+            ])
+          }
+        } else {
+          console.error('Failed to fetch urgency options:', response.status)
+        }
+      } catch (error) {
+        console.error('Error fetching urgency options:', error)
+      }
+    }
+
+    fetchUrgencyOptions()
+  }, [])
+
   const closeAllDropdowns = () => {
     setIsStatusOpen(false)
     setIsUrgencyOpen(false)
@@ -101,14 +156,6 @@ const Searchbar = ({
     setIsStatusOpen(false)
     setIsUrgencyOpen(false)
   }
-
-  const urgencyOptions: DropdownOption[] = [
-    { label: 'All Urgencies', value: 'all' },
-    { label: 'Low', value: 'low' },
-    { label: 'Medium', value: 'medium' },
-    { label: 'High', value: 'high' },
-    { label: 'Emergency', value: 'emergency' },
-  ]
 
   const sourceOptions: DropdownOption[] = [
     { label: 'All Sources', value: 'all' },
