@@ -83,6 +83,7 @@ import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
+import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
 
 
 // Create express app
@@ -410,6 +411,11 @@ app.use(
   technicianProtecter,
   autoCodeGeneratorRouter,
 
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-ticket-quotation`,
+  ticketQuotationRouter,
 );
 
 //Muhammad Imran code ended here.

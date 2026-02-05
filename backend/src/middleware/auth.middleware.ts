@@ -229,22 +229,16 @@ export const technicianMasterProtector = async (
         const token = authHeader.split(" ")[1];
 
         // 2️⃣ Verify token
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET as string
-        ) as {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
             userId: string;
             role: "Admin" | "Technician";
         };
-        console.log("decoded", decoded);
 
-        // 3️⃣ Technician only
         if (decoded.role !== "Technician") {
             return res.status(403).json({ message: "Technician access only" });
         }
 
-        // 4️⃣ Fetch technician
-        console.log("decoded id", decoded.userId);
+        // 3️⃣ Fetch technician
         const technician = await Technicians.findOne({
             accountId: decoded.userId,
             isDeleted: false,
@@ -252,12 +246,12 @@ export const technicianMasterProtector = async (
         })
             .select("_id accountId")
             .lean();
-        console.log("technician", technician);
+
         if (!technician) {
             return res.status(403).json({ message: "Technician not found or inactive" });
         }
 
-        // 5️⃣ Fetch MASTER ADMIN
+        // 4️⃣ Fetch MASTER Admin associated with technician
         const masterUser = await User.findOne({
             _id: technician.accountId,
             isDeleted: false,
@@ -268,11 +262,14 @@ export const technicianMasterProtector = async (
             return res.status(403).json({ message: "Associated admin not found" });
         }
 
-        // 6️⃣ Attach MASTER user (important)
-        req.user = masterUser;
+        // 5️⃣ Attach master user and technician info to request
+        req.user = masterUser; // MASTER Admin
+        req.technician = technician; // Logged-in Technician metadata
 
-        // 7️⃣ Attach technician metadata (optional but recommended)
-        req.technician = technician;
+        // 6️⃣ Auto-assign technicianId if requested in body
+        if (req.body.technicianId !== undefined) {
+            req.body.technicianId = technician._id;
+        }
 
         req.role = "Technician";
 
@@ -282,3 +279,5 @@ export const technicianMasterProtector = async (
         return res.status(401).json({ message: "Invalid or expired token" });
     }
 };
+
+

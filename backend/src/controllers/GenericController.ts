@@ -10,14 +10,14 @@ const queryFilters: Record<string, any> = {}; // <-- new object for mongoose
 interface ControllerOptions<T extends Document> {
     service: GenericService<T>;
     populate?: (string | PopulateOptions)[];
-    validationSchema?: ZodObject<ZodRawShape>; // optional Zod validation
-    searchFields?: string[]
+    validationSchema?: ZodObject<ZodRawShape>;
+    searchFields?: string[];
 }
 
 
 
 export class AdvancedGenericController<T extends Document> {
-    constructor(private options: ControllerOptions<T>) { }
+    constructor(protected options: ControllerOptions<T>) { }
     // CREATE
     create = async (req: Request, res: Response) => {
         try {
@@ -64,23 +64,23 @@ export class AdvancedGenericController<T extends Document> {
                     [field]: { $regex: search, $options: "i" }
                 }));
             }
-// Added by Muzamil Hassan 
+            // Added by Muzamil Hassan 
             //  Dynamic filters 
             Object.keys(rawFilters).forEach((key) => {
                 const value = rawFilters[key];
 
                 if (key.endsWith("Ids")) {
-    const ids = normalizeToStringArray(value)
-      .filter(id => Types.ObjectId.isValid(id))
-      .map(id => new Types.ObjectId(id));
+                    const ids = normalizeToStringArray(value)
+                        .filter(id => Types.ObjectId.isValid(id))
+                        .map(id => new Types.ObjectId(id));
 
-    if (ids.length) {
-      queryFilters[key.replace("Ids", "Id")] = { $in: ids };
-    }
-    return;
-  }
+                    if (ids.length) {
+                        queryFilters[key.replace("Ids", "Id")] = { $in: ids };
+                    }
+                    return;
+                }
 
-//   End of added code
+                //   End of added code
 
                 if (typeof value === "string" && Types.ObjectId.isValid(value)) {
                     queryFilters[key] = new Types.ObjectId(value);
@@ -99,7 +99,10 @@ export class AdvancedGenericController<T extends Document> {
 
             // ✅ Check if filter=all, then skip pagination
             if (filter === "all") {
-                const data = await query.sort(sortOption).find({ isActive: true }).exec();
+                const data = await query
+                    .sort(sortOption)
+                    .where({ isActive: true })
+                    .exec();
                 return res.status(200).json({
                     success: true,
                     total,
@@ -132,6 +135,9 @@ export class AdvancedGenericController<T extends Document> {
             });
         }
     };
+
+
+
     // GET BY ID
     getById = async (req: Request, res: Response) => {
         try {
