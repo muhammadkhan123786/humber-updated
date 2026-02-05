@@ -9,6 +9,7 @@ import {
 } from "../schema/activityRecordSchema";
 import { getAlls } from "../helper/apiHelper";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const generateJobId = () => {
   const date = new Date();
@@ -226,10 +227,55 @@ export const useActivityRecordForm = () => {
       setError(null);
       setSuccess(null);
 
-      // Get userId from auth/token
+      // ================== VALIDATION LOGIC STARTS HERE ==================
+      // Validate only the required fields in order
+
+      // 1. Check Ticket
+      if (!data.ticketId || data.ticketId.trim() === "") {
+        toast.error("Ticket is required");
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Check Technician
+      if (!data.technicianId || data.technicianId.trim() === "") {
+        toast.error("Technician is required");
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Check at least one service or part
+      const hasServices = data.services.length > 0;
+      const hasParts = data.parts.some(
+        (part) => part.partId && part.partId.trim() !== "",
+      );
+
+      if (!hasServices && !hasParts) {
+        toast.error("At least one service or part is required");
+        setIsLoading(false);
+        return;
+      }
+
+      // 4. Check General Notes
+      if (!data.generalNotes || data.generalNotes.trim() === "") {
+        toast.error("General Notes are required");
+        setIsLoading(false);
+        return;
+      }
+
+      // 5. Check Completion Summary
+      if (!data.completionSummary || data.completionSummary.trim() === "") {
+        toast.error("Completion Summary is required");
+        setIsLoading(false);
+        return;
+      }
+
+      // ================== VALIDATION LOGIC ENDS HERE ==================
+      // बस इतना ही! बाकी सारे parts और inspections के validation हटा दिए
+
       const userId = localStorage.getItem("userId") || "";
       if (!userId) {
-        setError("User ID not found. Please login again.");
+        toast.error("User ID not found. Please login again.");
         setIsLoading(false);
         return;
       }
@@ -266,11 +312,9 @@ export const useActivityRecordForm = () => {
         formData.append("services", "[]");
       }
 
-      // **FIX 2: Process parts with userId**
       const processedParts = data.parts
-        .filter((part) => part.partId && part.partId.trim() !== "") // Remove empty parts
+        .filter((part) => part.partId && part.partId.trim() !== "")
         .map((part) => {
-          // Calculate totals if not provided
           const unitCost = part.unitCost || 0;
           const quantity = part.quantity || 0;
           const totalCost = part.totalCost || unitCost * quantity;
@@ -282,7 +326,7 @@ export const useActivityRecordForm = () => {
             totalCost: Number(totalCost),
             oldPartConditionDescription:
               part.oldPartConditionDescription || "N/A", // Default value
-            userId: userId, // Add userId to each part
+            userId: userId,
           };
         });
 
@@ -291,8 +335,6 @@ export const useActivityRecordForm = () => {
       } else {
         formData.append("parts", "[]");
       }
-
-      // **FIX 3: Process inspections with userId**
       const processedInspections = data.inspections
         .filter(
           (inspection) =>
@@ -303,7 +345,7 @@ export const useActivityRecordForm = () => {
           ...inspection,
           status: inspection.status || "N/A",
           notes: inspection.notes || "",
-          userId: userId, // Add userId to each inspection
+          userId: userId,
         }));
 
       if (processedInspections.length > 0) {
@@ -311,8 +353,6 @@ export const useActivityRecordForm = () => {
       } else {
         formData.append("inspections", "[]");
       }
-
-      // **FIX 4: Job notes with userId**
       const jobNotesData = {
         messages: data.jobNotesMessages || [],
         images:
@@ -321,7 +361,7 @@ export const useActivityRecordForm = () => {
               typeof path === "string" && !path.startsWith("blob:"),
           ) || [],
         videos: data.jobNotesVideos || [],
-        userId: userId, // Add userId to jobNotes
+        userId: userId,
       };
 
       formData.append("jobNotes", JSON.stringify(jobNotesData));
@@ -331,28 +371,14 @@ export const useActivityRecordForm = () => {
           formData.append("jobNotesImagesFile", file);
         });
       }
-
-      // Videos files
       if (data.jobNotesVideosFile && data.jobNotesVideosFile.length > 0) {
         data.jobNotesVideosFile.forEach((file: File) => {
           formData.append("jobNotesVideosFile", file);
         });
       }
-
-      // Generate job ID for new records
       if (!editingId) {
         formData.append("jobId", generateJobId());
       }
-
-      // For debugging
-      console.log("FormData to send:");
-      formData.forEach((value, key) => {
-        if (typeof value === "string") {
-          console.log(key, value);
-        } else {
-          console.log(key, "(File)");
-        }
-      });
 
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -372,6 +398,11 @@ export const useActivityRecordForm = () => {
 
       if (res.data?.success) {
         clearEdit();
+        toast.success(
+          editingId
+            ? "Activity record updated successfully!"
+            : "Activity record created successfully!",
+        );
         setSuccess(
           editingId
             ? "Activity record updated successfully!"
@@ -379,14 +410,37 @@ export const useActivityRecordForm = () => {
         );
         return res.data;
       } else {
-        setError(res.data?.message || "Submission failed");
+        const errorMsg = res.data?.message || "Submission failed";
+        toast.error(errorMsg);
+        setError(errorMsg);
         return res.data;
       }
     } catch (err: any) {
       console.error("Error submitting form:", err);
       if (err.response?.data?.errors) {
-        console.error("Validation errors:", err.response.data.errors);
+        const serverErrors = err.response.data.errors;
+
+        if (serverErrors.ticketId) {
+          toast.error(`Ticket: ${serverErrors.ticketId[0]}`);
+        } else if (serverErrors.technicianId) {
+          toast.error(`Technician: ${serverErrors.technicianId[0]}`);
+        } else if (serverErrors.services && serverErrors.parts) {
+          toast.error(`At least one service or part is required`);
+        } else if (serverErrors.generalNotes) {
+          toast.error(`General Notes: ${serverErrors.generalNotes[0]}`);
+        } else if (serverErrors.completionSummary) {
+          toast.error(
+            `Completion Summary: ${serverErrors.completionSummary[0]}`,
+          );
+        } else {
+          toast.error("Validation error. Please check your inputs.");
+        }
+      } else if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Submission failed. Please try again.");
       }
+
       setError(
         err.response?.data?.message || err.message || "Submission failed",
       );
