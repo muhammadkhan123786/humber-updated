@@ -9,24 +9,25 @@ import {
   FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CustomSelectNoBorder } from "../../../common-form/CustomSelectNoBorder";
+import { FormDisplay } from "@/app/common-form/FormDisplay";
 
 export const JobInfoTab = ({ form, tickets, technicians }: any) => {
-  const { register, watch, setValue } = form;
+  const { watch, setValue } = form;
 
   const selectedTicketId = watch("ticketId");
   const selectedTechnicianId = watch("technicianId");
+  const [jobId, setJobId] = useState<string>("");
 
-  // 1. Initialize jobId once using a lazy initializer
-  const [jobId] = useState<string>(() => {
+  React.useEffect(() => {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
     const timestamp = Date.now().toString().slice(-6);
-    return `JOB-${year}${month}${day}-${timestamp}`;
-  });
+    setJobId(`JOB-${year}${month}${day}-${timestamp}`);
+  }, []);
 
-  // 2. Derive state directly during render (No useEffect needed)
   const selectedTicket = useMemo(() => {
     return tickets.find((t: any) => t._id === selectedTicketId) || null;
   }, [selectedTicketId, tickets]);
@@ -34,9 +35,6 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const selectedTechnician = useMemo(() => {
     return technicians.find((t: any) => t._id === selectedTechnicianId) || null;
   }, [selectedTechnicianId, technicians]);
-
-  // 3. Handle side effects (like auto-setting tech ID)
-  // only when the ticket actually changes
   React.useEffect(() => {
     if (selectedTicket?.assignedTechnicianId?.length > 0) {
       setValue("technicianId", selectedTicket.assignedTechnicianId[0]._id);
@@ -116,6 +114,16 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
     return `${brand} ${model} ${year ? `(${year})` : ""}`.trim();
   };
 
+  const ticketOptions = tickets.map((t: any) => ({
+    id: t._id,
+    label: `${t.ticketCode} - ${getCustomerName(t)} (${getPriority(t)})`,
+  }));
+
+  const technicianOptions = technicians.map((tech: any) => ({
+    id: tech._id,
+    label: `${getTechnicianName(tech)} (${getTechnicianSpecialization(tech)})`,
+  }));
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* 1. SELECT SERVICE TICKET SECTION */}
@@ -129,18 +137,13 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
             Service Ticket <span className="text-red-500">*</span>
           </label>
-          <select
-            className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-[#4F39F6] outline-none transition-all cursor-pointer"
-            {...register("ticketId")}
-          >
-            <option value="">Select a ticket...</option>
-            {tickets.map((ticket: any) => (
-              <option key={ticket._id} value={ticket._id}>
-                {ticket.ticketCode} - {getCustomerName(ticket)} (
-                {getPriority(ticket)})
-              </option>
-            ))}
-          </select>
+          <CustomSelectNoBorder
+            options={ticketOptions}
+            value={selectedTicketId}
+            onChange={(id: any) => setValue("ticketId", id)}
+            placeholder="Select a ticket..."
+            error={!selectedTicketId}
+          />
         </div>
 
         <AnimatePresence>
@@ -256,52 +259,32 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Job ID <span className="text-red-500">*</span>
-            </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">
-              {jobId}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Ticket ID <span className="text-red-500">*</span>
-            </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">
-              {selectedTicket ? selectedTicket.ticketCode : "Select a ticket"}
-            </div>
-          </div>
+          <FormDisplay label=" Job ID" value={jobId || "Select a Job ID"} />
+          <FormDisplay
+            label="Ticket id"
+            value={selectedTicket?.ticketCode || "Select a ticket"}
+          />
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               Technician Name <span className="text-red-500">*</span>
             </label>
-            <select
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-[#4F39F6] outline-none transition-all cursor-pointer text-sm"
-              {...register("technicianId")}
-            >
-              <option value="">Select Technician</option>
-              {technicians.map((tech: any) => (
-                <option key={tech._id} value={tech._id}>
-                  {getTechnicianName(tech)} ({getTechnicianSpecialization(tech)}
-                  )
-                </option>
-              ))}
-            </select>
+            <CustomSelectNoBorder
+              options={technicianOptions}
+              value={selectedTechnicianId}
+              onChange={(id: any) => setValue("technicianId", id)}
+              placeholder="Select Technician"
+              className="border-0 focus:border-0 focus:ring-0 ring-0 outline-none shadow-none"
+              error={!selectedTechnicianId}
+            />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Customer Name
-            </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">
-              {selectedTicket
-                ? getCustomerName(selectedTicket)
-                : "Select a ticket"}
-            </div>
-          </div>
+          <FormDisplay
+            label="Customer Name"
+            value={
+              selectedTicket ? getCustomerName(selectedTicket) : "john doe"
+            }
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-6 mb-6">
@@ -315,6 +298,14 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 : "Select a ticket"}
             </div>
           </div>
+          <FormDisplay
+            label="Scooter model"
+            value={
+              selectedTicket
+                ? getVehicleDetails(selectedTicket)
+                : "Select a ticket"
+            }
+          />
         </div>
 
         <AnimatePresence mode="wait">
