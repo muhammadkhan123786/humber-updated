@@ -405,6 +405,13 @@ app.use(
   ticketQuotationStatusRouter,
 );
 
+app.use(
+  `${process.env.API_PREFIX}/quotations`,
+  technicianProtecter,
+  autoCodeGeneratorRouter,
+
+);
+
 //Muhammad Imran code ended here.
 
 //  Muzmil Hassan 8/1/2026
