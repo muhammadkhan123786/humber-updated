@@ -326,7 +326,6 @@ export const useActivityRecordForm = () => {
 
       formData.append("jobNotes", JSON.stringify(jobNotesData));
 
-      // Images files
       if (data.jobNotesImagesFile && data.jobNotesImagesFile.length > 0) {
         data.jobNotesImagesFile.forEach((file: File) => {
           formData.append("jobNotesImagesFile", file);
@@ -436,26 +435,44 @@ export const useActivityRecordForm = () => {
     if (!files) return;
 
     const currentFiles = form.getValues("jobNotesImagesFile") || [];
+    const currentUrls = form.getValues("jobNotesImages") || [];
+
     const newFiles = Array.from(files);
+    const newUrls = newFiles.map((file) => URL.createObjectURL(file));
 
     form.setValue("jobNotesImagesFile", [...currentFiles, ...newFiles]);
-
-    newFiles.forEach((file) => {
-      const url = URL.createObjectURL(file);
-      const currentUrls = form.getValues("jobNotesImages") || [];
-      form.setValue("jobNotesImages", [...currentUrls, url]);
-    });
+    form.setValue("jobNotesImages", [...currentUrls, ...newUrls]);
   };
 
   const removeJobNotesImage = (index: number) => {
     const currentUrls = form.getValues("jobNotesImages") || [];
     const currentFiles = form.getValues("jobNotesImagesFile") || [];
 
-    const updatedUrls = currentUrls.filter((_, i) => i !== index);
-    const updatedFiles = currentFiles.filter((_, i) => i !== index);
+    const urlToRemove = currentUrls[index];
 
-    form.setValue("jobNotesImages", updatedUrls);
-    form.setValue("jobNotesImagesFile", updatedFiles);
+    // Check if this is a preview URL for a new file
+    if (urlToRemove.startsWith("blob:")) {
+      // Remove corresponding file from jobNotesImagesFile
+      const fileIndex =
+        currentUrls.slice(0, index + 1).filter((u) => u.startsWith("blob:"))
+          .length - 1;
+
+      if (fileIndex >= 0) {
+        currentFiles.splice(fileIndex, 1);
+      }
+
+      // Revoke preview URL
+      URL.revokeObjectURL(urlToRemove);
+    } else {
+      // Existing DB image - you may want to track it for deletion on backend
+      // Example: push to an array "imagesToDelete" and send to backend on submit
+    }
+
+    // Remove from URLs array
+    currentUrls.splice(index, 1);
+
+    form.setValue("jobNotesImages", [...currentUrls]);
+    form.setValue("jobNotesImagesFile", [...currentFiles]);
   };
 
   const addMessage = (message: string) => {
