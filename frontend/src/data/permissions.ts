@@ -605,6 +605,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Shield,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Quotation Status",
+        href: "/dashboard/ticket-qutation-status",
+        icon: FileText,
+        roleId: [1],
+      }
     ],
   },
 
