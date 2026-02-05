@@ -9,6 +9,7 @@ import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { parseFormDataArrays } from "../../middleware/parseFormDataArrays";
+import { normalizeArrays } from "../../middleware/normalizeArrays";
 
 const technicianJobsRouter = Router();
 
@@ -25,20 +26,15 @@ const technicianJobsController = new AdvancedGenericController({
 
 const technicianUploads = createUploader([
   {
-    name: "vehicleRepairImagesFile",
+    name: "jobNotesImagesFile",
     maxCount: 1000,
     mimeTypes: ["image/jpeg", "image/png"],
   },
+  // Optionally add video upload if needed
   {
-    name: "vehicleRepairVideo",
-    maxCount: 1,
-    mimeTypes: [
-      "video/mp4",
-      "video/mpeg",
-      "video/quicktime",
-      "video/x-msvideo",
-      "video/x-matroska",
-    ],
+    name: "jobNotesVideosFile",
+    maxCount: 10,
+    mimeTypes: ["video/mp4", "video/mpeg", "video/quicktime"],
   },
 ]);
 
@@ -48,27 +44,39 @@ technicianJobsRouter.get("/:id", technicianJobsController.getById);
 technicianJobsRouter.post(
   "/",
   technicianUploads,
+
+  (req, res, next) => {
+    if (req.body.jobNotes && typeof req.body.jobNotes === "string") {
+      try {
+        req.body.jobNotes = JSON.parse(req.body.jobNotes);
+        console.log("Fixed: Parsed jobNotes string to object");
+      } catch (err) {
+        console.error("Failed to parse jobNotes:", err);
+        req.body.jobNotes = {};
+      }
+    }
+    next();
+  },
   mapUploadedFilesToBody("/uploads", {
-    vehicleRepairImagesFile: "vehicleRepairDocumentation.images",
-    vehicleRepairVideo: "vehicleRepairDocumentation.video",
     jobNotesImagesFile: "jobNotes.images",
+    jobNotesVideosFile: "jobNotes.videos",
   }),
   parseFormDataArrays,
+  normalizeArrays(["jobNotes.images", "jobNotes.videos"]),
   technicianJobsController.create,
 );
 
 technicianJobsRouter.put(
   "/:id",
   technicianUploads,
-  mapUploadedFilesToBody("/uploads", {
-    vehicleRepairImagesFile: "vehicleRepairDocumentation.images",
-    vehicleRepairVideo: "vehicleRepairDocumentation.video",
-    jobNotesImagesFile: "jobNotes.images",
-  }),
   parseFormDataArrays,
+  mapUploadedFilesToBody("/uploads", {
+    jobNotesImagesFile: "jobNotes.images",
+    jobNotesVideosFile: "jobNotes.videos",
+  }),
+  normalizeArrays(["jobNotes.images", "jobNotes.videos"]),
   technicianJobsController.update,
 );
-
 technicianJobsRouter.delete("/:id", technicianJobsController.delete);
 
 export default technicianJobsRouter;
