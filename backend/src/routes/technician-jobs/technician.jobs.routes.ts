@@ -8,6 +8,7 @@ import { technicianJobSchemaValidation } from "../../schemas/technician-jobs-sch
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
+import { parseFormDataArrays } from "../../middleware/parseFormDataArrays";
 
 const technicianJobsRouter = Router();
 
@@ -50,7 +51,9 @@ technicianJobsRouter.post(
   mapUploadedFilesToBody("/uploads", {
     vehicleRepairImagesFile: "vehicleRepairDocumentation.images",
     vehicleRepairVideo: "vehicleRepairDocumentation.video",
+    jobNotesImagesFile: "jobNotes.images",
   }),
+  parseFormDataArrays,
   technicianJobsController.create,
 );
 
@@ -60,7 +63,9 @@ technicianJobsRouter.put(
   mapUploadedFilesToBody("/uploads", {
     vehicleRepairImagesFile: "vehicleRepairDocumentation.images",
     vehicleRepairVideo: "vehicleRepairDocumentation.video",
+    jobNotesImagesFile: "jobNotes.images",
   }),
+  parseFormDataArrays,
   technicianJobsController.update,
 );
 

@@ -18,7 +18,7 @@ export const ServiceSchema = new Schema(
 
 export const PartSchema = new Schema(
   {
-    productId: { type: Types.ObjectId, ref: "ProductBasic", required: true },
+    partId: { type: Types.ObjectId, ref: "Parts", required: true },
     oldPartConditionDescription: { type: String },
     newSerialNumber: { type: String },
     quantity: { type: Number, required: true },
@@ -47,7 +47,7 @@ export const InspectionSchema = new Schema(
 export const JobNotesSchema = new Schema(
   {
     messages: [{ type: String }],
-    images: [{ type: String }], // URLs
+    images: [{ type: String }],
     videos: [{ type: String }],
     ...commonSchema,
   },
