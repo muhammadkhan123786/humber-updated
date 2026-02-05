@@ -1,7 +1,7 @@
 
 import { Router } from "express";
 import { Response, Request } from "express";
-import { getCurrentTechnicianJobCode, getCurrentTicketCode, getCustomerInvoiceCurrentCode, getEmployeeCode, getSupplierCurrentCode } from "../../utils/generate.AutoCode.Counter";
+import { getCurrentTechnicianJobCode, getCurrentTicketCode, getCustomerInvoiceCurrentCode, getEmployeeCode, getQuotationCurrentCode, getSupplierCurrentCode } from "../../utils/generate.AutoCode.Counter";
 
 const autoCodeGeneratorRouter = Router();
 
@@ -54,6 +54,17 @@ autoCodeGeneratorRouter.get('/customer-invoice-code', async (req: Request, res: 
         res.status(500).json({ error: error.message || "Failed to get customer invoice code." });
     }
 })
+
+//quotation code auto generate 
+autoCodeGeneratorRouter.get('/quotation-auto-code', async (req: Request, res: Response) => {
+    try {
+        const quotationAutoCode = await getQuotationCurrentCode();
+        res.json({ quotationAutoCode: quotationAutoCode });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message || "Failed to get quotation auto code." });
+    }
+})
+
 
 
 export default autoCodeGeneratorRouter;

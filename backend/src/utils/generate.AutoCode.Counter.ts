@@ -3,6 +3,7 @@ import { TechnicianJobSequenceCounter } from "../models/ticket-management-system
 import { EmployeeSequenceCounter } from "../models/auto-generate-code-models/technician.employee.code.models";
 import { SuplierSequenceCounter } from "../models/auto-generate-code-models/supplier.code.models";
 import { CustomerInvoiceSequenceCounter } from "../models/auto-generate-code-models/invoice.code.models";
+import { QuotationSequenceCounter } from "../models/auto-generate-code-models/quotation.code.model";
 
 //generate for db 
 export const generateTicketCode = async (): Promise<string> => {
@@ -85,6 +86,24 @@ export const generateCustomerInvoiceCode = async (): Promise<string> => {
   return `INV-${year}-${String(counter.seq).padStart(6, "0")}`;
 };
 
+//real code to save in db update 
+export const generateQuotationCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  const counter = await QuotationSequenceCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to generate quotation Code sequence");
+  }
+
+  return `QUO-${year}-${String(counter.seq).padStart(6, "0")}`;
+};
+
+
 
 //generate for view
 
@@ -144,4 +163,16 @@ export const getCustomerInvoiceCurrentCode = async (): Promise<string> => {
   const seq = counter ? counter.seq + 1 : 1;
 
   return `INV-${year}-${String(seq).padStart(6, "0")}`;
+};
+
+//get Quotation current code 
+export const getQuotationCurrentCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  // Just fetch current counter without updating
+  const counter = await QuotationSequenceCounter.findOne({ year });
+
+  const seq = counter ? counter.seq + 1 : 1;
+
+  return `QUO-${year}-${String(seq).padStart(6, "0")}`;
 };
