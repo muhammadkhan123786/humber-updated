@@ -69,6 +69,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: Ticket,
     roleId: [2],
   },
+  {
+    _id: nanoid(),
+    label: "Create quotation",
+    href: "/dashboard/qutations",
+    icon: FileText,
+    roleId: [2],
+  },
   /* ================= SERVICE TICKETS ================= */
   {
     _id: nanoid(),
