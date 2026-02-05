@@ -82,6 +82,7 @@ import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
+import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
 
 
 // Create express app
@@ -397,6 +398,12 @@ app.use(
   ServiceRequestPrioprityRouter,
 );
 
+//05-02-2026
+app.use(
+  `${process.env.API_PREFIX}/ticket-quotation-status`,
+  adminProtecter,
+  ticketQuotationStatusRouter,
+);
 
 //Muhammad Imran code ended here.
 
