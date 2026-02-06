@@ -15,9 +15,9 @@ import { toast } from 'sonner';
 // Add statuses constant
 const statuses = [
   { value: 'all', label: 'All Statuses' },
-  { value: 'draft', label: 'Draft' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'discrepancy', label: 'Discrepancy' },
+  { value: 'received', label: 'Received' },
+  { value: 'ordered', label: 'Ordered' },
+
 ];
 
 export default function GoodsReceivedPage() {
@@ -46,6 +46,7 @@ export default function GoodsReceivedPage() {
     handleAddManualProduct,
     handleCreateGRN,
     resetForm,
+    handleExportGRN,
     loadGRNs
   } = useGoodsReceived();
 
@@ -59,7 +60,8 @@ export default function GoodsReceivedPage() {
     setIsViewDialogOpen(true);
   };
 
-  const handleDownloadGRN = (grn: GoodsReceivedNote) => {
+  const handleDownloadGRN = async(grn: GoodsReceivedNote) => {
+   await handleExportGRN(grn);
     toast.info(`Downloading GRN: ${grn.grnNumber}`);
   };
 
@@ -144,6 +146,7 @@ export default function GoodsReceivedPage() {
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
         grn={viewingGRN}
+        handleDownloadGRN = { handleDownloadGRN}
       />
     </div>
   );

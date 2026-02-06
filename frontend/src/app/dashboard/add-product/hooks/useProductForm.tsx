@@ -156,8 +156,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     const fetchCategoriesData = async () => {
       try {
         const data = await fetchCategories();
-        console.log("Fetched categories:", data);
-        setFetchedCategories(data.data as CategoryNode[] || []);
+        setFetchedCategories(data.data as any || []);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }

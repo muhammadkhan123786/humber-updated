@@ -3,14 +3,14 @@ import { Badge } from '@/components/form/Badge';
 import { Button } from '@/components/form/CustomButton';
 import { Star, ChevronRight, Eye, Edit, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Product } from '../types/product';
+import { Product, ProductListItem } from '../types/product';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ProductTableViewProps {
-  products: Product[];
-  onView: (product: Product) => void;
-  onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
+  products: ProductListItem[];
+  onView: (product: any) => void;
+  onEdit: (product: any) => void;
+  onDelete: (product: ProductListItem) => void;
   getStockBadge: (status: string) => { class: string; icon: any };
 }
 
@@ -62,19 +62,19 @@ export const ProductTableView = ({
                       <div className="space-y-1">
                         <div className="flex items-center gap-1 text-xs">
                           <Badge className="bg-blue-100 text-blue-700 border border-blue-300 text-xs">
-                            L1: {product.categories.level1.name}
+                            L1: {product.categories.level1?.name}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 text-xs">
                           <ChevronRight className="h-3 w-3 text-gray-400" />
                           <Badge className="bg-cyan-100 text-cyan-700 border border-cyan-300 text-xs">
-                            L2: {product.categories.level2.name}
+                            L2: {product.categories.level2?.name}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-1 text-xs">
                           <ChevronRight className="h-3 w-3 text-gray-400 ml-3" />
                           <Badge className="bg-teal-100 text-teal-700 border border-teal-300 text-xs">
-                            L3: {product.categories.level3.name}
+                            L3: {product.categories.level3?.name}
                           </Badge>
                         </div>
                       </div>
@@ -82,7 +82,7 @@ export const ProductTableView = ({
                     <td className="px-6 py-4">
                       <div>
                         <p className="font-bold text-gray-900">£{product.price.toFixed(2)}</p>
-                        <p className="text-xs text-gray-500">Cost: £{product.costPrice.toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">Cost: £{product?.costPrice?.toFixed(2)}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">

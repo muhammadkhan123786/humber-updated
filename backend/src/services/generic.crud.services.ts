@@ -78,9 +78,9 @@ export class GenericService<T extends Document> {
         if (!doc) return null;
 
         // 2️⃣ Prevent delete if default
-        if (hasIsDefaultField(doc) && doc.isDefault === true) {
-            throw new Error("Default record cannot be deleted");
-        }
+        // if (hasIsDefaultField(doc) && doc.isDefault === true) {
+        //     throw new Error("Default record cannot be deleted");
+        // }
 
         // 3️⃣ Safe delete
         return this.model.findByIdAndUpdate(
@@ -94,7 +94,6 @@ export class GenericService<T extends Document> {
 
       async getProductStats(filters = {}) {
         const baseFilter = { ...filters, isDeleted: false } ;
-  console.log("🔍 getProductStats called with filters:", filters);
         const [
             total,
             activeCount,
@@ -141,15 +140,7 @@ export class GenericService<T extends Document> {
             } )
         ]);
 
-        console.log("Product Stats:", {
-            total,
-            activeCount,
-            inactiveCount,
-            inStockCount,
-            lowStockCount,
-            outOfStockCount,
-            featuredCount
-        });
+       
 
         return {
             total,

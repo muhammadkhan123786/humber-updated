@@ -11,6 +11,7 @@ import { ViewOrderDialog } from './ViewOrderDialog';
 import { DeleteOrderDialog } from './DeleteOrderDialog';
 import { usePurchaseOrders } from '@/hooks/usePurchaseOrders';
 import { IPurchaseOrder } from '../types/purchaseOrders';
+import { toast } from 'sonner';
 
 export default function PurchaseOrdersPage() {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
@@ -72,6 +73,7 @@ const handleConfirmDelete = async () => {
 
   try {
     await handleDeleteOrder(deletingOrderId);
+    toast.success("Order is Deleted successfully")
   } finally {
     setIsDeleteDialogOpen(false);
     setDeletingOrderId(null);

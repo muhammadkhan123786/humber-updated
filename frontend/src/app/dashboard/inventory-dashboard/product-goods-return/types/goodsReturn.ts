@@ -9,23 +9,49 @@ export interface GoodsReturnNoteItem {
   unitPrice: number;
   totalPrice: number;
   notes: string;
+  _id?: string;
 }
 
 export interface GoodsReturnNote {
   _id: string;
-  grnNumber: string;
-  grnReference: string;
-  returnNumber: string;
-  supplier: string;
+
+  // New & old naming support
+  grtnNumber?: string;
+  returnNumber?: string;
+
+  grnNumber?: string;
+  grnId?: {
+    _id: string;
+    grnNumber?: string;
+    purchaseOrderId?: {
+      _id: string;
+      supplier?: {
+        contactInformation?: {
+          primaryContactName?: string;
+        };
+      };
+    };
+  };
+
+  supplier?: string;
+
   returnDate: Date;
   returnedBy: string;
+
   status: 'pending' | 'approved' | 'in-transit' | 'completed' | 'rejected';
+
   returnReason: string;
-  items: GoodsReturnNoteItem[];
-  totalAmount: number;
-  notes: string;
+  items: {
+    returnQty: number;
+    totalAmount: number;
+    status?: string;
+    itemsNotes?: string;
+  }[];
+
+  totalAmount?: number;
+  notes?: string;
+
   createdAt: Date;
-  grnId: string;
 }
 
 export interface GRNForReturn {
@@ -85,4 +111,6 @@ export interface CreateGoodsReturnDto {
   returnReason: string;
   notes?: string;
   items: CreateGoodsReturnItemDto[];
+  returnDate: Date;
+  grtnNumber: string;
 }

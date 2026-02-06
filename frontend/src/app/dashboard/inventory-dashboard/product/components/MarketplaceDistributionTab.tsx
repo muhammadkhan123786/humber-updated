@@ -6,7 +6,7 @@ import { Badge } from '@/components/form/Badge';
 import { Button } from '@/components/form/CustomButton';
 import { Card, CardContent } from '@/components/form/Card';
 import { ShoppingCart, Globe, Store, Smartphone, Plus, Minus, Shuffle, Package, TrendingUp, Search, Filter, X } from 'lucide-react';
-import { Product } from '../types/product';
+import { Product, ProductListItem } from '../types/product';
 
 
 interface MarketplaceDistribution {
@@ -19,7 +19,7 @@ interface MarketplaceDistribution {
 }
 
 interface MarketplaceDistributionTabProps {
-  products: Product[];
+  products: ProductListItem[];
 }
 
 export default function MarketplaceDistributionTab({ products }: MarketplaceDistributionTabProps) {

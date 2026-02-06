@@ -6,31 +6,30 @@ import { Badge } from '@/components/form/Badge';
 import { Card, CardContent } from '@/components/form/Card';
 import { GoodsReceivedNote, PurchaseOrder } from '../types/goodsReceived';
 import { getStatusColor, getStatusIcon } from '../utils/goodsReceivedUtils';
-import { Calendar, User, Download, Package } from 'lucide-react';
+import {  User, Download, Package } from 'lucide-react';
 import * as React from 'react';
-import { cn } from '@/lib/utils';
-
 interface ViewGRNDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   grn: GoodsReceivedNote | null;
+  handleDownloadGRN: (grn: GoodsReceivedNote) => Promise<void>;
 }
 
 export const ViewGRNDialog: React.FC<ViewGRNDialogProps> = ({
   open,
   onOpenChange,
-  grn
+  grn,
+  handleDownloadGRN
 }) => {
   if (!grn) return null;
 
   const StatusIcon = getStatusIcon(grn.status);
 
   const handleDownloadPDF = () => {
-    // In a real app, this would generate and download a PDF
-    alert('PDF export functionality would be implemented here');
+    handleDownloadGRN(grn)
+   
   };
 const purchaseOrder = grn.purchaseOrderId as PurchaseOrder;
-  console.log("Viewing GRN:", grn);
 const totals = React.useMemo(() => {
   return grn.items.reduce(
     (acc, item) => {
@@ -158,7 +157,7 @@ const totals = React.useMemo(() => {
                         <p className="font-medium">{item.productName}</p>
                         <p className="text-xs text-gray-500 font-mono">{item.sku}</p>
                       </td>
-                      <td className="p-3 text-center">{item.orderedQuantity}</td>
+                      <td className="p-3 text-center">{totals.ordered}</td>
                       <td className="p-3 text-center">
                         <Badge className="bg-blue-100 text-blue-700 border-blue-200">
                           {item.receivedQuantity}

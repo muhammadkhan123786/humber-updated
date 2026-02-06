@@ -4,13 +4,13 @@ import { Badge } from '@/components/form/Badge';
 import { Button } from '@/components/form/CustomButton';
 import { Star, ChevronRight, Eye, Edit, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Product } from '../types/product';
+import { Product, ProductListItem } from '../types/product';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductListItem;
   index: number;
-  onView: (product: Product) => void;
-  onEdit: (product: Product) => void;
+  onView: (product: any) => void;
+  onEdit: (product: any) => void;
   getStockBadge: (status: string) => { class: string; icon: any };
 }
 
@@ -71,17 +71,17 @@ export const ProductCard = ({
           <div className="mt-3 space-y-2">
             <div className="flex items-center gap-1 text-xs flex-wrap">
               <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
-                {product.categories.level1.name}
+                {product.categories.level1?.name}
               </Badge>
               <ChevronRight className="h-3 w-3 text-gray-400" />
               <Badge className="bg-cyan-100 text-cyan-700 border border-cyan-300">
-                {product.categories.level2.name}
+                {product.categories.level2?.name}
               </Badge>
             </div>
             <div className="flex items-center gap-1 text-xs">
               <ChevronRight className="h-3 w-3 text-gray-400" />
               <Badge className="bg-teal-100 text-teal-700 border border-teal-300">
-                {product.categories.level3.name}
+                {product.categories.level3?.name}
               </Badge>
             </div>
           </div>
@@ -94,7 +94,7 @@ export const ProductCard = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-gray-900">£{product.price.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">Cost: £{product.costPrice.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">Cost: £{product?.costPrice?.toFixed(2)}</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">Stock: {product.stockQuantity}</p>

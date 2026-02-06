@@ -13,7 +13,7 @@ const purchaseOrderBaseService = new GenericService<PurchaseDoc>(PurchaseOrder);
 const purchaseOrderController = new AdvancedGenericController({
   service: purchaseOrderBaseService,
   populate: ["userId", "supplier"],
-  searchFields: ["orderNumber", "supplier", "supplierContact", "notes"],
+  searchFields: ["orderNumber", "supplier","supplierContact", "notes"],
   validationSchema: purchaseOrderZodSchema,
 });
 
@@ -25,12 +25,13 @@ const purchaseOrderController = new AdvancedGenericController({
 // Custom business logic routes (specific paths)
 purchaseOrderRoutes.get("/next-order-number", purchaseOrderCustomController.generateNextOrderNumber);
 purchaseOrderRoutes.get("/stats/dashboard", purchaseOrderCustomController.getStats);
-// purchaseOrderRoutes.get("/export", purchaseOrderCustomController.exportToCSV);
+purchaseOrderRoutes.get("/export", purchaseOrderCustomController.exportToPDF);
 purchaseOrderRoutes.patch("/bulk-update", purchaseOrderCustomController.bulkUpdate);
+purchaseOrderRoutes.get("/", purchaseOrderCustomController.getAllWithSearch);
 
 // Standard CRUD operations (generic controller)
+// purchaseOrderRoutes.get("/", purchaseOrderController.getAll);
 purchaseOrderRoutes.post("/", purchaseOrderController.create);
-purchaseOrderRoutes.get("/", purchaseOrderController.getAll);
 purchaseOrderRoutes.get("/:id", purchaseOrderController.getById);
 purchaseOrderRoutes.put("/:id", purchaseOrderController.update);
 purchaseOrderRoutes.delete("/:id", purchaseOrderController.delete);

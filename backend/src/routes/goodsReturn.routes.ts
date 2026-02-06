@@ -9,8 +9,22 @@ const goodsReturnRoutes = Router();
 const goodsReturnService = new GenericService<GoodsReturnDoc>(GoodsReturn);
 
 const goodsReturnController = new AdvancedGenericController({
-  service: goodsReturnService,
-  populate: ["userId"], 
+  service: goodsReturnService,  
+  populate: [
+    "userId",
+    {
+      path: "grnId",
+      select: "grnNumber purchaseOrderId", 
+      populate: {
+        path: "purchaseOrderId",
+        select: "supplier",
+        populate: {
+          path: "supplier",
+          select: "contactInformation", 
+        },
+      },
+    },
+  ],
   validationSchema: CreateGoodsReturnValidation,
 });
 

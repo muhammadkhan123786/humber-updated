@@ -16,12 +16,15 @@ interface GoodsReturnTableViewProps {
   onDownload?: (grtn: GoodsReturnNote) => void;
 }
 
+
 export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
   returns,
   onView,
   onDownload
 }) => {
+  
   if (returns.length === 0) {
+    
     return (
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
         <CardContent className="p-12 text-center">
@@ -58,6 +61,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {returns.map((grtn, index) => {
+                console.log("grtn", grtn);
                 const StatusIcon = getStatusIcon(grtn.status);
                 return (
                   <motion.tr
@@ -112,12 +116,12 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                         "text-white border-0",
                         `bg-gradient-to-r ${getStatusColor(grtn.status)}`
                       )}>
-                        {grtn.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        {grtn?.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-right">
-                        <p className="text-lg font-bold text-[#ea580c]">£{grtn.totalAmount.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-[#ea580c]"> £{(grtn?.totalAmount ?? 0).toFixed(2)}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4">

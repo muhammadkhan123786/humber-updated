@@ -7,36 +7,53 @@ export interface Category {
   parentId?: string;
 }
 
-export interface Product {
+export interface ProductListItem {
   id: string;
   name: string;
   sku: string;
   description: string;
   categories: {
-    level1: Category;
-    level2: Category;
-    level3: Category;
+    level1?: { id: string; name: string; level?: number };
+    level2?: { id: string; name: string; level?: number; parentId?: string };
+    level3?: { id: string; name: string; level?: number; parentId?: string };
   };
+  price: number;
+  stockQuantity: number;
+  stockStatus: string;
+  status: string;
+  featured: boolean;
+  imageUrl?: string;
+  manufacturer?: string;
+  brand?: string;
+  costPrice: number;
+  rating?: number;
+  totalReviews?: string;
+  warranty?: string;
+   onHand: number;
+  reserved: number;
+  available: number;
+  reorderLevel: number;
+  reorderQuantity: number;
+  weight?: string;
+  dimensions?: string;
+}
+
+
+// inventory-dashboard/product/types/product.ts
+export interface Product extends ProductListItem {
   price: number;
   costPrice: number;
   stockQuantity: number;
-  stockStatus: 'in-stock' | 'low-stock' | 'out-of-stock';
   weight: string;
   dimensions: string;
-  manufacturer: string;
-  warranty: string;
-  rating: number;
-  totalReviews: number;
-  imageUrl?: string;
-  featured: boolean;
-  status: 'active' | 'inactive' | 'discontinued';
-  // Inventory fields
+
   onHand: number;
   reserved: number;
   available: number;
   reorderLevel: number;
   reorderQuantity: number;
 }
+
 
 export interface ProductStats {
   total: number;

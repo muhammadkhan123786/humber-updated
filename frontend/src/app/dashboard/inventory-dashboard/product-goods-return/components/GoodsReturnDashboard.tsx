@@ -37,10 +37,13 @@ export default function GoodsReturnPage() {
     returningItems,
     availableGRNs,
     statuses,
+    // ✅ NEW: Return date state and setter
+    returnDate,
+    setReturnDate,
     handleGRNSelection,
     handleUpdateItemReturn,
     handleCreateReturn,
-    resetForm
+    resetForm,
   } = useGoodsReturn();
 
   const handleOpenCreateReturn = () => {
@@ -68,7 +71,7 @@ export default function GoodsReturnPage() {
     resetForm();
   };
 
-  console.log("availableGRNs", availableGRNs)
+  console.log("filteredReturns", filteredReturns)
   return (
     <div className="space-y-6 relative p-4 md:p-6">
       {/* Animated Background */}
@@ -138,6 +141,9 @@ export default function GoodsReturnPage() {
         availableGRNs={availableGRNs}
         onCreateReturn={handleCreateAndClose}
         onCancel={handleCloseCreateDialog}
+        // ✅ NEW: Pass return date props
+        returnDate={returnDate}
+        onReturnDateChange={setReturnDate}
       />
 
       <ViewReturnDialog

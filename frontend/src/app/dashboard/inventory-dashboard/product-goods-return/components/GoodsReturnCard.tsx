@@ -24,7 +24,10 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
   onDownload
 }) => {
   const StatusIcon = getStatusIcon(grtn.status);
+const totalAmount = grtn.totalAmount || 
+    grtn.items.reduce((sum, item) => sum + (item.totalAmount || item.totalPrice || 0), 0);
 
+    console.log("")
   return (
     <motion.div
       key={grtn._id}
@@ -34,7 +37,7 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
       whileHover={{ scale: 1.01 }}
     >
       <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-white/80 backdrop-blur-sm overflow-hidden">
-        <div className={cn("h-1 bg-gradient-to-r", getStatusColor(grtn.status))}></div>
+        {/* <div className={cn("h-1 bg-gradient-to-r", getStatusColor(grtn.status))}></div> */}
         <CardContent className="p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-start gap-4">
@@ -46,28 +49,28 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-xl font-bold text-gray-900">{grtn.returnNumber}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{grtn.grtnNumber}</h3>
                   <Badge className={cn(
                     "text-white border-0",
                     `bg-gradient-to-r ${getStatusColor(grtn.status)}`
                   )}>
-                    {grtn.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    {grtn?.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
                     <FileText className="h-4 w-4 text-[#f97316]" />
-                    <span className="font-medium">GRN: {grtn.grnNumber}</span>
+                    <span className="font-medium">GRN: {grtn.grnId?.grnNumber}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Truck className="h-4 w-4 text-purple-500" />
-                    <span>{grtn.supplier}</span>
+                    <span>{grtn.grnId?.purchaseOrderId?.supplier?.contactInformation?.primaryContactName}</span>
                   </div>
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-[#ea580c]">£{grtn.totalAmount.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-[#ea580c]">£{grtn.totalAmount}</p>
               <p className="text-xs text-gray-500">Return Value</p>
             </div>
           </div>
@@ -76,7 +79,7 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-indigo-500" />
               <span className="text-gray-600">Return Date:</span>
-              <span className="font-medium text-gray-900"> {grtn.returnDate.toLocaleDateString()}</span>
+              <span className="font-medium text-gray-900">  {new Date(grtn.returnDate).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-green-500" />

@@ -1,3 +1,6 @@
+export interface MarketplaceIcon {
+  icon: string[];
+}
 export interface MarketplaceTemplate {
   _id: string;
   name: string;
@@ -5,7 +8,7 @@ export interface MarketplaceTemplate {
   description: string;
   color: string;
   colorCode?: string;
-  icon: string;
+  icon: any;
   fields: string[];
   isActive: boolean;
   isDefault: boolean;
