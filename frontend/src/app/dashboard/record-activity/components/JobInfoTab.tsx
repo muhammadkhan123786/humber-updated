@@ -11,6 +11,36 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomSelectNoBorder } from "../../../common-form/CustomSelectNoBorder";
 import { FormDisplay } from "@/app/common-form/FormDisplay";
+import axios from "axios";
+
+const generateJobId = async (): Promise<string> => {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const cleanToken = token ? token.replace(/^"|"$/g, "").trim() : "";
+
+    const response = await axios.get(
+      `${baseUrl}/auto-generate-codes/techcian-job-code`,
+      {
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+        },
+      },
+    );
+
+    return response.data.technicianJobCode || "JOB-ERROR-000";
+  } catch (error) {
+    console.error("Failed to generate job ID from API:", error);
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `JOB-${year}${month}${day}-${random}`;
+  }
+};
 
 export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const { watch, setValue } = form;
@@ -18,14 +48,22 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const selectedTicketId = watch("ticketId");
   const selectedTechnicianId = watch("technicianId");
   const [jobId, setJobId] = useState<string>("");
+  const [isGeneratingJobId, setIsGeneratingJobId] = useState(false);
 
   React.useEffect(() => {
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const timestamp = Date.now().toString().slice(-6);
-    setJobId(`JOB-${year}${month}${day}-${timestamp}`);
+    const fetchJobId = async () => {
+      setIsGeneratingJobId(true);
+      try {
+        const generatedJobId = await generateJobId();
+        setJobId(generatedJobId);
+      } catch (error) {
+        console.error("Error generating job ID:", error);
+      } finally {
+        setIsGeneratingJobId(false);
+      }
+    };
+
+    fetchJobId();
   }, []);
 
   const selectedTicket = useMemo(() => {
@@ -35,11 +73,6 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const selectedTechnician = useMemo(() => {
     return technicians.find((t: any) => t._id === selectedTechnicianId) || null;
   }, [selectedTechnicianId, technicians]);
-  React.useEffect(() => {
-    if (selectedTicket?.assignedTechnicianId?.length > 0) {
-      setValue("technicianId", selectedTicket.assignedTechnicianId[0]._id);
-    }
-  }, [selectedTicket, setValue]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -259,7 +292,26 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <FormDisplay label=" Job ID" value={jobId || "Select a Job ID"} />
+          <div className="space-y-2">
+            <label className="font-medium text-sm tracking-widest">
+              Job ID
+            </label>
+            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl">
+              {isGeneratingJobId ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4F39F6]"></div>
+                  <span className="text-gray-500 text-sm">
+                    Generating Job ID...
+                  </span>
+                </div>
+              ) : (
+                <span className="font-bold text-gray-800 text-sm">
+                  {jobId || "Loading..."}
+                </span>
+              )}
+            </div>
+          </div>
+
           <FormDisplay
             label="Ticket id"
             value={selectedTicket?.ticketCode || "Select a ticket"}

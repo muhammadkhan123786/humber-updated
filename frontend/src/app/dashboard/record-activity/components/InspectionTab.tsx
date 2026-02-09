@@ -29,7 +29,6 @@ export const InspectionTab = ({
   form,
   inspectionTypes,
 }: InspectionTabProps) => {
-  // ✅ derived UI state (NO useEffect, NO setState)
   const items: InspectionItemUI[] = useMemo(
     () =>
       inspectionTypes.map((item) => ({

@@ -4,8 +4,8 @@ import { Package, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityRecordFormData } from "../../../../schema/activityRecordSchema";
-import { CustomSelect } from "../../../common-form/CustomSelect"; // apna correct path
-import FormField from "../../suppliers/components/FormInput"; // apna correct path
+import { CustomSelect } from "../../../common-form/CustomSelect";
+import FormField from "../../suppliers/components/FormInput";
 
 interface PartsTabProps {
   form: UseFormReturn<ActivityRecordFormData>;
@@ -13,7 +13,6 @@ interface PartsTabProps {
   partFields: any[];
   addPart: () => void;
   removePart: (index: number) => void;
-  calculatePartTotal: (index: number) => number;
   totalPartsCost: number;
 }
 
@@ -23,7 +22,6 @@ export const PartsTab = ({
   partFields,
   addPart,
   removePart,
-  calculatePartTotal,
   totalPartsCost,
 }: PartsTabProps) => {
   const {
@@ -41,19 +39,18 @@ export const PartsTab = ({
 
   const selectedPart = parts.find((p) => p._id === currentPartId);
 
+  // Set unit cost when a part is selected
   useEffect(() => {
     if (!selectedPart) return;
-
     setValue(`parts.${nextIndex}.unitCost`, selectedPart.unitCost || 0, {
       shouldDirty: true,
     });
   }, [selectedPart, nextIndex, setValue]);
 
+  // Update total cost for current row
   useEffect(() => {
     const total = currentQuantity * currentUnitCost;
-    setValue(`parts.${nextIndex}.totalCost`, total, {
-      shouldDirty: true,
-    });
+    setValue(`parts.${nextIndex}.totalCost`, total, { shouldDirty: true });
   }, [currentQuantity, currentUnitCost, nextIndex, setValue]);
 
   const handleRecordPart = async () => {
@@ -66,18 +63,24 @@ export const PartsTab = ({
       return;
     }
 
+    // Add the part
     addPart();
 
-    setTimeout(() => {
-      const newIndex = nextIndex + 1;
-      setValue(`parts.${newIndex}.partId`, "");
-      setValue(`parts.${newIndex}.oldPartConditionDescription`, "");
-      setValue(`parts.${newIndex}.newSerialNumber`, "");
-      setValue(`parts.${newIndex}.quantity`, 1);
-      setValue(`parts.${newIndex}.unitCost`, 0);
-      setValue(`parts.${newIndex}.totalCost`, 0);
-      setValue(`parts.${newIndex}.reasonForChange`, "");
-    }, 0);
+    // Reset new row immediately
+    const newIndex = nextIndex + 1;
+    setValue(
+      `parts.${newIndex}`,
+      {
+        partId: "",
+        oldPartConditionDescription: "",
+        newSerialNumber: "",
+        quantity: 1,
+        unitCost: 0,
+        totalCost: 0,
+        reasonForChange: "",
+      },
+      { shouldValidate: true },
+    );
   };
 
   const getPartName = (partId: string) =>
@@ -86,14 +89,13 @@ export const PartsTab = ({
   const getPartNumber = (partId: string) =>
     parts.find((p) => p._id === partId)?.partNumber || "N/A";
 
-  const totalUnits = partFields
-    .filter((_, index) => index !== nextIndex)
-    .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+  const totalUnits = partFields.reduce(
+    (acc, curr) => acc + (Number(curr.quantity) || 0),
+    0,
+  );
 
   const currentTotalCost = currentQuantity * currentUnitCost;
-  const completedParts = partFields.filter(
-    (_, index) => index !== nextIndex && partFields[index].partId,
-  );
+  const completedParts = partFields.filter((f) => f.partId);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -136,6 +138,7 @@ export const PartsTab = ({
         )}
       </AnimatePresence>
 
+      {/* Current Part Form */}
       <div className="bg-white border border-purple-100 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-6 text-[#A855F7] font-bold">
           <Plus size={20} />
@@ -147,7 +150,6 @@ export const PartsTab = ({
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               Part Name <span className="text-red-500">*</span>
             </label>
-
             <CustomSelect
               options={parts.map((p) => ({
                 id: p._id,
@@ -156,12 +158,12 @@ export const PartsTab = ({
               value={currentPartId || ""}
               placeholder="Select a part from inventory..."
               isSearchable
-              onChange={(val: string) => {
+              onChange={(val: string) =>
                 setValue(`parts.${nextIndex}.partId`, val, {
                   shouldDirty: true,
                   shouldValidate: true,
-                });
-              }}
+                })
+              }
             />
           </div>
 
@@ -205,16 +207,21 @@ export const PartsTab = ({
           <FormField
             label="Quantity"
             type="number"
-            min="1"
             required
-            value={currentQuantity}
+            value={currentQuantity !== undefined ? Number(currentQuantity) : 1} // always string
             onChange={(e) => {
-              const value = e.target.value;
-              setValue(
-                `parts.${nextIndex}.quantity`,
-                value === "" ? 1 : Number(value),
-                { shouldDirty: true, shouldValidate: true },
-              );
+              let value: number;
+
+              if (e.target.value === "" || isNaN(Number(e.target.value))) {
+                value = 1; // empty or invalid -> 1
+              } else {
+                value = Math.max(1, Number(e.target.value)); // minimum 1
+              }
+
+              setValue(`parts.${nextIndex}.quantity`, value, {
+                shouldDirty: true,
+                shouldValidate: true, // trigger Zod validation
+              });
             }}
           />
 
@@ -222,7 +229,6 @@ export const PartsTab = ({
             <label className="text-sm font-medium text-gray-400 uppercase tracking-widest">
               Unit Cost (£)
             </label>
-
             <div className="w-full h-9 px-4 flex items-center bg-gray-100 border border-gray-100 rounded-2xl text-gray-500 font-medium text-sm">
               £{currentUnitCost?.toFixed(2) || "0.00"}
             </div>
@@ -232,7 +238,6 @@ export const PartsTab = ({
             <label className="text-sm font-medium text-gray-400 tracking-widest">
               Total Cost (£)
             </label>
-
             <div className="w-full h-9 px-4 flex items-center bg-purple-50 border border-purple-100 rounded-2xl text-[#A855F7] font-black text-sm">
               £{currentTotalCost.toFixed(2)}
             </div>
@@ -264,6 +269,7 @@ export const PartsTab = ({
         </button>
       </div>
 
+      {/* Completed Parts */}
       <AnimatePresence>
         {completedParts.length > 0 && (
           <motion.div
@@ -272,11 +278,8 @@ export const PartsTab = ({
             className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm"
           >
             <div className="space-y-4">
-              {completedParts.map((field) => {
-                const originalIndex = partFields.findIndex(
-                  (f) => f.id === field.id,
-                );
-                const totalCost = calculatePartTotal(originalIndex);
+              {completedParts.map((field, index) => {
+                const totalCost = (field.quantity || 1) * (field.unitCost || 0);
 
                 return (
                   <div
@@ -307,7 +310,7 @@ export const PartsTab = ({
                       <div className="text-right">
                         <button
                           type="button"
-                          onClick={() => removePart(originalIndex)}
+                          onClick={() => removePart(index)}
                           className="text-red-400 hover:bg-red-50 p-2 rounded-lg transition-colors"
                         >
                           <Trash2 size={18} />
@@ -316,7 +319,7 @@ export const PartsTab = ({
                           £{totalCost.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-400">
-                          {field.quantity} × £{field.unitCost?.toFixed(2)}
+                          {field.quantity || 1} × £{field.unitCost?.toFixed(2)}
                         </p>
                       </div>
                     </div>
