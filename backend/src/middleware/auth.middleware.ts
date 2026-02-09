@@ -57,7 +57,7 @@ export const technicianProtecter = (
     next: NextFunction
 ) => {
     let token: string | undefined;
-
+    console.log("Technician protector middleware invoked");
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer ")
@@ -227,7 +227,7 @@ export const technicianMasterProtector = async (
         }
 
         const token = authHeader.split(" ")[1];
-
+        console.log("Technician Master Protector invoked with token:", token);
         // 2️⃣ Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
             userId: string;
@@ -265,12 +265,6 @@ export const technicianMasterProtector = async (
         // 5️⃣ Attach master user and technician info to request
         req.user = masterUser; // MASTER Admin
         req.technician = technician; // Logged-in Technician metadata
-
-        // 6️⃣ Auto-assign technicianId if requested in body
-        if (req.body.technicianId !== undefined) {
-            req.body.technicianId = technician._id;
-        }
-
         req.role = "Technician";
 
         next();
