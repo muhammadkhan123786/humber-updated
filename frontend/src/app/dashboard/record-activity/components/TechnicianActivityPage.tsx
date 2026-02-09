@@ -1,8 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import {
-  ClipboardList,
-  Wrench,
   Package,
   CheckSquare,
   FileText,
@@ -11,6 +9,7 @@ import {
   Clock,
   Save,
   Send,
+  Briefcase,
 } from "lucide-react";
 
 import { ActivityHero } from "./ActivityHero";
@@ -56,11 +55,11 @@ const TechnicianActivityPage = () => {
   } = useActivityRecordForm();
 
   const tabs = [
-    { id: "Job Info", label: "Job Info", icon: ClipboardList },
+    { id: "Job Info", label: "Job Info", icon: Briefcase },
     {
       id: "Services",
       label: "Services",
-      icon: Wrench,
+      icon: Settings,
     },
     {
       id: "Parts",

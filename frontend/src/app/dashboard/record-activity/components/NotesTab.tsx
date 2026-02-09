@@ -8,6 +8,7 @@ import {
   FileEdit,
   CheckCircle,
   X,
+  Upload,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
@@ -34,7 +35,6 @@ export const NotesTab = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
-  // Watch form values
   const generalNotes = watch("generalNotes") || "";
   const completionSummary = watch("completionSummary") || "";
   const jobNotesMessages = watch("jobNotesMessages") || [];
@@ -90,8 +90,8 @@ export const NotesTab = ({
       className="space-y-6 pb-10"
     >
       <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm mb-4">
-          <Plus size={16} className="text-blue-500" />
+        <div className="leading-none flex items-center gap-2 text-blue-600 font-bold mb-4">
+          <Upload size={16} className="text-blue-500" />
           <span>Add Media & Messages</span>
         </div>
 
@@ -143,7 +143,7 @@ export const NotesTab = ({
         </div>
 
         <div className="relative">
-          <label className="text-[11px] text-gray-500 font-bold ml-1">
+          <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             Quick Message
           </label>
           <div className="flex gap-2 mt-1">
@@ -281,21 +281,21 @@ export const NotesTab = ({
       </AnimatePresence>
 
       <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 text-amber-600 font-semibold text-sm mb-4">
+        <div className="leading-none flex items-center gap-2 text-amber-600 font-semibold mb-4">
           <FileEdit size={16} />
           <span>General Notes</span>
         </div>
         <textarea
           rows={3}
           placeholder="Enter any general notes..."
-          className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 text-sm focus:outline-none resize-none"
+          className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 focus:outline-none resize-none"
           {...register("generalNotes")}
           defaultValue={generalNotes}
         />
       </div>
 
       <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 text-emerald-600 font-semibold text-sm mb-4">
+        <div className="leading-none flex items-center gap-2 text-green-600 font-semibold mb-4">
           <CheckCircle size={16} />
           <span>Completion Summary</span>
         </div>
