@@ -117,7 +117,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
     <>
       <div className="bg-white rounded-b-2xl border-t-4 border-orange-500 shadow-lg animate-slideUp">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-10">
+        <div className="flex items-center justify-between px-6 py-12">
           <div className="flex items-center gap-2">
             <Wrench className="text-orange-600 w-5 h-5" />
             <h2 className="font-medium text-gray-900 leading-none">Parts Required</h2>

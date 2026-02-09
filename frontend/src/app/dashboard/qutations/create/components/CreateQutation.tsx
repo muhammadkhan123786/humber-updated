@@ -104,7 +104,9 @@ const CreateQuotationPage = () => {
 
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
-              <QuotationSummary selectedTicket={selectedTicket} />
+              <div className="sticky top-6">
+                <QuotationSummary selectedTicket={selectedTicket} />
+              </div>
             </div>
           </div>
         ) : (
@@ -121,10 +123,12 @@ const CreateQuotationPage = () => {
 
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
-              <QuotationSummary 
-                selectedTicket={selectedTicket}
-                selectedParts={selectedParts}
-              />
+              <div className="sticky top-6">
+                <QuotationSummary 
+                  selectedTicket={selectedTicket}
+                  selectedParts={selectedParts}
+                />
+              </div>
             </div>
           </div>
         )}

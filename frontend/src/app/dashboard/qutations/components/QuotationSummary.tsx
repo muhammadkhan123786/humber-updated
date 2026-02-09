@@ -35,7 +35,7 @@ const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSumma
   const formattedValidUntil = validUntil.toLocaleDateString('en-GB');
 
   return (
-    <div className="bg-white rounded-b-2xl border-t-4 border-indigo-500 shadow-lg p-6 h-full animate-slideLeft">
+    <div className="bg-white rounded-b-2xl border-t-4 border-indigo-500 shadow-lg p-6 animate-slideLeft h-full overflow-y-auto scrollbar-hide">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="">
