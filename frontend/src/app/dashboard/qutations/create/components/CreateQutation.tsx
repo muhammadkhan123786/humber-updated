@@ -7,11 +7,17 @@ import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
 import { getAll } from '@/helper/apiHelper';
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
 

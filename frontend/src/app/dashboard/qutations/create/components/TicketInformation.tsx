@@ -39,11 +39,17 @@ interface Ticket {
   updatedAt: string;
 }
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
 

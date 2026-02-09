@@ -1,11 +1,17 @@
 "use client";
 import { Calculator, AlertCircle, Save, Send, Download } from 'lucide-react';
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
 
@@ -16,7 +22,7 @@ interface QuotationSummaryProps {
 
 const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSummaryProps) => {
   // Calculate totals based on selected parts
-  const partsTotal = selectedParts.reduce((sum, part) => sum + (part.price * part.quantity), 0);
+  const partsTotal = selectedParts.reduce((sum, part) => sum + ((part.unitCost || 0) * part.quantity), 0);
   const laborTotal = 0.00; // This can be updated later when labor is added
   const subtotal = partsTotal + laborTotal;
   const vatRate = 0.20;

@@ -9,7 +9,7 @@ interface Part {
   partName: string;
   partNumber: string;
   description?: string;
-  price: number;
+  unitCost?: number;
   stock?: number;
   isActive?: boolean;
 }
@@ -38,7 +38,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
   const loadParts = async () => {
     setIsLoading(true);
     try {
-      const response = await getAll<any>('/mobility-parts', {
+      const response = await getAll<any>('/master-parts-technician-dashboard', {
         limit: '1000',
         search: searchQuery.trim(),
       });
@@ -106,7 +106,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
     <>
       <div className="bg-white rounded-b-2xl border-t-4 border-orange-500 shadow-lg animate-slideUp">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-10">
           <div className="flex items-center gap-2">
             <Wrench className="text-orange-600 w-5 h-5" />
             <h2 className="font-medium text-gray-900 leading-none">Parts Required</h2>
@@ -162,7 +162,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-orange-600">£{part.price.toFixed(2)}</span>
+                        <span className="text-lg font-bold text-orange-600">£{(part.unitCost || 0).toFixed(2)}</span>
                         <button className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
                           <Plus size={18} />
                         </button>
@@ -197,7 +197,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
                       <h3 className="font-semibold text-gray-900">{part.partName}</h3>
                       <p className="text-sm text-gray-600 mt-1">Part #: {part.partNumber}</p>
                       <p className="text-sm text-gray-700 mt-2">
-                        £{part.price.toFixed(2)} × {part.quantity} = £{(part.price * part.quantity).toFixed(2)}
+                        £{(part.unitCost || 0).toFixed(2)} × {part.quantity} = £{((part.unitCost || 0) * part.quantity).toFixed(2)}
                       </p>
                     </div>
                     
