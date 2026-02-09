@@ -163,7 +163,9 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
       <div className="bg-white border border-blue-100 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 text-[#4F39F6] font-bold">
           <Calendar size={20} />
-          <span className="text-sm">Select Service Ticket</span>
+          <span className="leading-none flex items-center gap-2 text-indigo-600">
+            Select Service Ticket
+          </span>
         </div>
 
         <div className="space-y-2">
@@ -203,12 +205,11 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Ticket Source
+                    Job ID
                   </p>
-                  <p className="font-bold text-gray-800 text-sm capitalize">
-                    {selectedTicket.ticketSource || "N/A"}
-                  </p>
+                  <p className="font-bold text-gray-800 text-sm">{jobId}</p>
                 </div>
+
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Priority
@@ -284,11 +285,12 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </AnimatePresence>
       </div>
 
-      {/* 2. JOB INFORMATION SECTION */}
       <div className="bg-white border border-blue-100 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-6 text-[#4F39F6] font-bold">
           <Settings size={20} />
-          <span className="text-sm">Job Information</span>
+          <span className="leading-none flex items-center gap-2 text-indigo-600">
+            Job Information
+          </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -344,7 +346,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
             <label className=" font-medium text-sm  tracking-widest">
               Scooter model
             </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">
+            <div className="px-4 bg-gray-50 flex items-center border h-9 border-gray-100 rounded-xl text-gray-500 font-bold text-center text-sm">
               {selectedTicket
                 ? getVehicleDetails(selectedTicket)
                 : "Select a ticket"}
@@ -369,9 +371,11 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
               exit={{ opacity: 0, y: -10 }}
               className="bg-[#FFF8F4] border border-orange-100 rounded-3xl p-6 space-y-4 mb-6"
             >
-              <div className="flex items-center gap-2 text-[#E65100] font-bold">
+              <div className="flex items-center gap-2 text-orange-700 text-lg">
                 <AlertCircle size={18} />
-                <span className="text-sm">Customer & Fault Information</span>
+                <span className="font-semibold">
+                  Customer & Fault Information
+                </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
