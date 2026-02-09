@@ -3,7 +3,7 @@ import { AuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
-import path from "node:path";
+import { Tax } from "../../models/tax.models";
 
 export const technicianTicketsController = async (
   req: AuthRequest,
@@ -302,4 +302,49 @@ export const technicianJobsController = async (
     });
   }
 };
+
+//default tax get to add tax amount in technician quotations 
+export const getDefaultTaxPercentageController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const user = req.user;
+
+    // ✅ Master user must exist (attached by protector)
+    if (!user?._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user.",
+      });
+    }
+
+    // ✅ Fetch default tax for MASTER USER
+    const tax = await Tax.findOne({
+      userId: user._id,
+      isDefault: true,
+      isDeleted: false,
+    }).select("percentage");
+
+    if (!tax) {
+      return res.status(404).json({
+        success: false,
+        message: "Default tax not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Default tax fetched successfully.",
+      taxPercentage: tax.percentage,
+    });
+  } catch (error) {
+    console.error("Get Default Tax Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch default tax.",
+    });
+  }
+};
+
 
