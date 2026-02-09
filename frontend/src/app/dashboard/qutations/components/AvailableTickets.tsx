@@ -185,10 +185,10 @@ const AvailableTickets = ({ onSelectTicket }: AvailableTicketsProps) => {
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-4 text-center">
+                                    <td className="px-1 text-center">
                                         <button
                                             onClick={() => onSelectTicket?.(ticket)}
-                                            className="inline-flex items-center justify-center gap-2 whitespace-nowrap w-fit bg-linear-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg hover:from-green-600 hover:to-emerald-700"
+                                            className="inline-flex items-center justify-center gap-1 whitespace-nowrap w-fit bg-linear-to-r from-green-500 to-emerald-500 text-white px-2 py-2 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg hover:from-green-600 hover:to-emerald-700"
                                         >
                                             <Edit size={16} />
                                             <span className='text-sm'>Create Quote</span>

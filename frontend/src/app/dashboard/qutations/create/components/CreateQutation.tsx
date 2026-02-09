@@ -4,12 +4,23 @@ import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import AvailableTickets from '../../components/AvailableTickets';
 import QuotationSummary from '../../components/QuotationSummary';
+import TicketInformation from './TicketInformation';
 import { getAll } from '@/helper/apiHelper';
+
+interface SelectedPart {
+  _id: string;
+  partName: string;
+  partNumber: string;
+  price: number;
+  quantity: number;
+}
 
 const CreateQuotationPage = () => {
   const router = useRouter();
   const [quotationId, setQuotationId] = useState('');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [showTicketInfo, setShowTicketInfo] = useState(false);
+  const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
 
   useEffect(() => {
     fetchQuotationAutoCode();
@@ -32,6 +43,11 @@ const CreateQuotationPage = () => {
 
   const handleSelectTicket = (ticket: any) => {
     setSelectedTicket(ticket);
+    setShowTicketInfo(true);
+  };
+
+  const handleChangeTicket = () => {
+    setShowTicketInfo(false);
   };
 
   return (
@@ -57,26 +73,55 @@ const CreateQuotationPage = () => {
               </div>
             </div>
             
-            {quotationId && (
-              <div className="border text-lg px-4 py-2 bg-indigo-50 border-indigo-300 rounded-xl">
-                <p className="text-lg font-medium text-gray-900">{quotationId}</p>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              {showTicketInfo && selectedTicket && (
+                <div className="text-lg px-4 py-2 bg-blue-50 border-blue-300 rounded-md border font-medium whitespace-nowrap">
+                  Ticket: {selectedTicket.ticketCode}
+                </div>
+              )}
+              {quotationId && (
+                <div className="border text-lg px-4 py-2 bg-indigo-50 border-indigo-300 rounded-xl font-medium whitespace-nowrap">
+                  {showTicketInfo ? `QUO-${quotationId}` : quotationId}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Main Content - Two Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Available Tickets (2/3 width) */}
-          <div className="lg:col-span-2">
-            <AvailableTickets onSelectTicket={handleSelectTicket} />
-          </div>
+        {!showTicketInfo ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Available Tickets (2/3 width) */}
+            <div className="lg:col-span-2">
+              <AvailableTickets onSelectTicket={handleSelectTicket} />
+            </div>
 
-          {/* Right Column - Quotation Summary (1/3 width) */}
-          <div className="lg:col-span-1">
-            <QuotationSummary selectedTicket={selectedTicket} />
+            {/* Right Column - Quotation Summary (1/3 width) */}
+            <div className="lg:col-span-1">
+              <QuotationSummary selectedTicket={selectedTicket} />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Ticket Information (2/3 width) */}
+            <div className="lg:col-span-2 space-y-6">
+              <TicketInformation 
+                ticket={selectedTicket}
+                onChangeTicket={handleChangeTicket}
+                selectedParts={selectedParts}
+                onPartsChange={setSelectedParts}
+              />
+            </div>
+
+            {/* Right Column - Quotation Summary (1/3 width) */}
+            <div className="lg:col-span-1">
+              <QuotationSummary 
+                selectedTicket={selectedTicket}
+                selectedParts={selectedParts}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
