@@ -38,7 +38,7 @@ interface FormFieldProps {
 
 const FormField: React.FC<FormFieldProps> = ({
   label,
-  labelIcon: Icon, // 🆕 Destructure as 'Icon' (capitalized for component use)
+  labelIcon: Icon,
   name,
   value,
   onChange,

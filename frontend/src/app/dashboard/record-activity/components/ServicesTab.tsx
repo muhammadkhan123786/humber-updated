@@ -4,6 +4,8 @@ import { Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityRecordFormData } from "../../../../schema/activityRecordSchema";
+import { CustomSelect } from "../../../common-form/CustomSelect"; // apna correct path
+import FormField from "../../suppliers/components/FormInput"; // apna correct path
 
 interface ServicesTabProps {
   form: UseFormReturn<ActivityRecordFormData>;
@@ -76,55 +78,50 @@ export const ServicesTab = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className="text-sm font-medium   tracking-widest">
               Activity Type <span className="text-red-500">*</span>
             </label>
-            <select
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-[#4F39F6] outline-none text-sm"
-              {...register(`services.${inputIndex}.activityId`)}
+
+            <CustomSelect
+              options={serviceTypes.map((st) => ({
+                id: st._id || st.id,
+                label: st.technicianServiceType || "Unknown",
+              }))}
               value={currentActivityId || ""}
-              onChange={(e) =>
-                setValue(`services.${inputIndex}.activityId`, e.target.value)
-              }
-            >
-              <option value="">Select activity type</option>
-              {serviceTypes.map((serviceType) => (
-                <option
-                  key={serviceType._id || serviceType.id}
-                  value={serviceType._id || serviceType.id}
-                >
-                  {serviceType.technicianServiceType || "Unknown"}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Duration (minutes) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-[#4F39F6] outline-none text-sm"
-              placeholder="30"
-              {...register(`services.${inputIndex}.duration`, {
-                valueAsNumber: true,
-              })}
-              value={currentDuration || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-
-                setValue(
-                  `services.${inputIndex}.duration`,
-                  value === "" ? "" : (Number(value) as any),
-                );
+              placeholder="Select activity type"
+              isSearchable={true}
+              onChange={(val: string) => {
+                setValue(`services.${inputIndex}.activityId`, val, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
               }}
             />
           </div>
+
+          <FormField
+            label="Duration (minutes)"
+            type="number"
+            placeholder="30"
+            value={currentDuration || ""}
+            min="1"
+            required
+            onChange={(e) => {
+              const value = e.target.value;
+              setValue(
+                `services.${inputIndex}.duration`,
+                value === "" ? "" : (Number(value) as any),
+                {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                },
+              );
+            }}
+          />
         </div>
 
         <div className="space-y-2 mb-6">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <label className="text-sm font-medium  tracking-widest">
             Description <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -140,7 +137,7 @@ export const ServicesTab = ({
         </div>
 
         <div className="space-y-2 mb-8">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <label className=" font-medium text-sm tracking-widest">
             Additional Notes
           </label>
           <input
