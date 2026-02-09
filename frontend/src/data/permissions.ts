@@ -611,6 +611,14 @@ export const navigation: INavBarLinkSharedInterface[] = [
         href: "/dashboard/ticket-qutation-status",
         icon: FileText,
         roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Parts",
+        href: "/dashboard/parts",
+        icon: Wrench,
+        roleId: [1],
+
       }
     ],
   },

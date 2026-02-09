@@ -1,11 +1,33 @@
 "use client";
-import { Calculator, AlertCircle } from 'lucide-react';
+import { Calculator, AlertCircle, Save, Send, Download } from 'lucide-react';
+
+interface SelectedPart {
+  _id: string;
+  partName: string;
+  partNumber: string;
+  price: number;
+  quantity: number;
+}
 
 interface QuotationSummaryProps {
   selectedTicket?: any;
+  selectedParts?: SelectedPart[];
 }
 
-const QuotationSummary = ({ selectedTicket }: QuotationSummaryProps) => {
+const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSummaryProps) => {
+  // Calculate totals based on selected parts
+  const partsTotal = selectedParts.reduce((sum, part) => sum + (part.price * part.quantity), 0);
+  const laborTotal = 0.00; // This can be updated later when labor is added
+  const subtotal = partsTotal + laborTotal;
+  const vatRate = 0.20;
+  const vatAmount = subtotal * vatRate;
+  const total = subtotal + vatAmount;
+
+  // Calculate valid until date (30 days from now)
+  const validUntil = new Date();
+  validUntil.setDate(validUntil.getDate() + 30);
+  const formattedValidUntil = validUntil.toLocaleDateString('en-GB');
+
   return (
     <div className="bg-white rounded-b-2xl border-t-4 border-indigo-500 shadow-lg p-6 h-full animate-slideLeft">
       {/* Header */}
@@ -25,21 +47,64 @@ const QuotationSummary = ({ selectedTicket }: QuotationSummaryProps) => {
           <p className="text-gray-500 text-normal">Select a ticket to start</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {/* Ticket Details will be shown here */}
-          <div className="bg-linear-to-r from-indigo-50 to-indigo-100  p-4 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Selected Ticket</p>
-            <p className="text-lg font-bold text-gray-900">{selectedTicket.ticketCode}</p>
-          </div>
-          
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 mb-1">Customer</p>
-            <p className="text-base font-semibold text-gray-900">
-              {selectedTicket.customer.firstName} {selectedTicket.customer.lastName}
-            </p>
+        <div className="space-y-6">
+          {/* Price Breakdown */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-2">
+              <span className="text-gray-700">Parts Total:</span>
+              <span className="font-semibold text-gray-900">£{partsTotal.toFixed(2)}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <span className="text-gray-700">Labor Total:</span>
+              <span className="font-semibold text-gray-900">£{laborTotal.toFixed(2)}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <span className="text-gray-700">Subtotal:</span>
+              <span className="font-semibold text-gray-900">£{subtotal.toFixed(2)}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-2 border-b border-gray-200 pb-4">
+              <span className="text-gray-700">VAT (20%):</span>
+              <span className="font-semibold text-gray-900">£{vatAmount.toFixed(2)}</span>
+            </div>
+
+            <div className="flex items-center justify-between py-3 bg-indigo-50 px-4 rounded-lg">
+              <span className="text-lg font-bold text-gray-900">Total:</span>
+              <span className="text-2xl font-bold text-indigo-600">£{total.toFixed(2)}</span>
+            </div>
           </div>
 
-          {/* Add more summary details as needed */}
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors">
+              <Save size={18} />
+              <span>Save as Draft</span>
+            </button>
+
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg">
+              <Send size={18} />
+              <span>Send to Customer</span>
+            </button>
+
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors">
+              <Download size={18} />
+              <span>Download PDF</span>
+            </button>
+          </div>
+
+          {/* Status and Valid Until */}
+          <div className="space-y-2 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Status:</span>
+              <span className="text-sm font-medium text-gray-900">draft</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Valid Until:</span>
+              <span className="text-sm font-medium text-gray-900">{formattedValidUntil}</span>
+            </div>
+          </div>
         </div>
       )}
     </div>
