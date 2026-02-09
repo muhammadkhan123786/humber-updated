@@ -4,6 +4,8 @@ import { Package, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityRecordFormData } from "../../../../schema/activityRecordSchema";
+import { CustomSelect } from "../../../common-form/CustomSelect"; // apna correct path
+import FormField from "../../suppliers/components/FormInput"; // apna correct path
 
 interface PartsTabProps {
   form: UseFormReturn<ActivityRecordFormData>;
@@ -145,118 +147,93 @@ export const PartsTab = ({
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               Part Name <span className="text-red-500">*</span>
             </label>
-            <select
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-              {...register(`parts.${nextIndex}.partId`)}
+
+            <CustomSelect
+              options={parts.map((p) => ({
+                id: p._id,
+                label: `${p.partName} (${p.partNumber} - £${p.unitCost})`,
+              }))}
               value={currentPartId || ""}
-              onChange={(e) =>
-                setValue(`parts.${nextIndex}.partId`, e.target.value)
-              }
-            >
-              <option value="">Select a part from inventory...</option>
-              {parts.map((item) => (
-                <option key={item._id} value={item._id}>
-                  {item.partName} ({item.partNumber} - £{item.unitCost})
-                </option>
-              ))}
-            </select>
-            {errors.parts?.[nextIndex]?.partId && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.parts[nextIndex]?.partId?.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Part Number
-            </label>
-            <input
-              readOnly
-              value={selectedPart?.partNumber || ""}
-              className="w-full p-4 bg-gray-100 border border-gray-100 rounded-2xl text-gray-500 font-medium outline-none text-sm cursor-not-allowed"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Old Part Condition <span className="text-red-500">*</span>
-            </label>
-            <input
-              placeholder="e.g. Damaged"
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-              {...register(`parts.${nextIndex}.oldPartConditionDescription`)}
-              value={
-                watch(`parts.${nextIndex}.oldPartConditionDescription`) || ""
-              }
-              onChange={(e) =>
-                setValue(
-                  `parts.${nextIndex}.oldPartConditionDescription`,
-                  e.target.value,
-                )
-              }
-            />
-            {errors.parts?.[nextIndex]?.oldPartConditionDescription && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.parts[nextIndex]?.oldPartConditionDescription?.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              New Serial Number
-            </label>
-            <input
-              placeholder="SN-123456"
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-              {...register(`parts.${nextIndex}.newSerialNumber`)}
-              value={watch(`parts.${nextIndex}.newSerialNumber`) || ""}
-              onChange={(e) =>
-                setValue(`parts.${nextIndex}.newSerialNumber`, e.target.value)
-              }
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-              Quantity <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              min="1"
-              className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 font-medium focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-              {...register(`parts.${nextIndex}.quantity`, {
-                valueAsNumber: true,
-                min: 1,
-              })}
-              value={currentQuantity || 1}
-              onChange={(e) => {
-                const value = e.target.value;
-                setValue(
-                  `parts.${nextIndex}.quantity`,
-                  value === "" ? 1 : Number(value),
-                );
+              placeholder="Select a part from inventory..."
+              isSearchable
+              onChange={(val: string) => {
+                setValue(`parts.${nextIndex}.partId`, val, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                });
               }}
             />
           </div>
 
+          <FormField
+            label="Part Number"
+            name="partNumber"
+            value={selectedPart?.partNumber || ""}
+            type="text"
+            disabled
+          />
+
+          <FormField
+            label="Old Part Condition"
+            placeholder="e.g. Damaged"
+            required
+            value={
+              watch(`parts.${nextIndex}.oldPartConditionDescription`) || ""
+            }
+            onChange={(e) =>
+              setValue(
+                `parts.${nextIndex}.oldPartConditionDescription`,
+                e.target.value,
+                { shouldDirty: true, shouldValidate: true },
+              )
+            }
+          />
+
+          <FormField
+            label="New Serial Number"
+            placeholder="SN-123456"
+            value={watch(`parts.${nextIndex}.newSerialNumber`) || ""}
+            onChange={(e) =>
+              setValue(`parts.${nextIndex}.newSerialNumber`, e.target.value, {
+                shouldDirty: true,
+              })
+            }
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <FormField
+            label="Quantity"
+            type="number"
+            min="1"
+            required
+            value={currentQuantity}
+            onChange={(e) => {
+              const value = e.target.value;
+              setValue(
+                `parts.${nextIndex}.quantity`,
+                value === "" ? 1 : Number(value),
+                { shouldDirty: true, shouldValidate: true },
+              );
+            }}
+          />
+
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className="text-sm font-medium text-gray-400 uppercase tracking-widest">
               Unit Cost (£)
             </label>
-            <div className="w-full p-4 bg-gray-100 border border-gray-100 rounded-2xl text-gray-500 font-medium text-sm">
+
+            <div className="w-full h-9 px-4 flex items-center bg-gray-100 border border-gray-100 rounded-2xl text-gray-500 font-medium text-sm">
               £{currentUnitCost?.toFixed(2) || "0.00"}
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className="text-sm font-medium text-gray-400 tracking-widest">
               Total Cost (£)
             </label>
-            <div className="w-full p-4 bg-purple-50 border border-purple-100 rounded-2xl text-[#A855F7] font-black text-sm">
+
+            <div className="w-full h-9 px-4 flex items-center bg-purple-50 border border-purple-100 rounded-2xl text-[#A855F7] font-black text-sm">
               £{currentTotalCost.toFixed(2)}
             </div>
           </div>
