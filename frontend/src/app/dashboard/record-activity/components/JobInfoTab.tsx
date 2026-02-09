@@ -346,7 +346,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
             <label className=" font-medium text-sm  tracking-widest">
               Scooter model
             </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">
+            <div className="px-4 bg-gray-50 flex items-center border h-9 border-gray-100 rounded-xl text-gray-500 font-bold text-center text-sm">
               {selectedTicket
                 ? getVehicleDetails(selectedTicket)
                 : "Select a ticket"}

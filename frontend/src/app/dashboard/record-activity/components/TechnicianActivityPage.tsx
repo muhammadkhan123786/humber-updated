@@ -61,13 +61,12 @@ const TechnicianActivityPage = () => {
       id: "Services",
       label: "Services",
       icon: Wrench,
-      badge: serviceFields.length.toString(),
     },
     {
       id: "Parts",
       label: "Parts",
       icon: Package,
-      badge: partFields.length.toString(),
+
       badgeColor: "bg-[#A855F7]",
     },
     {

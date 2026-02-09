@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import TechnicianHeader from "./TechnicianHeader";
 import StatCard from "./StatCard";
 import {
