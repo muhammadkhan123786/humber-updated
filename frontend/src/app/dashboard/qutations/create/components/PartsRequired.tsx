@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
-import { Wrench, Plus, Search, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Wrench, Plus, Search, Trash2 } from 'lucide-react';
 import { getAll } from '@/helper/apiHelper';
 import { toast } from 'react-hot-toast';
 
@@ -9,7 +9,7 @@ interface Part {
   partName: string;
   partNumber: string;
   description?: string;
-  price: number;
+  unitCost?: number;
   stock?: number;
   isActive?: boolean;
 }
@@ -28,17 +28,22 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
   const [parts, setParts] = useState<Part[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const partsListRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (showPartsList) {
       loadParts();
+      // Smooth scroll to parts list
+      setTimeout(() => {
+        partsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
     }
   }, [showPartsList]);
 
   const loadParts = async () => {
     setIsLoading(true);
     try {
-      const response = await getAll<any>('/mobility-parts', {
+      const response = await getAll<any>('/master-parts-technician-dashboard', {
         limit: '1000',
         search: searchQuery.trim(),
       });
@@ -79,12 +84,18 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
 
     onPartsChange([...selectedParts, newPart]);
     toast.success(`${part.partName} added successfully`);
+    
+    // Close the parts list after selection
+    setShowPartsList(false);
+    setSearchQuery(''); // Clear search query for next time
   };
 
-  const handleQuantityChange = (partId: string, change: number) => {
+  const handleQuantityInput = (partId: string, value: string) => {
+    const numValue = parseInt(value) || 1;
+    const newQuantity = Math.max(1, numValue);
+    
     const updatedParts = selectedParts.map(part => {
       if (part._id === partId) {
-        const newQuantity = Math.max(1, part.quantity + change);
         return { ...part, quantity: newQuantity };
       }
       return part;
@@ -106,14 +117,14 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
     <>
       <div className="bg-white rounded-b-2xl border-t-4 border-orange-500 shadow-lg animate-slideUp">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-12">
           <div className="flex items-center gap-2">
             <Wrench className="text-orange-600 w-5 h-5" />
             <h2 className="font-medium text-gray-900 leading-none">Parts Required</h2>
           </div>
           <button
             onClick={() => setShowPartsList(!showPartsList)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-md"
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-white rounded-lg bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transition-colors shadow-md"
           >
             <Plus size={18} />
             <span>Add Part</span>
@@ -121,15 +132,20 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
         </div>
 
         {/* Search Bar and Parts List - shown when Add Part is clicked */}
-        {showPartsList && (
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div 
+          ref={partsListRef}
+          className={`overflow-hidden transition-all duration-500 ease-in-out ${
+            showPartsList ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="px-6 py-4 border-b border-gray-200 ">
             {/* Search Bar */}
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
               <input
                 type="text"
                 placeholder="Search parts by name or part number..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                className="w-full pl-10 pr-4 py-3 text-sm  rounded-lg focus:outline-none  focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6]"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
@@ -150,7 +166,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
                 filteredParts.map((part) => (
                   <div
                     key={part._id}
-                    className="p-3 bg-orange-50 rounded-lg border border-orange-200 hover:border-orange-400 cursor-pointer transition-all"
+                    className="p-3 bg-orange-50 rounded-lg border border-orange-200 hover:border-orange-400 hover:shadow-md cursor-pointer transition-all duration-200 transform "
                     onClick={() => handleSelectPart(part)}
                   >
                     <div className="flex items-center justify-between">
@@ -161,9 +177,9 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
                           <p className="text-xs text-gray-500 mt-0.5">Stock: {part.stock} units</p>
                         )}
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-orange-600">£{part.price.toFixed(2)}</span>
-                        <button className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-lg font-bold text-orange-600">£{(part.unitCost || 0).toFixed(2)}</span>
+                        <button className="text-orange-600">
                           <Plus size={18} />
                         </button>
                       </div>
@@ -173,7 +189,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
               )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Selected Parts Content */}
         <div className="p-6">
@@ -187,40 +203,30 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
             </div>
           ) : (
             <div className="space-y-3">
-              {selectedParts.map((part) => (
+              {selectedParts.map((part, index) => (
                 <div
                   key={part._id}
-                  className="border border-orange-200 rounded-lg p-4 bg-orange-50/30 hover:bg-orange-50/50 transition-colors"
+                  className="border border-orange-200 rounded-lg p-4 bg-orange-50/30 hover:bg-orange-50/50 transition-all duration-300 animate-slideUp"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">{part.partName}</h3>
                       <p className="text-sm text-gray-600 mt-1">Part #: {part.partNumber}</p>
                       <p className="text-sm text-gray-700 mt-2">
-                        £{part.price.toFixed(2)} × {part.quantity} = £{(part.price * part.quantity).toFixed(2)}
+                        £{(part.unitCost || 0).toFixed(2)} × {part.quantity} = £{((part.unitCost || 0) * part.quantity).toFixed(2)}
                       </p>
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center border border-gray-300 rounded-md overflow-hidden">
-                        <button
-                          onClick={() => handleQuantityChange(part._id, -1)}
-                          className="px-2 py-1 hover:bg-gray-100 transition-colors"
-                          disabled={part.quantity <= 1}
-                        >
-                          <ChevronDown size={16} className="text-gray-600" />
-                        </button>
-                        <span className="px-3 py-1 text-sm font-medium border-x border-gray-300">
-                          {part.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleQuantityChange(part._id, 1)}
-                          className="px-2 py-1 hover:bg-gray-100 transition-colors"
-                        >
-                          <ChevronUp size={16} className="text-gray-600" />
-                        </button>
-                      </div>
+                      {/* Quantity Input */}
+                      <input
+                        type="number"
+                        min="1"
+                        value={part.quantity}
+                        onChange={(e) => handleQuantityInput(part._id, e.target.value)}
+                        className="w-20 px-3 py-2 text-sm font-medium text-center  rounded-lg focus:outline-none  focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6]"
+                      />
 
                       {/* Delete Button */}
                       <button

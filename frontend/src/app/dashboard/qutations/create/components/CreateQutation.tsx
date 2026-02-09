@@ -7,11 +7,17 @@ import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
 import { getAll } from '@/helper/apiHelper';
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
 
@@ -98,7 +104,9 @@ const CreateQuotationPage = () => {
 
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
-              <QuotationSummary selectedTicket={selectedTicket} />
+              <div className="sticky top-6">
+                <QuotationSummary selectedTicket={selectedTicket} />
+              </div>
             </div>
           </div>
         ) : (
@@ -115,10 +123,12 @@ const CreateQuotationPage = () => {
 
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
-              <QuotationSummary 
-                selectedTicket={selectedTicket}
-                selectedParts={selectedParts}
-              />
+              <div className="sticky top-6">
+                <QuotationSummary 
+                  selectedTicket={selectedTicket}
+                  selectedParts={selectedParts}
+                />
+              </div>
             </div>
           </div>
         )}
