@@ -219,7 +219,6 @@ export const NotesTab = ({
                 </div>
               ))}
 
-              {/* Images */}
               {jobNotesImages.map((imageUrl, index) => (
                 <div
                   key={`image-${index}`}
@@ -236,7 +235,7 @@ export const NotesTab = ({
                       </span>
                     </div>
                     <button
-                      type="button" // ✅ Added
+                      type="button"
                       onClick={() => removeJobNotesImage(index)}
                       className="text-red-400 hover:text-red-600 transition-colors"
                     >
