@@ -134,7 +134,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <label className=" font-medium text-sm tracking-widest">
             Service Ticket <span className="text-red-500">*</span>
           </label>
           <CustomSelectNoBorder
@@ -266,7 +266,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
           />
 
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className=" font-medium text-sm tracking-widest">
               Technician Name <span className="text-red-500">*</span>
             </label>
             <CustomSelectNoBorder
@@ -289,7 +289,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
 
         <div className="grid grid-cols-1 gap-6 mb-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className=" font-medium text-sm  tracking-widest">
               Scooter model
             </label>
             <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">

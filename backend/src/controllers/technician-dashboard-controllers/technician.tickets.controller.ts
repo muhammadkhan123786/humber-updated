@@ -11,7 +11,7 @@ export const technicianTicketsController = async (
 ) => {
   try {
     const user = req.user;
-
+    console.log("Technician Tickets Controller invoked for user:", user);
     if (!user) {
       return res.status(400).json({
         success: false,
