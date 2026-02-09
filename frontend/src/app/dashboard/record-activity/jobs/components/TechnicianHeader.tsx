@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Settings } from "lucide-react";
+import { Wrench } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const TechnicianHeader = () => {
@@ -19,9 +19,9 @@ const TechnicianHeader = () => {
               duration: 8,
               ease: "linear",
             }}
-            className="w-16 h-16 md:w-20 md:h-20 bg-white/20 rounded-2xl shadow-xl flex justify-center items-center shrink-0 backdrop-blur-sm"
+            className="w-14 h-14 bg-white/20 rounded-2xl shadow-xl flex justify-center items-center shrink-0 backdrop-blur-sm"
           >
-            <Settings
+            <Wrench
               size={40}
               color="white"
               strokeWidth={1.5}
@@ -30,10 +30,10 @@ const TechnicianHeader = () => {
           </motion.div>
 
           <div className="flex flex-col justify-start items-start">
-            <h1 className="text-white text-2xl md:text-4xl font-bold drop-shadow-md">
+            <h1 className="text-4xl font-bold text-white drop-shadow-lg">
               Technician Activities
             </h1>
-            <p className="text-white/90 text-sm md:text-lg">
+            <p className="text-white/90 mt-1 text-lg">
               Track service activities and job completion
             </p>
           </div>

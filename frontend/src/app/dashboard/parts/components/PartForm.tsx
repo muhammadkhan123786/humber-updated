@@ -20,6 +20,7 @@ interface IPartFormData {
   partName: string;
   partNumber: string;
   unitCost: number;
+  stock: number;
   isActive: boolean;
   isDefault: boolean;
 }
@@ -28,6 +29,7 @@ const partValidation = z.object({
   partName: z.string().min(1, "Part Name is required."),
   partNumber: z.string().min(1, "Part Number is required."),
   unitCost: z.coerce.number().positive("Cost must be positive"),
+  stock: z.coerce.number().int().nonnegative("Stock must be 0 or more"),
   isActive: z.boolean(),
   isDefault: z.boolean(),
 });
@@ -52,6 +54,7 @@ const PartForm = ({ editingData, onClose, themeColor }: any) => {
       partName: "",
       partNumber: "",
       unitCost: 0,
+      stock: 0,
       isActive: true,
       isDefault: false,
     },
@@ -65,6 +68,7 @@ const PartForm = ({ editingData, onClose, themeColor }: any) => {
         partName: editingData.partName || "",
         partNumber: editingData.partNumber || "",
         unitCost: editingData.unitCost || 0,
+        stock: editingData.stock ?? 0,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
       });
@@ -112,6 +116,13 @@ const PartForm = ({ editingData, onClose, themeColor }: any) => {
           placeholder="0.00"
           {...register("unitCost")}
           error={errors.unitCost?.message}
+        />
+        <FormInput
+          label="Stock Quantity *"
+          type="number"
+          placeholder="e.g. 25"
+          {...register("stock")}
+          error={errors.stock?.message}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
