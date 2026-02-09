@@ -250,7 +250,6 @@ export const technicianMasterProtector = async (
         if (!technician) {
             return res.status(403).json({ message: "Technician not found or inactive" });
         }
-
         // 4️⃣ Fetch MASTER Admin associated with technician
         const masterUser = await User.findOne({
             _id: technician.accountId,

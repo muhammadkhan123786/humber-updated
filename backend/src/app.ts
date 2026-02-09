@@ -418,6 +418,13 @@ app.use(
   ticketQuotationRouter,
 );
 
+//09-02-2026
+app.use(
+  `${process.env.API_PREFIX}/master-parts-technician-dashboard`,
+  technicianMasterProtector,
+  partsRouter,
+);
+
 //Muhammad Imran code ended here.
 
 //  Muzmil Hassan 8/1/2026

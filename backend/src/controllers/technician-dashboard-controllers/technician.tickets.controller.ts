@@ -2,7 +2,8 @@ import { Response } from "express";
 import { AuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
-
+import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
+import path from "node:path";
 
 export const technicianTicketsController = async (
   req: AuthRequest,
@@ -69,7 +70,7 @@ export const technicianTicketsController = async (
           { path: "contactId", select: "emailId" },
         ],
       })
-      
+
       .populate("priorityId", "serviceRequestPrioprity")
       .populate("ticketStatusId", "label")
       .populate({
@@ -81,9 +82,9 @@ export const technicianTicketsController = async (
         },
       })
       .populate({
-        path:"vehicleId",
+        path: "vehicleId",
         select: "vehicleBrandId vehicleModelId serialNumber vehicleType",
-        populate: [{ path: "vehicleBrandId",select:"brandName" }, { path: "vehicleModelId",select:"modelName" }],
+        populate: [{ path: "vehicleBrandId", select: "brandName" }, { path: "vehicleModelId", select: "modelName" }],
       })
       .lean();
 
@@ -91,8 +92,8 @@ export const technicianTicketsController = async (
     const formattedTickets = tickets.map((t: any) => {
       const myTechnician = Array.isArray(t.assignedTechnicianId)
         ? t.assignedTechnicianId.find(
-            (tech: any) => tech?._id?.toString() === technician._id.toString()
-          )
+          (tech: any) => tech?._id?.toString() === technician._id.toString()
+        )
         : null;
 
       return {
@@ -109,10 +110,10 @@ export const technicianTicketsController = async (
         // ✅ single technician object
         assignedTechnician: myTechnician
           ? {
-              _id: myTechnician._id,
-              firstName: myTechnician.personId?.firstName || "",
-              lastName: myTechnician.personId?.lastName || "",
-            }
+            _id: myTechnician._id,
+            firstName: myTechnician.personId?.firstName || "",
+            lastName: myTechnician.personId?.lastName || "",
+          }
           : null,
 
         customer: {
@@ -136,6 +137,161 @@ export const technicianTicketsController = async (
         page,
         limit,
         pages: Math.ceil(totalTickets / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Technician Ticket Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Technician ticket fetch failed.",
+    });
+  }
+};
+
+export const technicianJobsController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Technician user not provided.",
+      });
+    }
+
+    const technician = await Technicians.findOne({
+      accountId: user._id,
+      isDeleted: false,
+      isActive: true,
+    }).select("_id");
+
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician not found.",
+      });
+    }
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = (req.query.search as string) || "";
+
+    const pipeline: any[] = [
+      {
+        $match: {
+          technicianId: technician._id,
+          isDeleted: false,
+        },
+      },
+      // ticket
+      {
+        $lookup: {
+          from: "customerTicketBase",
+          localField: "ticketId",
+          foreignField: "_id",
+          as: "ticket",
+        },
+      },
+      { $unwind: "$ticket" },
+
+      // customer
+      {
+        $lookup: {
+          from: "CustomerBase",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      { $unwind: "$customer" },
+
+      // person
+      {
+        $lookup: {
+          from: "persons",
+          localField: "customer.personId",
+          foreignField: "_id",
+          as: "person",
+        },
+      },
+      { $unwind: "$person" },
+
+      // vehicle
+      {
+        $lookup: {
+          from: "vehicles",
+          localField: "ticket.vehicleId",
+          foreignField: "_id",
+          as: "vehicle",
+        },
+      },
+      {
+        $lookup: {
+          from: "addresses",
+          localField: "customer.addressId",
+          foreignField: "_id",
+          as: "address",
+        },
+      },
+      { $unwind: { path: "$vehicle", preserveNullAndEmptyArrays: true } },
+    ];
+
+    // 🔎 Nested Search
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { "ticket.ticketCode": { $regex: search, $options: "i" } },
+            { "ticket.issue_Details": { $regex: search, $options: "i" } },
+            { "person.firstName": { $regex: search, $options: "i" } },
+            { "person.lastName": { $regex: search, $options: "i" } },
+          ],
+        },
+      });
+    }
+
+    // Count
+    const countPipeline = [...pipeline, { $count: "total" }];
+    const countResult = await TechniciansJobs.aggregate(countPipeline);
+    const total = countResult[0]?.total || 0;
+
+    // Pagination
+    pipeline.push({ $sort: { createdAt: -1 } });
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
+
+    // Projection
+    pipeline.push({
+      $project: {
+        _id: 1,
+        createdAt: 1,
+        updatedAt: 1,
+        ticketCode: "$ticket.ticketCode",
+        issue_Details: "$ticket.issue_Details",
+        location: "$address.address",
+        customer: {
+          firstName: "$person.firstName",
+          lastName: "$person.lastName",
+        },
+        vehicle: "$vehicle",
+      },
+    });
+
+    const tickets = await TechniciansJobs.aggregate(pipeline);
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician tickets fetched successfully",
+      tickets,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
       },
     });
   } catch (error) {
