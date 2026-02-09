@@ -18,12 +18,14 @@ interface SelectedPart extends Part {
 interface QuotationSummaryProps {
   selectedTicket?: any;
   selectedParts?: SelectedPart[];
+  laborHours?: number;
+  ratePerHour?: number;
 }
 
-const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSummaryProps) => {
+const QuotationSummary = ({ selectedTicket, selectedParts = [], laborHours = 0, ratePerHour = 45 }: QuotationSummaryProps) => {
   // Calculate totals based on selected parts
   const partsTotal = selectedParts.reduce((sum, part) => sum + ((part.unitCost || 0) * part.quantity), 0);
-  const laborTotal = 0.00; // This can be updated later when labor is added
+  const laborTotal = laborHours * ratePerHour;
   const subtotal = partsTotal + laborTotal;
   const vatRate = 0.20;
   const vatAmount = subtotal * vatRate;

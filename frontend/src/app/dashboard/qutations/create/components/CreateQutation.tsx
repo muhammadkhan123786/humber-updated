@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AvailableTickets from '../../components/AvailableTickets';
 import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
+import LaborAdditionalCost from './LaborAdditionalCost';
 import { getAll } from '@/helper/apiHelper';
 
 interface Part {
@@ -27,6 +28,16 @@ const CreateQuotationPage = () => {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [showTicketInfo, setShowTicketInfo] = useState(false);
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
+  
+  // Labor and additional cost states
+  const [laborHours, setLaborHours] = useState(0);
+  const [ratePerHour, setRatePerHour] = useState(45);
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  const [validUntil, setValidUntil] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toISOString().split('T')[0];
+  });
 
   useEffect(() => {
     fetchQuotationAutoCode();
@@ -105,7 +116,11 @@ const CreateQuotationPage = () => {
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
               <div className="sticky top-6">
-                <QuotationSummary selectedTicket={selectedTicket} />
+                <QuotationSummary 
+                  selectedTicket={selectedTicket} 
+                  laborHours={laborHours}
+                  ratePerHour={ratePerHour}
+                />
               </div>
             </div>
           </div>
@@ -119,6 +134,16 @@ const CreateQuotationPage = () => {
                 selectedParts={selectedParts}
                 onPartsChange={setSelectedParts}
               />
+              <LaborAdditionalCost
+                laborHours={laborHours}
+                ratePerHour={ratePerHour}
+                additionalNotes={additionalNotes}
+                validUntil={validUntil}
+                onLaborHoursChange={setLaborHours}
+                onRatePerHourChange={setRatePerHour}
+                onAdditionalNotesChange={setAdditionalNotes}
+                onValidUntilChange={setValidUntil}
+              />
             </div>
 
             {/* Right Column - Quotation Summary (1/3 width) */}
@@ -127,6 +152,8 @@ const CreateQuotationPage = () => {
                 <QuotationSummary 
                   selectedTicket={selectedTicket}
                   selectedParts={selectedParts}
+                  laborHours={laborHours}
+                  ratePerHour={ratePerHour}
                 />
               </div>
             </div>
