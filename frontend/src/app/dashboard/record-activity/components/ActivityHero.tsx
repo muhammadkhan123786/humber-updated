@@ -18,7 +18,7 @@ export const ActivityHero = () => {
       value: "0",
       tag: "Activities",
       icon: Settings,
-      color: "from-[#00B8DB] to-[#00BBA7]",
+      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
     },
     {
       label: "Parts Changed",

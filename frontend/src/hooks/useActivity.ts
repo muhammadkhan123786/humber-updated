@@ -21,7 +21,6 @@ const getAuthHeader = () => {
   return { Authorization: `Bearer ${cleanToken}` };
 };
 
-// Function to generate job ID from API
 const generateJobId = async (): Promise<string> => {
   try {
     const baseUrl =

@@ -32,14 +32,11 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
     date ? new Date(date).toLocaleString("en-GB") : "Not recorded";
 
   const partsCount = job.parts?.length || 0;
-
-  // Calculate total duration from services
   const totalJobDuration =
     job.services?.reduce((total: number, service: any) => {
       return total + (parseInt(service.duration) || 0);
     }, 0) || 0;
 
-  // Get technician name
   const technicianName = job.technicianId?.personId
     ? `${job.technicianId.personId.firstName || ""} ${job.technicianId.personId.lastName || ""}`
     : "Unassigned";

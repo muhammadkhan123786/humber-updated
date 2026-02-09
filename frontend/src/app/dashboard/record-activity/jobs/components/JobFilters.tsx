@@ -7,7 +7,7 @@ const JobFilters = () => {
   return (
     <div className="w-full relative bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
       {/* Top Gradient Border Line */}
-      <div className="w-full h-1 bg-gradient-to-r from-orange-500 to-pink-500" />
+      <div className="w-full h-1 bg-linear-to-r from-orange-500 to-pink-500" />
 
       <div className="p-6 flex flex-col md:flex-row items-center gap-4">
         {/* Search Input Container */}
@@ -44,7 +44,6 @@ const JobFilters = () => {
             <Filter size={18} />
           </div>
 
-          {/* Chevron Icon (Right) */}
           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
             <ChevronDown size={18} />
           </div>
