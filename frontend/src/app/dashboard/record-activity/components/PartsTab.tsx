@@ -13,6 +13,7 @@ interface PartsTabProps {
   partFields: any[];
   addPart: () => void;
   removePart: (index: number) => void;
+  calculatePartTotal: (index: number) => number;
   totalPartsCost: number;
 }
 
