@@ -25,9 +25,8 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
 }) => {
   const StatusIcon = getStatusIcon(grtn.status);
 const totalAmount = grtn.totalAmount || 
-    grtn.items.reduce((sum, item) => sum + (item.totalAmount || item.totalPrice || 0), 0);
+    grtn.items.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
 
-    console.log("")
   return (
     <motion.div
       key={grtn._id}
@@ -70,7 +69,7 @@ const totalAmount = grtn.totalAmount ||
               </div>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-[#ea580c]">£{grtn.totalAmount}</p>
+              <p className="text-2xl font-bold text-[#ea580c]">£{totalAmount}</p>
               <p className="text-xs text-gray-500">Return Value</p>
             </div>
           </div>

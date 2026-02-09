@@ -55,9 +55,11 @@ export default function AddProductForm() {
     attributes,
     onBulkAddTags,
     getWarrantyOptions,
+    
     // ✅ Destructure lifted variants state
     variants,
     setVariants,
+    setImages,
   } = useProductForm({
     initialData: {
       productName: "",
@@ -132,17 +134,18 @@ export default function AddProductForm() {
       case 2:
         return (          
             <BasicInfoStep
-              formData={formData}
-              tags={tags}
-              images={images}
-              newTag={newTag}
-              onInputChange={handleInputChange}
-              onAddTag={addTag}
-              onRemoveTag={removeTag}
-              onNewTagChange={setNewTag}
-              onImageUpload={handleImageUpload}
-              onRemoveImage={removeImage}
-              onBulkAddTags={onBulkAddTags}
+               formData={formData}
+          tags={tags}
+          images={images}
+          newTag={newTag}
+          onInputChange={handleInputChange}
+          onAddTag={addTag}
+          onRemoveTag={removeTag}
+          onNewTagChange={setNewTag}
+          onImageUpload={handleImageUpload}
+          onRemoveImage={removeImage}
+           setImage = { setImages}
+          onBulkAddTags = { onBulkAddTags}
             />
          
         );

@@ -18,6 +18,7 @@ export function useProductForm({ initialData, onSubmit }: UseProductFormProps) {
   const [dynamicFields, setDynamicFields] = useState<Record<string, any>>({});
   const [tags, setTags] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [newTag, setNewTag] = useState('');
 
   const getSelectedCategory = useCallback((level: 1 | 2 | 3): CategoryNode | null => {
@@ -94,7 +95,8 @@ export function useProductForm({ initialData, onSubmit }: UseProductFormProps) {
     setTags(tags.filter(tag => tag !== tagToRemove));
   }, [tags]);
 
-  const handleImageUpload = useCallback(() => {
+  const handleImageUpload = useCallback((files: FileList | File[]) => {
+    const fileArray = Array.from(files);
     const dummyUrl = `https://images.unsplash.com/photo-${1563206748 + Math.random()}-a084292cbbed?w=300`;
     setImages([...images, dummyUrl]);
   }, [images]);

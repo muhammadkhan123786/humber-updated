@@ -20,7 +20,11 @@ const marketplaceTemplateService =
 const marketplaceController = new MarketplaceController(marketplaceTemplateService);
 const marketplaceTemplateController = new AdvancedGenericController({
   service: marketplaceTemplateService,
-  populate: ["userId","icon", "color"],
+  populate: ["userId",
+    {
+      path: "icon", select: "_id icon"
+    }
+    , "color"],
   validationSchema: marketplaceTemplateSchemaValidation,
 });
 

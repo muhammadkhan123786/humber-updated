@@ -3,6 +3,7 @@ import { AdvancedGenericController } from "../controllers/GenericController";
 import { GenericService } from "../services/generic.crud.services";
 import { GoodsReturn, GoodsReturnDoc } from "../models/goodsReturn.model";
 import { CreateGoodsReturnValidation } from "../schemas/goodsReturn.schema";
+import { exportGRTNToPDF } from "../controllers/pdf.controller"
 
 const goodsReturnRoutes = Router();
 
@@ -14,10 +15,10 @@ const goodsReturnController = new AdvancedGenericController({
     "userId",
     {
       path: "grnId",
-      select: "grnNumber purchaseOrderId", 
+      select: "grnNumber items purchaseOrderId", 
       populate: {
         path: "purchaseOrderId",
-        select: "supplier",
+        select: "items supplier",
         populate: {
           path: "supplier",
           select: "contactInformation", 
@@ -27,6 +28,8 @@ const goodsReturnController = new AdvancedGenericController({
   ],
   validationSchema: CreateGoodsReturnValidation,
 });
+
+goodsReturnRoutes.get("/export/:id", exportGRTNToPDF);
 
 goodsReturnRoutes.get("/", goodsReturnController.getAll);
 goodsReturnRoutes.get("/:id", goodsReturnController.getById);

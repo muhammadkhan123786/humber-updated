@@ -7,7 +7,7 @@ import axios from 'axios';
 export interface DatabaseCategory {
   _id: string;
   categoryName: string;
-  parentId?: string;
+  parentId: string;
   isActive?: boolean;
   isDeleted?: boolean;
   userId?: string;
@@ -169,9 +169,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
       };
     } catch (err: any) {
       console.error('❌ Error fetching categories:', err);
-      console.error('❌ Error response:', err.response?.data);
-      console.error('❌ Error status:', err.response?.status);
-      console.error('❌ Error message:', err.message);
+      
       
       const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch categories';
       setError(errorMessage);
@@ -241,14 +239,18 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
   /**
    * Get child categories by parent ID
    */
-  const getChildCategories = useCallback((parentId: string): DatabaseCategory[] => {
+  const getChildCategories = useCallback(
+  (parentId?: string): DatabaseCategory[] => {
+    if (!parentId) return [];
     return categories.filter(cat => cat.parentId === parentId);
-  }, [categories]);
+  },
+  [categories]
+);
 
   /**
    * Get all descendants of a category (recursive)
    */
-  const getDescendants = useCallback((parentId: string): DatabaseCategory[] => {
+  const getDescendants = useCallback((parentId: any): DatabaseCategory[] => {
     const descendants: DatabaseCategory[] = [];
     const visited = new Set<string>();
     

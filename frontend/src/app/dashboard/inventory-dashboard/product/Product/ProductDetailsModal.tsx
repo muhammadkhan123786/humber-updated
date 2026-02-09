@@ -24,13 +24,14 @@ import {
   Trash2,
   Package2,
 } from "lucide-react";
-import { Product, ProductListItem } from "../types/product";
+import { Product, ProductListItem, CategoryInfo } from "../types/product";
 
 interface ProductDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: ProductListItem | null;
   getStockBadge: (status: string) => { class: string; icon: any };
+  handleConfirmDelete: any;
 }
 
 export default function ProductDetailsModal({
@@ -38,14 +39,29 @@ export default function ProductDetailsModal({
   onOpenChange,
   product,
   getStockBadge,
+  handleConfirmDelete,
 }: ProductDetailsModalProps) {
   if (!product) return null;
-
+  console.log("pro", product);
+console.log("product.categories", product.categories)
   const profitMargin = product.price - product?.costPrice;
   const profitPercentage = ((profitMargin / product?.costPrice) * 100)?.toFixed(
     1,
   );
 
+  const getCategoryBadgeColor = (level: number): string => {
+  const colors = [
+    'bg-blue-100 text-blue-700 border-blue-300',      // Level 1
+    'bg-cyan-100 text-cyan-700 border-cyan-300',      // Level 2
+    'bg-teal-100 text-teal-700 border-teal-300',      // Level 3
+    'bg-emerald-100 text-emerald-700 border-emerald-300', // Level 4
+    'bg-green-100 text-green-700 border-green-300',   // Level 5
+    'bg-lime-100 text-lime-700 border-lime-300',      // Level 6
+  ];
+  
+  // If level exceeds our color array, cycle through colors
+  return colors[(level - 1) % colors.length];
+};
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white">
@@ -153,7 +169,7 @@ export default function ProductDetailsModal({
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50">
+              {/* <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50">
                 <CardContent className="p-6">
                   <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Star className="h-4 w-4 text-amber-600" />
@@ -187,7 +203,7 @@ export default function ProductDetailsModal({
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </div>
 
@@ -209,7 +225,7 @@ export default function ProductDetailsModal({
                 <Tag className="h-4 w-4 text-cyan-600" />
                 Category Hierarchy
               </h3>
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600 w-24">Level 1:</span>
                   <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
@@ -230,7 +246,26 @@ export default function ProductDetailsModal({
                     {product.categories.level3?.name}
                   </Badge>
                 </div>
-              </div>
+              </div> */}
+              {product.categories && product.categories?.length > 0 && (
+                          <div className="mt-3 space-y-1">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {product.categories?.map((category: CategoryInfo, idx: number) => (
+                                <div key={category.id} className="flex items-center gap-1">
+                                  {idx > 0 && <ChevronRight className="h-3 w-3 text-gray-400" />}
+                                  <Badge className={`text-xs border ${getCategoryBadgeColor(category.level)}`}>
+                                    {category.name}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                            
+                            {/* Show category path as text (alternative view) */}
+                            <p className="text-xs text-gray-500 italic">
+                              {product.categories?.map(cat => cat.name).join(' → ')}
+                            </p>
+                          </div>
+                        )}
             </CardContent>
           </Card>
 
@@ -340,17 +375,21 @@ export default function ProductDetailsModal({
               <Edit className="h-4 w-4 mr-2" />
               Edit Product
             </Button>
-            <Button variant="outline" className="flex-1">
+            {/* <Button variant="outline" className="flex-1">
               <TrendingUp className="h-4 w-4 mr-2" />
               View Analytics
-            </Button>
+            </Button> */}
             <Button
-              variant="outline"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
+  variant="outline"
+  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+  onClick={() =>
+    handleConfirmDelete(product.id, product.name)
+  }
+>
+  <Trash2 className="h-4 w-4 mr-2" />
+  Delete
+</Button>
+
           </div>
         </div>
       </DialogContent>

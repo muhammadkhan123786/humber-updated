@@ -60,6 +60,13 @@ interface ApiProduct {
   updatedAt: string;
 }
 
+interface CategoryInfo {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string;
+}
+
 interface TransformedProduct {
   id: string;
   name: string;
@@ -69,25 +76,9 @@ interface TransformedProduct {
   brand: string;
   modelNumber: string;
   barcode: string;
-  categories: {
-    level1: {
-      id: string;
-      name: string;
-      level: number;
-    };
-    level2: {
-      id: string;
-      name: string;
-      level: number;
-      parentId: string;
-    };
-    level3: {
-      id: string;
-      name: string;
-      level: number;
-      parentId: string;
-    };
-  };
+  categories: CategoryInfo[]; // Changed from fixed levels to array
+  categoryPath: CategoryInfo[]; // Full path from root to leaf
+  primaryCategory: CategoryInfo; // The main/leaf category
   price: number;
   costPrice: number;
   retailPrice: number;
@@ -168,7 +159,8 @@ const processCategoryPath = (
     categoryName?: string; 
     name?: string; 
     level?: number; 
-    parentId?: string 
+    parentId?: string;
+    id?: string; 
   })[]
 ): { 
   _id: string; 
@@ -182,52 +174,97 @@ const processCategoryPath = (
   }
   
   return categoryPath.map(cat => {
+    console.log("cat", cat)
     if (typeof cat === 'string') {
-      return {
-        _id: cat,
-        categoryName: "Unknown Category",
-        name: "Unknown Category"
-      };
+      console.log("cat", cat)
+     return { _id: cat };
     }
     return cat;
   });
 };
 
 /**
- * Get the best category for a specific level
+ * Build complete category hierarchy from categoryPath
  */
-const getCategoryForLevel = (
-  categoryId: any,
-  categoryPath: any[],
-  targetLevel: number
-): { id: string; name: string; level: number; parentId: string } => {
-  // Find category at specific level from categoryPath
-  const categoryInPath = categoryPath.find(cat => {
-    const level = getCategoryLevel(cat);
-    return level === targetLevel;
-  });
+// const buildCategoryHierarchy = (
+//   categoryId: any,
+//   categoryPath: any[]
+// ): CategoryInfo[] => {
+//   const processedPath = processCategoryPath(categoryPath || []);
+  
+//   // If we have a processed path, use it
+//   if (processedPath.length > 0) {
+//     // Sort by level to ensure proper hierarchy
+//     const sortedPath = [...processedPath].sort((a, b) => {
+//       const levelA = getCategoryLevel(a);
+//       const levelB = getCategoryLevel(b);
+//       return levelA - levelB;
+//     });
+    
+//     const categories: CategoryInfo[] = [];
+    
+//     sortedPath.forEach((cat, index) => {
+//       const categoryInfo: CategoryInfo = {
+//         id: getCategoryId(cat),
+//         name: getCategoryDisplayName(cat, `Level ${getCategoryLevel(cat)}`),
+//         level: getCategoryLevel(cat),
+//         parentId: getCategoryParentId(cat, index > 0 ? categories[index - 1].id : "")
+//       };
+      
+//       categories.push(categoryInfo);
+//     });
+    
+//     return categories;
+//   }
+  
+//   // Fallback: if we only have categoryId
+//   if (categoryId) {
+//     return [{
+//       id: getCategoryId(categoryId),
+//       name: getCategoryDisplayName(categoryId, "Main Category"),
+//       level: getCategoryLevel(categoryId),
+//       parentId: getCategoryParentId(categoryId, "")
+//     }];
+//   }
+  
+//   // Default fallback
+//   return [{
+//     id: "uncategorized",
+//     name: "Uncategorized",
+//     level: 1,
+//     parentId: ""
+//   }];
+// };
 
-  if (categoryInPath) {
+// utils/productTransformer.ts
+
+const buildCategoryHierarchy = (categoryId: any, categoryPath: any[]): CategoryInfo[] => {
+  const processedPath = processCategoryPath(categoryPath);
+  
+  return processedPath.map((cat: any, index: number) => {
+    const id = cat?._id || cat?.id || (typeof cat === 'string' ? cat : undefined);
+    
     return {
-      id: getCategoryId(categoryInPath),
-      name: getCategoryDisplayName(categoryInPath, `Level ${targetLevel}`),
-      level: targetLevel,
-      parentId: getCategoryParentId(categoryInPath, "")
+      id: String(id), // Ensure it's a string
+      name: cat?.categoryName || cat?.name || (id ? `Category (${String(id).substring(0, 5)})` : "Unknown"),
+      level: cat?.level || (index + 1),
+      parentId: cat?.parentId || ""
     };
-  }
-
-  // If not found in path, use the main category with appropriate level
-  const fallbackCategory = categoryId || categoryPath[0] || null;
-  return {
-    id: getCategoryId(fallbackCategory),
-    name: getCategoryDisplayName(fallbackCategory, `Level ${targetLevel}`),
-    level: targetLevel,
-    parentId: getCategoryParentId(fallbackCategory, "")
-  };
+  });
 };
 
 /**
- * Transform API product to UI product format
+ * Get category by level from hierarchy
+ */
+const getCategoryByLevel = (
+  categories: CategoryInfo[],
+  level: number
+): CategoryInfo | null => {
+  return categories.find(cat => cat.level === level) || null;
+};
+
+/**
+ * Transform API product to UI product format with n-th level categories
  */
 export const transformProduct = (apiProduct: ApiProduct): TransformedProduct => {
   // Get the first attribute (primary variant)
@@ -235,102 +272,18 @@ export const transformProduct = (apiProduct: ApiProduct): TransformedProduct => 
   const firstPricing = firstAttribute?.pricing?.[0];
   const stock = firstAttribute?.stock;
 
-  // Process categories
-  const processedCategoryPath = processCategoryPath(apiProduct.categoryPath || []);
-  
-  console.log('=== DEBUG CATEGORY TRANSFORMATION ===');
-  console.log('Raw categoryId:', apiProduct.categoryId);
-  console.log('Raw categoryPath:', apiProduct.categoryPath);
-  console.log('Processed categoryPath:', processedCategoryPath);
-  console.log('Type of categoryId:', typeof apiProduct.categoryId);
-
-  // Get categories for each level
-  const level1Category = getCategoryForLevel(apiProduct.categoryId, processedCategoryPath, 1);
-  const level2Category = getCategoryForLevel(apiProduct.categoryId, processedCategoryPath, 2);
-  const level3Category = getCategoryForLevel(apiProduct.categoryId, processedCategoryPath, 3);
-
-  // Set parent relationships
-  level2Category.parentId = level2Category.parentId || level1Category.id;
-  level3Category.parentId = level3Category.parentId || level2Category.id;
-
-  console.log('Transformed Categories:', {
-    level1: level1Category,
-    level2: level2Category,
-    level3: level3Category
-  });
-
-  return {
-    id: apiProduct._id,
-    name: apiProduct.productName,
-    sku: apiProduct.sku,
-    description: apiProduct.description || apiProduct.shortDescription || '',
-    shortDescription: apiProduct.shortDescription || '',
-    brand: apiProduct.brand || '',
-    manufacturer: apiProduct.manufacturer || '',
-    modelNumber: apiProduct.modelNumber || '',
-    barcode: apiProduct.barcode || '',
-    categories: {
-      level1: {
-        id: level1Category.id,
-        name: level1Category.name,
-        level: level1Category.level
-      },
-      level2: {
-        id: level2Category.id,
-        name: level2Category.name,
-        level: level2Category.level,
-        parentId: level2Category.parentId
-      },
-      level3: {
-        id: level3Category.id,
-        name: level3Category.name,
-        level: level3Category.level,
-        parentId: level3Category.parentId
-      }
-    },
-    price: apiProduct.ui_price || firstPricing?.sellingPrice || 0,
-    costPrice: firstPricing?.costPrice || 0,
-    retailPrice: firstPricing?.retailPrice || 0,
-    stockQuantity: apiProduct.ui_totalStock || stock?.stockQuantity || 0,
-    stockStatus: stock?.stockStatus || 'out-of-stock',
-    warranty: firstAttribute?.warranty 
-      ? `${firstAttribute.warranty.warrantyPeriod} ${firstAttribute.warranty.warrantyType}`
-      : 'No warranty',
-    imageUrl: apiProduct.images?.[0] || 'https://via.placeholder.com/400',
-    images: apiProduct.images || [],
-    featured: stock?.featured || false,
-    status: apiProduct.isActive ? 'active' : 'inactive',
-    onHand: stock?.onHand || 0,
-    reserved: 0,
-    available: stock?.onHand || 0,
-    reorderLevel: stock?.reorderPoint || 0,
-    reorderQuantity: 0,
-    minStockLevel: stock?.minStockLevel || 0,
-    maxStockLevel: stock?.maxStockLevel || 0,
-    tags: apiProduct.tags || [],
-    keywords: apiProduct.keywords || [],
-    attributes: apiProduct.attributes || [],
-    createdAt: apiProduct.createdAt,
-    updatedAt: apiProduct.updatedAt
+  // Build category hierarchy
+  const categoryHierarchy = buildCategoryHierarchy(
+    apiProduct.categoryId,
+    apiProduct.categoryPath || []
+  );
+  // Primary category is the last (deepest/leaf) category in the path
+  const primaryCategory = categoryHierarchy[categoryHierarchy.length - 1] || {
+    id: "uncategorized",
+    name: "Uncategorized",
+    level: 1,
+    parentId: ""
   };
-};
-
-/**
- * Alternative simpler transformation if you don't need hierarchy levels
- */
-export const transformProductSimple = (apiProduct: ApiProduct): TransformedProduct => {
-  const firstAttribute = apiProduct.attributes?.[0];
-  const firstPricing = firstAttribute?.pricing?.[0];
-  const stock = firstAttribute?.stock;
-
-  // Get main category
-  const mainCategory = apiProduct.categoryId || 
-                      (apiProduct.categoryPath?.[0]) || 
-                      null;
-
-  // Use the same category for all levels (simplified)
-  const categoryId = getCategoryId(mainCategory);
-  const categoryName = getCategoryDisplayName(mainCategory, "Uncategorized");
 
   return {
     id: apiProduct._id,
@@ -342,25 +295,9 @@ export const transformProductSimple = (apiProduct: ApiProduct): TransformedProdu
     manufacturer: apiProduct.manufacturer || '',
     modelNumber: apiProduct.modelNumber || '',
     barcode: apiProduct.barcode || '',
-    categories: {
-      level1: {
-        id: categoryId,
-        name: categoryName,
-        level: 1
-      },
-      level2: {
-        id: `${categoryId}-l2`,
-        name: `${categoryName} - Subcategory`,
-        level: 2,
-        parentId: categoryId
-      },
-      level3: {
-        id: `${categoryId}-l3`,
-        name: `${categoryName} - All Products`,
-        level: 3,
-        parentId: `${categoryId}-l2`
-      }
-    },
+    categories: categoryHierarchy,
+    categoryPath: categoryHierarchy,
+    primaryCategory: primaryCategory,
     price: apiProduct.ui_price || firstPricing?.sellingPrice || 0,
     costPrice: firstPricing?.costPrice || 0,
     retailPrice: firstPricing?.retailPrice || 0,
@@ -393,7 +330,6 @@ export const transformProductSimple = (apiProduct: ApiProduct): TransformedProdu
  */
 export const transformProductsResponse = (apiResponse: { data: ApiProduct[] }): TransformedProduct[] => {
   try {
-    console.log('Transforming products response, count:', apiResponse.data?.length);
     const transformed = apiResponse.data.map(product => {
       try {
         return transformProduct(product);
@@ -411,10 +347,23 @@ export const transformProductsResponse = (apiResponse: { data: ApiProduct[] }): 
           manufacturer: product.manufacturer || '',
           modelNumber: product.modelNumber || '',
           barcode: product.barcode || '',
-          categories: {
-            level1: { id: 'uncategorized', name: 'Uncategorized', level: 1 },
-            level2: { id: 'general', name: 'General', level: 2, parentId: 'uncategorized' },
-            level3: { id: 'all', name: 'All Products', level: 3, parentId: 'general' }
+          categories: [{
+            id: 'uncategorized',
+            name: 'Uncategorized',
+            level: 1,
+            parentId: ''
+          }],
+          categoryPath: [{
+            id: 'uncategorized',
+            name: 'Uncategorized',
+            level: 1,
+            parentId: ''
+          }],
+          primaryCategory: {
+            id: 'uncategorized',
+            name: 'Uncategorized',
+            level: 1,
+            parentId: ''
           },
           price: product.ui_price || 0,
           costPrice: 0,
@@ -441,13 +390,7 @@ export const transformProductsResponse = (apiResponse: { data: ApiProduct[] }): 
         } as TransformedProduct;
       }
     });
-    
-    console.log('Successfully transformed products:', transformed.length);
-    if (transformed.length > 0) {
-      console.log('First transformed product categories:', transformed[0].categories);
-    }
-    
-    return transformed;
+      return transformed;
   } catch (error) {
     console.error('Error in transformProductsResponse:', error);
     return [];
@@ -461,43 +404,154 @@ export const extractCategoryIdsFromProducts = (products: TransformedProduct[]): 
   const categoryIds = new Set<string>();
   
   products.forEach(product => {
-    if (product.categories.level1.id && product.categories.level1.id !== 'uncategorized') {
-      categoryIds.add(product.categories.level1.id);
-    }
-    if (product.categories.level2.id && product.categories.level2.id !== 'general') {
-      categoryIds.add(product.categories.level2.id);
-    }
-    if (product.categories.level3.id && product.categories.level3.id !== 'all') {
-      categoryIds.add(product.categories.level3.id);
-    }
+    product.categories.forEach(category => {
+      if (category.id && category.id !== 'uncategorized') {
+        categoryIds.add(category.id);
+      }
+    });
   });
   
   return Array.from(categoryIds);
 };
 
 /**
+ * Get all categories at a specific level from products
+ */
+export const getCategoriesByLevel = (
+  products: TransformedProduct[],
+  level: number
+): CategoryInfo[] => {
+  const categoriesMap = new Map<string, CategoryInfo>();
+  
+  products.forEach(product => {
+    const category = getCategoryByLevel(product.categories, level);
+    if (category && category.id !== 'uncategorized') {
+      categoriesMap.set(category.id, category);
+    }
+  });
+  
+  return Array.from(categoriesMap.values());
+};
+
+/**
+ * Get the maximum category depth from products
+ */
+export const getMaxCategoryDepth = (products: TransformedProduct[]): number => {
+  let maxDepth = 0;
+  
+  products.forEach(product => {
+    const depth = product.categories.length;
+    if (depth > maxDepth) {
+      maxDepth = depth;
+    }
+  });
+  
+  return maxDepth;
+};
+
+/**
  * Update categories in transformed product with actual category names
  */
+// export const enrichProductCategories = (
+//   product: TransformedProduct,
+//   categoryMap: Record<string, { id: string; name: string; level: number; parentId?: string }>
+// ): TransformedProduct => {
+//   const enriched = { ...product };
+  
+//   // Enrich all categories in the hierarchy
+//   enriched.categories = product.categories.map(category => {
+//     if (categoryMap[category.id]) {
+//       return {
+//         ...category,
+//         name: categoryMap[category.id].name,
+//         level: categoryMap[category.id].level,
+//         parentId: categoryMap[category.id].parentId || category.parentId
+//       };
+//     }
+//     return category;
+//   });
+  
+//   // Update categoryPath as well
+//   enriched.categoryPath = enriched.categories;
+  
+//   // Update primary category
+//   enriched.primaryCategory = enriched.categories[enriched.categories.length - 1] || product.primaryCategory;
+  
+//   return enriched;
+// };
+
 export const enrichProductCategories = (
   product: TransformedProduct,
-  categoryMap: Record<string, { id: string; name: string; level: number }>
+  categoryMap: Record<string, any>
 ): TransformedProduct => {
   const enriched = { ...product };
-  
-  // Enrich level1
-  if (categoryMap[product.categories.level1.id]) {
-    enriched.categories.level1.name = categoryMap[product.categories.level1.id].name;
-  }
-  
-  // Enrich level2
-  if (categoryMap[product.categories.level2.id]) {
-    enriched.categories.level2.name = categoryMap[product.categories.level2.id].name;
-  }
-  
-  // Enrich level3
-  if (categoryMap[product.categories.level3.id]) {
-    enriched.categories.level3.name = categoryMap[product.categories.level3.id].name;
-  }
-  
+
+  enriched.categories = product.categories.map(cat => {
+    // Now that cat.id is '6978a...', this lookup will find the 'Mobile' object
+    const found = categoryMap[cat.id]; 
+    console.log("found", found);
+    return {
+      ...cat,
+      name: found?.categoryName || found?.name || cat.name,
+      level: found?.level || cat.level,
+      // Optional: if your category object has more fields, add them here
+    };
+  });
+
+  // Update the primary category to reflect the new name
+  enriched.primaryCategory = enriched.categories[enriched.categories.length - 1];
+
   return enriched;
+};
+/**
+ * Filter products by category at any level
+ */
+export const filterProductsByCategory = (
+  products: TransformedProduct[],
+  categoryId: string,
+  level?: number
+): TransformedProduct[] => {
+  return products.filter(product => {
+    if (level !== undefined) {
+      const category = getCategoryByLevel(product.categories, level);
+      return category?.id === categoryId;
+    } else {
+      // Match any level
+      return product.categories.some(cat => cat.id === categoryId);
+    }
+  });
+};
+
+/**
+ * Get breadcrumb path for a product's categories
+ */
+export const getCategoryBreadcrumb = (product: TransformedProduct): string => {
+  return product.categories
+    .map(cat => cat.name)
+    .join(' > ');
+};
+
+/**
+ * Get root category (level 1) from product
+ */
+export const getRootCategory = (product: TransformedProduct): CategoryInfo | null => {
+  return getCategoryByLevel(product.categories, 1);
+};
+
+/**
+ * Get leaf/deepest category from product
+ */
+export const getLeafCategory = (product: TransformedProduct): CategoryInfo => {
+  return product.primaryCategory;
+};
+
+/**
+ * Check if product belongs to a category path
+ */
+export const productBelongsToPath = (
+  product: TransformedProduct,
+  categoryIds: string[]
+): boolean => {
+  const productCategoryIds = product.categories.map(cat => cat.id);
+  return categoryIds.every(id => productCategoryIds.includes(id));
 };

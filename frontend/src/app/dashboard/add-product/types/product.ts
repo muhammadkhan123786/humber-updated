@@ -98,10 +98,11 @@ export const BASE_URL =
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
   onNewTagChange: (value: string) => void;
-  onImageUpload: (files: FileList | File[]) => void;
+onImageUpload: (files: File[]) => Promise<void> | void;
   onRemoveImage: (index: number) => void;
   isUploading?: boolean;
   onBulkAddTags: (newTagsArray: string[]) => void;
+  setImage: any;
 }
 
 export interface UploadedImage {

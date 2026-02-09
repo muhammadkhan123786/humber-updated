@@ -216,7 +216,7 @@ interface ProductDetailsModalProps {
               <Tag className="h-4 w-4" />
               Category Hierarchy
             </h3>
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* <div className="flex items-center gap-2 flex-wrap">
               <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
                 L1: {product.categories.level1?.name}
               </Badge>
@@ -226,9 +226,9 @@ interface ProductDetailsModalProps {
               </Badge>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <Badge className="bg-teal-100 text-teal-700 border border-teal-300">
-                L3: {product.categories.level3?.name}
+                L3: {product.categories?.level3?.name}
               </Badge>
-            </div>
+            </div> */}
           </div>
         </div>
       </DialogContent>

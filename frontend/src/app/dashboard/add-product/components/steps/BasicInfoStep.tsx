@@ -20,6 +20,7 @@ export function BasicInfoStep({
   onNewTagChange,
   onImageUpload,
   onRemoveImage,
+  setImage,
   isUploading: parentIsUploading = false,
 }: Props) {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -98,7 +99,7 @@ export function BasicInfoStep({
   };
 
   const handleFilesUpload = useCallback(
-    async (files: FileList) => {
+    async (files: File[] | FileList): Promise<void> => {
       const imageFiles = Array.from(files).filter((file) =>
         file.type.startsWith("image/"),
       );
@@ -179,6 +180,7 @@ export function BasicInfoStep({
         onNewTagChange={onNewTagChange}
         onImageUpload={handleFilesUpload} 
         onRemoveImage={handleRemoveImage} 
+        setImage = { setImage}
       />
       
      

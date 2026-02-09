@@ -9,13 +9,16 @@ import MarketplaceDistributionTab from "./MarketplaceDistributionTab";
 import { useProductFilters } from "../../../../../hooks/useProductFilters";
 import { useProducts } from "../../../../../hooks/useProduct";
 import { useCategories } from "../../../../../hooks/useCategory";
-import { Product, ProductListItem, ProductStats } from "../types/product";
+import { Product, ProductListItem } from "../types/product";
 import { toast } from "sonner";
 import { TabNavigation } from "./TabNavigation";
 import { PageHeader } from "./PageHeader";
 import { Pagination } from "./Pagination";
 import { NoProductsMessage } from "./NoProductsMessage";
 import { AnimatedBackground } from "./AnimatedBackground";
+import { CategoryFilters } from "../Product/CategoryFilters";
+import { ProductStatistics } from "../Product/ProductStats";
+import { transformProductsResponse, enrichProductCategories, transformProduct } from "@/lib/productTransformer";
 
 const LoadingState = () => (
   <div className="flex items-center justify-center py-12">
@@ -25,6 +28,7 @@ const LoadingState = () => (
     </div>
   </div>
 );
+
 
 // =============== Main Component ===============
 
@@ -39,6 +43,7 @@ export default function ProductListingPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductListItem | null>(null);
+  
 
   // Hooks
   const {
@@ -90,6 +95,14 @@ export default function ProductListingPage() {
     categories,
   });
 
+   const stats = useMemo(() => ({
+        total: products.length,
+        active: products.filter(p => p.status === 'active').length,
+        inStock: products.filter(p => p.stockStatus === 'in-stock').length,
+        lowStock: products.filter(p => p.stockStatus === 'low-stock').length,
+        outOfStock: products.filter(p => p.stockStatus === 'out-of-stock').length,
+        featured: products.filter(p => p.featured).length
+      }), [products]);
   // Helper Functions
   const getStockBadge = (status: string) => {
     const variants: Record<string, { class: string; icon: any }> = {
@@ -109,16 +122,40 @@ export default function ProductListingPage() {
     return variants[status] || variants["in-stock"];
   };
 
+  const categoryMap = useMemo(() => {
+  const map: Record<string, any> = {};
+  categories.forEach((cat: any) => {
+    map[cat.id || cat._id] = cat;
+  });
+  return map;
+}, [categories]);
+
   // Event Handlers
-  const handleViewProduct = async (product: Product) => {
-    const result = await getProductById(product.id);
-    if (result.success && result.data) {
-      setSelectedProduct(result.data as any);
+ // inside ProductListingPage component
+
+const handleViewProduct = async (product: Product) => {
+  const result = await getProductById(product.id);
+  
+  if (result.success && result.data) {
+    // 1. Use the SINGULAR transform function for a single product result
+    // Note: If result.data is { data: productObj }, use result.data.data
+    const rawData = (result.data as any).data || result.data;
+    const transformed = transformProduct(rawData);
+
+    // 2. Now enrich that single transformed object
+    if (transformed && transformed.categories) {
+      const fullyPopulatedProduct = enrichProductCategories(transformed, categoryMap);
+      
+      console.log("Success! Fully Populated:", fullyPopulatedProduct);
+      
+      // 3. IMPORTANT: Update the state with the enriched product
+      setSelectedProduct(fullyPopulatedProduct as any);
       setIsViewDialogOpen(true);
-    } else {
-      toast.error("Failed to load product details");
     }
-  };
+  } else {
+    toast.error("Failed to load product details");
+  }
+};
 
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -142,19 +179,17 @@ export default function ProductListingPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!productToDelete) return;
+  const handleConfirmDelete = async (productId: string, productName: string) => {
+  const result = await deleteProduct(productId);
 
-    const result = await deleteProduct(productToDelete.id);
+  if (result.success) {
+    toast.success(`${productName} deleted successfully!`);
+    setIsViewDialogOpen(false);
+  } else {
+    toast.error(result.error || "Failed to delete product");
+  }
+};
 
-    if (result.success) {
-      toast.success(`${productToDelete.name} deleted successfully!`);
-      setIsDeleteDialogOpen(false);
-      setProductToDelete(null);
-    } else {
-      toast.error(result.error || "Failed to delete product");
-    }
-  };
 
   const handleRefresh = () => {
     refetchProducts();
@@ -184,27 +219,40 @@ export default function ProductListingPage() {
         />
       );
     }
-
+console.log("selectedProduct", selectedProduct)
+    
     return (
       <>
+      <ProductStatistics stats={stats} />
+      
+            {/* Filters */}
+            <CategoryFilters
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              selectedStatus={selectedStatus}
+              selectedStockStatus={selectedStockStatus}
+              showFeaturedOnly={showFeaturedOnly}
+              categories={categories}
+              onSearchChange={handleSearchChange}
+              onCategoryChange={handleCategoryChange}
+              onStatusChange={handleStatusChange}
+              onStockStatusChange={handleStockStatusChange}
+              onFeaturedToggle={handleFeaturedToggle}
+              onResetFilters={resetFilters}
+              hasActiveFilters={hasActiveFilters}
+              filterStats={{
+                total: 0, 
+                filtered: products.length
+              }}
+            />
         {viewMode === "grid" ? (
           <ProductListing
-            products={filteredProducts}
-            categories={categories}
-            searchTerm={searchTerm}
-            selectedCategory={selectedCategory}
-            selectedStatus={selectedStatus}
-            selectedStockStatus={selectedStockStatus}
-            showFeaturedOnly={showFeaturedOnly}
+            products={filteredProducts}          
             hasActiveFilters={hasActiveFilters}
             onViewProduct={handleViewProduct}
-            onEditProduct={handleEditProduct}
-            onSearchChange={handleSearchChange}
-            onCategoryChange={handleCategoryChange}
-            onStatusChange={handleStatusChange}
-            onStockStatusChange={handleStockStatusChange}
-            onFeaturedToggle={handleFeaturedToggle}
-            onResetFilters={resetFilters}
+            onEditProduct={handleEditProduct} 
+            onResetFilters = {resetFilters }        
+            
           />
         ) : (
           <ProductTableView
@@ -260,6 +308,7 @@ export default function ProductListingPage() {
         onEditDialogChange={setIsEditDialogOpen}
         onSaveEdit={handleSaveEdit}
         getStockBadge={getStockBadge}
+        handleConfirmDelete = { handleConfirmDelete }
       />
     </div>
   );
@@ -275,6 +324,7 @@ interface ProductModalsProps {
   onEditDialogChange: (open: boolean) => void;
   onSaveEdit: (product: Product) => Promise<void>;
   getStockBadge: (status: string) => { class: string; icon: any };
+  handleConfirmDelete: any;
 }
 
 const ProductModals: React.FC<ProductModalsProps> = ({
@@ -285,6 +335,7 @@ const ProductModals: React.FC<ProductModalsProps> = ({
   onEditDialogChange,
   onSaveEdit,
   getStockBadge,
+  handleConfirmDelete,
 }) => {
   if (!selectedProduct) return null;
 
@@ -295,6 +346,7 @@ const ProductModals: React.FC<ProductModalsProps> = ({
         onOpenChange={onViewDialogChange}
         product={selectedProduct}
         getStockBadge={getStockBadge}
+        handleConfirmDelete = { handleConfirmDelete}
       />
 
       <EditProductDialog

@@ -7,6 +7,7 @@ import {
   createGoodsReturn,
   updateGoodsReturn,
   deleteGoodsReturn,
+  exportSingleGRNToPDF
 } from "../helper/goodsReturn";
 import { fetchGRNs } from "../helper/goodsReceived";
 import { fetchNextDocumentNumber } from "../helper/goodsReceived";
@@ -29,6 +30,8 @@ export const useGoodsReturn = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
+    const [isExporting, setIsExporting] = useState<string | null>(null); 
+  
 
   // For GRNs we use a separate search/page state so that
   // typing in the main search box doesn't re-fetch the GRN dropdown list.
@@ -39,7 +42,7 @@ export const useGoodsReturn = () => {
   const loadGoodsReturns = async () => {
     try {
       const res = await fetchGoodsReturns(page, limit, searchTerm);
-      setGoodsReturnNotes(res.data as GoodsReturnNote[]);
+      setGoodsReturnNotes(res.data as any);
       setTotal(res.total);
     } catch (err) {
       console.error(err);
@@ -91,14 +94,57 @@ export const useGoodsReturn = () => {
         }
       })();
     }, []);
+
+
+   const handleExportReturn = async (returnNote: GoodsReturnNote) => {
+  // 1. Validation check (Using _id or id based on your schema)
+  const targetId = returnNote._id ;
+  if (!targetId) return toast.error("Invalid Return Note ID");
+
+  try {
+    // 2. UI Feedback (Spinner and Toast)
+    setIsExporting(targetId); 
+    const downloadToast = toast.loading(`Generating PDF for ${returnNote.returnNumber}...`);
+
+    // 3. The API Call
+    // Make sure you create 'exportReturnToPDF' in your helper file (Step 2 below)
+    const blob = await exportSingleGRNToPDF(targetId);
+    
+    // 4. Browser Download Logic
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Naming the file: e.g., GRTN-2026-002.pdf
+    link.download = `${returnNote.returnNumber || 'Return-Note'}.pdf`;
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // 5. Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    
+    // 6. Success Feedback
+    toast.success("Return Note downloaded!", { id: downloadToast });
+  } catch (error: any) {
+    console.error("Export Error:", error);
+    toast.error("Failed to generate PDF. Please try again.");
+  } finally {
+    setIsExporting(null);
+  }
+};
   // ------------------- Statistics -------------------
   const stats: ReturnStats = useMemo(() => ({
-    totalReturns: goodsReturnNotes.length,
-    pendingReturns: goodsReturnNotes.filter(g => g.status === "pending").length,
-    inTransitReturns: goodsReturnNotes.filter(g => g.status === "in-transit").length,
-    completedReturns: goodsReturnNotes.filter(g => g.status === "completed").length,
-    totalReturnValue: goodsReturnNotes.reduce((sum, g) => sum + g.totalAmount, 0),
-  }), [goodsReturnNotes]);
+  totalReturns: goodsReturnNotes.length,
+  pendingReturns: goodsReturnNotes.filter(g => g.status === "pending").length,
+  inTransitReturns: goodsReturnNotes.filter(g => g.status === "in-transit").length,
+  completedReturns: goodsReturnNotes.filter(g => g.status === "completed").length,
+  totalReturnValue: goodsReturnNotes.reduce(
+    (sum, g) => sum + (g.totalAmount ?? 0), 
+    0
+  ),
+}), [goodsReturnNotes]);
 
   // ------------------- Filtered Returns -------------------
   const filteredReturns = useMemo(() => {
@@ -134,7 +180,7 @@ const handleGRNSelection = (grnId: string) => {
     grn.items.map((item, index) => ({
       // FIX: Ensure _id is unique. Use database ID if it exists, 
       // otherwise combine sku and index for a guaranteed unique string.
-      _id: item.id || item._id || `${item.sku}-${index}`, 
+      _id: item.id || `${item.sku}-${index}`, 
       productName: item.productName,
       sku: item.sku,
       receivedQuantity: item.acceptedQuantity ?? item.receivedQuantity ?? 0,
@@ -228,8 +274,8 @@ const handleGRNSelection = (grnId: string) => {
   // ------------------- Update Return Note -------------------
   const handleUpdateReturn = async (id: string, payload: Partial<GoodsReturnNote>) => {
     try {
-      const updated = await updateGoodsReturn(id, payload);
-      toast.success(`Goods Return Note ${updated.returnNumber} updated successfully`);
+      // const updated = await updateGoodsReturn(id, payload);
+      // toast.success(`Goods Return Note ${updated.returnNumber} updated successfully`);
 
       // Refresh so the UI reflects the change.
       await loadGoodsReturns();
@@ -297,5 +343,6 @@ const handleGRNSelection = (grnId: string) => {
     total,
     returnDate,
     setReturnDate,
+    handleExportReturn,
   };
 };

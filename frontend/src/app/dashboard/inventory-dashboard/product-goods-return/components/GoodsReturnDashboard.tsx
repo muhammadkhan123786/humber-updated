@@ -44,6 +44,7 @@ export default function GoodsReturnPage() {
     handleUpdateItemReturn,
     handleCreateReturn,
     resetForm,
+    handleExportReturn,
   } = useGoodsReturn();
 
   const handleOpenCreateReturn = () => {
@@ -57,6 +58,7 @@ export default function GoodsReturnPage() {
   };
 
   const handleDownloadReturn = (grtn: GoodsReturnNote) => {
+    handleExportReturn(grtn)
     // In a real app, this would download the return note as PDF
     toast.info(`Downloading Return Note: ${grtn.returnNumber}`);
   };

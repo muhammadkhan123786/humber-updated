@@ -59,7 +59,8 @@ interface ProductInformationCardProps {
   onRemoveTag: (tag: string) => void;
   onNewTagChange: (value: string) => void;
   onImageUpload: (files: FileList | File[]) => void; // Add this
-  onRemoveImage: (index: number) => void; // Add this
+onRemoveImage: (index: number, imageId: string) => void;
+  setImage: any;
 }
 export function ProductInformationCard({
   formData,
@@ -71,7 +72,8 @@ export function ProductInformationCard({
   onNewTagChange,
   images,
    onImageUpload,
-  onRemoveImage
+  onRemoveImage,
+  setImage,
 }: ProductInformationCardProps) {
   const [keywordInput, setKeywordInput] = useState("");
 
@@ -171,6 +173,7 @@ export function ProductInformationCard({
                onNewTagChange={onNewTagChange}
              onRemoveImage={onRemoveImage} 
              onImageUpload={onImageUpload}
+             setImage = { setImage }
             />
           </div>
           <div className="space-y-6">

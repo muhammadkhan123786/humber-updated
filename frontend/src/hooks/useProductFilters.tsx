@@ -1,21 +1,8 @@
-// hooks/useProductFilters.ts - UPDATED VERSION
+// hooks/useProductFilters.ts - UPDATED FOR N-TH LEVEL CATEGORIES
 "use client";
 import { useState, useMemo, useCallback } from 'react';
 import { DatabaseCategory } from './useCategory';
-import { ProductListItem } from "../app/dashboard/inventory-dashboard/product/types/product"
-// interface Product {
-//   id: string;
-//   name: string;
-//   categories: {
-//     level1?: { id: string; name: string; level: number };
-//     level2?: { id: string; name: string; level: number; parentId: string };
-//     level3?: { id: string; name: string; level: number; parentId: string };
-//   };
-//   status: string;
-//   stockStatus: string;
-//   featured: boolean;
-//   [key: string]: any;
-// }
+import { ProductListItem, CategoryInfo } from "../app/dashboard/inventory-dashboard/product/types/product"
 
 interface UseProductFiltersProps {
   products: ProductListItem[];
@@ -64,19 +51,24 @@ export const useProductFilters = ({
     return options;
   }, [categories]);
 
-  // ✅ Get product category IDs (simplified version)
+  // ✅ FIXED: Get product category IDs from new array structure
   const getProductCategoryIds = useCallback((product: ProductListItem): string[] => {
     const ids = new Set<string>();
     
-    // Check if product has categories in the old structure
-    if (product.categories?.level1?.id) {
-      ids.add(product.categories.level1.id);
+    // NEW STRUCTURE: Check if product has categories as an array
+    if (Array.isArray(product.categories) && product.categories.length > 0) {
+      product.categories.forEach((category: CategoryInfo) => {
+        if (category.id) {
+          ids.add(category.id);
+        }
+      });
     }
-    if (product.categories?.level2?.id) {
-      ids.add(product.categories.level2.id);
-    }
-    if (product.categories?.level3?.id) {
-      ids.add(product.categories.level3.id);
+    // FALLBACK: Check old structure (for backward compatibility)
+    else if (product.categories && typeof product.categories === 'object') {
+      const cats = product.categories as any;
+      if (cats.level1?.id) ids.add(cats.level1.id);
+      if (cats.level2?.id) ids.add(cats.level2.id);
+      if (cats.level3?.id) ids.add(cats.level3.id);
     }
 
     return Array.from(ids);
@@ -121,6 +113,8 @@ export const useProductFilters = ({
       if (selectedCategory !== 'all' && categories.length > 0) {
         // Get all product category IDs
         const productCategoryIds = getProductCategoryIds(product);
+        console.log("productCategoryIds", productCategoryIds)
+        
         
         // If product has no categories and a category is selected, hide it
         if (productCategoryIds.length === 0) {

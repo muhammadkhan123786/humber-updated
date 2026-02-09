@@ -10,6 +10,7 @@ import { DropdownService } from "@/helper/dropdown.service";
 import { fetchAttributes } from "@/hooks/useAttributes";
 import { createProduct } from "@/helper/products";
 import {  toast } from 'sonner';
+import { useRouter } from "next/navigation";
 // ─── Shared variant types (import these in AttributesAndPricingStep too) ────
 export interface MarketplacePricing {
   id: string;
@@ -61,6 +62,7 @@ export function useProductForm({
   const [fetchedCategories, setFetchedCategories] =
     useState<CategoryNode[]>(categories);
   const [formData, setFormData] = useState(initialData);
+ const router = useRouter();
 
   // ✅ Lifted up from AttributesAndPricingStep
   const [variants, setVariants] = useState<ProductVariant[]>([]);
@@ -267,16 +269,27 @@ const onBulkAddTags = (newTagsArray: string[]) => {
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   }, []);
 
-  const handleImageUpload = useCallback((files: FileList | File[]) => {
-    const fileArray = Array.from(files);
-    const newImages = fileArray.map((file) => URL.createObjectURL(file));
-    setImages((prev) => [...prev, ...newImages]);
-  }, []);
+ const handleImageUpload = useCallback(
+  (files: FileList | File[]) => {
+    const fileArray: File[] = Array.isArray(files)
+      ? files
+      : Array.from(files);
+
+    const newImages = fileArray.map(file =>
+      URL.createObjectURL(file)
+    );
+
+    setImages(prev => [...prev, ...newImages]);
+  },
+  []
+);
+
 
   const removeImage = useCallback((index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  console.log("imagessss", images)
   // ✅ handleSubmit now includes variants with your structured schema
  const handleSubmit = useCallback(
  async (e: React.FormEvent<HTMLFormElement>) => {
@@ -298,9 +311,8 @@ const onBulkAddTags = (newTagsArray: string[]) => {
       description: formData.description,
       shortDescription: formData.shortDescription,
       keywords: keywordsArray,
-      tags,
+      tags,      
       images,
-
       categoryId: selectedPath.at(-1),
       categoryPath: selectedPath,
 
@@ -347,6 +359,7 @@ const onBulkAddTags = (newTagsArray: string[]) => {
      const res = await createProduct(finalData as any);
     onSubmit(finalData);
     toast.success("Product created successfully!");
+      router.push("/dashboard/inventory-dashboard/product");
   },
   [formData, selectedPath, tags, images, variants, onSubmit],
 );
@@ -385,5 +398,6 @@ const onBulkAddTags = (newTagsArray: string[]) => {
     // ✅ Exposed for AttributesAndPricingStep
     variants,
     setVariants,
+    setImages,
   };
 }

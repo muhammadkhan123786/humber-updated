@@ -132,17 +132,12 @@ export const useProducts = (options: UseProductsOptions = {}) => {
         params
       });
 
-        console.log('API Response:', response.data);
-    console.log('Response structure:', response.data.data);
-    console.log('Response success:', response.data.success);
-
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch products');
       }
 
       // Transform products
       const transformedProducts = transformProductsResponse(response.data);
- console.log('Transformed products:', transformedProducts);
       setProducts(transformedProducts);
       setStatistics(response.data.statistics || null);
       setPagination({

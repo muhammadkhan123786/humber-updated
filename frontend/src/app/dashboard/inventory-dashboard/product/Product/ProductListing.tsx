@@ -5,56 +5,31 @@ import { ProductStatistics } from './ProductStats';
 import { CategoryFilters } from './CategoryFilters';
 import { ProductCard } from './ProductCard';
 import { CheckCircle, AlertCircle, Package } from "lucide-react"
-import { Product, ProductStats, ProductListItem } from '../types/product';
+import { Product,  ProductListItem } from '../types/product';
 import { Button } from "@/components/form/CustomButton"
 import { DatabaseCategory } from '../../../../../hooks/useCategory';
 
 interface ProductListingProps {
-  products: ProductListItem[];
-  categories: DatabaseCategory[];
-  searchTerm: string;
-  selectedCategory: string;
-  selectedStatus: string;
-  selectedStockStatus: string;
-  showFeaturedOnly: boolean;
+  products: ProductListItem[];  
   hasActiveFilters: boolean;
   onViewProduct: (product: Product) => void;
   onEditProduct: (product: Product) => void;
-  onSearchChange: (value: string) => void;
-  onCategoryChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
-  onStockStatusChange: (value: string) => void;
-  onFeaturedToggle: () => void;
+ 
   onResetFilters: () => void;
 }
 
 export const ProductListing = ({ 
-  products, 
-  categories,
-  searchTerm,
-  selectedCategory,
-  selectedStatus,
-  selectedStockStatus,
-  showFeaturedOnly,
+  products,  
   hasActiveFilters,
   onViewProduct, 
   onEditProduct,
-  onSearchChange,
-  onCategoryChange,
-  onStatusChange,
-  onStockStatusChange,
-  onFeaturedToggle,
-  onResetFilters
+  onResetFilters,
+
 }: ProductListingProps) => {
 
-  const stats: ProductStats = useMemo(() => ({
-    total: products.length,
-    active: products.filter(p => p.status === 'active').length,
-    inStock: products.filter(p => p.stockStatus === 'in-stock').length,
-    lowStock: products.filter(p => p.stockStatus === 'low-stock').length,
-    outOfStock: products.filter(p => p.stockStatus === 'out-of-stock').length,
-    featured: products.filter(p => p.featured).length
-  }), [products]);
+
+
+  console.log("products",products)
 
   const getStockBadge = (status: string) => {
     const variants: Record<string, { class: string; icon: any }> = {
@@ -76,29 +51,7 @@ export const ProductListing = ({
 
   return (
     <div className="space-y-6">
-      {/* Statistics */}
-      <ProductStatistics stats={stats} />
-
-      {/* Filters */}
-      <CategoryFilters
-        searchTerm={searchTerm}
-        selectedCategory={selectedCategory}
-        selectedStatus={selectedStatus}
-        selectedStockStatus={selectedStockStatus}
-        showFeaturedOnly={showFeaturedOnly}
-        categories={categories}
-        onSearchChange={onSearchChange}
-        onCategoryChange={onCategoryChange}
-        onStatusChange={onStatusChange}
-        onStockStatusChange={onStockStatusChange}
-        onFeaturedToggle={onFeaturedToggle}
-        onResetFilters={onResetFilters}
-        hasActiveFilters={hasActiveFilters}
-        filterStats={{
-          total: 0, 
-          filtered: products.length
-        }}
-      />
+      
 
       {/* Product Grid */}
       {products?.length > 0 ? (

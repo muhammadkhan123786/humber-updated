@@ -12,26 +12,57 @@ export interface GoodsReturnNoteItem {
   _id?: string;
 }
 
+export interface PurchaseOrderItem {
+  _id: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface GRNItem {
+  receivedQuantity: number;
+  acceptedQuantity?: number;
+  rejectedQuantity?: number;
+  damageQuantity?: number;
+  unitPrice: number;
+  condition?: string;
+  notes?: string;
+}
+
+export interface GRN {
+  _id: string;
+  grnNumber?: string;
+  purchaseOrderId?: PurchaseOrder;
+  items: GRNItem[];
+}
+
+export interface ReturnItem {
+  returnQty: number;
+  totalAmount: number;
+  status?: any;
+  itemsNotes?: string;
+}
+
+export interface PurchaseOrder {
+  _id: string;
+  supplier?: {
+    contactInformation?: {
+      primaryContactName?: string;
+    };
+  };
+  items: PurchaseOrderItem[]; // <-- added items
+}
+
+
 export interface GoodsReturnNote {
   _id: string;
-
-  // New & old naming support
   grtnNumber?: string;
   returnNumber?: string;
 
   grnNumber?: string;
-  grnId?: {
-    _id: string;
-    grnNumber?: string;
-    purchaseOrderId?: {
-      _id: string;
-      supplier?: {
-        contactInformation?: {
-          primaryContactName?: string;
-        };
-      };
-    };
-  };
+  grnId?: GRN;
 
   supplier?: string;
 
@@ -39,15 +70,9 @@ export interface GoodsReturnNote {
   returnedBy: string;
 
   status: 'pending' | 'approved' | 'in-transit' | 'completed' | 'rejected';
-
   returnReason: string;
-  items: {
-    returnQty: number;
-    totalAmount: number;
-    status?: string;
-    itemsNotes?: string;
-  }[];
 
+  items: ReturnItem[];
   totalAmount?: number;
   notes?: string;
 

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Shield, Sparkles, Check } from 'lucide-react';
+import { Shield, Sparkles, Check, Loader2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/form/Select';
-import { FormData, MARKETPLACE_TEMPLATES } from '../data/marketplaceData';
+import { FormData, MarketplaceTemplate } from '../data/marketplaceData';
+import { useFormActions } from '@/hooks/useFormActions';
+import { getImageUrl } from "@/helper/getImageUrl"
 
 interface AddEditDialogProps {
   isOpen: boolean;
@@ -38,9 +40,23 @@ export function AddEditDialog({
   onSubmit,
   onFormChange
 }: AddEditDialogProps) {
-  const getRequiredFields = () => {
-    const template = MARKETPLACE_TEMPLATES.find(t => t.type === formData.type);
-    return template?.fields || [];
+  // 1. Fetching real marketplace templates from backend
+  const { data: templates, isLoading } =
+  useFormActions<MarketplaceTemplate>(
+    "/marketplace-templates",
+    "marketplaceTemplates",
+    "Marketplace"
+  );
+
+
+  const selectedTemplate = templates?.find((t: any) => t._id === formData.type);
+
+  // Helper function to get icon URL for each template
+  const getTemplateIconUrl = (template: any) => {
+    if (!template?.icon?.icon || !Array.isArray(template.icon.icon)) {
+      return null;
+    }
+    return getImageUrl(template.icon.icon[0]);
   };
 
   return (
@@ -58,183 +74,147 @@ export function AddEditDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Marketplace Type */}
-          <div>
-            <Label className="text-base font-semibold">Marketplace Type</Label>
-            <Select 
-              value={formData.type} 
-              onValueChange={(value: any) => onFormChange({ ...formData, type: value })}
-              disabled={isEdit}
-            >
-              <SelectTrigger className="border-2 focus:border-indigo-500">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ebay">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🛒</span>
-                    <span>eBay</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="amazon">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">📦</span>
-                    <span>Amazon</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="etsy">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🎨</span>
-                    <span>Etsy</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="shopify">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🏪</span>
-                    <span>Shopify</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="custom">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🌐</span>
-                    <span>Custom Marketplace</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <p className="text-sm text-gray-500">Fetching templates...</p>
           </div>
+        ) : (
+          <div className="space-y-4 py-4">
+            {/* Marketplace Selection */}
+            <div>
+              <Label className="text-base font-semibold">Select Marketplace Type</Label>
+              <Select 
+                value={formData.type} 
+                onValueChange={(value: string) => onFormChange({ ...formData, type: value })}
+                disabled={isEdit}
+              >
+                <SelectTrigger className="border-2 focus:border-indigo-500">
+                  <SelectValue placeholder="Choose a platform" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates?.map((template: any) => {
+                    const iconUrl = getTemplateIconUrl(template);
+                    
+                    return (
+                      <SelectItem key={template._id} value={template._id}>
+                        <div className="flex items-center gap-2">
+                          {/* Dynamic Icon from Backend */}
+                          {iconUrl ? (
+                            <img 
+                              src={iconUrl} 
+                              alt={template.name} 
+                              className="w-5 h-5 object-contain"
+                              onError={(e) => {
+                                // Fallback to first letter if image fails to load
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                              {template.name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span>{template.name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Marketplace Name */}
-          <div>
-            <Label className="text-base font-semibold">Marketplace Name</Label>
-            <Input
-              placeholder="e.g., My eBay Store"
-              value={formData.name}
-              onChange={(e) => onFormChange({ ...formData, name: e.target.value })}
-              className="border-2 focus:border-indigo-500"
-            />
-          </div>
+            {/* General Details */}
+            <div>
+              <Label className="text-base font-semibold">Connection Name</Label>
+              <Input
+                placeholder="e.g., My eBay Store"
+                value={formData.name}
+                onChange={(e) => onFormChange({ ...formData, name: e.target.value })}
+                className="border-2 focus:border-indigo-500"
+              />
+            </div>
+{/* Description */}
 
-          {/* Description */}
           <div>
+
             <Label className="text-base font-semibold">Description</Label>
+
             <Textarea
+
               placeholder="Brief description of this marketplace..."
+
               value={formData.description}
+
               onChange={(e) => onFormChange({ ...formData, description: e.target.value })}
+
               rows={2}
+
               className="border-2 focus:border-indigo-500"
+
             />
+
           </div>
+            {/* Dynamic Fields Section */}
+            {selectedTemplate && (
+              <div className="border-t-2 pt-4 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 mb-4 bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border-2 border-purple-200">
+                  <Shield className="h-5 w-5 text-purple-600" />
+                  <Label className="text-lg font-bold text-purple-900">
+                    {selectedTemplate?.name} Credentials
+                  </Label>
+                </div>
 
-          {/* Dynamic Fields Based on Type */}
-          <div className="border-t-2 pt-4">
-            <div className="flex items-center gap-2 mb-4 bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg border-2 border-purple-200">
-              <Shield className="h-5 w-5 text-purple-600" />
-              <Label className="text-lg font-bold text-purple-900">API Credentials</Label>
-            </div>
-
-            {(getRequiredFields().includes('apiKey') || formData.type === 'custom') && (
-              <div className="mb-3">
-                <Label className="text-sm font-semibold">API Key</Label>
-                <Input
-                  type="password"
-                  placeholder="Enter API key..."
-                  value={formData.apiKey}
-                  onChange={(e) => onFormChange({ ...formData, apiKey: e.target.value })}
-                  className="border-2 focus:border-purple-500"
-                />
+                <div className="grid gap-4">
+                  {selectedTemplate?.fields.map((fieldName: string) => (
+                    <div key={fieldName}>
+                      <Label className="text-sm font-semibold capitalize">
+                        {fieldName.replace(/([A-Z])/g, ' $1')} {/* Formats shopUrl to Shop Url */}
+                      </Label>
+                      <Input
+                        type="password" // As per your requirement
+                        placeholder={`Enter ${fieldName}...`}
+                        value={(formData as any)[fieldName] || ''}
+                        onChange={(e) => onFormChange({ ...formData, [fieldName]: e.target.value })}
+                        className="border-2 focus:border-purple-500"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
-            {(getRequiredFields().includes('apiSecret') || formData.type === 'custom') && (
-              <div className="mb-3">
-                <Label className="text-sm font-semibold">API Secret</Label>
-                <Input
-                  type="password"
-                  placeholder="Enter API secret..."
-                  value={formData.apiSecret}
-                  onChange={(e) => onFormChange({ ...formData, apiSecret: e.target.value })}
-                  className="border-2 focus:border-purple-500"
-                />
+            {/* Help Text Contextual to Selection */}
+            <motion.div 
+              className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+            >
+              <div className="flex gap-3">
+                <Sparkles className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900">
+                  <p className="font-bold mb-1 text-base">Security Note</p>
+                  <p className="text-blue-800">
+                    Your {selectedTemplate?.name || 'marketplace'} credentials are encrypted before storage. 
+                    Visit the developer portal to manage your keys.
+                  </p>
+                </div>
               </div>
-            )}
-
-            {(getRequiredFields().includes('shopUrl') || formData.type === 'custom') && (
-              <div className="mb-3">
-                <Label className="text-sm font-semibold">Shop URL</Label>
-                <Input
-                  placeholder="e.g., yourstore.myshopify.com"
-                  value={formData.shopUrl}
-                  onChange={(e) => onFormChange({ ...formData, shopUrl: e.target.value })}
-                  className="border-2 focus:border-purple-500"
-                />
-              </div>
-            )}
-
-            {(getRequiredFields().includes('accessToken') || formData.type === 'custom') && (
-              <div className="mb-3">
-                <Label className="text-sm font-semibold">Access Token</Label>
-                <Input
-                  type="password"
-                  placeholder="Enter access token..."
-                  value={formData.accessToken}
-                  onChange={(e) => onFormChange({ ...formData, accessToken: e.target.value })}
-                  className="border-2 focus:border-purple-500"
-                />
-              </div>
-            )}
-
-            {getRequiredFields().includes('marketplaceId') && (
-              <div className="mb-3">
-                <Label className="text-sm font-semibold">Marketplace ID</Label>
-                <Input
-                  placeholder="Enter marketplace ID..."
-                  value={formData.marketplaceId}
-                  onChange={(e) => onFormChange({ ...formData, marketplaceId: e.target.value })}
-                  className="border-2 focus:border-purple-500"
-                />
-              </div>
-            )}
+            </motion.div>
           </div>
-
-          {/* Help Text */}
-          <motion.div 
-            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex gap-3">
-              <Sparkles className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-900">
-                <p className="font-bold mb-1 text-base">Getting API Credentials</p>
-                <p className="text-blue-800">
-                  Visit your {MARKETPLACE_TEMPLATES.find(t => t.type === formData.type)?.name || 'marketplace'} developer portal 
-                  to generate API keys and access tokens. Keep these credentials secure and never share them.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+        )}
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={onClose}
-            className="border-2"
-          >
+          <Button variant="outline" onClick={onClose} className="border-2">
             Cancel
           </Button>
           <Button 
             onClick={onSubmit}
-            className="gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-lg shadow-purple-500/50"
-            disabled={!formData.name}
+            className="gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white"
+            disabled={!formData.name || !formData.type}
           >
             <Check className="h-4 w-4" />
             {isEdit ? 'Update' : 'Add'} Marketplace
-            <Sparkles className="h-4 w-4" />
           </Button>
         </DialogFooter>
       </DialogContent>
