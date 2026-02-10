@@ -4,6 +4,8 @@ import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
 import { Tax } from "../../models/tax.models";
+import { Types } from "mongoose";
+import { TicketQuationStatus } from "../../models/ticket-quation-models/ticket.quation.status.models";
 
 export const technicianTicketsController = async (
   req: AuthRequest,
@@ -310,7 +312,7 @@ export const getDefaultTaxPercentageController = async (
 ) => {
   try {
     const user = req.user;
-
+    console.log("Get Default Tax Controller invoked for user:", user);
     // ✅ Master user must exist (attached by protector)
     if (!user?._id) {
       return res.status(401).json({
@@ -318,16 +320,25 @@ export const getDefaultTaxPercentageController = async (
         message: "Unauthorized user.",
       });
     }
+   const technician = await Technicians.findOne({
+  accountId: user._id,
+  isDeleted: false,
+  isActive: true,
+}).select("_id userId") as {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+} | null;
 
-    // ✅ Fetch default tax for MASTER USER
-    const tax = await Tax.findOne({
-      userId: user._id,
-      isDefault: true,
-      isDeleted: false,
-    }).select("percentage");
 
+const tax = await Tax.findOne({
+  userId: technician?.userId,
+  isDefault: true,
+  isDeleted: false,
+}).select("percentage");
+
+   
     if (!tax) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
         message: "Default tax not found.",
       });
@@ -343,6 +354,57 @@ export const getDefaultTaxPercentageController = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch default tax.",
+    });
+  }
+};
+
+//default quotation status get to add default status in technician quotations
+export const getDefaultQuotationStatusController = async (
+  req: AuthRequest, 
+  res: Response
+) => {
+  try {
+    const user = req.user;
+    
+    if (!user?._id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized user.",
+      });
+    }     
+    const technician = await Technicians.findOne({
+      accountId: user._id,
+      isDeleted: false, 
+      isActive: true,
+    }).select("_id userId") as {
+      _id: Types.ObjectId;
+      userId: Types.ObjectId;
+    } | null;
+   
+    const defaultStatus= await TicketQuationStatus.findOne({
+            userId: technician?.userId,
+            isDefault: true,
+            isDeleted: false,
+          }).select("_id");
+   
+    if (!defaultStatus) {
+      return res.status(401).json({
+        success: false,
+        message: "Default quotation status not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Default quotation status fetched successfully.",
+      defaultQuotationStatusId: defaultStatus._id,
+    });
+
+  } catch (error) { 
+    console.error("Get Default Quotation Status Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch default quotation status.",
     });
   }
 };

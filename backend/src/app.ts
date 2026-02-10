@@ -84,6 +84,7 @@ import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
 import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
+import { getDefaultQuotationStatusController, getDefaultTaxPercentageController } from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
 
 
 // Create express app
@@ -383,7 +384,6 @@ app.use(
   `${process.env.API_PREFIX}/technician-dashboard`,
   technicianProtecter,
   technicianDashboardRouter,
-
 );
 
 //04-02-2026
@@ -423,6 +423,20 @@ app.use(
   `${process.env.API_PREFIX}/master-parts-technician-dashboard`,
   technicianMasterProtector,
   partsRouter,
+);
+
+//10-02-2026
+app.get(
+  `${process.env.API_PREFIX}/default-tax`,
+  technicianMasterProtector,
+  getDefaultTaxPercentageController,
+);
+
+//default quotation api 
+app.get(
+  `${process.env.API_PREFIX}/default-quotation-status`,
+  technicianMasterProtector,
+  getDefaultQuotationStatusController,
 );
 
 //Muhammad Imran code ended here.

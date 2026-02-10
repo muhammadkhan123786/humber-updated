@@ -1,5 +1,4 @@
 "use client";
-import React from 'react';
 import { FileText, Edit, User, Package } from 'lucide-react';
 import PartsRequired from './PartsRequired';
 
