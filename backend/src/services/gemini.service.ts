@@ -1,23 +1,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { AIResponse } from '../../../common/ai.interface';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export const analyzeImagesWithGemini = async (
-  files: Express.Multer.File[]
-): Promise<AIResponse> => {
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-3-flash-preview'
-  });
+  files: { buffer: Buffer; mimetype: string }[],
+  retries = 3
+): Promise<any> => {
+ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const imageParts = files.map(file => ({
-    inlineData: {
-      data: file.buffer.toString('base64'),
-      mimeType: file.mimetype
-    }
+    inlineData: { data: file.buffer.toString('base64'), mimeType: file.mimetype }
   }));
 
-const prompt = `
+    const prompt = `
 Analyze all provided product images as a single product collection.
 Look for details like color, material, brand, usage, and style across ALL images.
 
@@ -34,15 +29,22 @@ Constraints:
 - Ensure tags are relevant to the specific product shown.
 `;
 
-  const result = await model.generateContent([
-    prompt,
-    ...imageParts
-  ]);
+  try {
+    const result = await model.generateContent([prompt, ...imageParts]);
+    const responseText = result.response.text();
+    
+    // Clean JSON more robustly
+    const jsonString = responseText.match(/\{[\s\S]*\}/)?.[0] || responseText;
+    return JSON.parse(jsonString);
 
-  const text = result.response
-    .text()
-    .replace(/```json|```/gi, '')
-    .trim();
-
-  return JSON.parse(text);
+  } catch (error: any) {
+    // 503 is Service Unavailable, 429 is Rate Limit
+    if ((error.status === 503 || error.status === 429) && retries > 0) {
+      const waitTime = Math.pow(2, 4 - retries) * 1000; // Exponential backoff: 1s, 2s, 4s
+      console.warn(`Gemini Busy. Retrying in ${waitTime}ms...`);
+      await new Promise(res => setTimeout(res, waitTime));
+      return analyzeImagesWithGemini(files, retries - 1);
+    }
+    throw error; // Rethrow if we're out of retries or it's a 400/500 error
+  }
 };

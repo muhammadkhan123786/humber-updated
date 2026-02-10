@@ -1,12 +1,18 @@
-import React from "react";
+"use client";
+
+import { Suspense } from "react";
 import Jobs from "./components/Jobs";
 
-const page = () => {
+export default function Page() {
   return (
-    <div>
+    <Suspense
+      fallback={
+        <div className="flex justify-center p-10 text-gray-500">
+          Loading jobs...
+        </div>
+      }
+    >
       <Jobs />
-    </div>
+    </Suspense>
   );
-};
-
-export default page;
+}

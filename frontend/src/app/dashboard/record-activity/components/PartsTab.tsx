@@ -13,6 +13,7 @@ interface PartsTabProps {
   partFields: any[];
   addPart: () => void;
   removePart: (index: number) => void;
+  calculatePartTotal: (index: number) => number;
   totalPartsCost: number;
 }
 
@@ -24,12 +25,7 @@ export const PartsTab = ({
   removePart,
   totalPartsCost,
 }: PartsTabProps) => {
-  const {
-    register,
-    watch,
-    setValue,
-    formState: { errors },
-  } = form;
+  const { register, watch, setValue } = form;
 
   const nextIndex = partFields.length;
 
@@ -99,7 +95,6 @@ export const PartsTab = ({
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* SUMMARY */}
       <AnimatePresence>
         {completedParts.length > 0 && (
           <motion.div
@@ -118,6 +113,9 @@ export const PartsTab = ({
             </div>
 
             <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Total Units
+              </span>
               <span className="text-2xl font-black text-[#6366F1]">
                 {totalUnits}
               </span>
@@ -127,6 +125,9 @@ export const PartsTab = ({
             </div>
 
             <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Total Cost
+              </span>
               <span className="text-2xl font-black text-[#10B981]">
                 £{totalPartsCost.toFixed(2)}
               </span>
@@ -137,17 +138,15 @@ export const PartsTab = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Current Part Form */}
       <div className="bg-white border border-purple-100 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-6 text-[#A855F7] font-bold">
+        <div className=" mb-6  font-bold leading-none flex items-center gap-2 text-purple-600">
           <Plus size={20} />
-          <span className="text-sm">Record Part Change</span>
+          <span className="">Record Part Change</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Part Name <span className="text-red-500">*</span>
             </label>
             <CustomSelect
@@ -168,17 +167,19 @@ export const PartsTab = ({
           </div>
 
           <FormField
-            label="Part Number"
+            label="Part Number *"
             name="partNumber"
             value={selectedPart?.partNumber || ""}
             type="text"
             disabled
+            labelClassName={true}
           />
 
           <FormField
             label="Old Part Condition"
             placeholder="e.g. Damaged"
             required
+            labelClassName={true}
             value={
               watch(`parts.${nextIndex}.oldPartConditionDescription`) || ""
             }
@@ -194,6 +195,7 @@ export const PartsTab = ({
           <FormField
             label="New Serial Number"
             placeholder="SN-123456"
+            labelClassName={true}
             value={watch(`parts.${nextIndex}.newSerialNumber`) || ""}
             onChange={(e) =>
               setValue(`parts.${nextIndex}.newSerialNumber`, e.target.value, {
@@ -207,26 +209,27 @@ export const PartsTab = ({
           <FormField
             label="Quantity"
             type="number"
+            labelClassName={true}
             required
-            value={currentQuantity !== undefined ? Number(currentQuantity) : 1} // always string
+            value={currentQuantity !== undefined ? Number(currentQuantity) : 1}
             onChange={(e) => {
               let value: number;
 
               if (e.target.value === "" || isNaN(Number(e.target.value))) {
-                value = 1; // empty or invalid -> 1
+                value = 1;
               } else {
-                value = Math.max(1, Number(e.target.value)); // minimum 1
+                value = Math.max(1, Number(e.target.value));
               }
 
               setValue(`parts.${nextIndex}.quantity`, value, {
                 shouldDirty: true,
-                shouldValidate: true, // trigger Zod validation
+                shouldValidate: true,
               });
             }}
           />
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400 uppercase tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Unit Cost (£)
             </label>
             <div className="w-full h-9 px-4 flex items-center bg-gray-100 border border-gray-100 rounded-2xl text-gray-500 font-medium text-sm">
@@ -235,7 +238,7 @@ export const PartsTab = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400 tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Total Cost (£)
             </label>
             <div className="w-full h-9 px-4 flex items-center bg-purple-50 border border-purple-100 rounded-2xl text-[#A855F7] font-black text-sm">
@@ -245,7 +248,7 @@ export const PartsTab = ({
         </div>
 
         <div className="space-y-2 mb-8">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             Reason for Change <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -262,7 +265,7 @@ export const PartsTab = ({
         <button
           type="button"
           onClick={handleRecordPart}
-          className="w-full py-4 bg-linear-to-r from-[#A855F7] to-[#E11D48] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg"
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-primary-foreground hover:bg-primary/90 px-4 py-2 has-[>svg]:px-3 w-full bg-linear-to-r text-white from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-12"
         >
           <Package size={20} />
           <span>Record Part Change</span>

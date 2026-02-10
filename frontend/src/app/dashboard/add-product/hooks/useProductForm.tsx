@@ -10,6 +10,7 @@ import { DropdownService } from "@/helper/dropdown.service";
 import { fetchAttributes } from "@/hooks/useAttributes";
 import { createProduct } from "@/helper/products";
 import {  toast } from 'sonner';
+import { useRouter } from "next/navigation";
 // ─── Shared variant types (import these in AttributesAndPricingStep too) ────
 export interface MarketplacePricing {
   id: string;
@@ -61,6 +62,7 @@ export function useProductForm({
   const [fetchedCategories, setFetchedCategories] =
     useState<CategoryNode[]>(categories);
   const [formData, setFormData] = useState(initialData);
+ const router = useRouter();
 
   // ✅ Lifted up from AttributesAndPricingStep
   const [variants, setVariants] = useState<ProductVariant[]>([]);
@@ -156,8 +158,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     const fetchCategoriesData = async () => {
       try {
         const data = await fetchCategories();
-        console.log("Fetched categories:", data);
-        setFetchedCategories(data.data as CategoryNode[] || []);
+        setFetchedCategories(data.data as any || []);
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
@@ -256,20 +257,39 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     }
   }, [newTag, tags]);
 
+  // Add this function to your Parent Component
+const onBulkAddTags = (newTagsArray: string[]) => {
+  setTags((prevTags) => {
+    // Combine old tags and new tags, and remove duplicates
+    const combined = [...prevTags, ...newTagsArray];
+    return Array.from(new Set(combined));
+  });
+};
   const removeTag = useCallback((tagToRemove: string) => {
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   }, []);
 
-  const handleImageUpload = useCallback((files: FileList | File[]) => {
-    const fileArray = Array.from(files);
-    const newImages = fileArray.map((file) => URL.createObjectURL(file));
-    setImages((prev) => [...prev, ...newImages]);
-  }, []);
+ const handleImageUpload = useCallback(
+  (files: FileList | File[]) => {
+    const fileArray: File[] = Array.isArray(files)
+      ? files
+      : Array.from(files);
+
+    const newImages = fileArray.map(file =>
+      URL.createObjectURL(file)
+    );
+
+    setImages(prev => [...prev, ...newImages]);
+  },
+  []
+);
+
 
   const removeImage = useCallback((index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  console.log("imagessss", images)
   // ✅ handleSubmit now includes variants with your structured schema
  const handleSubmit = useCallback(
  async (e: React.FormEvent<HTMLFormElement>) => {
@@ -291,9 +311,8 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
       description: formData.description,
       shortDescription: formData.shortDescription,
       keywords: keywordsArray,
-      tags,
+      tags,      
       images,
-
       categoryId: selectedPath.at(-1),
       categoryPath: selectedPath,
 
@@ -309,7 +328,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
           sellingPrice: p.sellingPrice,
           retailPrice: p.retailPrice,
           discountPercentage: p.discountPercentage,
-          taxId: p.taxId || null, // ✅ IMPORTANT
+          taxId: p.taxId || null, 
           taxRate: p.taxRate,
           vatExempt: p.vatExempt,
         })),
@@ -337,10 +356,10 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
       })),
     };
 
-    console.log("✅ Product data submitted:", finalData);
-     const res = await createProduct(finalData);
+     const res = await createProduct(finalData as any);
     onSubmit(finalData);
     toast.success("Product created successfully!");
+      router.push("/dashboard/inventory-dashboard/product");
   },
   [formData, selectedPath, tags, images, variants, onSubmit],
 );
@@ -362,6 +381,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     tags,
     images,
     newTag,
+    onBulkAddTags,
     handleInputChange,
     handleDynamicFieldChange,
     addTag,
@@ -378,5 +398,6 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     // ✅ Exposed for AttributesAndPricingStep
     variants,
     setVariants,
+    setImages,
   };
 }

@@ -1,13 +1,20 @@
-import React from 'react'
+"use client";
 
-import TechnicianActivityPage from './components/TechnicianActivityPage'
+import React, { Suspense } from "react";
+import TechnicianActivityPage from "./components/TechnicianActivityPage";
 
-const page = () => {
+const Page = () => {
   return (
-    <div>
-        <TechnicianActivityPage />
-    </div>
-  )
-}
+    <Suspense
+      fallback={
+        <div className="flex justify-center p-10 text-gray-500">
+          Loading jobs...
+        </div>
+      }
+    >
+      <TechnicianActivityPage />
+    </Suspense>
+  );
+};
 
-export default page
+export default Page;

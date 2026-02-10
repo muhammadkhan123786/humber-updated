@@ -1,4 +1,4 @@
-import { Schema, SchemaDefinition, Types } from "mongoose";
+import { Schema, SchemaDefinition } from "mongoose";
 import { z } from "zod";
 import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
 
@@ -25,9 +25,14 @@ export const GoodsReturnItemSchema = new Schema(
 
 export const GoodsReturnSchema: SchemaDefinition = {
   ...commonSchema,
-  grnId: { type: Schema.Types.ObjectId, ref: "grns", required: true },
+  grtnNumber: { type: String, required: true},
+  grnId: { type: Schema.Types.ObjectId, ref: "grn", required: true },
   returnedBy: { type: String, required: true },
   returnReason: { type: String, required: true },
+  returnDate: {
+    type: Date,
+    default: Date.now, 
+  },
   items: [GoodsReturnItemSchema],
   notes: String,
 };
@@ -45,9 +50,11 @@ export const GoodsReturnItemValidation = z.object({
 
 export const CreateGoodsReturnValidation = z.object({
   ...commonSchemaValidation,
+  grtnNumber: z.string(),
   grnId: z.string(),
   returnedBy: z.string().min(2),
   returnReason: z.string().min(2),
+  returnDate: z.coerce.date().optional(),
   items: z.array(GoodsReturnItemValidation).min(1),
   notes: z.string().optional(),
 });

@@ -1,4 +1,4 @@
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import path from "path";
 import "dotenv/config"; // load env variables
@@ -80,6 +80,8 @@ import goodsReturnRoutes from "./routes/goodsReturn.routes";
 import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
+import marketplaceRoute from "./routes/marketplace.routes";
+import  uploadRoutes  from "./routes/upload.routes"
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
@@ -439,6 +441,10 @@ app.get(
   getDefaultQuotationStatusController,
 );
 
+app.get(`${process.env.API_PREFIX}/test-mobile-access`, adminProtecter, (req: Request, res: Response) => {
+  return res.status(200).json({ status: true, message: "Mobile Access Successfully." })
+})
+
 //Muhammad Imran code ended here.
 
 //  Muzmil Hassan 8/1/2026
@@ -484,8 +490,12 @@ app.use(
   marketplaceTemplateRoutes,
 )
 
+app.use(
+  `${process.env.API_PREFIX}/marketplace`,
+  marketplaceRoute,
+)
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
-
+app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });

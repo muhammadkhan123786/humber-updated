@@ -311,17 +311,6 @@ export const useActivityRecordForm = () => {
         return;
       }
 
-      if (!data.generalNotes || data.generalNotes.trim() === "") {
-        toast.error("General Notes are required");
-        setIsLoading(false);
-        return;
-      }
-      if (!data.completionSummary || data.completionSummary.trim() === "") {
-        toast.error("Completion Summary is required");
-        setIsLoading(false);
-        return;
-      }
-
       const userId = localStorage.getItem("userId") || "";
       if (!userId) {
         toast.error("User ID not found. Please login again.");

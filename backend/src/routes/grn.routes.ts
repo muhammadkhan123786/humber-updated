@@ -3,6 +3,7 @@ import { GenericService } from "../services/generic.crud.services";
 import { GrnDoc, GrnModel } from "../models/grn.models";
 import { createGRNValidationsSchema } from "../schemas/grn.schema"; 
 import { AdvancedGenericController } from "../controllers/GenericController";
+import { exportGRNToPDF } from "../controllers/pdf.controller";
 
 
 const grnRoutes = Router();
@@ -10,19 +11,23 @@ const grnRoutes = Router();
 const grnBaseService = new GenericService<GrnDoc>(GrnModel);
 
 const grnController = new AdvancedGenericController({
-    service: grnBaseService,
-    populate: ["userId", {
-    path: "purchaseOrderId",
-    select: "orderNumber expectedDelivery supplier",
-    populate: {
+  service: grnBaseService,
+   searchFields: ["grnNumber", "receivedBy", "notes"], 
+  populate: [
+    "userId", 
+    {
+      path: "purchaseOrderId",
+      select: "orderNumber expectedDelivery supplier",
+      populate: {
         path: "supplier",
         select: "contactInformation"
+      }
     }
-    
-  }],
-    validationSchema: createGRNValidationsSchema, 
+  ],
+  validationSchema: createGRNValidationsSchema, 
 });
 
+grnRoutes.get("/export/:id", exportGRNToPDF);
 grnRoutes.get("/", grnController.getAll);
 grnRoutes.get("/:id", grnController.getById);
 grnRoutes.post("/", grnController.create);

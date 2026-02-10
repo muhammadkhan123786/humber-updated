@@ -24,20 +24,23 @@ export default function MarketplaceRow({
   onSetDefault,
 }: MarketplaceRowProps) {
 
+  console.log("market", marketplace);
   // Helper function to get the correct image URL
-  const getImageUrl = (iconPath: string) => {
-    if (!iconPath) return '';
-    
-    // Remove '/api' from the base URL for static file serving
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    const staticBaseUrl = baseUrl.replace('/api', '');
-    
-    // Construct the full URL
-    return `${staticBaseUrl}${iconPath}`;
-  };
+const getImageUrl = (iconPath?: unknown): string => {
+  if (typeof iconPath !== 'string') return '';
 
-  // Get the icon URL (marketplace.icon contains the path like "/uploads/...")
-  const iconUrl = getImageUrl(marketplace.icon);
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
+  const staticBaseUrl = baseUrl.replace('/api', '');
+
+  return `${staticBaseUrl}${iconPath}`;
+};
+
+
+const iconPath = marketplace?.icon?.icon?.[0] ?? '';
+const iconUrl = getImageUrl(iconPath);
+
+console.log('iconPath:', iconPath);
+console.log('iconUrl:', iconUrl);
 
   return (
     <motion.tr
@@ -55,7 +58,7 @@ export default function MarketplaceRow({
               background: `linear-gradient(to bottom right, ${marketplace.colorCode || '#6366f1'}, ${marketplace.colorCode || '#6366f1'}dd)` 
             }}
           >
-            {/* {iconUrl ? (
+            {iconUrl ? (
               <img
                 src={iconUrl}
                 alt={marketplace.name}
@@ -72,7 +75,7 @@ export default function MarketplaceRow({
               />
             ) : (
               <div className="text-white text-sm font-bold">?</div>
-            )} */}
+            )}
           </div>
           <div>
             <p className="font-semibold text-gray-900">{marketplace.name}</p>

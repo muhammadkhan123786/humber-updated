@@ -27,8 +27,8 @@ export const DOCUMENT_NUMBER_CONFIG: Record<string, DocumentNumberConfig> = {
   },
   GOODS_RETURN: {
     model: GoodsReturn as Model<any>,
-    field: "returnNumber",
-    prefix: "RET",
+    field: "grtnNumber",
+    prefix: "GRTN",
   },
 };
 

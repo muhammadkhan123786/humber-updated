@@ -10,46 +10,91 @@ export interface AuthRequest extends Request {
 }
 
 //admin protector operations middleware.
-export const adminProtecter = (
+export const adminProtecter = async (
     req: AuthRequest,
     res: Response,
     next: NextFunction
 ) => {
-
-    let token: string | undefined;
-    if (
-        req.headers.authorization &&
-        req.headers.authorization.startsWith("Bearer ")
-    ) {
-        token = req.headers.authorization.split(" ")[1];
-    }
-
-    if (!token) {
-        res.status(401).json({ message: "Not authorized, token missing" });
-        return; // ✅ return void
-    }
-
     try {
-        const decoded = jwt.verify(
-            token,
-            process.env.JWT_SECRET as string
-        ) as { id: string; role: Roles };
+        let userDoc: any = null;
 
-        // attach user info to request
-        req.user = decoded;
-        req.role = decoded.role;
+        /* ===================================================
+           ✅ 1. MOBILE AUTH FLOW (NO JWT)
+           Mobile sends:
+           - adminId
+           - x-mobile-key header
+        ==================================================== */
 
-        if (decoded.role !== "Admin") {
-            res.status(403).json({ message: "Not authorized, admin access only" });
-            return; // ✅ return void
+        const adminId = req.body?.adminId || req.headers["x-admin-id"];
+
+        if (adminId) {
+
+            userDoc = await User.findById(adminId).select("_id role isDeleted");
+
+            if (!userDoc || userDoc.isDeleted) {
+                return res.status(401).json({
+                    message: "Mobile admin not found",
+                });
+            }
+        }
+        else if (
+            req.headers.authorization &&
+            req.headers.authorization.startsWith("Bearer ")
+        ) {
+            const token = req.headers.authorization.split(" ")[1];
+
+            const decoded = jwt.verify(
+                token,
+                process.env.JWT_SECRET as string
+            ) as { id: string; role: string };
+
+            userDoc = await User.findById(decoded.id).select("_id role isDeleted");
+
+            if (!userDoc || userDoc.isDeleted) {
+                return res.status(401).json({
+                    message: "User not found",
+                });
+            }
         }
 
-        next(); // ✅ continue to next middleware
+        /* ===================================================
+           ❌ NO AUTH PROVIDED
+        ==================================================== */
+        else {
+            return res.status(401).json({
+                message: "Not authorized",
+            });
+        }
+
+        /* ===================================================
+           ✅ Attach unified user structure
+           (Controllers stay unchanged)
+        ==================================================== */
+        req.user = {
+            id: userDoc._id,
+        };
+
+        req.role = userDoc.role;
+
+        /* ===================================================
+           🔐 ROLE GUARD
+        ==================================================== */
+        if (userDoc.role !== "Admin") {
+            return res.status(403).json({
+                message: "Admin access only",
+            });
+        }
+
+        next();
     } catch (error) {
-        res.status(401).json({ message: "Not authorized, token invalid" });
-        return; // ✅ return void
+        console.error("ADMIN PROTECTOR ERROR:", error);
+
+        return res.status(401).json({
+            message: "Authentication failed",
+        });
     }
 };
+
 //technician protector operations middleware.
 export const technicianProtecter = (
     req: AuthRequest,

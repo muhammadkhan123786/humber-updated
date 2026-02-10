@@ -28,6 +28,32 @@ export const GRNRow: React.FC<GRNRowProps> = ({
 }) => {
   const StatusIcon = getStatusIcon(grn.status);
   const deliveryStatus = getDeliveryStatusBadge(grn);
+const totalReceived = grn.items.reduce((sum, item) => sum + (Number(item.receivedQuantity) || 0), 0);
+const totalOrdered = grn.items.reduce((sum, item) => sum + (Number(item.orderedQuantity) || 0), 0);
+
+const totals = React.useMemo(() => {
+  return grn.items.reduce(
+    (acc, item) => {
+      const received = item.receivedQuantity ?? 0;
+      const accepted = item.acceptedQuantity ?? 0;
+      const rejected = item.rejectedQuantity ?? 0;
+      const damaged = item.damageQuantity ?? 0;
+
+      acc.ordered += received + accepted + rejected + damaged;
+      acc.received += received;
+      acc.accepted += accepted;
+      acc.rejected += rejected;
+
+      return acc;
+    },
+    {
+      ordered: 0,
+      received: 0,
+      accepted: 0,
+      rejected: 0,
+    }
+  );
+}, [grn.items]);
 
   const getDeliveryStatusColor = () => {
     if (deliveryStatus === "Fully Delivered")
@@ -38,7 +64,7 @@ export const GRNRow: React.FC<GRNRowProps> = ({
       return "bg-red-100 text-red-700 border-red-200";
     return "bg-blue-100 text-blue-700 border-blue-200";
   };
-
+console.log("grns", grn)
   return (
     <motion.tr
       key={grn._id}
@@ -95,7 +121,7 @@ export const GRNRow: React.FC<GRNRowProps> = ({
             {grn.items.length} items
           </Badge>
           <p className="text-xs text-gray-500">
-            Received: {grn.totalReceived}/{grn.totalOrdered}
+            Received: <span className="text-blue-600">{totalReceived}</span> / {totals.ordered}
           </p>
         </div>
       </td>
