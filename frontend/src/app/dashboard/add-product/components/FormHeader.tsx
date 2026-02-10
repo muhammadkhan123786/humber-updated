@@ -42,7 +42,7 @@ export function FormHeader({ currentStep, totalSteps, stepTitle }: FormHeaderPro
                 variant="outline"
                 className="bg-white/20 text-white border-white/30 hover:bg-white/30"
               >
-                <Link href="/products/listing">
+                <Link href="/dashboard/inventory-dashboard/product">
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Link>

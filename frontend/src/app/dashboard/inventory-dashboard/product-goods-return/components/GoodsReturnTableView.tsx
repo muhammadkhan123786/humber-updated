@@ -6,7 +6,7 @@ import { Button } from '@/components/form/CustomButton';
 import { Badge } from '@/components/form/Badge';
 import { GoodsReturnNote } from '../types/goodsReturn';
 import { getStatusColor, getStatusIcon } from '../utils/goodsReturnUtils';
-import { FileText, Truck, Calendar, User, Eye, Download, PackageX } from 'lucide-react';
+import { FileText, Truck, Calendar, User, Eye, Download, PackageX, Package } from 'lucide-react';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -16,11 +16,32 @@ interface GoodsReturnTableViewProps {
   onDownload?: (grtn: GoodsReturnNote) => void;
 }
 
+// Helper function to safely extract nested data from backend response
+const extractReturnData = (grtn: GoodsReturnNote) => {
+  // Extract Return Number (grtnNumber for new returns, returnNumber for legacy)
+  const returnNumber = grtn.grtnNumber || grtn.returnNumber || 'N/A';
+  
+  // Extract GRN Number (from nested grnId object or legacy grnNumber field)
+  const grnNumber = grtn.grnId?.grnNumber || grtn.grnNumber || 'N/A';
+  
+    
+  // Calculate total amount (use existing totalAmount or sum up items)
+  const totalAmount = grtn.totalAmount || 
+    grtn.items.reduce((sum, item) => sum + (item.totalAmount  || 0), 0);
+  
+  return {
+    returnNumber,
+    grnNumber,
+    totalAmount
+  };
+};
+
 export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
   returns,
   onView,
   onDownload
 }) => {
+  
   if (returns.length === 0) {
     return (
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
@@ -46,7 +67,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
             <thead className="bg-gradient-to-r from-orange-50 to-amber-50">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Return Number</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">GRN Ref</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">GRN / PO</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Supplier</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Return Date</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Returned By</th>
@@ -58,7 +79,12 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
             </thead>
             <tbody className="divide-y divide-gray-200">
               {returns.map((grtn, index) => {
+                console.log("grtn", grtn);
                 const StatusIcon = getStatusIcon(grtn.status);
+                
+                // Extract all data using helper function
+                const { returnNumber,  totalAmount } = extractReturnData(grtn);
+                
                 return (
                   <motion.tr
                     key={grtn._id!}
@@ -67,6 +93,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                     transition={{ delay: 0.1 + index * 0.05 }}
                     className="hover:bg-orange-50/50 transition-colors"
                   >
+                    {/* Return Number */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <div className={cn(
@@ -75,69 +102,107 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                         )}>
                           <StatusIcon className="h-5 w-5 text-white" />
                         </div>
-                        <span className="font-semibold text-gray-900">{grtn.returnNumber}</span>
+                        <span className="font-semibold text-gray-900">{returnNumber}</span>
                       </div>
                     </td>
+                    
+                    {/* GRN / PO Reference */}
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-sm">
-                        <FileText className="h-4 w-4 text-[#f97316]" />
-                        <span className="font-medium text-gray-900">{grtn.grnNumber}</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm">
+                          <FileText className="h-4 w-4 text-[#f97316]" />
+                          <span className="font-medium text-gray-900">{grtn.grnId?.grnNumber}</span>
+                        </div>
+                        {grtn.grtnNumber !== 'N/A' && (
+                          <div className="flex items-center gap-1 text-xs">
+                            <Package className="h-3 w-3 text-blue-500" />
+                            <span className="text-gray-600">{grtn.grtnNumber}</span>
+                          </div>
+                        )}
                       </div>
                     </td>
+                    
+                    {/* Supplier */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 text-sm">
                         <Truck className="h-4 w-4 text-purple-500" />
-                        <span className="text-gray-700">{grtn.supplier}</span>
+                        <span className="text-gray-700 max-w-[200px] truncate" >
+                          <span>{grtn.grnId?.purchaseOrderId?.supplier?.contactInformation?.primaryContactName}</span>
+                        </span>
                       </div>
                     </td>
+                    
+                    {/* Return Date */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-4 w-4 text-indigo-500" />
-                        <span className="text-gray-700">{new Date(grtn.returnDate).toLocaleDateString()}</span>
+                        <span className="text-gray-700">
+                          {new Date(grtn.returnDate).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
                       </div>
                     </td>
+                    
+                    {/* Returned By */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1 text-sm">
                         <User className="h-4 w-4 text-green-500" />
                         <span className="text-gray-700">{grtn.returnedBy}</span>
                       </div>
                     </td>
+                    
+                    {/* Items Count */}
                     <td className="px-6 py-4">
                       <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">
                         {grtn.items.length} item(s)
                       </Badge>
                     </td>
+                    
+                    {/* Status */}
                     <td className="px-6 py-4">
                       <Badge className={cn(
                         "text-white border-0",
                         `bg-gradient-to-r ${getStatusColor(grtn.status)}`
                       )}>
-                        {grtn.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        {grtn?.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                       </Badge>
                     </td>
+                    
+                    {/* Total Amount */}
                     <td className="px-6 py-4">
                       <div className="text-right">
-                        <p className="text-lg font-bold text-[#ea580c]">£{grtn.totalAmount.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-[#ea580c]">
+                          £{totalAmount.toFixed(2)}
+                        </p>
                       </div>
                     </td>
+                    
+                    {/* Actions */}
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => onView(grtn)}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 hover:bg-orange-50 hover:border-orange-300 transition-colors"
+                          title="View Details"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onDownload?.(grtn)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
+                        {onDownload && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onDownload(grtn)}
+                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                            title="Download PDF"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

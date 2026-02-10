@@ -96,3 +96,16 @@ export const fetchAvailableGRNs = async (): Promise<GRNForReturn[]> => {
   return res.data;
 };
 
+
+export const exportSingleGRNToPDF = async (id: string): Promise<Blob> => {
+  const res = await axios.get(`${API_URL}/export/${id}`, {
+    ...getAuthConfig(),
+    responseType: "blob", 
+  });
+
+  if (res.data.size === 0) {
+    throw new Error("Exported file is empty");
+  }
+
+  return res.data;
+};

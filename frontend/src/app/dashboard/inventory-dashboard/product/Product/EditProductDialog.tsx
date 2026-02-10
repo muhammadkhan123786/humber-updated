@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from '@/components/form/Dialog';
 import { Badge } from '@/components/form/Badge';
-import { Product } from '../types/product';
+import { Product, ProductListItem } from '../types/product';
 import { 
   Package, 
   Tag, 
@@ -28,7 +28,7 @@ import {
 interface ProductDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product: Product | null;
+  product: ProductListItem | null;
   onSave: (updatedProduct: Product) => void;
 }
 
@@ -127,7 +127,7 @@ interface ProductDetailsModalProps {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Cost Price:</span>
-                  <span className="font-medium text-gray-700">£{product.costPrice.toFixed(2)}</span>
+                  <span className="font-medium text-gray-700">£{product?.costPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between border-t border-blue-200 pt-2">
                   <span className="text-gray-600">Profit Margin:</span>
@@ -216,19 +216,19 @@ interface ProductDetailsModalProps {
               <Tag className="h-4 w-4" />
               Category Hierarchy
             </h3>
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* <div className="flex items-center gap-2 flex-wrap">
               <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
-                L1: {product.categories.level1.name}
+                L1: {product.categories.level1?.name}
               </Badge>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <Badge className="bg-cyan-100 text-cyan-700 border border-cyan-300">
-                L2: {product.categories.level2.name}
+                L2: {product.categories.level2?.name}
               </Badge>
               <ChevronRight className="h-4 w-4 text-gray-400" />
               <Badge className="bg-teal-100 text-teal-700 border border-teal-300">
-                L3: {product.categories.level3.name}
+                L3: {product.categories?.level3?.name}
               </Badge>
-            </div>
+            </div> */}
           </div>
         </div>
       </DialogContent>

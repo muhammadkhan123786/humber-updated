@@ -22,7 +22,7 @@ import {
 } from "@/components/form/Select";
 import { Card, CardContent } from "@/components/form/Card";
 import { GRNForReturn, ReturningItem } from "../types/goodsReturn";
-import { PackageX, Loader2 } from "lucide-react";
+import { PackageX, Loader2, Calendar } from "lucide-react";
 
 interface CreateReturnDialogProps {
   open: boolean;
@@ -40,7 +40,10 @@ interface CreateReturnDialogProps {
   availableGRNs: GRNForReturn[];
   onCreateReturn: () => void;
   onCancel: () => void;
-  isLoadingItems?: boolean;   // ← new prop: true while the full GRN is being fetched
+  isLoadingItems?: boolean;
+  // ✅ NEW: Return date props
+  returnDate: string;
+  onReturnDateChange: (value: string) => void;
 }
 
 export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
@@ -60,6 +63,8 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
   onCreateReturn,
   onCancel,
   isLoadingItems = false,
+  returnDate,
+  onReturnDateChange,
 }) => {
   const totalReturnValue = returningItems.reduce(
     (sum, item) => sum + item.returnQuantity * item.unitPrice,
@@ -69,6 +74,7 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
   const canSubmit =
     selectedGRN &&
     returnedBy.trim() !== "" &&
+    returnDate &&
     returningItems.some((item) => item.returnQuantity > 0);
 
   return (
@@ -110,7 +116,26 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
           {selectedGRN && (
             <>
               {/* Return Details */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ✅ NEW: Return Date Field */}
+                <div className="space-y-2">
+                  <Label htmlFor="returnDate" className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-orange-600" />
+                    Return Date *
+                  </Label>
+                  <Input
+                    id="returnDate"
+                    type="date"
+                    value={returnDate}
+                    onChange={(e) => onReturnDateChange(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]} // Can't select future dates
+                    className="border-2 border-[#fed7aa] focus:border-orange-500 transition-colors"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Date when items are being returned
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="returnedBy">Returned By *</Label>
                   <Input
@@ -118,27 +143,27 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                     value={returnedBy}
                     onChange={(e) => onReturnedByChange(e.target.value)}
                     placeholder="Enter name"
-                    className="border-2 border-[#fed7aa]"
+                    className="border-2 border-[#fed7aa] focus:border-orange-500 transition-colors"
                   />
                 </div>
-                <div className="space-y-2">
+
+                <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="returnReason">General Return Reason</Label>
                   <Input
                     id="returnReason"
                     value={returnReason}
                     onChange={(e) => onReturnReasonChange(e.target.value)}
-                    placeholder="e.g., Quality issues"
-                    className="border-2 border-[#fed7aa]"
+                    placeholder="e.g., Quality issues, Damaged goods"
+                    className="border-2 border-[#fed7aa] focus:border-orange-500 transition-colors"
                   />
                 </div>
               </div>
 
               {/* Items to Return */}
               <div className="space-y-2">
-                <Label>Items to Return</Label>
+                <Label className="text-base font-semibold">Items to Return</Label>
                 <div className="border-2 border-[#fed7aa] rounded-lg p-4 space-y-4 max-h-96 overflow-y-auto">
-
-                  {/* Loading spinner — shows while fetchGRNById is running */}
+                  {/* Loading spinner */}
                   {isLoadingItems && (
                     <div className="flex items-center justify-center py-8 text-gray-500">
                       <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -146,19 +171,19 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                     </div>
                   )}
 
-                  {/* Empty state — shows after loading is done but no items came back */}
+                  {/* Empty state */}
                   {!isLoadingItems && returningItems.length === 0 && (
                     <div className="text-center py-8 text-gray-400 text-sm">
                       No items found for this GRN.
                     </div>
                   )}
 
-                  {/* The actual item cards — only rendered when we have items */}
+                  {/* Item cards */}
                   {!isLoadingItems &&
-                    returningItems.map((item) => (
+                    returningItems.map((item, index) => (
                       <div
-                        key={item._id!}
-                        className="bg-gray-50 rounded-lg p-4 space-y-3"
+                        key={item._id}
+                        className="bg-gray-50 rounded-lg p-4 space-y-3 hover:bg-gray-100 transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div>
@@ -177,9 +202,9 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                           </Badge>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <Label className="text-xs">Return Quantity</Label>
+                            <Label className="text-xs font-medium">Return Quantity</Label>
                             <Input
                               type="number"
                               min="0"
@@ -192,11 +217,11 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                                   parseInt(e.target.value) || 0,
                                 )
                               }
-                              className="border-2 border-[#fed7aa]"
+                              className="border-2 border-[#fed7aa] focus:border-orange-500"
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs">Return Reason</Label>
+                            <Label className="text-xs font-medium">Return Reason</Label>
                             <Select
                               value={item.returnReason}
                               onValueChange={(value) =>
@@ -219,14 +244,14 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                         </div>
 
                         <div className="space-y-1">
-                          <Label className="text-xs">Condition / Notes</Label>
+                          <Label className="text-xs font-medium">Condition / Notes</Label>
                           <Textarea
                             value={item.condition}
                             onChange={(e) =>
                               onUpdateItem(item._id, "condition", e.target.value)
                             }
                             placeholder="Describe the condition or reason for return..."
-                            className="border-2 border-[#fed7aa] min-h-20"
+                            className="border-2 border-[#fed7aa] focus:border-orange-500 min-h-20"
                           />
                         </div>
 
@@ -234,7 +259,9 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                           <div className="bg-orange-50 border border-orange-200 rounded p-2 text-sm">
                             <p className="font-medium text-orange-900">
                               Return Value: £
-                              {item.returnQuantity > 0 && item.unitPrice != null ? (item.returnQuantity * item.unitPrice).toFixed(2) : "0.00"}
+                              {item.returnQuantity > 0 && item.unitPrice != null 
+                                ? (item.returnQuantity * item.unitPrice).toFixed(2) 
+                                : "0.00"}
                             </p>
                           </div>
                         )}
@@ -251,7 +278,7 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                   value={returnNotes}
                   onChange={(e) => onReturnNotesChange(e.target.value)}
                   placeholder="Enter any additional notes about this return..."
-                  className="border-2 border-[#fed7aa] min-h-24"
+                  className="border-2 border-[#fed7aa] focus:border-orange-500 min-h-24"
                 />
               </div>
 
@@ -261,7 +288,7 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-orange-700">
+                        <p className="text-sm text-orange-700 font-medium">
                           Total Return Value
                         </p>
                         <p className="text-xs text-orange-600 mt-1">
@@ -270,7 +297,7 @@ export const CreateReturnDialog: React.FC<CreateReturnDialogProps> = ({
                         </p>
                       </div>
                       <p className="text-3xl font-bold text-orange-900">
-                        £{totalReturnValue}
+                        £{totalReturnValue.toFixed(2)}
                       </p>
                     </div>
                   </CardContent>

@@ -1,14 +1,33 @@
-'use client';
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/form/Dialog';
-import { Button } from '@/components/form/CustomButton';
-import { Badge } from '@/components/form/Badge';
-import { Card, CardContent } from '@/components/form/Card';
-import { GoodsReturnNote } from '../types/goodsReturn';
-import { getStatusColor, getStatusIcon, getReturnReasonColor } from '../utils/goodsReturnUtils';
-import { FileText, Truck, Calendar, User, RotateCcw, Download, PackageX } from 'lucide-react';
-import * as React from 'react';
-import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/form/Dialog";
+import { Button } from "@/components/form/CustomButton";
+import { Badge } from "@/components/form/Badge";
+import { Card, CardContent } from "@/components/form/Card";
+import { GoodsReturnNote } from "../types/goodsReturn";
+import {
+  getStatusColor,
+  getStatusIcon,
+  getReturnReasonColor,
+} from "../utils/goodsReturnUtils";
+import {
+  FileText,
+  Truck,
+  Calendar,
+  User,
+  RotateCcw,
+  Download,
+  PackageX,
+} from "lucide-react";
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface ViewReturnDialogProps {
   open: boolean;
@@ -19,10 +38,13 @@ interface ViewReturnDialogProps {
 export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
   open,
   onOpenChange,
-  grtn
+  grtn,
 }) => {
   if (!grtn) return null;
 
+  const totalReturnAmount = React.useMemo(() => {
+    return grtn.items.reduce((sum, item) => sum + item.totalAmount, 0);
+  }, [grtn.items]);
   const StatusIcon = getStatusIcon(grtn.status);
 
   const handleDownloadPDF = () => {
@@ -35,17 +57,19 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className={cn(
-              "h-8 w-8 rounded-lg flex items-center justify-center",
-              `bg-gradient-to-br ${getStatusColor(grtn.status)}`
-            )}>
+            <div
+              className={cn(
+                "h-8 w-8 rounded-lg flex items-center justify-center",
+                `bg-gradient-to-br ${getStatusColor(grtn.status)}`,
+              )}
+            >
               <PackageX className="h-4 w-4 text-white" />
             </div>
             {grtn.returnNumber}
           </DialogTitle>
-          <DialogDescription>
+          {/* <DialogDescription>
             Goods Return Note Details - {grtn.grnReference}
-          </DialogDescription>
+          </DialogDescription> */}
         </DialogHeader>
 
         <div className="space-y-4">
@@ -53,14 +77,23 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <Card className="border-2 border-orange-100 bg-orange-50">
               <CardContent className="p-4 space-y-2">
-                <p className="text-xs text-orange-600 font-medium">GRN Reference</p>
-                <p className="text-lg font-bold text-orange-900">{grtn.grnNumber}</p>
+                <p className="text-xs text-orange-600 font-medium">
+                  GRN Reference
+                </p>
+                <p className="text-lg font-bold text-orange-900">
+                  {grtn.grnNumber}
+                </p>
               </CardContent>
             </Card>
             <Card className="border-2 border-purple-100 bg-purple-50">
               <CardContent className="p-4 space-y-2">
                 <p className="text-xs text-purple-600 font-medium">Supplier</p>
-                <p className="text-lg font-bold text-purple-900">{grtn.supplier}</p>
+                <p className="text-lg font-bold text-purple-900">
+                  {
+                    grtn.grnId?.purchaseOrderId?.supplier?.contactInformation
+                      ?.primaryContactName
+                  }
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -72,7 +105,9 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
                 <Calendar className="h-4 w-4 text-indigo-500" />
                 <span>Return Date</span>
               </div>
-              <p className="font-medium text-gray-900">{new Date(grtn.returnDate).toLocaleDateString()}</p>
+              <p className="font-medium text-gray-900">
+                {new Date(grtn.returnDate).toLocaleDateString()}
+              </p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -86,11 +121,16 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
                 <RotateCcw className="h-4 w-4 text-amber-500" />
                 <span>Status</span>
               </div>
-              <Badge className={cn(
-                "text-white border-0 mt-1",
-                `bg-gradient-to-r ${getStatusColor(grtn.status)}`
-              )}>
-                {grtn.status.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+              <Badge
+                className={cn(
+                  "text-white border-0 mt-1",
+                  `bg-gradient-to-r ${getStatusColor(grtn.status)}`,
+                )}
+              >
+                {grtn?.status
+                  ?.split("-")
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" ")}
               </Badge>
             </div>
           </div>
@@ -107,59 +147,96 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
           {/* Items */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <h4 className="text-lg font-semibold text-gray-900">Returned Items</h4>
+              <h4 className="text-lg font-semibold text-gray-900">
+                Returned Items
+              </h4>
               <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">
                 {grtn.items.length} item(s)
               </Badge>
             </div>
             <div className="space-y-3">
-              {grtn.items.map((item) => (
-                <Card key={item.id} className="border-2 border-gray-100">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-semibold text-gray-900">{item.productName}</p>
-                        <p className="text-sm text-gray-600 mt-1">SKU: {item.sku}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-[#ea580c]">£{item.totalPrice.toFixed(2)}</p>
-                        <p className="text-xs text-gray-500">£{item.unitPrice.toFixed(2)} × {item.returnQuantity}</p>
-                      </div>
-                    </div>
+              {grtn?.grnId?.purchaseOrderId?.items?.map((poItem, index) => {
+                const grnItem = grtn?.grnId?.items[index];
+                const returnItem = grtn?.items[index];
 
-                    <div className="grid grid-cols-3 gap-4 mb-3">
-                      <div className="space-y-1">
-                        <p className="text-xs text-gray-600">Received Qty</p>
-                        <p className="font-medium">{item.receivedQuantity}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-gray-600">Return Qty</p>
-                        <p className="font-medium text-red-600">{item.returnQuantity}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs text-gray-600">Return Reason</p>
-                        <Badge className={getReturnReasonColor(item.returnReason)}>
-                          {item.returnReason.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
-                        </Badge>
-                      </div>
-                    </div>
+                return (
+                  <Card key={index} className="border-2 border-gray-100">
+                    <CardContent className="p-4">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-gray-900">
+                            {poItem.productName}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            SKU: {poItem.sku}
+                          </p>
+                        </div>
 
-                    {item.condition && (
-                      <div className="bg-gray-50 rounded p-3 mb-2">
-                        <p className="text-xs text-gray-600 mb-1">Condition</p>
-                        <p className="text-sm text-gray-900">{item.condition}</p>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-[#ea580c]">
+                            £{returnItem.totalAmount}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            £{poItem.unitPrice} × {returnItem.returnQty}
+                          </p>
+                        </div>
                       </div>
-                    )}
 
-                    {item.notes && (
-                      <div className="bg-blue-50 rounded p-3">
-                        <p className="text-xs text-blue-600 mb-1">Notes</p>
-                        <p className="text-sm text-blue-900">{item.notes}</p>
+                      {/* Quantities */}
+                      <div className="grid grid-cols-3 gap-4 mb-3">
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-600">Received Qty</p>
+                          <p className="font-medium">
+                            {grnItem?.receivedQuantity}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-600">Return Qty</p>
+                          <p className="font-medium text-red-600">
+                            {returnItem.returnQty}
+                          </p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-600">Status</p>
+                          <Badge
+  className={cn(
+    "text-white border-0 bg-gradient-to-r",
+    getStatusColor(returnItem?.status)
+  )}
+>
+  {returnItem?.status}
+</Badge>
+                        </div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+
+                      {/* Condition */}
+                      {grnItem?.condition && (
+                        <div className="bg-gray-50 rounded p-3 mb-2">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Condition
+                          </p>
+                          <p className="text-sm text-gray-900">
+                            {grnItem.condition}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Notes */}
+                      {(returnItem.itemsNotes || grnItem?.notes) && (
+                        <div className="bg-blue-50 rounded p-3">
+                          <p className="text-xs text-blue-600 mb-1">Notes</p>
+                          <p className="text-sm text-blue-900">
+                            {returnItem.itemsNotes || grnItem?.notes}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
@@ -179,12 +256,20 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-orange-700 font-medium">Total Return Value</p>
-                  <p className="text-xs text-orange-600 mt-1">{grtn.items.length} item(s)</p>
+                  <p className="text-sm text-orange-700 font-medium">
+                    Total Return Value
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    {grtn.items.length} item(s)
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-4xl font-bold text-orange-900">£{grtn.totalAmount.toFixed(2)}</p>
-                  <p className="text-sm text-orange-700">Created: {new Date(grtn.returnDate).toLocaleDateString()}</p>
+                  <p className="text-4xl font-bold text-orange-900">
+                    £{totalReturnAmount}
+                  </p>{" "}
+                  <p className="text-sm text-orange-700">
+                    Created: {new Date(grtn.returnDate).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -195,7 +280,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button 
+          <Button
             onClick={handleDownloadPDF}
             className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >

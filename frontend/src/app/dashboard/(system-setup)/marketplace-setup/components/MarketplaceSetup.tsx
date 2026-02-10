@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
+import { Toaster } from 'sonner';
 
 // Data
 import {
@@ -56,8 +56,6 @@ export default function MarketplaceSetup() {
   }, [colors, icons]);
 
   const handleSubmit = async() => {
-    console.log("Submitting marketplace template:", formData);
-
     const success = await saveMarketplace(formData);
     if (success) {
       setFormData(getInitialFormData(colors, icons));
@@ -69,20 +67,31 @@ export default function MarketplaceSetup() {
     
     // Find the selected color and icon to get their full data
     const selectedColor = colors.find(c => c.value === marketplace.color);
-    const selectedIcon = icons.find(i => i.value === marketplace.icon);
+const marketplaceIconUrl = marketplace.icon?.icon?.[0];
+
+const selectedIcon = icons.find(
+  i => i.icon?.[0] === marketplaceIconUrl
+);
     
     setFormData({
-      name: marketplace.name,
-      code: marketplace.code,
-      description: marketplace.description,
-      color: marketplace.color,
-      colorCode: selectedColor?.colorCode || marketplace.colorCode || '#6366f1',
-      icon: marketplace.icon,
-      iconUrl: selectedIcon?.icon[0] || '',
-      fields: [...marketplace.fields],
-      isActive: marketplace.isActive,
-      isDefault: marketplace.isDefault
-    });
+  name: marketplace.name,
+  code: marketplace.code,
+  description: marketplace.description,
+  color: marketplace.color,
+  colorCode:
+    selectedColor?.colorCode ||
+    marketplace.colorCode ||
+    '#6366f1',
+
+  // ✅ Form wants STRING (dropdown value)
+  icon: selectedIcon?.value || '',
+  iconUrl: marketplaceIconUrl || '',
+
+  fields: [...marketplace.fields],
+  isActive: marketplace.isActive,
+  isDefault: marketplace.isDefault,
+});
+
   };
 
   const handleDialogClose = () => {
@@ -97,6 +106,7 @@ export default function MarketplaceSetup() {
 
   return (
     <div className="space-y-6">
+      <Toaster position="top-right" richColors />
       <MarketplaceHeader onAddMarketplace={handleAddMarketplace} />
       
       <StatsGrid marketplaces={marketplaces} />

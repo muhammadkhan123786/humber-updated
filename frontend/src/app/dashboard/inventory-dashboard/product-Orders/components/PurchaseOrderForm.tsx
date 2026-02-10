@@ -16,6 +16,7 @@ import { Textarea } from "@/components/form/Textarea";
 import { IPurchaseOrder, IPurchaseOrderItem } from "../types/purchaseOrders";
 import { OrderFormData, OrderItemForm } from "../types/purchaseOrders";
 import { Plus, Trash2, Building2, Truck, Box } from "lucide-react";
+import { toast } from "sonner"
 
 export interface Supplier {
   _id: string;
@@ -81,6 +82,8 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setIsSaving(true);
     try {
       const success = await onSaveOrder();
+      toast.success("Order is created successfully");
+      onCancel();
       if (!success) {
         console.error("Save failed");
       }

@@ -115,13 +115,14 @@ const CategoryForm = ({
         isDefault: formData.isDefault,
         userId: savedUser._id || savedUser.id,
         // Logic: if parentId has a value, use it.
-        parentId: formData.parentId ? formData.parentId : null,
-      };
+...(formData.parentId && { parentId: formData.parentId }),
+
+};
 
       if (editingData?._id) {
-        await updateCategory(editingData._id, payload);
+        await updateCategory(editingData._id, payload as any);
       } else {
-        await createCategory(payload);
+        await createCategory(payload as any);
       }
 
       onRefresh();
