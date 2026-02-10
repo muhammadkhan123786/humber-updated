@@ -20,7 +20,7 @@ interface Props {
 
 const JobDetailCard = ({ job }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const router = useRouter(); // 2. Initialize Router
+  const router = useRouter();
 
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleString() : "-";
@@ -164,15 +164,14 @@ const JobDetailCard = ({ job }: Props) => {
           <div className="w-24 space-y-2">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-white transition-colors"
+              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white  transition-colors"
             >
               <Eye size={16} /> View
             </button>
 
-            {/* 4. Update Button Action Added */}
             <button
               onClick={handleUpdate}
-              className="w-full h-8 rounded-[10px] bg-indigo-600 text-white text-sm flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-sm"
+              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white  transition-colors"
             >
               <RefreshCw size={14} /> Update
             </button>
@@ -191,7 +190,6 @@ const JobDetailCard = ({ job }: Props) => {
 
 export default JobDetailCard;
 
-/* 🔹 Small helpers */
 const Stat = ({ icon, label, value, bg, border, color }: any) => (
   <div className={`p-3 rounded-xl bg-linear-to-br ${bg} border ${border}`}>
     <div className="flex items-center gap-2 text-xs text-gray-600">

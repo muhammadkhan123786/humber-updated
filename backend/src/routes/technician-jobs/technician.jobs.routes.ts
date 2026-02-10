@@ -26,6 +26,7 @@ const technicianJobsController = new AdvancedGenericController({
     "technicianId",
     "jobStatusId",
     { path: "technicianId", populate: { path: "personId" } },
+    { path: "parts", populate: { path: "partId" } },
   ],
   validationSchema: technicianJobSchemaValidation,
   searchFields: ["jobId"],
