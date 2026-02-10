@@ -427,7 +427,8 @@ app.use(
   partsRouter,
 );
 
-app.get('/test-mobile-access', adminProtecter, (req: Request, res: Response) => {
+
+app.get(`${process.env.API_PREFIX}/test-mobile-access`, adminProtecter, (req: Request, res: Response) => {
   return res.status(200).json({ status: true, message: "Mobile Access Successfully." })
 })
 
