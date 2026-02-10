@@ -1,4 +1,5 @@
 "use client";
+import React, { useState } from "react";
 import TechnicianHeader from "./TechnicianHeader";
 import StatCard from "./StatCard";
 import {
@@ -10,10 +11,31 @@ import {
 } from "lucide-react";
 import JobFilters from "./JobFilters";
 import JobDetailCard from "./JobDetailCard";
-import { useActivityRecordForm } from "../../../../../hooks/useActivity"; // Adjust path
+import { useActivityRecordForm } from "../../../../../hooks/useActivity";
+import Pagination from "@/components/ui/Pagination";
 
 const Jobs = () => {
   const { jobList, isLoading } = useActivityRecordForm();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(jobList.length / itemsPerPage);
+
+  const searchedJobs = jobList.filter(
+    (job) =>
+      job.jobId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job._id?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const paginatedJobs = searchedJobs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const stats = [
     {
@@ -69,7 +91,7 @@ const Jobs = () => {
         ))}
       </div>
 
-      <JobFilters />
+      <JobFilters searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
 
       {isLoading ? (
         <div className="flex justify-center p-10">
@@ -77,15 +99,23 @@ const Jobs = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {jobList.length > 0 ? (
-            jobList.map((job) => <JobDetailCard key={job._id} job={job} />)
+          {paginatedJobs.length > 0 ? (
+            paginatedJobs.map((job) => (
+              <JobDetailCard key={job._id} job={job} />
+            ))
           ) : (
             <div className="text-center py-10 bg-white rounded-xl border border-dashed text-gray-400">
-              No jobs found.
+              No jobs found matching {searchQuery}
             </div>
           )}
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };

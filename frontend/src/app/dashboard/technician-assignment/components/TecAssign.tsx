@@ -1,24 +1,35 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { getAlls } from "@/helper/apiHelper";
-import { User, Mail, Phone, ChevronRight } from "lucide-react";
+import { User, Mail, Phone } from "lucide-react";
+import Pagination from "@/components/ui/Pagination";
 
 const TechnicianAssignment = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+
         const [techRes, ticketRes]: any = await Promise.all([
           getAlls("/technicians"),
-          getAlls("/customer-tickets/unassigned-technician-tickets"),
+          getAlls(
+            `/customer-tickets/unassigned-technician-tickets?page=${currentPage}&limit=${limit}`,
+          ),
         ]);
 
         if (techRes.success) setTechnicians(techRes.data);
-        if (ticketRes.success) setTickets(ticketRes.data);
+
+        if (ticketRes.success) {
+          setTickets(ticketRes.data);
+          setTotalPages(Math.ceil(ticketRes.total / limit));
+        }
       } catch (error) {
         console.error("Error fetching assignment data:", error);
       } finally {
@@ -27,7 +38,7 @@ const TechnicianAssignment = () => {
     };
 
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   if (loading)
     return (
@@ -81,7 +92,6 @@ const TechnicianAssignment = () => {
               </div>
             </div>
 
-            {/* Specializations Tags */}
             <div className="flex flex-wrap gap-2 mb-4">
               {tech.specializationIds?.map((spec: any) => (
                 <span
@@ -121,47 +131,39 @@ const TechnicianAssignment = () => {
         ))}
       </div>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-5 border-b border-gray-50 bg-gray-50/30">
-          <h2 className="font-bold text-gray-700">
-            Unassigned / In-Progress Tickets
-          </h2>
+        <div className="px-6 pt-6 pb-3">
+          <h4 className="font-semibold">Unassigned / In-Progress Tickets</h4>
         </div>
 
-        <div className="divide-y divide-gray-50">
+        <div className="space-y-3 bg-white p-6 rounded-xl">
           {tickets.length > 0 ? (
             tickets.map((ticket) => (
               <div
                 key={ticket._id}
-                className="p-5 hover:bg-blue-50/20 transition-colors flex flex-col md:flex-row justify-between gap-4"
+                className="rounded-xl border border-indigo-600/10 px-4 pt-4 pb-2 flex flex-col gap-3"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-bold text-blue-600">
-                      {ticket.ticketCode}
-                    </span>
-                    <span
-                      className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded text-white bg-purple-500`}
-                    >
-                      {ticket.ticketStatusId?.label}
-                    </span>
-                    <span
-                      className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-red-100 text-red-600`}
-                    >
-                      {ticket.priorityId?.serviceRequestPrioprity}
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-sm font-medium">
+                        {ticket.ticketCode}
+                      </span>
+
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-violet-500 text-white capitalize">
+                        {ticket.ticketStatusId?.label}
+                      </span>
+                      <span className="px-2 py-0.5 text-xs rounded-full bg-red-500 text-white capitalize">
+                        {ticket.priorityId?.serviceRequestPrioprity}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-600 mt-1">
+                      {ticket.customerId?.personId?.firstName} –{" "}
+                      {ticket.vehicleId?.vehicleType}
                     </span>
                   </div>
-                  <h4 className="font-bold text-gray-800 mb-1">
-                    {ticket.customerId?.companyName} -{" "}
-                    {ticket.vehicleId?.vehicleType}
-                  </h4>
-                  <p className="text-sm text-gray-500 line-clamp-1 italic">
-                    {ticket.issue_Details}
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-4">
-                  <div className="min-w-[200px]">
-                    <select className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 outline-none focus:ring-2 focus:ring-blue-100 transition-all">
+                  <div className="bg-gray-100 rounded-[10px] px-3 h-9 flex items-center min-w-[190px]">
+                    <select className="bg-transparent text-sm text-indigo-950 w-full outline-none">
                       <option>Assign to...</option>
                       {technicians.map((t) => (
                         <option key={t._id} value={t._id}>
@@ -171,17 +173,21 @@ const TechnicianAssignment = () => {
                       ))}
                     </select>
                   </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                    <ChevronRight size={18} className="text-gray-400" />
-                  </button>
                 </div>
+                <p className="text-gray-700 text-sm">{ticket.issue_Details}</p>
               </div>
             ))
           ) : (
-            <div className="p-10 text-center text-gray-400 italic">
+            <div className="p-10 text-center text-gray-400 italic bg-white rounded-xl">
               No unassigned tickets found.
             </div>
           )}
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+          />
         </div>
       </div>
     </div>
