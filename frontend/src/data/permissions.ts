@@ -151,6 +151,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ListTree,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Technician Activities",
+        href: "/dashboard/record-activity/jobs",
+        icon: ListTree,
+        roleId: [1],
+      },
     ],
   },
   /* ================= INVENTORY SYSTEM ================= */
@@ -618,8 +625,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
         href: "/dashboard/parts",
         icon: Wrench,
         roleId: [1],
-
-      }
+      },
     ],
   },
 
