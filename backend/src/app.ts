@@ -1,4 +1,4 @@
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import path from "path";
 import "dotenv/config"; // load env variables
@@ -424,6 +424,10 @@ app.use(
   technicianMasterProtector,
   partsRouter,
 );
+
+app.get('/test-mobile-access', adminProtecter, (req: Request, res: Response) => {
+  return res.status(200).json({ status: true, message: "Mobile Access Successfully." })
+})
 
 //Muhammad Imran code ended here.
 
