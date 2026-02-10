@@ -1,5 +1,5 @@
-import { ITicketQuotation } from "../../../../common/ticket-quations-interfaces/quotation.interface";
-import { IBaseEntity } from "../../../../common/Base.Interface";
+import { ITicketQuotation } from "../../../common/ticket-quations-interfaces/quotation.interface";
+import { IBaseEntity } from "../../../common/Base.Interface";
 
 // Explicitly define quotation with string IDs for frontend use
 export interface IQuotationWithId extends IBaseEntity<string> {
