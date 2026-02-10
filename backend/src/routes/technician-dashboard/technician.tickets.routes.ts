@@ -6,6 +6,5 @@ const technicianDashboardRouter = Router();
 
 technicianDashboardRouter.get('/technician-tickets', technicianTicketsController)
 technicianDashboardRouter.get('/technician-jobs', technicianJobsController)
-technicianDashboardRouter.get('/default-tax', getDefaultTaxPercentageController)
 
 export default technicianDashboardRouter;

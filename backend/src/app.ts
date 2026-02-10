@@ -86,6 +86,7 @@ import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
 import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
+import { getDefaultQuotationStatusController, getDefaultTaxPercentageController } from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
 
 
 // Create express app
@@ -385,7 +386,6 @@ app.use(
   `${process.env.API_PREFIX}/technician-dashboard`,
   technicianProtecter,
   technicianDashboardRouter,
-
 );
 
 //04-02-2026
@@ -427,6 +427,19 @@ app.use(
   partsRouter,
 );
 
+//10-02-2026
+app.get(
+  `${process.env.API_PREFIX}/default-tax`,
+  technicianMasterProtector,
+  getDefaultTaxPercentageController,
+);
+
+//default quotation api 
+app.get(
+  `${process.env.API_PREFIX}/default-quotation-status`,
+  technicianMasterProtector,
+  getDefaultQuotationStatusController,
+);
 
 app.get(`${process.env.API_PREFIX}/test-mobile-access`, adminProtecter, (req: Request, res: Response) => {
   return res.status(200).json({ status: true, message: "Mobile Access Successfully." })
