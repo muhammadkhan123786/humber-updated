@@ -153,8 +153,8 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
       {
         _id: nanoid(),
-        label: "Technician Activities",
-        href: "/dashboard/record-activity/jobs",
+        label: "Record Activity",
+        href: "/dashboard/record-activity",
         icon: ListTree,
         roleId: [1],
       },
