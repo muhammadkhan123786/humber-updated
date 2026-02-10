@@ -9,23 +9,74 @@ export interface GoodsReturnNoteItem {
   unitPrice: number;
   totalPrice: number;
   notes: string;
+  _id?: string;
 }
+
+export interface PurchaseOrderItem {
+  _id: string;
+  productName: string;
+  sku: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface GRNItem {
+  receivedQuantity: number;
+  acceptedQuantity?: number;
+  rejectedQuantity?: number;
+  damageQuantity?: number;
+  unitPrice: number;
+  condition?: string;
+  notes?: string;
+}
+
+export interface GRN {
+  _id: string;
+  grnNumber?: string;
+  purchaseOrderId?: PurchaseOrder;
+  items: GRNItem[];
+}
+
+export interface ReturnItem {
+  returnQty: number;
+  totalAmount: number;
+  status?: any;
+  itemsNotes?: string;
+}
+
+export interface PurchaseOrder {
+  _id: string;
+  supplier?: {
+    contactInformation?: {
+      primaryContactName?: string;
+    };
+  };
+  items: PurchaseOrderItem[]; // <-- added items
+}
+
 
 export interface GoodsReturnNote {
   _id: string;
-  grnNumber: string;
-  grnReference: string;
-  returnNumber: string;
-  supplier: string;
+  grtnNumber?: string;
+  returnNumber?: string;
+
+  grnNumber?: string;
+  grnId?: GRN;
+
+  supplier?: string;
+
   returnDate: Date;
   returnedBy: string;
+
   status: 'pending' | 'approved' | 'in-transit' | 'completed' | 'rejected';
   returnReason: string;
-  items: GoodsReturnNoteItem[];
-  totalAmount: number;
-  notes: string;
+
+  items: ReturnItem[];
+  totalAmount?: number;
+  notes?: string;
+
   createdAt: Date;
-  grnId: string;
 }
 
 export interface GRNForReturn {
@@ -85,4 +136,6 @@ export interface CreateGoodsReturnDto {
   returnReason: string;
   notes?: string;
   items: CreateGoodsReturnItemDto[];
+  returnDate: Date;
+  grtnNumber: string;
 }

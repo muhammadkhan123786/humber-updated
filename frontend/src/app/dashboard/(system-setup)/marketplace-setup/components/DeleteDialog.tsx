@@ -33,7 +33,7 @@ export function DeleteDialog({ isOpen, marketplace, onClose, onConfirm }: Delete
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <div className={`h-10 w-10 rounded-lg bg-gradient-to-br ${marketplace.color} flex items-center justify-center text-xl`}>
-              {marketplace.icon}
+              {/* {marketplace.icon} */}
             </div>
             <div>
               <p className="font-semibold text-gray-900">{marketplace.name}</p>

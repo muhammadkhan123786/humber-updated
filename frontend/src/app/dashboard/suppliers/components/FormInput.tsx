@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronDown, LucideIcon } from "lucide-react"; // 🆕 LucideIcon type import kiya
+import { ChevronDown, LucideIcon } from "lucide-react";
 
 interface OptionObject {
   label: string;
@@ -8,7 +8,8 @@ interface OptionObject {
 
 interface FormFieldProps {
   label: string;
-  labelIcon?: LucideIcon; // 🆕 Optional icon prop
+  labelIcon?: LucideIcon;
+  labelClassName?: boolean; // ✅ boolean to apply custom style
   name?: string;
   value?: any;
   onChange?: (
@@ -39,6 +40,7 @@ interface FormFieldProps {
 const FormField: React.FC<FormFieldProps> = ({
   label,
   labelIcon: Icon,
+  labelClassName,
   name,
   value,
   onChange,
@@ -76,7 +78,7 @@ const FormField: React.FC<FormFieldProps> = ({
     className: [
       "w-full h-9 bg-gray-100",
       "border border-[#d0d5dd]",
-      "rounded-xl px-4 ",
+      "rounded-xl px-4",
       "outline-none transition-all",
       !disabled && hoverClassMap[hoverColor],
       "focus:border-blue-500 focus:ring-2 focus:ring-blue-100 focus:bg-white",
@@ -86,9 +88,14 @@ const FormField: React.FC<FormFieldProps> = ({
       .join(" "),
   };
 
+  // ✅ Determine label classes
+  const labelClasses = labelClassName
+    ? "flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50"
+    : "text-[14px] font-medium text-[#475467]";
+
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      {/* 🆕 Label aur Icon ka wrapper */}
+      {/* Label and Icon */}
       <div className="flex items-center gap-2">
         {Icon && (
           <Icon
@@ -96,9 +103,7 @@ const FormField: React.FC<FormFieldProps> = ({
             className={type === "email" ? "text-blue-500" : "text-purple-500"}
           />
         )}
-        <label className="text-[14px] font-medium text-[#475467]">
-          {label}
-        </label>
+        <label className={labelClasses}>{label}</label>
       </div>
 
       <div className="relative">

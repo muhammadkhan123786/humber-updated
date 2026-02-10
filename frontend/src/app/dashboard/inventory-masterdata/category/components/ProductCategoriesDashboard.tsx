@@ -84,7 +84,7 @@ const CategoryDashboard = () => {
 
   const handleCreateCategory = async (payload: ICategory) => {
     try {
-      await createCategory(payload);
+      await createCategory(payload as any);
     } catch (error) {
       console.log("err", error);
     }

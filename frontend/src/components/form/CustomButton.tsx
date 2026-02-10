@@ -10,19 +10,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#4f46e5] text-white hover:bg-[#4338ca] shadow-sm focus-visible:ring-2 focus-visible:ring-[#4f46e5]/40",
-
+          "bg-[#4f46e5] text-primary-[#ffffff] hover:bg-[#4f46e5]/90 focus-visible:ring-[#4f46e5]/40",
         destructive:
-          "bg-[#ef4444] text-white hover:bg-[#dc2626] shadow-sm focus-visible:ring-2 focus-visible:ring-[#ef4444]/40",
-
+          "bg-[#ef4444] text-white hover:bg-[#ef4444]/90 focus-visible:ring-[#ef4444]/20 ",
         outline:
-          "border border-[#e5e7eb] bg-white text-[#1a1d3f] hover:bg-[#f3f4f6] hover:text-[#4f46e5] focus-visible:ring-2 focus-visible:ring-[#4f46e5]/20",
+          "border bg-[#f8f9ff] text-[#1a1d3f] hover:bg-[#10b981] hover:text-[#ffffff] focus-visible:ring-2 focus-visible:ring-[#10b981]/40",
+        secondary: "bg-[#8b5cf6] text-[#ffffff] hover:bg-[#8b5cf6]/80",
 
-        secondary:
-          "bg-[#8b5cf6] text-white hover:bg-[#7c3aed] focus-visible:ring-2 focus-visible:ring-[#8b5cf6]/40",
-
-        ghost: "text-[#1a1d3f] hover:bg-[#f3f4f6] hover:text-[#4f46e5]",
-
+        ghost:
+          "hover:bg-[#10b981] hover:text-[#ffffff] focus-visible:ring-2 focus-visible:ring-[#10b981]/40",
         link: "text-[#4f46e5] underline-offset-4 hover:underline",
       },
       size: {
@@ -36,7 +32,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 
 const Button = React.forwardRef<

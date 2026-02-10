@@ -68,7 +68,7 @@ function StatCard({ title, value, icon: Icon, color, gradient, delay, isText = f
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={`bg-white rounded-xl shadow-lg p-6 border border-${color}-100`}
+      className={`bg-white rounded-xl shadow-lg p-6 border border-${color}-200`}
     >
       <div className="flex items-center justify-between">
         <div>

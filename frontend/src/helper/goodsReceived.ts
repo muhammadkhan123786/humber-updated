@@ -31,6 +31,7 @@ export const fetchGRNs = async (
   page = 1,
   limit = 10,
   search = "",
+  status = "all" // Added status parameter
 ): Promise<GRNResponse> => {
   const userId = getUserId();
   const res = await axios.get(API_URL, {
@@ -40,6 +41,7 @@ export const fetchGRNs = async (
       page,
       limit,
       search,
+      status: status === "all" ? undefined : status, 
     },
   });
   return res.data;
@@ -77,7 +79,7 @@ export const fetchGRNById = async (id: string): Promise<GoodsReceivedNote> => {
 
 /* ---------------- GENERATE NEXT NUMBER ---------------- */
 export const fetchNextDocumentNumber = async (
-  type: "GRN" | "GRN_REFERENCE" | "RETURN"
+  type: "GRN" | "GRN_REFERENCE" | "GOODS_RETURN"
 ): Promise<{ nextNumber: string }> => {
   const res = await axios.get(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/document-numbers/next`,
@@ -89,5 +91,19 @@ export const fetchNextDocumentNumber = async (
       },
     }
   );
+  return res.data;
+};
+
+/* ---------------- EXPORT SINGLE GRN TO PDF ---------------- */
+export const exportSingleGRNToPDF = async (id: string): Promise<Blob> => {
+  const res = await axios.get(`${API_URL}/export/${id}`, {
+    ...getAuthConfig(),
+    responseType: "blob", // Vital for binary data
+  });
+
+  if (res.data.size === 0) {
+    throw new Error("Exported file is empty");
+  }
+
   return res.data;
 };

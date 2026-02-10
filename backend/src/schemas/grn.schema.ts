@@ -31,19 +31,26 @@ export const GoodsReceivedSchema = new Schema(
     receivedBy: String,
     purchaseOrderId: { type: Schema.Types.ObjectId, ref: "PurchaseOrder", required: true },
     items: [GRNItemSchema],
-    notes: String,   
+    notes: String,
+    status: {
+      type: String,
+      enum: ["received", "ordered"]
+    }   
   },
   { timestamps: true },
 );
 
 export const grnItemSchema = z
   .object({
-        receivedQuantity: z.number().min(0),
+    
+    productName: z.string(),
+    sku: z.string(),
+    purchaseOrderItemId: z.string().optional(), 
+    receivedQuantity: z.number().min(0),
     acceptedQuantity: z.number().min(0),
     rejectedQuantity: z.number().min(0),
     damageQuantity: z.number().min(0),
     unitPrice: z.number().min(0),
-
     condition: z.enum(["good", "damaged", "expired", "other"]),
     notes: z.string().optional(),
   })
@@ -53,7 +60,7 @@ export const grnItemSchema = z
       data.receivedQuantity,
     {
       message: "Accepted + Rejected + Damaged must equal Received",
-    },
+    }
   );
 
 export const createGRNValidationsSchema = z.object({
@@ -64,4 +71,5 @@ export const createGRNValidationsSchema = z.object({
   receivedBy: z.string().min(2),
   items: z.array(grnItemSchema).min(1),
   notes: z.string().optional(),
+  status:z.enum(["received", "ordered"]),
 });

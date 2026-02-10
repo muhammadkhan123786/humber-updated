@@ -109,7 +109,10 @@ export interface IEmbeddedProductAttribute {
   _id?: string;
   productId?: string; // → ref Product._id
   sku: string; // variant-level SKU (e.g. PROD-RED-LG-001)
-  attributes: Record<string, any>; // dynamic key-value from category attributes
+  attributes: Record<string, any>; 
+   pricing: IAttributePricing[];
+   stock: IAttributeStock; 
+   warranty: IAttributeWarranty; 
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

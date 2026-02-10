@@ -1,10 +1,99 @@
 import { Request, Response } from "express";
 import { PurchaseOrder, PurchaseDoc } from "../models/purchaseOrder.model";
 import { Types } from "mongoose";
+import { SupplierModel } from '../models/suppliers/supplier.models';
+import { generatePdfFromTemplate } from '../utils/pdfGenerator';
+
 
 
 export class PurchaseOrderCustomController {
   
+   getAllWithSearch =  async (req: Request, res: Response) => {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        status,
+        userId,
+        sortBy = 'createdAt',
+        order = 'desc',
+      } = req.query;
+
+      const pageNumber = Number(page);
+      const pageSize = Number(limit);
+      const skip = (pageNumber - 1) * pageSize;
+
+      // Build base query
+      const queryFilters: any = { isDeleted: false };
+
+      if (userId) {
+        queryFilters.userId = userId;
+      }
+
+      if (status) {
+        queryFilters.status = status;
+      }
+
+      // Handle search - search in both order fields AND supplier fields
+      if (search) {
+        const searchTerm = search as string;
+
+        // Step 1: Find suppliers matching the search term
+        const matchingSuppliers = await SupplierModel.find({
+          isDeleted: false,
+          $or: [
+            { 'supplierIdentification.legalBusinessName': { $regex: searchTerm, $options: 'i' } },
+            { 'supplierIdentification.tradingName': { $regex: searchTerm, $options: 'i' } },
+            { 'contactInformation.primaryContactName': { $regex: searchTerm, $options: 'i' } },
+            { 'contactInformation.emailAddress': { $regex: searchTerm, $options: 'i' } },
+            { 'operationalInformation.orderContactEmail': { $regex: searchTerm, $options: 'i' } },
+          ]
+        }).select('_id');
+
+        const supplierIds = matchingSuppliers.map((s: any) => s._id);
+
+        // Step 2: Search in order fields OR matching supplier IDs
+        queryFilters.$or = [
+          { orderNumber: { $regex: searchTerm, $options: 'i' } },
+          { orderContactEmail: { $regex: searchTerm, $options: 'i' } },
+          { notes: { $regex: searchTerm, $options: 'i' } },
+          { supplier: { $in: supplierIds } }, // Include orders with matching suppliers
+        ];
+      }
+
+      // Build sort option
+      const sortOption: any = {};
+      sortOption[sortBy as string] = order === 'desc' ? -1 : 1;
+
+      // Execute query with population
+      const data = await PurchaseOrder.find(queryFilters)
+        .populate('userId', 'email role')
+        .populate('supplier') // Populate full supplier details
+        .sort(sortOption)
+        .skip(skip)
+        .limit(pageSize)
+        .exec();
+
+      const total = await PurchaseOrder.countDocuments(queryFilters);
+
+      res.status(200).json({
+        success: true,
+        data,
+        total,
+        page: pageNumber,
+        limit: pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error in getAllWithSearch:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to fetch purchase orders',
+      });
+    }
+  };
 
   updateStatus = async (req: Request, res: Response) => {
     try {
@@ -44,6 +133,7 @@ export class PurchaseOrderCustomController {
       });
     }
   };
+
 
   /**
    * Generate next order number
@@ -160,49 +250,32 @@ export class PurchaseOrderCustomController {
   /**
    * Export purchase orders to CSV
    */
-  // exportToCSV = async (req: Request, res: Response) => {
-  //   try {
-  //     const { userId, status, startDate, endDate, supplier } = req.query;
+ exportToPDF = async (req: Request, res: Response) => {
+  try {
+    const { userId /* filters */ } = req.query;
 
-  //     if (!userId || !Types.ObjectId.isValid(userId as string)) {
-  //       return res.status(400).json({ success: false, message: "Valid userId required" });
-  //     }
+    const orders = await PurchaseOrder.find({ userId, isDeleted: false })
+      .populate('supplier') // This fetches the full nested supplier object
+      .sort({ orderDate: -1 })
+      .lean();
 
-  //     const filters: any = {
-  //       userId: new Types.ObjectId(userId as string),
-  //       isDeleted: false
-  //     };
+    const pdfData = {
+      companyName: "Humber Mobility Scooter",
+      reportTitle: "Purchase Order Report",
+      generatedAt: new Date().toLocaleDateString('en-GB'), // Professional UK format
+      orders: orders
+    };
 
-  //     if (status && status !== 'all') filters.status = status;
-  //     if (supplier) filters.supplier = { $regex: supplier, $options: 'i' };
-  //     if (startDate || endDate) {
-  //       filters.orderDate = {};
-  //       if (startDate) filters.orderDate.$gte = new Date(startDate as string);
-  //       if (endDate) filters.orderDate.$lte = new Date(endDate as string);
-  //     }
+    const pdfBuffer = await generatePdfFromTemplate('purchase-orders', pdfData);
 
-  //     const orders = await PurchaseOrder.find(filters).sort({ orderDate: -1 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=Humber_Orders.pdf');
+    res.status(200).send(pdfBuffer);
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
-  //     // Generate CSV
-  //     const csvHeader = 'Order Number,Supplier,Contact,Order Date,Expected Delivery,Status,Subtotal,Tax,Total,Notes\n';
-  //     const csvRows = orders.map(order => {
-  //       const orderDate = new Date(order.orderDate).toISOString().split('T')[0];
-  //       const expectedDelivery = new Date(order.expectedDelivery).toISOString().split('T')[0];
-  //       return `"${order.orderNumber}","${order.supplier}","${order.supplierContact}","${orderDate}","${expectedDelivery}","${order.status}",${order.subtotal},${order.tax},${order.total},"${order.notes || ''}"`;
-  //     }).join('\n');
-
-  //     const csv = csvHeader + csvRows;
-
-  //     res.setHeader('Content-Type', 'text/csv');
-  //     res.setHeader('Content-Disposition', 'attachment; filename=purchase-orders.csv');
-  //     res.status(200).send(csv);
-  //   } catch (err: any) {
-  //     res.status(500).json({ 
-  //       success: false, 
-  //       message: err.message || "Failed to export orders" 
-  //     });
-  //   }
-  // };
 
   /**
    * Bulk update purchase orders

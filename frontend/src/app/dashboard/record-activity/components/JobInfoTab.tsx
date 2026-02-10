@@ -286,28 +286,26 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
       </div>
 
       <div className="bg-white border border-blue-100 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-6 text-[#4F39F6] font-bold">
+        <div className="leading-none flex items-center gap-2 text-blue-600 mb-4 font-semibold">
           <Settings size={20} />
-          <span className="leading-none flex items-center gap-2 text-indigo-600">
-            Job Information
-          </span>
+          <span>Job Information</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <label className="font-medium text-sm tracking-widest">
+            <label className="font-medium pt-3 pl-2 text-sm tracking-widest">
               Job ID
             </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl">
+            <div className="p-4 h-9 mt-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center">
               {isGeneratingJobId ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#4F39F6]"></div>
+                  <div className="animate-spin rounded-xl h-4 w-4 border-b-2 border-[#4F39F6]"></div>
                   <span className="text-gray-500 text-sm">
                     Generating Job ID...
                   </span>
                 </div>
               ) : (
-                <span className="font-bold text-gray-800 text-sm">
+                <span className="font-bold text-gray-500 text-sm">
                   {jobId || "Loading..."}
                 </span>
               )}
@@ -342,16 +340,6 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 mb-6">
-          <div className="space-y-2">
-            <label className=" font-medium text-sm  tracking-widest">
-              Scooter model
-            </label>
-            <div className="px-4 bg-gray-50 flex items-center border h-9 border-gray-100 rounded-xl text-gray-500 font-bold text-center text-sm">
-              {selectedTicket
-                ? getVehicleDetails(selectedTicket)
-                : "Select a ticket"}
-            </div>
-          </div>
           <FormDisplay
             label="Scooter model"
             value={
@@ -444,7 +432,8 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 <UserCheck size={18} />
                 <span className="text-sm">Selected Technician Details</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Name
@@ -453,6 +442,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                     {getTechnicianName(selectedTechnician)}
                   </p>
                 </div>
+
                 <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Phone
@@ -464,14 +454,15 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                       "N/A"}
                   </div>
                 </div>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                  Specialization
-                </p>
-                <p className="font-bold text-gray-800 text-sm">
-                  {getTechnicianSpecialization(selectedTechnician)}
-                </p>
+
+                <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
+                    Specialization
+                  </p>
+                  <p className="font-bold text-gray-800 text-sm">
+                    {getTechnicianSpecialization(selectedTechnician)}
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}

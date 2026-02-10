@@ -15,6 +15,7 @@ interface UploadedImage {
 interface AIResponse {
   success: boolean;
   imageCount: number;
+  imageUrls: any;
   ai: {
     shortDescription: string;
     description: string;
@@ -42,7 +43,8 @@ interface ImageUploadSectionsProps {
   onRemoveTag?: (tag: string) => void;
   onNewTagChange: (value: string) => void;
   onImageUpload: (files: FileList | File[]) => void;
-  onRemoveImage: (index: number) => void;
+onRemoveImage: (index: number, imageId: string) => void;
+  setImage: any;
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -54,7 +56,8 @@ const ImageUploadSections = ({
   onAddTag, 
   onInputChange, 
   onNewTagChange, 
-  onRemoveImage, 
+  onRemoveImage,
+  setImage, 
   formData 
 }: ImageUploadSectionsProps) => {
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -82,6 +85,7 @@ const ImageUploadSections = ({
   // Unified AI Analysis Logic
   const handleAnalyzeWithAI = async () => {
     // Collect all files currently in state
+    
     const filesToAnalyze = uploadedImages
       .map(img => img.file)
       .filter((file): file is File => !!file);
@@ -102,17 +106,22 @@ const ImageUploadSections = ({
         body: data,
       });
 
+      
       const result: AIResponse = await response.json();
       if (result.success && result.ai) {
         // 1. Remove duplicates from AI tags immediately
         const uniqueTags = Array.from(new Set(result.ai.tags.map(t => t.trim())));
-        
         const suggestions = {
           ...result.ai,
           tags: uniqueTags
         };
-
-        setAiSuggestions(suggestions);
+// setImage((prevImages = []): string[] => {
+  
+//   const combinedImages = [...prevImages, ...result.imageUrls];
+//   return Array.from(new Set(combinedImages));
+// });
+setImage(result.imageUrls);
+ setAiSuggestions(suggestions);
 
         // 2. Auto-fill form if empty
         if (!formData.description) onInputChange("description", suggestions.description);
@@ -126,7 +135,7 @@ const ImageUploadSections = ({
     }
   };
 
-  const handleFilesUpload = useCallback(async (files: FileList) => {
+  const handleFilesUpload = useCallback(async (files: FileList | File[]) => {
     const imageFiles = Array.from(files).filter(file => file.type.startsWith("image/"));
     if (imageFiles.length === 0) return;
 
@@ -149,7 +158,7 @@ const ImageUploadSections = ({
     const img = uploadedImages.find(i => i.id === imageId);
     if (img?.preview.startsWith('blob:')) URL.revokeObjectURL(img.preview);
     
-    onRemoveImage(index);
+    onRemoveImage(index, imageId);
     setUploadedImages(prev => prev.filter(i => i.id !== imageId));
   }, [uploadedImages, onRemoveImage]);
 
@@ -161,6 +170,7 @@ const ImageUploadSections = ({
     onInputChange("shortDescription", aiSuggestions.shortDescription);
     onInputChange("keywords", aiSuggestions.keywords);
 
+    console.log("Applying tags:", aiSuggestions.tags);
     // 2. Add all tags at once
     if (aiSuggestions.tags.length > 0) {
       aiSuggestions.tags.forEach(tag => {
@@ -194,7 +204,7 @@ const ImageUploadSections = ({
             {isAnalyzing ? (
               <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : "✨"}
-            {isAnalyzing ? "Analyzing All Images..." : "Generate AI Description & Tags"}
+            {isAnalyzing ? "Analyzing All Images..." : "Generate AI Description , KeyWord & Tags"}
           </button>
         </div>
       )}
