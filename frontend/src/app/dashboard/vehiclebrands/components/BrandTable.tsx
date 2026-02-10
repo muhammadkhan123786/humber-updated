@@ -61,12 +61,12 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, onStatusChange, theme
 
               <div className="pt-4">
                 <TableActionButton
-                  itemName="vehicle brand"
+                  itemName="vehicle make"
                   fullWidth={true}
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault) {
-                      return toast.error("Default brands cannot be deleted.");
+                      return toast.error("Default makes cannot be deleted.");
                     }
                     onDelete(item._id);
                   }}
@@ -78,7 +78,7 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, onStatusChange, theme
         {data.length === 0 && (
           <div className="col-span-full text-center py-20 text-gray-400">
             <div className="text-5xl mb-3">📭</div>
-            <p>No vehicle brands found.</p>
+            <p>No vehicle makes found.</p>
           </div>
         )}
       </div>
@@ -92,7 +92,7 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, onStatusChange, theme
         <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200">
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Brand Name</th>
+            <th className="px-6 py-4 font-bold text-gray-700">Make Name</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">Status</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">Actions</th>
           </tr>
@@ -122,11 +122,11 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, onStatusChange, theme
               </td>
               <td className="px-6 py-4 text-center">
                 <TableActionButton
-                  itemName="vehicle brand"
+                  itemName="vehicle make"
                   onEdit={() => onEdit(item)}
                   onDelete={() => {
                     if (item.isDefault)
-                      return toast.error("Default brands cannot be deleted.");
+                      return toast.error("Default makes cannot be deleted.");
                     onDelete(item._id);
                   }}
                 />
@@ -136,7 +136,7 @@ const BrandTable = ({ data, displayView, onEdit, onDelete, onStatusChange, theme
           {data.length === 0 && (
             <tr>
               <td colSpan={4} className="text-center py-10 text-gray-400">
-                No vehicle brands found.
+                No vehicle makes found.
               </td>
             </tr>
           )}

@@ -2,18 +2,20 @@
 
 import React, { useRef } from "react";
 import Image from "next/image";
-import { Check, Upload, X, CheckIcon } from "lucide-react";
+import { Check, Upload, X, CheckIcon, ShieldCheck } from "lucide-react";
 import { Controller } from "react-hook-form";
+import { CustomSelect } from "@/app/common-form/CustomSelect";
 
 interface Props {
   onNext?: (formData: any) => void;
   onBack?: () => void;
   form: any;
   isLoading: boolean;
-  decisions?: any[]; // Keep optional for compatibility
+  decisions?: any[];
+  insurances?: any[];
 }
 
-const StepIssueDetails: React.FC<Props> = ({ form }) => {
+const StepIssueDetails: React.FC<Props> = ({ form, insurances = [] }) => {
   const { control, watch, setValue } = form;
 
   const images = watch("vehicleRepairImages") || [];
@@ -22,7 +24,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const BASE_URL = process.env.NEXT_PUBLIC_IMAGE_URL || "http://localhost:4000";
 
-  // Static Decision Config
   const DECISION_OPTIONS = [
     {
       id: "Covered",
@@ -91,6 +92,12 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
       setValue("vehicleRepairImagesFile", newFiles, { shouldValidate: true });
     }
   };
+  const insuranceOptions = insurances
+    .filter((ins: any) => ins?.insuranceCompanyName)
+    .map((ins: any) => ({
+      id: ins._id,
+      label: ins.insuranceCompanyName,
+    }));
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
@@ -114,9 +121,8 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
       </div>
 
       <div className="p-10 space-y-8">
-        {/* Description Section */}
         <div className="space-y-3">
-          <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
+          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Fault or Accident Description{" "}
             <span className="text-red-500">*</span>
           </label>
@@ -131,10 +137,32 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
               />
             )}
           />
+
+          <div className="flex items-center gap-2 text-slate-500">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span className="text-xs font-normal font-['Arial']">
+              Provide as much detail as possible to help technicians understand
+              the issue
+            </span>
+          </div>
         </div>
         <div className="space-y-4">
-          <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
-            Decision Selection(optional)
+          <label className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
+            Decision *
           </label>
 
           <div className="flex flex-col gap-3">
@@ -162,10 +190,9 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
                     {item.icon}
                   </div>
 
-                  {/* Text Labels */}
                   <div className="flex-1">
                     <div
-                      className={`text-base font-bold font-['Arial'] ${
+                      className={`text-base font-medium font-['Arial'] ${
                         isSelected ? "text-white" : "text-gray-700"
                       }`}
                     >
@@ -180,7 +207,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
                     </div>
                   </div>
 
-                  {/* Checkmark */}
                   {isSelected && (
                     <div className="bg-white/20 rounded-full p-1">
                       <Check size={18} className="text-white" strokeWidth={3} />
@@ -195,7 +221,6 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
             <div className="flex justify-center">
               <button
                 type="button"
-                // Using undefined prevents the "" type error
                 onClick={() => setValue("decisionId", undefined)}
                 className="text-gray-400 text-xs font-medium hover:text-red-500 transition-colors"
               >
@@ -204,8 +229,83 @@ const StepIssueDetails: React.FC<Props> = ({ form }) => {
             </div>
           )}
         </div>
+        {(selectedDecisionId === "Covered" ||
+          selectedDecisionId === "Mixed") && (
+          <div className="space-y-4 p-6 bg-linear-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="p-2.5 bg-blue-500 rounded-full text-white shrink-0">
+                <ShieldCheck size={25} />
+              </div>
+              <div className="flex flex-col">
+                <h3 className="text-base font-semibold text-blue-900">
+                  Insurance Information
+                </h3>
+                <p className="text-blue-700 text-xs leading-relaxed">
+                  Required for warranty/insurance claims
+                </p>
+              </div>
+            </div>
 
-        {/* Upload Section */}
+            <div className="space-y-3">
+              <div className="space-y-5">
+                {/* Insurance Company */}
+                <div className="space-y-2">
+                  <label className="text-blue-900 font-medium text-base">
+                    Insurance Company *
+                  </label>
+                  <Controller
+                    name="insuranceId"
+                    control={control}
+                    rules={{ required: "Insurance company is required" }}
+                    render={({ field, fieldState }) => (
+                      <CustomSelect
+                        options={insuranceOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Select insurance company"
+                        error={fieldState.error}
+                      />
+                    )}
+                  />
+                </div>
+
+                {/* Insurance Reference Number */}
+                <div className="space-y-2">
+                  <label className="text-blue-900 font-medium text-base">
+                    Insurance Reference Number *
+                  </label>
+                  <Controller
+                    name="insuranceReferenceNumber"
+                    control={control}
+                    rules={{
+                      required: "Insurance reference number is required",
+                    }}
+                    render={({ field, fieldState }) => (
+                      <>
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Enter insurance reference number"
+                          className="w-full h-11 px-4 bg-white rounded-xl border border-blue-200 text-sm outline-none transition-all hover:border-blue-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                        />
+                        {fieldState.error && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {fieldState.error.message}
+                          </p>
+                        )}
+                      </>
+                    )}
+                  />
+                  <p className="text-blue-600 text-xs italic mt-1">
+                    This reference number will be used for insurance claim
+                    processing
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <label className="block text-sm font-bold text-gray-700 ml-1">
             Upload Photos or Videos

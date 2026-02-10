@@ -2,6 +2,9 @@ import { NextFunction, Request, Response } from 'express';
 import { Roles, User } from '../models/user.models';
 import { hashPassword, comparePassword, generateToken } from '../services/auth.service';
 import { DriverModel } from '../models/driver/driver.models';
+import { AuthRequest } from '../middleware/auth.middleware';
+import { CustomerBase } from '../models/customer.models';
+import { customerTicketBase } from '../models/ticket-management-system-models/customer.ticket.base.models';
 
 //this is middleware. common for register all user.
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {
@@ -86,7 +89,39 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
+        //if user role is customer 
+        if (user.role === 'Customer') {
 
+            const customer = await CustomerBase.findOne({
+                accountId: user._id,
+            }).populate([
+                { path: "personId", select: "firstName lastName" },
+                { path: "contactId", select: "emailId mobileNumber" },
+                { path: "addressId", select: "address" },
+            ]).lean();
+
+            if (!customer) {
+                return res.status(404).json({
+                    message: "Customer profile not found for this account"
+                });
+            }
+            if (!customer.isActive) {
+                return res.status(404).json({
+                    message: "Your account is not verified yet. please wait or contact website admin."
+                });
+            }
+            const totalTickets = await customerTicketBase.countDocuments({ customerId: customer._id, isDeleted: false });
+            return res.status(200).json({
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    customer: customer._id,
+                    totalTickets: totalTickets
+                },
+                token
+            });
+        }
         return res.status(200).json({
             user: {
                 id: user._id,
@@ -128,3 +163,64 @@ export const setupPassword = async (req: Request, res: Response) => {
     }
 };
 
+//change password controller 
+export const updatePassword = async (req: AuthRequest, res: Response) => {
+    try {
+        console.log("Update password request body:", req.body);
+        const { userId, currentPassword, newPassword } = req.body;
+
+        console.log("User ID from token:", userId);
+
+
+        if (!userId || !currentPassword || !newPassword) {
+            return res.status(400).json({
+                message: "currentPassword and newPassword are required.",
+            });
+        }
+
+        // ✅ Load user from DB
+        const user = await User.findById(userId).select("+password");
+        if (!user) {
+            return res.status(404).json({
+                message: "User does not exist.",
+            });
+        }
+
+        if (!user.isActive) {
+            return res.status(403).json({
+                message: "User is not active. Please contact administrator.",
+            });
+        }
+
+        // ✅ Verify current password
+        const isMatch = await comparePassword(currentPassword, user.password!);
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Current password is incorrect.",
+            });
+        }
+
+        // ✅ Prevent password reuse
+        const isSamePassword = await comparePassword(newPassword, user.password!);
+        if (isSamePassword) {
+            return res.status(400).json({
+                message: "New password must be different from current password.",
+            });
+        }
+
+        // ✅ Save new password
+        user.password = await hashPassword(newPassword);
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Password updated successfully.",
+        });
+    } catch (error) {
+        console.error("User password update error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Password update failed due to server error.",
+        });
+    }
+};

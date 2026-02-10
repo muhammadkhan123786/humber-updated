@@ -3,7 +3,7 @@
 import { Phone, Globe, Store, UserPlus, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller } from "react-hook-form";
-// Path check kar lein apne folder structure ke mutabiq
+
 import { CustomSelect } from "../../../../common-form/CustomSelect";
 
 const StepSourceCustomer = ({ form, customers }: any) => {
@@ -43,7 +43,8 @@ const StepSourceCustomer = ({ form, customers }: any) => {
 
   const customerOptions = customers.map((c: any) => ({
     id: c._id,
-    label: `${c.personId?.firstName} - ${c.contactId?.mobileNumber}`,
+
+    label: `${c.personId?.firstName}\n${c.contactId?.mobileNumber} • ${c.contactId?.emailId}`,
   }));
 
   return (
@@ -70,7 +71,7 @@ const StepSourceCustomer = ({ form, customers }: any) => {
       <div className="p-10 space-y-10">
         {/* Ticket Source Section */}
         <div className="space-y-4">
-          <div className="text-indigo-950 text-base font-normal font-['Arial'] leading-6">
+          <div className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Ticket Source
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -106,7 +107,7 @@ const StepSourceCustomer = ({ form, customers }: any) => {
         </div>
 
         <div className="space-y-4">
-          <div className="text-indigo-950 text-base font-normal font-['Arial'] leading-6">
+          <div className="text-indigo-950 text-base font-medium font-['Arial'] leading-6">
             Select Customer *
           </div>
 
@@ -145,10 +146,9 @@ const StepSourceCustomer = ({ form, customers }: any) => {
           </button>
         </div>
 
-        {/* Selected Customer Details Section */}
         {selectedCustomerData && (
           <div className="p-8 rounded-3xl bg-[#F5F3FF] border border-[#4F39F6]/10 space-y-4 animate-in slide-in-from-top-4 duration-500">
-            <h3 className="text-[#4F39F6] font-black text-sm uppercase tracking-widest">
+            <h3 className="text-sm font-semibold text-indigo-900  tracking-widest">
               Customer Details
             </h3>
             <div className="grid grid-cols-1 gap-4">
@@ -163,6 +163,10 @@ const StepSourceCustomer = ({ form, customers }: any) => {
               <DetailRow
                 label="Address"
                 value={`${selectedCustomerData.addressId?.address || ""}, ${selectedCustomerData.addressId?.zipCode || ""}`}
+              />
+              <DetailRow
+                label="VAT Exemption"
+                value={`${selectedCustomerData.isVatExemption ? "Yes" : "No"}`}
               />
             </div>
           </div>

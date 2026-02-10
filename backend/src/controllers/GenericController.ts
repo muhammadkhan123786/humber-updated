@@ -348,10 +348,10 @@ import { Document, PopulateOptions, Types } from "mongoose";
 import { ZodObject, ZodRawShape } from "zod";
 import { normalizeToStringArray } from "../utils/query.utils";
 interface ControllerOptions<T extends Document> {
-  service: GenericService<T>;
-  populate?: (string | PopulateOptions)[];
-  validationSchema?: ZodObject<ZodRawShape>;
-  searchFields?: string[];
+    service: GenericService<T>;
+    populate?: (string | PopulateOptions)[];
+    validationSchema?: ZodObject<ZodRawShape>;
+    searchFields?: string[];
 }
 
 export class AdvancedGenericController<T extends Document> {

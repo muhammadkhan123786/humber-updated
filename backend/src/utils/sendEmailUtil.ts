@@ -26,6 +26,7 @@ export const sendConfirmationEmail = async (userEmail: string, role: string) => 
 
 
 export const sendEmailTemplate = async (EmailId: string, template: string, subject: string) => {
+
     await transporator.sendMail({
         from: `Humber ${process.env.gmailuser}`,
         to: EmailId,

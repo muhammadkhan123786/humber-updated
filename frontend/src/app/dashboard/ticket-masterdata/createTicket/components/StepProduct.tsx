@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Loader2, Check, Plus, Save } from "lucide-react";
 import { Controller } from "react-hook-form";
 import { CustomSelect } from "../../../../common-form/CustomSelect";
@@ -209,6 +209,21 @@ const StepProduct: React.FC<StepProductProps> = ({
       setIsAddingVehicle(false);
     }
   };
+
+  const companyOwnedVehicles = useMemo(() => {
+    if (!customerId) return [];
+    return vehicles.filter((v) => {
+      const vehicleCustomerId =
+        typeof v.customerId === "object" ? v.customerId?._id : v.customerId;
+
+      return (
+        v.isVehicleCompanyOwned === true && vehicleCustomerId === customerId
+      );
+    });
+  }, [vehicles, customerId]);
+
+  const companyProductCount = companyOwnedVehicles.length;
+
   useEffect(() => {
     const currentProductOwnership =
       watch("productOwnership") || "Customer Product";
@@ -217,6 +232,25 @@ const StepProduct: React.FC<StepProductProps> = ({
       setShowManualForm(false);
     }
   }, [productOwnership, setValue, watch]);
+  const isDefaultSet = useRef(false);
+  useEffect(() => {
+    if (!customerId) return;
+
+    isDefaultSet.current = false;
+  }, [customerId]);
+
+  useEffect(() => {
+    if (isDefaultSet.current) return;
+
+    if (companyProductCount > 0) {
+      setValue("productOwnership", "Company product");
+    } else {
+      setValue("productOwnership", "Customer Product");
+    }
+
+    isDefaultSet.current = true;
+  }, [companyProductCount, setValue]);
+
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500">
       <div
@@ -274,7 +308,7 @@ const StepProduct: React.FC<StepProductProps> = ({
                 🏢
               </div>
               <div className="flex-1">
-                <p className="font-bold text-sm">Company Product</p>
+                <p className="font-bold text-sm">Our Product</p>
                 <p
                   className={`text-xs ${
                     productOwnership === "Company product"
@@ -789,8 +823,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </div>
                     </div>
-
-                    {/* Year & Color */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-indigo-950 text-base font-medium">
@@ -838,8 +870,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </div>
                     </div>
-
-                    {/* Serial Number and Purchase Date */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-purple-100">
                       <div className="space-y-2">
                         <label className="text-indigo-950 text-base font-medium">
@@ -878,8 +908,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </div>
                     </div>
-
-                    {/* ADD VEHICLE BUTTON */}
                     <div className="flex justify-center pt-6">
                       <button
                         type="button"
@@ -904,8 +932,6 @@ const StepProduct: React.FC<StepProductProps> = ({
                         )}
                       </button>
                     </div>
-
-                    {/* Validation message */}
                     {!isManualFormValid && (
                       <div className="text-center text-gray-500 text-sm pt-2">
                         Please fill all required fields (*) to add vehicle
@@ -918,7 +944,6 @@ const StepProduct: React.FC<StepProductProps> = ({
           </div>
         )}
 
-        {/* Show selected vehicle details */}
         {vehicleDetails && !showManualForm && (
           <div
             className={`self-stretch w-full px-6 pt-6 pb-6 rounded-2xl border grid grid-cols-2 gap-3 ${
@@ -933,7 +958,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Make
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.vehicleBrandId?.brandName || "N/A"}
               </div>
             </div>
@@ -943,7 +968,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Model
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.vehicleModelId?.modelName || "N/A"}
               </div>
             </div>
@@ -953,7 +978,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Vehicle Type
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.vehicleType || "N/A"}
               </div>
             </div>
@@ -963,7 +988,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Serial No.
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.serialNumber || "N/A"}
               </div>
             </div>
@@ -973,7 +998,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Purchase Date
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.purchaseDate
                   ? new Date(vehicleDetails.purchaseDate).toLocaleDateString()
                   : "N/A"}
@@ -985,7 +1010,7 @@ const StepProduct: React.FC<StepProductProps> = ({
               >
                 Ownership
               </div>
-              <div className="text-gray-700 text-sm font-bold">
+              <div className="text-gray-700 text-sm ">
                 {vehicleDetails.isVehicleCompanyOwned
                   ? "Company Owned"
                   : "Customer Owned"}

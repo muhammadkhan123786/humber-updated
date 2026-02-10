@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ticketFormSchema, TicketFormData } from "../schema/ticketSchema";
 import { getAlls } from "../helper/apiHelper";
-import { useRouter } from "next/navigation";
 import axios from "axios";
 
 const generateTicketCode = () => {
@@ -33,6 +32,8 @@ export const useTicketForm = () => {
   const [brands, setBrands] = useState<any[]>([]);
   const [models, setModels] = useState<any[]>([]);
   const [colors, setColors] = useState<any[]>([]);
+  const [insurances, setInsurances] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   const [defaultTicketStatusId, setDefaultTicketStatusId] =
     useState<string>("");
@@ -54,11 +55,17 @@ export const useTicketForm = () => {
       purchaseDate: "",
       decisionId: undefined,
       productOwnership: "Company product",
+
+      vehiclePickUp: "Customer-Drop",
+      insuranceId: "",
+      insuranceReferenceNumber: "",
+      pickUpBy: "",
+      externalCompanyName: "",
+      riderId: "",
+      pickUpDate: "",
     },
     mode: "onBlur",
   });
-
-  const router = useRouter();
 
   const clearEdit = () => {
     setEditingId(null);
@@ -145,6 +152,17 @@ export const useTicketForm = () => {
             vehicleRepairImagesFile: [],
             productOwnership: ticket.productOwnership || "Customer Product",
             decisionId: ticket.decisionId || undefined,
+
+            //new feild
+            insuranceId: ticket.insuranceId?._id || ticket.insuranceId || "",
+            insuranceReferenceNumber: ticket.insuranceReferenceNumber || "",
+            vehiclePickUp: ticket.vehiclePickUp || "Customer-Drop",
+            pickUpBy: ticket.pickUpBy || "",
+            riderId: ticket.riderId?._id || ticket.riderId || "",
+            externalCompanyName: ticket.externalCompanyName || "",
+            pickUpDate: ticket.pickUpDate
+              ? new Date(ticket.pickUpDate).toISOString().split("T")[0]
+              : "",
           });
         });
       }
@@ -181,6 +199,8 @@ export const useTicketForm = () => {
           getAlls("/vehiclebrand"),
           getAlls("/vechilemodel"),
           getAlls("/colors"),
+          getAlls("/insurance-companies"),
+          getAlls("/register-driver"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
@@ -202,6 +222,11 @@ export const useTicketForm = () => {
           setMobilityParts(
             (results[6].value?.data ?? []).filter((i: any) => i.isActive),
           );
+        if (results[4].status === "fulfilled") {
+          setDrivers(
+            (results[4].value?.data ?? []).filter((d: any) => d.isActive),
+          );
+        }
         if (results[7].status === "fulfilled")
           setBrands(
             (results[7].value?.data ?? []).filter((i: any) => i.isActive),
@@ -214,6 +239,11 @@ export const useTicketForm = () => {
           setColors(
             (results[9].value?.data ?? []).filter((i: any) => i.isActive),
           );
+        if (results[10].status === "fulfilled") {
+          setInsurances(
+            (results[10].value?.data ?? []).filter((i: any) => i.isActive),
+          );
+        }
 
         if (results[2].status === "fulfilled") {
           const statusData = (results[2].value?.data ?? []).filter(
@@ -256,7 +286,7 @@ export const useTicketForm = () => {
     return () => subscription.unsubscribe();
   }, [form, fetchVehiclesForCustomer]);
 
-  const handleSubmit = async (data: TicketFormData) => {
+  const handleSubmit = async (data: TicketFormData): Promise<any> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -264,7 +294,6 @@ export const useTicketForm = () => {
 
       const formData = new FormData();
 
-      // Required fields from your schema
       formData.append("ticketSource", data.ticketSource);
       formData.append("customerId", data.customerId);
       formData.append("vehicleId", data.vehicleId);
@@ -276,13 +305,42 @@ export const useTicketForm = () => {
         data.ticketStatusId || defaultTicketStatusId,
       );
       formData.append("userId", data.userId);
-      if (data.decisionId) {
+      if (data.decisionId && data.decisionId.trim() !== "") {
         formData.append("decisionId", data.decisionId);
       }
       if (data.address) formData.append("address", data.address);
       if (data.productSerialNumber) {
         formData.append("productSerialNumber", data.productSerialNumber);
       }
+
+      if (data.insuranceId) formData.append("insuranceId", data.insuranceId);
+      if (data.insuranceReferenceNumber)
+        formData.append(
+          "insuranceReferenceNumber",
+          data.insuranceReferenceNumber,
+        );
+      if (data.vehiclePickUp)
+        formData.append("vehiclePickUp", data.vehiclePickUp);
+      if (data.vehiclePickUp === "Customer-Drop") {
+        formData.append("pickUpBy", ""); // Clear pickUpBy if Customer-Drop
+        formData.append("externalCompanyName", "");
+        formData.append("riderId", "");
+        formData.append("pickUpDate", "");
+      }
+      if (data.pickUpDate) {
+        const pickUpDateStr =
+          data.pickUpDate instanceof Date
+            ? data.pickUpDate.toISOString()
+            : data.pickUpDate;
+        formData.append("pickUpDate", pickUpDateStr);
+      }
+
+      if (data.pickUpBy) formData.append("pickUpBy", data.pickUpBy);
+      if (data.externalCompanyName)
+        formData.append("externalCompanyName", data.externalCompanyName);
+      if (data.riderId) formData.append("riderId", data.riderId);
+
+      // end new feild
 
       if (data.purchaseDate) {
         formData.append("purchaseDate", data.purchaseDate.toString());
@@ -348,11 +406,11 @@ export const useTicketForm = () => {
       console.log("API Response:", res.data);
 
       if (res.data?.success) {
-        alert(editingId ? "Ticket updated!" : "Ticket created!");
         clearEdit();
-        router.push("/dashboard/ticket-masterdata/allTickets");
+        return res.data;
       } else {
         setError(res.data?.message || "Submission failed");
+        return res.data;
       }
     } catch (err: any) {
       console.error("Error submitting form:", err);
@@ -449,8 +507,9 @@ export const useTicketForm = () => {
     models,
     colors,
     statuses,
+    drivers,
     technicians,
-
+    insurances,
     mobilityParts,
     handleAddVehicle,
     editingId,

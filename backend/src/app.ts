@@ -6,7 +6,7 @@ import "dotenv/config"; // load env variables
 // Import routes
 import shopRouter from "./routes/shop.routes";
 import authRouter from "./routes/auth.routes";
-import { adminProtecter } from "./middleware/auth.middleware";
+import { adminProtecter, technicianMasterProtector, technicianProtecter } from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
 import aiRoutes from './routes/ai.routes';
@@ -82,6 +82,10 @@ import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace.routes";
 import  uploadRoutes  from "./routes/upload.routes"
+import technicianRouter from "./routes/technician.routes";
+import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
+import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
+import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
 
 
 // Create express app
@@ -263,7 +267,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/customer-tickets`,
-  // adminProtecter,
+  adminProtecter,
   customerTicketBaseRouter,
 );
 
@@ -293,10 +297,10 @@ app.use(
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
-app.use(`${process.env.API_PREFIX}/icons`,  iconsRouter);
+app.use(`${process.env.API_PREFIX}/icons`, iconsRouter);
 
 //16-02-2026
-app.use(`${process.env.API_PREFIX}/suppliers`,  SupplierRouters);
+app.use(`${process.env.API_PREFIX}/suppliers`, SupplierRouters);
 
 //20-01-2026
 app.use(
@@ -376,7 +380,52 @@ app.use(
 
 );
 
+//03-02-2026 
+app.use(
+  `${process.env.API_PREFIX}/technician-dashboard`,
+  technicianProtecter,
+  technicianDashboardRouter,
 
+);
+
+//04-02-2026
+app.use(
+  `${process.env.API_PREFIX}/master-ticket-status-technician-dashboard`,
+  technicianMasterProtector,
+  ticketStatusRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/master-ticket-urgency-technician-dashboard`,
+  technicianMasterProtector,
+  ServiceRequestPrioprityRouter,
+);
+
+//05-02-2026
+app.use(
+  `${process.env.API_PREFIX}/ticket-quotation-status`,
+  adminProtecter,
+  ticketQuotationStatusRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/quotations`,
+  technicianProtecter,
+  autoCodeGeneratorRouter,
+
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-ticket-quotation`,
+  ticketQuotationRouter,
+);
+
+//09-02-2026
+app.use(
+  `${process.env.API_PREFIX}/master-parts-technician-dashboard`,
+  technicianMasterProtector,
+  partsRouter,
+);
 
 //Muhammad Imran code ended here.
 
@@ -395,26 +444,26 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/ai`,
-  
+
   aiRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/purchase-orders`,
-  
+
   purchaseOrderRoutes,
 );
 
 
 app.use(
   `${process.env.API_PREFIX}/grn`,
-  
+
   grnRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/goods-return-notice`,
-  
+
   goodsReturnRoutes,
 );
 

@@ -12,7 +12,7 @@ import { IVehicleBrand } from "../types";
 import { useFormActions } from "@/hooks/useFormActions";
 
 const brandSchemaValidation = z.object({
-  brandName: z.string().min(1, "Brand name is required."),
+  brandName: z.string().min(1, "Make name is required."),
   isActive: z.boolean(),
   isDefault: z.boolean(),
 });
@@ -29,8 +29,8 @@ interface Props {
 const BrandForm = ({ editingData, onClose, themeColor }: Props) => {
   const { createItem, updateItem, isSaving } = useFormActions(
     "/vehiclebrand",
-    "vehicleBrands",
-    "Vehicle Brand"
+    "vehicleMakes",
+    "Vehicle Make"
   );
 
   const {
@@ -78,14 +78,14 @@ const BrandForm = ({ editingData, onClose, themeColor }: Props) => {
 
   return (
     <FormModal
-      title={editingData ? "Edit Brand" : "Add Brand"}
+      title={editingData ? "Edit Make" : "Add Make"}
       icon={<Car size={24} />}
       onClose={onClose}
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
         <FormInput
-          label="Brand Name *"
+          label="Make Name *"
           placeholder="e.g. Toyota, Honda..."
           {...register("brandName")}
           error={errors.brandName?.message}
@@ -122,7 +122,7 @@ const BrandForm = ({ editingData, onClose, themeColor }: Props) => {
 
         <FormButton
           type="submit"
-          label={editingData ? "Update Brand" : "Create"}
+          label={editingData ? "Update Make" : "Create"}
           icon={<Save size={20} />}
           loading={isSaving}
           themeColor={themeColor}

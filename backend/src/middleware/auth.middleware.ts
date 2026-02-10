@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { Roles } from '../models/user.models';
+import { Roles, User } from '../models/user.models';
+import { Technicians } from '../models/technician-models/technician.models';
 
 export interface AuthRequest extends Request {
     user?: any;
-    role?: Roles
+    role?: Roles;
+    technician?: any
 }
 
 //admin protector operations middleware.
@@ -55,7 +57,7 @@ export const technicianProtecter = (
     next: NextFunction
 ) => {
     let token: string | undefined;
-
+    console.log("Technician protector middleware invoked");
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer ")
@@ -82,7 +84,7 @@ export const technicianProtecter = (
             res.status(403).json({ message: "Not authorized, Technician access only" });
             return; // ✅ return void
         }
-
+        // console.log("Technician access granted");
         next(); // ✅ continue to next middleware
     } catch (error) {
         res.status(401).json({ message: "Not authorized, token invalid" });
@@ -174,3 +176,101 @@ export const driverProtecter = (
         return; // ✅ return void
     }
 };
+
+
+//check user is valid logged in. 
+export const generalProtecter = (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    let token: string | undefined;
+
+    if (
+        req.headers.authorization &&
+        req.headers.authorization.startsWith("Bearer ")
+    ) {
+        token = req.headers.authorization.split(" ")[1];
+    }
+
+    if (!token) {
+        return res.status(401).json({ message: "Not authorized, token missing" });
+    }
+
+    try {
+        const decoded = jwt.verify(
+            token,
+            process.env.JWT_SECRET as string
+        ) as { id: string; role: Roles };
+
+        // ✅ Attach ONLY token data
+        req.user = { id: decoded.id };
+        req.role = decoded.role;
+
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: "Not authorized, token invalid" });
+    }
+};
+
+//admin add user id 
+export const technicianMasterProtector = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+) => {
+    try {
+        // 1️⃣ Extract token
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Token missing" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        console.log("Technician Master Protector invoked with token:", token);
+        // 2️⃣ Verify token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+            userId: string;
+            role: "Admin" | "Technician";
+        };
+
+        if (decoded.role !== "Technician") {
+            return res.status(403).json({ message: "Technician access only" });
+        }
+
+        // 3️⃣ Fetch technician
+        const technician = await Technicians.findOne({
+            accountId: decoded.userId,
+            isDeleted: false,
+            isActive: true,
+        })
+            .select("_id accountId")
+            .lean();
+
+        if (!technician) {
+            return res.status(403).json({ message: "Technician not found or inactive" });
+        }
+        // 4️⃣ Fetch MASTER Admin associated with technician
+        const masterUser = await User.findOne({
+            _id: technician.accountId,
+            isDeleted: false,
+            isActive: true,
+        }).lean();
+
+        if (!masterUser) {
+            return res.status(403).json({ message: "Associated admin not found" });
+        }
+
+        // 5️⃣ Attach master user and technician info to request
+        req.user = masterUser; // MASTER Admin
+        req.technician = technician; // Logged-in Technician metadata
+        req.role = "Technician";
+
+        next();
+    } catch (error) {
+        console.error("Technician Master Protector Error:", error);
+        return res.status(401).json({ message: "Invalid or expired token" });
+    }
+};
+
+

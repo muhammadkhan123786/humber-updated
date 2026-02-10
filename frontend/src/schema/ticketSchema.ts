@@ -78,7 +78,11 @@ export const ticketFormSchema = z.object({
     )
     .optional()
     .default([]),
-  decisionId: z.enum(["Covered", "Chargeable", "Mixed"]).optional(),
+  decisionId: z
+    .enum(["Covered", "Chargeable", "Mixed"])
+    .optional()
+    .or(z.literal("")),
+
   isEmailSendReport: z.boolean().default(false),
   total: z.coerce.number().nonnegative().optional(),
   manualProductName: z.string().optional(),
@@ -87,5 +91,25 @@ export const ticketFormSchema = z.object({
   manualYear: z.string().optional(),
   manualColor: z.string().optional(),
   vehicleType: z.string().optional(),
+
+  insuranceId: z
+    .string()
+    .regex(objectIdRegex, "Invalid Insurance Selection")
+    .optional()
+    .or(z.literal("")),
+  insuranceReferenceNumber: z.string().optional(),
+
+  vehiclePickUp: z.enum(["Customer-Drop", "Company-Pickup"]).optional(),
+  pickUpDate: z.string().optional().or(z.date()),
+  pickUpBy: z
+    .enum(["External Company", "Company Rider"])
+    .optional()
+    .or(z.literal("")),
+  externalCompanyName: z.string().optional(),
+  riderId: z
+    .string()
+    .regex(objectIdRegex, "Invalid Rider Selection")
+    .optional()
+    .or(z.literal("")),
 });
 export type TicketFormData = z.infer<typeof ticketFormSchema>;

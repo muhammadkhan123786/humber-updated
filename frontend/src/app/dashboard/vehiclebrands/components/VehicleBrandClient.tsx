@@ -32,8 +32,8 @@ export default function VehicleBrandClient() {
     updateItem 
   } = useFormActions<VehicleBrandWithId>(
     "/vehiclebrand", 
-    "vehicleBrands", 
-    "Vehicle Brand", 
+    "vehicleMakes", 
+    "Vehicle Make", 
     currentPage, 
     searchTerm
   );
@@ -78,8 +78,8 @@ export default function VehicleBrandClient() {
           <div className="flex items-center gap-4">
           <AnimatedIcon icon={<Car size={32} className="text-white" />} />
             <div>
-              <h1 className="text-4xl font-bold">Vehicle Brands</h1>
-              <p className="text-blue-100 text-lg">Manage manufacturers and brand identities</p>
+              <h1 className="text-4xl font-bold">Vehicle Make</h1>
+              <p className="text-blue-100 text-lg">Manage manufacturers and make identities</p>
             </div>
           </div>
           <button
@@ -89,7 +89,7 @@ export default function VehicleBrandClient() {
             }}
             className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
-            <Plus size={22} /> Add Brand
+            <Plus size={22} /> Add Make
           </button>
         </div>
 
@@ -100,9 +100,9 @@ export default function VehicleBrandClient() {
           inactiveCount={totalInactiveCount}
           onFilterChange={(filter) => setFilterStatus(filter)}
           labels={{
-            total: "Total Vehicle Brands",
-            active: "Active Brands",
-            inactive: "Inactive Brands"
+            total: "Total Vehicle Makes",
+            active: "Active Makes",
+            inactive: "Inactive Makes"
           }}
           icons={{
             total: <Car size={24} />,
@@ -114,7 +114,7 @@ export default function VehicleBrandClient() {
           <Search className="text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search brand name..."
+            placeholder="Search make name..."
             className="w-full outline-none text-lg"
             value={searchTerm}
             onChange={(e) => {
@@ -128,9 +128,9 @@ export default function VehicleBrandClient() {
           <div className="flex justify-between items-center mb-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Brand List
+                Make List
               </h2>
-              <p className="text-sm text-gray-500">Configure brands for vehicle identification</p>
+              <p className="text-sm text-gray-500">Configure makes for vehicle identification</p>
             </div>
 
               <div className="flex gap-2 bg-linear-to-r from-blue-50 to-cyan-50 p-1 rounded-lg border border-blue-200 w-full md:w-auto">
@@ -165,7 +165,7 @@ export default function VehicleBrandClient() {
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
-              <p className="mt-4 text-gray-400 font-medium">Loading brands...</p>
+              <p className="mt-4 text-gray-400 font-medium">Loading makes...</p>
             </div>
           ) : (
             <>

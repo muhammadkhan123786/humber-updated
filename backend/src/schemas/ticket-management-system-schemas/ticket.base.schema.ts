@@ -63,10 +63,66 @@ export const customerTicketBaseSchema = {
     enum: ["Customer Product", "Company product"],
     required: true,
   },
+  insuranceId: {
+    type: Types.ObjectId,
+    ref: "InsuranceCompanies",
+  },
+  insuranceReferenceNumber: {
+    type: String,
+  },
+  vehiclePickUp: {
+    type: String,
+    enum: ["Customer-Drop", "Company-Pickup"],
+  },
+  pickUpDate: { type: Date },
+  pickUpBy: {
+    type: String,
+    enum: ["External Company", "Company Rider"],
+  },
+  externalCompanyName: {
+    type: String,
+  },
+  riderId: { type: Types.ObjectId },
 };
 
 export const customerTicketBaseSchemaValidation = z.object({
   ...commonSchemaValidation,
+
+  insuranceId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/, "Valid Insurance Id is required")
+    .optional(),
+
+  insuranceReferenceNumber: z.string().optional(),
+
+  vehiclePickUp: z.enum(["Customer-Drop", "Company-Pickup"]).optional(),
+
+  pickUpDate: z
+    .union([z.date(), z.string(), z.null()])
+    .optional()
+    .transform((val) => {
+      if (!val || val === "") return undefined;
+      return new Date(val);
+    }),
+
+  pickUpBy: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || val === "External Company" || val === "Company Rider",
+      "Invalid pickUpBy value",
+    ),
+
+  externalCompanyName: z.string().optional(),
+
+  riderId: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[0-9a-fA-F]{24}$/.test(val),
+      "Valid Rider Id is required",
+    ),
+
   productOwnership: z.enum(["Customer Product", "Company product"]),
 
   decisionId: z.enum(["Covered", "Chargeable", "Mixed"]),

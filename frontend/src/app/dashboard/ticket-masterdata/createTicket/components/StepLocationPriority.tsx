@@ -3,6 +3,7 @@
 import { Check, Wrench, Home, Truck, Users, Info, MapPin } from "lucide-react";
 
 import { Controller } from "react-hook-form";
+import ScooterDeliveryMethod from "./ScooterDeliveryMethod";
 
 const StepLocationPriority = ({
   form,
@@ -11,6 +12,7 @@ const StepLocationPriority = ({
   customers,
   statuses,
   vehicles,
+  drivers,
 }: any) => {
   const {
     control,
@@ -60,25 +62,25 @@ const StepLocationPriority = ({
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500 pb-10 bg-white">
       <div
-        className="p-8 text-white w-full"
+        className="w-full text-white"
         style={{
-          display: "inline-grid",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
           height: "66px",
-          rowGap: "6px",
-          columnGap: "6px",
-          gridTemplateRows: "minmax(0, 16fr) minmax(0, 1fr)",
-          gridTemplateColumns: "repeat(1, minmax(0, 1fr))",
+          paddingLeft: "24px",
+          paddingRight: "24px",
           borderRadius: "12px 12px 0 0",
           background: "linear-gradient(90deg, #00C950 0%, #00BC7D 100%)",
         }}
       >
-        <h2 className="text-[16px] font-bold pb-3 tracking-tight leading-none">
+        <h2 className="text-[16px] font-bold tracking-tight leading-tight">
           Location & Priority
         </h2>
 
         <p
-          className="leading-none opacity-90 pt-3"
-          style={{ fontSize: "12px", fontWeight: 400 }}
+          className="opacity-90 mt-0.5 leading-tight"
+          style={{ fontSize: "13px", fontWeight: 400 }}
         >
           Set repair location and urgency
         </p>
@@ -86,7 +88,7 @@ const StepLocationPriority = ({
 
       <div className="p-8 space-y-8">
         <section className="space-y-4">
-          <label className="text-sm font-bold text-[#1E293B]">
+          <label className="text-[16px] font-medium text-[#1E293B]">
             Repair Location *
           </label>
           <Controller
@@ -160,8 +162,10 @@ const StepLocationPriority = ({
           </section>
         )}
 
+        <ScooterDeliveryMethod form={form} drivers={drivers} />
+
         <section className="space-y-4">
-          <label className="text-sm font-bold text-[#1E293B] flex items-center gap-2">
+          <label className="text-[16px] font-medium text-[#1E293B] flex items-center gap-2">
             Ticket Status *
           </label>
           <Controller
@@ -202,7 +206,7 @@ const StepLocationPriority = ({
         </section>
         <div className="my-3"></div>
         <section className="space-y-4">
-          <label className="text-sm font-bold text-[#1E293B]">
+          <label className="text-[16px] font-medium text-[#1E293B]">
             Priority Level *
           </label>
           <Controller
@@ -229,10 +233,10 @@ const StepLocationPriority = ({
                             : "text-gray-600 border-gray-100"
                       }`}
                     >
-                      <p className="font-bold text-sm">
+                      <p className="font-medium text-[16px]">
                         {p.serviceRequestPrioprity || p.name}
                       </p>
-                      <p className="text-[10px] opacity-80">
+                      <p className="text-[14px] font-normal opacity-80">
                         {p.description || "Priority level description"}
                       </p>
                       {isActive && (
@@ -259,7 +263,7 @@ const StepLocationPriority = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#4F39F6]">
               <Users size={18} />
-              <label className="text-indigo-950 text-base font-bold font-['Arial'] leading-6">
+              <label className="text-indigo-950 text-base text-[16px] font-medium font-['Arial'] leading-6">
                 Assign Technician (Optional)
               </label>
             </div>
@@ -284,7 +288,7 @@ const StepLocationPriority = ({
             control={control}
             render={({ field }) => (
               <div className="bg-[#F3F8FF] p-5 rounded-2xl border border-[#E0EFFF]">
-                <p className="text-[11px] text-[#4F39F6] font-medium flex items-center gap-1.5 mb-4">
+                <p className="text-[12px] text-[#4F39F6] font-normal flex items-center gap-1.5 mb-4">
                   <Info size={12} /> Select a technician now or assign later
                   from the ticket details page
                 </p>
@@ -328,7 +332,7 @@ const StepLocationPriority = ({
                       >
                         <div className="flex items-center gap-3 mb-4">
                           <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-medium text-xs ${
                               isSelected
                                 ? "bg-white/20"
                                 : "bg-[#8E79FF] text-white"
@@ -339,14 +343,14 @@ const StepLocationPriority = ({
                           </div>
                           <div className="flex flex-col">
                             <p
-                              className={`font-bold text-sm ${isSelected ? "text-white" : "text-gray-700"}`}
+                              className={`font-medium text-sm ${isSelected ? "text-white" : "text-gray-700"}`}
                             >
                               {tech.personId?.firstName}{" "}
                               {tech.personId?.lastName}
                             </p>
                             <div className="flex">
                               <span
-                                className={`text-[10px] px-2 py-0.5 rounded-md font-bold ${
+                                className={`text-[12px] px-2 py-0.5 rounded-md font-medium ${
                                   isBusy
                                     ? "bg-[#FFE9E9] text-[#FF5B5B]"
                                     : isSelected
@@ -367,7 +371,7 @@ const StepLocationPriority = ({
                         >
                           <span>Active Jobs:</span>
                           <span
-                            className={`font-bold ${isSelected ? "text-white" : "text-[#4F39F6]"}`}
+                            className={`font-normal ${isSelected ? "text-white" : "text-[#4F39F6]"}`}
                           >
                             {tech.activeJobs || 0}
                           </span>
@@ -389,7 +393,7 @@ const StepLocationPriority = ({
                         </div>
 
                         {isSelected && (
-                          <div className="mt-3 pt-3 border-t border-white/20 flex justify-center items-center gap-1.5 text-[11px] font-bold animate-in fade-in slide-in-from-top-1">
+                          <div className="mt-3 pt-3 border-t border-white/20 flex justify-center items-center gap-1.5 text-[12px] font-medium animate-in fade-in slide-in-from-top-1">
                             <Check size={14} /> Selected
                           </div>
                         )}
@@ -406,13 +410,13 @@ const StepLocationPriority = ({
           <div className="self-stretch h-5 flex items-center gap-2">
             <Check size={15} strokeWidth={3} className="text-green-900" />
 
-            <h4 className="text-green-900 text-sm font-bold font-['Arial'] leading-5">
+            <h4 className="text-green-900 text-sm font-semibold font-['Arial'] leading-5">
               Review Your Ticket
             </h4>
           </div>
 
           {/* LIST ITEMS */}
-          <div className="self-stretch flex flex-col justify-start items-start gap-2">
+          <div className="self-stretch font-medium text-sm flex flex-col justify-start items-start gap-2">
             {[
               {
                 label: "Customer",

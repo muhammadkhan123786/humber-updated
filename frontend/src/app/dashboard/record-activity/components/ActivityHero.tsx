@@ -4,20 +4,50 @@ import Link from "next/link";
 import {
   Settings,
   Package,
-  CheckSquare,
   Image as ImageIcon,
   Clock,
   ArrowLeft,
-  ClipboardEdit
+  ClipboardEdit,
+  ListTodo,
 } from "lucide-react";
 
 export const ActivityHero = () => {
   const stats = [
-    { label: "Service Activities", value: "0", tag: "Activities", icon: Settings, color: "from-[#00B8DB] to-[#00BBA7]" },
-    { label: "Parts Changed", value: "2", tag: "Parts", icon: Package, color: "from-[#E12AFB] to-[#FF2056]" },
-    { label: "Completed", value: "0/8", tag: "Inspection", icon: CheckSquare, color: "from-[#00BC7D] to-[#7CCF00]" },
-    { label: "Photos & Videos", value: "0", tag: "Media", icon: ImageIcon, color: "from-[#8E51FF] to-[#615FFF]" },
-    { label: "Total Duration", value: "0m", tag: "Time", icon: Clock, color: "from-[#FF8C00] to-[#FF4500]" },
+    {
+      label: "Service Activities",
+      value: "0",
+      tag: "Activities",
+      icon: Settings,
+      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
+    },
+    {
+      label: "Parts Changed",
+      value: "2",
+      tag: "Parts",
+      icon: Package,
+      color: "from-[#E12AFB] to-[#FF2056]",
+    },
+    {
+      label: "Completed",
+      value: "0/8",
+      tag: "Inspection",
+      icon: ListTodo,
+      color: "from-[#00BC7D] to-[#7CCF00]",
+    },
+    {
+      label: "Photos & Videos",
+      value: "0",
+      tag: "Media",
+      icon: ImageIcon,
+      color: "from-[#8E51FF] to-[#615FFF]",
+    },
+    {
+      label: "Total Duration",
+      value: "0m",
+      tag: "Time",
+      icon: Clock,
+      color: "from-[#FF8C00] to-[#FF4500]",
+    },
   ];
 
   return (
@@ -25,30 +55,38 @@ export const ActivityHero = () => {
       <div className="bg-linear-to-r from-[#4F39F6] to-[#9810FA] p-6 rounded-3xl shadow-xl flex items-center gap-4 text-white mb-8">
         <Link href="/dashboard">
           <button className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all cursor-pointer group">
-            <ArrowLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft
+              size={18}
+              className="group-hover:-translate-x-0.5 transition-transform"
+            />
           </button>
         </Link>
         <motion.div
-
-    initial={{ scale: 0, rotate: -180 }}
-    animate={{
-      scale: 1,
-      rotate: 360
-    }}
-    transition={{
-      scale: { type: "spring", duration: 0.8 },
-      rotate: {
-        repeat: Infinity,
-        duration: 12,
-        ease: "linear",
-      },
-    }}
-  >
-    <ClipboardEdit size={32} />
-  </motion.div>
+          initial={{ scale: 0, rotate: -180 }}
+          animate={{
+            scale: 1,
+            rotate: 360,
+          }}
+          transition={{
+            scale: { type: "spring", duration: 0.8 },
+            rotate: {
+              repeat: Infinity,
+              duration: 12,
+              ease: "linear",
+            },
+          }}
+        >
+          <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
+            <ClipboardEdit size={32} />
+          </div>
+        </motion.div>
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Record Technician Activity</h1>
-          <p className="text-white/80 font-medium text-sm">Enter service activities, parts, and inspection results</p>
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+            Record Technician Activity
+          </h1>
+          <p className="text-white/90 mt-1 text-lg">
+            Enter service activities, parts, and inspection results
+          </p>
         </div>
       </div>
 

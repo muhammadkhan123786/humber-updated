@@ -1,0 +1,381 @@
+'use client'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Search, Filter, Grid3x3, List, Check, ChevronDown } from 'lucide-react'
+import { DropdownAnimation } from './Animation'
+
+interface DropdownOption {
+  label: string
+  value: string
+}
+
+interface SearchbarProps {
+  viewMode: 'grid' | 'table'
+  onViewModeChange: (mode: 'grid' | 'table') => void
+  onSearchChange: (search: string) => void
+  onFiltersChange: (filters: { status?: string; urgency?: string; source?: string }) => void
+  totalTickets: number
+  displayedTickets: number
+}
+
+const Searchbar = ({ 
+  viewMode, 
+  onViewModeChange, 
+  onSearchChange, 
+  onFiltersChange,
+  totalTickets,
+  displayedTickets
+}: SearchbarProps) => {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('All Statuses')
+  const [selectedUrgency, setSelectedUrgency] = useState('All Urgencies')
+  const [selectedSource, setSelectedSource] = useState('All Sources')
+  const [isStatusOpen, setIsStatusOpen] = useState(false)
+  const [isUrgencyOpen, setIsUrgencyOpen] = useState(false)
+  const [isSourceOpen, setIsSourceOpen] = useState(false)
+  const [statusOptions, setStatusOptions] = useState<DropdownOption[]>([
+    { label: 'All Statuses', value: 'all' }
+  ])
+  const [urgencyOptions, setUrgencyOptions] = useState<DropdownOption[]>([
+    { label: 'All Urgencies', value: 'all' }
+  ])
+
+  // Fetch status options from API
+  useEffect(() => {
+    const fetchStatusOptions = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No authentication token found')
+          return
+        }
+
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api'
+        const response = await fetch(
+          `${API_BASE_URL}/master-ticket-status-technician-dashboard?filter=all`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data) {
+            const dynamicOptions = data.data.map((status: any) => ({
+              label: status.label,
+              value: status.label.toLowerCase().replace(/ /g, '-')
+            }))
+            setStatusOptions([
+              { label: 'All Statuses', value: 'all' },
+              ...dynamicOptions
+            ])
+          }
+        } else {
+          console.error('Failed to fetch status options:', response.status)
+        }
+      } catch (error) {
+        console.error('Error fetching status options:', error)
+      }
+    }
+
+    fetchStatusOptions()
+  }, [])
+
+  // Fetch urgency options from API
+  useEffect(() => {
+    const fetchUrgencyOptions = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+          console.error('No authentication token found')
+          return
+        }
+
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api'
+        const response = await fetch(
+          `${API_BASE_URL}/master-ticket-urgency-technician-dashboard?filter=all`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        )
+        
+        if (response.ok) {
+          const data = await response.json()
+
+          console.log('Urgency API Response:', data)
+
+          if (data.success && data.data && Array.isArray(data.data)) {
+            console.log('Raw Urgency Data:', data.data)
+            const dynamicOptions = data.data
+              .filter((urgency: any) => urgency && urgency.serviceRequestPrioprity) // Filter out undefined/null values
+              .map((urgency: any) => ({
+                label: urgency.serviceRequestPrioprity,
+                value: urgency.serviceRequestPrioprity.toLowerCase().replace(/ /g, '-')
+              }))
+            console.log('Dynamic Urgency Options:', dynamicOptions)
+            setUrgencyOptions([
+              { label: 'All Urgencies', value: 'all' },
+              ...dynamicOptions
+            ])
+          }
+        } else {
+          console.error('Failed to fetch urgency options:', response.status)
+        }
+      } catch (error) {
+        console.error('Error fetching urgency options:', error)
+      }
+    }
+
+    fetchUrgencyOptions()
+  }, [])
+
+  const closeAllDropdowns = () => {
+    setIsStatusOpen(false)
+    setIsUrgencyOpen(false)
+    setIsSourceOpen(false)
+  }
+
+  const closeOthersExceptStatus = () => {
+    setIsUrgencyOpen(false)
+    setIsSourceOpen(false)
+  }
+
+  const closeOthersExceptUrgency = () => {
+    setIsStatusOpen(false)
+    setIsSourceOpen(false)
+  }
+
+  const closeOthersExceptSource = () => {
+    setIsStatusOpen(false)
+    setIsUrgencyOpen(false)
+  }
+
+  const sourceOptions: DropdownOption[] = [
+    { label: 'All Sources', value: 'all' },
+    { label: 'Phone', value: 'phone' },
+    { label: 'Online', value: 'online' },
+    { label: 'Walk In', value: 'walk-in' },
+  ]
+
+  const handleStatusChange = useCallback((value: string) => {
+    setSelectedStatus(value)
+    onFiltersChange({ 
+      status: value === 'All Statuses' ? undefined : value,
+      urgency: selectedUrgency === 'All Urgencies' ? undefined : selectedUrgency,
+      source: selectedSource === 'All Sources' ? undefined : selectedSource
+    })
+  }, [selectedUrgency, selectedSource, onFiltersChange])
+
+  const handleUrgencyChange = useCallback((value: string) => {
+    setSelectedUrgency(value)
+    onFiltersChange({ 
+      status: selectedStatus === 'All Statuses' ? undefined : selectedStatus,
+      urgency: value === 'All Urgencies' ? undefined : value,
+      source: selectedSource === 'All Sources' ? undefined : selectedSource
+    })
+  }, [selectedStatus, selectedSource, onFiltersChange])
+
+  const handleSourceChange = useCallback((value: string) => {
+    setSelectedSource(value)
+    onFiltersChange({ 
+      status: selectedStatus === 'All Statuses' ? undefined : selectedStatus,
+      urgency: selectedUrgency === 'All Urgencies' ? undefined : selectedUrgency,
+      source: value === 'All Sources' ? undefined : value
+    })
+  }, [selectedStatus, selectedUrgency, onFiltersChange])
+
+  const Dropdown = ({
+    options,
+    selected,
+    onSelect,
+    isOpen,
+    setIsOpen,
+    placeholder,
+    closeOthers
+  }: {
+    options: DropdownOption[]
+    selected: string
+    onSelect: (value: string) => void
+    isOpen: boolean
+    setIsOpen: (value: boolean) => void
+    placeholder: string
+    closeOthers: () => void
+  }) => {
+    const dropdownRef = useRef<HTMLDivElement>(null)
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+          setIsOpen(false)
+        }
+      }
+
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside)
+        setHoveredIndex(0) // Auto-hover first item when dropdown opens
+      } else {
+        setHoveredIndex(null)
+      }
+
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }, [isOpen, setIsOpen])
+
+    const handleToggle = () => {
+      if (!isOpen) {
+        closeOthers()
+      }
+      setIsOpen(!isOpen)
+    }
+
+    const handleOptionClick = useCallback((option: DropdownOption) => {
+      onSelect(option.label)
+      setIsOpen(false)
+    }, [onSelect])
+
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={handleToggle}
+          className={`flex items-center font-semibold justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all w-full md:min-w-48 h-9 focus:outline-none ${
+            isOpen 
+              ? 'border-[#4f46e5] ring-2 ring-[#4f46e5]/50' 
+              : 'border-gray-300 hover:border-gray-400 focus:border-[#4f46e5] focus:ring-2 focus:ring-[#4f46e5]/50'
+          }`}
+        >
+          <span className="text-sm text-gray-700">{selected}</span>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        <DropdownAnimation isOpen={isOpen}>
+          <div className="p-1">
+            {options.map((option, index) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleOptionClick(option)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(0)}
+                className={`w-full  px-3 py-1.5 text-left text-sm flex items-center justify-between transition-colors rounded-md ${
+                  hoveredIndex === index
+                    ? 'bg-[#10b981] text-white'
+                    : 'text-gray-700'
+                }`}
+              >
+                <span>{option.label}</span>
+                {selected === option.label && (
+                  <Check className="w-4 h-4" />
+                )}
+              </button>
+            ))}
+          </div>
+        </DropdownAnimation>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-lg p-4 md:p-6">
+      {/* Search and Filters - Stack on mobile, horizontal on md+ */}
+      <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+        {/* Search Bar */}
+        <div className="relative w-full md:flex-1 md:max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search tickets, customers, products..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              onSearchChange(e.target.value)
+            }}
+            className="w-full h-9 pl-10 pr-3 py-1 bg-[#f3f4f6] border border-gray-300 rounded-lg placeholder:text-[#6b7280] text-sm focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-2 focus:ring-[#4f46e5]/50 transition-all"
+          />
+        </div>
+
+        {/* Status Dropdown */}
+        <div className="w-full md:w-auto">
+          <Dropdown
+            options={statusOptions}
+            selected={selectedStatus}
+            onSelect={handleStatusChange}
+            isOpen={isStatusOpen}
+            setIsOpen={setIsStatusOpen}
+            placeholder="All Statuses"
+            closeOthers={closeOthersExceptStatus}
+          />
+        </div>
+
+        {/* Urgency Dropdown */}
+        <div className="w-full md:w-auto">
+          <Dropdown
+            options={urgencyOptions}
+            selected={selectedUrgency}
+            onSelect={handleUrgencyChange}
+            isOpen={isUrgencyOpen}
+            setIsOpen={setIsUrgencyOpen}
+            placeholder="All Urgencies"
+            closeOthers={closeOthersExceptUrgency}
+          />
+        </div>
+
+        {/* Source Dropdown */}
+        <div className="w-full md:w-auto">
+          <Dropdown
+            options={sourceOptions}
+            selected={selectedSource}
+            onSelect={handleSourceChange}
+            isOpen={isSourceOpen}
+            setIsOpen={setIsSourceOpen}
+            placeholder="All Sources"
+            closeOthers={closeOthersExceptSource}
+          />
+        </div>
+
+        {/* View Toggle Buttons */}
+        <div className="flex items-center gap-1 md:ml-auto bg-gray-100 rounded-xl p-1 w-fit">
+          <button
+            type="button"
+            onClick={() => onViewModeChange('grid')}
+            className={`p-2 px-2.5 rounded-lg transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-linear-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-[#10b981] hover:text-blue-600'
+            }`}
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewModeChange('table')}
+            className={`p-2 px-2.5 rounded-lg transition-colors ${
+              viewMode === 'table'
+                ? 'bg-linear-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-[#10b981] hover:text-blue-600'
+            }`}
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Second Row: Filter and Showing Count */}
+      <div className="flex items-center gap-2 text-sm text-gray-600">
+        <Filter className="w-4 h-4" />
+        <span>Showing <span className="font-semibold text-indigo-600">{displayedTickets}</span> of <span className="font-semibold text-gray-600">{totalTickets}</span> tickets</span>
+      </div>
+    </div>
+  )
+}
+
+export default Searchbar
