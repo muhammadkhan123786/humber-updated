@@ -188,19 +188,19 @@ export const useTicketForm = () => {
       setIsLoading(true);
       try {
         const results = (await Promise.allSettled([
-          getAlls("/customers"),
-          getAlls("/service-request-prioprity-level"),
-          getAlls("/ticket-status"),
-          getAlls("/technicians"),
+          getAlls("/customers?filter=all"),
+          getAlls("/service-request-prioprity-level?filter=all"),
+          getAlls("/ticket-status?filter=all"),
+          getAlls("/technicians?filter=all"),
 
           Promise.resolve({ status: "fulfilled", value: { data: [] } }),
-          getAlls("/ticket-decision"),
-          getAlls("/mobility-parts"),
-          getAlls("/vehiclebrand"),
-          getAlls("/vechilemodel"),
-          getAlls("/colors"),
-          getAlls("/insurance-companies"),
-          getAlls("/register-driver"),
+          getAlls("/ticket-decision?filter=all"),
+          getAlls("/mobility-parts?filter=all"),
+          getAlls("/vehiclebrand?filter=all"),
+          getAlls("/vechilemodel?filter=all"),
+          getAlls("/colors?filter=all"),
+          getAlls("/insurance-companies?filter=all"),
+          getAlls("/register-driver?filter=all"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
