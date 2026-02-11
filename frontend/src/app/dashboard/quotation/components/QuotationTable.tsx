@@ -21,6 +21,7 @@ interface Quotation {
   date: string;
   amount: string;
   status: Status;
+  payBy: string;
 }
 
 const QuotationTable: React.FC = () => {
@@ -32,6 +33,7 @@ const QuotationTable: React.FC = () => {
       date: "01 Feb 2024",
       amount: "£ 389.40",
       status: "sent",
+      payBy: "Cash",
     },
     {
       id: "QUO-1738654321002",
@@ -40,6 +42,7 @@ const QuotationTable: React.FC = () => {
       date: "02 Feb 2024",
       amount: "£ 156.00",
       status: "approved",
+      payBy: "Cheque",
     },
     {
       id: "QUO-1738654321003",
@@ -48,6 +51,7 @@ const QuotationTable: React.FC = () => {
       date: "03 Feb 2024",
       amount: "£ 159.60",
       status: "draft",
+      payBy: "Bank Transfer",
     },
     {
       id: "QUO-1738654321004",
@@ -56,6 +60,7 @@ const QuotationTable: React.FC = () => {
       date: "05 Feb 2024",
       amount: "£ 234.00",
       status: "rejected",
+      payBy: "Card",
     },
   ];
 
@@ -115,6 +120,9 @@ const QuotationTable: React.FC = () => {
                   Total Amount
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">
+                  Pay By
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">
                   Status
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-semibold">
@@ -149,6 +157,10 @@ const QuotationTable: React.FC = () => {
                   </td>
                   <td className="p-4 text-[#4F46E5] font-bold text-base">
                     {row.amount}
+                  </td>
+                  <td className="p-4 text-sm text-slate-700">
+                    {/* NEW COLUMN CELL */}
+                    {row.payBy || "N/A"}
                   </td>
                   <td className="p-4">
                     <span

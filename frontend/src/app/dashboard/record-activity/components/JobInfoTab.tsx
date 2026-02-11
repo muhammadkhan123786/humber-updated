@@ -159,7 +159,6 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* 1. SELECT SERVICE TICKET SECTION */}
       <div className="bg-white border border-blue-100 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 text-[#4F39F6] font-bold">
           <Calendar size={20} />

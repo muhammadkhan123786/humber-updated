@@ -61,7 +61,7 @@ const AdditionalCharges: React.FC = () => {
                 isSearchable={false}
               />
             </div>
-            <div className="relative h-12">
+            <div className="w-full ">
               <input
                 type="number"
                 placeholder="0"
@@ -69,7 +69,7 @@ const AdditionalCharges: React.FC = () => {
                 onChange={(e) =>
                   setDiscountValue(parseFloat(e.target.value) || 0)
                 }
-                className={`w-full h-full px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
+                className={`w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
               />
             </div>
             <div className="h-12 px-4 bg-amber-50 rounded-xl outline-2 outline-amber-200 flex justify-between items-center">
