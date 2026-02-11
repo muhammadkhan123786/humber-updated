@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+import mongoose, { Types } from "mongoose";
+
+import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
 import { TechnicianJobStatus } from "../../models/master-data-models/technician.job.status.models";
 
 export const technicianJobsStatisticsController = async (
@@ -6,13 +9,13 @@ export const technicianJobsStatisticsController = async (
     res: Response
 ) => {
     try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
         const result = await TechnicianJobStatus.aggregate([
             {
                 $facet: {
-
-                    /* ===================================================
-                       ✅ 1. STATUS COUNTS (Master Driven)
-                    ==================================================== */
+                    // ✅ 1️⃣ STATUS COUNTS (Show ALL statuses)
                     statusCounts: [
                         {
                             $lookup: {
@@ -23,7 +26,18 @@ export const technicianJobsStatisticsController = async (
                                         $match: {
                                             $expr: {
                                                 $and: [
-                                                    { $eq: ["$jobStatusId", "$$statusId"] },
+                                                    {
+                                                        $eq: [
+                                                            {
+                                                                $cond: [
+                                                                    { $eq: [{ $type: "$jobStatusId" }, "string"] },
+                                                                    { $toObjectId: "$jobStatusId" },
+                                                                    "$jobStatusId"
+                                                                ]
+                                                            },
+                                                            "$$statusId"
+                                                        ]
+                                                    },
                                                     { $eq: ["$isDeleted", false] }
                                                 ]
                                             }
@@ -46,14 +60,14 @@ export const technicianJobsStatisticsController = async (
                         },
                         {
                             $project: {
-                                jobsData: 0
+                                _id: 1,
+                                technicianJobStatus: 1,
+                                totalJobs: 1
                             }
                         }
                     ],
 
-                    /* ===================================================
-                       ✅ 2. OVERALL TOTAL JOBS
-                    ==================================================== */
+                    // ✅ 2️⃣ OVERALL TOTAL JOBS (REAL JOBS COLLECTION)
                     overallTotal: [
                         {
                             $lookup: {
@@ -62,91 +76,67 @@ export const technicianJobsStatisticsController = async (
                                     { $match: { isDeleted: false } },
                                     { $count: "overallTotalJobs" }
                                 ],
-                                as: "data"
+                                as: "overall"
                             }
                         },
                         {
+                            $unwind: {
+                                path: "$overall",
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        {
+                            $limit: 1
+                        },
+                        {
                             $project: {
-                                overallTotalJobs: {
-                                    $ifNull: [
-                                        { $arrayElemAt: ["$data.overallTotalJobs", 0] },
-                                        0
-                                    ]
-                                }
+                                overallTotalJobs: "$overall.overallTotalJobs"
                             }
                         }
                     ],
 
-                    /* ===================================================
-                       ✅ 3. EXTRA DASHBOARD STATS (OPTIONAL)
-                    ==================================================== */
-                    stats: [
+                    // ✅ 3️⃣ TODAY JOBS
+                    todayJobs: [
                         {
                             $lookup: {
                                 from: "techniciansjobs",
                                 pipeline: [
-                                    { $match: { isDeleted: false } },
                                     {
-                                        $group: {
-                                            _id: null,
-                                            completedJobs: {
-                                                $sum: {
-                                                    $cond: [
-                                                        { $eq: ["$jobStatusName", "Completed"] }, // adjust if needed
-                                                        1,
-                                                        0
-                                                    ]
-                                                }
-                                            },
-                                            pendingJobs: {
-                                                $sum: {
-                                                    $cond: [
-                                                        { $eq: ["$jobStatusName", "Pending"] },
-                                                        1,
-                                                        0
-                                                    ]
-                                                }
-                                            },
-                                            todayJobs: {
-                                                $sum: {
-                                                    $cond: [
-                                                        {
-                                                            $gte: [
-                                                                "$createdAt",
-                                                                new Date(new Date().setHours(0, 0, 0, 0))
-                                                            ]
-                                                        },
-                                                        1,
-                                                        0
-                                                    ]
-                                                }
-                                            }
+                                        $match: {
+                                            isDeleted: false,
+                                            createdAt: { $gte: todayStart }
                                         }
-                                    }
+                                    },
+                                    { $count: "todayJobs" }
                                 ],
-                                as: "data"
+                                as: "today"
                             }
                         },
+                        { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
+                        { $limit: 1 },
                         {
                             $project: {
-                                stats: { $arrayElemAt: ["$data", 0] }
+                                todayJobs: "$today.todayJobs"
                             }
                         }
                     ]
                 }
             },
-
-            /* ===================================================
-               ✅ FINAL CLEAN RESPONSE SHAPE
-            ==================================================== */
             {
                 $project: {
                     statusCounts: 1,
+                    technicianJobStatus: 1,
                     overallTotalJobs: {
-                        $arrayElemAt: ["$overallTotal.overallTotalJobs", 0]
+                        $ifNull: [
+                            { $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] },
+                            0
+                        ]
                     },
-                    stats: {
-                        $arrayElemAt: ["$stats.stats", 0]
+                    todayJobs: {
+                        $ifNull: [
+                            { $arrayElemAt: ["$todayJobs.todayJobs", 0] },
+                            0
+                        ]
                     }
                 }
             }
@@ -154,17 +144,18 @@ export const technicianJobsStatisticsController = async (
 
         return res.status(200).json({
             success: true,
-            data: result
+            data: result[0] || {
+                statusCounts: [],
+                overallTotalJobs: 0,
+                todayJobs: 0
+            }
         });
-
-
-
 
     } catch (error) {
         console.error("Technician Jobs Statistics Error:", error);
         return res.status(500).json({
             success: false,
-            message: "Failed to fetch technician job statistics failed.",
+            message: "Failed to fetch technician job statistics."
         });
     }
 };

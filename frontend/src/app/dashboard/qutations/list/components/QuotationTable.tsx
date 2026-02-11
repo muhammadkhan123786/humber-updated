@@ -15,6 +15,11 @@ interface QuotationFromBackend {
     lastName: string;
     email?: string;
   };
+  ticket: {
+    _id: string;
+    ticketCode: string;
+    [key: string]: any;
+  };
   labourTime?: number;
   labourRate?: number;
   partTotalBill?: number;
@@ -80,6 +85,9 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
               Total Amount
             </th>
             <th className="px-4 py-5 text-left text-sm font-semibold">
+              Pay By
+            </th>
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Status
             </th>
             <th className="px-4 py-5 text-left text-sm font-semibold">
@@ -134,6 +142,11 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                   <td className="px-4 py-4">
                     <span className=" font-bold text-indigo-600">
                       {formatCurrency(quotation.netTotal)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className="text-sm font-medium text-indigo-600">
+                      {quotation.ticket.pay_by || "N/A"}
                     </span>
                   </td>
                   <td className="px-4 py-4">

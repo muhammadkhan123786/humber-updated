@@ -288,6 +288,11 @@ const ListAllQuotations = () => {
             />
           </div>
         
+            {/* Status Cards */}
+        <Cards
+          statusCounts={getStatusCounts()}
+          onFilterByStatus={handleFilterByStatus}
+        />
 
         {/* Quotations Table */}
         <QuotationTable
@@ -298,14 +303,8 @@ const ListAllQuotations = () => {
           getCustomerName={getCustomerName}
           getTicketNumber={getTicketNumber}
           getStatusInfo={getStatusInfo}
-        />
-
-        {/* Status Cards */}
-        <Cards
-          statusCounts={getStatusCounts()}
-          onFilterByStatus={handleFilterByStatus}
-        />
-</div>
+        />       
+        </div>
         {/* View Modal */}
         {viewingQuotation && (
           <View

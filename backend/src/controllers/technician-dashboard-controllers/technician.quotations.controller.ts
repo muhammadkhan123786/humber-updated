@@ -125,6 +125,7 @@ export const technicianTicketsQuotationsController = async (
           _id: "$ticket._id",
           ticketCode: "$ticket.ticketCode",
           issue_Details: "$ticket.issue_Details",
+          pay_by:"$ticket.decisionId",
          // location: "$ticket.location",
         },
         quotationStatus: "$quotationStatus.ticketQuationStatus",
