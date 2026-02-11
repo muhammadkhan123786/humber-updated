@@ -145,7 +145,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <span className=" font-bold text-indigo-600">
+                    <span className="text-sm font-medium text-indigo-600">
                       {quotation.ticket.pay_by || "N/A"}
                     </span>
                   </td>
