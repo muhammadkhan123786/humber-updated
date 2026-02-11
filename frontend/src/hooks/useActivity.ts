@@ -236,12 +236,12 @@ export const useActivityRecordForm = () => {
       setIsLoading(true);
       try {
         const results = (await Promise.allSettled([
-          getAlls("/customer-tickets"),
-          getAlls("/technicians"),
-          getAlls("/technician-service-types"),
-          getAlls("/mobility-parts"),
-          getAlls("/technician-inspection"),
-          getAlls("/technician-job-status"),
+          getAlls("/customer-tickets?filter=all"),
+          getAlls("/technicians?filter=all"),
+          getAlls("/technician-service-types?filter=all"),
+          getAlls("/mobility-parts?filter=all"),
+          getAlls("/technician-inspection?filter=all"),
+          getAlls("/technician-job-status?filter=all"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
@@ -268,11 +268,19 @@ export const useActivityRecordForm = () => {
           setInspectionTypes(
             (results[4].value?.data ?? []).filter((i: any) => i.isActive),
           );
-
-        if (results[5].status === "fulfilled")
-          setJobStatuses(
-            (results[5].value?.data ?? []).filter((i: any) => i.isActive),
+        if (results[5].status === "fulfilled") {
+          const statuses = (results[5].value?.data ?? []).filter(
+            (i: any) => i.isActive,
           );
+
+          setJobStatuses(statuses);
+
+          const defaultStatus = statuses.find((s: any) => s.isDefault);
+
+          if (!editId && defaultStatus) {
+            form.setValue("jobStatusId", defaultStatus._id);
+          }
+        }
       } catch (err) {
         console.error("Error fetching dropdown data:", err);
         setError("Failed to load form data");
@@ -282,7 +290,7 @@ export const useActivityRecordForm = () => {
     };
 
     fetchDropdownData();
-  }, []);
+  }, [editId, form]);
 
   const handleSubmit = async (data: ActivityRecordFormData): Promise<any> => {
     try {
