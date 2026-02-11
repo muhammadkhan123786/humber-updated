@@ -63,31 +63,31 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
     <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
       <table className="w-full">
         <thead>
-          <tr className="bg-linear-to-r from-indigo-600 to-purple-600 text-white">
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+          <tr className="bg-linear-to-r from-indigo-500 to-purple-500 text-white">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Quotation No.
             </th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Ticket No.
             </th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+            <th className="px-4 py-5  text-left text-sm font-semibold">
               Customer Name
             </th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Created Date
             </th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Total Amount
             </th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Status
             </th>
-            <th className="px-6 py-4 text-left text-sm font-semibold">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="bg-white divide-y divide-gray-200">
           {quotations.length === 0 ? (
             <tr>
               <td colSpan={7} className="px-6 py-12 text-center">
@@ -103,19 +103,19 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
               return (
                 <tr
                   key={quotation._id}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-indigo-50 transition-colors"
                 >
-                  <td className="px-6 py-4">
-                    <span className="font-mono text-sm text-gray-700">
+                  <td className="px-4 py-4 ">
+                    <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
                       {quotation.quotationAutoId || "N/A"}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="font-mono text-sm text-gray-700">
+                  <td className="px-4 py-4">
+                    <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
                       {getTicketNumber(quotation)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <User size={16} className="text-gray-400" />
                       <span className="text-sm font-medium text-gray-900">
@@ -123,7 +123,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <Calendar size={16} className="text-gray-400" />
                       <span className="text-sm text-gray-600">
@@ -131,19 +131,19 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-indigo-600">
+                  <td className="px-4 py-4">
+                    <span className=" font-bold text-indigo-600">
                       {formatCurrency(quotation.netTotal)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     <span
-                      className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color}`}
+                      className={`inline-flex px-3 py-1 rounded-full   text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color}`}
                     >
                       {statusInfo.name}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     <ActionButtons
                       onView={() => onView(quotation._id)}
                       onEdit={() => onEdit(quotation._id)}

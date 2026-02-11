@@ -1,11 +1,11 @@
 "use client";
-
 import  { useState, useEffect } from "react";
 import { Search, FileText } from "lucide-react";
 import Cards from "./Cards";
 import QuotationTable from "./QuotationTable";
+import View from "./View";
 import { getAlls, deleteItem } from "@/helper/apiHelper";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 interface QuotationFromBackend {
   _id: string;
@@ -13,6 +13,10 @@ interface QuotationFromBackend {
   ticketCode: string;
   quotationStatus: string;
   quotationAutoId?: string;
+  ticket: {
+    ticketCode: string;
+    [key: string]: any;
+  };
   customer: {
     _id: string;
     firstName: string;
@@ -36,6 +40,7 @@ const ListAllQuotations = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [viewingQuotation, setViewingQuotation] = useState<QuotationFromBackend | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -169,13 +174,21 @@ const ListAllQuotations = () => {
   };
 
   const handleView = (id: string) => {
-    console.log("View quotation:", id);
-    toast.info("View functionality coming soon");
+    const quotation = quotations.find(q => q._id === id);
+    if (quotation) {
+      setViewingQuotation(quotation);
+    } else {
+      toast.error("Quotation not found");
+    }
+  };
+
+  const handleCloseView = () => {
+    setViewingQuotation(null);
   };
 
   const handleEdit = (id: string) => {
     console.log("Edit quotation:", id);
-    toast.info("Edit functionality coming soon");
+    toast.error("Edit functionality coming soon");
   };
 
   const handleDelete = async (id: string) => {
@@ -208,24 +221,23 @@ const ListAllQuotations = () => {
   }
 
   return (
-    <div className="bg-linear-to-br from-gray-50 to-gray-100 p-6">
+    <div className="shadow-xl bg-white/80 backdrop-blur-sm border-t-4 border-indigo-600 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header with Count */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg">
-                <FileText className="text-white" size={28} />
+            <div className="flex items-center gap-2">
+              <div className="">
+                <FileText className="text-indigo-600" size={20} />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-lg font-semibold text-gray-900">
                   All Quotations
                 </h1>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500">Total Quotations</p>
-              <p className="text-2xl font-bold text-indigo-600">
+              <p className="border border-gray-200 rounded-md px-2 py-0.5 text-sm  font-medium">
                 {quotations.length} quotations
               </p>
             </div>
@@ -233,7 +245,7 @@ const ListAllQuotations = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="space-y-4 ">
           <div className="relative">
             <Search
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -244,16 +256,10 @@ const ListAllQuotations = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by quotation number, ticket ID, or customer name..."
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              className="w-full pl-12 pr-4 py-3 bg-[#f3f4f6] h-12 rounded-lg placeholder:text-[#6b7280] text-sm focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all"
             />
           </div>
-        </div>
-
-        {/* Status Cards */}
-        <Cards
-          statusCounts={getStatusCounts()}
-          onFilterByStatus={handleFilterByStatus}
-        />
+        
 
         {/* Quotations Table */}
         <QuotationTable
@@ -265,6 +271,20 @@ const ListAllQuotations = () => {
           getTicketNumber={getTicketNumber}
           getStatusInfo={getStatusInfo}
         />
+
+        {/* Status Cards */}
+        <Cards
+          statusCounts={getStatusCounts()}
+          onFilterByStatus={handleFilterByStatus}
+        />
+</div>
+        {/* View Modal */}
+        {viewingQuotation && (
+          <View
+            quotation={viewingQuotation}
+            onClose={handleCloseView}
+          />
+        )}
       </div>
     </div>
   );
