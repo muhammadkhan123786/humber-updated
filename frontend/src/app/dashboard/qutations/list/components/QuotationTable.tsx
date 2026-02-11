@@ -113,13 +113,14 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                   key={quotation._id}
                   className="hover:bg-indigo-50 transition-colors"
                 >
-                  <td className="px-4 py-4 ">
-                    <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
+                  <td className="px-3 py-4">
+                    <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
                       {quotation.quotationAutoId || "N/A"}
                     </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100">
+
+                  <td className="px-3 py-4">
+                    <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
                       {getTicketNumber(quotation)}
                     </span>
                   </td>
