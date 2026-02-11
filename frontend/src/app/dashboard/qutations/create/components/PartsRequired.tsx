@@ -205,7 +205,7 @@ const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => 
             <div className="space-y-3">
               {selectedParts.map((part, index) => (
                 <div
-                  key={part._id}
+                  key={part._id ? `${part._id}-${index}` : `part-${index}`}
                   className="border border-orange-200 rounded-lg p-4 bg-orange-50/30 hover:bg-orange-50/50 transition-all duration-300 animate-slideUp"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >

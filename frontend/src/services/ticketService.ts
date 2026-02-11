@@ -44,13 +44,13 @@ export const fetchTechnicianTickets = async (filters: TicketFilters = {}): Promi
       'Authorization': `Bearer ${token}`,
     },
   });
-
+ 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Failed to fetch tickets' }));
     throw new Error(error.message || 'Failed to fetch tickets');
   }
   const data = await response.json();
-  console.log('Fetch Tickets Response:', data);
+  console.log('Fetch Tickets Response imran:', data);
   return data;
 };
 

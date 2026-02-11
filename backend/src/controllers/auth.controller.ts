@@ -5,6 +5,7 @@ import { DriverModel } from '../models/driver/driver.models';
 import { AuthRequest } from '../middleware/auth.middleware';
 import { CustomerBase } from '../models/customer.models';
 import { customerTicketBase } from '../models/ticket-management-system-models/customer.ticket.base.models';
+import { Technicians } from '../models/technician-models/technician.models';
 
 //this is middleware. common for register all user.
 export const userRegister = async (req: Request, res: Response, next: NextFunction) => {
@@ -122,6 +123,33 @@ export const login = async (req: Request, res: Response) => {
                 token
             });
         }
+
+        //if user role is technician 
+        if (user.role === 'Technician') {
+            const technician = await Technicians.findOne({ accountId: user._id });
+
+            if (!technician) {
+                return res.status(404).json({
+                    message: "Technician profile not found for this account"
+                });
+            }
+            if (!technician.isActive) {
+                return res.status(404).json({
+                    message: "Your account is not active. Please contact website admin."
+                });
+            }
+
+            return res.status(200).json({
+                user: {
+                    id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    technicianId: technician._id,
+                },
+                token
+            });
+        }
+
         return res.status(200).json({
             user: {
                 id: user._id,

@@ -49,7 +49,17 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: "$ticket" },
-        // 3️⃣ Lookup - quotation status
+        // 3️⃣ Lookup - ticket status
+        {
+            $lookup: {
+                from: "ticketstatuses",
+                localField: "ticket.ticketStatusId",
+                foreignField: "_id",
+                as: "ticketStatusDetails",
+            },
+        },
+        { $unwind: { path: "$ticketStatusDetails", preserveNullAndEmptyArrays: true } },
+        // 4️⃣ Lookup - quotation status
         {
             $lookup: {
                 from: "ticketquationstatuses",
@@ -59,7 +69,7 @@ export const technicianTicketsQuotationsController = async (
             },          
         },
         { $unwind: "$quotationStatus" },
-        // 4️⃣ Lookup - parts details
+        // 5️⃣ Lookup - customer details
         {
             $lookup: {
                 from: "customerbases",
@@ -78,6 +88,57 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: "$person" },       
+        // 6️⃣ Lookup - vehicle details
+        {
+            $lookup: {
+                from: "customervehiclemodels",
+                localField: "ticket.vehicleId",
+                foreignField: "_id",
+                as: "vehicle",
+            },
+        },
+        { $unwind: { path: "$vehicle", preserveNullAndEmptyArrays: true } },
+        // 7️⃣ Lookup - vehicle brand
+        {
+            $lookup: {
+                from: "vechiclebrands",
+                localField: "vehicle.vehicleBrandId",
+                foreignField: "_id",
+                as: "vehicleBrand",
+            },
+        },
+        { $unwind: { path: "$vehicleBrand", preserveNullAndEmptyArrays: true } },
+        // 8️⃣ Lookup - vehicle model
+        {
+            $lookup: {
+                from: "vechiclemodels",
+                localField: "vehicle.vehicleModelId",
+                foreignField: "_id",
+                as: "vehicleModel",
+            },
+        },
+        { $unwind: { path: "$vehicleModel", preserveNullAndEmptyArrays: true } },
+        // 9️⃣ Lookup - parts details
+        {
+            $lookup: {
+                from: "parts",
+                localField: "partsList",
+                foreignField: "_id",
+                as: "partsDetails",
+            },
+        },
+        // 🔟 Add fields to preserve original partsList array
+        {
+            $addFields: {
+                originalPartsList: "$partsList",
+                debugVehicle: {
+                    hasVehicle: { $cond: [{ $ifNull: ["$vehicle._id", false] }, true, false] },
+                    hasBrand: { $cond: [{ $ifNull: ["$vehicleBrand.brandName", false] }, true, false] },
+                    hasModel: { $cond: [{ $ifNull: ["$vehicleModel.modelName", false] }, true, false] },
+                    vehicleId: "$ticket.vehicleId"
+                }
+            }
+        },
 
     ];
     console.log("Technician Quotations Initial Match Pipeline:", pipeline);
@@ -110,6 +171,7 @@ export const technicianTicketsQuotationsController = async (
     pipeline.push({
       $project: {
         quotationAutoId: 1,
+        technicianId: 1,
         labourTime: 1,
         labourRate: 1,
         partTotalBill: 1,
@@ -125,27 +187,88 @@ export const technicianTicketsQuotationsController = async (
           _id: "$ticket._id",
           ticketCode: "$ticket.ticketCode",
           issue_Details: "$ticket.issue_Details",
-          pay_by:"$ticket.decisionId",
-         // location: "$ticket.location",
+          pay_by: "$ticket.decisionId",
+          ticketStatus: { $ifNull: ["$ticketStatusDetails.label", "$ticketStatusDetails.code"] },
+          customer: {
+            _id: "$customer._id",
+            firstName: "$person.firstName",
+            lastName: "$person.lastName",
+            email: "$contact.emailId",
+          },
+          vehicle: {
+            _id: "$vehicle._id",
+            vehicleBrandId: {
+              _id: "$vehicleBrand._id",
+              brandName: "$vehicleBrand.brandName",
+            },
+            vehicleModelId: {
+              _id: "$vehicleModel._id",
+              modelName: "$vehicleModel.modelName",
+            },
+          },
         },
         quotationStatus: "$quotationStatus.ticketQuationStatus",
-        partsList: 1,
+        partsList: {
+          $map: {
+            input: "$originalPartsList",
+            as: "partId",
+            in: {
+              $let: {
+                vars: {
+                  matchedPart: {
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$partsDetails",
+                          as: "detail",
+                          cond: { $eq: ["$$detail._id", "$$partId"] }
+                        }
+                      },
+                      0
+                    ]
+                  }
+                },
+                in: {
+                  _id: "$$matchedPart._id",
+                  partName: "$$matchedPart.partName",
+                  partNumber: "$$matchedPart.partNumber",
+                  unitCost: "$$matchedPart.unitCost",
+                  stock: "$$matchedPart.stock",
+                  description: "$$matchedPart.description",
+                  quantity: 1
+                }
+              }
+            }
+          }
+        },
         technician: {
           _id: "$technician._id",
           name: "$technician.name",
         },
-
         customer: {
           _id: "$customer._id",
           firstName: "$person.firstName",
           lastName: "$person.lastName",
           email: "$contact.emailId",
         },
+        debugVehicle: 1,
       },
     });
 
     const quotations = await TicketQuations.aggregate(pipeline);
-  console.log("Technician Quotations Aggregation Result:", quotations);
+    console.log("Technician Quotations Aggregation Result:", JSON.stringify(quotations, null, 2));
+    
+    // Log specific quotation details for debugging
+    if (quotations.length > 0) {
+      console.log("First quotation partsList length:", quotations[0].partsList?.length);
+      console.log("First quotation partsList:", JSON.stringify(quotations[0].partsList, null, 2));
+      console.log("First quotation originalPartsList:", quotations[0].originalPartsList);
+      console.log("First quotation ticket:", JSON.stringify(quotations[0].ticket, null, 2));
+      console.log("First quotation vehicle:", JSON.stringify(quotations[0].ticket?.vehicle, null, 2));
+      console.log("First quotation customer:", JSON.stringify(quotations[0].ticket?.customer, null, 2));
+      console.log("First quotation partsList:", quotations[0].partsList);
+    }
+    
     return res.status(200).json({
       success: true,
       message: "Technician Quotations fetched successfully",

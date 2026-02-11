@@ -13,7 +13,7 @@ const ticketQuotationServices = new GenericService<ticketQuatationDoc>(TicketQua
 
 const ticketQuotationController = new AdvancedGenericController({
     service: ticketQuotationServices,
-    populate: ["userId"],
+    populate: ["userId","technicianId","ticketId","quotationStatusId","partsList"],
     validationSchema: ticketQuotationValidation,
     searchFields: ["quotationAutoId"]
 });
@@ -39,7 +39,17 @@ ticketQuotationRouter.post("/",async (req, res, next) => {
       console.log("Modified Request Body for Ticket Quotation Creation:", req.body);
     next();
   }, ticketQuotationController.create);
-ticketQuotationRouter.put("/:id", technicianMasterProtector, ticketQuotationController.update);
+ticketQuotationRouter.put("/:id", technicianMasterProtector, (req:Request,res:Response,next:NextFunction)=>{
+    console.log("Update Ticket Quotation Request Body:", req.body);
+    console.log("Parts list being updated:", req.body.partsList);
+    console.log("Parts list length:", req.body.partsList?.length);
+    console.log("Parts list array:", JSON.stringify(req.body.partsList, null, 2));
+      const newUserId = req.body.userId;
+      req.body.userId = req.body.technicianId;
+      req.body.technicianId = newUserId;
+      console.log("Modified Request Body for Ticket Quotation Update:", req.body);
+    next();
+  }, ticketQuotationController.update);
 ticketQuotationRouter.delete("/:id", ticketQuotationController.delete);
 
 export default ticketQuotationRouter;

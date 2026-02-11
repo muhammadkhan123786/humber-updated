@@ -54,6 +54,12 @@ export default function LoginPage() {
       localStorage.setItem('user', JSON.stringify(result.user));
       localStorage.setItem('email', email);
       localStorage.setItem('userId', result.user.id);
+      
+      // Store technicianId if user is a technician
+      if (result.user.technicianId) {
+        localStorage.setItem('technicianId', result.user.technicianId);
+      }
+      
       if (result.user.role) {
         if (result.user.role === 'Admin') {
           localStorage.setItem('roleId', JSON.stringify(1));

@@ -53,8 +53,9 @@ interface Part {
   partName: string;
   partNumber?: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  unitCost: number;
+  stock?: number;
+  description?: string;
 }
 
 interface QuotationViewData {
@@ -209,10 +210,10 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Full Name</p>
                 <p className="text-gray-900 font-semibold">
-                  {quotation.customer.firstName} {quotation.customer.lastName}
+                  {quotation?.customer?.firstName || ''} {quotation?.customer?.lastName || ''}
                 </p>
               </div>
-              {quotation.customer.email && (
+              {quotation?.customer?.email && (
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Mail size={16} className="text-gray-500" />
@@ -221,7 +222,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                   <p className="text-gray-900">{quotation.customer.email}</p>
                 </div>
               )}
-              {quotation.customer.phone && (
+              {quotation?.customer?.phone && (
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Phone size={16} className="text-gray-500" />
@@ -233,7 +234,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Ticket Number</p>
                 <p className="text-gray-900 font-mono font-semibold">
-                  {quotation.ticket.ticketCode || "N/A"}
+                  {quotation?.ticket?.ticketCode || "N/A"}
                 </p>
               </div>
             </div>
@@ -269,7 +270,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {quotation.partsList.map((part, index) => (
-                      <tr key={part._id || index} className="hover:bg-gray-50">
+                      <tr key={`${part._id}-${index}`} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {part.partName}
                         </td>
@@ -280,10 +281,10 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                           {part.quantity}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                          {formatCurrency(part.unitPrice)}
+                          {formatCurrency(part.unitCost || 0)}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-indigo-600 text-right">
-                          {formatCurrency(part.totalPrice)}
+                          {formatCurrency((part.unitCost || 0) * (part.quantity || 1))}
                         </td>
                       </tr>
                     ))}

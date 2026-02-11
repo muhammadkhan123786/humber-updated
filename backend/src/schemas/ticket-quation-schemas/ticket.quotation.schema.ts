@@ -13,7 +13,7 @@ export const ticketQuotationSchema = {
 
     quotationStatusId: {
         type: Types.ObjectId,
-        ref: "TicketQuotationStatus",
+        ref: "TicketQuationStatus",
         index: true,
         required: true,
     },
