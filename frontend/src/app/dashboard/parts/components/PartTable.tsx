@@ -96,6 +96,10 @@ const PartTable = ({
               Cost
             </th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">
+              Stock
+            </th>
+
+            <th className="px-6 py-4 text-center font-bold text-gray-700">
               Status
             </th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">
@@ -113,10 +117,11 @@ const PartTable = ({
                   <Settings size={18} />
                 </div>
               </td>
+
               <td className="px-6 py-4">
                 <div className="flex flex-col">
                   <span className="font-bold text-gray-900 flex items-center gap-2">
-                    {item.partName}{" "}
+                    {item.partName}
                     {item.isDefault && (
                       <Star
                         size={14}
@@ -129,9 +134,19 @@ const PartTable = ({
                   </span>
                 </div>
               </td>
-              <td className="px-6 py-4 text-center font-semibold text-gray-700">
-                ${item.unitCost?.toFixed(2)}
+
+              <td className="px-6 py-4 text-center">
+                <p className="text-indigo-600 font-bold">
+                  ${item.unitCost?.toFixed(2)}
+                </p>
               </td>
+
+              <td className="px-6 py-4 text-center">
+                <p className="text-sm text-gray-600 font-medium">
+                  Stock: <span className="font-bold">{item.stock ?? 0}</span>
+                </p>
+              </td>
+
               <td className="px-6 py-4 text-center">
                 <StatusBadge
                   isActive={!!item.isActive}
@@ -141,6 +156,7 @@ const PartTable = ({
                   editable={!item.isDefault}
                 />
               </td>
+
               <td className="px-6 py-4 text-center">
                 <TableActionButton
                   itemName="part"

@@ -5,13 +5,20 @@ import { useRouter } from 'next/navigation';
 import AvailableTickets from '../../components/AvailableTickets';
 import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
+import LaborAdditionalCost from './LaborAdditionalCost';
 import { getAll } from '@/helper/apiHelper';
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
 
@@ -21,9 +28,23 @@ const CreateQuotationPage = () => {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [showTicketInfo, setShowTicketInfo] = useState(false);
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
+  
+  // Labor and additional cost states
+  const [laborHours, setLaborHours] = useState(0);
+  const [ratePerHour, setRatePerHour] = useState(45);
+  const [additionalNotes, setAdditionalNotes] = useState('');
+  const [validUntil, setValidUntil] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toISOString().split('T')[0];
+  });
+  
+  // Tax state
+  const [defaultTaxPercentage, setDefaultTaxPercentage] = useState(20);
 
   useEffect(() => {
     fetchQuotationAutoCode();
+    fetchDefaultTax();
   }, []);
 
   const fetchQuotationAutoCode = async () => {
@@ -34,6 +55,18 @@ const CreateQuotationPage = () => {
       }
     } catch (error) {
       console.error('Error fetching quotation auto code:', error);
+    }
+  };
+
+  const fetchDefaultTax = async () => {
+    try {
+      const response = await getAll<{ taxPercentage: number }>('/default-tax');
+      if ((response as any)?.taxPercentage !== undefined) {
+        setDefaultTaxPercentage((response as any).taxPercentage);
+      }
+    } catch (error) {
+      console.error('Error fetching default tax:', error);
+      // Keep default 20% if API fails
     }
   };
 
@@ -98,7 +131,17 @@ const CreateQuotationPage = () => {
 
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
-              <QuotationSummary selectedTicket={selectedTicket} />
+              <div className="sticky top-6">
+                <QuotationSummary 
+                  selectedTicket={selectedTicket} 
+                  laborHours={laborHours}
+                  ratePerHour={ratePerHour}
+                  taxPercentage={defaultTaxPercentage}
+                  additionalNotes={additionalNotes}
+                  validUntil={validUntil}
+                  quotationAutoId={quotationId}
+                />
+              </div>
             </div>
           </div>
         ) : (
@@ -111,14 +154,32 @@ const CreateQuotationPage = () => {
                 selectedParts={selectedParts}
                 onPartsChange={setSelectedParts}
               />
+              <LaborAdditionalCost
+                laborHours={laborHours}
+                ratePerHour={ratePerHour}
+                additionalNotes={additionalNotes}
+                validUntil={validUntil}
+                onLaborHoursChange={setLaborHours}
+                onRatePerHourChange={setRatePerHour}
+                onAdditionalNotesChange={setAdditionalNotes}
+                onValidUntilChange={setValidUntil}
+              />
             </div>
 
             {/* Right Column - Quotation Summary (1/3 width) */}
             <div className="lg:col-span-1">
-              <QuotationSummary 
-                selectedTicket={selectedTicket}
-                selectedParts={selectedParts}
-              />
+              <div className="sticky top-6">
+                <QuotationSummary 
+                  selectedTicket={selectedTicket}
+                  selectedParts={selectedParts}
+                  laborHours={laborHours}
+                  ratePerHour={ratePerHour}
+                  taxPercentage={defaultTaxPercentage}
+                  additionalNotes={additionalNotes}
+                  validUntil={validUntil}
+                  quotationAutoId={quotationId}
+                />
+              </div>
             </div>
           </div>
         )}

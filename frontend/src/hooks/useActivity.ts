@@ -9,20 +9,49 @@ import {
 } from "../schema/activityRecordSchema";
 import { getAlls } from "../helper/apiHelper";
 import axios from "axios";
+import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
-const generateJobId = () => {
-  const date = new Date();
-  const year = date.getFullYear().toString().slice(-2);
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `JOB-${year}${month}${day}-${random}`;
+const getAuthHeader = () => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (!token) return {};
+  const cleanToken = token.replace(/^"|"$/g, "").trim();
+  return { Authorization: `Bearer ${cleanToken}` };
+};
+
+const generateJobId = async (): Promise<string> => {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    const response = await axios.get(
+      `${baseUrl}/auto-generate-codes/techcian-job-code`,
+      {
+        headers: getAuthHeader(),
+      },
+    );
+
+    return response.data.technicianJobCode || "JOB-ERROR-000";
+  } catch (error) {
+    console.error("Failed to generate job ID from API:", error);
+
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `JOB-${year}${month}${day}-${random}`;
+  }
 };
 
 export const useActivityRecordForm = () => {
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [jobList, setJobList] = useState<any[]>([]);
+  const [isFetchingJobs, setIsFetchingJobs] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -32,6 +61,8 @@ export const useActivityRecordForm = () => {
   const [parts, setParts] = useState<any[]>([]);
   const [inspectionTypes, setInspectionTypes] = useState<any[]>([]);
   const [jobStatuses, setJobStatuses] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("edit");
 
   const form = useForm<ActivityRecordFormData>({
     resolver: zodResolver(activityRecordSchema) as any,
@@ -53,6 +84,22 @@ export const useActivityRecordForm = () => {
     mode: "onBlur",
   });
 
+  const fetchJobs = useCallback(async () => {
+    setIsFetchingJobs(true);
+    try {
+      const response = await getAlls("/technician-jobs");
+      const data = response?.data || response || [];
+      setJobList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error fetching jobs:", err);
+    } finally {
+      setIsFetchingJobs(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
   const {
     fields: serviceFields,
     append: appendService,
@@ -84,13 +131,14 @@ export const useActivityRecordForm = () => {
   const currentParts = form.watch("parts");
   const currentInspections = form.watch("inspections");
 
-  // Calculate totals
   const totalDuration = currentServices.reduce((total, service) => {
     return total + (parseInt(service.duration) || 0);
   }, 0);
 
   const totalPartsCost = currentParts.reduce((total, part) => {
-    return total + (part.totalCost || part.quantity * part.unitCost || 0);
+    const qty = Number(part.quantity || 1);
+    const cost = Number(part.unitCost || 1);
+    return total + (part.totalCost || qty * cost);
   }, 0);
 
   const completedInspections = currentInspections.filter(
@@ -102,20 +150,14 @@ export const useActivityRecordForm = () => {
     form.reset();
   };
 
-  const getAuthHeader = () => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) return {};
-    const cleanToken = token.replace(/^"|"$/g, "").trim();
-    return { Authorization: `Bearer ${cleanToken}` };
-  };
-
   const setEditData = useCallback(
     (record: any) => {
       if (!record) return;
 
       const id = record._id || record.id;
       setEditingId(id);
+
+      const baseUrl = process.env.NEXT_PUBLIC_IMAGE_URL || "";
 
       form.reset({
         ticketId: record.ticketId?._id || record.ticketId || "",
@@ -125,23 +167,27 @@ export const useActivityRecordForm = () => {
         services: Array.isArray(record.services)
           ? record.services.map((service: any) => ({
               activityId: service.activityId?._id || service.activityId || "",
-              duration: service.duration || "",
+              duration: String(service.duration || ""), // Ensure string
               description: service.description || "",
               additionalNotes: service.additionalNotes || "",
             }))
           : [],
 
         parts: Array.isArray(record.parts)
-          ? record.parts.map((part: any) => ({
-              partId: part.partId?._id || part.partId || "",
-              oldPartConditionDescription:
-                part.oldPartConditionDescription || "",
-              newSerialNumber: part.newSerialNumber || "",
-              quantity: part.quantity || 1,
-              unitCost: part.unitCost || 0,
-              totalCost: part.totalCost || part.quantity * part.unitCost || 0,
-              reasonForChange: part.reasonForChange || "",
-            }))
+          ? record.parts.map((part: any) => {
+              const qty = part.quantity || 1;
+              const price = part.unitCost || 0;
+              return {
+                partId: part.partId?._id || part.partId || "",
+                oldPartConditionDescription:
+                  part.oldPartConditionDescription || "",
+                newSerialNumber: part.newSerialNumber || "",
+                quantity: qty,
+                unitCost: price,
+                totalCost: part.totalCost || qty * price,
+                reasonForChange: part.reasonForChange || "",
+              };
+            })
           : [],
 
         inspections: Array.isArray(record.inspections)
@@ -158,8 +204,14 @@ export const useActivityRecordForm = () => {
         generalNotes: record.generalNotes || "",
         completionSummary: record.completionSummary || "",
 
-        jobNotesMessages: record.jobNotes?.messages || [],
-        jobNotesImages: record.jobNotes?.images || [],
+        jobNotesMessages: Array.isArray(record.jobNotes?.messages)
+          ? record.jobNotes.messages
+          : [],
+
+        jobNotesImages: (record.jobNotes?.images || []).map((img: string) =>
+          img.startsWith("http") ? img : `${baseUrl}${img}`,
+        ),
+
         jobNotesVideos: record.jobNotes?.videos || [],
         jobNotesImagesFile: [],
         jobNotesVideosFile: [],
@@ -167,6 +219,17 @@ export const useActivityRecordForm = () => {
     },
     [form],
   );
+
+  useEffect(() => {
+    if (editId && jobList.length > 0) {
+      const recordToEdit = jobList.find(
+        (job) => (job._id || job.id) === editId,
+      );
+      if (recordToEdit) {
+        setEditData(recordToEdit);
+      }
+    }
+  }, [editId, jobList, setEditData]);
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -226,25 +289,17 @@ export const useActivityRecordForm = () => {
       setIsLoading(true);
       setError(null);
       setSuccess(null);
-
-      // ================== VALIDATION LOGIC STARTS HERE ==================
-      // Validate only the required fields in order
-
-      // 1. Check Ticket
       if (!data.ticketId || data.ticketId.trim() === "") {
         toast.error("Ticket is required");
         setIsLoading(false);
         return;
       }
 
-      // 2. Check Technician
       if (!data.technicianId || data.technicianId.trim() === "") {
         toast.error("Technician is required");
         setIsLoading(false);
         return;
       }
-
-      // 3. Check at least one service or part
       const hasServices = data.services.length > 0;
       const hasParts = data.parts.some(
         (part) => part.partId && part.partId.trim() !== "",
@@ -256,23 +311,6 @@ export const useActivityRecordForm = () => {
         return;
       }
 
-      // 4. Check General Notes
-      if (!data.generalNotes || data.generalNotes.trim() === "") {
-        toast.error("General Notes are required");
-        setIsLoading(false);
-        return;
-      }
-
-      // 5. Check Completion Summary
-      if (!data.completionSummary || data.completionSummary.trim() === "") {
-        toast.error("Completion Summary is required");
-        setIsLoading(false);
-        return;
-      }
-
-      // ================== VALIDATION LOGIC ENDS HERE ==================
-      // बस इतना ही! बाकी सारे parts और inspections के validation हटा दिए
-
       const userId = localStorage.getItem("userId") || "";
       if (!userId) {
         toast.error("User ID not found. Please login again.");
@@ -282,10 +320,9 @@ export const useActivityRecordForm = () => {
 
       const formData = new FormData();
 
-      // Basic fields append
       formData.append("ticketId", data.ticketId);
       formData.append("technicianId", data.technicianId);
-      formData.append("userId", userId); // Add userId to root
+      formData.append("userId", userId);
 
       if (data.jobStatusId && data.jobStatusId.trim() !== "") {
         formData.append("jobStatusId", data.jobStatusId);
@@ -295,15 +332,14 @@ export const useActivityRecordForm = () => {
       if (data.completionSummary)
         formData.append("completionSummary", data.completionSummary);
 
-      // **FIX 1: Process services with userId and ensure string duration**
       const processedServices = data.services
         .filter(
           (service) => service.activityId && service.activityId.trim() !== "",
-        ) // Remove empty services
+        )
         .map((service) => ({
           ...service,
-          duration: service.duration ? String(service.duration) : "", // Ensure duration is string
-          userId: userId, // Add userId to each service
+          duration: service.duration ? String(service.duration) : "",
+          userId: userId,
         }));
 
       if (processedServices.length > 0) {
@@ -322,10 +358,10 @@ export const useActivityRecordForm = () => {
           return {
             ...part,
             unitCost: Number(unitCost),
-            quantity: Number(quantity),
+            quantity: Number(quantity || 1),
             totalCost: Number(totalCost),
             oldPartConditionDescription:
-              part.oldPartConditionDescription || "N/A", // Default value
+              part.oldPartConditionDescription || "N/A",
             userId: userId,
           };
         });
@@ -377,7 +413,8 @@ export const useActivityRecordForm = () => {
         });
       }
       if (!editingId) {
-        formData.append("jobId", generateJobId());
+        const jobId = await generateJobId();
+        formData.append("jobId", jobId);
       }
 
       const baseUrl =
@@ -408,6 +445,7 @@ export const useActivityRecordForm = () => {
             ? "Activity record updated successfully!"
             : "Activity record created successfully!",
         );
+        router.push("/dashboard/record-activity/jobs");
         return res.data;
       } else {
         const errorMsg = res.data?.message || "Submission failed";
@@ -480,8 +518,10 @@ export const useActivityRecordForm = () => {
   };
 
   const calculatePartTotal = (index: number) => {
-    const quantity = form.getValues(`parts.${index}.quantity`) || 0;
-    const unitCost = form.getValues(`parts.${index}.unitCost`) || 0;
+    const part = partFields[index];
+    if (!part) return 0;
+    const quantity = Number(part.quantity || 0);
+    const unitCost = Number(part.unitCost || 0);
     return quantity * unitCost;
   };
 
@@ -504,9 +544,7 @@ export const useActivityRecordForm = () => {
 
     const urlToRemove = currentUrls[index];
 
-    // Check if this is a preview URL for a new file
     if (urlToRemove.startsWith("blob:")) {
-      // Remove corresponding file from jobNotesImagesFile
       const fileIndex =
         currentUrls.slice(0, index + 1).filter((u) => u.startsWith("blob:"))
           .length - 1;
@@ -515,11 +553,8 @@ export const useActivityRecordForm = () => {
         currentFiles.splice(fileIndex, 1);
       }
 
-      // Revoke preview URL
       URL.revokeObjectURL(urlToRemove);
     } else {
-      // Existing DB image - you may want to track it for deletion on backend
-      // Example: push to an array "imagesToDelete" and send to backend on submit
     }
 
     // Remove from URLs array
@@ -574,7 +609,9 @@ export const useActivityRecordForm = () => {
     removeJobNotesImage,
     addMessage,
     removeMessage,
-
+    isFetchingJobs,
+    fetchJobs,
+    jobList,
     editingId,
     setEditData,
     clearEdit,

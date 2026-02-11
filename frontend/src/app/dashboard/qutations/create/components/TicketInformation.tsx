@@ -1,5 +1,4 @@
 "use client";
-import React from 'react';
 import { FileText, Edit, User, Package } from 'lucide-react';
 import PartsRequired from './PartsRequired';
 
@@ -39,11 +38,17 @@ interface Ticket {
   updatedAt: string;
 }
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
 
@@ -84,7 +89,7 @@ const TicketInformation = ({ ticket, onChangeTicket, selectedParts, onPartsChang
       {/* Main Card */}
       <div className="bg-white rounded-b-2xl border-t-4 border-green-500 shadow-lg animate-slideUp">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-10 ">
+        <div className="flex items-center justify-between px-6 py-12 ">
           <div className="flex items-center gap-2">
             <FileText className="text-green-600 w-5 h-5" />
             <h2 className="font-medium text-gray-900 leading-none">Ticket Information</h2>

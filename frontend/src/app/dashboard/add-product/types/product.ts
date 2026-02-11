@@ -1,3 +1,4 @@
+import { sub } from "framer-motion/client";
 
 
 export interface DynamicField {
@@ -97,9 +98,11 @@ export const BASE_URL =
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
   onNewTagChange: (value: string) => void;
-  onImageUpload: (files: FileList | File[]) => void;
+onImageUpload: (files: File[]) => Promise<void> | void;
   onRemoveImage: (index: number) => void;
   isUploading?: boolean;
+  onBulkAddTags: (newTagsArray: string[]) => void;
+  setImage: any;
 }
 
 export interface UploadedImage {
@@ -137,18 +140,21 @@ export const LEVEL_STYLES = [
     border: "border-purple-300",
     focus: "focus:border-purple-500 focus:ring-purple-200",
     label: "Main Category",
+    subCat: "bg-purple-100 text-purple-700 border border-purple-300 px-3 py-1.5 text-sm"
   },
   {
     badge: "bg-cyan-500 text-white",
     border: "border-cyan-300",
     focus: "focus:border-cyan-500 focus:ring-cyan-200",
     label: "Subcategory",
+    subCat: "bg-cyan-200 text-cyan-700 border border-cyan-300 px-3 py-1.5 text-sm"
   },
   {
     badge: "bg-teal-500 text-white",
     border: "border-teal-300",
     focus: "focus:border-teal-500 focus:ring-teal-200",
     label: "Sub-subcategory",
+    subCat: "bg-teal-100 text-teal-700 border border-teal-300 px-3 py-1.5 text-sm"
   },
 ];
 

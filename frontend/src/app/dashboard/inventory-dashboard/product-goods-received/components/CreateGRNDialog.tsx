@@ -65,7 +65,6 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
   onCreateGRN,
   onCancel,
 }) => {
-  console.log("Rendering CreateGRNDialog with availablePOs:", availablePOs);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -151,10 +150,10 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                   </thead>
                   <tbody>
                     {receivingItems?.map((item) => (
-                      <tr key={item._id} className="border-t border-gray-100">
+                      <tr key={item._id!} className="border-t border-gray-100">
                         <td className="p-3">
                           <p className="font-medium text-sm">
-                            {/* {item?.productName} */}
+                            {item?.productName}
                           </p>
                         </td>
                         <td className="p-3">
@@ -171,11 +170,10 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                           <Input
                             type="number"
                             min="0"
-                            max={item.orderedQuantity}
                             value={item.receivedQuantity}
                             onChange={(e) =>
                               onUpdateItem(
-                                item._id!,
+                                item.purchaseOrderItemId,
                                 "receivedQuantity",
                                 Number(e.target.value),
                               )
@@ -196,9 +194,9 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             value={item.rejectedQuantity}
                             onChange={(e) =>
                               onUpdateItem(
-                                item._id!,
+                                item.purchaseOrderItemId, 
                                 "rejectedQuantity",
-                                Number(e.target.value)
+                                Number(e.target.value),
                               )
                             }
                             className="w-20 text-center border-2 border-red-100"
@@ -212,7 +210,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             value={item.damageQuantity}
                             onChange={(e) =>
                               onUpdateItem(
-                                item._id!,
+                                item.purchaseOrderItemId,
                                 "damageQuantity",
                                 Number(e.target.value),
                               )
@@ -243,7 +241,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                           <Input
                             value={item.notes}
                             onChange={(e) =>
-                              onUpdateItem(item._id!, "notes", e.target.value)
+                              onUpdateItem( item.purchaseOrderItemId, "notes", e.target.value)
                             }
                             placeholder="Optional notes..."
                             className="w-40 text-xs border-2 border-gray-100"

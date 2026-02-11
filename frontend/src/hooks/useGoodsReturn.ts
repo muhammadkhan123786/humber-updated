@@ -1,181 +1,3 @@
-// import { useState, useMemo } from 'react';
-// import { toast } from 'sonner';
-// import { 
-//   GoodsReturnNote, 
-//   GRNForReturn, 
-//   ReturningItem,
-//   ReturnStats 
-// } from '../app/dashboard/inventory-dashboard/product-goods-return/types/goodsReturn';
-// import { mockGoodsReturnNotes, mockAvailableGRNs } from '../app/dashboard/inventory-dashboard/product-goods-return/data/goodsReturn';
-
-
-// export const useGoodsReturn = () => {
-//   const [goodsReturnNotes, setGoodsReturnNotes] = useState<GoodsReturnNote[]>(mockGoodsReturnNotes);
-//   const [availableGRNs] = useState<GRNForReturn[]>(mockAvailableGRNs);
-//   const [searchTerm, setSearchTerm] = useState('');
-//   const [selectedStatus, setSelectedStatus] = useState('all');
-//   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
-//   const [selectedGRN, setSelectedGRN] = useState<string>('');
-//   const [returnedBy, setReturnedBy] = useState('');
-//   const [returnReason, setReturnReason] = useState('');
-//   const [returnNotes, setReturnNotes] = useState('');
-//   const [returningItems, setReturningItems] = useState<ReturningItem[]>([]);
-
-//   // Calculate statistics
-//   const stats: ReturnStats = useMemo(() => ({
-//     totalReturns: goodsReturnNotes.length,
-//     pendingReturns: goodsReturnNotes.filter(g => g.status === 'pending').length,
-//     inTransitReturns: goodsReturnNotes.filter(g => g.status === 'in-transit').length,
-//     completedReturns: goodsReturnNotes.filter(g => g.status === 'completed').length,
-//     totalReturnValue: goodsReturnNotes.reduce((sum, g) => sum + g.totalAmount, 0)
-//   }), [goodsReturnNotes]);
-
-//   // Filter return notes
-//   const filteredReturns = useMemo(() => {
-//     return goodsReturnNotes.filter(grtn => {
-//       const matchesSearch = 
-//         grtn.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         grtn.grnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         grtn.supplier.toLowerCase().includes(searchTerm.toLowerCase());
-//       const matchesStatus = selectedStatus === 'all' || grtn.status === selectedStatus;
-//       return matchesSearch && matchesStatus;
-//     });
-//   }, [goodsReturnNotes, searchTerm, selectedStatus]);
-
-//   // Handle GRN selection
-//   const handleGRNSelection = (grnId: string) => {
-//     const grn = availableGRNs.find(g => g.id === grnId);
-//     if (grn) {
-//       setSelectedGRN(grnId);
-//       setReturningItems(grn.items.map(item => ({
-//         id: item.id,
-//         productName: item.productName,
-//         sku: item.sku,
-//         receivedQuantity: item.acceptedQuantity,
-//         returnQuantity: 0,
-//         returnReason: 'damaged',
-//         condition: '',
-//         notes: '',
-//         unitPrice: item.unitPrice
-//       })));
-//     }
-//   };
-
-//   // Update returning item
-//   const handleUpdateItemReturn = (itemId: string, field: string, value: any) => {
-//     setReturningItems(prev => prev.map(item => 
-//       item.id === itemId ? { ...item, [field]: value } : item
-//     ));
-//   };
-
-//   // Create return note
-//   const handleCreateReturn = () => {
-//     const selectedGRNData = availableGRNs.find(g => g.id === selectedGRN);
-//     if (!selectedGRNData) {
-//       toast.error('Please select a GRN');
-//       return;
-//     }
-
-//     if (!returnedBy) {
-//       toast.error('Please enter who is processing the return');
-//       return;
-//     }
-
-//     const itemsToReturn = returningItems.filter(item => item.returnQuantity > 0);
-//     if (itemsToReturn.length === 0) {
-//       toast.error('Please specify at least one item to return');
-//       return;
-//     }
-
-//     // Validate return quantities
-//     for (const item of itemsToReturn) {
-//       if (item.returnQuantity > item.receivedQuantity) {
-//         toast.error(`Return quantity for ${item.productName} cannot exceed received quantity`);
-//         return;
-//       }
-//       if (!item.returnReason) {
-//         toast.error(`Please select return reason for ${item.productName}`);
-//         return;
-//       }
-//     }
-
-//     const totalAmount = itemsToReturn.reduce((sum, item) => 
-//       sum + (item.returnQuantity * item.unitPrice), 0
-//     );
-
-//     const newGRTN: GoodsReturnNote = {
-//       id: (goodsReturnNotes.length + 1).toString(),
-//       grnNumber: selectedGRNData.grnNumber,
-//       grnReference: `${selectedGRNData.grnNumber} / ${selectedGRNData.poNumber}`,
-//       returnNumber: `GRTN-2024-${String(goodsReturnNotes.length + 1).padStart(3, '0')}`,
-//       supplier: selectedGRNData.supplier,
-//       returnDate: new Date(),
-//       returnedBy,
-//       status: 'pending',
-//       returnReason: returnReason || 'General return',
-//       items: itemsToReturn.map(item => ({
-//         id: item.id,
-//         productName: item.productName,
-//         sku: item.sku,
-//         receivedQuantity: item.receivedQuantity,
-//         returnQuantity: item.returnQuantity,
-//         returnReason: item.returnReason,
-//         condition: item.condition,
-//         unitPrice: item.unitPrice,
-//         totalPrice: item.returnQuantity * item.unitPrice,
-//         notes: item.notes
-//       })),
-//       totalAmount,
-//       notes: returnNotes,
-//       createdAt: new Date()
-//     };
-
-//     setGoodsReturnNotes(prev => [newGRTN, ...prev]);
-//     toast.success(`Goods Return Note ${newGRTN.returnNumber} created successfully!`);
-//     resetForm();
-//   };
-
-//   // Reset form
-//   const resetForm = () => {
-//     setSelectedGRN('');
-//     setReturnedBy('');
-//     setReturnReason('');
-//     setReturnNotes('');
-//     setReturningItems([]);
-//   };
-
-//   // Available statuses
-//   const statuses = ['all', 'pending', 'approved', 'in-transit', 'completed', 'rejected'];
-
-//   return {
-//     goodsReturnNotes,
-//     filteredReturns,
-//     stats,
-//     availableGRNs,
-//     searchTerm,
-//     setSearchTerm,
-//     selectedStatus,
-//     setSelectedStatus,
-//     viewMode,
-//     setViewMode,
-//     selectedGRN,
-//     returnedBy,
-//     setReturnedBy,
-//     returnReason,
-//     setReturnReason,
-//     returnNotes,
-//     setReturnNotes,
-//     returningItems,
-//     statuses,
-//     handleGRNSelection,
-//     handleUpdateItemReturn,
-//     handleCreateReturn,
-//     resetForm
-//   };
-// };
-
-
-
 "use client";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
@@ -185,8 +7,10 @@ import {
   createGoodsReturn,
   updateGoodsReturn,
   deleteGoodsReturn,
+  exportSingleGRNToPDF
 } from "../helper/goodsReturn";
 import { fetchGRNs } from "../helper/goodsReceived";
+import { fetchNextDocumentNumber } from "../helper/goodsReceived";
 
 export const useGoodsReturn = () => {
   const [goodsReturnNotes, setGoodsReturnNotes] = useState<GoodsReturnNote[]>([]);
@@ -199,10 +23,15 @@ export const useGoodsReturn = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnNotes, setReturnNotes] = useState("");
   const [returningItems, setReturningItems] = useState<ReturningItem[]>([]);
+  const [returnDate, setReturnDate] = useState<string>(
+  new Date().toISOString().split("T")[0]);
+  const [grtnNumber, setGRTNNumber] = useState("");
 
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
+    const [isExporting, setIsExporting] = useState<string | null>(null); 
+  
 
   // For GRNs we use a separate search/page state so that
   // typing in the main search box doesn't re-fetch the GRN dropdown list.
@@ -213,7 +42,7 @@ export const useGoodsReturn = () => {
   const loadGoodsReturns = async () => {
     try {
       const res = await fetchGoodsReturns(page, limit, searchTerm);
-      setGoodsReturnNotes(res.data as GoodsReturnNote[]);
+      setGoodsReturnNotes(res.data as any);
       setTotal(res.total);
     } catch (err) {
       console.error(err);
@@ -253,14 +82,69 @@ export const useGoodsReturn = () => {
     loadAvailableGRNs();
   }, []);
 
+
+  useEffect(() => {
+      (async () => {
+        try {
+          const grnNumRes = await fetchNextDocumentNumber("GOODS_RETURN");          
+          setGRTNNumber(grnNumRes.nextNumber);          
+        } catch (err) {
+          console.error("Failed to fetch document numbers", err);
+          toast.error("Failed to fetch document numbers");
+        }
+      })();
+    }, []);
+
+
+   const handleExportReturn = async (returnNote: GoodsReturnNote) => {
+  // 1. Validation check (Using _id or id based on your schema)
+  const targetId = returnNote._id ;
+  if (!targetId) return toast.error("Invalid Return Note ID");
+
+  try {
+    // 2. UI Feedback (Spinner and Toast)
+    setIsExporting(targetId); 
+    const downloadToast = toast.loading(`Generating PDF for ${returnNote.returnNumber}...`);
+
+    // 3. The API Call
+    // Make sure you create 'exportReturnToPDF' in your helper file (Step 2 below)
+    const blob = await exportSingleGRNToPDF(targetId);
+    
+    // 4. Browser Download Logic
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    // Naming the file: e.g., GRTN-2026-002.pdf
+    link.download = `${returnNote.returnNumber || 'Return-Note'}.pdf`;
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // 5. Cleanup
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+    
+    // 6. Success Feedback
+    toast.success("Return Note downloaded!", { id: downloadToast });
+  } catch (error: any) {
+    console.error("Export Error:", error);
+    toast.error("Failed to generate PDF. Please try again.");
+  } finally {
+    setIsExporting(null);
+  }
+};
   // ------------------- Statistics -------------------
   const stats: ReturnStats = useMemo(() => ({
-    totalReturns: goodsReturnNotes.length,
-    pendingReturns: goodsReturnNotes.filter(g => g.status === "pending").length,
-    inTransitReturns: goodsReturnNotes.filter(g => g.status === "in-transit").length,
-    completedReturns: goodsReturnNotes.filter(g => g.status === "completed").length,
-    totalReturnValue: goodsReturnNotes.reduce((sum, g) => sum + g.totalAmount, 0),
-  }), [goodsReturnNotes]);
+  totalReturns: goodsReturnNotes.length,
+  pendingReturns: goodsReturnNotes.filter(g => g.status === "pending").length,
+  inTransitReturns: goodsReturnNotes.filter(g => g.status === "in-transit").length,
+  completedReturns: goodsReturnNotes.filter(g => g.status === "completed").length,
+  totalReturnValue: goodsReturnNotes.reduce(
+    (sum, g) => sum + (g.totalAmount ?? 0), 
+    0
+  ),
+}), [goodsReturnNotes]);
 
   // ------------------- Filtered Returns -------------------
   const filteredReturns = useMemo(() => {
@@ -280,30 +164,34 @@ export const useGoodsReturn = () => {
   // ------------------- Handle GRN Selection -------------------
   // This is called from the <Select> with the value that was set on <SelectItem>,
   // which is grn.id (after normalisation above).
-  const handleGRNSelection = (grnId: string) => {
-    const grn = availableGRNs.find(g => g.id === grnId);
+ // Find this function in your useGoodsReturn.ts and replace it:
+const handleGRNSelection = (grnId: string) => {
+  const grn = availableGRNs.find(g => g.id === grnId);
 
-    if (!grn) {
-      // Safety net – should never happen after normalisation, but guard anyway.
-      toast.error("Selected GRN not found. Please try again.");
-      return;
-    }
+  if (!grn) {
+    toast.error("Selected GRN not found. Please try again.");
+    return;
+  }
 
-    setSelectedGRN(grnId);
-    setReturningItems(
-      grn.items.map(item => ({
-        _id: item.id,
-        productName: item.productName,
-        sku: item.sku,
-        receivedQuantity: item.acceptedQuantity ?? item.receivedQuantity ?? 0,
-        returnQuantity: 0,
-        returnReason: "damaged",
-        condition: "",
-        notes: "",
-        unitPrice: item.unitPrice,
-      }))
-    );
-  };
+  setSelectedGRN(grnId);
+  
+  // We add 'index' here in the arguments so we can use it below
+  setReturningItems(
+    grn.items.map((item, index) => ({
+      // FIX: Ensure _id is unique. Use database ID if it exists, 
+      // otherwise combine sku and index for a guaranteed unique string.
+      _id: item.id || `${item.sku}-${index}`, 
+      productName: item.productName,
+      sku: item.sku,
+      receivedQuantity: item.acceptedQuantity ?? item.receivedQuantity ?? 0,
+      returnQuantity: 0,
+      returnReason: "damaged",
+      condition: "",
+      notes: "",
+      unitPrice: item.unitPrice,
+    }))
+  );
+};
 
   // ------------------- Update Returning Item -------------------
   const handleUpdateItemReturn = (itemId: string, field: string, value: any) => {
@@ -354,6 +242,8 @@ export const useGoodsReturn = () => {
   const payload: Partial<CreateGoodsReturnDto> = {
   grnId: selectedGRN,
   returnedBy,
+  grtnNumber,
+  returnDate: new Date(returnDate),
   returnReason: returnReason || "General return",
   notes: returnNotes,
 
@@ -384,8 +274,8 @@ export const useGoodsReturn = () => {
   // ------------------- Update Return Note -------------------
   const handleUpdateReturn = async (id: string, payload: Partial<GoodsReturnNote>) => {
     try {
-      const updated = await updateGoodsReturn(id, payload);
-      toast.success(`Goods Return Note ${updated.returnNumber} updated successfully`);
+      // const updated = await updateGoodsReturn(id, payload);
+      // toast.success(`Goods Return Note ${updated.returnNumber} updated successfully`);
 
       // Refresh so the UI reflects the change.
       await loadGoodsReturns();
@@ -415,6 +305,7 @@ export const useGoodsReturn = () => {
     setReturnReason("");
     setReturnNotes("");
     setReturningItems([]);
+    setReturnDate(new Date().toISOString().split("T")[0]);
   };
 
   const statuses = ["all", "pending", "approved", "in-transit", "completed", "rejected"];
@@ -450,5 +341,8 @@ export const useGoodsReturn = () => {
     limit,
     setLimit,
     total,
+    returnDate,
+    setReturnDate,
+    handleExportReturn,
   };
 };

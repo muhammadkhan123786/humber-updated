@@ -156,6 +156,7 @@ export interface GoodsReceivedNoteItem {
   unitPrice: number;
   condition: "good" | "damaged" | "defective";
   notes: string;
+  status?: string
 }
 
 export interface GoodsReceivedNote {
@@ -170,15 +171,16 @@ export interface GoodsReceivedNote {
   totalReceived: number;
   totalAccepted: number;
   totalRejected: number;
-  status: "draft" | "completed" | "discrepancy";
-  notes: string;
+  status: "received"| "ordered";
+  notes?: string;
   signature?: string;
+  
 }
 
 export interface GRNStats {
   totalGRNs: number;
   completedGRNs: number;
-  discrepancyGRNs: number;
+  discrepancyGRNs?: number;
   totalItemsReceived: number;
 }
 
@@ -189,4 +191,5 @@ export interface NewProductForm {
   orderedQuantity: number;
   receivedQuantity: number;
   unitPrice: number;
+  status: "received"| "ordered";
 }

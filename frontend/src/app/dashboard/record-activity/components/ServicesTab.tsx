@@ -78,7 +78,7 @@ export const ServicesTab = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium   tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Activity Type <span className="text-red-500">*</span>
             </label>
 
@@ -100,7 +100,7 @@ export const ServicesTab = ({
           </div>
 
           <FormField
-            label="Duration (minutes)"
+            label="Duration (minutes) *"
             type="number"
             placeholder="30"
             value={currentDuration || ""}
@@ -121,7 +121,7 @@ export const ServicesTab = ({
         </div>
 
         <div className="space-y-2 mb-6">
-          <label className="text-sm font-medium  tracking-widest">
+          <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             Description <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -137,7 +137,7 @@ export const ServicesTab = ({
         </div>
 
         <div className="space-y-2 mb-8">
-          <label className=" font-medium text-sm tracking-widest">
+          <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             Additional Notes
           </label>
           <input
@@ -155,14 +155,12 @@ export const ServicesTab = ({
         <button
           type="button"
           onClick={handleAddActivity}
-          className="w-full py-4 bg-linear-to-r from-[#0061FF] to-[#00C1FF] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg"
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-primary-foreground hover:bg-primary/90 px-4 py-2 has-[>svg]:px-3 w-full bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 h-12 text-white"
         >
           <Plus size={20} />
           <span>Add Service Activity</span>
         </button>
       </div>
-
-      {/* RECORDED SERVICE ACTIVITIES SECTION */}
       <AnimatePresence>
         {completedServices.length > 0 && (
           <motion.div

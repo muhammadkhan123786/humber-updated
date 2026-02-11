@@ -10,6 +10,7 @@ import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { parseFormDataArrays } from "../../middleware/parseFormDataArrays";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
+import { generateTechnicianJobCode } from "../../utils/generate.AutoCode.Counter";
 
 const technicianJobsRouter = Router();
 
@@ -19,7 +20,14 @@ const technicianJobServices = new GenericService<technicianJobsDoc>(
 
 const technicianJobsController = new AdvancedGenericController({
   service: technicianJobServices,
-  populate: ["userId", "ticketId", "technicianId", "jobStatusId"],
+  populate: [
+    "userId",
+    "ticketId",
+    "technicianId",
+    "jobStatusId",
+    { path: "technicianId", populate: { path: "personId" } },
+    { path: "parts", populate: { path: "partId" } },
+  ],
   validationSchema: technicianJobSchemaValidation,
   searchFields: ["jobId"],
 });
@@ -45,10 +53,13 @@ technicianJobsRouter.post(
   "/",
   technicianUploads,
 
-  (req, res, next) => {
+  async (req, res, next) => {
     if (req.body.jobNotes && typeof req.body.jobNotes === "string") {
       try {
+        const jobId = await generateTechnicianJobCode();
+        req.body.jobId = jobId;
         req.body.jobNotes = JSON.parse(req.body.jobNotes);
+
         console.log("Fixed: Parsed jobNotes string to object");
       } catch (err) {
         console.error("Failed to parse jobNotes:", err);

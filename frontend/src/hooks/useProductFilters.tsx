@@ -1,99 +1,216 @@
-// hooks/useProductFilters.ts
-import { useState, useMemo } from 'react';
-import { Product, Category } from '../app/dashboard/inventory-dashboard/product/types/product';
+// hooks/useProductFilters.ts - UPDATED FOR N-TH LEVEL CATEGORIES
+"use client";
+import { useState, useMemo, useCallback } from 'react';
+import { DatabaseCategory } from './useCategory';
+import { ProductListItem, CategoryInfo } from "../app/dashboard/inventory-dashboard/product/types/product"
 
+interface UseProductFiltersProps {
+  products: ProductListItem[];
+  categories: DatabaseCategory[];
+}
 
-
-export const useProductFilters = (products: Product[]) => {
+export const useProductFilters = ({ 
+  products = [], 
+  categories = [] 
+}: UseProductFiltersProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLevel1, setSelectedLevel1] = useState('all');
-  const [selectedLevel2, setSelectedLevel2] = useState('all');
-  const [selectedLevel3, setSelectedLevel3] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStockStatus, setSelectedStockStatus] = useState<string>('all');
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
 
-  // Extract unique categories
-  const categoriesLevel1 = useMemo(() => 
-    Array.from(new Set(products.map(p => JSON.stringify(p.categories.level1))))
-      .map(str => JSON.parse(str) as Category),
-    [products]
-  );
-  
-  const categoriesLevel2 = useMemo(() => 
-    Array.from(new Set(products.map(p => JSON.stringify(p.categories.level2))))
-      .map(str => JSON.parse(str) as Category),
-    [products]
-  );
-  
-  const categoriesLevel3 = useMemo(() => 
-    Array.from(new Set(products.map(p => JSON.stringify(p.categories.level3))))
-      .map(str => JSON.parse(str) as Category),
-    [products]
-  );
+  // ✅ Build hierarchical categories for dropdown
+  const buildCategoryOptions = useCallback(() => {
+    const options: { value: string; label: string; level: number }[] = [
+      { value: 'all', label: 'All Categories', level: 0 }
+    ];
 
-  // Filter level 2 categories based on selected level 1
-  const filteredLevel2 = useMemo(() => 
-    selectedLevel1 === 'all' 
-      ? categoriesLevel2 
-      : categoriesLevel2.filter(cat => cat.parentId === selectedLevel1),
-    [selectedLevel1, categoriesLevel2]
-  );
+    // Helper function to add category and its children recursively
+    const addCategoryWithChildren = (category: DatabaseCategory, level: number = 1) => {
+      // Add current category
+      const prefix = '─'.repeat(level - 1) + (level > 1 ? ' ' : '');
+      options.push({
+        value: category._id,
+        label: `${prefix}${category.categoryName}`,
+        level
+      });
 
-  // Filter level 3 categories based on selected level 2
-  const filteredLevel3 = useMemo(() => 
-    selectedLevel2 === 'all'
-      ? categoriesLevel3
-      : categoriesLevel3.filter(cat => cat.parentId === selectedLevel2),
-    [selectedLevel2, categoriesLevel3]
-  );
+      // Find and add children
+      const children = categories.filter(cat => cat.parentId === category._id);
+      children.forEach(child => {
+        addCategoryWithChildren(child, level + 1);
+      });
+    };
 
-  // Filter products
-  const filteredProducts = useMemo(() => 
-    products.filter((product) => {
-      const matchesSearch = 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesLevel1 = selectedLevel1 === 'all' || product.categories.level1.id === selectedLevel1;
-      const matchesLevel2 = selectedLevel2 === 'all' || product.categories.level2.id === selectedLevel2;
-      const matchesLevel3 = selectedLevel3 === 'all' || product.categories.level3.id === selectedLevel3;
-      const matchesStatus = selectedStatus === 'all' || product.status === selectedStatus;
-      
-      return matchesSearch && matchesLevel1 && matchesLevel2 && matchesLevel3 && matchesStatus;
-    }),
-    [products, searchTerm, selectedLevel1, selectedLevel2, selectedLevel3, selectedStatus]
-  );
+    // Start with root categories (no parent)
+    const rootCategories = categories.filter(cat => !cat.parentId);
+    rootCategories.forEach(root => {
+      addCategoryWithChildren(root, 1);
+    });
 
-  const handleSearchChange = (value: string) => setSearchTerm(value);
-  
-  const handleLevel1Change = (value: string) => {
-    setSelectedLevel1(value);
-    setSelectedLevel2('all');
-    setSelectedLevel3('all');
-  };
+    return options;
+  }, [categories]);
 
-  const handleLevel2Change = (value: string) => {
-    setSelectedLevel2(value);
-    setSelectedLevel3('all');
-  };
+  // ✅ FIXED: Get product category IDs from new array structure
+  const getProductCategoryIds = useCallback((product: ProductListItem): string[] => {
+    const ids = new Set<string>();
+    
+    // NEW STRUCTURE: Check if product has categories as an array
+    if (Array.isArray(product.categories) && product.categories.length > 0) {
+      product.categories.forEach((category: CategoryInfo) => {
+        if (category.id) {
+          ids.add(category.id);
+        }
+      });
+    }
+    // FALLBACK: Check old structure (for backward compatibility)
+    else if (product.categories && typeof product.categories === 'object') {
+      const cats = product.categories as any;
+      if (cats.level1?.id) ids.add(cats.level1.id);
+      if (cats.level2?.id) ids.add(cats.level2.id);
+      if (cats.level3?.id) ids.add(cats.level3.id);
+    }
 
-  const handleLevel3Change = (value: string) => setSelectedLevel3(value);
-  const handleStatusChange = (value: string) => setSelectedStatus(value);
+    return Array.from(ids);
+  }, []);
+
+  // ✅ Get all descendants of a category
+  const getDescendantCategoryIds = useCallback((categoryId: string): string[] => {
+    const descendants = new Set<string>([categoryId]);
+    
+    const findChildren = (parentId: string) => {
+      const children = categories.filter(cat => cat.parentId === parentId);
+      children.forEach(child => {
+        descendants.add(child._id);
+        findChildren(child._id);
+      });
+    };
+    
+    findChildren(categoryId);
+    return Array.from(descendants);
+  }, [categories]);
+
+  // ✅ Filter products
+  const filteredProducts = useMemo(() => {
+    console.log('🔍 Filtering products:', { 
+      total: products.length, 
+      searchTerm, 
+      selectedCategory,
+      categoriesCount: categories.length 
+    });
+
+    return products.filter((product) => {
+      // Search filter
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || 
+        (product.name?.toLowerCase() || '').includes(searchLower) ||
+        (product.sku?.toLowerCase() || '').includes(searchLower) ||
+        (product.manufacturer?.toLowerCase() || '').includes(searchLower) ||
+        (product.brand?.toLowerCase() || '').includes(searchLower);
+
+      // Category filter
+      let matchesCategory = true;
+      if (selectedCategory !== 'all' && categories.length > 0) {
+        // Get all product category IDs
+        const productCategoryIds = getProductCategoryIds(product);
+        console.log("productCategoryIds", productCategoryIds)
+        
+        
+        // If product has no categories and a category is selected, hide it
+        if (productCategoryIds.length === 0) {
+          matchesCategory = false;
+        } else {
+          // Get all descendant IDs of selected category
+          const descendantIds = getDescendantCategoryIds(selectedCategory);
+          
+          // Check if any product category matches the selected category or its descendants
+          matchesCategory = productCategoryIds.some(id => descendantIds.includes(id));
+        }
+      }
+
+      // Status filter
+      const matchesStatus = selectedStatus === 'all' || 
+        product.status === selectedStatus;
+
+      // Stock status filter
+      const matchesStockStatus = selectedStockStatus === 'all' || 
+        product.stockStatus === selectedStockStatus;
+
+      // Featured filter
+      const matchesFeatured = !showFeaturedOnly || product.featured === true;
+
+      return matchesSearch && matchesCategory && matchesStatus && matchesStockStatus && matchesFeatured;
+    });
+  }, [
+    products, 
+    searchTerm, 
+    selectedCategory, 
+    selectedStatus,
+    selectedStockStatus,
+    showFeaturedOnly,
+    categories,
+    getProductCategoryIds,
+    getDescendantCategoryIds
+  ]);
+
+  // Handlers
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
+
+  const handleCategoryChange = useCallback((value: string) => {
+    setSelectedCategory(value);
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setSelectedStatus(value);
+  }, []);
+
+  const handleStockStatusChange = useCallback((value: string) => {
+    setSelectedStockStatus(value);
+  }, []);
+
+  const handleFeaturedToggle = useCallback(() => {
+    setShowFeaturedOnly(prev => !prev);
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setSelectedStatus('all');
+    setSelectedStockStatus('all');
+    setShowFeaturedOnly(false);
+  }, []);
+
+  const hasActiveFilters = useMemo(() => {
+    return searchTerm !== '' ||
+           selectedCategory !== 'all' ||
+           selectedStatus !== 'all' ||
+           selectedStockStatus !== 'all' ||
+           showFeaturedOnly;
+  }, [searchTerm, selectedCategory, selectedStatus, selectedStockStatus, showFeaturedOnly]);
 
   return {
+    // Filter values
     searchTerm,
-    selectedLevel1,
-    selectedLevel2,
-    selectedLevel3,
+    selectedCategory,
     selectedStatus,
+    selectedStockStatus,
+    showFeaturedOnly,
+
+    // Filtered data
     filteredProducts,
-    categoriesLevel1,
-    filteredLevel2,
-    filteredLevel3,
+
+    // Category options for dropdown
+    categoryOptions: buildCategoryOptions(),
+
+    // Handlers
     handleSearchChange,
-    handleLevel1Change,
-    handleLevel2Change,
-    handleLevel3Change,
-    handleStatusChange
+    handleCategoryChange,
+    handleStatusChange,
+    handleStockStatusChange,
+    handleFeaturedToggle,
+    resetFilters,
+    hasActiveFilters
   };
 };

@@ -11,6 +11,7 @@ import { createAttribute, updateAttribute } from "@/hooks/useAttributes";
 import axios from "axios";
 import { IAttribute } from "../../../../../../../common/IProductAttributes.interface";
 import { ICategory } from "../../../../../../../common/ICategory.interface";
+import  CategorySelect  from "./CategoryTreeSelect"
 
 interface Props {
   editingData: IAttribute | null;
@@ -154,22 +155,40 @@ console.log("error", errors)
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       
       {/* Category Selection */}
-      <div className="space-y-1">        
+      {/* <div className="space-y-1">        
         <Controller
           name="categoryId"
           control={control}
           render={({ field }) => (
-            <SearchableSelect
-            label="Category"
-              options={categoryOptions}
-              value={field.value}
-              onChange={field.onChange}
-              placeholder="Select a category"
+            // <SearchableSelect
+            // label="Category"
+            //   options={categoryOptions}
+            //   value={field.value}
+            //   onChange={field.onChange}
+            //   placeholder="Select a category"
              
-            />
+            // />
           )}
         />
-      </div>
+      </div> */}
+      {/* Category Selection */}
+<div className="space-y-2">
+  <label className="text-sm font-semibold text-slate-700">
+    Category <span className="text-red-500">*</span>
+  </label>
+
+  <Controller
+    name="categoryId"
+    control={control}
+    render={({ field }) => (
+      <CategorySelect
+        categories={allCategories}
+        field={field}
+        error={errors.categoryId?.message}
+      />
+    )}
+  />
+</div>
 
       {/* Attribute Name */}
       <div className="space-y-1">        

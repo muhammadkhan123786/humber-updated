@@ -4,8 +4,8 @@ import { Package, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { UseFormReturn } from "react-hook-form";
 import { ActivityRecordFormData } from "../../../../schema/activityRecordSchema";
-import { CustomSelect } from "../../../common-form/CustomSelect"; // apna correct path
-import FormField from "../../suppliers/components/FormInput"; // apna correct path
+import { CustomSelect } from "../../../common-form/CustomSelect";
+import FormField from "../../suppliers/components/FormInput";
 
 interface PartsTabProps {
   form: UseFormReturn<ActivityRecordFormData>;
@@ -23,15 +23,9 @@ export const PartsTab = ({
   partFields,
   addPart,
   removePart,
-  calculatePartTotal,
   totalPartsCost,
 }: PartsTabProps) => {
-  const {
-    register,
-    watch,
-    setValue,
-    formState: { errors },
-  } = form;
+  const { register, watch, setValue } = form;
 
   const nextIndex = partFields.length;
 
@@ -41,19 +35,18 @@ export const PartsTab = ({
 
   const selectedPart = parts.find((p) => p._id === currentPartId);
 
+  // Set unit cost when a part is selected
   useEffect(() => {
     if (!selectedPart) return;
-
     setValue(`parts.${nextIndex}.unitCost`, selectedPart.unitCost || 0, {
       shouldDirty: true,
     });
   }, [selectedPart, nextIndex, setValue]);
 
+  // Update total cost for current row
   useEffect(() => {
     const total = currentQuantity * currentUnitCost;
-    setValue(`parts.${nextIndex}.totalCost`, total, {
-      shouldDirty: true,
-    });
+    setValue(`parts.${nextIndex}.totalCost`, total, { shouldDirty: true });
   }, [currentQuantity, currentUnitCost, nextIndex, setValue]);
 
   const handleRecordPart = async () => {
@@ -66,18 +59,24 @@ export const PartsTab = ({
       return;
     }
 
+    // Add the part
     addPart();
 
-    setTimeout(() => {
-      const newIndex = nextIndex + 1;
-      setValue(`parts.${newIndex}.partId`, "");
-      setValue(`parts.${newIndex}.oldPartConditionDescription`, "");
-      setValue(`parts.${newIndex}.newSerialNumber`, "");
-      setValue(`parts.${newIndex}.quantity`, 1);
-      setValue(`parts.${newIndex}.unitCost`, 0);
-      setValue(`parts.${newIndex}.totalCost`, 0);
-      setValue(`parts.${newIndex}.reasonForChange`, "");
-    }, 0);
+    // Reset new row immediately
+    const newIndex = nextIndex + 1;
+    setValue(
+      `parts.${newIndex}`,
+      {
+        partId: "",
+        oldPartConditionDescription: "",
+        newSerialNumber: "",
+        quantity: 1,
+        unitCost: 0,
+        totalCost: 0,
+        reasonForChange: "",
+      },
+      { shouldValidate: true },
+    );
   };
 
   const getPartName = (partId: string) =>
@@ -86,18 +85,16 @@ export const PartsTab = ({
   const getPartNumber = (partId: string) =>
     parts.find((p) => p._id === partId)?.partNumber || "N/A";
 
-  const totalUnits = partFields
-    .filter((_, index) => index !== nextIndex)
-    .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+  const totalUnits = partFields.reduce(
+    (acc, curr) => acc + (Number(curr.quantity) || 0),
+    0,
+  );
 
   const currentTotalCost = currentQuantity * currentUnitCost;
-  const completedParts = partFields.filter(
-    (_, index) => index !== nextIndex && partFields[index].partId,
-  );
+  const completedParts = partFields.filter((f) => f.partId);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* SUMMARY */}
       <AnimatePresence>
         {completedParts.length > 0 && (
           <motion.div
@@ -116,6 +113,9 @@ export const PartsTab = ({
             </div>
 
             <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Total Units
+              </span>
               <span className="text-2xl font-black text-[#6366F1]">
                 {totalUnits}
               </span>
@@ -125,6 +125,9 @@ export const PartsTab = ({
             </div>
 
             <div className="flex flex-col items-center">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                Total Cost
+              </span>
               <span className="text-2xl font-black text-[#10B981]">
                 £{totalPartsCost.toFixed(2)}
               </span>
@@ -135,19 +138,17 @@ export const PartsTab = ({
           </motion.div>
         )}
       </AnimatePresence>
-
       <div className="bg-white border border-purple-100 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-6 text-[#A855F7] font-bold">
+        <div className=" mb-6  font-bold leading-none flex items-center gap-2 text-purple-600">
           <Plus size={20} />
-          <span className="text-sm">Record Part Change</span>
+          <span className="">Record Part Change</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Part Name <span className="text-red-500">*</span>
             </label>
-
             <CustomSelect
               options={parts.map((p) => ({
                 id: p._id,
@@ -156,27 +157,29 @@ export const PartsTab = ({
               value={currentPartId || ""}
               placeholder="Select a part from inventory..."
               isSearchable
-              onChange={(val: string) => {
+              onChange={(val: string) =>
                 setValue(`parts.${nextIndex}.partId`, val, {
                   shouldDirty: true,
                   shouldValidate: true,
-                });
-              }}
+                })
+              }
             />
           </div>
 
           <FormField
-            label="Part Number"
+            label="Part Number *"
             name="partNumber"
             value={selectedPart?.partNumber || ""}
             type="text"
             disabled
+            labelClassName={true}
           />
 
           <FormField
             label="Old Part Condition"
             placeholder="e.g. Damaged"
             required
+            labelClassName={true}
             value={
               watch(`parts.${nextIndex}.oldPartConditionDescription`) || ""
             }
@@ -192,6 +195,7 @@ export const PartsTab = ({
           <FormField
             label="New Serial Number"
             placeholder="SN-123456"
+            labelClassName={true}
             value={watch(`parts.${nextIndex}.newSerialNumber`) || ""}
             onChange={(e) =>
               setValue(`parts.${nextIndex}.newSerialNumber`, e.target.value, {
@@ -205,34 +209,38 @@ export const PartsTab = ({
           <FormField
             label="Quantity"
             type="number"
-            min="1"
+            labelClassName={true}
             required
-            value={currentQuantity}
+            value={currentQuantity !== undefined ? Number(currentQuantity) : 1}
             onChange={(e) => {
-              const value = e.target.value;
-              setValue(
-                `parts.${nextIndex}.quantity`,
-                value === "" ? 1 : Number(value),
-                { shouldDirty: true, shouldValidate: true },
-              );
+              let value: number;
+
+              if (e.target.value === "" || isNaN(Number(e.target.value))) {
+                value = 1;
+              } else {
+                value = Math.max(1, Number(e.target.value));
+              }
+
+              setValue(`parts.${nextIndex}.quantity`, value, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
             }}
           />
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400 uppercase tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Unit Cost (£)
             </label>
-
             <div className="w-full h-9 px-4 flex items-center bg-gray-100 border border-gray-100 rounded-2xl text-gray-500 font-medium text-sm">
               £{currentUnitCost?.toFixed(2) || "0.00"}
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-400 tracking-widest">
+            <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
               Total Cost (£)
             </label>
-
             <div className="w-full h-9 px-4 flex items-center bg-purple-50 border border-purple-100 rounded-2xl text-[#A855F7] font-black text-sm">
               £{currentTotalCost.toFixed(2)}
             </div>
@@ -240,7 +248,7 @@ export const PartsTab = ({
         </div>
 
         <div className="space-y-2 mb-8">
-          <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+          <label className="flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
             Reason for Change <span className="text-red-500">*</span>
           </label>
           <textarea
@@ -257,13 +265,14 @@ export const PartsTab = ({
         <button
           type="button"
           onClick={handleRecordPart}
-          className="w-full py-4 bg-linear-to-r from-[#A855F7] to-[#E11D48] text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg"
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive text-primary-foreground hover:bg-primary/90 px-4 py-2 has-[>svg]:px-3 w-full bg-linear-to-r text-white from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-12"
         >
           <Package size={20} />
           <span>Record Part Change</span>
         </button>
       </div>
 
+      {/* Completed Parts */}
       <AnimatePresence>
         {completedParts.length > 0 && (
           <motion.div
@@ -272,11 +281,8 @@ export const PartsTab = ({
             className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm"
           >
             <div className="space-y-4">
-              {completedParts.map((field) => {
-                const originalIndex = partFields.findIndex(
-                  (f) => f.id === field.id,
-                );
-                const totalCost = calculatePartTotal(originalIndex);
+              {completedParts.map((field, index) => {
+                const totalCost = (field.quantity || 1) * (field.unitCost || 0);
 
                 return (
                   <div
@@ -307,7 +313,7 @@ export const PartsTab = ({
                       <div className="text-right">
                         <button
                           type="button"
-                          onClick={() => removePart(originalIndex)}
+                          onClick={() => removePart(index)}
                           className="text-red-400 hover:bg-red-50 p-2 rounded-lg transition-colors"
                         >
                           <Trash2 size={18} />
@@ -316,7 +322,7 @@ export const PartsTab = ({
                           £{totalCost.toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-400">
-                          {field.quantity} × £{field.unitCost?.toFixed(2)}
+                          {field.quantity || 1} × £{field.unitCost?.toFixed(2)}
                         </p>
                       </div>
                     </div>

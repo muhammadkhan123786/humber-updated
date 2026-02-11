@@ -146,12 +146,35 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
       {
         _id: nanoid(),
+        label: "Technician Jobs",
+        href: "/dashboard/technician-jobs",
+        icon: ListTree,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
         label: "Record Activity",
         href: "/dashboard/record-activity",
         icon: ListTree,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Technicain Activities",
+        href: "/dashboard/record-activity/jobs",
+        icon: ListTree,
+        roleId: [1],
+      },
     ],
+  },
+
+  //quotation
+  {
+    _id: nanoid(),
+    label: "Quotation",
+    href: "/dashboard/quotation",
+    icon: Wrench,
+    roleId: [1],
   },
   /* ================= INVENTORY SYSTEM ================= */
   {
@@ -618,8 +641,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
         href: "/dashboard/parts",
         icon: Wrench,
         roleId: [1],
-
-      }
+      },
     ],
   },
 

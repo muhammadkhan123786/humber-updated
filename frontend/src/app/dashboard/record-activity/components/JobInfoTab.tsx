@@ -11,6 +11,36 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CustomSelectNoBorder } from "../../../common-form/CustomSelectNoBorder";
 import { FormDisplay } from "@/app/common-form/FormDisplay";
+import axios from "axios";
+
+const generateJobId = async (): Promise<string> => {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const cleanToken = token ? token.replace(/^"|"$/g, "").trim() : "";
+
+    const response = await axios.get(
+      `${baseUrl}/auto-generate-codes/techcian-job-code`,
+      {
+        headers: {
+          Authorization: `Bearer ${cleanToken}`,
+        },
+      },
+    );
+
+    return response.data.technicianJobCode || "JOB-ERROR-000";
+  } catch (error) {
+    console.error("Failed to generate job ID from API:", error);
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `JOB-${year}${month}${day}-${random}`;
+  }
+};
 
 export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const { watch, setValue } = form;
@@ -18,14 +48,22 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const selectedTicketId = watch("ticketId");
   const selectedTechnicianId = watch("technicianId");
   const [jobId, setJobId] = useState<string>("");
+  const [isGeneratingJobId, setIsGeneratingJobId] = useState(false);
 
   React.useEffect(() => {
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const timestamp = Date.now().toString().slice(-6);
-    setJobId(`JOB-${year}${month}${day}-${timestamp}`);
+    const fetchJobId = async () => {
+      setIsGeneratingJobId(true);
+      try {
+        const generatedJobId = await generateJobId();
+        setJobId(generatedJobId);
+      } catch (error) {
+        console.error("Error generating job ID:", error);
+      } finally {
+        setIsGeneratingJobId(false);
+      }
+    };
+
+    fetchJobId();
   }, []);
 
   const selectedTicket = useMemo(() => {
@@ -35,11 +73,6 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
   const selectedTechnician = useMemo(() => {
     return technicians.find((t: any) => t._id === selectedTechnicianId) || null;
   }, [selectedTechnicianId, technicians]);
-  React.useEffect(() => {
-    if (selectedTicket?.assignedTechnicianId?.length > 0) {
-      setValue("technicianId", selectedTicket.assignedTechnicianId[0]._id);
-    }
-  }, [selectedTicket, setValue]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -130,7 +163,9 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
       <div className="bg-white border border-blue-100 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-4 text-[#4F39F6] font-bold">
           <Calendar size={20} />
-          <span className="text-sm">Select Service Ticket</span>
+          <span className="leading-none flex items-center gap-2 text-indigo-600">
+            Select Service Ticket
+          </span>
         </div>
 
         <div className="space-y-2">
@@ -170,12 +205,11 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Ticket Source
+                    Job ID
                   </p>
-                  <p className="font-bold text-gray-800 text-sm capitalize">
-                    {selectedTicket.ticketSource || "N/A"}
-                  </p>
+                  <p className="font-bold text-gray-800 text-sm">{jobId}</p>
                 </div>
+
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Priority
@@ -251,15 +285,33 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </AnimatePresence>
       </div>
 
-      {/* 2. JOB INFORMATION SECTION */}
       <div className="bg-white border border-blue-100 rounded-3xl p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-6 text-[#4F39F6] font-bold">
+        <div className="leading-none flex items-center gap-2 text-blue-600 mb-4 font-semibold">
           <Settings size={20} />
-          <span className="text-sm">Job Information</span>
+          <span>Job Information</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <FormDisplay label=" Job ID" value={jobId || "Select a Job ID"} />
+          <div className="space-y-2">
+            <label className="font-medium pt-3 pl-2 text-sm tracking-widest">
+              Job ID
+            </label>
+            <div className="p-4 h-9 mt-2 bg-gray-50 border border-gray-100 rounded-xl flex items-center">
+              {isGeneratingJobId ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-xl h-4 w-4 border-b-2 border-[#4F39F6]"></div>
+                  <span className="text-gray-500 text-sm">
+                    Generating Job ID...
+                  </span>
+                </div>
+              ) : (
+                <span className="font-bold text-gray-500 text-sm">
+                  {jobId || "Loading..."}
+                </span>
+              )}
+            </div>
+          </div>
+
           <FormDisplay
             label="Ticket id"
             value={selectedTicket?.ticketCode || "Select a ticket"}
@@ -288,16 +340,6 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         </div>
 
         <div className="grid grid-cols-1 gap-6 mb-6">
-          <div className="space-y-2">
-            <label className=" font-medium text-sm  tracking-widest">
-              Scooter model
-            </label>
-            <div className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm">
-              {selectedTicket
-                ? getVehicleDetails(selectedTicket)
-                : "Select a ticket"}
-            </div>
-          </div>
           <FormDisplay
             label="Scooter model"
             value={
@@ -317,9 +359,11 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
               exit={{ opacity: 0, y: -10 }}
               className="bg-[#FFF8F4] border border-orange-100 rounded-3xl p-6 space-y-4 mb-6"
             >
-              <div className="flex items-center gap-2 text-[#E65100] font-bold">
+              <div className="flex items-center gap-2 text-orange-700 text-lg">
                 <AlertCircle size={18} />
-                <span className="text-sm">Customer & Fault Information</span>
+                <span className="font-semibold">
+                  Customer & Fault Information
+                </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
@@ -388,7 +432,8 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 <UserCheck size={18} />
                 <span className="text-sm">Selected Technician Details</span>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Name
@@ -397,6 +442,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                     {getTechnicianName(selectedTechnician)}
                   </p>
                 </div>
+
                 <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Phone
@@ -408,14 +454,15 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                       "N/A"}
                   </div>
                 </div>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
-                <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                  Specialization
-                </p>
-                <p className="font-bold text-gray-800 text-sm">
-                  {getTechnicianSpecialization(selectedTechnician)}
-                </p>
+
+                <div className="bg-white p-4 rounded-2xl border border-emerald-50/50 shadow-sm">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
+                    Specialization
+                  </p>
+                  <p className="font-bold text-gray-800 text-sm">
+                    {getTechnicianSpecialization(selectedTechnician)}
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}

@@ -1,35 +1,197 @@
 "use client";
 import { Calculator, AlertCircle, Save, Send, Download } from 'lucide-react';
+import { createItem, getAlls } from '@/helper/apiHelper';
+import { toast } from "react-hot-toast";
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-interface SelectedPart {
+interface Part {
   _id: string;
   partName: string;
   partNumber: string;
-  price: number;
+  description?: string;
+  unitCost?: number;
+  stock?: number;
+  isActive?: boolean;
+}
+
+interface SelectedPart extends Part {
   quantity: number;
 }
+
 
 interface QuotationSummaryProps {
   selectedTicket?: any;
   selectedParts?: SelectedPart[];
+  laborHours?: number;
+  ratePerHour?: number;
+  taxPercentage?: number;
+  additionalNotes?: string;
+  validUntil?: string;
+  quotationAutoId?: string;
 }
 
-const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSummaryProps) => {
-  // Calculate totals based on selected parts
-  const partsTotal = selectedParts.reduce((sum, part) => sum + (part.price * part.quantity), 0);
-  const laborTotal = 0.00; // This can be updated later when labor is added
+const QuotationSummary = ({ 
+  selectedTicket, 
+  selectedParts = [], 
+  laborHours = 0, 
+  ratePerHour = 45,
+  taxPercentage = 20,
+  additionalNotes = '',
+  validUntil = '',
+  quotationAutoId = ''
+}: QuotationSummaryProps) => {
+  const [defaultStatuses, setDefaultStatuses] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchDefaultStatuses();
+  }, []);
+
+  const fetchDefaultStatuses = async () => {
+    try {
+      const response = await getAlls<any>('/default-quotation-status');
+      if (response.data) {
+        // Create a map of status names to IDs
+        const statusMap: any = {};
+        response.data.forEach((status: any) => {
+          const statusName = status.ticketQuationStatus?.toLowerCase();
+          if (statusName?.includes('draft')) {
+            statusMap.draft = status._id;
+          } else if (statusName?.includes('sent') || statusName?.includes('send')) {
+            statusMap.sent = status._id;
+          }
+        });
+        setDefaultStatuses(statusMap);
+      }
+    } catch (error) {
+      console.error('Error fetching default statuses:', error);
+    }
+  };
+
+  // Calculate totals based on selected parts (MOVED BEFORE FUNCTIONS)
+  const partsTotal = selectedParts.reduce((sum, part) => sum + ((part.unitCost || 0) * part.quantity), 0);
+  const laborTotal = laborHours * ratePerHour;
   const subtotal = partsTotal + laborTotal;
-  const vatRate = 0.20;
+  const vatRate = taxPercentage / 100;
   const vatAmount = subtotal * vatRate;
   const total = subtotal + vatAmount;
 
-  // Calculate valid until date (30 days from now)
-  const validUntil = new Date();
-  validUntil.setDate(validUntil.getDate() + 30);
-  const formattedValidUntil = validUntil.toLocaleDateString('en-GB');
+  // Calculate valid until date (use prop or calculate 30 days from now)
+  const calculateValidUntil = () => {
+    if (validUntil) {
+      return new Date(validUntil).toLocaleDateString('en-GB');
+    }
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toLocaleDateString('en-GB');
+  };
+  const formattedValidUntil = calculateValidUntil();
+
+  const createQuotation = async () => {
+    if (!selectedTicket) {
+      toast.error('Please select a ticket first');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Fetch default quotation status using axios directly
+      const token = localStorage.getItem('token')?.replace(/"/g, '').trim();
+      const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
+      
+      const statusesRes = await axios.get(`${BASE_URL}/default-quotation-status`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      console.log('Fetched default statuses:', statusesRes.data);
+      
+      if (!statusesRes.data?.defaultQuotationStatusId) {
+        toast.error('Default quotation status not found. Please configure default statuses.');
+        setSaving(false);
+        return;
+      }
+
+      const technicianId = localStorage.getItem('technicianId') || selectedTicket.assignedTechnician?._id;
+      
+      if (!technicianId) {
+        toast.error('Technician ID not found. Please log in again.');
+        setSaving(false);
+        return;
+      }
+
+      // Get userId - required by backend
+      let userId = localStorage.getItem('userId');
+      if (!userId) {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          userId = user._id || user.userId;
+        }
+      }
+
+      if (!userId) {
+        toast.error('User ID not found. Please log in again.');
+        setSaving(false);
+        return;
+      }
+      
+      const quotationData = {
+        userId: userId,
+        ticketId: selectedTicket._id,
+        quotationStatusId: statusesRes.data.defaultQuotationStatusId,
+        partsList: selectedParts.map(part => part._id),
+        labourTime: laborHours,
+        labourRate: ratePerHour,
+        aditionalNotes: additionalNotes,
+        validityDate: validUntil ? new Date(validUntil).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        technicianId: technicianId,
+        partTotalBill: partsTotal,
+        labourTotalBill: laborTotal,
+        subTotalBill: subtotal,
+        taxAmount: vatAmount,
+        netTotal: total,
+        quotationAutoId: quotationAutoId,
+        isActive: true
+      };
+
+      console.log('Creating quotation with data:', quotationData);
+      
+      const response = await createItem('/technician-ticket-quotation', quotationData);
+      
+      console.log('Quotation created successfully:', response);
+      
+      toast.success('Quotation created successfully!');
+      
+      // Redirect to quotations list page
+      setTimeout(() => {
+        window.location.href = '/dashboard/qutations';
+      }, 1500);
+    } catch (error: any) {
+      console.error('Error creating quotation:', error);
+      toast.error(error?.message || 'Failed to create quotation');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveDraft = () => {
+    createQuotation();
+  };
+
+  const handleSendToAdmin = () => {
+    console.log('Sending quotation to admin with status "sent"');
+    createQuotation();
+  };
+
+  const handleDownloadPDF = () => {
+    toast.error('PDF download feature coming soon');
+  };
 
   return (
-    <div className="bg-white rounded-b-2xl border-t-4 border-indigo-500 shadow-lg p-6 h-full animate-slideLeft">
+    <div className="bg-white rounded-b-2xl border-t-4 border-indigo-500 shadow-lg p-6 animate-slideLeft h-full overflow-y-auto scrollbar-hide">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="">
@@ -66,7 +228,7 @@ const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSumma
             </div>
 
             <div className="flex items-center justify-between py-2 border-b border-gray-200 pb-4">
-              <span className="text-gray-700">VAT (20%):</span>
+              <span className="text-gray-700">VAT ({taxPercentage}%):</span>
               <span className="font-semibold text-gray-900">£{vatAmount.toFixed(2)}</span>
             </div>
 
@@ -78,17 +240,28 @@ const QuotationSummary = ({ selectedTicket, selectedParts = [] }: QuotationSumma
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors">
+            <button 
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Save size={18} />
-              <span>Save as Draft</span>
+              <span>{saving ? 'Saving...' : 'Save as Draft'}</span>
             </button>
 
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg">
+            <button 
+              onClick={handleSendToAdmin}
+              disabled={saving}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Send size={18} />
-              <span>Send to Customer</span>
+              <span>{saving ? 'Sending...' : 'Send to Admin'}</span>
             </button>
 
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors">
+            <button 
+              onClick={handleDownloadPDF}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors"
+            >
               <Download size={18} />
               <span>Download PDF</span>
             </button>

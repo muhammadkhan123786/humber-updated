@@ -14,6 +14,7 @@ import { InventorySection } from '../sections/InventorySection';
 import { WarrantySection } from '../sections/WarrantySection';
 import { VariantSummary } from '../sections/VariantSummarySections';
 import { Input } from '@/components/form/Input';
+import { Button } from '@/components/form/CustomButton';
 import {
   Select,
   SelectContent,
@@ -654,7 +655,7 @@ export function AttributesAndPricingStep({
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
-                  <button
+                  <Button
                     type="button"
                     onClick={addVariant}
                     className="flex-1 px-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg font-bold text-lg hover:from-orange-600 hover:to-amber-600 transition-all flex items-center justify-center gap-2 shadow-lg"
@@ -670,7 +671,7 @@ export function AttributesAndPricingStep({
                         Add Variant
                       </>
                     )}
-                  </button>
+                  </Button>
 
                   {editingVariantId && (
                     <button

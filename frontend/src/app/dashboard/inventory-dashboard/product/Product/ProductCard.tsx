@@ -1,18 +1,32 @@
-// components/product/ProductCard.tsx
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/form/Card';
 import { Badge } from '@/components/form/Badge';
 import { Button } from '@/components/form/CustomButton';
 import { Star, ChevronRight, Eye, Edit, Package } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Product } from '../types/product';
+import { ProductListItem, CategoryInfo } from '../types/product';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductListItem;
   index: number;
-  onView: (product: Product) => void;
-  onEdit: (product: Product) => void;
+  onView: (product: any) => void;
+  onEdit: (product: any) => void;
   getStockBadge: (status: string) => { class: string; icon: any };
 }
+
+// Badge colors for different category levels
+const getCategoryBadgeColor = (level: number): string => {
+  const colors = [
+    'bg-blue-100 text-blue-700 border-blue-300',      // Level 1
+    'bg-cyan-100 text-cyan-700 border-cyan-300',      // Level 2
+    'bg-teal-100 text-teal-700 border-teal-300',      // Level 3
+    'bg-emerald-100 text-emerald-700 border-emerald-300', // Level 4
+    'bg-green-100 text-green-700 border-green-300',   // Level 5
+    'bg-lime-100 text-lime-700 border-lime-300',      // Level 6
+  ];
+  
+  // If level exceeds our color array, cycle through colors
+  return colors[(level - 1) % colors.length];
+};
 
 export const ProductCard = ({ 
   product, 
@@ -37,11 +51,11 @@ export const ProductCard = ({
         <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
           {product.imageUrl ? (
             <img 
-              src={product.imageUrl} 
-              alt={product.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
+  src={product.imageUrl} 
+  alt={product.name}
+  className="w-full h-full object-contain bg-gray-50" 
+  loading="lazy"
+/>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <Package className="h-20 w-20 text-gray-400" />
@@ -67,24 +81,26 @@ export const ProductCard = ({
           <CardTitle className="text-lg line-clamp-2">{product.name}</CardTitle>
           <p className="text-sm text-gray-500">{product.sku}</p>
           
-          {/* Category Breadcrumb */}
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-1 text-xs flex-wrap">
-              <Badge className="bg-blue-100 text-blue-700 border border-blue-300">
-                {product.categories.level1.name}
-              </Badge>
-              <ChevronRight className="h-3 w-3 text-gray-400" />
-              <Badge className="bg-cyan-100 text-cyan-700 border border-cyan-300">
-                {product.categories.level2.name}
-              </Badge>
+          {/* Dynamic Category Breadcrumb - Supports n-th levels */}
+          {product.categories && product.categories?.length > 0 && (
+            <div className="mt-3 space-y-1">
+              <div className="flex items-center gap-1 flex-wrap">
+                {product.categories?.map((category: CategoryInfo, idx: number) => (
+                  <div key={category.id} className="flex items-center gap-1">
+                    {idx > 0 && <ChevronRight className="h-3 w-3 text-gray-400" />}
+                    <Badge className={`text-xs border ${getCategoryBadgeColor(category.level)}`}>
+                      {category.name}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Show category path as text (alternative view) */}
+              <p className="text-xs text-gray-500 italic">
+                {product.categories?.map(cat => cat.name).join(' → ')}
+              </p>
             </div>
-            <div className="flex items-center gap-1 text-xs">
-              <ChevronRight className="h-3 w-3 text-gray-400" />
-              <Badge className="bg-teal-100 text-teal-700 border border-teal-300">
-                {product.categories.level3.name}
-              </Badge>
-            </div>
-          </div>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-3">
@@ -94,14 +110,16 @@ export const ProductCard = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-2xl font-bold text-gray-900">£{product.price.toFixed(2)}</p>
-              <p className="text-xs text-gray-500">Cost: £{product.costPrice.toFixed(2)}</p>
+              <p className="text-xs text-gray-500">Cost: £{product?.costPrice?.toFixed(2)}</p>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">Stock: {product.stockQuantity}</p>
-              <div className="flex items-center gap-1 text-xs text-amber-600">
-                <Star className="h-3 w-3 fill-amber-400" />
-                {product.rating} ({product.totalReviews})
-              </div>
+              {product.rating && (
+                <div className="flex items-center gap-1 text-xs text-amber-600">
+                  <Star className="h-3 w-3 fill-amber-400" />
+                  {product.rating} ({product.totalReviews || 0})
+                </div>
+              )}
             </div>
           </div>
 

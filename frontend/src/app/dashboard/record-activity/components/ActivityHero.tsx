@@ -4,11 +4,11 @@ import Link from "next/link";
 import {
   Settings,
   Package,
-  CheckSquare,
   Image as ImageIcon,
   Clock,
   ArrowLeft,
   ClipboardEdit,
+  ListTodo,
 } from "lucide-react";
 
 export const ActivityHero = () => {
@@ -18,7 +18,7 @@ export const ActivityHero = () => {
       value: "0",
       tag: "Activities",
       icon: Settings,
-      color: "from-[#00B8DB] to-[#00BBA7]",
+      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
     },
     {
       label: "Parts Changed",
@@ -31,7 +31,7 @@ export const ActivityHero = () => {
       label: "Completed",
       value: "0/8",
       tag: "Inspection",
-      icon: CheckSquare,
+      icon: ListTodo,
       color: "from-[#00BC7D] to-[#7CCF00]",
     },
     {

@@ -1,82 +1,109 @@
-// pages/ProductListingPage.tsx
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/form/Card";
-import { Button } from "@/components/form/CustomButton";
-import Link from "next/link";
-import {
-  Package,
-  Plus,
-  Grid3x3,
-  List,
-  BarChart3,
-  CheckCircle,
-  AlertCircle,
-  Star,
-  Box,
-  Search,
-} from "lucide-react";
-import { Input } from "@/components/form/Input";
-import { Badge } from "@/components/form/Badge";
+"use client";
+import { useState, useMemo, useEffect } from "react";
+import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { ProductListing } from "../Product/ProductListing";
 import { ProductTableView } from "../Product/ProductTableView";
 import ProductDetailsModal from "../Product/ProductDetailsModal";
 import EditProductDialog from "../Product/EditProductDialog";
 import MarketplaceDistributionTab from "./MarketplaceDistributionTab";
+import { useProductFilters } from "../../../../../hooks/useProductFilters";
+import { useProducts } from "../../../../../hooks/useProduct";
+import { useCategories } from "../../../../../hooks/useCategory";
+import { Product, ProductListItem } from "../types/product";
+import { toast } from "sonner";
+import { TabNavigation } from "./TabNavigation";
+import { PageHeader } from "./PageHeader";
+import { Pagination } from "./Pagination";
+import { NoProductsMessage } from "./NoProductsMessage";
+import { AnimatedBackground } from "./AnimatedBackground";
 import { CategoryFilters } from "../Product/CategoryFilters";
 import { ProductStatistics } from "../Product/ProductStats";
-import { useProductFilters } from "@/hooks/useProductFilters";
-import { Product, ProductStats } from "../types/product";
-import { sampleProducts } from "../data/sampleProducts";
-import { toast } from "sonner";
-import { createProduct } from "@/helper/products";
+import { transformProductsResponse, enrichProductCategories, transformProduct } from "@/lib/productTransformer";
+
+const LoadingState = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="text-center">
+      <RefreshCw className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
+      <p className="text-gray-600">Loading products...</p>
+    </div>
+  </div>
+);
+
+
+// =============== Main Component ===============
 
 export default function ProductListingPage() {
   // State
-  const [products, setProducts] = useState<Product[]>(sampleProducts);
   const [activeTab, setActiveTab] = useState<"products" | "distribution">(
     "products",
   );
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductListItem | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<ProductListItem | null>(null);
+  
 
-  // Filters
+  // Hooks
   const {
-    searchTerm,
-    selectedLevel1,
-    selectedLevel2,
-    selectedLevel3,
-    selectedStatus,
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useCategories({
+    autoFetch: true,
+  });
+
+
+  const data = useCategories();
+
+  const {
+    products,
+    loading: productsLoading,
+    error: productsError,
+    statistics,
+    pagination,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    getProductById,
+    goToPage,
+    changePageSize,
+    refetch: refetchProducts,
+  } = useProducts({
+    autoFetch: true,
+    initialLimit: 12,
+  });
+
+  const {
     filteredProducts,
-    categoriesLevel1,
-    filteredLevel2,
-    filteredLevel3,
+    searchTerm,
+    selectedCategory,
+    selectedStatus,
+    selectedStockStatus,
+    showFeaturedOnly,
+    hasActiveFilters,
     handleSearchChange,
-    handleLevel1Change,
-    handleLevel2Change,
-    handleLevel3Change,
+    handleCategoryChange,
     handleStatusChange,
-  } = useProductFilters(products);
+    handleStockStatusChange,
+    handleFeaturedToggle,
+    resetFilters,
+  } = useProductFilters({
+    products,
+    categories,
+  });
 
-  // Stats
-  const stats: ProductStats = useMemo(
-    () => ({
-      total: products.length,
-      active: products.filter((p) => p.status === "active").length,
-      inStock: products.filter((p) => p.stockStatus === "in-stock").length,
-      lowStock: products.filter((p) => p.stockStatus === "low-stock").length,
-      outOfStock: products.filter((p) => p.stockStatus === "out-of-stock")
-        .length,
-      featured: products.filter((p) => p.featured).length,
-    }),
-    [products],
-  );
-
-  // Stock badge helper
+   const stats = useMemo(() => ({
+        total: products.length,
+        active: products.filter(p => p.status === 'active').length,
+        inStock: products.filter(p => p.stockStatus === 'in-stock').length,
+        lowStock: products.filter(p => p.stockStatus === 'low-stock').length,
+        outOfStock: products.filter(p => p.stockStatus === 'out-of-stock').length,
+        featured: products.filter(p => p.featured).length
+      }), [products]);
+  // Helper Functions
   const getStockBadge = (status: string) => {
     const variants: Record<string, { class: string; icon: any }> = {
       "in-stock": {
@@ -95,303 +122,239 @@ export default function ProductListingPage() {
     return variants[status] || variants["in-stock"];
   };
 
-  // Handlers
-  const handleViewProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setIsViewDialogOpen(true);
-  };
+  const categoryMap = useMemo(() => {
+  const map: Record<string, any> = {};
+  categories.forEach((cat: any) => {
+    map[cat.id || cat._id] = cat;
+  });
+  return map;
+}, [categories]);
+
+  // Event Handlers
+ // inside ProductListingPage component
+
+const handleViewProduct = async (product: Product) => {
+  const result = await getProductById(product.id);
+  
+  if (result.success && result.data) {
+    // 1. Use the SINGULAR transform function for a single product result
+    // Note: If result.data is { data: productObj }, use result.data.data
+    const rawData = (result.data as any).data || result.data;
+    const transformed = transformProduct(rawData);
+
+    // 2. Now enrich that single transformed object
+    if (transformed && transformed.categories) {
+      const fullyPopulatedProduct = enrichProductCategories(transformed, categoryMap);
+      
+      console.log("Success! Fully Populated:", fullyPopulatedProduct);
+      
+      // 3. IMPORTANT: Update the state with the enriched product
+      setSelectedProduct(fullyPopulatedProduct as any);
+      setIsViewDialogOpen(true);
+    }
+  } else {
+    toast.error("Failed to load product details");
+  }
+};
 
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     setIsEditDialogOpen(true);
   };
 
-  const handleSaveEdit = (updatedProduct: Product) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)),
-    );
-    toast.success("Product updated successfully!");
-    setIsEditDialogOpen(false);
+  const handleSaveEdit = async (updatedProduct: ProductListItem) => {
+    const result = await updateProduct(updatedProduct.id, updatedProduct);
+
+    if (result.success) {
+      toast.success("Product updated successfully!");
+      setIsEditDialogOpen(false);
+      setSelectedProduct(null);
+    } else {
+      toast.error(result.error || "Failed to update product");
+    }
   };
 
-  const handleDeleteClick = (product: Product) => {
+  const handleDeleteClick = (product: ProductListItem) => {
     setProductToDelete(product);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (!productToDelete) return;
+  const handleConfirmDelete = async (productId: string, productName: string) => {
+  const result = await deleteProduct(productId);
 
-    setProducts((prev) => prev.filter((p) => p.id !== productToDelete.id));
-    toast.success(`${productToDelete.name} deleted successfully!`);
-    setIsDeleteDialogOpen(false);
-    setProductToDelete(null);
+  if (result.success) {
+    toast.success(`${productName} deleted successfully!`);
+    setIsViewDialogOpen(false);
+  } else {
+    toast.error(result.error || "Failed to delete product");
+  }
+};
+
+
+  const handleRefresh = () => {
+    refetchProducts();
+    refetchCategories();
+    toast.success("Refreshed!");
   };
 
-  // Tab Button Component
-  const TabButton = ({
-    active,
-    icon: Icon,
-    title,
-    subtitle,
-    onClick,
-    gradient,
-  }: {
-    active: boolean;
-    icon: any;
-    title: string;
-    subtitle: string;
-    onClick: () => void;
-    gradient: string;
-  }) => (
-    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-      <Button
-        variant={active ? "default" : "ghost"}
-        onClick={onClick}
-        className={`w-full h-auto py-4 px-6 gap-3 transition-all duration-300 ${
-          active
-            ? `bg-gradient-to-br ${gradient} hover:from-opacity-90 hover:via-opacity-90 hover:to-opacity-90 text-white shadow-xl border-2 border-white/20`
-            : "hover:bg-gray-50 text-gray-700 hover:shadow-lg"
-        }`}
-      >
-        <div className="flex flex-col items-center gap-2 w-full">
-          <motion.div
-            animate={active ? { rotate: [0, 360] } : {}}
-            transition={
-              active ? { duration: 2, repeat: Infinity, ease: "linear" } : {}
-            }
-            className={`p-3 rounded-xl ${active ? "bg-white/20 backdrop-blur-sm" : "bg-gray-100"}`}
-          >
-            <Icon
-              className={`h-6 w-6 ${active ? "text-white" : "text-gray-600"}`}
+  // Effects
+  useEffect(() => {
+    if (productsError) toast.error(productsError);
+    if (categoriesError) toast.error(categoriesError);
+  }, [productsError, categoriesError]);
+
+  // Derived State
+  const isLoading = productsLoading || categoriesLoading;
+  const hasProducts = filteredProducts?.length > 0;
+
+  // Render Logic
+  const renderProductsContent = () => {
+    if (isLoading) return <LoadingState />;
+
+    if (!hasProducts) {
+      return (
+        <NoProductsMessage
+          hasActiveFilters={hasActiveFilters}
+          onResetFilters={resetFilters}
+        />
+      );
+    }
+console.log("selectedProduct", selectedProduct)
+    
+    return (
+      <>
+      <ProductStatistics stats={stats} />
+      
+            {/* Filters */}
+            <CategoryFilters
+              searchTerm={searchTerm}
+              selectedCategory={selectedCategory}
+              selectedStatus={selectedStatus}
+              selectedStockStatus={selectedStockStatus}
+              showFeaturedOnly={showFeaturedOnly}
+              categories={categories}
+              onSearchChange={handleSearchChange}
+              onCategoryChange={handleCategoryChange}
+              onStatusChange={handleStatusChange}
+              onStockStatusChange={handleStockStatusChange}
+              onFeaturedToggle={handleFeaturedToggle}
+              onResetFilters={resetFilters}
+              hasActiveFilters={hasActiveFilters}
+              filterStats={{
+                total: 0, 
+                filtered: products.length
+              }}
             />
-          </motion.div>
-          <div className="text-center">
-            <div
-              className={`font-bold text-base ${active ? "text-white" : "text-gray-900"}`}
-            >
-              {title}
-            </div>
-            <div
-              className={`text-xs mt-0.5 ${active ? "text-white/80" : "text-gray-500"}`}
-            >
-              {subtitle}
-            </div>
-          </div>
-        </div>
-      </Button>
-    </motion.div>
-  );
+        {viewMode === "grid" ? (
+          <ProductListing
+            products={filteredProducts}          
+            hasActiveFilters={hasActiveFilters}
+            onViewProduct={handleViewProduct}
+            onEditProduct={handleEditProduct} 
+            onResetFilters = {resetFilters }        
+            
+          />
+        ) : (
+          <ProductTableView
+            products={filteredProducts}
+            onView={handleViewProduct}
+            onEdit={handleEditProduct}
+            onDelete={handleDeleteClick}
+            getStockBadge={getStockBadge}
+          />
+        )}
+
+        {pagination.total > pagination.limit && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={goToPage}
+            onPageSizeChange={changePageSize}
+          />
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="space-y-6 relative">
       {/* Animated Background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            rotate: [0, 90, 0],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-1/4 -left-1/4 w-96 h-96 bg-gradient-to-br from-blue-400 via-cyan-400 to-teal-400 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            rotate: [90, 0, 90],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-1/4 -right-1/4 w-96 h-96 bg-gradient-to-br from-purple-400 via-pink-400 to-rose-400 rounded-full blur-3xl"
-        />
-      </div>
+      <AnimatedBackground />
 
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-2xl blur-xl opacity-20 -z-10"></div>
-        <Card className="border-0 shadow-2xl bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 overflow-hidden">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                <motion.div
-                  animate={{ rotate: [0, 360] }}
-                  transition={{
-                    duration: 20,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl"
-                >
-                  <Package className="h-8 w-8 text-white" />
-                </motion.div>
-                <div>
-                  <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-                    {activeTab === "products"
-                      ? "Product Listing"
-                      : "Marketplace Distribution"}
-                  </h1>
-                  <p className="text-white/90 mt-1 text-lg">
-                    {activeTab === "products"
-                      ? "Browse products by hierarchical categories"
-                      : "Multi-channel analytics and distribution management"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Show Add Product button only in Products tab */}
-                {activeTab === "products" && (
-                  <Button
-                    asChild
-                    className="bg-white text-cyan-600 hover:bg-white/90"
-                  >
-                    <Link href="/dashboard/add-product">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Product
-                    </Link>
-                  </Button>
-                )}
-
-                {/* Show View Mode buttons only in Products tab */}
-                {activeTab === "products" && (
-                  <>
-                    <Button
-                      variant={viewMode === "grid" ? "default" : "outline"}
-                      onClick={() => setViewMode("grid")}
-                      className={
-                        viewMode === "grid"
-                          ? "bg-white text-cyan-600 hover:bg-white/90"
-                          : "bg-white/20 text-white border-white/30 hover:bg-white/30"
-                      }
-                    >
-                      <Grid3x3 className="h-4 w-4 mr-2" />
-                      Grid
-                    </Button>
-                    <Button
-                      variant={viewMode === "table" ? "default" : "outline"}
-                      onClick={() => setViewMode("table")}
-                      className={
-                        viewMode === "table"
-                          ? "bg-white text-cyan-600 hover:bg-white/90"
-                          : "bg-white/20 text-white border-white/30 hover:bg-white/30"
-                      }
-                    >
-                      <List className="h-4 w-4 mr-2" />
-                      Table
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <PageHeader
+        activeTab={activeTab}
+        viewMode={viewMode}
+        isLoading={isLoading}
+        onRefresh={handleRefresh}
+        onViewModeChange={setViewMode}
+      />
 
       {/* Tab Navigation */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-md overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-purple-500 via-pink-500 via-rose-500 via-orange-500 via-amber-500 via-yellow-500 via-lime-500 via-green-500 via-emerald-500 via-teal-500 via-cyan-500 via-sky-500 via-blue-500 via-indigo-500 to-purple-500 animate-gradient" />
-          <CardContent className="p-3">
-            <div className="grid grid-cols-2 gap-3">
-              <TabButton
-                active={activeTab === "products"}
-                icon={Package}
-                title="Product Listing"
-                subtitle="Browse & Manage"
-                onClick={() => setActiveTab("products")}
-                gradient="from-purple-600 via-pink-600 to-rose-600"
-              />
-              <TabButton
-                active={activeTab === "distribution"}
-                icon={BarChart3}
-                title="Marketplace Distribution"
-                subtitle="Multi-Channel Analytics"
-                onClick={() => setActiveTab("distribution")}
-                gradient="from-orange-600 via-amber-600 to-yellow-600"
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Tab Content */}
+      {/* Main Content */}
       {activeTab === "products" ? (
-        <div className="space-y-6">
-                  {/* Content based on view mode */}
-          {filteredProducts.length > 0 ? (
-            <>
-              {viewMode === "grid" ? (
-                // Grid View - Using your existing ProductListing component
-                <ProductListing
-                  products={filteredProducts}
-                  onViewProduct={handleViewProduct}
-                  onEditProduct={handleEditProduct}
-                />
-              ) : (
-                // Table View
-                <ProductTableView
-                  products={filteredProducts}
-                  onView={handleViewProduct}
-                  onEdit={handleEditProduct}
-                  onDelete={handleDeleteClick}
-                  getStockBadge={getStockBadge}
-                />
-              )}
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No products found
-              </h3>
-              <p className="text-gray-500">
-                Try adjusting your search or filter criteria
-              </p>
-            </div>
-          )}
-        </div>
+        <div className="space-y-6">{renderProductsContent()}</div>
       ) : (
-        // Marketplace Distribution Tab
         <MarketplaceDistributionTab products={products} />
       )}
 
       {/* Modals */}
-      {selectedProduct && (
-        <>
-          <ProductDetailsModal
-            open={isViewDialogOpen}
-            onOpenChange={setIsViewDialogOpen}
-            product={selectedProduct}
-            getStockBadge={getStockBadge}
-          />
-
-          <EditProductDialog
-            open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            product={selectedProduct}
-            onSave={handleSaveEdit}
-          />
-        </>
-      )}
-
-      {/* Delete Confirmation Dialog */}
-      {/* Uncomment this when you create the DeleteConfirmationDialog component */}
-      {/* 
-      <DeleteConfirmationDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        product={productToDelete}
-        onConfirm={handleConfirmDelete}
+      <ProductModals
+        selectedProduct={selectedProduct}
+        isViewDialogOpen={isViewDialogOpen}
+        isEditDialogOpen={isEditDialogOpen}
+        onViewDialogChange={setIsViewDialogOpen}
+        onEditDialogChange={setIsEditDialogOpen}
+        onSaveEdit={handleSaveEdit}
+        getStockBadge={getStockBadge}
+        handleConfirmDelete = { handleConfirmDelete }
       />
-      */}
     </div>
   );
 }
+
+// =============== Additional Components ===============
+
+interface ProductModalsProps {
+  selectedProduct: ProductListItem | null;
+  isViewDialogOpen: boolean;
+  isEditDialogOpen: boolean;
+  onViewDialogChange: (open: boolean) => void;
+  onEditDialogChange: (open: boolean) => void;
+  onSaveEdit: (product: Product) => Promise<void>;
+  getStockBadge: (status: string) => { class: string; icon: any };
+  handleConfirmDelete: any;
+}
+
+const ProductModals: React.FC<ProductModalsProps> = ({
+  selectedProduct,
+  isViewDialogOpen,
+  isEditDialogOpen,
+  onViewDialogChange,
+  onEditDialogChange,
+  onSaveEdit,
+  getStockBadge,
+  handleConfirmDelete,
+}) => {
+  if (!selectedProduct) return null;
+
+  return (
+    <>
+      <ProductDetailsModal
+        open={isViewDialogOpen}
+        onOpenChange={onViewDialogChange}
+        product={selectedProduct}
+        getStockBadge={getStockBadge}
+        handleConfirmDelete = { handleConfirmDelete}
+      />
+
+      <EditProductDialog
+        open={isEditDialogOpen}
+        onOpenChange={onEditDialogChange}
+        product={selectedProduct}
+        onSave={onSaveEdit}
+      />
+    </>
+  );
+};

@@ -1,10 +1,15 @@
 import axios from "axios";
-import { IPurchaseOrder, IPurchaseOrderItem } from "../../../common/IPurchase.order.interface";
-import { ISupplier, PurchaseOrderFilters } from "../app/dashboard/inventory-dashboard/product-Orders/types/purchaseOrders";
+import {
+  IPurchaseOrder,
+  IPurchaseOrderItem,
+} from "../../../common/IPurchase.order.interface";
+import {
+  ISupplier,
+  PurchaseOrderFilters,
+} from "../app/dashboard/inventory-dashboard/product-Orders/types/purchaseOrders";
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/purchase-orders`;
 const API_URL1 = `${process.env.NEXT_PUBLIC_API_BASE_URL}/suppliers`;
-
 
 interface PurchaseOrderResponse {
   data: IPurchaseOrder[];
@@ -12,8 +17,6 @@ interface PurchaseOrderResponse {
   page: number;
   limit: number;
 }
-
-
 
 const getAuthConfig = () => {
   const token = localStorage.getItem("token");
@@ -27,25 +30,34 @@ const getUserId = () => {
   return user.id || user._id;
 };
 
-/**
- * Fetch all purchase orders with pagination and filters
- */
 export const fetchOrders = async (
   page = 1,
   limit = 10,
-  ): Promise<PurchaseOrderResponse> => {
+  search?: string, // Make optional
+  status?: string, // Make optional
+): Promise<PurchaseOrderResponse> => {
+  // Build params object conditionally
   const params: any = {
     userId: getUserId(),
     page,
     limit,
   };
 
+  // Only add search if it has a value
+  if (search && search.trim()) {
+    params.search = search.trim();
+  }
 
+  // Only add status if it has a value and is not 'all'
+  if (status && status !== "all") {
+    params.status = status;
+  }
 
   const res = await axios.get(API_URL, {
     ...getAuthConfig(),
     params,
   });
+
   console.log("res", res);
   return res.data;
 };
@@ -53,7 +65,9 @@ export const fetchOrders = async (
 /**
  * Fetch single purchase order by ID
  */
-export const fetchPurchaseOrderById = async (id: string): Promise<IPurchaseOrder> => {
+export const fetchPurchaseOrderById = async (
+  id: string,
+): Promise<IPurchaseOrder> => {
   const res = await axios.get(`${API_URL}/${id}`, {
     ...getAuthConfig(),
     params: {
@@ -67,14 +81,14 @@ export const fetchPurchaseOrderById = async (id: string): Promise<IPurchaseOrder
  * Create new purchase order
  */
 export const createPurchaseOrder = async (
-  payload: Partial<IPurchaseOrder>
+  payload: Partial<IPurchaseOrder>,
 ): Promise<IPurchaseOrder> => {
   const userId = getUserId();
-  
+
   const completePayload = {
     ...payload,
     userId,
-     orderDate: payload.orderDate || new Date(),
+    orderDate: payload.orderDate || new Date(),
   };
 
   const res = await axios.post(API_URL, completePayload, getAuthConfig());
@@ -86,21 +100,27 @@ export const createPurchaseOrder = async (
  */
 export const updatePurchaseOrder = async (
   id: string,
-  payload: Partial<IPurchaseOrder>
+  payload: Partial<IPurchaseOrder>,
 ): Promise<IPurchaseOrder> => {
   const completePayload = {
     ...payload,
     updatedBy: getUserId(),
   };
 
-  const res = await axios.put(`${API_URL}/${id}`, completePayload, getAuthConfig());
+  const res = await axios.put(
+    `${API_URL}/${id}`,
+    completePayload,
+    getAuthConfig(),
+  );
   return res.data.data;
 };
 
 /**
  * Delete purchase order (soft delete)
  */
-export const deletePurchaseOrder = async (id: string): Promise<{ message: string }> => {
+export const deletePurchaseOrder = async (
+  id: string,
+): Promise<{ message: string }> => {
   const res = await axios.delete(`${API_URL}/${id}`, getAuthConfig());
   return res.data;
 };
@@ -110,12 +130,12 @@ export const deletePurchaseOrder = async (id: string): Promise<{ message: string
  */
 export const updatePurchaseOrderStatus = async (
   id: string,
-  status: IPurchaseOrder['status']
+  status: IPurchaseOrder["status"],
 ): Promise<IPurchaseOrder> => {
   const res = await axios.patch(
     `${API_URL}/${id}/status`,
     { status },
-    getAuthConfig()
+    getAuthConfig(),
   );
   return res.data.data;
 };
@@ -123,7 +143,9 @@ export const updatePurchaseOrderStatus = async (
 /**
  * Generate next order number
  */
-export const generateNextOrderNumber = async (): Promise<{ nextOrderNumber: string }> => {
+export const generateNextOrderNumber = async (): Promise<{
+  nextOrderNumber: string;
+}> => {
   const res = await axios.get(`${API_URL}/next-order-number`, {
     ...getAuthConfig(),
     params: {
@@ -156,9 +178,11 @@ export const getPurchaseOrderStats = async (): Promise<{
  * Export purchase orders to CSV/Excel
  */
 // In your purchaseOrderApi.ts
-export const exportPurchaseOrders = async (filters: PurchaseOrderFilters = {}): Promise<Blob> => {
+export const exportPurchaseOrders = async (
+  filters: PurchaseOrderFilters = {},
+): Promise<Blob> => {
   const { status, startDate, endDate, supplier } = filters;
-  
+
   const params: any = {
     userId: getUserId(),
   };
@@ -169,57 +193,44 @@ export const exportPurchaseOrders = async (filters: PurchaseOrderFilters = {}): 
   if (supplier) params.supplier = supplier;
 
   try {
-    console.log('Exporting with params:', params);
-    
+    console.log("Exporting with params:", params);
+
     const res = await axios.get(`${API_URL}/export`, {
       ...getAuthConfig(),
       params,
-      responseType: 'blob',
+      responseType: "blob",
     });
-
-    // Log response details
-    console.log('Export response status:', res.status);
-    console.log('Export response headers:', res.headers);
-    console.log('Export response data type:', typeof res.data);
-    console.log('Export response data size:', res.data.size);
-    console.log('Export response content-type:', res.headers['content-type']);
 
     // Check if response is actually a blob
     if (!(res.data instanceof Blob)) {
-      console.error('Response is not a Blob:', res.data);
-      
       // If it's JSON (error), try to parse it
-      if (typeof res.data === 'string' && res.data.startsWith('{')) {
+      if (typeof res.data === "string" && res.data.startsWith("{")) {
         const errorData = JSON.parse(res.data);
-        console.error('Server error:', errorData);
-        throw new Error(errorData.message || 'Export failed');
+        console.error("Server error:", errorData);
+        throw new Error(errorData.message || "Export failed");
       }
-      
-      throw new Error('Invalid response format');
+
+      throw new Error("Invalid response format");
     }
 
     // Check if blob is empty
     if (res.data.size === 0) {
-      throw new Error('Exported file is empty');
+      throw new Error("Exported file is empty");
     }
 
     return res.data;
   } catch (error: any) {
     console.error("Error exporting purchase orders:", error);
-    
+
     // More detailed error logging
     if (error.response) {
-      console.error('Error response status:', error.response.status);
-      console.error('Error response headers:', error.response.headers);
-      console.error('Error response data:', error.response.data);
-      
       // If error response is blob, convert to text
       if (error.response.data instanceof Blob) {
         const errorText = await error.response.data.text();
-        console.error('Error blob content:', errorText);
+        console.error("Error blob content:", errorText);
       }
     }
-    
+
     throw error;
   }
 };
@@ -229,12 +240,12 @@ export const exportPurchaseOrders = async (filters: PurchaseOrderFilters = {}): 
  */
 export const bulkUpdatePurchaseOrders = async (
   ids: string[],
-  updates: Partial<IPurchaseOrder>
+  updates: Partial<IPurchaseOrder>,
 ): Promise<{ message: string; updatedCount: number }> => {
   const res = await axios.patch(
     `${API_URL}/bulk-update`,
     { ids, updates, updatedBy: getUserId() },
-    getAuthConfig()
+    getAuthConfig(),
   );
   return res.data;
 };
@@ -242,12 +253,15 @@ export const bulkUpdatePurchaseOrders = async (
 /**
  * Calculate purchase order totals (client-side helper)
  */
-export const calculateOrderTotals = (items: IPurchaseOrderItem[], taxRate: number = 0) => {
+export const calculateOrderTotals = (
+  items: IPurchaseOrderItem[],
+  taxRate: number = 0,
+) => {
   const subtotal = items.reduce((sum, item) => {
     const itemTotal = item.totalPrice || item.quantity * item.unitPrice;
     return sum + itemTotal;
   }, 0);
-  
+
   const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
 
@@ -261,7 +275,9 @@ export const calculateOrderTotals = (items: IPurchaseOrderItem[], taxRate: numbe
 /**
  * Validate purchase order items
  */
-export const validatePurchaseOrderItems = (items: IPurchaseOrderItem[]): string[] => {
+export const validatePurchaseOrderItems = (
+  items: IPurchaseOrderItem[],
+): string[] => {
   const errors: string[] = [];
 
   if (!items || items.length === 0) {
@@ -287,12 +303,10 @@ export const validatePurchaseOrderItems = (items: IPurchaseOrderItem[]): string[
   return errors;
 };
 
-
-
 export const fetchSuppliers = async (
   page = 1,
   limit = 10,
-  ): Promise<ISupplier[]> => {
+): Promise<ISupplier[]> => {
   const params: any = {
     userId: getUserId(),
     page,

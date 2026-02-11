@@ -5,7 +5,7 @@ import { SuplierSequenceCounter } from "../models/auto-generate-code-models/supp
 import { CustomerInvoiceSequenceCounter } from "../models/auto-generate-code-models/invoice.code.models";
 import { QuotationSequenceCounter } from "../models/auto-generate-code-models/quotation.code.model";
 
-//generate for db 
+//generate for db
 export const generateTicketCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
 
@@ -86,7 +86,7 @@ export const generateCustomerInvoiceCode = async (): Promise<string> => {
   return `INV-${year}-${String(counter.seq).padStart(6, "0")}`;
 };
 
-//real code to save in db update 
+//real code to save in db update
 export const generateQuotationCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
 
@@ -103,8 +103,6 @@ export const generateQuotationCode = async (): Promise<string> => {
   return `QUO-${year}-${String(counter.seq).padStart(6, "0")}`;
 };
 
-
-
 //generate for view
 
 export const getCurrentTechnicianJobCode = async (): Promise<string> => {
@@ -118,7 +116,6 @@ export const getCurrentTechnicianJobCode = async (): Promise<string> => {
   return `JOB-${year}-${String(seq).padStart(6, "0")}`;
 };
 
-
 export const getCurrentTicketCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
 
@@ -129,7 +126,6 @@ export const getCurrentTicketCode = async (): Promise<string> => {
 
   return `TKT-${year}-${String(seq).padStart(6, "0")}`;
 };
-
 
 export const getEmployeeCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
@@ -153,7 +149,6 @@ export const getSupplierCurrentCode = async (): Promise<string> => {
   return `SUP-${year}-${String(seq).padStart(6, "0")}`;
 };
 
-
 export const getCustomerInvoiceCurrentCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
 
@@ -165,7 +160,7 @@ export const getCustomerInvoiceCurrentCode = async (): Promise<string> => {
   return `INV-${year}-${String(seq).padStart(6, "0")}`;
 };
 
-//get Quotation current code 
+//get Quotation current code
 export const getQuotationCurrentCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
 
