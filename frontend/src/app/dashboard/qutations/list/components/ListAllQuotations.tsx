@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Cards from "./Cards";
 import QuotationTable from "./QuotationTable";
 import View from "./View";
-import Edit from "./Edit";
 import DeleteConfirmModal from "../../../my-tickets/components/DeleteConfirmModal";
 import { getAlls, deleteItem } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
@@ -208,15 +207,6 @@ const ListAllQuotations = () => {
     } else {
       toast.error("Quotation not found");
     }
-  };
-
-  const handleCloseEdit = () => {
-    setEditingQuotation(null);
-  };
-
-  const handleUpdateSuccess = () => {
-    setEditingQuotation(null);
-    fetchData(); // Refresh list after update
   };
 
   const handleDelete = (id: string) => {

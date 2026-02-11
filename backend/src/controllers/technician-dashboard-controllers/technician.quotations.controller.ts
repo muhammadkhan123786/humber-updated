@@ -49,7 +49,17 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: "$ticket" },
-        // 3️⃣ Lookup - quotation status
+        // 3️⃣ Lookup - ticket status
+        {
+            $lookup: {
+                from: "ticketstatuses",
+                localField: "ticket.ticketStatusId",
+                foreignField: "_id",
+                as: "ticketStatusDetails",
+            },
+        },
+        { $unwind: { path: "$ticketStatusDetails", preserveNullAndEmptyArrays: true } },
+        // 4️⃣ Lookup - quotation status
         {
             $lookup: {
                 from: "ticketquationstatuses",
@@ -59,7 +69,7 @@ export const technicianTicketsQuotationsController = async (
             },          
         },
         { $unwind: "$quotationStatus" },
-        // 4️⃣ Lookup - parts details
+        // 5️⃣ Lookup - customer details
         {
             $lookup: {
                 from: "customerbases",
@@ -78,7 +88,7 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: "$person" },       
-        // 5️⃣ Lookup - vehicle details
+        // 6️⃣ Lookup - vehicle details
         {
             $lookup: {
                 from: "customervehiclemodels",
@@ -88,7 +98,7 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: { path: "$vehicle", preserveNullAndEmptyArrays: true } },
-        // 6️⃣ Lookup - vehicle brand
+        // 7️⃣ Lookup - vehicle brand
         {
             $lookup: {
                 from: "vechiclebrands",
@@ -98,7 +108,7 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: { path: "$vehicleBrand", preserveNullAndEmptyArrays: true } },
-        // 7️⃣ Lookup - vehicle model
+        // 8️⃣ Lookup - vehicle model
         {
             $lookup: {
                 from: "vechiclemodels",
@@ -108,7 +118,7 @@ export const technicianTicketsQuotationsController = async (
             },
         },
         { $unwind: { path: "$vehicleModel", preserveNullAndEmptyArrays: true } },
-        // 8️⃣ Lookup - parts details
+        // 9️⃣ Lookup - parts details
         {
             $lookup: {
                 from: "parts",
@@ -177,7 +187,7 @@ export const technicianTicketsQuotationsController = async (
           ticketCode: "$ticket.ticketCode",
           issue_Details: "$ticket.issue_Details",
           pay_by: "$ticket.decisionId",
-          ticketStatus: "$ticket.ticketStatus",
+          ticketStatus: { $ifNull: ["$ticketStatusDetails.label", "$ticketStatusDetails.code"] },
           customer: {
             _id: "$customer._id",
             firstName: "$person.firstName",

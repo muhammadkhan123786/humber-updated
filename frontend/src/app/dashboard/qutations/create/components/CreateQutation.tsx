@@ -84,9 +84,12 @@ const CreateQuotationPage = () => {
         if (quotation.ticket) {
           const ticketData = {
             ...quotation.ticket,
-            ticketStatus: quotation.ticket.ticketStatus || quotation.quotationStatus || 'Open'
+            // Keep the original ticket status - don't override with quotation status
+            ticketStatus: quotation.ticket.ticketStatus
           };
           console.log('Setting ticket data:', ticketData);
+          console.log('Ticket status value:', ticketData.ticketStatus);
+          console.log('Full quotation object:', quotation);
           setSelectedTicket(ticketData);
           setShowTicketInfo(true);
         }

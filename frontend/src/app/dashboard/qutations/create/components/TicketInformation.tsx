@@ -60,6 +60,10 @@ interface TicketInformationProps {
 }
 
 const TicketInformation = ({ ticket, onChangeTicket, selectedParts, onPartsChange }: TicketInformationProps) => {
+  console.log('Rendering TicketInformation with ticket:', ticket);
+  console.log('Ticket status:', ticket?.ticketStatus);
+  console.log('Ticket status type:', typeof ticket?.ticketStatus);
+
   const customerName = ticket?.customer?.firstName && ticket?.customer?.lastName
     ? `${ticket.customer.firstName} ${ticket.customer.lastName}`
     : 'N/A';
