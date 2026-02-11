@@ -1,6 +1,7 @@
 "use client";
 import  { useState, useEffect } from "react";
 import { Search, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Cards from "./Cards";
 import QuotationTable from "./QuotationTable";
 import View from "./View";
@@ -43,6 +44,7 @@ interface QuotationFromBackend {
 }
 
 const ListAllQuotations = () => {
+  const router = useRouter();
   const [quotations, setQuotations] = useState<QuotationFromBackend[]>([]);
   const [filteredQuotations, setFilteredQuotations] = useState<QuotationFromBackend[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -199,7 +201,10 @@ const ListAllQuotations = () => {
   const handleEdit = (id: string) => {
     const quotation = quotations.find(q => q._id === id);
     if (quotation) {
-      setEditingQuotation(quotation);
+      // Store quotation data in localStorage for editing
+      localStorage.setItem('editQuotation', JSON.stringify(quotation));
+      // Navigate to create/edit page
+      router.push('/dashboard/qutations/create?mode=edit');
     } else {
       toast.error("Quotation not found");
     }
@@ -314,13 +319,13 @@ const ListAllQuotations = () => {
         )}
 
         {/* Edit Modal */}
-        {editingQuotation && (
+        {/* {editingQuotation && (
           <Edit
             quotation={editingQuotation}
             onClose={handleCloseEdit}
             onSuccess={handleUpdateSuccess}
           />
-        )}
+        )} */}
 
         {/* Delete Confirmation Modal */}
         <DeleteConfirmModal

@@ -209,10 +209,10 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Full Name</p>
                 <p className="text-gray-900 font-semibold">
-                  {quotation.customer.firstName} {quotation.customer.lastName}
+                  {quotation?.customer?.firstName || ''} {quotation?.customer?.lastName || ''}
                 </p>
               </div>
-              {quotation.customer.email && (
+              {quotation?.customer?.email && (
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Mail size={16} className="text-gray-500" />
@@ -221,7 +221,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                   <p className="text-gray-900">{quotation.customer.email}</p>
                 </div>
               )}
-              {quotation.customer.phone && (
+              {quotation?.customer?.phone && (
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <Phone size={16} className="text-gray-500" />
@@ -233,7 +233,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Ticket Number</p>
                 <p className="text-gray-900 font-mono font-semibold">
-                  {quotation.ticket.ticketCode || "N/A"}
+                  {quotation?.ticket?.ticketCode || "N/A"}
                 </p>
               </div>
             </div>

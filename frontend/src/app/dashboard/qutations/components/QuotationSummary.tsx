@@ -1,6 +1,6 @@
 "use client";
 import { Calculator, AlertCircle, Save, Send, Download } from 'lucide-react';
-import { createItem, getAlls } from '@/helper/apiHelper';
+import { createItem, getAlls, updateItem } from '@/helper/apiHelper';
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -29,6 +29,9 @@ interface QuotationSummaryProps {
   additionalNotes?: string;
   validUntil?: string;
   quotationAutoId?: string;
+  quotationId?: string; // For edit mode
+  isEditMode?: boolean;
+  technicianId?: string; // For passing technician ID from edit mode
 }
 
 const QuotationSummary = ({ 
@@ -39,7 +42,10 @@ const QuotationSummary = ({
   taxPercentage = 20,
   additionalNotes = '',
   validUntil = '',
-  quotationAutoId = ''
+  quotationAutoId = '',
+  quotationId = '',
+  isEditMode = false,
+  technicianId: technicianIdProp = '' // Renamed to avoid shadowing
 }: QuotationSummaryProps) => {
   const [defaultStatuses, setDefaultStatuses] = useState<any>({});
   const [saving, setSaving] = useState(false);
@@ -88,7 +94,7 @@ const QuotationSummary = ({
   };
   const formattedValidUntil = calculateValidUntil();
 
-  const createQuotation = async () => {
+  const createOrUpdateQuotation = async () => {
     if (!selectedTicket) {
       toast.error('Please select a ticket first');
       return;
@@ -114,7 +120,15 @@ const QuotationSummary = ({
         return;
       }
 
-      const technicianId = localStorage.getItem('technicianId') || selectedTicket.assignedTechnician?._id;
+      // Get technician ID - priority: 1) Passed prop (from edit), 2) localStorage, 3) Selected ticket
+      const technicianId = technicianIdProp || localStorage.getItem('technicianId') || selectedTicket.assignedTechnician?._id;
+      
+      console.log('Technician ID sources:', { 
+        technicianIdProp, 
+        localStorageTechnicianId: localStorage.getItem('technicianId'),
+        assignedTechnicianId: selectedTicket.assignedTechnician?._id,
+        finalTechnicianId: technicianId 
+      });
       
       if (!technicianId) {
         toast.error('Technician ID not found. Please log in again.');
@@ -157,33 +171,40 @@ const QuotationSummary = ({
         isActive: true
       };
 
-      console.log('Creating quotation with data:', quotationData);
+      console.log(isEditMode ? 'Updating quotation with data:' : 'Creating quotation with data:', quotationData);
       
-      const response = await createItem('/technician-ticket-quotation', quotationData);
-      
-      console.log('Quotation created successfully:', response);
-      
-      toast.success('Quotation created successfully!');
+      let response;
+      if (isEditMode && quotationId) {
+        // Update existing quotation
+        response = await updateItem('/technician-ticket-quotation', quotationId, quotationData);
+        console.log('Quotation updated successfully:', response);
+        toast.success('Quotation updated successfully!');
+      } else {
+        // Create new quotation
+        response = await createItem('/technician-ticket-quotation', quotationData);
+        console.log('Quotation created successfully:', response);
+        toast.success('Quotation created successfully!');
+      }
       
       // Redirect to quotations list page
       setTimeout(() => {
         window.location.href = '/dashboard/qutations';
       }, 1500);
     } catch (error: any) {
-      console.error('Error creating quotation:', error);
-      toast.error(error?.message || 'Failed to create quotation');
+      console.error(isEditMode ? 'Error updating quotation:' : 'Error creating quotation:', error);
+      toast.error(error?.message || (isEditMode ? 'Failed to update quotation' : 'Failed to create quotation'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleSaveDraft = () => {
-    createQuotation();
+    createOrUpdateQuotation();
   };
 
   const handleSendToAdmin = () => {
     console.log('Sending quotation to admin with status "sent"');
-    createQuotation();
+    createOrUpdateQuotation();
   };
 
   const handleDownloadPDF = () => {
@@ -246,7 +267,7 @@ const QuotationSummary = ({
               className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-[#10b981] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save size={18} />
-              <span>{saving ? 'Saving...' : 'Save as Draft'}</span>
+              <span>{saving ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Update Draft' : 'Save as Draft')}</span>
             </button>
 
             <button 
@@ -255,7 +276,7 @@ const QuotationSummary = ({
               className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white bg-linear-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={18} />
-              <span>{saving ? 'Sending...' : 'Send to Admin'}</span>
+              <span>{saving ? (isEditMode ? 'Updating...' : 'Sending...') : (isEditMode ? 'Update & Send to Admin' : 'Send to Admin')}</span>
             </button>
 
             <button 

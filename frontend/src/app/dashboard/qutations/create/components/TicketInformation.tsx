@@ -60,8 +60,10 @@ interface TicketInformationProps {
 }
 
 const TicketInformation = ({ ticket, onChangeTicket, selectedParts, onPartsChange }: TicketInformationProps) => {
-  const customerName = `${ticket.customer.firstName} ${ticket.customer.lastName}`;
-  const productName = ticket.vehicle.vehicleBrandId?.brandName && ticket.vehicle.vehicleModelId?.modelName
+  const customerName = ticket?.customer?.firstName && ticket?.customer?.lastName
+    ? `${ticket.customer.firstName} ${ticket.customer.lastName}`
+    : 'N/A';
+  const productName = ticket?.vehicle?.vehicleBrandId?.brandName && ticket?.vehicle?.vehicleModelId?.modelName
     ? `${ticket.vehicle.vehicleBrandId.brandName} ${ticket.vehicle.vehicleModelId.modelName}`
     : 'N/A';
 
@@ -109,12 +111,12 @@ const TicketInformation = ({ ticket, onChangeTicket, selectedParts, onPartsChang
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs font-medium text-gray-600 mb-1">Ticket ID</p>
-              <p className="text-base font-semibold text-gray-900">{ticket.ticketCode}</p>
+              <p className="text-base font-semibold text-gray-900">{ticket?.ticketCode || 'N/A'}</p>
             </div>
             <div>
               <p className="text-xs font-medium text-gray-600 mb-1">Status</p>
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-white text-sm font-medium ${getStatusColor(ticket.ticketStatus)}`}>
-                {ticket.ticketStatus}
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-white text-sm font-medium ${getStatusColor(ticket?.ticketStatus || 'unknown')}`}>
+                {ticket?.ticketStatus || 'N/A'}
               </span>
             </div>
           </div>
@@ -142,7 +144,7 @@ const TicketInformation = ({ ticket, onChangeTicket, selectedParts, onPartsChang
             <p className="text-xs font-medium text-gray-600 mb-2">Issue Description</p>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm font-medium text-gray-700 leading-relaxed whitespace-pre-line">
-                {ticket.issue_Details || 'No issue details provided'}
+                {ticket?.issue_Details || 'No issue details provided'}
               </p>
             </div>
           </div>
