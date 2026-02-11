@@ -156,7 +156,7 @@ const QuotationSummary = ({
         userId: userId,
         ticketId: selectedTicket._id,
         quotationStatusId: statusesRes.data.defaultQuotationStatusId,
-        partsList: selectedParts.map(part => part._id),
+        partsList: selectedParts.flatMap(part => Array(part.quantity).fill(part._id)),
         labourTime: laborHours,
         labourRate: ratePerHour,
         aditionalNotes: additionalNotes,
@@ -171,6 +171,8 @@ const QuotationSummary = ({
         isActive: true
       };
 
+      console.log('Selected parts:', selectedParts);
+      console.log('Parts list being sent (with duplicates for quantity):', quotationData.partsList);
       console.log(isEditMode ? 'Updating quotation with data:' : 'Creating quotation with data:', quotationData);
       
       let response;

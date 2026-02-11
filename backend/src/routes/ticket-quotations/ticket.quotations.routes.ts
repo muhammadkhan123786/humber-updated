@@ -41,6 +41,9 @@ ticketQuotationRouter.post("/",async (req, res, next) => {
   }, ticketQuotationController.create);
 ticketQuotationRouter.put("/:id", technicianMasterProtector, (req:Request,res:Response,next:NextFunction)=>{
     console.log("Update Ticket Quotation Request Body:", req.body);
+    console.log("Parts list being updated:", req.body.partsList);
+    console.log("Parts list length:", req.body.partsList?.length);
+    console.log("Parts list array:", JSON.stringify(req.body.partsList, null, 2));
       const newUserId = req.body.userId;
       req.body.userId = req.body.technicianId;
       req.body.technicianId = newUserId;

@@ -53,8 +53,9 @@ interface Part {
   partName: string;
   partNumber?: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  unitCost: number;
+  stock?: number;
+  description?: string;
 }
 
 interface QuotationViewData {
@@ -269,7 +270,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {quotation.partsList.map((part, index) => (
-                      <tr key={part._id || index} className="hover:bg-gray-50">
+                      <tr key={`${part._id}-${index}`} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {part.partName}
                         </td>
@@ -280,10 +281,10 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                           {part.quantity}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                          {formatCurrency(part.unitPrice)}
+                          {formatCurrency(part.unitCost || 0)}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-indigo-600 text-right">
-                          {formatCurrency(part.totalPrice)}
+                          {formatCurrency((part.unitCost || 0) * (part.quantity || 1))}
                         </td>
                       </tr>
                     ))}

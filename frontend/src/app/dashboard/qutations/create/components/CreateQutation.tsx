@@ -65,6 +65,8 @@ const CreateQuotationPage = () => {
         console.log('Loading quotation for edit:', quotation);
         console.log('Ticket data:', quotation.ticket);
         console.log('Parts list:', quotation.partsList);
+        console.log('Parts list length:', quotation.partsList?.length);
+        console.log('Parts list array:', JSON.stringify(quotation.partsList, null, 2));
         console.log('Vehicle data:', quotation.ticket?.vehicle);
         console.log('Vehicle brand:', quotation.ticket?.vehicle?.vehicleBrandId);
         console.log('Vehicle model:', quotation.ticket?.vehicle?.vehicleModelId);
@@ -94,34 +96,44 @@ const CreateQuotationPage = () => {
           setShowTicketInfo(true);
         }
         
-        // Set parts - calculate quantity from total bill if needed
+        // Set parts - group by ID and count quantities
         if (quotation.partsList && Array.isArray(quotation.partsList)) {
-          const formattedParts = quotation.partsList
-            .filter((part: any) => part && part._id) // Filter out null/undefined parts
-            .map((part: any, index: number) => {
-            // Try to calculate quantity if we have the totals
-            let calculatedQuantity = 1;
-            if (quotation.partTotalBill && part.unitCost && quotation.partsList.length > 0) {
-              // Rough estimate: divide total by number of parts and by unit cost
-              const avgPartCost = quotation.partTotalBill / quotation.partsList.length;
-              if (part.unitCost > 0) {
-                calculatedQuantity = Math.round(avgPartCost / part.unitCost) || 1;
-              }
+          // Filter out null/undefined parts first
+          const validParts = quotation.partsList.filter((part: any) => part && part._id);
+          
+          console.log('Valid parts from backend:', validParts);
+          console.log('Valid parts count:', validParts.length);
+          
+          // Group parts by ID and count occurrences
+          const partsMap = new Map<string, any>();
+          
+          validParts.forEach((part: any, index: number) => {
+            const partId = part._id;
+            console.log(`Processing part ${index}:`, { partId, partName: part.partName });
+            
+            if (partsMap.has(partId)) {
+              // Increment quantity for existing part
+              const existingPart = partsMap.get(partId);
+              existingPart.quantity += 1;
+              console.log(`  -> Incremented quantity for ${part.partName} to ${existingPart.quantity}`);
+            } else {
+              // Add new part with quantity 1
+              partsMap.set(partId, {
+                _id: part._id,
+                partName: part.partName || 'Unknown Part',
+                partNumber: part.partNumber || 'N/A',
+                quantity: 1,
+                unitCost: part.unitCost || 0,
+                stock: part.stock,
+                description: part.description || ''
+              });
+              console.log(`  -> Added new part ${part.partName} with quantity 1`);
             }
-            
-            console.log('Processing part:', part);
-            
-            return {
-              _id: part._id || '',
-              partName: part.partName || 'Unknown Part',
-              partNumber: part.partNumber || 'N/A',
-              quantity: part.quantity || calculatedQuantity,
-              unitCost: part.unitCost || 0,
-              stock: part.stock,
-              description: part.description || ''
-            };
           });
-          console.log('Formatted parts:', formattedParts);
+          
+          // Convert map to array
+          const formattedParts = Array.from(partsMap.values());
+          console.log('Formatted parts with quantities:', formattedParts);
           setSelectedParts(formattedParts);
         }
         

@@ -127,9 +127,10 @@ export const technicianTicketsQuotationsController = async (
                 as: "partsDetails",
             },
         },
-        // Add debug field to track vehicle data
+        // 🔟 Add fields to preserve original partsList array
         {
             $addFields: {
+                originalPartsList: "$partsList",
                 debugVehicle: {
                     hasVehicle: { $cond: [{ $ifNull: ["$vehicle._id", false] }, true, false] },
                     hasBrand: { $cond: [{ $ifNull: ["$vehicleBrand.brandName", false] }, true, false] },
@@ -208,24 +209,36 @@ export const technicianTicketsQuotationsController = async (
         },
         quotationStatus: "$quotationStatus.ticketQuationStatus",
         partsList: {
-          $cond: {
-            if: { $isArray: "$partsDetails" },
-            then: {
-              $map: {
-                input: "$partsDetails",
-                as: "part",
+          $map: {
+            input: "$originalPartsList",
+            as: "partId",
+            in: {
+              $let: {
+                vars: {
+                  matchedPart: {
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$partsDetails",
+                          as: "detail",
+                          cond: { $eq: ["$$detail._id", "$$partId"] }
+                        }
+                      },
+                      0
+                    ]
+                  }
+                },
                 in: {
-                  _id: "$$part._id",
-                  partName: "$$part.partName",
-                  partNumber: "$$part.partNumber",
-                  unitCost: "$$part.unitCost",
-                  stock: "$$part.stock",
-                  description: "$$part.description",
+                  _id: "$$matchedPart._id",
+                  partName: "$$matchedPart.partName",
+                  partNumber: "$$matchedPart.partNumber",
+                  unitCost: "$$matchedPart.unitCost",
+                  stock: "$$matchedPart.stock",
+                  description: "$$matchedPart.description",
                   quantity: 1
                 }
               }
-            },
-            else: []
+            }
           }
         },
         technician: {
@@ -247,6 +260,9 @@ export const technicianTicketsQuotationsController = async (
     
     // Log specific quotation details for debugging
     if (quotations.length > 0) {
+      console.log("First quotation partsList length:", quotations[0].partsList?.length);
+      console.log("First quotation partsList:", JSON.stringify(quotations[0].partsList, null, 2));
+      console.log("First quotation originalPartsList:", quotations[0].originalPartsList);
       console.log("First quotation ticket:", JSON.stringify(quotations[0].ticket, null, 2));
       console.log("First quotation vehicle:", JSON.stringify(quotations[0].ticket?.vehicle, null, 2));
       console.log("First quotation customer:", JSON.stringify(quotations[0].ticket?.customer, null, 2));
