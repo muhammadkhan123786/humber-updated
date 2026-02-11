@@ -19,7 +19,7 @@ export const generateTicketCode = async (): Promise<string> => {
     throw new Error("Failed to generate ticket sequence");
   }
   console.log("counter", counter);
-  return `TKT-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `TKT-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 export const generateEmployeeCode = async (): Promise<string> => {
@@ -35,7 +35,7 @@ export const generateEmployeeCode = async (): Promise<string> => {
     throw new Error("Failed to employee code sequence");
   }
   console.log("counter", counter);
-  return `Emp-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `Emp-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 export const generateTechnicianJobCode = async (): Promise<string> => {
@@ -51,7 +51,7 @@ export const generateTechnicianJobCode = async (): Promise<string> => {
     throw new Error("Failed to Technician Job Code sequence");
   }
 
-  return `JOB-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `JOB-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 export const generateSupplierCode = async (): Promise<string> => {
@@ -67,7 +67,7 @@ export const generateSupplierCode = async (): Promise<string> => {
     throw new Error("Failed to Supplier Code sequence");
   }
 
-  return `SUP-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `SUP-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 export const generateCustomerInvoiceCode = async (): Promise<string> => {
@@ -83,7 +83,7 @@ export const generateCustomerInvoiceCode = async (): Promise<string> => {
     throw new Error("Failed to Customer Invoice Code sequence");
   }
 
-  return `INV-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `INV-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 //real code to save in db update
@@ -100,7 +100,7 @@ export const generateQuotationCode = async (): Promise<string> => {
     throw new Error("Failed to generate quotation Code sequence");
   }
 
-  return `QUO-${year}-${String(counter.seq).padStart(6, "0")}`;
+  return `QUO-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 //generate for view
@@ -113,7 +113,7 @@ export const getCurrentTechnicianJobCode = async (): Promise<string> => {
 
   const seq = counter ? counter.seq + 1 : 1;
 
-  return `JOB-${year}-${String(seq).padStart(6, "0")}`;
+  return `JOB-${year}-${String(seq).padStart(3, "0")}`;
 };
 
 export const getCurrentTicketCode = async (): Promise<string> => {
@@ -124,7 +124,7 @@ export const getCurrentTicketCode = async (): Promise<string> => {
 
   const seq = counter ? counter.seq + 1 : 1;
 
-  return `TKT-${year}-${String(seq).padStart(6, "0")}`;
+  return `TKT-${year}-${String(seq).padStart(3, "0")}`;
 };
 
 export const getEmployeeCode = async (): Promise<string> => {
@@ -135,7 +135,7 @@ export const getEmployeeCode = async (): Promise<string> => {
 
   const seq = counter ? counter.seq + 1 : 1;
 
-  return `Emp-${year}-${String(seq).padStart(6, "0")}`;
+  return `Emp-${year}-${String(seq).padStart(3, "0")}`;
 };
 
 export const getSupplierCurrentCode = async (): Promise<string> => {
@@ -146,7 +146,7 @@ export const getSupplierCurrentCode = async (): Promise<string> => {
 
   const seq = counter ? counter.seq + 1 : 1;
 
-  return `SUP-${year}-${String(seq).padStart(6, "0")}`;
+  return `SUP-${year}-${String(seq).padStart(3, "0")}`;
 };
 
 export const getCustomerInvoiceCurrentCode = async (): Promise<string> => {
@@ -157,7 +157,7 @@ export const getCustomerInvoiceCurrentCode = async (): Promise<string> => {
 
   const seq = counter ? counter.seq + 1 : 1;
 
-  return `INV-${year}-${String(seq).padStart(6, "0")}`;
+  return `INV-${year}-${String(seq).padStart(3, "0")}`;
 };
 
 //get Quotation current code
@@ -169,5 +169,6 @@ export const getQuotationCurrentCode = async (): Promise<string> => {
 
   const seq = counter ? counter.seq + 1 : 1;
 
-  return `QUO-${year}-${String(seq).padStart(6, "0")}`;
+  return `QUO-${year}-${String(seq).padStart(3, "0")}`;
 };
+
