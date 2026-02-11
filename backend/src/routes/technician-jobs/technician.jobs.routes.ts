@@ -22,12 +22,47 @@ const technicianJobsController = new AdvancedGenericController({
   service: technicianJobServices,
   populate: [
     "userId",
-    "ticketId",
-    "technicianId",
+
+    {
+      path: "ticketId",
+      populate: [
+        { path: "ticketStatusId" },
+
+        {
+          path: "customerId",
+          populate: [
+            { path: "personId" },
+            { path: "addressId" },
+            { path: "contactId" },
+          ],
+        },
+
+        {
+          path: "vehicleId",
+          populate: [{ path: "vehicleBrandId" }, { path: "vehicleModelId" }],
+        },
+
+        { path: "priorityId" },
+      ],
+    },
+
+    {
+      path: "technicianId",
+      populate: [
+        { path: "personId" },
+        { path: "addressId" },
+        { path: "contactId" },
+      ],
+    },
+
+    {
+      path: "parts",
+      populate: { path: "partId" },
+    },
+
     "jobStatusId",
-    { path: "technicianId", populate: { path: "personId" } },
-    { path: "parts", populate: { path: "partId" } },
   ],
+
   validationSchema: technicianJobSchemaValidation,
   searchFields: ["jobId"],
 });
