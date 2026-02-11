@@ -81,12 +81,13 @@ import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace.routes";
-import  uploadRoutes  from "./routes/upload.routes"
+import uploadRoutes from "./routes/upload.routes"
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
 import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
 import { getDefaultQuotationStatusController, getDefaultTaxPercentageController } from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
+import technicianJobsStatisticsRouter from "./routes/technician-jobs/technician.jobs.statistics";
 
 
 // Create express app
@@ -444,6 +445,13 @@ app.get(
 app.get(`${process.env.API_PREFIX}/test-mobile-access`, adminProtecter, (req: Request, res: Response) => {
   return res.status(200).json({ status: true, message: "Mobile Access Successfully." })
 })
+
+// 11-02-2026
+app.use(
+  `${process.env.API_PREFIX}/job-statistics`,
+  // adminProtecter,
+  technicianJobsStatisticsRouter,
+);
 
 //Muhammad Imran code ended here.
 
