@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface DropdownAnimationProps {
   isOpen: boolean
@@ -54,9 +55,9 @@ export const PopupAnimation: React.FC<PopupAnimationProps> = ({ isOpen, children
 
   if (!isOpen) return null
 
-  return (
+  const content = (
     <div 
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-fadeIn"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-9999 p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div 
@@ -67,6 +68,10 @@ export const PopupAnimation: React.FC<PopupAnimationProps> = ({ isOpen, children
       </div>
     </div>
   )
+
+  return typeof document !== 'undefined' 
+    ? createPortal(content, document.body)
+    : null
 }
 
 // Add this to your global CSS file (globals.css or tailwind.config)

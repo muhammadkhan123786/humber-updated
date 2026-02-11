@@ -19,7 +19,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       {/* View Button */}
       <button
         onClick={onView}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 bg-[#f8f9ff] rounded-lg h-8  hover:bg-indigo-100 transition-colors"
         aria-label="View"
       >
         <Eye size={16} />
@@ -29,7 +29,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       {/* Edit Button */}
       <button
         onClick={onEdit}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-indigo-600 border border-indigo-300 bg-[#f8f9ff] rounded-lg h-8  hover:bg-indigo-100 transition-colors"
         aria-label="Edit"
       >
         <Edit size={16} />
@@ -39,7 +39,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       {/* Delete Button */}
       <button
         onClick={onDelete}
-        className="flex items-center gap-1 p-2 text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-red-600 border border-red-300 bg-red-50 rounded-lg h-8  hover:bg-red-100 transition-colors"
         aria-label="Delete"
       >
         <Trash2 size={16} />

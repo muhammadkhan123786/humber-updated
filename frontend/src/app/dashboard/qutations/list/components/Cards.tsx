@@ -19,48 +19,43 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
     
     if (statusLower.includes("sent") || statusLower.includes("send")) {
       return {
-        icon: <FileText size={24} />,
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-200",
-        iconColor: "text-blue-600",
-        countColor: "text-blue-700",
+        icon: <FileText size={18} />, // Slightly smaller to match text height
+        bgColor: "bg-blue-50/50",
+        borderColor: "border-blue-100",
+        accentColor: "text-blue-600",
         label: "Sent",
       };
     } else if (statusLower.includes("approved") || statusLower.includes("approve")) {
       return {
-        icon: <CheckCircle size={24} />,
-        bgColor: "bg-green-50",
-        borderColor: "border-green-200",
-        iconColor: "text-green-600",
-        countColor: "text-green-700",
+        icon: <CheckCircle size={18} />,
+        bgColor: "bg-green-50/50",
+        borderColor: "border-green-100",
+        accentColor: "text-green-600",
         label: "Approved",
       };
     } else if (statusLower.includes("draft")) {
       return {
-        icon: <AlertCircle size={24} />,
-        bgColor: "bg-gray-50",
-        borderColor: "border-gray-200",
-        iconColor: "text-gray-600",
-        countColor: "text-gray-700",
+        icon: <FileText size={18} />,
+        bgColor: "bg-gray-50/50",
+        borderColor: "border-gray-100",
+        accentColor: "text-slate-600",
         label: "Draft",
       };
     } else if (statusLower.includes("reject")) {
       return {
-        icon: <XCircle size={24} />,
-        bgColor: "bg-red-50",
-        borderColor: "border-red-200",
-        iconColor: "text-red-600",
-        countColor: "text-red-700",
+        icon: <AlertCircle size={18} />,
+        bgColor: "bg-red-50/50",
+        borderColor: "border-red-100",
+        accentColor: "text-red-600",
         label: "Rejected",
       };
     }
     
     return {
-      icon: <FileText size={24} />,
-      bgColor: "bg-gray-50",
-      borderColor: "border-gray-200",
-      iconColor: "text-gray-600",
-      countColor: "text-gray-700",
+      icon: <FileText size={18} />,
+      bgColor: "bg-gray-50/50",
+      borderColor: "border-gray-100",
+      accentColor: "text-gray-600",
       label: status,
     };
   };
@@ -73,18 +68,21 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
           <div
             key={index}
             onClick={() => onFilterByStatus(item.status)}
-            className={`${config.bgColor} ${config.borderColor} border-2 rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1`}
+            className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 cursor-pointer hover:shadow-md transition-all duration-200`}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">
-                  {config.label}
-                </p>
-                <p className={`text-3xl font-bold ${config.countColor}`}>
-                  {item.count}
-                </p>
-              </div>
-              <div className={`${config.iconColor}`}>{config.icon}</div>
+            {/* Header: Icon and Label side-by-side */}
+            <div className={`flex items-center gap-2 mb-3  ${config.accentColor}`}>
+              {config.icon}
+              <span className="text-sm font-semibold">
+                {config.label}
+              </span>
+            </div>
+
+            {/* Content: Number on next line */}
+            <div>
+              <p className={`text-3xl font-bold ${config.accentColor}`}>
+                {item.count}
+              </p>
             </div>
           </div>
         );
