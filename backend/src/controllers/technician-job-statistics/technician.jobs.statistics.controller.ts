@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import mongoose, { Types } from "mongoose";
+
+import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
 import { TechnicianJobStatus } from "../../models/master-data-models/technician.job.status.models";
 
 export const technicianJobsStatisticsController = async (
@@ -7,13 +9,13 @@ export const technicianJobsStatisticsController = async (
     res: Response
 ) => {
     try {
-        // Start of today for filtering today's jobs
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
+
         const result = await TechnicianJobStatus.aggregate([
             {
                 $facet: {
-                    // 1️⃣ Status counts (per master status)
+                    // ✅ 1️⃣ STATUS COUNTS (Show ALL statuses)
                     statusCounts: [
                         {
                             $lookup: {
@@ -29,8 +31,8 @@ export const technicianJobsStatisticsController = async (
                                                             {
                                                                 $cond: [
                                                                     { $eq: [{ $type: "$jobStatusId" }, "string"] },
-                                                                    { $toObjectId: "$jobStatusId" }, // convert string to ObjectId
-                                                                    "$jobStatusId" // already ObjectId
+                                                                    { $toObjectId: "$jobStatusId" },
+                                                                    "$jobStatusId"
                                                                 ]
                                                             },
                                                             "$$statusId"
@@ -49,47 +51,92 @@ export const technicianJobsStatisticsController = async (
                         {
                             $addFields: {
                                 totalJobs: {
-                                    $ifNull: [{ $arrayElemAt: ["$jobsData.totalJobs", 0] }, 0]
+                                    $ifNull: [
+                                        { $arrayElemAt: ["$jobsData.totalJobs", 0] },
+                                        0
+                                    ]
                                 }
                             }
                         },
                         {
                             $project: {
                                 _id: 1,
-                                statusName: 1,
-                                totalJobs: 1 // ✅ no exclusion, avoids Mongo error
+                                technicianJobStatus: 1,
+                                totalJobs: 1
                             }
                         }
                     ],
 
-                    // 2️⃣ Overall total jobs (all non-deleted jobs)
+                    // ✅ 2️⃣ OVERALL TOTAL JOBS (REAL JOBS COLLECTION)
                     overallTotal: [
                         {
-                            $match: { isDeleted: false }
-                        },
-                        { $count: "overallTotalJobs" }
-                    ],
-
-                    // 3️⃣ Today's jobs
-                    todayJobs: [
-                        {
-                            $match: {
-                                isDeleted: false,
-                                createdAt: { $gte: todayStart }
+                            $lookup: {
+                                from: "techniciansjobs",
+                                pipeline: [
+                                    { $match: { isDeleted: false } },
+                                    { $count: "overallTotalJobs" }
+                                ],
+                                as: "overall"
                             }
                         },
-                        { $count: "todayJobs" }
+                        {
+                            $unwind: {
+                                path: "$overall",
+                                preserveNullAndEmptyArrays: true
+                            }
+                        },
+                        {
+                            $limit: 1
+                        },
+                        {
+                            $project: {
+                                overallTotalJobs: "$overall.overallTotalJobs"
+                            }
+                        }
+                    ],
+
+                    // ✅ 3️⃣ TODAY JOBS
+                    todayJobs: [
+                        {
+                            $lookup: {
+                                from: "techniciansjobs",
+                                pipeline: [
+                                    {
+                                        $match: {
+                                            isDeleted: false,
+                                            createdAt: { $gte: todayStart }
+                                        }
+                                    },
+                                    { $count: "todayJobs" }
+                                ],
+                                as: "today"
+                            }
+                        },
+                        { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
+                        { $limit: 1 },
+                        {
+                            $project: {
+                                todayJobs: "$today.todayJobs"
+                            }
+                        }
                     ]
                 }
             },
             {
                 $project: {
                     statusCounts: 1,
+                    technicianJobStatus: 1,
                     overallTotalJobs: {
-                        $ifNull: [{ $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] }, 0]
+                        $ifNull: [
+                            { $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] },
+                            0
+                        ]
                     },
                     todayJobs: {
-                        $ifNull: [{ $arrayElemAt: ["$todayJobs.todayJobs", 0] }, 0]
+                        $ifNull: [
+                            { $arrayElemAt: ["$todayJobs.todayJobs", 0] },
+                            0
+                        ]
                     }
                 }
             }
@@ -97,8 +144,13 @@ export const technicianJobsStatisticsController = async (
 
         return res.status(200).json({
             success: true,
-            data: result[0]
+            data: result[0] || {
+                statusCounts: [],
+                overallTotalJobs: 0,
+                todayJobs: 0
+            }
         });
+
     } catch (error) {
         console.error("Technician Jobs Statistics Error:", error);
         return res.status(500).json({
