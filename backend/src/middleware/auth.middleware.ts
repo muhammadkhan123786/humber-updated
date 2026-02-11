@@ -16,45 +16,54 @@ export const adminProtecter = async (
     next: NextFunction
 ) => {
     try {
-        let userDoc: any = null;
+
+        let userId: string | null = null;
+        let role: Roles | null = null;
 
         /* ===================================================
-           ✅ 1. MOBILE AUTH FLOW (NO JWT)
-           Mobile sends:
-           - adminId
-           - x-mobile-key header
+           ✅ 1. MOBILE FLOW (adminId)
         ==================================================== */
 
-        const adminId = req.body?.adminId || req.headers["x-admin-id"];
+        const adminId =
+            req.body?.adminId ||
+            (req.headers["x-admin-id"] as string | undefined);
 
         if (adminId) {
+            const mobileUser = await User.findById(adminId)
+                .select("_id role isDeleted");
 
-            userDoc = await User.findById(adminId).select("_id role isDeleted");
-
-            if (!userDoc || userDoc.isDeleted) {
+            if (!mobileUser || mobileUser.isDeleted) {
                 return res.status(401).json({
                     message: "Mobile admin not found",
                 });
             }
+
+            userId = mobileUser._id.toString();
+            role = mobileUser.role as Roles;
         }
+
+        /* ===================================================
+           ✅ 2. JWT FLOW (WEB)
+        ==================================================== */
         else if (
             req.headers.authorization &&
             req.headers.authorization.startsWith("Bearer ")
         ) {
             const token = req.headers.authorization.split(" ")[1];
 
+            if (!token) {
+                return res.status(401).json({
+                    message: "Not authorized, token missing",
+                });
+            }
+
             const decoded = jwt.verify(
                 token,
                 process.env.JWT_SECRET as string
-            ) as { id: string; role: string };
+            ) as { id: string; role: Roles };
 
-            userDoc = await User.findById(decoded.id).select("_id role isDeleted");
-
-            if (!userDoc || userDoc.isDeleted) {
-                return res.status(401).json({
-                    message: "User not found",
-                });
-            }
+            userId = decoded.id;
+            role = decoded.role;
         }
 
         /* ===================================================
@@ -67,25 +76,25 @@ export const adminProtecter = async (
         }
 
         /* ===================================================
-           ✅ Attach unified user structure
-           (Controllers stay unchanged)
+           ✅ UNIFIED ATTACH (IDENTICAL STRUCTURE)
+           Controllers DO NOT CHANGE
         ==================================================== */
-        req.user = {
-            id: userDoc._id,
-        };
 
-        req.role = userDoc.role;
+        req.user = { id: userId };
+        req.role = role;
 
         /* ===================================================
            🔐 ROLE GUARD
         ==================================================== */
-        if (userDoc.role !== "Admin") {
+
+        if (role !== "Admin") {
             return res.status(403).json({
-                message: "Admin access only",
+                message: "Not authorized, Admin access only",
             });
         }
 
-        next();
+        return next();
+
     } catch (error) {
         console.error("ADMIN PROTECTOR ERROR:", error);
 
