@@ -117,6 +117,8 @@ export const technicianTicketsQuotationsController = async (
         subTotalBill: 1,
         taxAmount: 1,
         netTotal: 1,
+        aditionalNotes: 1,
+        validityDate: 1,
         createdAt: 1,
         updatedAt: 1,
         ticket: {
@@ -126,7 +128,7 @@ export const technicianTicketsQuotationsController = async (
          // location: "$ticket.location",
         },
         quotationStatus: "$quotationStatus.ticketQuationStatus",
-        parts: 1,
+        partsList: 1,
         technician: {
           _id: "$technician._id",
           name: "$technician.name",

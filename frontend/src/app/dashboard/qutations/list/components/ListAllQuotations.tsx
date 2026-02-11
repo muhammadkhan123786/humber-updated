@@ -4,6 +4,8 @@ import { Search, FileText } from "lucide-react";
 import Cards from "./Cards";
 import QuotationTable from "./QuotationTable";
 import View from "./View";
+import Edit from "./Edit";
+import DeleteConfirmModal from "../../../my-tickets/components/DeleteConfirmModal";
 import { getAlls, deleteItem } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 
@@ -12,8 +14,10 @@ interface QuotationFromBackend {
   ticketId: any;
   ticketCode: string;
   quotationStatus: string;
+  quotationStatusId?: string;
   quotationAutoId?: string;
   ticket: {
+    _id: string;
     ticketCode: string;
     [key: string]: any;
   };
@@ -22,7 +26,9 @@ interface QuotationFromBackend {
     firstName: string;
     lastName: string;
     email?: string;
+    phone?: string;
   };
+  partsList?: any[];
   labourTime?: number;
   labourRate?: number;
   partTotalBill?: number;
@@ -30,6 +36,8 @@ interface QuotationFromBackend {
   subTotalBill?: number;
   taxAmount?: number;
   netTotal?: number;
+  aditionalNotes?: string;
+  validityDate?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -41,6 +49,8 @@ const ListAllQuotations = () => {
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [viewingQuotation, setViewingQuotation] = useState<QuotationFromBackend | null>(null);
+  const [editingQuotation, setEditingQuotation] = useState<QuotationFromBackend | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -187,20 +197,38 @@ const ListAllQuotations = () => {
   };
 
   const handleEdit = (id: string) => {
-    console.log("Edit quotation:", id);
-    toast.error("Edit functionality coming soon");
+    const quotation = quotations.find(q => q._id === id);
+    if (quotation) {
+      setEditingQuotation(quotation);
+    } else {
+      toast.error("Quotation not found");
+    }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this quotation?")) {
-      try {
-        await deleteItem("/technician-ticket-quotation", id);
-        toast.success("Quotation deleted successfully");
-        fetchData();
-      } catch (error) {
-        console.error("Error deleting quotation:", error);
-        toast.error("Failed to delete quotation");
-      }
+  const handleCloseEdit = () => {
+    setEditingQuotation(null);
+  };
+
+  const handleUpdateSuccess = () => {
+    setEditingQuotation(null);
+    fetchData(); // Refresh list after update
+  };
+
+  const handleDelete = (id: string) => {
+    setDeletingId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteItem("/technician-ticket-quotation", deletingId);
+      toast.success("Quotation deleted successfully");
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting quotation:", error);
+      toast.error("Failed to delete quotation");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -285,6 +313,24 @@ const ListAllQuotations = () => {
             onClose={handleCloseView}
           />
         )}
+
+        {/* Edit Modal */}
+        {editingQuotation && (
+          <Edit
+            quotation={editingQuotation}
+            onClose={handleCloseEdit}
+            onSuccess={handleUpdateSuccess}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmModal
+          isOpen={!!deletingId}
+          onClose={() => setDeletingId(null)}
+          onConfirm={confirmDelete}
+          title="Delete Quotation"
+          message="Are you sure you want to delete this quotation? This action cannot be undone."
+        />
       </div>
     </div>
   );
