@@ -14,6 +14,7 @@ interface TechnicianJobType {
   jobId: string;
   ticketId: any;
   technicianId: any;
+  jobStatusId: any;
   createdAt: string;
 }
 
@@ -70,7 +71,8 @@ const TechnicianJob = () => {
           .includes(searchStr) ||
         job.ticketId?.vehicleId?.productName?.toLowerCase().includes(searchStr);
 
-      const currentStatus = job.ticketId?.ticketStatusId?.label || "";
+      const currentStatus = job.jobStatusId?.technicianJobStatus || "";
+
       const matchesStatus =
         statusFilter === "All Statuses" ||
         currentStatus.toLowerCase() === statusFilter.toLowerCase();
