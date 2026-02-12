@@ -45,7 +45,7 @@ export const technicianDashboardJobsController = async (
             .populate([
                 {
                     path: "ticketId",
-                    select: "ticketCode customerId issue_Details ticketStatusId",
+                    select: "ticketCode customerId issue_Details ticketStatusId vehicleId priorityId",
                     populate: [
                         {
                             path: "customerId",               // nested populate
@@ -55,10 +55,11 @@ export const technicianDashboardJobsController = async (
                                 { path: "contactId", select: "mobileNumber" }
                             ]
                         },
+                        { path: "vehicleId", select: "vehicleType productName" },
+                         { path: "priorityId", select: "serviceRequestPrioprity" },
+                         { path: "ticketStatusId", select: "code" },
                     ],
                 },
-                { path: "vehicleId", select: "vehicleType productName" },
-                { path: "priorityId" }
             ])
             .sort({ createdAt: -1 })
             .skip(skip)

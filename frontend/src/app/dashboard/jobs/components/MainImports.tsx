@@ -36,15 +36,19 @@ const MainImports = () => {
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAlls<TechnicianJobType>("/technician-jobs", {
+      const res = await getAlls<TechnicianJobType>("/technician-dashboard-jobs", {
+
         page: currentPage,
         limit,
       });
-
-      setJobs(res.data || []);
-      setTotalPages(Math.ceil(res.total / limit));
+       console.log("API Response:", res); // Debug log to check API response structure
+      // Ensure we always set an array
+      const jobsData = Array.isArray(res.data) ? res.data : [];
+      setJobs(jobsData);
+      setTotalPages(Math.ceil((res.total || 0) / limit));
     } catch (error: any) {
       console.log("Error fetching jobs:", error.message);
+      setJobs([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -59,6 +63,11 @@ const MainImports = () => {
   };
 
   const filteredJobs = useMemo(() => {
+    // Ensure jobs is always an array
+    if (!Array.isArray(jobs)) {
+      return [];
+    }
+    
     return jobs.filter((job) => {
       const searchStr = searchTerm.toLowerCase().trim();
       const matchesSearch =
