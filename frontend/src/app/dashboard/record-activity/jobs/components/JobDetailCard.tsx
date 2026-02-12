@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation"; // 1. Import Router
+import { useRouter } from "next/navigation";
 import {
   User,
   Clock,
@@ -11,16 +11,25 @@ import {
   Eye,
   RefreshCw,
   Receipt,
+  Trash2,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import JobDetailModal from "./JobDetailModal";
 
 interface Props {
   job: any;
+  onDelete?: (jobId: string) => void;
 }
 
-const JobDetailCard = ({ job }: Props) => {
+const JobDetailCard = ({ job, onDelete }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
   const router = useRouter();
+
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleString() : "-";
@@ -54,8 +63,92 @@ const JobDetailCard = ({ job }: Props) => {
     router.push(`/dashboard/record-activity?edit=${job._id || job.id}`);
   };
 
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        toast.error("No authentication token found");
+        throw new Error("No authentication token found");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}/technician-jobs/${job._id || job.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error("Unauthorized - Please login again");
+          throw new Error("Unauthorized - Please login again");
+        }
+        if (response.status === 403) {
+          toast.error("You do not have permission to delete this job");
+          throw new Error(
+            "Forbidden - You do not have permission to delete this job",
+          );
+        }
+        if (response.status === 404) {
+          toast.error("Job not found");
+          throw new Error("Job not found");
+        }
+        toast.error("Failed to delete job");
+        throw new Error("Failed to delete job");
+      }
+      toast.success(
+        <div>
+          <p className="font-semibold">Job deleted successfully!</p>
+          <p className="text-xs opacity-90">Job ID: {job.jobId}</p>
+        </div>,
+        {
+          icon: "🗑️",
+          duration: 4000,
+          position: "top-right",
+          style: {
+            background: "#10b981",
+            color: "#fff",
+            padding: "16px",
+            borderRadius: "10px",
+          },
+        },
+      );
+      setIsDeleted(true);
+      setShowDeleteConfirm(false);
+      if (onDelete) {
+        onDelete(job._id || job.id);
+      }
+    } catch (error) {
+      console.error("Error deleting job:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (isDeleted) {
+    return null;
+  }
+
   return (
-    <div className="relative w-full bg-white/80 rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+    <div className="relative w-full bg-white/80 rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6 transition-all duration-300 ease-in-out">
+      {isDeleting && (
+        <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-lg">
+            <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm font-medium text-gray-700">
+              Deleting job...
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="h-1 w-full bg-linear-to-r from-orange-500 to-pink-500" />
 
       <div className="p-6">
@@ -164,17 +257,42 @@ const JobDetailCard = ({ job }: Props) => {
           <div className="w-24 space-y-2">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white  transition-colors"
+              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-colors"
             >
               <Eye size={16} /> View
             </button>
 
             <button
               onClick={handleUpdate}
-              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white  transition-colors"
+              className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-colors"
             >
               <RefreshCw size={14} /> Update
             </button>
+
+            {!showDeleteConfirm ? (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full h-8 rounded-[10px] bg-slate-50 border border-red-200 text-sm flex items-center justify-center gap-2 hover:bg-red-600 hover:text-white transition-colors"
+              >
+                <Trash2 size={14} /> Delete
+              </button>
+            ) : (
+              <div className="space-y-1">
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full h-8 rounded-[10px] bg-red-600 text-white text-sm flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? "Deleting..." : "Confirm"}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="w-full h-8 rounded-[10px] bg-gray-100 text-gray-700 text-sm flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
