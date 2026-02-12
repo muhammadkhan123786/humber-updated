@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import TechnicianHeader from "./TechnicianHeader";
 import StatsDashboard from "./StatsDashboard";
 import FilterSection from "./FilterSection";
@@ -30,28 +30,34 @@ const TechnicianJob = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   const limit = 10;
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        setLoading(true);
-        const res = await getAlls<TechnicianJobType>("/technician-jobs", {
-          page: currentPage,
-          limit,
-        });
+  const fetchJobs = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await getAlls<TechnicianJobType>("/technician-jobs", {
+        page: currentPage,
+        limit,
+      });
 
-        setJobs(res.data || []);
-        setTotalPages(Math.ceil(res.total / limit));
-      } catch (error: any) {
-        console.log(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJobs();
+      setJobs(res.data || []);
+      setTotalPages(Math.ceil(res.total / limit));
+    } catch (error: any) {
+      console.log("Error fetching jobs:", error.message);
+    } finally {
+      setLoading(false);
+    }
   }, [currentPage]);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [currentPage, fetchJobs]);
+  const handleRefreshData = () => {
+    setRefreshTrigger((prev) => prev + 1);
+    fetchJobs();
+  };
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
@@ -72,7 +78,6 @@ const TechnicianJob = () => {
         job.ticketId?.vehicleId?.productName?.toLowerCase().includes(searchStr);
 
       const currentStatus = job.jobStatusId?.technicianJobStatus || "";
-
       const matchesStatus =
         statusFilter === "All Statuses" ||
         currentStatus.toLowerCase() === statusFilter.toLowerCase();
@@ -91,7 +96,7 @@ const TechnicianJob = () => {
     <div className="flex flex-col gap-6">
       <TechnicianHeader activeView={viewMode} setActiveView={setViewMode} />
 
-      <StatsDashboard />
+      <StatsDashboard refreshTrigger={refreshTrigger} />
 
       <FilterSection
         searchTerm={searchTerm}
@@ -111,6 +116,7 @@ const TechnicianJob = () => {
           jobs={filteredJobs}
           loading={loading}
           viewMode={viewMode}
+          onDelete={handleRefreshData}
         />
       )}
 

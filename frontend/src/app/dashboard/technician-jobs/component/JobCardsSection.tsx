@@ -159,7 +159,7 @@ const JobCardsSection = ({
     <div>
       {viewMode === "grid" ? (
         visibleJobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
             {visibleJobs?.map((job, index) => {
               const status = job.jobStatusId?.technicianJobStatus || "open";
               const statusStyle = getStatusStyle(status);
@@ -167,7 +167,7 @@ const JobCardsSection = ({
               return (
                 <div
                   key={job._id || index}
-                  className="w-full max-w-96 bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-shadow duration-300"
+                  className="w-full  bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-shadow duration-300"
                 >
                   <div
                     className="w-full h-1.5"
