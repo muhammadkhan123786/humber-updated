@@ -2,11 +2,15 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { env } from '../config/env';
 import ms from 'ms';
+import { Types } from 'mongoose';
 
-interface JwtPayload {
+export interface JwtPayload {
     userId: string;
     email: string;
     role?: string;
+    driverId?: string;
+    technicianId?: string;
+    customerId?: string;
 }
 
 export const hashPassword = async (password: string) => {

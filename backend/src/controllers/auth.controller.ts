@@ -46,25 +46,45 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
 export const login = async (req: Request, res: Response) => {
     try {
         console.log("Request body: ", req.body);
+
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required.' });
+            return res.status(400).json({
+                message: "Email and password are required."
+            });
         }
 
+        // 🔎 Find User
         const user = await User.findOne({ email });
+
         if (!user) {
-            return res.status(400).json({ message: `Email ${email} does not exist. Invalid credentials.` });
+            return res.status(400).json({
+                message: `Email ${email} does not exist. Invalid credentials.`
+            });
         }
 
-        if (!user.isActive) { return res.status(400).json({ message: `Email ${email} your email is not active/verified. Please contact website administrator.` }); }
+        if (!user.isActive) {
+            return res.status(400).json({
+                message: `Email ${email} is not active/verified. Contact admin.`
+            });
+        }
+
         const isMatch = await comparePassword(password, user.password!);
-        if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid password. Please check.' });
-        }
-        const token = generateToken({ userId: user._id.toString(), email: user.email, role: user.role });
 
+        if (!isMatch) {
+            return res.status(400).json({
+                message: "Invalid password. Please check."
+            });
+        }
+
+        let token = "";
+
+        // =====================================================
+        // 🚚 DRIVER LOGIN
+        // =====================================================
         if (user.role === "Driver") {
+
             const driver = await DriverModel.findOne({ accountId: user._id });
 
             if (!driver) {
@@ -72,11 +92,19 @@ export const login = async (req: Request, res: Response) => {
                     message: "Driver profile not found for this account"
                 });
             }
+
             if (!driver.isVerified) {
-                return res.status(404).json({
-                    message: "Your account is not verified yet. please wait or contact website admin."
+                return res.status(403).json({
+                    message: "Your account is not verified yet."
                 });
             }
+
+            token = generateToken({
+                userId: user._id.toString(),
+                email: user.email,
+                role: user.role,
+                driverId: driver._id.toString()
+            });
 
             return res.status(200).json({
                 user: {
@@ -90,54 +118,77 @@ export const login = async (req: Request, res: Response) => {
             });
         }
 
-        //if user role is customer 
-        if (user.role === 'Customer') {
+        if (user.role === "Customer") {
 
             const customer = await CustomerBase.findOne({
                 accountId: user._id,
-            }).populate([
-                { path: "personId", select: "firstName lastName" },
-                { path: "contactId", select: "emailId mobileNumber" },
-                { path: "addressId", select: "address" },
-            ]).lean();
+            })
+                .populate([
+                    { path: "personId", select: "firstName lastName" },
+                    { path: "contactId", select: "emailId mobileNumber" },
+                    { path: "addressId", select: "address" },
+                ])
+                .lean();
 
             if (!customer) {
                 return res.status(404).json({
-                    message: "Customer profile not found for this account"
+                    message: "Customer profile not found"
                 });
             }
+
             if (!customer.isActive) {
-                return res.status(404).json({
-                    message: "Your account is not verified yet. please wait or contact website admin."
+                return res.status(403).json({
+                    message: "Your account is not active yet."
                 });
             }
-            const totalTickets = await customerTicketBase.countDocuments({ customerId: customer._id, isDeleted: false });
+
+            token = generateToken({
+                userId: customer.userId.toString(),
+                email: user.email,
+                role: user.role,
+                customerId: customer._id
+            });
+
+            const totalTickets = await customerTicketBase.countDocuments({
+                customerId: customer._id,
+                isDeleted: false
+            });
+
             return res.status(200).json({
                 user: {
                     id: user._id,
                     email: user.email,
                     role: user.role,
-                    customer: customer._id,
-                    totalTickets: totalTickets
+                    customerId: customer._id,
+                    totalTickets
                 },
                 token
             });
         }
+        if (user.role === "Technician") {
 
-        //if user role is technician 
-        if (user.role === 'Technician') {
-            const technician = await Technicians.findOne({ accountId: user._id });
+            const technician = await Technicians.findOne({
+                accountId: user._id
+            });
 
             if (!technician) {
                 return res.status(404).json({
-                    message: "Technician profile not found for this account"
+                    message: "Technician profile not found"
                 });
             }
+
             if (!technician.isActive) {
-                return res.status(404).json({
-                    message: "Your account is not active. Please contact website admin."
+                return res.status(403).json({
+                    message: "Your account is not active."
                 });
             }
+
+            token = generateToken({
+                userId: technician.userId.toString(),
+                email: user.email,
+                role: user.role,
+                technicianId: technician._id.toString()
+            });
 
             return res.status(200).json({
                 user: {
@@ -149,6 +200,11 @@ export const login = async (req: Request, res: Response) => {
                 token
             });
         }
+        token = generateToken({
+            userId: user._id.toString(),
+            email: user.email,
+            role: user.role
+        });
 
         return res.status(200).json({
             user: {
@@ -156,17 +212,20 @@ export const login = async (req: Request, res: Response) => {
                 email: user.email,
                 role: user.role,
             },
-            token,
+            token
         });
 
     } catch (error) {
-        console.error('Login error:', error);
+
+        console.error("Login error:", error);
+
         return res.status(500).json({
-            message: 'Login failed due to server error',
+            message: "Login failed due to server error",
             error: error instanceof Error ? error.message : error,
         });
     }
 };
+
 
 export const setupPassword = async (req: Request, res: Response) => {
     try {
