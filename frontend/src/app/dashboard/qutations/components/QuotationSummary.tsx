@@ -4,6 +4,8 @@ import { createItem, getAlls, updateItem } from '@/helper/apiHelper';
 import { toast } from "react-hot-toast";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Part {
   _id: string;
@@ -200,6 +202,23 @@ const QuotationSummary = ({
     }
   };
 
+  // Aggregate parts by part ID to combine duplicate items
+  const aggregateParts = (parts: SelectedPart[]) => {
+    const partMap = new Map<string, SelectedPart>();
+    
+    parts.forEach((part) => {
+      const key = part._id;
+      if (partMap.has(key)) {
+        const existingPart = partMap.get(key)!;
+        existingPart.quantity += part.quantity;
+      } else {
+        partMap.set(key, { ...part });
+      }
+    });
+    
+    return Array.from(partMap.values());
+  };
+
   const handleSaveDraft = () => {
     createOrUpdateQuotation();
   };
@@ -210,7 +229,200 @@ const QuotationSummary = ({
   };
 
   const handleDownloadPDF = () => {
-    toast.error('PDF download feature coming soon');
+    if (!selectedTicket) {
+      toast.error('Please select a ticket first');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      
+      // Header with company info
+      doc.setFillColor(79, 70, 229); // Indigo color
+      doc.rect(0, 0, pageWidth, 40, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.text('QUOTATION', pageWidth / 2, 20, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(quotationAutoId || 'QUOT-DRAFT', pageWidth / 2, 30, { align: 'center' });
+      
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
+      
+      let yPos = 50;
+      
+      // Quotation Info
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Date:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(new Date().toLocaleDateString('en-GB'), 40, yPos);
+      
+      yPos += 7;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Valid Until:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(formattedValidUntil, 40, yPos);
+      
+      yPos += 7;
+      doc.setFont('helvetica', 'bold');
+      doc.text('Ticket:', 14, yPos);
+      doc.setFont('helvetica', 'normal');
+      doc.text(selectedTicket.ticketCode || 'N/A', 40, yPos);
+      
+      yPos += 12;
+      
+      // Customer Information
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Customer Information', 14, yPos);
+      
+      yPos += 7;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      
+      const customerName = `${selectedTicket.customer?.firstName || ''} ${selectedTicket.customer?.lastName || ''}`.trim();
+      if (customerName) {
+        doc.text(`Name: ${customerName}`, 14, yPos);
+        yPos += 6;
+      }
+      
+      if (selectedTicket.customer?.email) {
+        doc.text(`Email: ${selectedTicket.customer.email}`, 14, yPos);
+        yPos += 6;
+      }
+      
+      if (selectedTicket.customer?.phone) {
+        doc.text(`Phone: ${selectedTicket.customer.phone}`, 14, yPos);
+        yPos += 6;
+      }
+      
+      yPos += 6;
+      
+      // Parts List Table
+      if (selectedParts.length > 0) {
+        const aggregatedParts = aggregateParts(selectedParts);
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Parts List', 14, yPos);
+        yPos += 5;
+        
+        const tableData = aggregatedParts.map(part => [
+          part.partName,
+          part.partNumber || 'N/A',
+          part.quantity.toString(),
+          `£${(part.unitCost || 0).toFixed(2)}`,
+          `£${((part.unitCost || 0) * part.quantity).toFixed(2)}`
+        ]);
+        
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Part Name', 'Part Number', 'Qty', 'Unit Price', 'Total']],
+          body: tableData,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [79, 70, 229],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 10
+          },
+          bodyStyles: {
+            fontSize: 9
+          },
+          columnStyles: {
+            2: { halign: 'center' },
+            3: { halign: 'right' },
+            4: { halign: 'right' }
+          }
+        });
+        
+        yPos = (doc as any).lastAutoTable.finalY + 10;
+      }
+      
+      // Labour Details
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Labour Details', 14, yPos);
+      yPos += 7;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Labour Time: ${laborHours} hours`, 14, yPos);
+      yPos += 6;
+      doc.text(`Labour Rate: £${ratePerHour.toFixed(2)}/hour`, 14, yPos);
+      yPos += 6;
+      doc.text(`Labour Total: £${laborTotal.toFixed(2)}`, 14, yPos);
+      yPos += 10;
+      
+      // Additional Notes
+      if (additionalNotes && additionalNotes.trim()) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Additional Notes', 14, yPos);
+        yPos += 7;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const splitNotes = doc.splitTextToSize(additionalNotes, pageWidth - 28);
+        doc.text(splitNotes, 14, yPos);
+        yPos += (splitNotes.length * 6) + 10;
+      }
+      
+      // Price Summary Table
+      const summaryData = [
+        ['Parts Total', `£${partsTotal.toFixed(2)}`],
+        ['Labour Total', `£${laborTotal.toFixed(2)}`],
+        ['Subtotal', `£${subtotal.toFixed(2)}`],
+        [`VAT (${taxPercentage}%)`, `£${vatAmount.toFixed(2)}`],
+      ];
+      
+      autoTable(doc, {
+        startY: yPos,
+        body: summaryData,
+        theme: 'plain',
+        bodyStyles: {
+          fontSize: 10
+        },
+        columnStyles: {
+          0: { cellWidth: pageWidth - 80, fontStyle: 'bold' },
+          1: { cellWidth: 60, halign: 'right' }
+        }
+      });
+      
+      yPos = (doc as any).lastAutoTable.finalY + 2;
+      
+      // Grand Total
+      doc.setFillColor(79, 70, 229);
+      doc.rect(14, yPos, pageWidth - 28, 12, 'F');
+      
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TOTAL', 20, yPos + 8);
+      doc.text(`£${total.toFixed(2)}`, pageWidth - 20, yPos + 8, { align: 'right' });
+      
+      // Footer
+      doc.setTextColor(128, 128, 128);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      const footerY = doc.internal.pageSize.getHeight() - 10;
+      doc.text('Thank you!', pageWidth / 2, footerY, { align: 'center' });
+      
+      // Save the PDF
+      const filename = `Quotation_${quotationAutoId || selectedTicket.ticketCode || 'Draft'}_${new Date().toISOString().split('T')[0]}.pdf`;
+      doc.save(filename);
+      
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF');
+    }
   };
 
   return (
