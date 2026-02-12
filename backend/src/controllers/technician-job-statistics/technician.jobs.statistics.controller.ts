@@ -5,6 +5,7 @@ import { TechniciansJobs } from "../../models/technician-jobs-models/technician.
 import { TechnicianJobStatus } from "../../models/master-data-models/technician.job.status.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
+import { Technicians } from "../../models/technician-models/technician.models";
 
 export const technicianJobsStatisticsController = async (
     req: Request,
@@ -368,38 +369,172 @@ export const technicianDashboardJobsStatisticsController = async (
 
 
 //technician active jobs 
-export const technicianActiveJobsCountController = async (
+export const getTechniciansWithActiveJobsController = async (
     req: Request,
     res: Response
 ) => {
     try {
-        const { technicianId } = req.body;
+        const {
+            page = 1,
+            limit = 10,
+            search = "",
+            filter = "paged" // ✅ paged | all
+        } = req.query as any;
 
-        // ✅ Validate ObjectId
-        if (!Types.ObjectId.isValid(technicianId)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid technicianId",
+        const pageNumber = parseInt(page);
+        const limitNumber = parseInt(limit);
+        const skip = (pageNumber - 1) * limitNumber;
+
+        // ✅ Base match
+        const matchStage: any = { isDeleted: false };
+
+        // ✅ Search support
+        if (search) {
+            matchStage.$or = [
+                { technicianName: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        // =========================
+        // 🔥 BASE PIPELINE
+        // =========================
+        const basePipeline: any[] = [
+            { $match: matchStage },
+
+            // ✅ Populate Account
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "accountId",
+                    foreignField: "_id",
+                    as: "accountId"
+                }
+            },
+            { $unwind: { path: "$accountId", preserveNullAndEmptyArrays: true } },
+
+            // ✅ Populate Person
+            {
+                $lookup: {
+                    from: "persons",
+                    localField: "personId",
+                    foreignField: "_id",
+                    as: "personId"
+                }
+            },
+            { $unwind: { path: "$personId", preserveNullAndEmptyArrays: true } },
+
+            // ✅ Populate Contact
+            {
+                $lookup: {
+                    from: "contacts",
+                    localField: "contactId",
+                    foreignField: "_id",
+                    as: "contactId"
+                }
+            },
+            { $unwind: { path: "$contactId", preserveNullAndEmptyArrays: true } },
+            {
+                $lookup: {
+                    from: "addresses",
+                    localField: "addressId",
+                    foreignField: "_id",
+                    as: "addressId"
+                }
+            },
+            { $unwind: { path: "$addressId", preserveNullAndEmptyArrays: true } },
+            // ✅ Count Active Jobs
+            {
+                $lookup: {
+                    from: "techniciansjobs",
+                    let: { technicianId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $and: [
+                                        { $eq: ["$technicianId", "$$technicianId"] },
+                                        { $eq: ["$isActive", true] },
+                                        { $eq: ["$isDeleted", false] }
+                                    ]
+                                }
+                            }
+                        },
+                        { $count: "activeJobs" }
+                    ],
+                    as: "jobsData"
+                }
+            },
+
+            {
+                $addFields: {
+                    activeJobs: {
+                        $ifNull: [
+                            { $arrayElemAt: ["$jobsData.activeJobs", 0] },
+                            0
+                        ]
+                    }
+                }
+            },
+
+            {
+                $project: {
+                    jobsData: 0
+                }
+            }
+        ];
+
+        // =========================
+        // ✅ IF FILTER = ALL → NO PAGINATION
+        // =========================
+        if (filter === "all") {
+            const technicians = await Technicians.aggregate(basePipeline);
+
+            return res.status(200).json({
+                success: true,
+                pagination: null,
+                data: technicians
             });
         }
 
-        // ✅ Count ONLY this technician active jobs
-        const totalActiveJobs = await TechniciansJobs.countDocuments({
-            technicianId: new Types.ObjectId(technicianId), // 👈 IMPORTANT FILTER
-            isDeleted: false,
-            isActive: true,
-        });
+        // =========================
+        // ✅ PAGINATED RESULT
+        // =========================
+        const pipeline = [
+            ...basePipeline,
+            {
+                $facet: {
+                    data: [
+                        { $sort: { createdAt: -1 } },
+                        { $skip: skip },
+                        { $limit: limitNumber }
+                    ],
+                    totalCount: [{ $count: "total" }]
+                }
+            }
+        ];
+
+        const result = await Technicians.aggregate(pipeline);
+
+        const technicians = result[0]?.data || [];
+        const total = result[0]?.totalCount[0]?.total || 0;
 
         return res.status(200).json({
             success: true,
-            message: "Technician active jobs count successfully",
-            totalActiveJobs,
+            pagination: {
+                page: pageNumber,
+                limit: limitNumber,
+                total,
+                totalPages: Math.ceil(total / limitNumber)
+            },
+            data: technicians
         });
+
     } catch (error) {
-        console.error("Technician Active Jobs Error:", error);
+        console.error("Technicians With Active Jobs Error:", error);
         return res.status(500).json({
             success: false,
-            message: "Failed to get technician active jobs count.",
+            message: "Failed to fetch technicians with active jobs"
         });
     }
 };
