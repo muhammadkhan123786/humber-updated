@@ -450,7 +450,7 @@ app.get(`${process.env.API_PREFIX}/test-mobile-access`, adminProtecter, (req: Re
 // 11-02-2026
 app.use(
   `${process.env.API_PREFIX}/job-statistics`,
-  // adminProtecter,
+  adminProtecter,
   technicianJobsStatisticsRouter,
 );
 
