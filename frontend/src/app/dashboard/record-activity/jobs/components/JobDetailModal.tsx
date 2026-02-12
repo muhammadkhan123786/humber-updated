@@ -13,6 +13,9 @@ import {
   Wrench,
   ListTodo,
   Search,
+  ImageIcon,
+  MessageSquare,
+  MessageSquareCode,
 } from "lucide-react";
 
 interface ModalProps {
@@ -53,8 +56,13 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
       label: "Inspections",
       icon: <ClipboardCheck size={18} />,
     },
+    {
+      id: "notes",
+      label: "Notes",
+      icon: <MessageSquare size={18} />,
+    },
   ];
-
+  console.log("notes ", job);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200 max-h-[90vh]">
@@ -89,7 +97,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
+              className={`flex items-center gap-1 px-3 py-3 text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-indigo-600 text-indigo-600"
                   : "border-transparent text-gray-400 hover:text-gray-600"
@@ -500,6 +508,115 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
               ) : (
                 <EmptyState message="No inspections recorded" />
               )}
+            </div>
+          )}
+
+          {activeTab === "notes" && (
+            <div className="space-y-6">
+              {/* General Notes */}
+              {job.generalNotes && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-blue-50 rounded-lg">
+                      <FileText size={16} className="text-blue-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      General Notes
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    {job.generalNotes}
+                  </p>
+                </div>
+              )}
+
+              {/* Completion Summary */}
+              {job.completionSummary && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-green-50 rounded-lg">
+                      <ClipboardCheck size={16} className="text-green-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      Completion Summary
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    {job.completionSummary}
+                  </p>
+                </div>
+              )}
+
+              {/* Job Notes Messages */}
+              {job.jobNotes?.messages?.length > 0 && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-purple-50 rounded-lg">
+                      <MessageSquareCode
+                        size={16}
+                        className="text-purple-600"
+                      />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      Job Notes Messages ({job.jobNotes.messages.length})
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {job.jobNotes.messages.map((msg: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="bg-gray-50 p-4 rounded-xl border border-gray-100"
+                      >
+                        <p className="text-gray-700 text-sm">{msg}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Job Notes Images */}
+              {job.jobNotes?.images?.length > 0 && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-amber-50 rounded-lg">
+                      <ImageIcon size={16} className="text-amber-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      Images ({job.jobNotes.images.length})
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {job.jobNotes.images.map((img: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="relative group rounded-xl overflow-hidden border border-gray-200"
+                      >
+                        <img
+                          src={img}
+                          alt={`Job note ${idx + 1}`}
+                          className="w-full h-32 object-cover"
+                        />
+                        <a
+                          href={img}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium"
+                        >
+                          View Full
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Notes Message */}
+              {!job.generalNotes &&
+                !job.completionSummary &&
+                !job.jobNotes?.messages?.length &&
+                !job.jobNotes?.images?.length && (
+                  <EmptyState message="No notes or media recorded" />
+                )}
             </div>
           )}
         </div>

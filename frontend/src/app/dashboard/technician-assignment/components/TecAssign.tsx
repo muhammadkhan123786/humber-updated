@@ -1,8 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { getAlls } from "@/helper/apiHelper";
+import { getAlls, updateItem } from "@/helper/apiHelper";
 import { User, Mail, Phone } from "lucide-react";
 import Pagination from "@/components/ui/Pagination";
+import toast from "react-hot-toast";
+
+interface ApiResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
 
 const TechnicianAssignment = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
@@ -10,7 +17,11 @@ const TechnicianAssignment = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [assigningTicketId, setAssigningTicketId] = useState<string | null>(
+    null,
+  );
   const limit = 10;
+  const ENDPOINT = "/job-statistics";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,6 +43,7 @@ const TechnicianAssignment = () => {
         }
       } catch (error) {
         console.error("Error fetching assignment data:", error);
+        toast.error("Failed to load assignment data");
       } finally {
         setLoading(false);
       }
@@ -39,6 +51,41 @@ const TechnicianAssignment = () => {
 
     fetchData();
   }, [currentPage]);
+
+  const handleAssignTechnician = async (
+    ticketId: string,
+    technicianId: string,
+  ) => {
+    if (!technicianId) {
+      toast.error("Please select a technician");
+      return;
+    }
+
+    try {
+      setAssigningTicketId(ticketId);
+      const response = await updateItem<any>(ENDPOINT, ticketId, {
+        technicianId,
+      });
+      const result = response as ApiResponse;
+
+      if (result?.success) {
+        toast.success("Technician assigned successfully!");
+
+        setTickets((prevTickets) =>
+          prevTickets.filter((ticket) => ticket._id !== ticketId),
+        );
+
+        setTotalPages(() => Math.ceil((tickets.length - 1) / limit));
+      } else {
+        toast.error(result?.message || "Failed to assign technician");
+      }
+    } catch (error: any) {
+      console.error("Error assigning technician:", error);
+      toast.error(error?.message || "Failed to assign technician");
+    } finally {
+      setAssigningTicketId(null);
+    }
+  };
 
   if (loading)
     return (
@@ -65,7 +112,11 @@ const TechnicianAssignment = () => {
             className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 relative overflow-hidden"
           >
             <div
-              className={`absolute top-0 left-0 w-full h-1 ${tech.technicianStatus === "Available"}`}
+              className={`absolute top-0 left-0 w-full h-1 ${
+                tech.technicianStatus === "Available"
+                  ? "bg-green-500"
+                  : "bg-orange-500"
+              }`}
             ></div>
 
             <div className="flex justify-between items-start mb-4">
@@ -83,10 +134,18 @@ const TechnicianAssignment = () => {
                 </div>
               </div>
               <div
-                className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${tech.technicianStatus === "Available" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}
+                className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
+                  tech.technicianStatus === "Available"
+                    ? "bg-green-50 text-green-600"
+                    : "bg-orange-50 text-orange-600"
+                }`}
               >
                 <div
-                  className={`w-1.5 h-1.5 rounded-full ${tech.technicianStatus === "Available" ? "bg-green-500" : "bg-orange-500"}`}
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    tech.technicianStatus === "Available"
+                      ? "bg-green-500"
+                      : "bg-orange-500"
+                  }`}
                 ></div>
                 {tech.technicianStatus}
               </div>
@@ -130,6 +189,7 @@ const TechnicianAssignment = () => {
           </div>
         ))}
       </div>
+
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 pt-6 pb-3">
           <h4 className="font-semibold">Unassigned / In-Progress Tickets</h4>
@@ -162,16 +222,36 @@ const TechnicianAssignment = () => {
                     </span>
                   </div>
 
-                  <div className="bg-gray-100 rounded-[10px] px-3 h-9 flex items-center min-w-[190px]">
-                    <select className="bg-transparent text-sm text-indigo-950 w-full outline-none">
-                      <option>Assign to...</option>
+                  <div className="bg-gray-100 rounded-[10px] px-3 h-9 flex items-center min-w-[220px]">
+                    <select
+                      id={`technician-select-${ticket._id}`}
+                      value=""
+                      onChange={(e) => {
+                        const technicianId = e.target.value;
+                        if (technicianId) {
+                          handleAssignTechnician(ticket._id, technicianId);
+                        }
+                      }}
+                      disabled={assigningTicketId === ticket._id}
+                      className="bg-transparent text-sm text-indigo-950 w-full outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {assigningTicketId === ticket._id
+                          ? "Assigning..."
+                          : "Assign to..."}
+                      </option>
                       {technicians.map((t) => (
                         <option key={t._id} value={t._id}>
                           {t.personId?.firstName} ({t.dutyRoster?.length || 0}{" "}
-                          jobs)
+                          jobs) - {t.technicianStatus}
                         </option>
                       ))}
                     </select>
+                    {assigningTicketId === ticket._id && (
+                      <div className="ml-2">
+                        <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-700 text-sm">{ticket.issue_Details}</p>
