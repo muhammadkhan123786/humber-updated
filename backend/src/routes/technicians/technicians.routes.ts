@@ -12,6 +12,7 @@ import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
 import { parseDutyRosterMiddleware } from "../../middleware/parseDutyRoster";
+import { getTechniciansWithActiveJobsController } from "../../controllers/technician-job-statistics/technician.jobs.statistics.controller";
 const technicianUploads = createUploader([
   {
     name: "technicianDocumentsFile",
@@ -49,7 +50,7 @@ const technicianProfileMiddleware = genericProfileIdsMiddleware<technicianDoc>({
 });
 
 techniciansRouter.get("/summary", getTechnicianDashboardSummary);
-techniciansRouter.get("/", technicianController.getAll);
+techniciansRouter.get("/", getTechniciansWithActiveJobsController);
 techniciansRouter.get("/:id", technicianController.getById);
 
 techniciansRouter.post(
