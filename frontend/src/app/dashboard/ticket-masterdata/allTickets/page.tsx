@@ -28,12 +28,21 @@ import {
 } from "lucide-react";
 import { deleteItem, getAlls } from "../../../../helper/apiHelper";
 import Pagination from "@/components/ui/Pagination";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+type TicketQueryResponse = {
+  tickets: any[];
+  total: number;
+  limit: number;
+  currentPage: number;
+};
+
 const getStatusIcon = (status: string = "") => {
   const s = status.toLowerCase();
   if (s === "open") return <AlertCircle size={16} strokeWidth={2.5} />;
   if (s === "completed") return <CheckCircle2 size={16} strokeWidth={2.5} />;
   return <Clock size={16} strokeWidth={2.5} />;
 };
+
 const getLocationIcon = (location: string = "") => {
   const l = location.toLowerCase();
   if (l.includes("workshop")) {
@@ -44,96 +53,120 @@ const getLocationIcon = (location: string = "") => {
   }
   return <Home size={14} className="text-orange-400" />;
 };
+
 const TicketListingPage = () => {
   const [view, setView] = useState<"grid" | "table">("grid");
-  const [tickets, setTickets] = useState<any[]>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalTickets, setTotalTickets] = useState(0); // New state
   const [filters, setFilters] = useState({
     status: "",
     urgency: "",
     source: "",
   });
+
   const router = useRouter();
-  const fetchTickets = useCallback(
-    async (page = 1) => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-        params.append("page", page.toString());
-        params.append("limit", "10");
+  const queryClient = useQueryClient();
+  const buildQueryParams = useCallback(
+    (page = 1) => {
+      const params = new URLSearchParams();
+      params.append("page", page.toString());
+      params.append("limit", "10");
 
-        if (searchTerm.trim() !== "") {
-          params.append("search", searchTerm.trim());
+      if (searchTerm.trim() !== "") {
+        params.append("search", searchTerm.trim());
+      }
+
+      if (filters.status) params.append("ticketStatusId", filters.status);
+      if (filters.urgency) params.append("priorityId", filters.urgency);
+      if (filters.source) params.append("ticketSource", filters.source);
+
+      return params;
+    },
+    [searchTerm, filters.status, filters.urgency, filters.source],
+  );
+  const fetchTickets = async (page = 1) => {
+    const params = buildQueryParams(page);
+    const response = await getAlls(`/customer-tickets?${params.toString()}`);
+
+    if (response && response.success && Array.isArray(response.data)) {
+      const mappedData = response.data.map((t: any) => ({
+        ...t,
+        customerName: t.customerId?.personId?.firstName || "Unknown",
+        productName: t.vehicleId?.vehicleType || "",
+        issue: t.issue_Details || "No details provided",
+        status: t.ticketStatusId?.code || "",
+        urgency: t.priorityId?.serviceRequestPrioprity || "",
+        bg: t.priorityId?.backgroundColor || "",
+        source: t.ticketSource || "",
+        location: t.location || "",
+        technician:
+          t.assignedTechnicianId?.length > 0 ? "Assigned" : "Not Assigned",
+        createdAt: t.createdAt ? t.createdAt : "N/A",
+      }));
+
+      return {
+        tickets: mappedData,
+        total: response.total || 0,
+        limit: response.limit || 10,
+        currentPage: page,
+      };
+    }
+
+    return {
+      tickets: [],
+      total: 0,
+      limit: 10,
+      currentPage: page,
+    };
+  };
+
+  const {
+    data: queryData,
+    isLoading,
+    refetch,
+  } = useQuery<TicketQueryResponse>({
+    queryKey: ["tickets", currentPage, searchTerm, filters],
+    queryFn: () => fetchTickets(currentPage),
+    placeholderData: (previousData) => previousData,
+  });
+
+  const tickets = queryData?.tickets || [];
+  const totalTickets = queryData?.total || 0;
+  const totalPages = Math.ceil(totalTickets / (queryData?.limit || 10));
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteItem("/customer-tickets", id),
+    onSuccess: (response) => {
+      if (response && response.success) {
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
+        if (tickets.length === 1 && currentPage > 1) {
+          setCurrentPage((prev) => prev - 1);
         }
 
-        if (filters.status) params.append("ticketStatusId", filters.status);
-        if (filters.urgency) params.append("priorityId", filters.urgency);
-        if (filters.source) params.append("ticketSource", filters.source);
-
-        const response = await getAlls(
-          `/customer-tickets?${params.toString()}`,
-        );
-
-        if (response && response.success && Array.isArray(response.data)) {
-          const mappedData = response.data.map((t: any) => ({
-            ...t,
-            customerName: t.customerId?.personId?.firstName || "Unknown",
-            productName: t.vehicleId?.vehicleType || "",
-            issue: t.issue_Details || "No details provided",
-            status: t.ticketStatusId?.code || "",
-            urgency: t.priorityId?.serviceRequestPrioprity || "",
-            bg: t.priorityId?.backgroundColor || "",
-            source: t.ticketSource || "",
-            location: t.location || "",
-            technician:
-              t.assignedTechnicianId?.length > 0 ? "Assigned" : "Not Assigned",
-            createdAt: t.createdAt ? t.createdAt : "N/A",
-          }));
-
-          setTickets(mappedData);
-
-          const totalItems = response.total || 0;
-          setTotalTickets(totalItems);
-          const limitPerPage = response.limit || 10;
-          const calculatedTotalPages = Math.ceil(totalItems / limitPerPage);
-
-          setTotalPages(calculatedTotalPages);
-          setCurrentPage(page);
-        } else {
-          setTickets([]);
-          setTotalPages(1);
-        }
-      } catch (err) {
-        console.error("API Error:", err);
-        setTickets([]);
-      } finally {
-        setLoading(false);
+        setActiveMenu(null);
+      } else {
+        alert(response.message || "Failed to delete ticket");
       }
     },
-    [filters.source, filters.status, filters.urgency, searchTerm],
-  );
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchTickets(1);
-    }, 500);
+    onError: (err: any) => {
+      console.error("Delete Error:", err);
+      alert(err.message || "An error occurred while deleting the ticket.");
+    },
+  });
+  const handleDelete = async (id: string) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this ticket? This action cannot be undone.",
+    );
+    if (isConfirmed) {
+      deleteMutation.mutate(id);
+    }
+  };
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [
-    searchTerm,
-    filters.status,
-    filters.urgency,
-    filters.source,
-    fetchTickets,
-  ]);
-  console.log("this isn", tickets);
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
+    setCurrentPage(1);
   };
 
   const getSourceIcon = (source: string) => {
@@ -175,36 +208,20 @@ const TicketListingPage = () => {
       </span>
     );
   };
+
   const handleEdit = (ticket: any) => {
     router.push(`createTicket?id=${ticket._id}`);
-
-    console.log("Editing:", ticket);
   };
-  const handleDelete = async (id: string) => {
-    const isConfirmed = window.confirm(
-      "Are you sure you want to delete this ticket? This action cannot be undone.",
-    );
-    if (isConfirmed) {
-      try {
-        setLoading(true);
 
-        const response = await deleteItem("/customer-tickets", id);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setCurrentPage(1);
+      refetch();
+    }, 500);
 
-        if (response && response.success) {
-          setTickets((prev) => prev.filter((ticket) => ticket._id !== id));
+    return () => clearTimeout(handler);
+  }, [searchTerm, refetch]);
 
-          console.log(response.message || "Ticket deleted successfully");
-        } else {
-          alert(response.message || "Failed to delete ticket");
-        }
-      } catch (err: any) {
-        console.error("Delete Error:", err);
-        alert(err.message || "An error occurred while deleting the ticket.");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
   return (
     <div className="p-8 bg-[#F8F9FF] min-h-screen font-sans text-gray-900">
       <div className="flex justify-between items-center mb-6">
@@ -301,7 +318,7 @@ const TicketListingPage = () => {
         {Math.min(currentPage * 10, totalTickets)} of {totalTickets} tickets
       </p>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#6D28D9] mb-4"></div>
           <p className="text-gray-500 font-medium">Fetching records...</p>
@@ -316,6 +333,7 @@ const TicketListingPage = () => {
             onClick={() => {
               setSearchTerm("");
               setFilters({ status: "", urgency: "", source: "" });
+              setCurrentPage(1);
             }}
             className="mt-4 text-[#6D28D9] font-bold text-sm underline"
           >
@@ -323,11 +341,11 @@ const TicketListingPage = () => {
           </button>
         </div>
       ) : view === "grid" ? (
-        <div className="grid  grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
-          {tickets.map((t) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-500">
+          {tickets.map((t: any) => (
             <div
               key={t._id}
-              className="bg-white flex flex-col justify-between hover:shadow-lg transition-all border border-gray-50 relative group" // 'group' class yahan add ki hai
+              className="bg-white flex flex-col justify-between hover:shadow-lg transition-all border border-gray-50 relative group"
               style={{
                 padding: "24px",
                 borderRadius: "16px",
@@ -352,7 +370,7 @@ const TicketListingPage = () => {
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
                   <div
-                    className="flex items-center gap-2  text-[13px]"
+                    className="flex items-center gap-2 text-[13px]"
                     style={{ color: "#4F39F6" }}
                   >
                     {getStatusIcon(t.status)}
@@ -362,7 +380,11 @@ const TicketListingPage = () => {
                   <div className="flex items-center gap-2 relative">
                     {getUrgencyBadge(t.urgency, t.bg)}
                     <div
-                      className={`transition-opacity duration-200 ${activeMenu === t._id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                      className={`transition-opacity duration-200 ${
+                        activeMenu === t._id
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      }`}
                     >
                       <button
                         onClick={() =>
@@ -408,9 +430,13 @@ const TicketListingPage = () => {
                               handleDelete(t._id);
                               setActiveMenu(null);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 border-t border-gray-50"
+                            disabled={deleteMutation.isPending}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 border-t border-gray-50 disabled:opacity-50"
                           >
-                            <Trash2 size={14} className="text-red-400" /> Delete
+                            <Trash2 size={14} className="text-red-400" />
+                            {deleteMutation.isPending
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </div>
                       </>
@@ -460,7 +486,6 @@ const TicketListingPage = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-y-3">
-                  {/* Creation Date */}
                   <div className="flex items-center gap-2 text-gray-500">
                     <Calendar size={14} className="text-gray-400" />
                     <span className="text-[12px] font-medium">
@@ -476,7 +501,6 @@ const TicketListingPage = () => {
                   >
                     <User size={14} />
                     <span className="text-[12px] font-bold">
-                      {/* Accessing the first technician's name from the array */}
                       {t.assignedTechnicianId?.[0]?.personId?.firstName ||
                         "Unassigned"}
                     </span>
@@ -517,7 +541,7 @@ const TicketListingPage = () => {
                   key={t._id}
                   className="hover:bg-purple-50/30 transition-colors"
                 >
-                  <td className="px-6 py-4  text-[#6D28D9] text-xs whitespace-nowrap">
+                  <td className="px-6 py-4 text-[#6D28D9] text-xs whitespace-nowrap">
                     <Link
                       href={`/tickets/${t._id}`}
                       className="hover:underline"
@@ -553,7 +577,6 @@ const TicketListingPage = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      {/* Avatar Circle */}
                       <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#8B5CF6] to-[#6366F1] flex items-center justify-center text-white text-[10px] font-bold uppercase shadow-sm">
                         {t.assignedTechnicianId?.[0]?.personId?.firstName
                           ? t.assignedTechnicianId[0].personId.firstName.slice(
@@ -562,8 +585,6 @@ const TicketListingPage = () => {
                             )
                           : "UN"}
                       </div>
-
-                      {/* Technician Name Text */}
                       <span className="text-[12px] font-medium text-[#1E1B4B]">
                         {t.assignedTechnicianId?.[0]?.personId?.firstName ||
                           "Unassigned"}
@@ -586,10 +607,9 @@ const TicketListingPage = () => {
                     {activeMenu === t._id && (
                       <>
                         <div
-                          className="fixed inset-0 "
+                          className="fixed inset-0"
                           onClick={() => setActiveMenu(null)}
                         />
-
                         <div
                           className="absolute right-12 bottom-0 w-36 bg-white border border-gray-100 py-1 animate-in slide-in-from-bottom-2 duration-200"
                           style={{
@@ -608,16 +628,18 @@ const TicketListingPage = () => {
                             <Edit3 size={16} className="text-gray-400" />
                             Edit
                           </button>
-
                           <button
                             onClick={() => {
                               handleDelete(t._id);
                               setActiveMenu(null);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-red-600 hover:bg-red-50 border-t border-gray-50"
+                            disabled={deleteMutation.isPending}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-red-600 hover:bg-red-50 border-t border-gray-50 disabled:opacity-50"
                           >
                             <Trash2 size={16} className="text-red-400" />
-                            Delete
+                            {deleteMutation.isPending
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </div>
                       </>
@@ -630,12 +652,15 @@ const TicketListingPage = () => {
         </div>
       )}
 
-      {!loading && tickets.length > 0 && totalPages > 1 && (
-        <div className=" flex justify-end border-t border-gray-100 ">
+      {!isLoading && tickets.length > 0 && totalPages > 1 && (
+        <div className="flex justify-end border-t border-gray-100">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={(page) => fetchTickets(page)}
+            onPageChange={(page) => {
+              setCurrentPage(page);
+              refetch();
+            }}
           />
         </div>
       )}
