@@ -2,12 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Roles, User } from '../models/user.models';
 import { Technicians } from '../models/technician-models/technician.models';
+import { JwtPayload } from '../services/auth.service';
 
 export interface AuthRequest extends Request {
     user?: any;
     role?: Roles;
     technician?: any
+    technicianId?: string
 }
+
+export interface TechnicianAuthRequest extends Request {
+    user?: any;
+    role?: Roles;
+    technicianId?: string;
+}
+
 
 //admin protector operations middleware.
 export const adminProtecter = async (
@@ -106,12 +115,14 @@ export const adminProtecter = async (
 
 //technician protector operations middleware.
 export const technicianProtecter = (
-    req: AuthRequest,
+    req: TechnicianAuthRequest,
     res: Response,
     next: NextFunction
 ) => {
-    let token: string | undefined;
     console.log("Technician protector middleware invoked");
+
+    let token: string | undefined;
+
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer ")
@@ -120,29 +131,36 @@ export const technicianProtecter = (
     }
 
     if (!token) {
-        res.status(401).json({ message: "Not authorized, token missing" });
-        return; // ✅ return void
+        return res.status(401).json({
+            message: "Not authorized, token missing",
+        });
     }
 
     try {
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET as string
-        ) as { id: string; role: Roles };
+        ) as JwtPayload;
 
-        // attach user info to request
+        console.log("Technician Decoded:", decoded);
+
+        // ✅ Role check FIRST
+        if (decoded.role !== "Technician") {
+            return res.status(403).json({
+                message: "Not authorized, Technician access only",
+            });
+        }
+
+        // ✅ Attach to request
         req.user = decoded;
         req.role = decoded.role;
+        req.technicianId = decoded.technicianId;
 
-        if (decoded.role !== "Technician") {
-            res.status(403).json({ message: "Not authorized, Technician access only" });
-            return; // ✅ return void
-        }
-        // console.log("Technician access granted");
-        next(); // ✅ continue to next middleware
+        next();
     } catch (error) {
-        res.status(401).json({ message: "Not authorized, token invalid" });
-        return; // ✅ return void
+        return res.status(401).json({
+            message: "Not authorized, token invalid",
+        });
     }
 };
 

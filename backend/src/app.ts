@@ -88,6 +88,7 @@ import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quota
 import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
 import { getDefaultQuotationStatusController, getDefaultTaxPercentageController } from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
 import technicianJobsStatisticsRouter from "./routes/technician-jobs/technician.jobs.statistics";
+import technicianDashboardJobsRouter from "./routes/technician-dashboard/technician-jobs/technician.jobs.routes";
 
 
 // Create express app
@@ -451,6 +452,13 @@ app.use(
   `${process.env.API_PREFIX}/job-statistics`,
   // adminProtecter,
   technicianJobsStatisticsRouter,
+);
+
+//12-02-2026
+app.use(
+  `${process.env.API_PREFIX}/technician-dashboard-jobs`,
+  technicianProtecter,
+  technicianDashboardJobsRouter,
 );
 
 //Muhammad Imran code ended here.

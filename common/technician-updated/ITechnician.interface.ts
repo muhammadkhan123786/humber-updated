@@ -26,7 +26,9 @@ export interface ITechnician<
   IPERSONID = string,
   ICONTACTID = string,
   IADDRESSID = string,
+  ITUSERID = string
 > extends commonProfileDto {
+  userId?: ITUSERID
   personId?: IPERSONID;
   contactId?: ICONTACTID;
   addressId?: IADDRESSID;

@@ -11,6 +11,7 @@ export type technicianDoc = ITechnician<
   Types.ObjectId,
   Types.ObjectId,
   Types.ObjectId,
+  Types.ObjectId,
   Types.ObjectId
 > &
   Document;
