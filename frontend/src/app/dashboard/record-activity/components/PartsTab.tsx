@@ -85,10 +85,9 @@ export const PartsTab = ({
   const getPartNumber = (partId: string) =>
     parts.find((p) => p._id === partId)?.partNumber || "N/A";
 
-  const totalUnits = partFields.reduce(
-    (acc, curr) => acc + (Number(curr.quantity) || 0),
-    0,
-  );
+  const totalUnits = partFields
+    .filter((field) => field.partId)
+    .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
 
   const currentTotalCost = currentQuantity * currentUnitCost;
   const completedParts = partFields.filter((f) => f.partId);

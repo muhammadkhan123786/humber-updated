@@ -196,21 +196,6 @@ const JobCardsSection = ({
 
                     <div className="space-y-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="p-1.5 bg-indigo-50 rounded-lg">
-                          <User size={14} className="text-indigo-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {job.technicianId?.personId?.firstName}{" "}
-                            {job.technicianId?.personId?.lastName}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {job.technicianId?.contactId?.phoneNumber}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
                         <div className="p-1.5 bg-blue-50 rounded-lg">
                           <MapPin size={14} className="text-blue-600" />
                         </div>
@@ -221,6 +206,20 @@ const JobCardsSection = ({
                           <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-1">
                             {job.ticketId?.customerId?.addressId?.address},{" "}
                             {job.ticketId?.customerId?.addressId?.city}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="p-1.5 bg-indigo-50 rounded-lg">
+                          <User size={14} className="text-indigo-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {job.technicianId?.personId?.firstName}{" "}
+                            {job.technicianId?.personId?.lastName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {job.technicianId?.contactId?.phoneNumber}
                           </p>
                         </div>
                       </div>
