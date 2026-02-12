@@ -12,29 +12,14 @@ export const technicianTicketsController = async (
   res: Response
 ) => {
   try {
-    const user = req.user;
-    console.log("Technician Tickets Controller invoked for user:", user);
-    if (!user) {
+    const technicianId = req.technicianId;
+    console.log("Technician Tickets Controller invoked for user:", technicianId);
+    if (!technicianId) {
       return res.status(400).json({
         success: false,
         message: "Technician user not provided.",
       });
     }
-
-    // ✅ Find technician account
-    const technician = await Technicians.findOne({
-      accountId: user.userId,
-      isDeleted: false,
-      isActive: true,
-    }).select("_id");
-
-    if (!technician) {
-      return res.status(404).json({
-        success: false,
-        message: "Technician not found.",
-      });
-    }
-
     // ✅ Pagination
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
@@ -43,7 +28,7 @@ export const technicianTicketsController = async (
 
     // ✅ Base Filter (array-safe)
     const filter: any = {
-      assignedTechnicianId: technician._id,
+      assignedTechnicianId: technicianId,
       isDeleted: false,
     };
 
@@ -94,7 +79,7 @@ export const technicianTicketsController = async (
     const formattedTickets = tickets.map((t: any) => {
       const myTechnician = Array.isArray(t.assignedTechnicianId)
         ? t.assignedTechnicianId.find(
-          (tech: any) => tech?._id?.toString() === technician._id.toString()
+          (tech: any) => tech?._id?.toString() === technicianId
         )
         : null;
 
@@ -155,28 +140,14 @@ export const technicianJobsController = async (
   res: Response
 ) => {
   try {
-    const user = req.user;
+    const technicianId = req.technicianId;
 
-    if (!user) {
+    if (!technicianId) {
       return res.status(400).json({
         success: false,
         message: "Technician user not provided.",
       });
     }
-
-    const technician = await Technicians.findOne({
-      accountId: user._id,
-      isDeleted: false,
-      isActive: true,
-    }).select("_id");
-
-    if (!technician) {
-      return res.status(404).json({
-        success: false,
-        message: "Technician not found.",
-      });
-    }
-
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -185,7 +156,7 @@ export const technicianJobsController = async (
     const pipeline: any[] = [
       {
         $match: {
-          technicianId: technician._id,
+          technicianId: technicianId,
           isDeleted: false,
         },
       },
@@ -320,23 +291,21 @@ export const getDefaultTaxPercentageController = async (
         message: "Unauthorized user.",
       });
     }
-   const technician = await Technicians.findOne({
-  accountId: user._id,
-  isDeleted: false,
-  isActive: true,
-}).select("_id userId") as {
-  _id: Types.ObjectId;
-  userId: Types.ObjectId;
-} | null;
+    const technician = await Technicians.findOne({
+      accountId: user._id,
+      isDeleted: false,
+      isActive: true,
+    }).select("_id userId") as {
+      _id: Types.ObjectId;
+      userId: Types.ObjectId;
+    } | null;
 
+    const tax = await Tax.findOne({
+      userId: technician?.userId,
+      isDefault: true,
+      isDeleted: false,
+    }).select("percentage");
 
-const tax = await Tax.findOne({
-  userId: technician?.userId,
-  isDefault: true,
-  isDeleted: false,
-}).select("percentage");
-
-   
     if (!tax) {
       return res.status(401).json({
         success: false,
@@ -360,33 +329,33 @@ const tax = await Tax.findOne({
 
 //default quotation status get to add default status in technician quotations
 export const getDefaultQuotationStatusController = async (
-  req: AuthRequest, 
+  req: AuthRequest,
   res: Response
 ) => {
   try {
     const user = req.user;
-    
+
     if (!user?._id) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized user.",
       });
-    }     
+    }
     const technician = await Technicians.findOne({
       accountId: user._id,
-      isDeleted: false, 
+      isDeleted: false,
       isActive: true,
     }).select("_id userId") as {
       _id: Types.ObjectId;
       userId: Types.ObjectId;
     } | null;
-   
-    const defaultStatus= await TicketQuationStatus.findOne({
-            userId: technician?.userId,
-            isDefault: true,
-            isDeleted: false,
-          }).select("_id");
-   
+
+    const defaultStatus = await TicketQuationStatus.findOne({
+      userId: technician?.userId,
+      isDefault: true,
+      isDeleted: false,
+    }).select("_id");
+
     if (!defaultStatus) {
       return res.status(401).json({
         success: false,
@@ -400,7 +369,7 @@ export const getDefaultQuotationStatusController = async (
       defaultQuotationStatusId: defaultStatus._id,
     });
 
-  } catch (error) { 
+  } catch (error) {
     console.error("Get Default Quotation Status Error:", error);
     return res.status(500).json({
       success: false,
@@ -408,5 +377,6 @@ export const getDefaultQuotationStatusController = async (
     });
   }
 };
+
 
 
