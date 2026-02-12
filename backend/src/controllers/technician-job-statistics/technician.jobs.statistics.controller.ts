@@ -365,3 +365,41 @@ export const technicianDashboardJobsStatisticsController = async (
         });
     }
 };
+
+
+//technician active jobs 
+export const technicianActiveJobsCountController = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const { technicianId } = req.body;
+
+        // ✅ Validate ObjectId
+        if (!Types.ObjectId.isValid(technicianId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid technicianId",
+            });
+        }
+
+        // ✅ Count ONLY this technician active jobs
+        const totalActiveJobs = await TechniciansJobs.countDocuments({
+            technicianId: new Types.ObjectId(technicianId), // 👈 IMPORTANT FILTER
+            isDeleted: false,
+            isActive: true,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Technician active jobs count successfully",
+            totalActiveJobs,
+        });
+    } catch (error) {
+        console.error("Technician Active Jobs Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to get technician active jobs count.",
+        });
+    }
+};
