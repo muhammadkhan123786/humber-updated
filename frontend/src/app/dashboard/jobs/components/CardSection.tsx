@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
-import JobDetailModal from "../../record-activity/jobs/components/JobDetailModal";
+import JobDetailModal from "./JobsDetail";
 
 import {
   Briefcase,
@@ -9,15 +7,13 @@ import {
   MapPin,
   Calendar,
   Eye,
-  Edit3,
-  Trash2,
   Inbox,
 } from "lucide-react";
+
 interface JobCardsProps {
   jobs: any[];
   loading: boolean;
   viewMode: string;
-  onDelete?: (jobId: string) => void;
 }
 const statusConfig: Record<string, { bg: string; text: string }> = {
   open: { bg: "bg-indigo-500", text: "text-white" },
@@ -34,19 +30,14 @@ const getStatusStyle = (status: string) =>
     bg: "bg-slate-500",
     text: "text-white",
   };
+
 const JobCardsSection = ({
   viewMode,
   jobs,
   loading,
-  onDelete,
 }: JobCardsProps) => {
-  const router = useRouter();
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
-  const [deletedJobIds, setDeletedJobIds] = useState<Set<string>>(new Set());
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
   if (loading) return <div className="p-10 text-center">Loading jobs...</div>;
 
@@ -54,72 +45,10 @@ const JobCardsSection = ({
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString("en-GB");
   };
+
   const handleView = (job: any) => {
     setSelectedJob(job);
     setIsModalOpen(true);
-  };
-  const handleEdit = (job: any) => {
-    router.push(`/dashboard/record-activity?edit=${job._id || job.id}`);
-  };
-  const handleDelete = async (job: any) => {
-    try {
-      setDeletingJobId(job._id || job.id);
-
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        toast.error("No authentication token found");
-        return;
-      }
-      const response = await fetch(
-        `${API_BASE_URL}/technician-jobs/${job._id || job.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          toast.error("Job not found");
-          return;
-        }
-        toast.error("Failed to delete job");
-        return;
-      }
-
-      toast.success(
-        <div>
-          <p className="font-semibold">Job deleted successfully!</p>
-          <p className="text-xs opacity-90">Job ID: {job.jobId}</p>
-        </div>,
-        {
-          icon: "🗑️",
-          duration: 4000,
-          position: "top-right",
-          style: {
-            background: "#10b981",
-            color: "#fff",
-            padding: "16px",
-            borderRadius: "10px",
-          },
-        },
-      );
-
-      setDeletedJobIds((prev) => new Set(prev).add(job._id || job.id));
-
-      if (onDelete) {
-        onDelete(job._id || job.id);
-      }
-    } catch (error) {
-      console.error("Error deleting job:", error);
-      toast.error("Failed to delete job. Please try again.");
-    } finally {
-      setDeletingJobId(null);
-    }
   };
 
   const partsCost =
@@ -137,8 +66,6 @@ const JobCardsSection = ({
     ) || 0;
 
   const totalBill = partsCost + labourCost;
-  const visibleJobs =
-    jobs?.filter((job) => !deletedJobIds.has(job._id || job.id)) || [];
 
   const NoJobsMessage = () => (
     <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -158,9 +85,9 @@ const JobCardsSection = ({
   return (
     <div>
       {viewMode === "grid" ? (
-        visibleJobs.length > 0 ? (
+        jobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
-            {visibleJobs?.map((job, index) => {
+            {jobs?.map((job, index) => {
               const status = job.jobStatusId?.technicianJobStatus || "open";
               const statusStyle = getStatusStyle(status);
 
@@ -276,12 +203,6 @@ const JobCardsSection = ({
                       >
                         <Eye size={14} /> VIEW
                       </button>
-                      <button
-                        onClick={() => handleEdit(job)}
-                        className="flex-1 bg-white border border-gray-200 text-indigo-950 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
-                      >
-                        <Edit3 size={14} /> EDIT
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -291,7 +212,7 @@ const JobCardsSection = ({
         ) : (
           <NoJobsMessage />
         )
-      ) : visibleJobs.length > 0 ? (
+      ) : jobs.length > 0 ? (
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -328,15 +249,14 @@ const JobCardsSection = ({
               </thead>
 
               <tbody className="divide-y divide-gray-50">
-                {visibleJobs?.map((job, index) => {
+                {jobs?.map((job, index) => {
                   const status = job.jobStatusId?.technicianJobStatus || "open";
                   const statusStyle = getStatusStyle(status);
-                  const isDeleting = deletingJobId === (job._id || job.id);
 
                   return (
                     <tr
                       key={job._id || index}
-                      className={`hover:bg-indigo-50/30 transition-colors group ${isDeleting ? "opacity-50" : ""}`}
+                      className="hover:bg-indigo-50/30 transition-colors group"
                     >
                       <td className="p-4 font-bold text-sm text-indigo-950">
                         {job.jobId}
@@ -387,27 +307,9 @@ const JobCardsSection = ({
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleView(job)}
-                            disabled={isDeleting}
-                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-green-600 hover:text-white transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-green-600 hover:text-white transition-all shadow-sm"
                           >
                             <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleEdit(job)}
-                            disabled={isDeleting}
-                            className="p-2 bg-white border border-gray-200 text-slate-600 rounded-lg hover:bg-green-600 hover:text-white transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Edit3 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(job)}
-                            disabled={isDeleting}
-                            className="p-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <Trash2
-                              size={16}
-                              className={isDeleting ? "animate-pulse" : ""}
-                            />
                           </button>
                         </div>
                       </td>
