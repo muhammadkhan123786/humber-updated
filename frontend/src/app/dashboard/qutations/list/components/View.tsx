@@ -104,6 +104,23 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
     };
   }, []);
 
+  // Aggregate parts by part ID to combine duplicate items
+  const aggregateParts = (parts: Part[]) => {
+    const partMap = new Map<string, Part>();
+    
+    parts.forEach((part) => {
+      const key = part._id;
+      if (partMap.has(key)) {
+        const existingPart = partMap.get(key)!;
+        existingPart.quantity += part.quantity;
+      } else {
+        partMap.set(key, { ...part });
+      }
+    });
+    
+    return Array.from(partMap.values());
+  };
+
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-GB", {
@@ -269,7 +286,7 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {quotation.partsList.map((part, index) => (
+                    {aggregateParts(quotation.partsList).map((part, index) => (
                       <tr key={`${part._id}-${index}`} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-sm text-gray-900">
                           {part.partName}
