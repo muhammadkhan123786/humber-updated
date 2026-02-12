@@ -1,16 +1,21 @@
 "use client";
-
 import React from "react";
 import { Search, ChevronDown, Filter } from "lucide-react";
 
 interface JobFiltersProps {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
+  statuses: any[];
 }
 
 const JobFilters: React.FC<JobFiltersProps> = ({
   searchQuery,
   setSearchQuery,
+  statusFilter,
+  setStatusFilter,
+  statuses,
 }) => {
   return (
     <div className="w-full relative bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
@@ -26,25 +31,22 @@ const JobFilters: React.FC<JobFiltersProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by Job ID..."
-            className="w-full h-12 pl-12 pr-4 bg-gray-100 border-2 border-orange-50 rounded-xl focus:outline-none focus:border-orange-200 text-sm transition-all placeholder:text-gray-400"
+            className="w-full h-12 pl-12 pr-4 bg-gray-100 border-2 border-orange-50 rounded-xl focus:outline-none focus:border-orange-200 text-sm transition-all"
           />
         </div>
 
-        {/* Status Dropdown (Keep as is or add filtering logic later) */}
-        <div className="relative w-full md:w-48">
+        <div className="relative w-full md:w-64">
           <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full h-12 pl-10 pr-10 bg-white border-2 border-orange-50 rounded-xl appearance-none focus:outline-none focus:border-orange-200 text-sm font-medium text-indigo-950 cursor-pointer"
-            defaultValue=""
           >
-            <option value="" disabled>
-              Status
-            </option>
-            <option value="all">All Status</option>
-            <option value="assigned">Assigned</option>
-            <option value="progress">In Progress</option>
-            <option value="hold">On Hold</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="all">All Statuses</option>
+            {statuses.map((status) => (
+              <option key={status._id} value={status._id}>
+                {status.name || status.technicianJobStatus}
+              </option>
+            ))}
           </select>
 
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400 pointer-events-none">

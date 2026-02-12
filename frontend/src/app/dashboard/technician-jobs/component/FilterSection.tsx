@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Search, ChevronDown } from "lucide-react";
 
 interface FilterSectionProps {
@@ -18,6 +20,44 @@ const FilterSection = ({
   priorityFilter,
   setPriorityFilter,
 }: FilterSectionProps) => {
+  const [dbStatuses, setDbStatuses] = useState<any[]>([]);
+  const [dbPriorities, setDbPriorities] = useState<any[]>([]);
+
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+  useEffect(() => {
+    const fetchFilters = async () => {
+      const token = localStorage.getItem("token");
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+
+      try {
+        const statusRes = await fetch(`${API_BASE_URL}/technician-job-status`, {
+          headers,
+        });
+        const statusData = await statusRes.json();
+        setDbStatuses(
+          Array.isArray(statusData) ? statusData : statusData.data || [],
+        );
+        const priorityRes = await fetch(
+          `${API_BASE_URL}/service-request-prioprity-level`,
+          { headers },
+        );
+        const priorityData = await priorityRes.json();
+        setDbPriorities(
+          Array.isArray(priorityData) ? priorityData : priorityData.data || [],
+        );
+      } catch (error) {
+        console.error("Error fetching filters:", error);
+      }
+    };
+
+    fetchFilters();
+  }, [API_BASE_URL]);
+
   return (
     <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4 items-center w-full">
       <div className="relative flex-1 w-full">
@@ -41,18 +81,16 @@ const FilterSection = ({
             className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1.5 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer"
           >
             <option value="All Statuses">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Assigned">Assigned</option>
-            <option value="In Progress">In Progress</option>
-            <option value="On Hold">On Hold</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            {dbStatuses.map((s: any) => (
+              <option key={s._id} value={s.technicianJobStatus}>
+                {s.technicianJobStatus}
+              </option>
+            ))}
           </select>
           <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
             <ChevronDown className="h-4 w-4 text-gray-600" />
           </div>
         </div>
-
         <div className="relative flex-1 md:w-48">
           <select
             value={priorityFilter}
@@ -60,10 +98,11 @@ const FilterSection = ({
             className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1.5 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer"
           >
             <option value="All Priorities">All Priorities</option>
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-            <option value="Urgent">Urgent</option>
+            {dbPriorities.map((p: any) => (
+              <option key={p._id} value={p.serviceRequestPrioprity}>
+                {p.serviceRequestPrioprity}
+              </option>
+            ))}
           </select>
           <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
             <ChevronDown className="h-4 w-4 text-gray-600" />

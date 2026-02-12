@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import TechnicianHeader from "./TechnicianHeader";
 import StatCard from "./StatCard";
 import {
@@ -13,22 +13,58 @@ import JobFilters from "./JobFilters";
 import JobDetailCard from "./JobDetailCard";
 import { useActivityRecordForm } from "../../../../../hooks/useActivity";
 import Pagination from "@/components/ui/Pagination";
+import { getAlls } from "@/helper/apiHelper";
 
 const Jobs = () => {
-  const { jobList, isLoading } = useActivityRecordForm();
+  const { jobList: initialJobList, isLoading } = useActivityRecordForm();
 
+  // Maintain local jobs state for immediate updates
+  const [jobs, setJobs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [availableStatuses, setAvailableStatuses] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(jobList.length / itemsPerPage);
 
-  const searchedJobs = jobList.filter(
-    (job) =>
-      job.jobId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job._id?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  // Update local jobs when initialJobList changes
+  useEffect(() => {
+    setJobs(initialJobList);
+  }, [initialJobList]);
 
-  const paginatedJobs = searchedJobs.slice(
+  useEffect(() => {
+    const fetchStatuses = async () => {
+      try {
+        const res = await getAlls<any>("/technician-job-status");
+        setAvailableStatuses(res.data || []);
+      } catch (error) {
+        console.error("Error fetching statuses:", error);
+      }
+    };
+    fetchStatuses();
+  }, []);
+
+  // Handle delete - immediately updates jobs state and stats
+  const handleDeleteJob = (deletedJobId: string) => {
+    setJobs((prevJobs) => prevJobs.filter((job) => job._id !== deletedJobId));
+  };
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const matchesSearch =
+        job.jobId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job._id?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        job.jobStatusId?._id === statusFilter ||
+        job.jobStatusId?.name === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [jobs, searchQuery, statusFilter]);
+
+  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+  const paginatedJobs = filteredJobs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
@@ -37,16 +73,17 @@ const Jobs = () => {
     setCurrentPage(page);
   };
 
+  // Calculate stats from local jobs state - updates immediately on delete
   const stats = [
     {
-      value: jobList.length.toString(),
+      value: jobs.length.toString(),
       label: "Total Activities",
       badgeText: "Total",
       gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
       icon: Activity,
     },
     {
-      value: jobList
+      value: jobs
         .filter((j) => j.jobStatusId?.name?.toLowerCase() === "assigned")
         .length.toString(),
       label: "Awaiting Start",
@@ -55,7 +92,7 @@ const Jobs = () => {
       icon: Clock,
     },
     {
-      value: jobList
+      value: jobs
         .filter((j) => j.jobStatusId?.name?.toLowerCase() === "in progress")
         .length.toString(),
       label: "In Progress",
@@ -64,7 +101,7 @@ const Jobs = () => {
       icon: PlayCircle,
     },
     {
-      value: jobList
+      value: jobs
         .filter((j) => j.jobStatusId?.name?.toLowerCase() === "completed")
         .length.toString(),
       label: "Completed",
@@ -80,18 +117,17 @@ const Jobs = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            value={stat.value}
-            label={stat.label}
-            badgeText={stat.badgeText}
-            gradient={stat.gradient}
-            Icon={stat.icon}
-          />
+          <StatCard key={index} {...stat} Icon={stat.icon} />
         ))}
       </div>
 
-      <JobFilters searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      <JobFilters
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        statuses={availableStatuses}
+      />
 
       {isLoading ? (
         <div className="flex justify-center p-10">
@@ -101,11 +137,15 @@ const Jobs = () => {
         <div className="flex flex-col gap-4">
           {paginatedJobs.length > 0 ? (
             paginatedJobs.map((job) => (
-              <JobDetailCard key={job._id} job={job} />
+              <JobDetailCard
+                key={job._id}
+                job={job}
+                onDelete={handleDeleteJob}
+              />
             ))
           ) : (
             <div className="text-center py-10 bg-white rounded-xl border border-dashed text-gray-400">
-              No jobs found matching {searchQuery}
+              No jobs found.
             </div>
           )}
         </div>
