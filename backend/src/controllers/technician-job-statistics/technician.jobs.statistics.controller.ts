@@ -3,6 +3,7 @@ import mongoose, { Types } from "mongoose";
 
 import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
 import { TechnicianJobStatus } from "../../models/master-data-models/technician.job.status.models";
+import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 
 export const technicianJobsStatisticsController = async (
     req: Request,
@@ -156,6 +157,56 @@ export const technicianJobsStatisticsController = async (
         return res.status(500).json({
             success: false,
             message: "Failed to fetch technician job statistics."
+        });
+    }
+};
+
+export const assignTicketToTechnicianController = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const { id } = req.params;          // ✅ ticketId
+        const { technicianId } = req.body;  // ✅ technicianId
+
+        // Validate ObjectIds
+        if (!Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid ticketId" });
+        }
+
+        if (!Types.ObjectId.isValid(technicianId)) {
+            return res.status(400).json({ message: "Invalid technicianId" });
+        }
+
+        // ✅ Add technician into array (NO DUPLICATES)
+        const updatedTicket = await customerTicketBase.findByIdAndUpdate(
+            id,
+            {
+                $addToSet: {
+                    assignedTechnicianId: technicianId
+                }
+            },
+            { new: true }
+        ).populate("assignedTechnicianId");
+
+        if (!updatedTicket) {
+            return res.status(404).json({
+                success: false,
+                message: "Ticket not found",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Technician assigned successfully",
+            data: updatedTicket,
+        });
+
+    } catch (error) {
+        console.error("Assign Technician Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to assign technician.",
         });
     }
 };
