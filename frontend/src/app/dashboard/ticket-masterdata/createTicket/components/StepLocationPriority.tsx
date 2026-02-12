@@ -1,9 +1,37 @@
 "use client";
 
 import { Check, Wrench, Home, Truck, Users, Info, MapPin } from "lucide-react";
-
 import { Controller } from "react-hook-form";
 import ScooterDeliveryMethod from "./ScooterDeliveryMethod";
+import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
+import { useEffect } from "react";
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+interface PlaceResult {
+  place_id?: string;
+  formatted_address?: string;
+  address_components?: Array<{
+    types: string[];
+    long_name: string;
+    short_name: string;
+  }>;
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+}
+
+interface AddressComponent {
+  types: string[];
+  long_name: string;
+  short_name: string;
+}
 
 const StepLocationPriority = ({
   form,
@@ -17,10 +45,13 @@ const StepLocationPriority = ({
   const {
     control,
     watch,
+    setValue,
     formState: { errors },
   } = form;
   const currentLoc = watch("location") || "Workshop";
   const selectedTechIds: string[] = watch("assignedTechnicianId") || [];
+
+  const googleMapLoader = useGoogleMapLoad();
 
   const locations = [
     {
@@ -35,19 +66,20 @@ const StepLocationPriority = ({
       label: "On-Site",
       sub: "At customer location",
       icon: Home,
-      activeColor: "from-[#C148F0] to-[#F15FD1]", // Purple gradient
+      activeColor: "from-[#C148F0] to-[#F15FD1]",
     },
     {
       id: "Mobile Service",
       label: "Mobile Service",
       sub: "Send technician",
       icon: Truck,
-      activeColor: "from-[#00C853] to-[#4CAF50]", // Green gradient
+      activeColor: "from-[#00C853] to-[#4CAF50]",
     },
   ];
-  console.log("this is our tech ", technicians);
+
   const showAddressField =
     currentLoc === "On-Site" || currentLoc === "Mobile Service";
+
   const selectedTechnicianNames =
     selectedTechIds.length > 0
       ? technicians
@@ -58,6 +90,72 @@ const StepLocationPriority = ({
           )
           .join(", ")
       : null;
+
+  useEffect(() => {
+    if (!googleMapLoader || !window.google?.maps?.places || !showAddressField)
+      return;
+
+    const input = document.getElementById("job-address") as HTMLInputElement;
+    if (!input) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(input, {
+      types: ["address"],
+      componentRestrictions: { country: "GB" },
+    });
+
+    const listener = autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace() as PlaceResult;
+      if (!place?.place_id) return;
+
+      const service = new window.google.maps.places.PlacesService(
+        document.createElement("div"),
+      );
+
+      service.getDetails(
+        {
+          placeId: place.place_id,
+          fields: ["address_components", "formatted_address", "geometry"],
+        },
+        (result: PlaceResult | null, status: string) => {
+          if (
+            status === window.google.maps.places.PlacesServiceStatus.OK &&
+            result
+          ) {
+            const address = result.formatted_address ?? "";
+
+            const postalCode =
+              result.address_components?.find((c: AddressComponent) =>
+                c.types.includes("postal_code"),
+              )?.long_name ?? "";
+
+            const city =
+              result.address_components?.find((c: AddressComponent) =>
+                c.types.includes("locality"),
+              )?.long_name ?? "";
+
+            const country =
+              result.address_components?.find((c: AddressComponent) =>
+                c.types.includes("country"),
+              )?.long_name ?? "";
+
+            const lat = result.geometry?.location?.lat() ?? 0;
+            const lng = result.geometry?.location?.lng() ?? 0;
+
+            setValue("address", address);
+            setValue("postalCode", postalCode);
+            setValue("city", city);
+            setValue("country", country);
+            setValue("latitude", lat);
+            setValue("longitude", lng);
+          }
+        },
+      );
+    });
+
+    return () => {
+      listener.remove();
+    };
+  }, [googleMapLoader, showAddressField, setValue]);
 
   return (
     <div className="flex flex-col animate-in slide-in-from-right-8 duration-500 pb-10 bg-white">
@@ -77,7 +175,6 @@ const StepLocationPriority = ({
         <h2 className="text-[16px] font-bold tracking-tight leading-tight">
           Location & Priority
         </h2>
-
         <p
           className="opacity-90 mt-0.5 leading-tight"
           style={{ fontSize: "13px", fontWeight: 400 }}
@@ -112,7 +209,7 @@ const StepLocationPriority = ({
                       <loc.icon
                         size={22}
                         strokeWidth={2.5}
-                        className={isActive ? "text-white" : "text-[#0095FF]"} // Icon color matches the design
+                        className={isActive ? "text-white" : "text-[#0095FF]"}
                       />
                       <div className="text-left mt-2">
                         <p
@@ -138,6 +235,7 @@ const StepLocationPriority = ({
             <p className="text-red-500 text-sm">{errors.location.message}</p>
           )}
         </section>
+
         {showAddressField && (
           <section className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex items-center gap-2 text-[#7C3AED]">
@@ -150,8 +248,10 @@ const StepLocationPriority = ({
               render={({ field }) => (
                 <input
                   {...field}
+                  id="job-address"
                   placeholder="Enter the specific address for the job (e.g., 123 Main St, London, SW1A 1AA)"
                   className="w-full p-4 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:ring-1 focus:ring-purple-400 outline-none transition-all"
+                  autoComplete="off"
                 />
               )}
             />
@@ -204,7 +304,9 @@ const StepLocationPriority = ({
             </p>
           )}
         </section>
+
         <div className="my-3"></div>
+
         <section className="space-y-4">
           <label className="text-[16px] font-medium text-[#1E293B]">
             Priority Level *
@@ -216,7 +318,6 @@ const StepLocationPriority = ({
               <div className="flex flex-col gap-2">
                 {priorities?.map((p: any) => {
                   const isActive = field.value === p._id;
-
                   return (
                     <button
                       key={p._id}
@@ -251,7 +352,6 @@ const StepLocationPriority = ({
               </div>
             )}
           />
-
           {errors.priorityId && (
             <p className="text-red-500 text-xs font-bold mt-1 animate-pulse">
               ⚠️ Please select an Urgency Level
@@ -267,7 +367,6 @@ const StepLocationPriority = ({
                 Assign Technician (Optional)
               </label>
             </div>
-
             <Controller
               name="assignedTechnicianId"
               control={control}
@@ -292,14 +391,12 @@ const StepLocationPriority = ({
                   <Info size={12} /> Select a technician now or assign later
                   from the ticket details page
                 </p>
-
                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                   {technicians?.map((tech: any) => {
                     const isSelected = field.value?.includes(tech._id);
                     const isBusy =
                       tech.technicianStatus?.toLowerCase() === "busy" ||
                       tech.technicianStatus?.toLowerCase() === "bzy";
-
                     const displaySkills =
                       tech.skills?.length > 0
                         ? tech.skills
@@ -322,13 +419,13 @@ const StepLocationPriority = ({
                           }
                         }}
                         className={`shrink-0 w-64 p-4 rounded-2xl border transition-all text-left relative h-full
-                  ${
-                    isSelected
-                      ? "bg-[#6322F2] text-white border-transparent shadow-lg scale-[1.02]"
-                      : "bg-white border-gray-100 text-gray-800 hover:border-[#4F39F6] hover:shadow-md"
-                  }
-                  ${isBusy ? "opacity-60 cursor-not-allowed grayscale-[0.5]" : "cursor-pointer"}
-                `}
+                          ${
+                            isSelected
+                              ? "bg-[#6322F2] text-white border-transparent shadow-lg scale-[1.02]"
+                              : "bg-white border-gray-100 text-gray-800 hover:border-[#4F39F6] hover:shadow-md"
+                          }
+                          ${isBusy ? "opacity-60 cursor-not-allowed grayscale-[0.5]" : "cursor-pointer"}
+                        `}
                       >
                         <div className="flex items-center gap-3 mb-4">
                           <div
@@ -406,16 +503,14 @@ const StepLocationPriority = ({
           />
         </section>
 
-        <section className="self-stretch w-full px-6 pt-6 pb-6 bg-linear-to-br from-green-50 to-emerald-50 rounded-2xl  outline-1 outline-offset-1 outline-green-200 flex flex-col justify-start items-start gap-3 animate-in fade-in duration-500">
+        <section className="self-stretch w-full px-6 pt-6 pb-6 bg-linear-to-br from-green-50 to-emerald-50 rounded-2xl outline-1 outline-offset-1 outline-green-200 flex flex-col justify-start items-start gap-3 animate-in fade-in duration-500">
           <div className="self-stretch h-5 flex items-center gap-2">
             <Check size={15} strokeWidth={3} className="text-green-900" />
-
             <h4 className="text-green-900 text-sm font-semibold font-['Arial'] leading-5">
               Review Your Ticket
             </h4>
           </div>
 
-          {/* LIST ITEMS */}
           <div className="self-stretch font-medium text-sm flex flex-col justify-start items-start gap-2">
             {[
               {
