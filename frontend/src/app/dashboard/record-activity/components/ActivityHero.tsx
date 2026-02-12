@@ -11,39 +11,62 @@ import {
   ListTodo,
 } from "lucide-react";
 
-export const ActivityHero = () => {
+interface ActivityHeroProps {
+  actualServicesCount: number;
+  actualPartsCount: number;
+  completedInspections: number;
+  totalInspectionTypes: number;
+  totalMedia: number;
+  totalDuration: number;
+}
+
+export const ActivityHero = ({
+  actualServicesCount,
+  actualPartsCount,
+  completedInspections,
+  totalInspectionTypes,
+  totalMedia,
+  totalDuration,
+}: ActivityHeroProps) => {
+  const formatTotalTime = (total: number) => {
+    if (total < 60) return `${total}m`;
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return `${h}h ${m}m`;
+  };
+
   const stats = [
     {
       label: "Service Activities",
-      value: "0",
+      value: actualServicesCount.toString(),
       tag: "Activities",
       icon: Settings,
       color: "bg-gradient-to-br from-blue-500 to-cyan-500",
     },
     {
       label: "Parts Changed",
-      value: "2",
+      value: actualPartsCount.toString(),
       tag: "Parts",
       icon: Package,
       color: "from-[#E12AFB] to-[#FF2056]",
     },
     {
       label: "Completed",
-      value: "0/8",
+      value: `${completedInspections}/${totalInspectionTypes}`,
       tag: "Inspection",
       icon: ListTodo,
       color: "from-[#00BC7D] to-[#7CCF00]",
     },
     {
       label: "Photos & Videos",
-      value: "0",
+      value: totalMedia.toString(),
       tag: "Media",
       icon: ImageIcon,
       color: "from-[#8E51FF] to-[#615FFF]",
     },
     {
       label: "Total Duration",
-      value: "0m",
+      value: formatTotalTime(totalDuration),
       tag: "Time",
       icon: Clock,
       color: "from-[#FF8C00] to-[#FF4500]",
