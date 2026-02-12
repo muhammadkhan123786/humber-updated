@@ -8,533 +8,536 @@ import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 
 export const technicianJobsStatisticsController = async (
-    req: Request,
-    res: Response
+  req: Request,
+  res: Response,
 ) => {
-    try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-        const result = await TechnicianJobStatus.aggregate([
+    const result = await TechnicianJobStatus.aggregate([
+      {
+        $facet: {
+          // ✅ 1️⃣ STATUS COUNTS (Show ALL statuses)
+          statusCounts: [
             {
-                $facet: {
-                    // ✅ 1️⃣ STATUS COUNTS (Show ALL statuses)
-                    statusCounts: [
-                        {
-                            $lookup: {
-                                from: "techniciansjobs",
-                                let: { statusId: "$_id" },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    {
-                                                        $eq: [
-                                                            {
-                                                                $cond: [
-                                                                    { $eq: [{ $type: "$jobStatusId" }, "string"] },
-                                                                    { $toObjectId: "$jobStatusId" },
-                                                                    "$jobStatusId"
-                                                                ]
-                                                            },
-                                                            "$$statusId"
-                                                        ]
-                                                    },
-                                                    { $eq: ["$isDeleted", false] }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    { $count: "totalJobs" }
+              $lookup: {
+                from: "techniciansjobs",
+                let: { statusId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          {
+                            $eq: [
+                              {
+                                $cond: [
+                                  {
+                                    $eq: [{ $type: "$jobStatusId" }, "string"],
+                                  },
+                                  { $toObjectId: "$jobStatusId" },
+                                  "$jobStatusId",
                                 ],
-                                as: "jobsData"
-                            }
-                        },
-                        {
-                            $addFields: {
-                                totalJobs: {
-                                    $ifNull: [
-                                        { $arrayElemAt: ["$jobsData.totalJobs", 0] },
-                                        0
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            $project: {
-                                _id: 1,
-                                technicianJobStatus: 1,
-                                totalJobs: 1
-                            }
-                        }
-                    ],
-
-                    // ✅ 2️⃣ OVERALL TOTAL JOBS (REAL JOBS COLLECTION)
-                    overallTotal: [
-                        {
-                            $lookup: {
-                                from: "techniciansjobs",
-                                pipeline: [
-                                    { $match: { isDeleted: false } },
-                                    { $count: "overallTotalJobs" }
-                                ],
-                                as: "overall"
-                            }
-                        },
-                        {
-                            $unwind: {
-                                path: "$overall",
-                                preserveNullAndEmptyArrays: true
-                            }
-                        },
-                        {
-                            $limit: 1
-                        },
-                        {
-                            $project: {
-                                overallTotalJobs: "$overall.overallTotalJobs"
-                            }
-                        }
-                    ],
-
-                    // ✅ 3️⃣ TODAY JOBS
-                    todayJobs: [
-                        {
-                            $lookup: {
-                                from: "techniciansjobs",
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            isDeleted: false,
-                                            createdAt: { $gte: todayStart }
-                                        }
-                                    },
-                                    { $count: "todayJobs" }
-                                ],
-                                as: "today"
-                            }
-                        },
-                        { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
-                        { $limit: 1 },
-                        {
-                            $project: {
-                                todayJobs: "$today.todayJobs"
-                            }
-                        }
-                    ]
-                }
+                              },
+                              "$$statusId",
+                            ],
+                          },
+                          { $eq: ["$isDeleted", false] },
+                        ],
+                      },
+                    },
+                  },
+                  { $count: "totalJobs" },
+                ],
+                as: "jobsData",
+              },
             },
             {
-                $project: {
-                    statusCounts: 1,
-                    technicianJobStatus: 1,
-                    overallTotalJobs: {
-                        $ifNull: [
-                            { $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] },
-                            0
-                        ]
+              $addFields: {
+                totalJobs: {
+                  $ifNull: [{ $arrayElemAt: ["$jobsData.totalJobs", 0] }, 0],
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                technicianJobStatus: 1,
+                totalJobs: 1,
+              },
+            },
+          ],
+
+          // ✅ 2️⃣ OVERALL TOTAL JOBS (REAL JOBS COLLECTION)
+          overallTotal: [
+            {
+              $lookup: {
+                from: "techniciansjobs",
+                pipeline: [
+                  { $match: { isDeleted: false } },
+                  { $count: "overallTotalJobs" },
+                ],
+                as: "overall",
+              },
+            },
+            {
+              $unwind: {
+                path: "$overall",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $limit: 1,
+            },
+            {
+              $project: {
+                overallTotalJobs: "$overall.overallTotalJobs",
+              },
+            },
+          ],
+
+          // ✅ 3️⃣ TODAY JOBS
+          todayJobs: [
+            {
+              $lookup: {
+                from: "techniciansjobs",
+                pipeline: [
+                  {
+                    $match: {
+                      isDeleted: false,
+                      createdAt: { $gte: todayStart },
                     },
-                    todayJobs: {
-                        $ifNull: [
-                            { $arrayElemAt: ["$todayJobs.todayJobs", 0] },
-                            0
-                        ]
-                    }
-                }
-            }
-        ]);
+                  },
+                  { $count: "todayJobs" },
+                ],
+                as: "today",
+              },
+            },
+            { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
+            { $limit: 1 },
+            {
+              $project: {
+                todayJobs: "$today.todayJobs",
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          statusCounts: 1,
+          technicianJobStatus: 1,
+          overallTotalJobs: {
+            $ifNull: [
+              { $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] },
+              0,
+            ],
+          },
+          todayJobs: {
+            $ifNull: [{ $arrayElemAt: ["$todayJobs.todayJobs", 0] }, 0],
+          },
+        },
+      },
+    ]);
 
-        return res.status(200).json({
-            success: true,
-            data: result[0] || {
-                statusCounts: [],
-                overallTotalJobs: 0,
-                todayJobs: 0
-            }
-        });
-
-    } catch (error) {
-        console.error("Technician Jobs Statistics Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch technician job statistics."
-        });
-    }
+    return res.status(200).json({
+      success: true,
+      data: result[0] || {
+        statusCounts: [],
+        overallTotalJobs: 0,
+        todayJobs: 0,
+      },
+    });
+  } catch (error) {
+    console.error("Technician Jobs Statistics Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch technician job statistics.",
+    });
+  }
 };
 
 export const assignTicketToTechnicianController = async (
-    req: Request,
-    res: Response
+  req: Request,
+  res: Response,
 ) => {
-    try {
-        const { id } = req.params;          // ✅ ticketId
-        const { technicianId } = req.body;  // ✅ technicianId
+  try {
+    const { id } = req.params; // ✅ ticketId
+    const { technicianId } = req.body; // ✅ technicianId
 
-        // Validate ObjectIds
-        if (!Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: "Invalid ticketId" });
-        }
-
-        if (!Types.ObjectId.isValid(technicianId)) {
-            return res.status(400).json({ message: "Invalid technicianId" });
-        }
-
-        // ✅ Add technician into array (NO DUPLICATES)
-        const updatedTicket = await customerTicketBase.findByIdAndUpdate(
-            id,
-            {
-                $addToSet: {
-                    assignedTechnicianId: technicianId
-                }
-            },
-            { new: true }
-        ).populate("assignedTechnicianId");
-
-        if (!updatedTicket) {
-            return res.status(404).json({
-                success: false,
-                message: "Ticket not found",
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: "Technician assigned successfully",
-            data: updatedTicket,
-        });
-
-    } catch (error) {
-        console.error("Assign Technician Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to assign technician.",
-        });
+    // Validate ObjectIds
+    if (!Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid ticketId" });
     }
-};
 
+    if (!Types.ObjectId.isValid(technicianId)) {
+      return res.status(400).json({ message: "Invalid technicianId" });
+    }
+
+    // ✅ Add technician into array (NO DUPLICATES)
+    const updatedTicket = await customerTicketBase
+      .findByIdAndUpdate(
+        id,
+        {
+          $addToSet: {
+            assignedTechnicianId: technicianId,
+          },
+        },
+        { new: true },
+      )
+      .populate("assignedTechnicianId");
+
+    if (!updatedTicket) {
+      return res.status(404).json({
+        success: false,
+        message: "Ticket not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician assigned successfully",
+      data: updatedTicket,
+    });
+  } catch (error) {
+    console.error("Assign Technician Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to assign technician.",
+    });
+  }
+};
 
 export const technicianDashboardJobsStatisticsController = async (
-    req: TechnicianAuthRequest,
-    res: Response
+  req: TechnicianAuthRequest,
+  res: Response,
 ) => {
-    try {
-        const technicianId = req.technicianId; // 👈 middleware se
-        if (!technicianId)
-            return res.status(400).json({ success: false, message: "Technician not found" });
+  try {
+    const technicianId = req.technicianId; // 👈 middleware se
+    if (!technicianId)
+      return res
+        .status(400)
+        .json({ success: false, message: "Technician not found" });
 
-        const technicianObjectId = new Types.ObjectId(technicianId);
+    const technicianObjectId = new Types.ObjectId(technicianId);
 
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-        const result = await TechnicianJobStatus.aggregate([
+    const result = await TechnicianJobStatus.aggregate([
+      {
+        $facet: {
+          // ✅ STATUS COUNTS (TECHNICIAN BASED)
+          statusCounts: [
             {
-                $facet: {
-
-                    // ✅ STATUS COUNTS (TECHNICIAN BASED)
-                    statusCounts: [
-                        {
-                            $lookup: {
-                                from: "techniciansjobs",
-                                let: { statusId: "$_id" },
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            $expr: {
-                                                $and: [
-                                                    {
-                                                        $eq: [
-                                                            {
-                                                                $cond: [
-                                                                    { $eq: [{ $type: "$jobStatusId" }, "string"] },
-                                                                    { $toObjectId: "$jobStatusId" },
-                                                                    "$jobStatusId"
-                                                                ]
-                                                            },
-                                                            "$$statusId"
-                                                        ]
-                                                    },
-                                                    { $eq: ["$technicianId", technicianObjectId] }, // ✅ FILTER ADDED
-                                                    { $eq: ["$isDeleted", false] }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    { $count: "totalJobs" }
+              $lookup: {
+                from: "techniciansjobs",
+                let: { statusId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          {
+                            $eq: [
+                              {
+                                $cond: [
+                                  {
+                                    $eq: [{ $type: "$jobStatusId" }, "string"],
+                                  },
+                                  { $toObjectId: "$jobStatusId" },
+                                  "$jobStatusId",
                                 ],
-                                as: "jobsData"
-                            }
-                        },
-                        {
-                            $addFields: {
-                                totalJobs: {
-                                    $ifNull: [{ $arrayElemAt: ["$jobsData.totalJobs", 0] }, 0]
-                                }
-                            }
-                        },
-                        {
-                            $project: {
-                                _id: 1,
-                                technicianJobStatus: 1,
-                                totalJobs: 1
-                            }
-                        }
-                    ],
-
-                    // ✅ OVERALL TOTAL (TECHNICIAN BASED)
-                    overallTotal: [
-                        {
-                            $lookup: {
-                                from: "techniciansjobs",
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            isDeleted: false,
-                                            technicianId: technicianObjectId // ✅ FILTER ADDED
-                                        }
-                                    },
-                                    { $count: "overallTotalJobs" }
-                                ],
-                                as: "overall"
-                            }
-                        },
-                        { $unwind: { path: "$overall", preserveNullAndEmptyArrays: true } },
-                        { $limit: 1 },
-                        {
-                            $project: {
-                                overallTotalJobs: "$overall.overallTotalJobs"
-                            }
-                        }
-                    ],
-
-                    // ✅ TODAY JOBS (TECHNICIAN BASED)
-                    todayJobs: [
-                        {
-                            $lookup: {
-                                from: "techniciansjobs",
-                                pipeline: [
-                                    {
-                                        $match: {
-                                            isDeleted: false,
-                                            technicianId: technicianObjectId, // ✅ FILTER ADDED
-                                            createdAt: { $gte: todayStart }
-                                        }
-                                    },
-                                    { $count: "todayJobs" }
-                                ],
-                                as: "today"
-                            }
-                        },
-                        { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
-                        { $limit: 1 },
-                        {
-                            $project: {
-                                todayJobs: "$today.todayJobs"
-                            }
-                        }
-                    ]
-                }
+                              },
+                              "$$statusId",
+                            ],
+                          },
+                          { $eq: ["$technicianId", technicianObjectId] }, // ✅ FILTER ADDED
+                          { $eq: ["$isDeleted", false] },
+                        ],
+                      },
+                    },
+                  },
+                  { $count: "totalJobs" },
+                ],
+                as: "jobsData",
+              },
             },
             {
-                $project: {
-                    statusCounts: 1,
-                    overallTotalJobs: {
-                        $ifNull: [{ $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] }, 0]
-                    },
-                    todayJobs: {
-                        $ifNull: [{ $arrayElemAt: ["$todayJobs.todayJobs", 0] }, 0]
-                    }
-                }
-            }
-        ]);
+              $addFields: {
+                totalJobs: {
+                  $ifNull: [{ $arrayElemAt: ["$jobsData.totalJobs", 0] }, 0],
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                technicianJobStatus: 1,
+                totalJobs: 1,
+              },
+            },
+          ],
 
-        return res.status(200).json({
-            success: true,
-            data:
-                result[0] || {
-                    statusCounts: [],
-                    overallTotalJobs: 0,
-                    todayJobs: 0
-                }
-        });
-    } catch (error) {
-        console.error("Technician Jobs Statistics Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch technician job statistics."
-        });
-    }
+          // ✅ OVERALL TOTAL (TECHNICIAN BASED)
+          overallTotal: [
+            {
+              $lookup: {
+                from: "techniciansjobs",
+                pipeline: [
+                  {
+                    $match: {
+                      isDeleted: false,
+                      technicianId: technicianObjectId, // ✅ FILTER ADDED
+                    },
+                  },
+                  { $count: "overallTotalJobs" },
+                ],
+                as: "overall",
+              },
+            },
+            { $unwind: { path: "$overall", preserveNullAndEmptyArrays: true } },
+            { $limit: 1 },
+            {
+              $project: {
+                overallTotalJobs: "$overall.overallTotalJobs",
+              },
+            },
+          ],
+
+          // ✅ TODAY JOBS (TECHNICIAN BASED)
+          todayJobs: [
+            {
+              $lookup: {
+                from: "techniciansjobs",
+                pipeline: [
+                  {
+                    $match: {
+                      isDeleted: false,
+                      technicianId: technicianObjectId, // ✅ FILTER ADDED
+                      createdAt: { $gte: todayStart },
+                    },
+                  },
+                  { $count: "todayJobs" },
+                ],
+                as: "today",
+              },
+            },
+            { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
+            { $limit: 1 },
+            {
+              $project: {
+                todayJobs: "$today.todayJobs",
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          statusCounts: 1,
+          overallTotalJobs: {
+            $ifNull: [
+              { $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] },
+              0,
+            ],
+          },
+          todayJobs: {
+            $ifNull: [{ $arrayElemAt: ["$todayJobs.todayJobs", 0] }, 0],
+          },
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: result[0] || {
+        statusCounts: [],
+        overallTotalJobs: 0,
+        todayJobs: 0,
+      },
+    });
+  } catch (error) {
+    console.error("Technician Jobs Statistics Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch technician job statistics.",
+    });
+  }
 };
 
-
-//technician active jobs 
+//technician active jobs
 export const getTechniciansWithActiveJobsController = async (
-    req: Request,
-    res: Response
+  req: Request,
+  res: Response,
 ) => {
-    try {
-        const {
-            page = 1,
-            limit = 10,
-            search = "",
-            filter = "paged" // ✅ paged | all
-        } = req.query as any;
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      filter = "paged", // ✅ paged | all
+    } = req.query as any;
 
-        const pageNumber = parseInt(page);
-        const limitNumber = parseInt(limit);
-        const skip = (pageNumber - 1) * limitNumber;
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const skip = (pageNumber - 1) * limitNumber;
 
-        // ✅ Base match
-        const matchStage: any = { isDeleted: false };
+    // ✅ Base match
+    const matchStage: any = { isDeleted: false };
 
-        // ✅ Search support
-        if (search) {
-            matchStage.$or = [
-                { technicianName: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } }
-            ];
-        }
-
-        // =========================
-        // 🔥 BASE PIPELINE
-        // =========================
-        const basePipeline: any[] = [
-            { $match: matchStage },
-
-            // ✅ Populate Account
-            {
-                $lookup: {
-                    from: "users",
-                    localField: "accountId",
-                    foreignField: "_id",
-                    as: "accountId"
-                }
-            },
-            { $unwind: { path: "$accountId", preserveNullAndEmptyArrays: true } },
-
-            // ✅ Populate Person
-            {
-                $lookup: {
-                    from: "persons",
-                    localField: "personId",
-                    foreignField: "_id",
-                    as: "personId"
-                }
-            },
-            { $unwind: { path: "$personId", preserveNullAndEmptyArrays: true } },
-
-            // ✅ Populate Contact
-            {
-                $lookup: {
-                    from: "contacts",
-                    localField: "contactId",
-                    foreignField: "_id",
-                    as: "contactId"
-                }
-            },
-            { $unwind: { path: "$contactId", preserveNullAndEmptyArrays: true } },
-            {
-                $lookup: {
-                    from: "addresses",
-                    localField: "addressId",
-                    foreignField: "_id",
-                    as: "addressId"
-                }
-            },
-            { $unwind: { path: "$addressId", preserveNullAndEmptyArrays: true } },
-            // ✅ Count Active Jobs
-            {
-                $lookup: {
-                    from: "techniciansjobs",
-                    let: { technicianId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$technicianId", "$$technicianId"] },
-                                        { $eq: ["$isActive", true] },
-                                        { $eq: ["$isDeleted", false] }
-                                    ]
-                                }
-                            }
-                        },
-                        { $count: "activeJobs" }
-                    ],
-                    as: "jobsData"
-                }
-            },
-
-            {
-                $addFields: {
-                    activeJobs: {
-                        $ifNull: [
-                            { $arrayElemAt: ["$jobsData.activeJobs", 0] },
-                            0
-                        ]
-                    }
-                }
-            },
-
-            {
-                $project: {
-                    jobsData: 0
-                }
-            }
-        ];
-
-        // =========================
-        // ✅ IF FILTER = ALL → NO PAGINATION
-        // =========================
-        if (filter === "all") {
-            const technicians = await Technicians.aggregate(basePipeline);
-
-            return res.status(200).json({
-                success: true,
-                pagination: null,
-                data: technicians
-            });
-        }
-
-        // =========================
-        // ✅ PAGINATED RESULT
-        // =========================
-        const pipeline = [
-            ...basePipeline,
-            {
-                $facet: {
-                    data: [
-                        { $sort: { createdAt: -1 } },
-                        { $skip: skip },
-                        { $limit: limitNumber }
-                    ],
-                    totalCount: [{ $count: "total" }]
-                }
-            }
-        ];
-
-        const result = await Technicians.aggregate(pipeline);
-
-        const technicians = result[0]?.data || [];
-        const total = result[0]?.totalCount[0]?.total || 0;
-
-        return res.status(200).json({
-            success: true,
-            pagination: {
-                page: pageNumber,
-                limit: limitNumber,
-                total,
-                totalPages: Math.ceil(total / limitNumber)
-            },
-            data: technicians
-        });
-
-    } catch (error) {
-        console.error("Technicians With Active Jobs Error:", error);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch technicians with active jobs"
-        });
+    // ✅ Search support
+    if (search) {
+      matchStage.$or = [
+        { technicianName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
     }
+
+    // =========================
+    // 🔥 BASE PIPELINE
+    // =========================
+    const basePipeline: any[] = [
+      { $match: matchStage },
+
+      // ✅ Populate Account
+      {
+        $lookup: {
+          from: "users",
+          localField: "accountId",
+          foreignField: "_id",
+          as: "accountId",
+        },
+      },
+      { $unwind: { path: "$accountId", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "servicetypemasters",
+          localField: "specializationIds",
+          foreignField: "_id",
+          as: "specializationIds",
+        },
+      },
+
+      // ✅ Populate Person
+      {
+        $lookup: {
+          from: "people",
+          localField: "personId",
+          foreignField: "_id",
+          as: "personId",
+        },
+      },
+      { $unwind: { path: "$personId", preserveNullAndEmptyArrays: true } },
+
+      // ✅ Populate Contact
+      {
+        $lookup: {
+          from: "contacts",
+          localField: "contactId",
+          foreignField: "_id",
+          as: "contactId",
+        },
+      },
+      { $unwind: { path: "$contactId", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "addresses",
+          localField: "addressId",
+          foreignField: "_id",
+          as: "addressId",
+        },
+      },
+      { $unwind: { path: "$addressId", preserveNullAndEmptyArrays: true } },
+      // ✅ Count Active Jobs
+      {
+        $lookup: {
+          from: "techniciansjobs",
+          let: { technicianId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$technicianId", "$$technicianId"] },
+                    { $eq: ["$isActive", true] },
+                    { $eq: ["$isDeleted", false] },
+                  ],
+                },
+              },
+            },
+            { $count: "activeJobs" },
+          ],
+          as: "jobsData",
+        },
+      },
+
+      {
+        $addFields: {
+          activeJobs: {
+            $ifNull: [{ $arrayElemAt: ["$jobsData.activeJobs", 0] }, 0],
+          },
+        },
+      },
+
+      {
+        $project: {
+          jobsData: 0,
+        },
+      },
+    ];
+
+    // =========================
+    // ✅ IF FILTER = ALL → NO PAGINATION
+    // =========================
+    if (filter === "all") {
+      const technicians = await Technicians.aggregate(basePipeline);
+
+      return res.status(200).json({
+        success: true,
+        pagination: null,
+        data: technicians,
+      });
+    }
+
+    // =========================
+    // ✅ PAGINATED RESULT
+    // =========================
+    const pipeline = [
+      ...basePipeline,
+      {
+        $facet: {
+          data: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limitNumber },
+          ],
+          totalCount: [{ $count: "total" }],
+        },
+      },
+    ];
+
+    const result = await Technicians.aggregate(pipeline);
+
+    const technicians = result[0]?.data || [];
+    const total = result[0]?.totalCount[0]?.total || 0;
+
+    return res.status(200).json({
+      success: true,
+      pagination: {
+        page: pageNumber,
+        limit: limitNumber,
+        total,
+        totalPages: Math.ceil(total / limitNumber),
+      },
+      data: technicians,
+    });
+  } catch (error) {
+    console.error("Technicians With Active Jobs Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch technicians with active jobs",
+    });
+  }
 };
