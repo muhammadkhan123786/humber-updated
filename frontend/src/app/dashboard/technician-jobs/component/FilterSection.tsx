@@ -35,15 +35,18 @@ const FilterSection = ({
       };
 
       try {
-        const statusRes = await fetch(`${API_BASE_URL}/technician-job-status`, {
-          headers,
-        });
+        const statusRes = await fetch(
+          `${API_BASE_URL}/technician-job-status?filter=all`,
+          {
+            headers,
+          },
+        );
         const statusData = await statusRes.json();
         setDbStatuses(
           Array.isArray(statusData) ? statusData : statusData.data || [],
         );
         const priorityRes = await fetch(
-          `${API_BASE_URL}/service-request-prioprity-level`,
+          `${API_BASE_URL}/service-request-prioprity-level?filter=all`,
           { headers },
         );
         const priorityData = await priorityRes.json();

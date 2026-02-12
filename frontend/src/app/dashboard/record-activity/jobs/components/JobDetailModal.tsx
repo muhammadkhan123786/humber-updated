@@ -84,7 +84,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
           </button>
         </div>
 
-        <div className="flex border-b px-6 bg-white ">
+        <div className="flex border-b px-6 bg-white">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -100,7 +100,9 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
             </button>
           ))}
         </div>
+
         <div className="flex-1 overflow-y-auto p-6 bg-white">
+          {/* Overview Tab */}
           {activeTab === "overview" && (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
@@ -171,6 +173,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
                   </div>
                 </div>
               </div>
+
               <div className="bg-[#f0fdf4] p-6 rounded-3xl border border-[#dcfce7]">
                 <div className="flex items-center gap-2 mb-6">
                   <div className="p-1 text-[#10b981]">
@@ -235,8 +238,9 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
             </div>
           )}
 
+          {/* Services Tab */}
           {activeTab === "services" && (
-            <div className="grid grid-cols-1  gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {job.services?.length > 0 ? (
                 job.services.map((s: any, i: number) => {
                   const isDiagnostic =
@@ -357,104 +361,107 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
               )}
             </div>
           )}
-          <div className="flex flex-col items-center space-y-4">
-            {job.parts?.length > 0 ? (
-              job.parts.map((p: any, i: number) => (
-                <div
-                  key={i}
-                  className="w-full sm:w-80 md:w-[400px] lg:w-[450px] p-4 rounded-2xl border border-gray-200 bg-white shadow-md"
-                >
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Part Name
-                      </p>
-                      <h4 className="text-gray-900 font-bold text-lg">
-                        {p.partId?.partName || "Motor Assembly"}
-                      </h4>
-                    </div>
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Part Number
-                      </p>
-                      <p className="text-gray-700 font-semibold text-lg">
-                        {p.partId?.partNumber || "MOT-12V-350W"}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
+          {activeTab === "parts" && (
+            <div className="flex flex-col items-center space-y-4">
+              {job.parts?.length > 0 ? (
+                job.parts.map((p: any, i: number) => (
+                  <div
+                    key={i}
+                    className="w-full sm:w-80 md:w-[400px] lg:w-[450px] p-4 rounded-2xl border border-gray-200 bg-white shadow-md"
+                  >
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Part Name
+                        </p>
+                        <h4 className="text-gray-900 font-bold text-lg">
+                          {p.partId?.partName || "Motor Assembly"}
+                        </h4>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Part Number
+                        </p>
+                        <p className="text-gray-700 font-semibold text-lg">
+                          {p.partId?.partNumber || "MOT-12V-350W"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Old Part Condition
+                        </p>
+                        <p className="text-gray-800 font-medium text-sm">
+                          {p.oldPartConditionDescription ||
+                            "Damaged - burnt wiring"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          New Serial Number
+                        </p>
+                        <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 font-bold text-sm rounded-lg">
+                          {p.newSerialNumber || "SN-MOT-2024-0125"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Quantity
+                        </p>
+                        <p className="text-gray-800 font-medium text-lg">
+                          {p.quantity || 1}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Cost
+                        </p>
+                        <p className="text-emerald-700 font-bold text-xl">
+                          £
+                          {p.totalCost?.toLocaleString() ||
+                            p.unitCost?.toLocaleString() ||
+                            "245.00"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
                       <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Old Part Condition
+                        Reason for Change
                       </p>
                       <p className="text-gray-800 font-medium text-sm">
-                        {p.oldPartConditionDescription ||
-                          "Damaged - burnt wiring"}
+                        {p.reasonForChange ||
+                          "Motor failure due to electrical short"}
                       </p>
                     </div>
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        New Serial Number
-                      </p>
-                      <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 font-bold text-sm rounded-lg">
-                        {p.newSerialNumber || "SN-MOT-2024-0125"}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
+                    <div className="pt-4 border-t border-gray-100">
                       <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Quantity
+                        Replaced At
                       </p>
-                      <p className="text-gray-800 font-medium text-lg">
-                        {p.quantity || 1}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Cost
-                      </p>
-                      <p className="text-emerald-700 font-bold text-xl">
-                        £
-                        {p.totalCost?.toLocaleString() ||
-                          p.unitCost?.toLocaleString() ||
-                          "245.00"}
+                      <p className="text-gray-800 font-medium text-sm">
+                        {new Date(
+                          p.updatedAt || job.createdAt,
+                        ).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        }) || "15/01/2024"}
                       </p>
                     </div>
                   </div>
-
-                  <div className="mb-4">
-                    <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                      Reason for Change
-                    </p>
-                    <p className="text-gray-800 font-medium text-sm">
-                      {p.reasonForChange ||
-                        "Motor failure due to electrical short"}
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100">
-                    <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                      Replaced At
-                    </p>
-                    <p className="text-gray-800 font-medium text-sm">
-                      {new Date(
-                        p.updatedAt || job.createdAt,
-                      ).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }) || "15/01/2024"}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState message="No parts recorded" />
-            )}
-          </div>
+                ))
+              ) : (
+                <EmptyState message="No parts recorded" />
+              )}
+            </div>
+          )}
 
           {activeTab === "inspections" && (
             <div className="space-y-4">
@@ -466,7 +473,13 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
                   >
                     <div className="flex justify-between items-center mb-4">
                       <span
-                        className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white ${ins.status === "PASS" ? "bg-emerald-500" : ins.status === "FAIL" ? "bg-red-500" : "bg-gray-500"}`}
+                        className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white ${
+                          ins.status === "PASS"
+                            ? "bg-emerald-500"
+                            : ins.status === "FAIL"
+                              ? "bg-red-500"
+                              : "bg-gray-500"
+                        }`}
                       >
                         {ins.status || "N/A"}
                       </span>

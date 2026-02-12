@@ -20,7 +20,6 @@ interface StatItem {
   bg: string;
 }
 
-// Interface for props to handle auto-refresh
 interface StatsDashboardProps {
   refreshTrigger?: number;
 }
@@ -74,7 +73,6 @@ const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
 
         const dynamicStats: StatItem[] = [];
 
-        // 1. Adding Total Jobs Card
         dynamicStats.push({
           label: "Total Jobs",
           value: apiData.overallTotalJobs || 0,
@@ -82,7 +80,6 @@ const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
           bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
         });
 
-        // 2. Mapping Dynamic Statuses from DB
         apiData.statusCounts?.forEach((status: any) => {
           const config =
             statusConfig[status.technicianJobStatus] || defaultStyle;
@@ -102,7 +99,7 @@ const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
     };
 
     fetchStats();
-  }, [refreshTrigger]); // Jab bhi refreshTrigger change hoga (delete ke baad), ye foran fetch karega.
+  }, [refreshTrigger]);
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 bg-gray-50 rounded-xl">
