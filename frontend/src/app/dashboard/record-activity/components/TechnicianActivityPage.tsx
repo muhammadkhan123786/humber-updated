@@ -54,6 +54,14 @@ const TechnicianActivityPage = () => {
     totalMedia,
   } = useActivityRecordForm();
 
+  const actualPartsCount = partFields.filter(
+    (part) => part.partId && part.partId.trim() !== "",
+  ).length;
+
+  const actualServicesCount = serviceFields.filter(
+    (service) => service.activityId && service.activityId.trim() !== "",
+  ).length;
+
   const tabs = [
     { id: "Job Info", label: "Job Info", icon: Briefcase },
     {
@@ -162,7 +170,15 @@ const TechnicianActivityPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FF] p-4 md:p-8 pb-12">
-      <ActivityHero />
+      {/* Pass the props to ActivityHero */}
+      <ActivityHero
+        actualServicesCount={actualServicesCount}
+        actualPartsCount={actualPartsCount}
+        completedInspections={completedInspections}
+        totalInspectionTypes={inspectionTypes.length}
+        totalMedia={totalMedia}
+        totalDuration={totalDuration}
+      />
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 font-medium">
@@ -221,12 +237,12 @@ const TechnicianActivityPage = () => {
         <div className="flex items-center gap-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2">
           <div className="flex items-center gap-2">
             <Settings size={14} className="text-[#4F39F6]" />
-            <span>{serviceFields.length} Activities</span>
+            <span>{actualServicesCount} Activities</span>
           </div>
           <div className="h-4 w-px bg-gray-200" />
           <div className="flex items-center gap-2">
             <Package size={14} className="text-[#9810FA]" />
-            <span>{partFields.length} Parts</span>
+            <span>{actualPartsCount} Parts</span>
           </div>
           <div className="h-4 w-px bg-gray-200" />
           <div className="flex items-center gap-2">

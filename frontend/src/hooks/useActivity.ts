@@ -142,7 +142,11 @@ export const useActivityRecordForm = () => {
   }, 0);
 
   const completedInspections = currentInspections.filter(
-    (item) => item.status !== "N/A",
+    (item) =>
+      item.inspectionTypeId &&
+      item.inspectionTypeId.trim() !== "" &&
+      item.status &&
+      item.status !== "N/A",
   ).length;
 
   const clearEdit = () => {
