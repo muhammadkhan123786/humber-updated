@@ -44,22 +44,42 @@ export const technicianDashboardJobsController = async (
         const jobs = await TechniciansJobs.find(query)
             .populate([
                 {
+                    path: "technicianId",
+                    select: "personId contactId",
+                    populate: [
+                        { path: "personId", select: "firstName lastName" },
+                        { path: "contactId", select: "phoneNumber mobileNumber" }
+                    ]
+                },
+                {
                     path: "ticketId",
                     select: "ticketCode customerId issue_Details ticketStatusId vehicleId priorityId",
                     populate: [
                         {
-                            path: "customerId",               // nested populate
-                            select: "personId contactId", // select the fields you want
+                            path: "customerId",
+                            select: "personId contactId addressId",
                             populate: [
                                 { path: "personId", select: "firstName lastName" },
-                                { path: "contactId", select: "mobileNumber" }
+                                { path: "contactId", select: "mobileNumber phoneNumber" },
+                                { path: "addressId", select: "address city state zipCode" }
                             ]
                         },
-                        { path: "vehicleId", select: "vehicleType productName" },
-                         { path: "priorityId", select: "serviceRequestPrioprity" },
-                         { path: "ticketStatusId", select: "code" },
+                        { 
+                            path: "vehicleId", 
+                            select: "vehicleType productName serialNumber vehicleModelId",
+                            populate: {
+                                path: "vehicleModelId",
+                                select: "modelName"
+                            }
+                        },
+                        { path: "priorityId", select: "serviceRequestPrioprity backgroundColor" },
+                        { path: "ticketStatusId", select: "code" },
                     ],
                 },
+                {
+                    path: "jobStatusId",
+                    select: "technicianJobStatus"
+                }
             ])
             .sort({ createdAt: -1 })
             .skip(skip)

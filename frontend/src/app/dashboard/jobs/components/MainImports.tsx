@@ -29,23 +29,28 @@ const MainImports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   const limit = 10;
 
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       const res = await getAlls<TechnicianJobType>("/technician-dashboard-jobs", {
-
         page: currentPage,
         limit,
       });
-       console.log("API Response:", res); // Debug log to check API response structure
-      // Ensure we always set an array
-      const jobsData = Array.isArray(res.data) ? res.data : [];
+      
+      console.log("API Response:", res); // Debug log to check API response structure
+      
+      // Handle nested response structure: res.data.jobs
+      const responseData = res.data as any;
+      const jobsData = Array.isArray(responseData?.jobs) ? responseData.jobs : 
+                       Array.isArray(res.data) ? res.data : [];
+      
       setJobs(jobsData);
-      setTotalPages(Math.ceil((res.total || 0) / limit));
+      
+      // Handle pagination from nested structure
+      const totalJobs = responseData?.pagination?.totalJobs || res.total || 0;
+      setTotalPages(Math.ceil(totalJobs / limit));
     } catch (error: any) {
       console.log("Error fetching jobs:", error.message);
       setJobs([]); // Reset to empty array on error
@@ -57,10 +62,6 @@ const MainImports = () => {
   useEffect(() => {
     fetchJobs();
   }, [currentPage, fetchJobs]);
-  const handleRefreshData = () => {
-    setRefreshTrigger((prev) => prev + 1);
-    fetchJobs();
-  };
 
   const filteredJobs = useMemo(() => {
     // Ensure jobs is always an array
@@ -104,7 +105,7 @@ const MainImports = () => {
     <div className="flex flex-col gap-6">
       <TechnicianHeader activeView={viewMode} setActiveView={setViewMode} />
 
-      <StatsDashboard refreshTrigger={refreshTrigger} />
+      <StatsDashboard />
 
       <FilterSection
         searchTerm={searchTerm}
@@ -124,7 +125,6 @@ const MainImports = () => {
           jobs={filteredJobs}
           loading={loading}
           viewMode={viewMode}
-          onDelete={handleRefreshData}
         />
       )}
 
