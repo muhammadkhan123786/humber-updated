@@ -86,16 +86,6 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
       );
 
       if (!response.ok) {
-        if (response.status === 401) {
-          toast.error("Unauthorized - Please login again");
-          throw new Error("Unauthorized - Please login again");
-        }
-        if (response.status === 403) {
-          toast.error("You do not have permission to delete this job");
-          throw new Error(
-            "Forbidden - You do not have permission to delete this job",
-          );
-        }
         if (response.status === 404) {
           toast.error("Job not found");
           throw new Error("Job not found");

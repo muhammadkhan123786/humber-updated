@@ -17,8 +17,6 @@ import { getAlls } from "@/helper/apiHelper";
 
 const Jobs = () => {
   const { jobList: initialJobList, isLoading } = useActivityRecordForm();
-
-  // Maintain local jobs state for immediate updates
   const [jobs, setJobs] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -26,7 +24,6 @@ const Jobs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Update local jobs when initialJobList changes
   useEffect(() => {
     setJobs(initialJobList);
   }, [initialJobList]);
@@ -34,7 +31,7 @@ const Jobs = () => {
   useEffect(() => {
     const fetchStatuses = async () => {
       try {
-        const res = await getAlls<any>("/technician-job-status");
+        const res = await getAlls<any>("/technician-job-status?filter=all");
         setAvailableStatuses(res.data || []);
       } catch (error) {
         console.error("Error fetching statuses:", error);
@@ -43,7 +40,6 @@ const Jobs = () => {
     fetchStatuses();
   }, []);
 
-  // Handle delete - immediately updates jobs state and stats
   const handleDeleteJob = (deletedJobId: string) => {
     setJobs((prevJobs) => prevJobs.filter((job) => job._id !== deletedJobId));
   };
@@ -73,7 +69,6 @@ const Jobs = () => {
     setCurrentPage(page);
   };
 
-  // Calculate stats from local jobs state - updates immediately on delete
   const stats = [
     {
       value: jobs.length.toString(),
