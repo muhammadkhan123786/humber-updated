@@ -1,11 +1,12 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import CreateQuotationPage from './components/CreateQutation'
 
 const page = () => {
   return (
-    <div>
+    <Suspense fallback={<div>Loading...</div>}>
       <CreateQuotationPage />
-    </div>
+    </Suspense>
+
   )
 }
 
