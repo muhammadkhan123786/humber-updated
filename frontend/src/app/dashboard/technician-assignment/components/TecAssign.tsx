@@ -179,7 +179,7 @@ const TechnicianAssignment = () => {
                   Active Jobs
                 </p>
                 <p className="text-lg font-bold text-gray-700">
-                  {tech.dutyRoster?.length || 0}
+                  {tech.activeJobs || 0}
                 </p>
               </div>
               <button className="text-xs font-bold text-blue-600 hover:underline">

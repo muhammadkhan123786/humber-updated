@@ -191,7 +191,7 @@ const ManageTechnicianList = ({
                               Active
                             </span>
                             <span className="text-xs font-black text-red-600">
-                              3
+                              {tech.activeJobs}
                             </span>
                           </div>
                           <div className="bg-[#E6FFFA] border border-emerald-50 px-3 py-1 rounded-xl flex flex-col items-center min-w-[55px]">
