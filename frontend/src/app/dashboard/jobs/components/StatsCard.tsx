@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import {
   Briefcase,
@@ -12,7 +11,6 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { getAlls } from "@/helper/apiHelper";
-
 interface StatItem {
   label: string;
   value: number;
@@ -20,6 +18,10 @@ interface StatItem {
   bg: string;
 }
 
+// Interface for props to handle auto-refresh
+interface StatsDashboardProps {
+  refreshTrigger?: number;
+}
 const statusConfig: Record<string, { icon: any; bg: string }> = {
   Pending: {
     icon: Clock,
@@ -50,26 +52,23 @@ const statusConfig: Record<string, { icon: any; bg: string }> = {
     bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
   },
 };
-
 const defaultStyle = {
   icon: HelpCircle,
   bg: "bg-gradient-to-br from-slate-500 to-slate-700",
 };
-
-const StatsDashboard = () => {
+const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
   const [stats, setStats] = useState<StatItem[]>([]);
-
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const res = await getAlls<any>("/job-statistics");
-        console.log("API Response for Job Statistics:", res);
         const apiData = res?.data as any;
 
         if (!apiData) return;
-
+        
         const dynamicStats: StatItem[] = [];
 
+        // 1. Adding Total Jobs Card
         dynamicStats.push({
           label: "Total Jobs",
           value: apiData.overallTotalJobs || 0,
@@ -77,7 +76,8 @@ const StatsDashboard = () => {
           bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
         });
 
-        apiData.statusCounts.forEach((status: any) => {
+        // 2. Mapping Dynamic Statuses from DB
+        apiData.statusCounts?.forEach((status: any) => {
           const config =
             statusConfig[status.technicianJobStatus] || defaultStyle;
 
@@ -96,10 +96,10 @@ const StatsDashboard = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [refreshTrigger]); // Jab bhi refreshTrigger change hoga (delete ke baad), ye foran fetch karega.
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 bg-gray-50 rounded-xl mt-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 bg-gray-50 rounded-xl">
       {stats.map((item, index) => (
         <div
           key={index}
