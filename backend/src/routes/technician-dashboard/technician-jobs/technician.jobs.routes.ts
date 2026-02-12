@@ -1,6 +1,6 @@
 
-import { Request, Response, NextFunction, Router } from 'express';
-import { TechnicianAuthRequest } from '../../../middleware/auth.middleware';
+import { Router } from 'express';
+
 import { technicianDashboardJobsController } from '../../../controllers/technician-dashboard-controllers/technician-dashboard-jobs/technician.dashboard.jobs';
 import { technicianDashboardJobsStatisticsController } from '../../../controllers/technician-job-statistics/technician.jobs.statistics.controller';
 
