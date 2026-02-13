@@ -13,6 +13,9 @@ import {
   Wrench,
   ListTodo,
   Search,
+  ImageIcon,
+  MessageSquare,
+  MessageSquareCode,
 } from "lucide-react";
 import { jobsAnimations } from "./JobsAnimation";
 
@@ -66,6 +69,11 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
       label: "Inspections",
       icon: <ClipboardCheck size={18} />,
     },
+    {
+      id: "notes",
+      label: "Notes",
+      icon: <MessageSquare size={18} />,
+    },
   ];
 
   return (
@@ -104,7 +112,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               style={{ animationDelay: `${index * 0.1}s` }}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap animate-fadeInUp ${
+              className={`flex items-center gap-1 px-3 py-3 text-sm font-semibold transition-all border-b-2 whitespace-nowrap animate-fadeInUp ${
                 activeTab === tab.id
                   ? "border-indigo-600 text-indigo-600"
                   : "border-transparent text-gray-400 hover:text-gray-600"
@@ -251,7 +259,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
           )}
 
           {activeTab === "services" && (
-            <div className="grid grid-cols-1  gap-4">
+            <div className="grid grid-cols-1 gap-4">
               {job.services?.length > 0 ? (
                 job.services.map((s: any, i: number) => {
                   const isDiagnostic =
@@ -373,105 +381,108 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
               )}
             </div>
           )}
-          <div className="flex flex-col items-center space-y-4">
-            {job.parts?.length > 0 ? (
-              job.parts.map((p: any, i: number) => (
-                <div
-                  key={i}
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                  className="w-full sm:w-80 md:w-[400px] lg:w-[450px] p-4 rounded-2xl border border-gray-200 bg-white shadow-md animate-fadeInUp"
-                >
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Part Name
-                      </p>
-                      <h4 className="text-gray-900 font-bold text-lg">
-                        {p.partId?.partName || "Motor Assembly"}
-                      </h4>
-                    </div>
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Part Number
-                      </p>
-                      <p className="text-gray-700 font-semibold text-lg">
-                        {p.partId?.partNumber || "MOT-12V-350W"}
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
+          {activeTab === "parts" && (
+            <div className="flex flex-col items-center space-y-4">
+              {job.parts?.length > 0 ? (
+                job.parts.map((p: any, i: number) => (
+                  <div
+                    key={i}
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                    className="w-full sm:w-80 md:w-[400px] lg:w-[450px] p-4 rounded-2xl border border-gray-200 bg-white shadow-md animate-fadeInUp"
+                  >
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Part Name
+                        </p>
+                        <h4 className="text-gray-900 font-bold text-lg">
+                          {p.partId?.partName || "Motor Assembly"}
+                        </h4>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Part Number
+                        </p>
+                        <p className="text-gray-700 font-semibold text-lg">
+                          {p.partId?.partNumber || "MOT-12V-350W"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Old Part Condition
+                        </p>
+                        <p className="text-gray-800 font-medium text-sm">
+                          {p.oldPartConditionDescription ||
+                            "Damaged - burnt wiring"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          New Serial Number
+                        </p>
+                        <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 font-bold text-sm rounded-lg">
+                          {p.newSerialNumber || "SN-MOT-2024-0125"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Quantity
+                        </p>
+                        <p className="text-gray-800 font-medium text-lg">
+                          {p.quantity || 1}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
+                          Cost
+                        </p>
+                        <p className="text-emerald-700 font-bold text-xl">
+                          £
+                          {p.totalCost?.toLocaleString() ||
+                            p.unitCost?.toLocaleString() ||
+                            "245.00"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
                       <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Old Part Condition
+                        Reason for Change
                       </p>
                       <p className="text-gray-800 font-medium text-sm">
-                        {p.oldPartConditionDescription ||
-                          "Damaged - burnt wiring"}
+                        {p.reasonForChange ||
+                          "Motor failure due to electrical short"}
                       </p>
                     </div>
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        New Serial Number
-                      </p>
-                      <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 font-bold text-sm rounded-lg">
-                        {p.newSerialNumber || "SN-MOT-2024-0125"}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
+                    <div className="pt-4 border-t border-gray-100">
                       <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Quantity
+                        Replaced At
                       </p>
-                      <p className="text-gray-800 font-medium text-lg">
-                        {p.quantity || 1}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                        Cost
-                      </p>
-                      <p className="text-emerald-700 font-bold text-xl">
-                        £
-                        {p.totalCost?.toLocaleString() ||
-                          p.unitCost?.toLocaleString() ||
-                          "245.00"}
+                      <p className="text-gray-800 font-medium text-sm">
+                        {new Date(
+                          p.updatedAt || job.createdAt,
+                        ).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        }) || "15/01/2024"}
                       </p>
                     </div>
                   </div>
-
-                  <div className="mb-4">
-                    <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                      Reason for Change
-                    </p>
-                    <p className="text-gray-800 font-medium text-sm">
-                      {p.reasonForChange ||
-                        "Motor failure due to electrical short"}
-                    </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-gray-100">
-                    <p className="flex items-center gap-2 font-medium select-none text-xs text-gray-600 uppercase mb-1">
-                      Replaced At
-                    </p>
-                    <p className="text-gray-800 font-medium text-sm">
-                      {new Date(
-                        p.updatedAt || job.createdAt,
-                      ).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      }) || "15/01/2024"}
-                    </p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <EmptyState message="No parts recorded" />
-            )}
-          </div>
+                ))
+              ) : (
+                <EmptyState message="No parts recorded" />
+              )}
+            </div>
+          )}
 
           {activeTab === "inspections" && (
             <div className="space-y-4">
@@ -505,6 +516,115 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
               ) : (
                 <EmptyState message="No inspections recorded" />
               )}
+            </div>
+          )}
+
+          {activeTab === "notes" && (
+            <div className="space-y-6">
+              {/* General Notes */}
+              {job.generalNotes && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-fadeInUp">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-blue-50 rounded-lg">
+                      <FileText size={16} className="text-blue-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      General Notes
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    {job.generalNotes}
+                  </p>
+                </div>
+              )}
+
+              {/* Completion Summary */}
+              {job.completionSummary && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-fadeInUp animate-delay-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-green-50 rounded-lg">
+                      <ClipboardCheck size={16} className="text-green-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      Completion Summary
+                    </h3>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    {job.completionSummary}
+                  </p>
+                </div>
+              )}
+
+              {/* Job Notes Messages */}
+              {job.jobNotes?.messages?.length > 0 && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-fadeInUp animate-delay-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-purple-50 rounded-lg">
+                      <MessageSquareCode
+                        size={16}
+                        className="text-purple-600"
+                      />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      Job Notes Messages ({job.jobNotes.messages.length})
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {job.jobNotes.messages.map((msg: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="bg-gray-50 p-4 rounded-xl border border-gray-100"
+                      >
+                        <p className="text-gray-700 text-sm">{msg}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Job Notes Images */}
+              {job.jobNotes?.images?.length > 0 && (
+                <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-fadeInUp animate-delay-300">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-amber-50 rounded-lg">
+                      <ImageIcon size={16} className="text-amber-600" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">
+                      Images ({job.jobNotes.images.length})
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {job.jobNotes.images.map((img: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="relative group rounded-xl overflow-hidden border border-gray-200"
+                      >
+                        <img
+                          src={img}
+                          alt={`Job note ${idx + 1}`}
+                          className="w-full h-32 object-cover"
+                        />
+                        <a
+                          href={img}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium"
+                        >
+                          View Full
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Notes Message */}
+              {!job.generalNotes &&
+                !job.completionSummary &&
+                !job.jobNotes?.messages?.length &&
+                !job.jobNotes?.images?.length && (
+                  <EmptyState message="No notes or media recorded" />
+                )}
             </div>
           )}
         </div>
