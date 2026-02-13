@@ -393,13 +393,13 @@ app.use(
 //04-02-2026
 app.use(
   `${process.env.API_PREFIX}/master-ticket-status-technician-dashboard`,
-  technicianMasterProtector,
+  technicianProtecter,
   ticketStatusRouter,
 );
 
 app.use(
   `${process.env.API_PREFIX}/master-ticket-urgency-technician-dashboard`,
-  technicianMasterProtector,
+  technicianProtecter,
   ServiceRequestPrioprityRouter,
 );
 

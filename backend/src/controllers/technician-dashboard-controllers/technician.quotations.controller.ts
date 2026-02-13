@@ -1,4 +1,4 @@
-import { AuthRequest } from "../../middleware/auth.middleware";
+import { AuthRequest, TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { Request, Response } from "express";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { TicketQuations } from "../../models/ticket-quation-models/ticket.quotation.models";
@@ -7,26 +7,23 @@ import { Types } from "mongoose";
 
 
 export const technicianTicketsQuotationsController = async (
-  req: AuthRequest,
+  req: TechnicianAuthRequest,
   res: Response
 ) => {
   try {
-    const user = req.user;
-
-    if (!user) {
+    if (!req.technicianId) {
       return res.status(400).json({
         success: false,
         message: "Technician user not provided.",
       });
     }
-
     // Pagination
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const search = (req.query.search as string) || "";
 
-    const technicianObjectId = new Types.ObjectId(user.userId);
+    const technicianObjectId = new Types.ObjectId(req.technicianId);
 
     // =========================
     // Aggregation pipeline
@@ -39,109 +36,109 @@ export const technicianTicketsQuotationsController = async (
           isDeleted: false,
         },
       },
-        // 2️⃣ Lookup - ticket details
-        {
-            $lookup: {
-                from: "customerticketbases",
-                localField: "ticketId",
-                foreignField: "_id",
-                as: "ticket",
-            },
+      // 2️⃣ Lookup - ticket details
+      {
+        $lookup: {
+          from: "customerticketbases",
+          localField: "ticketId",
+          foreignField: "_id",
+          as: "ticket",
         },
-        { $unwind: "$ticket" },
-        // 3️⃣ Lookup - ticket status
-        {
-            $lookup: {
-                from: "ticketstatuses",
-                localField: "ticket.ticketStatusId",
-                foreignField: "_id",
-                as: "ticketStatusDetails",
-            },
+      },
+      { $unwind: "$ticket" },
+      // 3️⃣ Lookup - ticket status
+      {
+        $lookup: {
+          from: "ticketstatuses",
+          localField: "ticket.ticketStatusId",
+          foreignField: "_id",
+          as: "ticketStatusDetails",
         },
-        { $unwind: { path: "$ticketStatusDetails", preserveNullAndEmptyArrays: true } },
-        // 4️⃣ Lookup - quotation status
-        {
-            $lookup: {
-                from: "ticketquationstatuses",
-                localField: "quotationStatusId",
-                foreignField: "_id",
-                as: "quotationStatus",  
-            },          
+      },
+      { $unwind: { path: "$ticketStatusDetails", preserveNullAndEmptyArrays: true } },
+      // 4️⃣ Lookup - quotation status
+      {
+        $lookup: {
+          from: "ticketquationstatuses",
+          localField: "quotationStatusId",
+          foreignField: "_id",
+          as: "quotationStatus",
         },
-        { $unwind: "$quotationStatus" },
-        // 5️⃣ Lookup - customer details
-        {
-            $lookup: {
-                from: "customerbases",
-                localField: "ticket.customerId",
-                foreignField: "_id",
-                as: "customer",
-            },  
+      },
+      { $unwind: "$quotationStatus" },
+      // 5️⃣ Lookup - customer details
+      {
+        $lookup: {
+          from: "customerbases",
+          localField: "ticket.customerId",
+          foreignField: "_id",
+          as: "customer",
         },
-        { $unwind: "$customer" },
-        {
-            $lookup: {
-                from: "people",   
-                localField: "customer.personId",
-                foreignField: "_id",
-                as: "person",   
-            },
+      },
+      { $unwind: "$customer" },
+      {
+        $lookup: {
+          from: "people",
+          localField: "customer.personId",
+          foreignField: "_id",
+          as: "person",
         },
-        { $unwind: "$person" },       
-        // 6️⃣ Lookup - vehicle details
-        {
-            $lookup: {
-                from: "customervehiclemodels",
-                localField: "ticket.vehicleId",
-                foreignField: "_id",
-                as: "vehicle",
-            },
+      },
+      { $unwind: "$person" },
+      // 6️⃣ Lookup - vehicle details
+      {
+        $lookup: {
+          from: "customervehiclemodels",
+          localField: "ticket.vehicleId",
+          foreignField: "_id",
+          as: "vehicle",
         },
-        { $unwind: { path: "$vehicle", preserveNullAndEmptyArrays: true } },
-        // 7️⃣ Lookup - vehicle brand
-        {
-            $lookup: {
-                from: "vechiclebrands",
-                localField: "vehicle.vehicleBrandId",
-                foreignField: "_id",
-                as: "vehicleBrand",
-            },
+      },
+      { $unwind: { path: "$vehicle", preserveNullAndEmptyArrays: true } },
+      // 7️⃣ Lookup - vehicle brand
+      {
+        $lookup: {
+          from: "vechiclebrands",
+          localField: "vehicle.vehicleBrandId",
+          foreignField: "_id",
+          as: "vehicleBrand",
         },
-        { $unwind: { path: "$vehicleBrand", preserveNullAndEmptyArrays: true } },
-        // 8️⃣ Lookup - vehicle model
-        {
-            $lookup: {
-                from: "vechiclemodels",
-                localField: "vehicle.vehicleModelId",
-                foreignField: "_id",
-                as: "vehicleModel",
-            },
+      },
+      { $unwind: { path: "$vehicleBrand", preserveNullAndEmptyArrays: true } },
+      // 8️⃣ Lookup - vehicle model
+      {
+        $lookup: {
+          from: "vechiclemodels",
+          localField: "vehicle.vehicleModelId",
+          foreignField: "_id",
+          as: "vehicleModel",
         },
-        { $unwind: { path: "$vehicleModel", preserveNullAndEmptyArrays: true } },
-        // 9️⃣ Lookup - parts details
-        {
-            $lookup: {
-                from: "parts",
-                localField: "partsList",
-                foreignField: "_id",
-                as: "partsDetails",
-            },
+      },
+      { $unwind: { path: "$vehicleModel", preserveNullAndEmptyArrays: true } },
+      // 9️⃣ Lookup - parts details
+      {
+        $lookup: {
+          from: "parts",
+          localField: "partsList",
+          foreignField: "_id",
+          as: "partsDetails",
         },
-        // 🔟 Add fields to preserve original partsList array
-        {
-            $addFields: {
-                originalPartsList: "$partsList",
-                debugVehicle: {
-                    hasVehicle: { $cond: [{ $ifNull: ["$vehicle._id", false] }, true, false] },
-                    hasBrand: { $cond: [{ $ifNull: ["$vehicleBrand.brandName", false] }, true, false] },
-                    hasModel: { $cond: [{ $ifNull: ["$vehicleModel.modelName", false] }, true, false] },
-                    vehicleId: "$ticket.vehicleId"
-                }
-            }
-        },
+      },
+      // 🔟 Add fields to preserve original partsList array
+      {
+        $addFields: {
+          originalPartsList: "$partsList",
+          debugVehicle: {
+            hasVehicle: { $cond: [{ $ifNull: ["$vehicle._id", false] }, true, false] },
+            hasBrand: { $cond: [{ $ifNull: ["$vehicleBrand.brandName", false] }, true, false] },
+            hasModel: { $cond: [{ $ifNull: ["$vehicleModel.modelName", false] }, true, false] },
+            vehicleId: "$ticket.vehicleId"
+          }
+        }
+      },
 
     ];
-    console.log("Technician Quotations Initial Match Pipeline:", pipeline);
+
 
     // 🔍 Search
     if (search) {
@@ -159,7 +156,6 @@ export const technicianTicketsQuotationsController = async (
     // 🔢 Count (before pagination)
     const countPipeline = [...pipeline, { $count: "total" }];
     const countResult = await TicketQuations.aggregate(countPipeline);
-    console.log("Technician Quotations Count Result:", countResult);
     const total = countResult[0]?.total || 0;
 
     // Pagination
@@ -256,19 +252,6 @@ export const technicianTicketsQuotationsController = async (
     });
 
     const quotations = await TicketQuations.aggregate(pipeline);
-    console.log("Technician Quotations Aggregation Result:", JSON.stringify(quotations, null, 2));
-    
-    // Log specific quotation details for debugging
-    if (quotations.length > 0) {
-      console.log("First quotation partsList length:", quotations[0].partsList?.length);
-      console.log("First quotation partsList:", JSON.stringify(quotations[0].partsList, null, 2));
-      console.log("First quotation originalPartsList:", quotations[0].originalPartsList);
-      console.log("First quotation ticket:", JSON.stringify(quotations[0].ticket, null, 2));
-      console.log("First quotation vehicle:", JSON.stringify(quotations[0].ticket?.vehicle, null, 2));
-      console.log("First quotation customer:", JSON.stringify(quotations[0].ticket?.customer, null, 2));
-      console.log("First quotation partsList:", quotations[0].partsList);
-    }
-    
     return res.status(200).json({
       success: true,
       message: "Technician Quotations fetched successfully",
