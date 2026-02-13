@@ -92,7 +92,11 @@ export const BASE_URL =
     keywords: string;
   };
   tags: string[];
-  images: string[];
+  images: {
+  file: File;
+  preview: string;
+  name: string;
+}[];
   newTag: string;
   onInputChange: (field: string, value: string) => void;
   onAddTag: () => void;

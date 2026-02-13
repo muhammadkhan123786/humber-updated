@@ -20,7 +20,7 @@ Return ONLY valid JSON in this exact structure:
 {
   "shortDescription": "Summarize the product briefly based on all views.",
   "description": "Provide a detailed description combining features seen in all images.",
-  "tags": ["Provide 8-10 UNIQUE, diverse tags (e.g., category, material, color, style)"],
+  "tags": "Provide 8-10 UNIQUE, diverse tags (e.g., category, material, color, style)",
   "keywords": "comma, separated, unique, keywords"
 }
 

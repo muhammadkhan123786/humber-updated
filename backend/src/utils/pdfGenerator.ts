@@ -7,6 +7,7 @@ export const generatePdfFromTemplate = async (templateName: string, data: any): 
   let browser;
   try {
     console.log(`[PDF] Starting generation for: ${templateName}`);
+    const isProduction = process.env.NODE_ENV === 'production';
     
     const filePath = path.join(process.cwd(), 'templates', `${templateName}.hbs`);
     if (!await fs.pathExists(filePath)) {
@@ -19,7 +20,7 @@ export const generatePdfFromTemplate = async (templateName: string, data: any): 
 
     console.log("[PDF] Launching Puppeteer...");
     browser = await puppeteer.launch({
-      headless: true,
+      executablePath: isProduction ? '/usr/bin/google-chrome' : undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
 

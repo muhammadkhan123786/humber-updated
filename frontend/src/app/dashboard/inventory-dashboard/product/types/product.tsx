@@ -97,6 +97,7 @@ export interface ProductListItem {
   totalReviews?: number;
   dimensions?: string;
   weight?: string;
+  attributes?: any;
 }
 
 /**

@@ -4,7 +4,7 @@ import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { ProductListing } from "../Product/ProductListing";
 import { ProductTableView } from "../Product/ProductTableView";
 import ProductDetailsModal from "../Product/ProductDetailsModal";
-import EditProductDialog from "../Product/EditProductDialog";
+// import EditProductDialog from "../Product/EditProductDialog";
 import MarketplaceDistributionTab from "./MarketplaceDistributionTab";
 import { useProductFilters } from "../../../../../hooks/useProductFilters";
 import { useProducts } from "../../../../../hooks/useProduct";
@@ -19,7 +19,7 @@ import { AnimatedBackground } from "./AnimatedBackground";
 import { CategoryFilters } from "../Product/CategoryFilters";
 import { ProductStatistics } from "../Product/ProductStats";
 import { transformProductsResponse, enrichProductCategories, transformProduct } from "@/lib/productTransformer";
-
+import  {ProductQuickEditDialog} from "../Product/EditProductDialog"
 const LoadingState = () => (
   <div className="flex items-center justify-center py-12">
     <div className="text-center">
@@ -43,6 +43,30 @@ export default function ProductListingPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductListItem | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductListItem | null>(null);
+  const [quickEditOpen, setQuickEditOpen] = useState(false);
+
+  const handleQuickEdit = (product: ProductListItem) => {
+    setEditingProduct(product);
+    setQuickEditOpen(true);
+  };
+
+  const handleSaveQuickEdit = async (updatedProduct: Partial<ProductListItem>) => {
+    if (!editingProduct) return;
+
+    const result = await updateProduct(editingProduct.id, updatedProduct);
+    
+    if (result.success) {
+      setQuickEditOpen(false);
+      setEditingProduct(null);
+      // Optionally show success toast
+    }
+  };
+  //  const handleFullEdit = () => {
+  //   if (editingProduct) {
+  //     router.push(`/dashboard/inventory-dashboard/product/edit/${editingProduct.id}`);
+  //   }
+  // };
   
 
   // Hooks
@@ -163,6 +187,9 @@ const handleViewProduct = async (product: Product) => {
   };
 
   const handleSaveEdit = async (updatedProduct: ProductListItem) => {
+    console.log("updateId", updatedProduct.id);
+        console.log("update", updatedProduct);
+
     const result = await updateProduct(updatedProduct.id, updatedProduct);
 
     if (result.success) {
@@ -219,7 +246,6 @@ const handleViewProduct = async (product: Product) => {
         />
       );
     }
-console.log("selectedProduct", selectedProduct)
     
     return (
       <>
@@ -322,7 +348,7 @@ interface ProductModalsProps {
   isEditDialogOpen: boolean;
   onViewDialogChange: (open: boolean) => void;
   onEditDialogChange: (open: boolean) => void;
-  onSaveEdit: (product: Product) => Promise<void>;
+  onSaveEdit: ( product: Product) => Promise<void>;
   getStockBadge: (status: string) => { class: string; icon: any };
   handleConfirmDelete: any;
 }
@@ -349,11 +375,19 @@ const ProductModals: React.FC<ProductModalsProps> = ({
         handleConfirmDelete = { handleConfirmDelete}
       />
 
-      <EditProductDialog
+      {/* <EditProductDialog
         open={isEditDialogOpen}
         onOpenChange={onEditDialogChange}
         product={selectedProduct}
         onSave={onSaveEdit}
+      /> */}
+
+      <ProductQuickEditDialog
+        open={isEditDialogOpen}
+        onOpenChange={onEditDialogChange}
+        product={selectedProduct}
+        onSave={onSaveEdit}
+        // onFullEdit={handleFullEdit}
       />
     </>
   );

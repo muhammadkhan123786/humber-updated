@@ -87,19 +87,20 @@ export const useGoodsReceived = () => {
     loadGRNs();
   }, [page, searchTerm, selectedStatus]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const grnNumRes = await fetchNextDocumentNumber("GRN");
-        const grnRefRes = await fetchNextDocumentNumber("GRN_REFERENCE");
-        setGRNNumber(grnNumRes.nextNumber);
-        setGRNReference(grnRefRes.nextNumber);
-      } catch (err) {
-        console.error("Failed to fetch document numbers", err);
-        toast.error("Failed to fetch document numbers");
-      }
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const grnNumRes = await fetchNextDocumentNumber("GRN");
+  //       const grnRefRes = await fetchNextDocumentNumber("GRN_REFERENCE");
+  //       console.log("grnNumRes", grnNumRes, "grnRefRes", grnRefRes)
+  //       setGRNNumber(grnNumRes.nextNumber);
+  //       setGRNReference(grnRefRes.nextNumber);
+  //     } catch (err) {
+  //       console.error("Failed to fetch document numbers", err);
+  //       toast.error("Failed to fetch document numbers");
+  //     }
+  //   })();
+  // }, []);
 
   /* =========================================================
    * STATS (DASHBOARD)
@@ -213,13 +214,14 @@ export const useGoodsReceived = () => {
 
     const payload: Partial<GoodsReceivedNote> = {
       purchaseOrderId: selectedPO,
-      grnNumber,
+      // grnNumber,
+      // grnReference,
       receivedBy,
       notes: grnNotes,
       items: validItems,
       status: newProduct.status
     };
-
+console.log(payload)
     try {
       setLoading(true);
       await createGRN(payload);

@@ -21,7 +21,6 @@ import {
 } from '@/components/form/Select';
 import { FormData, MarketplaceTemplate } from '../data/marketplaceData';
 import { useFormActions } from '@/hooks/useFormActions';
-import { getImageUrl } from "@/helper/getImageUrl"
 
 interface AddEditDialogProps {
   isOpen: boolean;
@@ -45,20 +44,9 @@ export function AddEditDialog({
   useFormActions<MarketplaceTemplate>(
     "/marketplace-templates",
     "marketplaceTemplates",
-    "Marketplace"
+    "MarketplaceTemplates"
   );
-
-
   const selectedTemplate = templates?.find((t: any) => t._id === formData.type);
-
-  // Helper function to get icon URL for each template
-  const getTemplateIconUrl = (template: any) => {
-    if (!template?.icon?.icon || !Array.isArray(template.icon.icon)) {
-      return null;
-    }
-    return getImageUrl(template.icon.icon[0]);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] overflow-y-auto max-w-2xl bg-white">
@@ -94,32 +82,31 @@ export function AddEditDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {templates?.map((template: any) => {
-                    const iconUrl = getTemplateIconUrl(template);
-                    
-                    return (
-                      <SelectItem key={template._id} value={template._id}>
-                        <div className="flex items-center gap-2">
-                          {/* Dynamic Icon from Backend */}
-                          {iconUrl ? (
-                            <img 
-                              src={iconUrl} 
-                              alt={template.name} 
-                              className="w-5 h-5 object-contain"
-                              onError={(e) => {
-                                // Fallback to first letter if image fails to load
-                                e.currentTarget.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-                              {template.name?.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span>{template.name}</span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
+  const iconSrc = template?.icon?.icon; 
+
+  return (
+    <SelectItem key={template._id} value={template._id}>
+      <div className="flex items-center gap-2">
+        {iconSrc ? (
+          <img 
+            src={iconSrc} 
+            alt={template.name} 
+            className="w-5 h-5 object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+            {template.name?.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <span>{template.name}</span>
+      </div>
+    </SelectItem>
+  );
+})}
+
                 </SelectContent>
               </Select>
             </div>
@@ -211,7 +198,7 @@ export function AddEditDialog({
           <Button 
             onClick={onSubmit}
             className="gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white"
-            disabled={!formData.name || !formData.type}
+            disabled={!formData.name}
           >
             <Check className="h-4 w-4" />
             {isEdit ? 'Update' : 'Add'} Marketplace

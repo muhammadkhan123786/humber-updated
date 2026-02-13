@@ -174,6 +174,7 @@ export interface GoodsReceivedNote {
   status: "received"| "ordered";
   notes?: string;
   signature?: string;
+  grnReference: string
   
 }
 

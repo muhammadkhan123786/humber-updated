@@ -100,6 +100,7 @@ app.use(cors());
 // Static files (for uploads/public folder)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
+
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);

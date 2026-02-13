@@ -1,12 +1,4 @@
-/**
- * product.schema.ts  (Mongoose)
- *
- * Corrected version:
- *  - Sub-schemas properly ordered
- *  - No circular refs in stock
- *  - Virtuals for onHand, recordLevel, reorderQuantity
- *  - Nested pricing, stock, warranty hydrated correctly
- */
+
 
 import { Schema, SchemaDefinition } from "mongoose";
 import { commonSchema } from "./shared/common.schema";

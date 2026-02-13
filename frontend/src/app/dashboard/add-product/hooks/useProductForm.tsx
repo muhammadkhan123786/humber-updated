@@ -1,6 +1,8 @@
+// hooks/useProductForm.ts - UPDATED VERSION
+
 "use client";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { CategoryNode, UseProductFormProps, Attribute, DropdownOption, FourDropdownData } from "../types/product";
+import { CategoryNode, UseProductFormProps, Attribute, FourDropdownData } from "../types/product";
 import {
   getCategoriesAtLevel,
   getSelectedCategoryPath,
@@ -9,9 +11,10 @@ import { fetchCategories } from "@/hooks/useCategory";
 import { DropdownService } from "@/helper/dropdown.service";
 import { fetchAttributes } from "@/hooks/useAttributes";
 import { createProduct } from "@/helper/products";
-import {  toast } from 'sonner';
+import { toast } from 'sonner';
 import { useRouter } from "next/navigation";
-// ─── Shared variant types (import these in AttributesAndPricingStep too) ────
+
+// ─── Shared variant types ────
 export interface MarketplacePricing {
   id: string;
   marketplaceId: string;
@@ -46,7 +49,6 @@ export interface ProductVariant {
   warranty: string;
   warrantyPeriod: string;
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function useProductForm({
   initialData,
@@ -57,17 +59,21 @@ export function useProductForm({
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
   const [dynamicFields, setDynamicFields] = useState<Record<string, any>>({});
   const [tags, setTags] = useState<string[]>([]);
-  const [images, setImages] = useState<string[]>([]);
+  
+  // ✅ Image state with preview and base64
+  const [images, setImages] = useState<{
+    file: File;
+    preview: string;
+    name: string;
+    base64?: string; // ✅ Add base64 field
+  }[]>([]);
+  
   const [newTag, setNewTag] = useState("");
-  const [fetchedCategories, setFetchedCategories] =
-    useState<CategoryNode[]>(categories);
+  const [fetchedCategories, setFetchedCategories] = useState<CategoryNode[]>(categories);
   const [formData, setFormData] = useState(initialData);
- const router = useRouter();
-
-  // ✅ Lifted up from AttributesAndPricingStep
+  const router = useRouter();
   const [variants, setVariants] = useState<ProductVariant[]>([]);
-
-const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
+  const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
   const [dropdownLoading, setDropdownLoading] = useState(false);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
 
@@ -88,7 +94,6 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
 
         if (currentStep === 3) {
           const data = await DropdownService.fetchOnlyTaxAndCurrency();
-
           setDropdowns((prev) => ({
             ...prev,
             taxes: data.taxes,
@@ -122,25 +127,17 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
       return;
     }
 
-    
     const loadAttributes = async () => {
       try {
         const res = await fetchAttributes(1, 100, "", selectedPath.join(","));
-
         const allAttributes: Attribute[] = res.data || [];
-        console.log("Fetched attributes:", allAttributes);
         const selectedCategoryId = selectedPath.at(-1);
 
         const filteredAttributes = allAttributes.filter((attr) => {
           if (attr.categoryId === selectedCategoryId) return true;
-
-          if (
-            attr.isForSubcategories &&
-            selectedPath.includes(attr.categoryId)
-          ) {
+          if (attr.isForSubcategories && selectedPath.includes(attr.categoryId)) {
             return true;
           }
-
           return false;
         });
 
@@ -183,13 +180,7 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
       if (!fetchedCategories || !Array.isArray(fetchedCategories)) {
         return [];
       }
-
-      const result = getCategoriesAtLevel(
-        fetchedCategories,
-        selectedPath,
-        level,
-      );
-
+      const result = getCategoriesAtLevel(fetchedCategories, selectedPath, level);
       return result;
     },
     [fetchedCategories, selectedPath],
@@ -198,11 +189,9 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
   const getSelectedCategory = useCallback(
     (level?: number) => {
       if (selectedCategories.length === 0) return null;
-
       if (level !== undefined) {
         return selectedCategories[level] || null;
       }
-
       return selectedCategories[selectedCategories.length - 1];
     },
     [selectedCategories],
@@ -257,113 +246,148 @@ const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
     }
   }, [newTag, tags]);
 
-  // Add this function to your Parent Component
-const onBulkAddTags = (newTagsArray: string[]) => {
-  setTags((prevTags) => {
-    // Combine old tags and new tags, and remove duplicates
-    const combined = [...prevTags, ...newTagsArray];
-    return Array.from(new Set(combined));
-  });
-};
+  const onBulkAddTags = (newTagsArray: string[]) => {
+    setTags((prevTags) => {
+      const combined = [...prevTags, ...newTagsArray];
+      return Array.from(new Set(combined));
+    });
+  };
+
   const removeTag = useCallback((tagToRemove: string) => {
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   }, []);
 
- const handleImageUpload = useCallback(
-  (files: FileList | File[]) => {
-    const fileArray: File[] = Array.isArray(files)
-      ? files
-      : Array.from(files);
+  // ✅ UPDATED: Convert File to Base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
-    const newImages = fileArray.map(file =>
-      URL.createObjectURL(file)
-    );
+  // ✅ UPDATED: Handle image upload with Base64 conversion
+  const handleImageUpload = useCallback(
+    async (files: FileList | File[]) => {
+      const fileArray: File[] = Array.isArray(files) ? files : Array.from(files);
 
-    setImages(prev => [...prev, ...newImages]);
-  },
-  []
-);
+      // Filter valid image files
+      const validFiles = fileArray.filter((file) => file instanceof File);
 
+      // Convert each file to Base64
+      const formattedImagesPromises = validFiles.map(async (file) => {
+        const base64 = await fileToBase64(file);
+        return {
+          file,
+          preview: URL.createObjectURL(file),
+          name: file.name,
+          base64, // ✅ Store Base64 string
+        };
+      });
+
+      const formattedImages = await Promise.all(formattedImagesPromises);
+
+      setImages((prev) => [...prev, ...formattedImages]);
+    },
+    []
+  );
 
   const removeImage = useCallback((index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImages((prev) => {
+      // Revoke object URL to prevent memory leaks
+      if (prev[index]?.preview) {
+        URL.revokeObjectURL(prev[index].preview);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
   }, []);
 
-  console.log("imagessss", images)
-  // ✅ handleSubmit now includes variants with your structured schema
- const handleSubmit = useCallback(
- async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  console.log("Images in hook:", images);
 
-    const keywordsArray = (formData.keywords as string)
-      .split(",")
-      .map(k => k.trim())
-      .filter(Boolean);
+  // ✅ UPDATED: handleSubmit now sends Base64 images to database
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const finalData = {
-      // ── Product Info ─────────────────────────
-      productName: formData.productName,
-      sku: formData.sku,
-      barcode: formData.barcode,
-      brand: formData.brand,
-      manufacturer: formData.manufacturer,
-      modelNumber: formData.modelNumber,
-      description: formData.description,
-      shortDescription: formData.shortDescription,
-      keywords: keywordsArray,
-      tags,      
-      images,
-      categoryId: selectedPath.at(-1),
-      categoryPath: selectedPath,
+      // ✅ Extract Base64 strings instead of file names
+      const base64Images = images.map((img) => img.base64 || '');
 
-      // ── Variants → attributes (BACKEND NAME) ──
-      attributes: variants.map(v => ({
-        sku: v.sku,
-        attributes: v.attributes,
+      const keywordsArray = (formData.keywords as string)
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean);
 
-        pricing: v.marketplacePricing.map(p => ({
-          marketplaceId: p.marketplaceId,
-          marketplaceName: p.marketplaceName,
-          costPrice: p.costPrice,
-          sellingPrice: p.sellingPrice,
-          retailPrice: p.retailPrice,
-          discountPercentage: p.discountPercentage,
-          taxId: p.taxId || null, 
-          taxRate: p.taxRate,
-          vatExempt: p.vatExempt,
+      const finalData = {
+        // ── Product Info ─────────────────────────
+        productName: formData.productName,
+        sku: formData.sku,
+        barcode: formData.barcode,
+        brand: formData.brand,
+        manufacturer: formData.manufacturer,
+        modelNumber: formData.modelNumber,
+        description: formData.description,
+        shortDescription: formData.shortDescription,
+        keywords: keywordsArray,
+        tags,
+        images: base64Images, // ✅ Send Base64 strings to backend
+        categoryId: selectedPath.at(-1),
+        categoryPath: selectedPath,
+
+        // ── Variants → attributes (BACKEND NAME) ──
+        attributes: variants.map((v) => ({
+          sku: v.sku,
+          attributes: v.attributes,
+
+          pricing: v.marketplacePricing.map((p) => ({
+            marketplaceId: p.marketplaceId,
+            marketplaceName: p.marketplaceName,
+            costPrice: p.costPrice,
+            sellingPrice: p.sellingPrice,
+            retailPrice: p.retailPrice,
+            discountPercentage: p.discountPercentage,
+            taxId: p.taxId || null,
+            taxRate: p.taxRate,
+            vatExempt: p.vatExempt,
+          })),
+
+          stock: {
+            stockQuantity: v.stockQuantity,
+            minStockLevel: v.minStockLevel,
+            maxStockLevel: v.maxStockLevel,
+            reorderPoint: v.reorderPoint,
+            safetyStock: v.safetyStock,
+            leadTimeDays: v.leadTimeDays,
+            stockLocation: v.stockLocation,
+            warehouseId: v.warehouseId,
+            binLocation: v.binLocation,
+            productStatusId: v.productStatusId,
+            conditionId: v.conditionId,
+            featured: v.featured,
+          },
+
+          warranty: {
+            warrantyType: v.warranty,
+            warrantyPeriod: v.warrantyPeriod,
+          },
         })),
+      };
 
-        stock: {
-          stockQuantity: v.stockQuantity,
-          minStockLevel: v.minStockLevel,
-          maxStockLevel: v.maxStockLevel,
-          reorderPoint: v.reorderPoint,
-          safetyStock: v.safetyStock,
-          leadTimeDays: v.leadTimeDays,
-          stockLocation: v.stockLocation,
-          warehouseId: v.warehouseId,
-          binLocation: v.binLocation,
-          productStatusId: v.productStatusId,
-          conditionId: v.conditionId,
-          // warehouseStatusId: v.warehouseStatusId,
-          featured: v.featured,
-        },
+      console.log("📤 Final data being sent to API:", finalData);
+      console.log("📷 Images (Base64):", base64Images);
 
-        warranty: {
-          warrantyType: v.warranty,
-          warrantyPeriod: v.warrantyPeriod,
-        },
-      })),
-    };
-
-     const res = await createProduct(finalData as any);
-    onSubmit(finalData);
-    toast.success("Product created successfully!");
-      router.push("/dashboard/inventory-dashboard/product");
-  },
-  [formData, selectedPath, tags, images, variants, onSubmit],
-);
-
+      try {
+        const res = await createProduct(finalData as any);
+        onSubmit(finalData);
+        toast.success("Product created successfully!");
+        router.push("/dashboard/inventory-dashboard/product");
+      } catch (error) {
+        console.error("❌ Error creating product:", error);
+        toast.error("Failed to create product");
+      }
+    },
+    [formData, selectedPath, tags, images, variants, onSubmit, router]
+  );
 
   return {
     currentStep,
@@ -395,7 +419,6 @@ const onBulkAddTags = (newTagsArray: string[]) => {
     setDynamicFields,
     attributes,
     getWarrantyOptions,
-    // ✅ Exposed for AttributesAndPricingStep
     variants,
     setVariants,
     setImages,

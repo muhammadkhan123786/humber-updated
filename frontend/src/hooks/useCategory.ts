@@ -66,10 +66,10 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
 
       const userId = getUserId();
       
-      console.log('=== FETCH CATEGORIES DEBUG ===');
-      console.log('📦 API URL:', API_URL);
-      console.log('👤 User ID:', userId);
-      console.log('🔑 Token exists:', !!localStorage.getItem("token"));
+      // console.log('=== FETCH CATEGORIES DEBUG ===');
+      // console.log('📦 API URL:', API_URL);
+      // console.log('👤 User ID:', userId);
+      // console.log('🔑 Token exists:', !!localStorage.getItem("token"));
       
       let response;
       let categoriesData: DatabaseCategory[] = [];
@@ -83,7 +83,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
             limit: 1000
           }
         });
-        console.log('✅ Attempt 1 Response:', response.data);
+        // console.log('✅ Attempt 1 Response:', response.data);
       } catch (err: any) {
         console.log('❌ Attempt 1 failed:', err.response?.status, err.response?.data?.message);
         
@@ -97,7 +97,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
               limit: 1000
             }
           });
-          console.log('✅ Attempt 2 Response:', response.data);
+          // console.log('✅ Attempt 2 Response:', response.data);
         } catch (err2: any) {
           console.log('❌ Attempt 2 failed:', err2.response?.status, err2.response?.data?.message);
           throw err2; // Re-throw to be caught by outer catch
@@ -122,24 +122,24 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
       if (response.data.success && Array.isArray(response.data.data)) {
         // Structure: { success: true, data: [...] }
         categoriesData = response.data.data;
-        console.log('📦 Extracted from response.data.data');
+        // console.log('📦 Extracted from response.data.data');
       } else if (Array.isArray(response.data.data)) {
         // Structure: { data: [...] }
         categoriesData = response.data.data;
-        console.log('📦 Extracted from response.data.data (no success field)');
+        // console.log('📦 Extracted from response.data.data (no success field)');
       } else if (Array.isArray(response.data.categories)) {
         // Structure: { categories: [...] }
         categoriesData = response.data.categories;
-        console.log('📦 Extracted from response.data.categories');
+        // console.log('📦 Extracted from response.data.categories');
       } else if (Array.isArray(response.data)) {
         // Structure: [...]
         categoriesData = response.data;
-        console.log('📦 Extracted from response.data (direct array)');
+        // console.log('📦 Extracted from response.data (direct array)');
       } else if (response.data.success && response.data.data && typeof response.data.data === 'object') {
         // Structure: { success: true, data: { categories: [...] } }
         if (Array.isArray(response.data.data.categories)) {
           categoriesData = response.data.data.categories;
-          console.log('📦 Extracted from response.data.data.categories');
+          // console.log('📦 Extracted from response.data.data.categories');
         }
       }
 
@@ -151,13 +151,13 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
                cat.isDeleted !== true;
       });
 
-      console.log('📦 Valid categories count:', categoriesData.length);
-      console.log('📦 Sample category:', categoriesData[0]);
-      console.log('📦 All category names:', categoriesData.map(c => c.categoryName));
+      // console.log('📦 Valid categories count:', categoriesData.length);
+      // console.log('📦 Sample category:', categoriesData[0]);
+      // console.log('📦 All category names:', categoriesData.map(c => c.categoryName));
       
       if (categoriesData.length === 0) {
-        console.warn('⚠️ No categories found! Check your database and API.');
-        console.warn('⚠️ Full response:', JSON.stringify(response.data, null, 2));
+        // console.warn('⚠️ No categories found! Check your database and API.');
+        // console.warn('⚠️ Full response:', JSON.stringify(response.data, null, 2));
       }
 
       setCategories(categoriesData);
@@ -215,7 +215,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
    * Get categories with calculated levels
    */
   const categoriesWithLevels = useMemo(() => {
-    console.log('🔄 Computing categoriesWithLevels, count:', categories.length);
+    // console.log('🔄 Computing categoriesWithLevels, count:', categories.length);
     
     const result = categories.map(category => ({
       ...category,
@@ -223,7 +223,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
       level: calculateLevel(category, categories)
     }));
     
-    console.log('✅ Categories with levels:', result.length);
+    // console.log('✅ Categories with levels:', result.length);
     return result;
   }, [categories, calculateLevel]);
 
@@ -232,7 +232,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
    */
   const rootCategories = useMemo(() => {
     const roots = categories.filter(cat => !cat.parentId);
-    console.log('🌲 Root categories:', roots.length);
+    // console.log('🌲 Root categories:', roots.length);
     return roots;
   }, [categories]);
 
@@ -304,10 +304,9 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
    * Build category tree structure
    */
   const categoryTree = useMemo(() => {
-    console.log('🌲 Building category tree from', categories.length, 'categories');
     
     if (categories.length === 0) {
-      console.warn('⚠️ No categories to build tree from');
+      // console.warn('⚠️ No categories to build tree from');
       return [];
     }
 
@@ -324,7 +323,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
       });
     });
 
-    console.log('📦 Category map size:', categoryMap.size);
+    // console.log('📦 Category map size:', categoryMap.size);
 
     // Build tree
     categoriesWithLevels.forEach(category => {
@@ -347,8 +346,8 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
     // Sort root categories alphabetically
     tree.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
     
-    console.log('🌲 Tree built with', tree.length, 'root nodes');
-    console.log('🌲 Tree structure:', tree.map(t => ({ name: t.name, children: t.children.length })));
+    // console.log('🌲 Tree built with', tree.length, 'root nodes');
+    // console.log('🌲 Tree structure:', tree.map(t => ({ name: t.name, children: t.children.length })));
     
     return tree;
   }, [categoriesWithLevels, categories.length]);
@@ -382,7 +381,7 @@ export const useCategories = (options: UseCategoriesOptions = {}) => {
   // Auto-fetch on mount
   useEffect(() => {
     if (autoFetch) {
-      console.log('🚀 Auto-fetching categories on mount');
+      // console.log('🚀 Auto-fetching categories on mount');
       fetchCategoriesData();
     }
   }, [autoFetch, fetchCategoriesData]);
@@ -419,8 +418,8 @@ export const fetchCategories = async (
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.id || user._id || user.userId;
   
-  console.log('🔍 fetchCategories - User ID:', userId);
-  console.log('🔍 fetchCategories - Params:', { page, limit, search });
+  // console.log('🔍 fetchCategories - User ID:', userId);
+  // console.log('🔍 fetchCategories - Params:', { page, limit, search });
   
   try {
     const response = await axios.get(API_URL, {
@@ -436,7 +435,7 @@ export const fetchCategories = async (
       }
     });
     
-    console.log('🔍 fetchCategories - Response:', response.data);
+    // console.log('🔍 fetchCategories - Response:', response.data);
     return response.data;
   } catch (error: any) {
     console.error('🔍 fetchCategories - Error:', error.response?.data || error.message);

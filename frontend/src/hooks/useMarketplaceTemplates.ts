@@ -56,6 +56,7 @@ export function useMarketplaceTemplates() {
     const loadDropdowns = async () => {
       try {
         const { colors, icons } = await DropdownService.fetchColorsAndIcons();
+        console.log("icons", icons);
         setColors(colors);
         setIcons(icons);
       } catch (error) {
@@ -141,61 +142,46 @@ export function useMarketplaceTemplates() {
     }
   }, []);
 
-  /* ---------------- Prepare form data for API ---------------- */
-  const prepareFormDataForApi = (formData: FormData) => {
-    const payload: any = {
-      name: formData.name,
-      code: formData.code,
-      description: formData.description || "",
-      color: formData.color || "",
-      colorCode: formData.colorCode || "",
-      fields: formData.fields || [],
-      isActive: formData.isActive !== undefined ? formData.isActive : true,
-      isDefault: formData.isDefault !== undefined ? formData.isDefault : false,
-    };
-
-    // Handle icon - ensure it's a string
-    if (formData.icon) {
-      payload.icon = typeof formData.icon === 'string' 
-        ? formData.icon 
-        : String(formData.icon);
-    } else {
-      payload.icon = "";
-    }
-
-    return payload;
+/* ---------------- Prepare form data for api ---------------- */
+const prepareFormDataForApi = (formData: FormData) => {
+  return {
+    name: formData.name,
+    code: formData.code,
+    description: formData.description || "",
+    // Ensure we send ONLY the ID string
+    color: formData.color, 
+    // This MUST be the 24-char ObjectId stored in selectedIconId
+    icon: formData.selectedIconId, 
+    fields: formData.fields || [],
+    isActive: formData.isActive,
+    isDefault: formData.isDefault,
   };
+};
 
-  /* ---------------- CREATE / UPDATE ---------------- */
-  const saveMarketplace = useCallback(
-    async (formData: FormData) => {
-      if (!formData.name) {
-        toast.error("Please fill in all required fields");
-        return false;
+/* ---------------- CREATE / UPDATE ---------------- */
+const saveMarketplace = useCallback(
+  async (formData: FormData) => {
+    try {
+      const apiPayload = prepareFormDataForApi(formData);
+      
+      if (editingMarketplace) {
+        await updateMarketplaceTemplate(editingMarketplace._id, apiPayload);
+        toast.success("Updated successfully");
+      } else {
+        const response = await createMarketplaceTemplate(apiPayload);
+       
       }
-
-      try {
-        const apiPayload = prepareFormDataForApi(formData);
-        
-        if (editingMarketplace) {
-          await updateMarketplaceTemplate(editingMarketplace._id, apiPayload);
-          toast.success(`${formData.name} has been updated`);
-          setIsEditDialogOpen(false);
-        } else {
-          await createMarketplaceTemplate(apiPayload);
-          toast.success(`${formData.name} has been added`);
-          setIsAddDialogOpen(false);
-        }
-
-        await loadMarketplaces();
-        return true;
-      } catch (error: any) {
-        toast.error(error.message || "Failed to save marketplace");
-        return false;
-      }
-    },
-    [editingMarketplace]
-  );
+      await loadMarketplaces(); 
+      setIsAddDialogOpen(false);
+      setIsEditDialogOpen(false);
+      return true;
+    } catch (error: any) {
+      console.error("Save error:", error);
+      return false;
+    }
+  },
+  [editingMarketplace, loadMarketplaces] // Dependencies are crucial here!
+);
 
   /* ---------------- DELETE ---------------- */
   const deleteMarketplace = useCallback(async () => {

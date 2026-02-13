@@ -1,10 +1,15 @@
 // components/steps/variant-sections/InventorySection.tsx
-import { motion } from 'framer-motion';
-import { Input } from '@/components/form/Input';
-import { 
-  PackageCheck, Warehouse, Shield, AlertTriangle, 
-  TrendingUp, TrendingDown, Package 
-} from 'lucide-react';
+import { motion } from "framer-motion";
+import { Input } from "@/components/form/Input";
+import {
+  PackageCheck,
+  Warehouse,
+  Shield,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Package,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -30,44 +35,90 @@ export function InventorySection({
   conditions = [],
   onVariantFieldChange,
 }: InventorySectionProps) {
-  const stockQuantity = parseInt(currentVariant.stockQuantity || '0');
-  const minStockLevel = parseInt(currentVariant.minStockLevel || '0');
-  const maxStockLevel = parseInt(currentVariant.maxStockLevel || '0');
-  const reorderPoint = parseInt(currentVariant.reorderPoint || '0');
-  
+  const stockQuantity = parseInt(currentVariant.stockQuantity || "0");
+  const minStockLevel = parseInt(currentVariant.minStockLevel || "0");
+  const maxStockLevel = parseInt(currentVariant.maxStockLevel || "0");
+  const reorderPoint = parseInt(currentVariant.reorderPoint || "0");
+
   // Stock status calculations
   const isLowStock = minStockLevel > 0 && stockQuantity < minStockLevel;
   const isCriticalStock = reorderPoint > 0 && stockQuantity <= reorderPoint;
   const isOverstocked = maxStockLevel > 0 && stockQuantity > maxStockLevel;
-  const isOptimalStock = stockQuantity >= minStockLevel && stockQuantity <= maxStockLevel;
-  
+  const isOptimalStock =
+    stockQuantity >= minStockLevel && stockQuantity <= maxStockLevel;
+
   // Get stock status
   const getStockStatus = () => {
     if (stockQuantity === 0) {
-      return { label: 'Out of Stock', color: 'from-red-500 to-rose-600', icon: AlertTriangle };
+      return {
+        label: "Out of Stock",
+        color: "from-red-500 to-rose-600",
+        icon: AlertTriangle,
+      };
     }
     if (isCriticalStock) {
-      return { label: 'Critical', color: 'from-red-500 to-orange-600', icon: AlertTriangle };
+      return {
+        label: "Critical",
+        color: "from-red-500 to-orange-600",
+        icon: AlertTriangle,
+      };
     }
     if (isLowStock) {
-      return { label: 'Low Stock', color: 'from-orange-500 to-amber-600', icon: TrendingDown };
+      return {
+        label: "Low Stock",
+        color: "from-orange-500 to-amber-600",
+        icon: TrendingDown,
+      };
     }
     if (isOverstocked) {
-      return { label: 'Overstocked', color: 'from-purple-500 to-pink-600', icon: TrendingUp };
+      return {
+        label: "Overstocked",
+        color: "from-purple-500 to-pink-600",
+        icon: TrendingUp,
+      };
     }
     if (isOptimalStock) {
-      return { label: 'Optimal', color: 'from-green-500 to-emerald-600', icon: PackageCheck };
+      return {
+        label: "Optimal",
+        color: "from-green-500 to-emerald-600",
+        icon: PackageCheck,
+      };
     }
-    return { label: 'Normal', color: 'from-blue-500 to-cyan-600', icon: Package };
+    return {
+      label: "Normal",
+      color: "from-blue-500 to-cyan-600",
+      icon: Package,
+    };
+  };
+
+  const getStatusColor = (label: string) => {
+    const text = label.toLowerCase();
+
+    if (text.includes("in stock") || text.includes("available")) {
+      return "bg-green-500";
+    }
+    if (text.includes("out of stock")) {
+      return "bg-red-500";
+    }
+    if (text.includes("low stock")) {
+      return "bg-yellow-500";
+    }
+    if (text.includes("reserved")) {
+      return "bg-blue-500";
+    }
+
+    // ✅ Default color if nothing matches
+    return "bg-purple-500"; // change to whatever default you want
   };
 
   const stockStatus = getStockStatus();
   const StockIcon = stockStatus.icon;
-  
+
   // Calculate stock utilization percentage
-  const stockUtilization = maxStockLevel > 0 
-    ? Math.min((stockQuantity / maxStockLevel) * 100, 100) 
-    : 0;
+  const stockUtilization =
+    maxStockLevel > 0
+      ? Math.min((stockQuantity / maxStockLevel) * 100, 100)
+      : 0;
 
   return (
     <div className="space-y-4">
@@ -81,17 +132,19 @@ export function InventorySection({
             type="number"
             min="0"
             value={currentVariant.stockQuantity}
-            onChange={(e) => onVariantFieldChange('stockQuantity', e.target.value)}
+            onChange={(e) =>
+              onVariantFieldChange("stockQuantity", e.target.value)
+            }
             placeholder="0"
             className="border-2 border-blue-200 focus:border-blue-500"
           />
         </div>
-        
+
         {/* Stock Status Display */}
         {stockQuantity > 0 && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             className="mt-2"
           >
             <div className="flex items-center justify-between">
@@ -103,7 +156,7 @@ export function InventorySection({
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-2 w-16 bg-gray-200 rounded-full overflow-hidden">
-                  <motion.div 
+                  <motion.div
                     className={`h-full bg-gradient-to-r ${stockStatus.color}`}
                     initial={{ width: 0 }}
                     animate={{ width: `${stockUtilization}%` }}
@@ -115,7 +168,7 @@ export function InventorySection({
                 </span>
               </div>
             </div>
-            
+
             {/* Stock Alerts */}
             <div className="mt-2 space-y-1">
               {stockQuantity === 0 && (
@@ -123,25 +176,25 @@ export function InventorySection({
                   ⚠️ Out of Stock - Immediate action required!
                 </div>
               )}
-              
+
               {isCriticalStock && stockQuantity > 0 && (
                 <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
                   ⚠️ Critical Stock Level - Reorder immediately!
                 </div>
               )}
-              
+
               {isLowStock && !isCriticalStock && (
                 <div className="p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
                   ⚠️ Low Stock Warning - Consider reordering
                 </div>
               )}
-              
+
               {isOverstocked && (
                 <div className="p-2 bg-purple-50 border border-purple-200 rounded text-xs text-purple-700">
                   ⚠️ Overstocked - Consider reducing stock
                 </div>
               )}
-              
+
               {isOptimalStock && (
                 <div className="p-2 bg-green-50 border border-green-200 rounded text-xs text-green-700">
                   ✅ Stock Level Optimal
@@ -162,11 +215,15 @@ export function InventorySection({
             type="number"
             min="0"
             value={currentVariant.minStockLevel}
-            onChange={(e) => onVariantFieldChange('minStockLevel', e.target.value)}
+            onChange={(e) =>
+              onVariantFieldChange("minStockLevel", e.target.value)
+            }
             placeholder="0"
             className="border-2 border-red-200 focus:border-red-500"
           />
-          <p className="text-xs text-gray-500 mt-1">Alert when stock falls below</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Alert when stock falls below
+          </p>
         </div>
 
         <div>
@@ -177,7 +234,9 @@ export function InventorySection({
             type="number"
             min="0"
             value={currentVariant.maxStockLevel}
-            onChange={(e) => onVariantFieldChange('maxStockLevel', e.target.value)}
+            onChange={(e) =>
+              onVariantFieldChange("maxStockLevel", e.target.value)
+            }
             placeholder="0"
             className="border-2 border-green-200 focus:border-green-500"
           />
@@ -192,11 +251,15 @@ export function InventorySection({
             type="number"
             min="0"
             value={currentVariant.reorderPoint}
-            onChange={(e) => onVariantFieldChange('reorderPoint', e.target.value)}
+            onChange={(e) =>
+              onVariantFieldChange("reorderPoint", e.target.value)
+            }
             placeholder="0"
             className="border-2 border-amber-200 focus:border-amber-500"
           />
-          <p className="text-xs text-gray-500 mt-1">Trigger automatic reordering</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Trigger automatic reordering
+          </p>
         </div>
       </div>
 
@@ -207,7 +270,9 @@ export function InventorySection({
         </label>
         <Input
           value={currentVariant.stockLocation}
-          onChange={(e) => onVariantFieldChange('stockLocation', e.target.value)}
+          onChange={(e) =>
+            onVariantFieldChange("stockLocation", e.target.value)
+          }
           placeholder="e.g., Aisle 3, Shelf B"
           className="border-2 border-amber-200 focus:border-amber-500"
         />
@@ -222,7 +287,9 @@ export function InventorySection({
           </label>
           <Select
             value={currentVariant.warehouseId}
-            onValueChange={(value) => onVariantFieldChange('warehouseId', value)}
+            onValueChange={(value) =>
+              onVariantFieldChange("warehouseId", value)
+            }
           >
             <SelectTrigger className="border-2 border-blue-200 focus:border-blue-500">
               <SelectValue placeholder="Select warehouse..." />
@@ -234,7 +301,9 @@ export function InventorySection({
                     <div className="flex items-center justify-between w-full">
                       <span>{warehouse.label}</span>
                       {warehouse.code && (
-                        <span className="text-xs text-gray-500">({warehouse.code})</span>
+                        <span className="text-xs text-gray-500">
+                          ({warehouse.code})
+                        </span>
                       )}
                     </div>
                   </SelectItem>
@@ -254,7 +323,9 @@ export function InventorySection({
           </label>
           <Input
             value={currentVariant.binLocation}
-            onChange={(e) => onVariantFieldChange('binLocation', e.target.value)}
+            onChange={(e) =>
+              onVariantFieldChange("binLocation", e.target.value)
+            }
             placeholder="e.g., A-12-03"
             className="border-2 border-yellow-200 focus:border-yellow-500"
           />
@@ -262,7 +333,7 @@ export function InventorySection({
       </div>
 
       {/* Product Status & Condition */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1 flex items-center gap-2">
             <PackageCheck className="h-4 w-4 text-green-600" />
@@ -270,7 +341,9 @@ export function InventorySection({
           </label>
           <Select
             value={currentVariant.productStatusId}
-            onValueChange={(value) => onVariantFieldChange('productStatusId', value)}
+            onValueChange={(value) =>
+              onVariantFieldChange("productStatusId", value)
+            }
           >
             <SelectTrigger className="border-2 border-green-200 focus:border-green-500">
               <SelectValue placeholder="Select product status..." />
@@ -298,7 +371,9 @@ export function InventorySection({
           </label>
           <Select
             value={currentVariant.conditionId}
-            onValueChange={(value) => onVariantFieldChange('conditionId', value)}
+            onValueChange={(value) =>
+              onVariantFieldChange("conditionId", value)
+            }
           >
             <SelectTrigger className="border-2 border-red-200 focus:border-red-500">
               <SelectValue placeholder="Select condition..." />
@@ -318,6 +393,36 @@ export function InventorySection({
             </SelectContent>
           </Select>
         </div>
+
+        <div>
+          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            Warehouse Status
+          </label>
+          <Select
+            value={currentVariant.warehouseStatusId || ""}
+            onValueChange={(value) => {
+                 onVariantFieldChange("warehouseStatusId", value);
+            }}
+          >
+            <SelectTrigger className="border-2 border-orange-200 focus:border-orange-500">
+              <SelectValue placeholder="Select warehouse status..." />
+            </SelectTrigger>
+            <SelectContent>
+              {warehouseStatus.map((status) => (
+                <SelectItem key={status.value} value={status.value}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`h-2 w-2 rounded-full ${getStatusColor(status.label)}`}
+                    ></div>
+                    {status.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+        </div>
       </div>
 
       {/* Additional Inventory Fields */}
@@ -329,12 +434,16 @@ export function InventorySection({
           <Input
             type="number"
             min="0"
-            value={currentVariant.safetyStock || ''}
-            onChange={(e) => onVariantFieldChange('safetyStock', e.target.value)}
+            value={currentVariant.safetyStock || ""}
+            onChange={(e) =>
+              onVariantFieldChange("safetyStock", e.target.value)
+            }
             placeholder="Extra stock for emergencies"
             className="border-2 border-amber-200 focus:border-amber-500"
           />
-          <p className="text-xs text-gray-500 mt-1">Buffer stock for unexpected demand</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Buffer stock for unexpected demand
+          </p>
         </div>
 
         <div>
@@ -344,8 +453,10 @@ export function InventorySection({
           <Input
             type="number"
             min="0"
-            value={currentVariant.leadTimeDays || ''}
-            onChange={(e) => onVariantFieldChange('leadTimeDays', e.target.value)}
+            value={currentVariant.leadTimeDays || ""}
+            onChange={(e) =>
+              onVariantFieldChange("leadTimeDays", e.target.value)
+            }
             placeholder="e.g., 7"
             className="border-2 border-blue-200 focus:border-blue-500"
           />
@@ -358,7 +469,7 @@ export function InventorySection({
         <input
           type="checkbox"
           checked={currentVariant.featured || false}
-          onChange={(e) => onVariantFieldChange('featured', e.target.checked)}
+          onChange={(e) => onVariantFieldChange("featured", e.target.checked)}
           className="h-5 w-5 rounded border-2 border-orange-300 text-orange-600 focus:ring-2 focus:ring-orange-200"
         />
         <div>
@@ -383,11 +494,13 @@ export function InventorySection({
               <StockIcon className="h-5 w-5" />
               Stock Status Dashboard
             </h3>
-            <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${stockStatus.color} text-white text-xs font-bold`}>
+            <div
+              className={`px-3 py-1 rounded-full bg-gradient-to-r ${stockStatus.color} text-white text-xs font-bold`}
+            >
               {stockStatus.label}
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-orange-200">
               <p className="text-xs text-gray-600">Current Stock</p>
@@ -395,15 +508,21 @@ export function InventorySection({
             </div>
             <div className="bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-red-200">
               <p className="text-xs text-gray-600">Min Level</p>
-              <p className="text-lg font-bold text-red-700">{minStockLevel || '—'}</p>
+              <p className="text-lg font-bold text-red-700">
+                {minStockLevel || "—"}
+              </p>
             </div>
             <div className="bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-green-200">
               <p className="text-xs text-gray-600">Max Level</p>
-              <p className="text-lg font-bold text-green-700">{maxStockLevel || '—'}</p>
+              <p className="text-lg font-bold text-green-700">
+                {maxStockLevel || "—"}
+              </p>
             </div>
             <div className="bg-white/50 backdrop-blur-sm p-3 rounded-lg border border-amber-200">
               <p className="text-xs text-gray-600">Reorder Point</p>
-              <p className="text-lg font-bold text-amber-700">{reorderPoint || '—'}</p>
+              <p className="text-lg font-bold text-amber-700">
+                {reorderPoint || "—"}
+              </p>
             </div>
           </div>
         </motion.div>

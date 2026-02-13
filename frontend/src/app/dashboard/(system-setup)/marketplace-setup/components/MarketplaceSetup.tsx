@@ -48,6 +48,7 @@ export default function MarketplaceSetup() {
     getInitialFormData(colors, icons)
   );
 
+  console.log(formData)
   // Update formData when colors/icons are loaded
   useEffect(() => {
     if (colors.length > 0 || icons.length > 0) {
@@ -62,37 +63,33 @@ export default function MarketplaceSetup() {
     }
   };
 
-  const handleEditClick = (marketplace: MarketplaceTemplate) => {
-    handleEditMarketplace(marketplace);
-    
-    // Find the selected color and icon to get their full data
-    const selectedColor = colors.find(c => c.value === marketplace.color);
-const marketplaceIconUrl = marketplace.icon?.icon?.[0];
+ const handleEditClick = (marketplace: MarketplaceTemplate) => {
+  handleEditMarketplace(marketplace);
 
-const selectedIcon = icons.find(
-  i => i.icon?.[0] === marketplaceIconUrl
-);
-    
-    setFormData({
-  name: marketplace.name,
-  code: marketplace.code,
-  description: marketplace.description,
-  color: marketplace.color,
-  colorCode:
-    selectedColor?.colorCode ||
-    marketplace.colorCode ||
-    '#6366f1',
+ const colorId = typeof marketplace.color === 'object' 
+    ? (marketplace.color as { _id: string })._id 
+    : marketplace.color;
 
-  // ✅ Form wants STRING (dropdown value)
-  icon: selectedIcon?.value || '',
-  iconUrl: marketplaceIconUrl || '',
+  const iconId = typeof marketplace.icon === 'object' 
+    ? (marketplace.icon as { _id: string })._id 
+    : marketplace.icon;
+  const selectedColor = colors.find(c => c.value === colorId);
+  const selectedIcon = icons.find(i => i.value === iconId);
 
-  fields: [...marketplace.fields],
-  isActive: marketplace.isActive,
-  isDefault: marketplace.isDefault,
-});
-
-  };
+  setFormData({
+    name: marketplace.name,
+    code: marketplace.code,
+    description: marketplace.description || '',
+    color: colorId, // Send ID to database
+    colorCode: selectedColor?.colorCode || marketplace.colorCode || '#6366f1',
+    icon: selectedIcon?.icon || '', // Send Base64 to <img> tag
+    label: selectedIcon?.label || '',
+    selectedIconId: iconId, // NEW field we must use for API
+    fields: [...marketplace.fields],
+    isActive: marketplace.isActive,
+    isDefault: marketplace.isDefault,
+  });
+};
 
   const handleDialogClose = () => {
     if (isEditDialogOpen) {

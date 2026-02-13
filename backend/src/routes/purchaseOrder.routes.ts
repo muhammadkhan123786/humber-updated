@@ -12,7 +12,11 @@ const purchaseOrderBaseService = new GenericService<PurchaseDoc>(PurchaseOrder);
 
 const purchaseOrderController = new AdvancedGenericController({
   service: purchaseOrderBaseService,
-  populate: ["userId", "supplier"],
+  populate: ["userId", 
+     {
+        path: "supplier",
+        select: "contactInformation"
+      }],
   searchFields: ["orderNumber", "supplier","supplierContact", "notes"],
   validationSchema: purchaseOrderZodSchema,
 });

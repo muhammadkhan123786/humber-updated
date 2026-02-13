@@ -24,24 +24,7 @@ export default function MarketplaceRow({
   onSetDefault,
 }: MarketplaceRowProps) {
 
-  console.log("market", marketplace);
-  // Helper function to get the correct image URL
-const getImageUrl = (iconPath?: unknown): string => {
-  if (typeof iconPath !== 'string') return '';
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
-  const staticBaseUrl = baseUrl.replace('/api', '');
-
-  return `${staticBaseUrl}${iconPath}`;
-};
-
-
-const iconPath = marketplace?.icon?.icon?.[0] ?? '';
-const iconUrl = getImageUrl(iconPath);
-
-console.log('iconPath:', iconPath);
-console.log('iconUrl:', iconUrl);
-
+console.log("market", marketplace);
   return (
     <motion.tr
       initial={{ opacity: 0, x: -20 }}
@@ -58,13 +41,13 @@ console.log('iconUrl:', iconUrl);
               background: `linear-gradient(to bottom right, ${marketplace.colorCode || '#6366f1'}, ${marketplace.colorCode || '#6366f1'}dd)` 
             }}
           >
-            {iconUrl ? (
+           
               <img
-                src={iconUrl}
+                src={marketplace?.icon?.icon}
                 alt={marketplace.name}
                 className="h-full w-full object-contain"
                 onError={(e) => {
-                  console.error('Icon failed to load in table:', iconUrl);
+                  console.error('Icon failed to load in table:' );
                   // Hide image and show fallback
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
@@ -73,9 +56,7 @@ console.log('iconUrl:', iconUrl);
                   }
                 }}
               />
-            ) : (
-              <div className="text-white text-sm font-bold">?</div>
-            )}
+           
           </div>
           <div>
             <p className="font-semibold text-gray-900">{marketplace.name}</p>

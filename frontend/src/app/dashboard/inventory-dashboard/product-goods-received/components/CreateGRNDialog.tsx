@@ -149,8 +149,11 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {receivingItems?.map((item) => (
-                      <tr key={item._id!} className="border-t border-gray-100">
+                    {receivingItems?.map((item, index) => (
+                      <tr
+                        key={item._id! || index}
+                        className="border-t border-gray-100"
+                      >
                         <td className="p-3">
                           <p className="font-medium text-sm">
                             {item?.productName}
@@ -194,7 +197,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                             value={item.rejectedQuantity}
                             onChange={(e) =>
                               onUpdateItem(
-                                item.purchaseOrderItemId, 
+                                item.purchaseOrderItemId,
                                 "rejectedQuantity",
                                 Number(e.target.value),
                               )
@@ -222,7 +225,12 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                           <Select
                             value={item.condition}
                             onValueChange={(value) =>
-                              onUpdateItem(item._id!, "condition", value)
+                              // Change item._id! to item.purchaseOrderItemId
+                              onUpdateItem(
+                                item.purchaseOrderItemId,
+                                "condition",
+                                value,
+                              )
                             }
                           >
                             <SelectTrigger className="w-32 h-8 text-xs">
@@ -234,6 +242,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                               <SelectItem value="defective">
                                 Defective
                               </SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </td>
@@ -241,7 +250,11 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                           <Input
                             value={item.notes}
                             onChange={(e) =>
-                              onUpdateItem( item.purchaseOrderItemId, "notes", e.target.value)
+                              onUpdateItem(
+                                item.purchaseOrderItemId,
+                                "notes",
+                                e.target.value,
+                              )
                             }
                             placeholder="Optional notes..."
                             className="w-40 text-xs border-2 border-gray-100"

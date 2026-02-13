@@ -177,7 +177,7 @@ export function PricingSection({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">
-                Select Tax Rate
+                Select Vat Rate
               </label>
               <Select
                 value={currentVariant.taxId}
@@ -194,7 +194,7 @@ export function PricingSection({
                         <span>{tax.label}</span>
                         {tax.rate !== undefined && (
                           <span className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded">
-                            {(tax.rate * 100).toFixed(1)}%
+                            {(tax.rate).toFixed(1)}%
                           </span>
                         )}
                       </div>

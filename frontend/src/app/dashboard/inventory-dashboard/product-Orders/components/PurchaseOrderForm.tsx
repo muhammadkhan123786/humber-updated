@@ -21,9 +21,9 @@ import { toast } from "sonner"
 export interface Supplier {
   _id: string;
   legalBusinessName: string;
-  operationalInformation: {
-    orderContactName: string;
-    orderContactEmail: string;
+  contactInformation: {
+    primaryContactName?: string;
+    emailAddress: string;
   };
 }
 interface PurchaseOrderFormProps {
@@ -74,7 +74,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       ...orderForm,
       supplier: supplierId,
       orderContactEmail:
-        selectedSupplier?.operationalInformation?.orderContactEmail || "",
+        selectedSupplier?.contactInformation?.emailAddress || "",
     });
   };
 
@@ -154,7 +154,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   <option value="">Select a supplier...</option>
                   {suppliers.map((supplier) => (
                     <option key={supplier._id} value={supplier._id}>
-                      {supplier?.operationalInformation?.orderContactName}
+                      {supplier?.contactInformation?.primaryContactName}
                     </option>
                   ))}
                 </select>

@@ -11,14 +11,12 @@ export class MarketplaceController {
     try {
       const {
         name,
-        code,
         credentials,
-        icon,
-        color,
+        type,
         description
       } = req.body;
 
-      if (!name || !code || !credentials || typeof credentials !== "object") {
+      if (!name ||  !credentials || !type) {
         return res.status(400).json({
           success: false,
           message: "name, code and credentials object are required",
@@ -40,14 +38,13 @@ export class MarketplaceController {
       const connection = await marketplaceModel.create({
         userId,
         name,
-        code,
         credentials: encryptedCredentials,
-        icon,
-        color,
+        type,
         description,
         status: "disconnected",
       });
 
+      console.log("conn", connection)
       return res.status(201).json({
         success: true,
         message: "Marketplace connection created",
@@ -63,8 +60,19 @@ export class MarketplaceController {
 
   // GET ALL
   async getAll(req: Request, res: Response) {
-    const data = await marketplaceModel.find({ isDeleted: false });
+    const data = await marketplaceModel.find({ isDeleted: false })
+    .populate({
+      path: "type",
+      select: "_id Icons Color",
+       populate: [
+      { path: 'icon', select: '_id  icon' },  
+      { path: 'color', select: '_id colorCode' }        
+    ]
+    })
+    // .populate("color", "_id colorCode")
+    ;
     res.json({ success: true, data });
+    console.log("res", data);
   }
 
   // GET ONE

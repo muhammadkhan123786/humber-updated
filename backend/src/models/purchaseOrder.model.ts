@@ -86,16 +86,29 @@
 //   next();
 // });
 
-import { Document, Model, model, Schema } from "mongoose";
+// import { Document, Model, model, Schema } from "mongoose";
+// import { IPurchaseOrder } from "../../../common/IPurchase.order.interface";
+// import { purchaseOrderSchema } from "../schemas/purchaseOrder.schema";
+
+// export type PurchaseDoc = IPurchaseOrder & Document;
+
+// const purchaseDbSchema = new Schema<PurchaseDoc>(
+//   purchaseOrderSchema,
+//   { timestamps: true }
+// );
+
+// export const PurchaseOrder: Model<PurchaseDoc> =
+//   model<PurchaseDoc>("PurchaseOrder", purchaseDbSchema);
+
+import { model, Document } from "mongoose";
+import { PurchaseOrderSchema } from "../schemas/purchaseOrder.schema";
 import { IPurchaseOrder } from "../../../common/IPurchase.order.interface";
-import { purchaseOrderSchema } from "../schemas/purchaseOrder.schema";
 
 export type PurchaseDoc = IPurchaseOrder & Document;
 
-const purchaseDbSchema = new Schema<PurchaseDoc>(
-  purchaseOrderSchema,
-  { timestamps: true }
+export const PurchaseOrder = model<PurchaseDoc>(
+  "PurchaseOrder",
+  PurchaseOrderSchema
 );
 
-export const PurchaseOrder: Model<PurchaseDoc> =
-  model<PurchaseDoc>("PurchaseOrder", purchaseDbSchema);
+
