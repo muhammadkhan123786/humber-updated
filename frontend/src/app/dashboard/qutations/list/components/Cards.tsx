@@ -62,13 +62,30 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <style jsx>{`
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-card {
+          animation: scaleIn 0.4s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
       {statusCounts.map((item, index) => {
         const config = getStatusConfig(item.status);
         return (
           <div
             key={index}
             onClick={() => onFilterByStatus(item.status)}
-            className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 cursor-pointer hover:shadow-md transition-all duration-200`}
+            className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 cursor-pointer hover:shadow-md hover:scale-105 transition-all duration-200 animate-card`}
+            style={{ animationDelay: `${index * 80}ms` }}
           >
             {/* Header: Icon and Label side-by-side */}
             <div className={`flex items-center gap-2 mb-3  ${config.accentColor}`}>

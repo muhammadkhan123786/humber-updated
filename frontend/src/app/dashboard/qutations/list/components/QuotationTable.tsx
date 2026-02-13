@@ -65,7 +65,36 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   };
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm animate-slideUp">
+      <style jsx>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fadeInRow {
+          from {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .animate-slideUp {
+          animation: slideUp 0.5s ease-out;
+        }
+        .animate-row {
+          animation: fadeInRow 0.4s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
       <table className="w-full">
         <thead>
           <tr className="bg-linear-to-r from-indigo-500 to-purple-500 text-white">
@@ -106,12 +135,13 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
               </td>
             </tr>
           ) : (
-            quotations.map((quotation) => {
+            quotations.map((quotation, index) => {
               const statusInfo = getStatusInfo(quotation);
               return (
                 <tr
                   key={quotation._id}
-                  className="hover:bg-indigo-50 transition-colors"
+                  className="hover:bg-indigo-50 transition-all duration-200 animate-row"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <td className="px-3 py-4">
                     <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 whitespace-nowrap">

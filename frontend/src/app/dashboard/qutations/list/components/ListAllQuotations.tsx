@@ -1,5 +1,5 @@
 "use client";
-import  { useState, useEffect } from "react";
+import  { useState, useEffect, useRef } from "react";
 import { Search, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cards from "./Cards";
@@ -51,9 +51,13 @@ const ListAllQuotations = () => {
   const [loading, setLoading] = useState(true);
   const [viewingQuotationId, setViewingQuotationId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
-    fetchData();
+    if (!hasFetchedRef.current) {
+      fetchData();
+      hasFetchedRef.current = true;
+    }
   }, []);
 
   useEffect(() => {
@@ -203,7 +207,9 @@ const ListAllQuotations = () => {
     try {
       await deleteItem("/technician-ticket-quotation", deletingId);
       toast.success("Quotation deleted successfully");
-      fetchData();
+      // Update state directly instead of re-fetching
+      setQuotations(prev => prev.filter(q => q._id !== deletingId));
+      setFilteredQuotations(prev => prev.filter(q => q._id !== deletingId));
     } catch (error) {
       console.error("Error deleting quotation:", error);
       toast.error("Failed to delete quotation");
@@ -229,10 +235,36 @@ const ListAllQuotations = () => {
   }
 
   return (
-    <div className="shadow-xl bg-white/80 backdrop-blur-sm border-t-4 border-indigo-600 p-6">
+    <div className="shadow-xl bg-white/80 backdrop-blur-sm border-t-4 border-indigo-600 p-6 animate-fadeIn">
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.4s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.5s ease-out;
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto">
         {/* Header with Count */}
-        <div className="mb-8">
+        <div className="mb-8 animate-slideUp">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="">
@@ -253,10 +285,10 @@ const ListAllQuotations = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="space-y-4 ">
+        <div className="space-y-4 animate-slideUp" style={{ animationDelay: '100ms' }}>
           <div className="relative">
             <Search
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors"
               size={20}
             />
             <input
