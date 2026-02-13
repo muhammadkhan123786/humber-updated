@@ -11,7 +11,7 @@ const Topbar = () => {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/dashboard');
   };
 
   return (
