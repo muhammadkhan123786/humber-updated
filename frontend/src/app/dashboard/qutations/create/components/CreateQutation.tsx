@@ -112,19 +112,36 @@ const CreateQuotationPage = () => {
           setShowTicketInfo(true);
         }
         
-        // Set parts list
+        // Set parts list - group duplicates by ID and sum quantities
         if (quotation.partsList && Array.isArray(quotation.partsList)) {
-          const formattedParts = quotation.partsList
+          const partsMap = new Map<string, SelectedPart>();
+          
+          quotation.partsList
             .filter((part: any) => part && part._id)
-            .map((part: any) => ({
-              _id: part._id,
-              partName: part.partName || 'Unknown Part',
-              partNumber: part.partNumber || 'N/A',
-              quantity: part.quantity || 1,
-              unitCost: part.unitCost || 0,
-              stock: part.stock,
-              description: part.description || ''
-            }));
+            .forEach((part: any) => {
+              const partId = part._id;
+              
+              if (partsMap.has(partId)) {
+                // If part already exists, increment its quantity
+                const existingPart = partsMap.get(partId)!;
+                existingPart.quantity += (part.quantity || 1);
+              } else {
+                // Add new part
+                partsMap.set(partId, {
+                  _id: part._id,
+                  partName: part.partName || 'Unknown Part',
+                  partNumber: part.partNumber || 'N/A',
+                  quantity: part.quantity || 1,
+                  unitCost: part.unitCost || 0,
+                  stock: part.stock,
+                  description: part.description || '',
+                  isActive: part.isActive
+                });
+              }
+            });
+          
+          // Convert map to array
+          const formattedParts = Array.from(partsMap.values());
           setSelectedParts(formattedParts);
         }
         
