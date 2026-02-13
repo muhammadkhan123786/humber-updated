@@ -541,3 +541,87 @@ export const getTechniciansWithActiveJobsController = async (
     });
   }
 };
+
+//update techncian job status
+export const updateTechnicianJobStatusController = async (
+  req: TechnicianAuthRequest,
+  res: Response
+) => {
+  try {
+    const { techncianJobStatusId, techncianJobId } = req.body;
+
+    // ✅ Validate role
+    if (!req.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access.",
+      });
+    }
+
+    // ✅ Validate IDs
+    if (!techncianJobId || !Types.ObjectId.isValid(techncianJobId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid technician job id.",
+      });
+    }
+
+    if (!techncianJobStatusId || !Types.ObjectId.isValid(techncianJobStatusId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid technician job status id.",
+      });
+    }
+
+    // =====================================
+    // 🔐 ROLE BASED FILTER
+    // =====================================
+    const filter: any = {
+      _id: techncianJobId,
+      isDeleted: false,
+    };
+
+    // ✅ Technician → can update ONLY own job
+    if (req.role === "Technician") {
+      if (!req.technicianId) {
+        return res.status(401).json({
+          success: false,
+          message: "Technician not authorized.",
+        });
+      }
+
+      filter.technicianId = req.technicianId;
+    }
+
+    // ✅ Admin → no technician filter (can update all)
+
+    const updatedJob = await TechniciansJobs.findOneAndUpdate(
+      filter,
+      {
+        $set: { jobStatusId: techncianJobStatusId },
+      },
+      {
+        new: true,
+      }
+    ).lean();
+
+    if (!updatedJob) {
+      return res.status(404).json({
+        success: false,
+        message: "Job not found or access denied.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician Job Status Updated Successfully.",
+      data: updatedJob,
+    });
+  } catch (error) {
+    console.error("Update Technician Job Status Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update technician job status.",
+    });
+  }
+};

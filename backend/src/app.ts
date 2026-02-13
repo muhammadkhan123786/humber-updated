@@ -89,7 +89,7 @@ import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.
 import { getDefaultQuotationStatusController, getDefaultTaxPercentageController } from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
 import technicianJobsStatisticsRouter from "./routes/technician-jobs/technician.jobs.statistics";
 import technicianDashboardJobsRouter from "./routes/technician-dashboard/technician-jobs/technician.jobs.routes";
-import { technicianDashboardJobsStatisticsController } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
+import { technicianDashboardJobsStatisticsController, updateTechnicianJobStatusController } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
 
 
 // Create express app
@@ -467,6 +467,12 @@ app.get(
   `${process.env.API_PREFIX}/technician-dashboard-jobs-statistics`,
   technicianProtecter,
   technicianDashboardJobsStatisticsController,
+);
+
+app.get(
+  `${process.env.API_PREFIX}/update-technician-job-status`,
+  technicianProtecter,
+  updateTechnicianJobStatusController,
 );
 //Muhammad Imran code ended here.
 
