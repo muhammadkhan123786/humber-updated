@@ -2,9 +2,23 @@ FROM node:20-alpine
 
 WORKDIR /app/backend
 
+# 1. Install Chromium and dependencies needed for Alpine
+RUN apk add --no-cache \
+      chromium \
+      nss \
+      freetype \
+      harfbuzz \
+      ca-certificates \
+      ttf-freefont
+
+# 2. Tell Puppeteer to skip downloading its own browser (save space)
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+          
 # Copy only package files first (cache-friendly)
 COPY backend/package*.json ./
 RUN npm install --legacy-peer-deps
+
 
 # Copy ALL source code AFTER deps
 COPY backend ./
