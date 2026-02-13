@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
+import { Request, Response, NextFunction } from "express";
 import {
   technicianDoc,
   Technicians,
@@ -13,6 +14,7 @@ import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { normalizeArrays } from "../../middleware/normalizeArrays";
 import { parseDutyRosterMiddleware } from "../../middleware/parseDutyRoster";
 import { getTechniciansWithActiveJobsController } from "../../controllers/technician-job-statistics/technician.jobs.statistics.controller";
+import { generateEmployeeCode } from "../../utils/generate.AutoCode.Counter";
 const technicianUploads = createUploader([
   {
     name: "technicianDocumentsFile",
@@ -62,6 +64,11 @@ techniciansRouter.post(
   normalizeArrays(["technicianDocuments"]),
   parseDutyRosterMiddleware,
   technicianProfileMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    const employeeCode = await generateEmployeeCode();
+    req.body.employeeId = employeeCode;
+    next();
+  },
   technicianController.create,
 );
 

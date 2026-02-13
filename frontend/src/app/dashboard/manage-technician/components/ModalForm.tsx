@@ -12,10 +12,31 @@ import DocumentUploadSection from "./DocumentUploadSection";
 import AdditionalInfoSection from "./AdditionalInfoSection";
 import FormActions from "./FormActions";
 import DocumentPreviewModal from "./DocumentPreviewModal";
+
+// Google Maps types
+interface GoogleAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+interface GooglePlaceResult {
+  place_id?: string;
+  formatted_address?: string;
+  address_components?: GoogleAddressComponent[];
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+}
+
 interface ModalFormProps {
   onClose: () => void;
   initialData?: any;
 }
+
 const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   const isEditMode = !!initialData;
   const [paymentFreq, setPaymentFreq] = useState("Monthly");
@@ -30,6 +51,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
   const [previewType, setPreviewType] = useState<"image" | "pdf">("image");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingEmployeeCode, setIsLoadingEmployeeCode] = useState(false);
   const [dropdowns, setDropdowns] = useState({
     contractTypes: [],
     serviceTypesMaster: [],
@@ -87,6 +109,45 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     technicianStatus: "Available",
   });
 
+  // Auto-generate employee code on mount (only for new technicians)
+  useEffect(() => {
+    const generateEmployeeCode = async () => {
+      if (isEditMode) return; // Don't generate for edit mode
+
+      setIsLoadingEmployeeCode(true);
+      try {
+        const token = localStorage.getItem("token")?.replace(/"/g, "") || "";
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+        const response = await fetch(
+          `${baseUrl}/auto-generate-codes/employee-code`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        const result = await response.json();
+
+        if (result.employeeCode) {
+          setFormData((prev) => ({
+            ...prev,
+            employeeId: result.employeeCode,
+          }));
+        }
+      } catch (error) {
+        console.error("Error generating employee code:", error);
+      } finally {
+        setIsLoadingEmployeeCode(false);
+      }
+    };
+
+    generateEmployeeCode();
+  }, [isEditMode]);
+
   useEffect(() => {
     if (isEditMode && initialData?.technicianDocuments) {
       const existingDocs = initialData.technicianDocuments.map(
@@ -104,55 +165,93 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     }
   }, [isEditMode, initialData]);
 
-  // Initialize Google Maps Autocomplete
+  // Initialize Google Maps Autocomplete with TypeScript fixes
   useEffect(() => {
-    if (!googleMapLoader) return;
-    if (!window.google) return;
+    if (!googleMapLoader || typeof window === "undefined" || !window.google)
+      return;
 
     const input = document.getElementById(
       "street-address-input",
     ) as HTMLInputElement;
     if (!input) return;
 
-    const autocomplete = new google.maps.places.Autocomplete(input, {
+    // Create autocomplete instance
+    const autocomplete = new window.google.maps.places.Autocomplete(input, {
       types: ["address"],
       componentRestrictions: { country: "uk" },
     });
 
+    // Add place changed listener
     const listener = autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      if (!place.place_id) return;
+      const place = autocomplete.getPlace() as GooglePlaceResult;
 
-      const service = new google.maps.places.PlacesService(
+      if (!place?.place_id) return;
+
+      // Create PlacesService for details
+      const service = new window.google.maps.places.PlacesService(
         document.createElement("div"),
       );
-      service.getDetails({ placeId: place.place_id }, (result, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-          const address = result.formatted_address ?? "";
-          const postalCode =
-            result.address_components?.find((c) =>
-              c.types.includes("postal_code"),
-            )?.long_name ?? "";
-          const city =
-            result.address_components?.find((c) => c.types.includes("locality"))
-              ?.long_name ?? "";
 
-          setFormData((prev) => ({
-            ...prev,
-            streetAddress: address,
-            city: city,
-            postcode: postalCode,
-            ...(result.geometry?.location && {
-              latitude: result.geometry.location.lat(),
-              longitude: result.geometry.location.lng(),
-            }),
-          }));
-        }
-      });
+      service.getDetails(
+        {
+          placeId: place.place_id,
+          fields: ["address_components", "formatted_address", "geometry"],
+        },
+        (result: GooglePlaceResult | null, status: string) => {
+          if (
+            status === window.google.maps.places.PlacesServiceStatus.OK &&
+            result
+          ) {
+            // Get address components
+            const addressComponents = result.address_components || [];
+
+            // Extract address components
+            const getComponent = (types: string[]): string => {
+              const component = addressComponents.find((comp) =>
+                types.some((type) => comp.types.includes(type)),
+              );
+              return component?.long_name || "";
+            };
+
+            // Get formatted address or build from components
+            const streetNumber = getComponent(["street_number"]);
+            const route = getComponent(["route"]);
+            const address =
+              streetNumber && route
+                ? `${streetNumber} ${route}`
+                : result.formatted_address || input.value;
+
+            // Get city (locality or postal_town)
+            const city =
+              getComponent(["locality"]) ||
+              getComponent(["postal_town"]) ||
+              getComponent(["administrative_area_level_3"]);
+
+            // Get postal code
+            const zipCode = getComponent(["postal_code"]);
+
+            // Get coordinates
+            const lat = result.geometry?.location?.lat() || 0;
+            const lng = result.geometry?.location?.lng() || 0;
+
+            // Update form values
+            setFormData((prev) => ({
+              ...prev,
+              streetAddress: address,
+              city: city,
+              postcode: zipCode,
+              latitude: lat,
+              longitude: lng,
+            }));
+          }
+        },
+      );
     });
 
     return () => {
-      listener.remove();
+      if (listener) {
+        window.google.maps.event.removeListener(listener);
+      }
     };
   }, [googleMapLoader]);
 
@@ -207,6 +306,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       isMounted = false;
     };
   }, []);
+
   useEffect(() => {
     if (isEditMode && initialData) {
       console.log("Edit data received:", initialData);
@@ -681,6 +781,7 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
             <PersonalInfoSection
               formData={formData}
               handleChange={handleChange}
+              isLoadingEmployeeCode={isLoadingEmployeeCode}
             />
             <AddressSection
               formData={formData}

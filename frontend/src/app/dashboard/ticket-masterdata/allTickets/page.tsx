@@ -29,12 +29,41 @@ import {
 import { deleteItem, getAlls } from "../../../../helper/apiHelper";
 import Pagination from "@/components/ui/Pagination";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-type TicketQueryResponse = {
-  tickets: any[];
-  total: number;
-  limit: number;
-  currentPage: number;
-};
+
+interface TicketStatus {
+  _id: string;
+  label: string;
+  code: string;
+  isDefault?: boolean;
+}
+
+interface Priority {
+  _id: string;
+  serviceRequestPrioprity: string;
+  backgroundColor?: string;
+  isDefault?: boolean;
+}
+const sourceOptions = [
+  { id: "phone", name: "Phone" },
+  { id: "online", name: "Online Portal" },
+  { id: "walkin", name: "Walk-in" },
+];
+
+interface Technician {
+  _id: string;
+  personId?: {
+    firstName: string;
+    lastName: string;
+  };
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  total?: number;
+  limit?: number;
+}
 
 const getStatusIcon = (status: string = "") => {
   const s = status.toLowerCase();
@@ -59,6 +88,8 @@ const TicketListingPage = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusOptions, setStatusOptions] = useState<TicketStatus[]>([]);
+  const [priorityOptions, setPriorityOptions] = useState<Priority[]>([]);
   const [filters, setFilters] = useState({
     status: "",
     urgency: "",
@@ -67,6 +98,32 @@ const TicketListingPage = () => {
 
   const router = useRouter();
   const queryClient = useQueryClient();
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const statusRes: any = await getAlls(
+          "/ticket-status?filter=all&isActive=true",
+        );
+
+        if (statusRes?.success && statusRes.data) {
+          setStatusOptions(statusRes.data);
+        }
+
+        const priorityRes: any = await getAlls(
+          "/service-request-prioprity-level?filter=all&isActive=true",
+        );
+
+        if (priorityRes?.success && priorityRes.data) {
+          setPriorityOptions(priorityRes.data);
+        }
+      } catch (error) {
+        console.error("Error fetching filter options:", error);
+      }
+    };
+
+    fetchFilterOptions();
+  }, []);
+
   const buildQueryParams = useCallback(
     (page = 1) => {
       const params = new URLSearchParams();
@@ -85,9 +142,12 @@ const TicketListingPage = () => {
     },
     [searchTerm, filters.status, filters.urgency, filters.source],
   );
+
   const fetchTickets = async (page = 1) => {
     const params = buildQueryParams(page);
-    const response = await getAlls(`/customer-tickets?${params.toString()}`);
+    const response = await getAlls<ApiResponse<any[]>>(
+      `/customer-tickets?${params.toString()}`,
+    );
 
     if (response && response.success && Array.isArray(response.data)) {
       const mappedData = response.data.map((t: any) => ({
@@ -95,13 +155,13 @@ const TicketListingPage = () => {
         customerName: t.customerId?.personId?.firstName || "Unknown",
         productName: t.vehicleId?.vehicleType || "",
         issue: t.issue_Details || "No details provided",
-        status: t.ticketStatusId?.code || "",
+        status: t.ticketStatusId?.label || t.ticketStatusId?.code || "",
         urgency: t.priorityId?.serviceRequestPrioprity || "",
         bg: t.priorityId?.backgroundColor || "",
         source: t.ticketSource || "",
         location: t.location || "",
-        technician:
-          t.assignedTechnicianId?.length > 0 ? "Assigned" : "Not Assigned",
+        technician: t.assignedTechnicianId?.length || 0,
+        assignedTechnicians: t.assignedTechnicianId || [],
         createdAt: t.createdAt ? t.createdAt : "N/A",
       }));
 
@@ -125,10 +185,10 @@ const TicketListingPage = () => {
     data: queryData,
     isLoading,
     refetch,
-  } = useQuery<TicketQueryResponse>({
+  } = useQuery<any>({
     queryKey: ["tickets", currentPage, searchTerm, filters],
     queryFn: () => fetchTickets(currentPage),
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData: any) => previousData,
   });
 
   const tickets = queryData?.tickets || [];
@@ -143,7 +203,6 @@ const TicketListingPage = () => {
         if (tickets.length === 1 && currentPage > 1) {
           setCurrentPage((prev) => prev - 1);
         }
-
         setActiveMenu(null);
       } else {
         alert(response.message || "Failed to delete ticket");
@@ -154,6 +213,7 @@ const TicketListingPage = () => {
       alert(err.message || "An error occurred while deleting the ticket.");
     },
   });
+
   const handleDelete = async (id: string) => {
     const isConfirmed = window.confirm(
       "Are you sure you want to delete this ticket? This action cannot be undone.",
@@ -175,6 +235,8 @@ const TicketListingPage = () => {
       return <Phone size={14} className="text-gray-400" />;
     if (s?.includes("walk"))
       return <UserCheck size={14} className="text-gray-400" />;
+    if (s?.includes("online") || s?.includes("portal") || s?.includes("web"))
+      return <Globe size={14} className="text-gray-400" />;
     return <Globe size={14} className="text-gray-400" />;
   };
 
@@ -222,6 +284,36 @@ const TicketListingPage = () => {
     return () => clearTimeout(handler);
   }, [searchTerm, refetch]);
 
+  const getTechnicianName = (technicians: Technician[] = []) => {
+    if (technicians.length === 0) return "Unassigned";
+    if (technicians.length === 1) {
+      const tech = technicians[0];
+      return tech.personId?.firstName || "Assigned";
+    }
+    const names = technicians
+      .map((tech) => tech.personId?.firstName)
+      .filter((name) => name)
+      .join(", ");
+    return names || `${technicians.length} technicians`;
+  };
+
+  const getTechnicianInitials = (technicians: Technician[] = []) => {
+    if (technicians.length === 0) return "UN";
+    if (technicians.length === 1) {
+      const tech = technicians[0];
+      if (tech.personId?.firstName) {
+        return tech.personId.firstName.slice(0, 2).toUpperCase();
+      }
+      return "AS";
+    }
+    const initials = technicians
+      .slice(0, 2)
+      .map((tech) => tech.personId?.firstName?.[0] || "")
+      .filter((initial) => initial)
+      .join("");
+    return initials || "AS";
+  };
+
   return (
     <div className="p-8 bg-[#F8F9FF] min-h-screen font-sans text-gray-900">
       <div className="flex justify-between items-center mb-6">
@@ -259,33 +351,40 @@ const TicketListingPage = () => {
             name="status"
             value={filters.status}
             onChange={handleFilterChange}
-            className="bg-[#F8F9FD] border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-600 outline-none cursor-pointer"
+            className="bg-[#F8F9FD] border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-600 outline-none cursor-pointer min-w-[140px]"
           >
             <option value="">All Statuses</option>
-            <option value="695e62b94a0436aac0dd3944">Open</option>
-            <option value="completed">Completed</option>
+            {statusOptions.map((status) => (
+              <option key={status._id} value={status._id}>
+                {status.label || status.code}
+              </option>
+            ))}
           </select>
-
           <select
             name="urgency"
             value={filters.urgency}
             onChange={handleFilterChange}
-            className="bg-[#F8F9FD] border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-600 outline-none cursor-pointer"
+            className="bg-[#F8F9FD] border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-600 outline-none cursor-pointer min-w-[140px]"
           >
             <option value="">All Urgencies</option>
-            <option value="6965f40cdac61db61224caaf">Medium</option>
-            <option value="high">High</option>
+            {priorityOptions.map((priority) => (
+              <option key={priority._id} value={priority._id}>
+                {priority.serviceRequestPrioprity}
+              </option>
+            ))}
           </select>
-
           <select
             name="source"
             value={filters.source}
             onChange={handleFilterChange}
-            className="bg-[#F8F9FD] border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-600 outline-none cursor-pointer"
+            className="bg-[#F8F9FD] border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-semibold text-gray-600 outline-none cursor-pointer min-w-[140px]"
           >
             <option value="">All Sources</option>
-            <option value="phone">Phone</option>
-            <option value="online">Online</option>
+            {sourceOptions.map((source) => (
+              <option key={source.id} value={source.name}>
+                {source.name}
+              </option>
+            ))}
           </select>
 
           <div className="flex bg-[#F3F4F6] p-1 rounded-xl">
@@ -501,8 +600,7 @@ const TicketListingPage = () => {
                   >
                     <User size={14} />
                     <span className="text-[12px] font-bold">
-                      {t.assignedTechnicianId?.[0]?.personId?.firstName ||
-                        "Unassigned"}
+                      {getTechnicianName(t.assignedTechnicians)}
                     </span>
                   </div>
                 </div>
@@ -536,14 +634,14 @@ const TicketListingPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {tickets.map((t) => (
+              {tickets.map((t: any) => (
                 <tr
                   key={t._id}
                   className="hover:bg-purple-50/30 transition-colors"
                 >
                   <td className="px-6 py-4 text-[#6D28D9] text-xs whitespace-nowrap">
                     <Link
-                      href={`/tickets/${t._id}`}
+                      href={`/dashboard/ticket-masterdata/allTickets/${t._id}`}
                       className="hover:underline"
                     >
                       {t.ticketCode || t.displayId}
@@ -568,7 +666,7 @@ const TicketListingPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 justify-end text-gray-400">
+                    <div className="flex items-center gap-2 text-gray-400">
                       {getLocationIcon(t.location)}
                       <span className="text-[12px] font-medium">
                         {t.location}
@@ -578,21 +676,17 @@ const TicketListingPage = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#8B5CF6] to-[#6366F1] flex items-center justify-center text-white text-[10px] font-bold uppercase shadow-sm">
-                        {t.assignedTechnicianId?.[0]?.personId?.firstName
-                          ? t.assignedTechnicianId[0].personId.firstName.slice(
-                              0,
-                              2,
-                            )
-                          : "UN"}
+                        {getTechnicianInitials(t.assignedTechnicians)}
                       </div>
                       <span className="text-[12px] font-medium text-[#1E1B4B]">
-                        {t.assignedTechnicianId?.[0]?.personId?.firstName ||
-                          "Unassigned"}
+                        {getTechnicianName(t.assignedTechnicians)}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[11px] text-gray-500 font-bold whitespace-nowrap">
-                    {new Date(t.createdAt).toLocaleDateString("en-GB")}
+                    {t.createdAt
+                      ? new Date(t.createdAt).toLocaleDateString("en-GB")
+                      : "N/A"}
                   </td>
                   <td className="px-6 py-4 text-right relative">
                     <button
@@ -653,7 +747,7 @@ const TicketListingPage = () => {
       )}
 
       {!isLoading && tickets.length > 0 && totalPages > 1 && (
-        <div className="flex justify-end border-t border-gray-100">
+        <div className="flex justify-end border-t border-gray-100 mt-6">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

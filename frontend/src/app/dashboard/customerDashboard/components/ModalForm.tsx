@@ -25,6 +25,23 @@ import { saveCustomer } from "../../../../hooks/useCustomer";
 import { Customer } from "../../../../../../common/DTOs/Customer.dto";
 import { getById } from "../../../../helper/apiHelper";
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
+interface GoogleAddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
+interface GooglePlaceResult {
+  place_id?: string;
+  formatted_address?: string;
+  address_components?: GoogleAddressComponent[];
+  geometry?: {
+    location?: {
+      lat: () => number;
+      lng: () => number;
+    };
+  };
+}
 
 interface ModalProps {
   onClose: () => void;
@@ -46,74 +63,90 @@ const ModalForm: React.FC<ModalProps> = ({
 
   const googleMapLoader = useGoogleMapLoad();
 
-  const { register, handleSubmit, watch, setValue, reset, getValues } =
-    useForm<Customer>({
-      defaultValues: {
-        customerType: "domestic",
-        isActive: true,
-        isVatExemption: false,
-        address: {
-          country: "UK",
-          address: "",
-          city: "",
-          zipCode: "",
-          latitude: 0,
-          longitude: 0,
-        },
-      } as any,
-    });
+  const { register, handleSubmit, watch, setValue, reset } = useForm<Customer>({
+    defaultValues: {
+      customerType: "domestic",
+      isActive: true,
+      isVatExemption: false,
+      address: {
+        country: "UK",
+        address: "",
+        city: "",
+        zipCode: "",
+        latitude: 0,
+        longitude: 0,
+      },
+    } as any,
+  });
 
   const customerType = watch("customerType");
   const isActive = watch("isActive");
   const sourceId = watch("sourceId");
   const isVatExemption = watch("isVatExemption" as any);
-
-  // Initialize Google Maps Autocomplete
   useEffect(() => {
-    if (!googleMapLoader) return;
-    if (!window.google) return;
+    if (!googleMapLoader || typeof window === "undefined" || !window.google)
+      return;
 
     const input = document.getElementById(
       "street-address-input",
     ) as HTMLInputElement;
     if (!input) return;
 
-    const autocomplete = new google.maps.places.Autocomplete(input, {
+    const autocomplete = new window.google.maps.places.Autocomplete(input, {
       types: ["address"],
-      componentRestrictions: { country: "uk" }, // UK addresses only
+      componentRestrictions: { country: "uk" },
     });
-
     const listener = autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
-      if (!place.place_id) return;
+      const place = autocomplete.getPlace() as GooglePlaceResult;
 
-      const service = new google.maps.places.PlacesService(
+      if (!place?.place_id) return;
+
+      const service = new window.google.maps.places.PlacesService(
         document.createElement("div"),
       );
-      service.getDetails({ placeId: place.place_id }, (result, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && result) {
-          const address = result.formatted_address ?? "";
-          const postalCode =
-            result.address_components?.find((c) =>
-              c.types.includes("postal_code"),
-            )?.long_name ?? "";
-          const country =
-            result.address_components?.find((c) => c.types.includes("country"))
-              ?.long_name ?? "";
-          const city =
-            result.address_components?.find((c) => c.types.includes("locality"))
-              ?.long_name ?? "";
 
-          setValue("address.address", address);
-          setValue("address.zipCode", postalCode);
-          setValue("address.country", country);
-          setValue("address.city", city);
-        }
-      });
+      service.getDetails(
+        {
+          placeId: place.place_id,
+          fields: ["address_components", "formatted_address", "geometry"],
+        },
+        (result: GooglePlaceResult | null, status: string) => {
+          if (
+            status === window.google.maps.places.PlacesServiceStatus.OK &&
+            result
+          ) {
+            const addressComponents = result.address_components || [];
+            const getComponent = (types: string[]): string => {
+              const component = addressComponents.find((comp) =>
+                types.some((type) => comp.types.includes(type)),
+              );
+              return component?.long_name || "";
+            };
+            const streetNumber = getComponent(["street_number"]);
+            const route = getComponent(["route"]);
+            const address =
+              streetNumber && route
+                ? `${streetNumber} ${route}`
+                : result.formatted_address || input.value;
+            const city =
+              getComponent(["locality"]) ||
+              getComponent(["postal_town"]) ||
+              getComponent(["administrative_area_level_3"]);
+            const zipCode = getComponent(["postal_code"]);
+            const country = getComponent(["country"]);
+            setValue("address.address", address);
+            setValue("address.city", city);
+            setValue("address.zipCode", zipCode);
+            setValue("address.country", country);
+          }
+        },
+      );
     });
 
     return () => {
-      listener.remove(); // cleanup listener
+      if (listener) {
+        window.google.maps.event.removeListener(listener);
+      }
     };
   }, [googleMapLoader, setValue]);
 
@@ -161,10 +194,79 @@ const ModalForm: React.FC<ModalProps> = ({
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (data.success)
-          setSourceOptions(data.data?.filter((s: any) => s.isActive));
+        if (data.success) {
+          const activeSources = data.data?.filter((s: any) => s.isActive) || [];
+          if (activeSources.length < 3) {
+            const defaultSources = [
+              {
+                _id: "walk-in",
+                customerSource: "Walk-in",
+                isActive: true,
+                icon: "walk",
+              },
+              {
+                _id: "phone",
+                customerSource: "Phone",
+                isActive: true,
+                icon: "phone",
+              },
+              {
+                _id: "web",
+                customerSource: "Web",
+                isActive: true,
+                icon: "web",
+              },
+            ];
+            const mergedSources = [...activeSources];
+            defaultSources.forEach((def) => {
+              if (
+                !mergedSources.some(
+                  (s) =>
+                    s.customerSource.toLowerCase() ===
+                    def.customerSource.toLowerCase(),
+                )
+              ) {
+                mergedSources.push(def);
+              }
+            });
+            setSourceOptions(mergedSources);
+          } else {
+            setSourceOptions(activeSources);
+          }
+        } else {
+          setSourceOptions([
+            {
+              _id: "walk-in",
+              customerSource: "Walk-in",
+              isActive: true,
+              icon: "walk",
+            },
+            {
+              _id: "phone",
+              customerSource: "Phone",
+              isActive: true,
+              icon: "phone",
+            },
+            { _id: "web", customerSource: "Web", isActive: true, icon: "web" },
+          ]);
+        }
       } catch (err) {
         console.error(err);
+        setSourceOptions([
+          {
+            _id: "walk-in",
+            customerSource: "Walk-in",
+            isActive: true,
+            icon: "walk",
+          },
+          {
+            _id: "phone",
+            customerSource: "Phone",
+            isActive: true,
+            icon: "phone",
+          },
+          { _id: "web", customerSource: "Web", isActive: true, icon: "web" },
+        ]);
       }
     };
 
@@ -174,8 +276,6 @@ const ModalForm: React.FC<ModalProps> = ({
 
   const onFormSubmit = async (data: Customer) => {
     if (!currentUserId) return setError("Session expired.");
-
-    // Validation
     if (!data.address?.address) {
       setError("Please enter a valid address.");
       return;
@@ -207,7 +307,38 @@ const ModalForm: React.FC<ModalProps> = ({
     }
   };
 
-  // If Google Maps is loading
+  const getSourceIcon = (sourceName: string, isActive: boolean) => {
+    console.log(isActive);
+    const name = sourceName.toLowerCase();
+    if (name.includes("walk")) return <Store size={22} strokeWidth={2.5} />;
+    if (name.includes("phone"))
+      return <PhoneCall size={22} strokeWidth={2.5} />;
+    if (name.includes("web") || name.includes("online"))
+      return <Globe size={22} strokeWidth={2.5} />;
+
+    return <Building size={22} strokeWidth={2.5} />;
+  };
+
+  const getSourceGradient = (sourceName: string) => {
+    const name = sourceName.toLowerCase();
+    if (name.includes("walk"))
+      return "bg-gradient-to-br from-emerald-500 to-green-500 shadow-green-200";
+    if (name.includes("phone"))
+      return "bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-200";
+    if (name.includes("web") || name.includes("online"))
+      return "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-blue-200";
+    return "bg-gradient-to-br from-purple-500 to-pink-500 shadow-purple-200";
+  };
+
+  const getSourceHoverBorder = (sourceName: string) => {
+    const name = sourceName.toLowerCase();
+    if (name.includes("walk")) return "hover:border-green-400";
+    if (name.includes("phone")) return "hover:border-red-400";
+    if (name.includes("web") || name.includes("online"))
+      return "hover:border-blue-400";
+    return "hover:border-purple-400";
+  };
+
   if (!googleMapLoader && !customerId) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -234,7 +365,6 @@ const ModalForm: React.FC<ModalProps> = ({
         animate={{ scale: 1, opacity: 1 }}
         className="bg-[#F8FAFC] w-full max-w-[550px] rounded-3xl shadow-2xl relative z-10 overflow-hidden max-h-[95vh] flex flex-col"
       >
-        {/* Loading State for Edit */}
         {fetchingData && (
           <div className="absolute inset-0 z-60 bg-white/80 flex items-center justify-center">
             <Loader2 className="animate-spin text-indigo-600" size={40} />
@@ -293,7 +423,6 @@ const ModalForm: React.FC<ModalProps> = ({
                   <User size={16} className="text-[#6366F1]" /> Customer Type *
                 </label>
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Individual Card */}
                   <div
                     onClick={() => setValue("customerType", "domestic" as any)}
                     className={`cursor-pointer relative min-h-[140px] rounded-2xl transition-all duration-300 flex flex-col p-[18px]  outline-2 -outline-offset-2 hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
@@ -335,8 +464,6 @@ const ModalForm: React.FC<ModalProps> = ({
                       </span>
                     </div>
                   </div>
-
-                  {/* Company Card */}
                   <div
                     onClick={() => setValue("customerType", "corporate" as any)}
                     className={`cursor-pointer relative min-h-[140px] rounded-2xl transition-all duration-300 flex flex-col p-[18px]  outline-2 -outline-offset-2 hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
@@ -380,8 +507,6 @@ const ModalForm: React.FC<ModalProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Name & Company */}
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
@@ -431,32 +556,15 @@ const ModalForm: React.FC<ModalProps> = ({
                 <div className="grid grid-cols-3 gap-3">
                   {sourceOptions
                     .filter((item) => item.isActive === true)
-                    .map((item) => {
-                      const isWalkIn = item.customerSource
-                        .toLowerCase()
-                        .includes("walk");
-                      const isPhone = item.customerSource
-                        .toLowerCase()
-                        .includes("phone");
-                      const isWeb = item.customerSource
-                        .toLowerCase()
-                        .includes("web");
-
-                      const activeBg = isWalkIn
-                        ? "bg-gradient-to-br from-emerald-500 to-green-500 shadow-green-200"
-                        : isPhone
-                          ? "bg-gradient-to-br from-orange-500 to-red-500 shadow-orange-200"
-                          : "bg-gradient-to-br from-blue-500 to-cyan-500 shadow-blue-200";
-
-                      const hoverBorder = isWalkIn
-                        ? "hover:border-green-400"
-                        : isPhone
-                          ? "hover:border-red-400"
-                          : "hover:border-blue-400";
+                    .map((item, index) => {
+                      const activeBg = getSourceGradient(item.customerSource);
+                      const hoverBorder = getSourceHoverBorder(
+                        item.customerSource,
+                      );
 
                       return (
                         <div
-                          key={item._id}
+                          key={item._id || index}
                           onClick={() => setValue("sourceId", item._id)}
                           className={`
                             cursor-pointer relative p-4 rounded-2xl transition-all duration-300
@@ -477,11 +585,10 @@ const ModalForm: React.FC<ModalProps> = ({
                                 : "text-slate-400"
                             }
                           >
-                            {isWalkIn && <Store size={22} strokeWidth={2.5} />}
-                            {isPhone && (
-                              <PhoneCall size={22} strokeWidth={2.5} />
+                            {getSourceIcon(
+                              item.customerSource,
+                              sourceId === item._id,
                             )}
-                            {isWeb && <Globe size={22} strokeWidth={2.5} />}
                           </div>
 
                           <span
@@ -494,8 +601,6 @@ const ModalForm: React.FC<ModalProps> = ({
                     })}
                 </div>
               </div>
-
-              {/* Contact */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
@@ -555,7 +660,7 @@ const ModalForm: React.FC<ModalProps> = ({
                   <input
                     id="street-address-input"
                     {...register("address.address", { required: true })}
-                    placeholder="123 Mian Street"
+                    placeholder="123 Main Street"
                     className="
                       w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
                       bg-[#F0FDF4] text-slate-700 placeholder:text-slate-400 outline-none
@@ -569,14 +674,13 @@ const ModalForm: React.FC<ModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* City - Blue Theme */}
                   <div className="space-y-2 group">
                     <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 transition-colors group-focus-within:text-[#3B82F6]">
                       <Building size={16} className="text-[#3B82F6]" /> City *
                     </label>
                     <input
                       {...register("address.city", { required: true })}
-                      placeholder="san francisco"
+                      placeholder="London"
                       className="
                         w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
                         bg-[#F0F9FF] text-slate-700 placeholder:text-slate-400 outline-none
@@ -587,14 +691,13 @@ const ModalForm: React.FC<ModalProps> = ({
                     />
                   </div>
 
-                  {/* Postcode - Pink Theme */}
                   <div className="space-y-2 group">
                     <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 transition-colors group-focus-within:text-[#EC4899]">
                       <MapPin size={16} className="text-[#EC4899]" /> Postcode *
                     </label>
                     <input
                       {...register("address.zipCode", { required: true })}
-                      placeholder="94102"
+                      placeholder="SW1A 1AA"
                       className="
                         w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
                         bg-[#FDF2F8] text-slate-700 placeholder:text-slate-400 outline-none
@@ -606,8 +709,7 @@ const ModalForm: React.FC<ModalProps> = ({
                   </div>
                 </div>
 
-                {/* Hidden Latitude/Longitude fields */}
-                <div className="grid grid-cols-2 gap-4 hidden">
+                <div className="grid grid-cols-2 gap-4 ">
                   <input type="hidden" {...register("address.latitude")} />
                   <input type="hidden" {...register("address.longitude")} />
                   <input type="hidden" {...register("address.country")} />
