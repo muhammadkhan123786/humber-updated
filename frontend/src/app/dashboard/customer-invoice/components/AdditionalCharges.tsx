@@ -1,28 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { CustomSelect } from "../../../common-form/CustomSelect";
 
-const AdditionalCharges: React.FC = () => {
-  const [calloutFee, setCalloutFee] = useState<number>(0);
-  const [discountValue, setDiscountValue] = useState<number>(0);
-  const [discountType, setDiscountType] = useState<string>("percentage");
-  const [isVatExempt, setIsVatExempt] = useState<boolean>(true);
-  const [vatRate, setVatRate] = useState<number>(20);
+interface AdditionalChargesProps {
+  calloutFee: number;
+  setCalloutFee: (value: number) => void;
+  discountValue: number;
+  setDiscountValue: (value: number) => void;
+  discountType: string;
+  setDiscountType: (value: string) => void;
+  isVatExempt: boolean;
+  setIsVatExempt: (value: boolean) => void;
+  vatRate: number;
+  setVatRate: (value: number) => void;
+  subtotal: number;
+}
 
+const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
+  calloutFee,
+  setCalloutFee,
+  discountValue,
+  setDiscountValue,
+  discountType,
+  setDiscountType,
+  isVatExempt,
+  setIsVatExempt,
+  vatRate,
+  setVatRate,
+  subtotal,
+}) => {
   const discountOptions = [
     { id: "percentage", label: "Percentage (%)" },
     { id: "fixed", label: "Fixed Amount (£)" },
   ];
 
-  const calculatedDiscount = discountValue;
+  const calculatedDiscount =
+    discountType === "percentage"
+      ? (subtotal * (discountValue || 0)) / 100
+      : discountValue || 0;
 
   const inputFocusClasses =
     "focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all";
 
   return (
-    <div className="w-full  bg-white rounded-2xl outline-2 outline-amber-100 p-6 flex flex-col gap-6 font-sans">
+    <div className="w-full bg-white rounded-2xl outline-2 outline-amber-100 p-6 flex flex-col gap-6 font-sans">
       <div className="flex items-center gap-3 text-amber-600">
         <div className="p-1 rounded-md">
           <DollarSign size={20} />
@@ -61,10 +84,12 @@ const AdditionalCharges: React.FC = () => {
                 isSearchable={false}
               />
             </div>
-            <div className="w-full ">
+            <div className="w-full">
               <input
                 type="number"
-                placeholder="0"
+                placeholder={
+                  discountType === "percentage" ? "Enter %" : "Enter £"
+                }
                 value={discountValue}
                 onChange={(e) =>
                   setDiscountValue(parseFloat(e.target.value) || 0)
@@ -125,7 +150,11 @@ const AdditionalCharges: React.FC = () => {
                 <div className="h-12 px-4 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center">
                   <span className="text-gray-600 text-sm">VAT Amount:</span>
                   <span className="text-amber-600 text-lg font-bold">
-                    £0.00
+                    £
+                    {(
+                      ((subtotal - calculatedDiscount) * (vatRate || 0)) /
+                      100
+                    ).toFixed(2)}
                   </span>
                 </div>
               </div>
