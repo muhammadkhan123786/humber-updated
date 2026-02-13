@@ -21,6 +21,7 @@ interface Ticket {
       modelName: string;
     };
     vehicleType?: string;
+    productName?: string;
     _id: string;
   };
   issue_Details: string;
@@ -60,16 +61,14 @@ interface TicketInformationProps {
 }
 
 const TicketInformation = ({ ticket, onChangeTicket, selectedParts, onPartsChange }: TicketInformationProps) => {
-  console.log('Rendering TicketInformation with ticket:', ticket);
-  console.log('Ticket status:', ticket?.ticketStatus);
-  console.log('Ticket status type:', typeof ticket?.ticketStatus);
-
   const customerName = ticket?.customer?.firstName && ticket?.customer?.lastName
     ? `${ticket.customer.firstName} ${ticket.customer.lastName}`
     : 'N/A';
+  
+  // Check for vehicle brand/model first, then fall back to productName
   const productName = ticket?.vehicle?.vehicleBrandId?.brandName && ticket?.vehicle?.vehicleModelId?.modelName
     ? `${ticket.vehicle.vehicleBrandId.brandName} ${ticket.vehicle.vehicleModelId.modelName}`
-    : 'N/A';
+    : (ticket?.vehicle as any)?.productName || 'N/A';
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {

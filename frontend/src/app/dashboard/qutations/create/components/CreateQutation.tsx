@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 import AvailableTickets from '../../components/AvailableTickets';
 import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
@@ -26,13 +27,14 @@ const CreateQuotationPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditMode = searchParams.get('mode') === 'edit';
+  const editQuotationId = searchParams.get('id') || '';
   
   const [quotationId, setQuotationId] = useState('');
-  const [editQuotationId, setEditQuotationId] = useState(''); // For storing actual quotation _id
   const [technicianIdFromQuotation, setTechnicianIdFromQuotation] = useState<string>('');
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [showTicketInfo, setShowTicketInfo] = useState(false);
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Labor and additional cost states
   const [laborHours, setLaborHours] = useState(0);
@@ -48,119 +50,102 @@ const CreateQuotationPage = () => {
   const [defaultTaxPercentage, setDefaultTaxPercentage] = useState(20);
 
   useEffect(() => {
-    if (isEditMode) {
-      loadEditQuotation();
-    } else {
+    if (isEditMode && editQuotationId) {
+      loadEditQuotation(editQuotationId);
+    } else if (!isEditMode) {
       fetchQuotationAutoCode();
     }
     fetchDefaultTax();
-  }, [isEditMode]);
+  }, [isEditMode, editQuotationId]);
 
-  const loadEditQuotation = async () => {
+  const loadEditQuotation = async (id: string) => {
     try {
-      const editData = localStorage.getItem('editQuotation');
-      if (editData) {
-        const quotation = JSON.parse(editData);
-        
-        console.log('Loading quotation for edit:', quotation);
-        console.log('Ticket data:', quotation.ticket);
-        console.log('Parts list:', quotation.partsList);
-        console.log('Parts list length:', quotation.partsList?.length);
-        console.log('Parts list array:', JSON.stringify(quotation.partsList, null, 2));
-        console.log('Vehicle data:', quotation.ticket?.vehicle);
-        console.log('Vehicle brand:', quotation.ticket?.vehicle?.vehicleBrandId);
-        console.log('Vehicle model:', quotation.ticket?.vehicle?.vehicleModelId);
-        console.log('Debug vehicle info:', quotation.debugVehicle);
-        
-        // Set quotation IDs
+      setIsLoading(true);
+      const response: any = await getAll(`/technician-ticket-quotation/${id}`);
+      
+      // Handle response - it might be response.data or just response depending on API structure
+      const quotation = response?.data || response;
+      
+      if (quotation && typeof quotation === 'object' && !Array.isArray(quotation)) {
+        // Set quotation auto ID
         setQuotationId(quotation.quotationAutoId || '');
-        setEditQuotationId(quotation._id || ''); // Store the actual quotation _id for updates
         
-        // Store technician ID from quotation
-        if (quotation.technicianId) {
-          setTechnicianIdFromQuotation(quotation.technicianId);
-          console.log('Loaded technician ID from quotation:', quotation.technicianId);
+        // Store technician ID
+        if (quotation.technicianId?._id) {
+          setTechnicianIdFromQuotation(quotation.technicianId._id);
         }
         
-        // Set ticket data with proper status handling
-        if (quotation.ticket) {
-          const ticketData = {
-            ...quotation.ticket,
-            // Keep the original ticket status - don't override with quotation status
-            ticketStatus: quotation.ticket.ticketStatus
+        // Map ticket data (already populated from API)
+        if (quotation.ticketId) {
+          const ticketData = quotation.ticketId;
+          
+          // Construct ticket object with proper field mapping
+          const ticketInfo = {
+            _id: ticketData._id,
+            ticketCode: ticketData.ticketCode,
+            customer: {
+              _id: ticketData.customerId?._id || '',
+              firstName: ticketData.customerId?.personId?.firstName || '',
+              lastName: ticketData.customerId?.personId?.lastName || '',
+              email: ticketData.customerId?.contactId?.email || '',
+            },
+            vehicle: {
+              _id: ticketData.vehicleId?._id || '',
+              serialNumber: ticketData.vehicleId?.serialNumber || '',
+              vehicleBrandId: ticketData.vehicleId?.vehicleBrandId || null,
+              vehicleModelId: ticketData.vehicleId?.vehicleModelId || null,
+              vehicleType: ticketData.vehicleId?.vehicleType || '',
+              productName: ticketData.vehicleId?.productName || '',
+            },
+            issue_Details: ticketData.issue_Details || '',
+            ticketStatus: ticketData.ticketStatusId?.code || ticketData.ticketStatusId?.ticketStatus || 'Unknown',
+            priority: ticketData.priorityId?.priorityName || 'N/A',
+            location: ticketData.location || '',
+            ticketSource: ticketData.ticketSource || '',
+            assignedTechnician: ticketData.assignedTechnicianId?.[0] || null,
+            technicianReport: ticketData.technicianReport || '',
+            createdAt: ticketData.createdAt,
+            updatedAt: ticketData.updatedAt,
           };
-          console.log('Setting ticket data:', ticketData);
-          console.log('Ticket status value:', ticketData.ticketStatus);
-          console.log('Full quotation object:', quotation);
-          setSelectedTicket(ticketData);
+          
+          setSelectedTicket(ticketInfo);
           setShowTicketInfo(true);
         }
         
-        // Set parts - group by ID and count quantities
+        // Set parts list
         if (quotation.partsList && Array.isArray(quotation.partsList)) {
-          // Filter out null/undefined parts first
-          const validParts = quotation.partsList.filter((part: any) => part && part._id);
-          
-          console.log('Valid parts from backend:', validParts);
-          console.log('Valid parts count:', validParts.length);
-          
-          // Group parts by ID and count occurrences
-          const partsMap = new Map<string, any>();
-          
-          validParts.forEach((part: any, index: number) => {
-            const partId = part._id;
-            console.log(`Processing part ${index}:`, { partId, partName: part.partName });
-            
-            if (partsMap.has(partId)) {
-              // Increment quantity for existing part
-              const existingPart = partsMap.get(partId);
-              existingPart.quantity += 1;
-              console.log(`  -> Incremented quantity for ${part.partName} to ${existingPart.quantity}`);
-            } else {
-              // Add new part with quantity 1
-              partsMap.set(partId, {
-                _id: part._id,
-                partName: part.partName || 'Unknown Part',
-                partNumber: part.partNumber || 'N/A',
-                quantity: 1,
-                unitCost: part.unitCost || 0,
-                stock: part.stock,
-                description: part.description || ''
-              });
-              console.log(`  -> Added new part ${part.partName} with quantity 1`);
-            }
-          });
-          
-          // Convert map to array
-          const formattedParts = Array.from(partsMap.values());
-          console.log('Formatted parts with quantities:', formattedParts);
+          const formattedParts = quotation.partsList
+            .filter((part: any) => part && part._id)
+            .map((part: any) => ({
+              _id: part._id,
+              partName: part.partName || 'Unknown Part',
+              partNumber: part.partNumber || 'N/A',
+              quantity: part.quantity || 1,
+              unitCost: part.unitCost || 0,
+              stock: part.stock,
+              description: part.description || ''
+            }));
           setSelectedParts(formattedParts);
         }
         
         // Set labor information
-        if (quotation.labourTime !== undefined) {
-          setLaborHours(quotation.labourTime);
-        }
-        if (quotation.labourRate !== undefined) {
-          setRatePerHour(quotation.labourRate);
-        }
+        setLaborHours(quotation.labourTime || 0);
+        setRatePerHour(quotation.labourRate || 45);
         
         // Set additional notes
-        if (quotation.aditionalNotes) {
-          setAdditionalNotes(quotation.aditionalNotes);
-        }
+        setAdditionalNotes(quotation.aditionalNotes || '');
         
-        // Set valid until date
+        // Set validity date
         if (quotation.validityDate) {
           const date = new Date(quotation.validityDate);
           setValidUntil(date.toISOString().split('T')[0]);
         }
-        
-        // Clear localStorage after loading
-        localStorage.removeItem('editQuotation');
       }
     } catch (error) {
-      console.error('Error loading edit quotation:', error);
+      console.error('Error loading quotation:', error);
+      toast.error('Failed to load quotation data');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -199,6 +184,14 @@ const CreateQuotationPage = () => {
   const handleChangeTicket = () => {
     setShowTicketInfo(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
@@ -251,6 +244,7 @@ const CreateQuotationPage = () => {
               <div className="sticky top-6">
                 <QuotationSummary 
                   selectedTicket={selectedTicket} 
+                  selectedParts={selectedParts}
                   laborHours={laborHours}
                   ratePerHour={ratePerHour}
                   taxPercentage={defaultTaxPercentage}

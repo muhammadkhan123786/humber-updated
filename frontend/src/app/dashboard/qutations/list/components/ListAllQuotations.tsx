@@ -70,8 +70,6 @@ const ListAllQuotations = () => {
         "/technician-ticket-quotation"
       );
       
-      console.log('Quotations response:', quotationsRes);
-      
       // The backend returns "tickets" not "data" for this endpoint
       const quotationsData = Array.isArray(quotationsRes.tickets) ? quotationsRes.tickets : [];
       
@@ -198,15 +196,8 @@ const ListAllQuotations = () => {
   };
 
   const handleEdit = (id: string) => {
-    const quotation = quotations.find(q => q._id === id);
-    if (quotation) {
-      // Store quotation data in localStorage for editing
-      localStorage.setItem('editQuotation', JSON.stringify(quotation));
-      // Navigate to create/edit page
-      router.push('/dashboard/qutations/create?mode=edit');
-    } else {
-      toast.error("Quotation not found");
-    }
+    // Navigate to edit page with quotation ID
+    router.push(`/dashboard/qutations/create?mode=edit&id=${id}`);
   };
 
   const handleDelete = (id: string) => {

@@ -50,7 +50,6 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   getTicketNumber,
   getStatusInfo,
 }) => {
-  console.log("Rendering QuotationTable with quotations:", quotations);
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-GB", {
@@ -148,7 +147,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                   </td>
                   <td className="px-4 py-4">
                     <span className="text-sm font-medium text-indigo-600">
-                      {quotation?.ticket?.pay_by || "N/A"}
+                      {quotation?.ticket?.decision || "N/A"}
                     </span>
                   </td>
                   <td className="px-4 py-4">
