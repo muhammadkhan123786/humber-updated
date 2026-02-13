@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../../middleware/auth.middleware";
+import { AuthRequest, TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
@@ -278,33 +278,17 @@ export const technicianJobsController = async (
 
 //default tax get to add tax amount in technician quotations 
 export const getDefaultTaxPercentageController = async (
-  req: AuthRequest,
+  req: TechnicianAuthRequest,
   res: Response
 ) => {
   try {
-    const user = req.user;
-    console.log("Get Default Tax Controller invoked for user:", user);
-    // ✅ Master user must exist (attached by protector)
-    if (!user?._id) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized user.",
-      });
-    }
-    const technician = await Technicians.findOne({
-      accountId: user._id,
-      isDeleted: false,
-      isActive: true,
-    }).select("_id userId") as {
-      _id: Types.ObjectId;
-      userId: Types.ObjectId;
-    } | null;
 
     const tax = await Tax.findOne({
-      userId: technician?.userId,
+      userId: req.user.userId,
       isDefault: true,
       isDeleted: false,
     }).select("percentage");
+
 
     if (!tax) {
       return res.status(401).json({
@@ -329,29 +313,13 @@ export const getDefaultTaxPercentageController = async (
 
 //default quotation status get to add default status in technician quotations
 export const getDefaultQuotationStatusController = async (
-  req: AuthRequest,
+  req: TechnicianAuthRequest,
   res: Response
 ) => {
   try {
-    const user = req.user;
-
-    if (!user?._id) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized user.",
-      });
-    }
-    const technician = await Technicians.findOne({
-      accountId: user._id,
-      isDeleted: false,
-      isActive: true,
-    }).select("_id userId") as {
-      _id: Types.ObjectId;
-      userId: Types.ObjectId;
-    } | null;
 
     const defaultStatus = await TicketQuationStatus.findOne({
-      userId: technician?.userId,
+      userId: req.user.userId,
       isDefault: true,
       isDeleted: false,
     }).select("_id");
