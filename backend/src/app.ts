@@ -6,10 +6,14 @@ import "dotenv/config"; // load env variables
 // Import routes
 import shopRouter from "./routes/shop.routes";
 import authRouter from "./routes/auth.routes";
-import { adminProtecter, technicianMasterProtector, technicianProtecter } from "./middleware/auth.middleware";
+import {
+  adminProtecter,
+  technicianMasterProtector,
+  technicianProtecter,
+} from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
-import aiRoutes from './routes/ai.routes';
+import aiRoutes from "./routes/ai.routes";
 
 import customerSourceRouter from "./routes/customer.source.routes";
 import repairStatusRouter from "./routes/repair.status.routes";
@@ -73,7 +77,6 @@ import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.ro
 import partsRouter from "./routes/master-data-routes/parts.routes";
 import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
 
-
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
 import grnRoutes from "./routes/grn.routes";
 import goodsReturnRoutes from "./routes/goodsReturn.routes";
@@ -81,16 +84,21 @@ import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace.routes";
-import uploadRoutes from "./routes/upload.routes"
+import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
 import ticketQuotationStatusRouter from "./routes/ticket-quotations/ticket.quotation.status.routes";
 import ticketQuotationRouter from "./routes/ticket-quotations/ticket.quotations.routes";
-import { getDefaultQuotationStatusController, getDefaultTaxPercentageController } from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
+import {
+  getDefaultQuotationStatusController,
+  getDefaultTaxPercentageController,
+} from "./controllers/technician-dashboard-controllers/technician.tickets.controller";
 import technicianJobsStatisticsRouter from "./routes/technician-jobs/technician.jobs.statistics";
 import technicianDashboardJobsRouter from "./routes/technician-dashboard/technician-jobs/technician.jobs.routes";
-import { technicianDashboardJobsStatisticsController, updateTechnicianQuotationStatusController } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
-
+import {
+  technicianDashboardJobsStatisticsController,
+  updateTechnicianQuotationStatusController,
+} from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
 
 // Create express app
 const app: Application = express();
@@ -102,7 +110,6 @@ app.use(cors());
 
 // Static files (for uploads/public folder)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
 
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
@@ -314,7 +321,7 @@ app.use(
   contractTypeRouter,
 );
 
-//23-01-2026 
+//23-01-2026
 app.use(
   `${process.env.API_PREFIX}/technician-service-types`,
   adminProtecter,
@@ -326,7 +333,6 @@ app.use(
   adminProtecter,
   technicianInspectionListRouter,
 );
-
 
 app.use(
   `${process.env.API_PREFIX}/technician-job-status`,
@@ -340,27 +346,24 @@ app.use(
   technicianJobsRouter,
 );
 
-//26-01-2026 
+//26-01-2026
 app.use(
   `${process.env.API_PREFIX}/auto-generate-codes`,
   adminProtecter,
   autoCodeGeneratorRouter,
-
 );
 
 app.use(
   `${process.env.API_PREFIX}/register-driver`,
   // adminProtecter,
   driverRouter,
-
 );
 
-//27-01-2026 
+//27-01-2026
 app.use(
   `${process.env.API_PREFIX}/forget-password`,
   //adminProtecter,
   otpRouter,
-
 );
 
 //29-01-2026
@@ -368,7 +371,6 @@ app.use(
   `${process.env.API_PREFIX}/ticket-decision`,
   adminProtecter,
   ticketDecisionRouter,
-
 );
 
 app.use(
@@ -382,10 +384,9 @@ app.use(
   `${process.env.API_PREFIX}/insurance-companies`,
   adminProtecter,
   insuranceCompaniesRouter,
-
 );
 
-//03-02-2026 
+//03-02-2026
 app.use(
   `${process.env.API_PREFIX}/technician-dashboard`,
   technicianProtecter,
@@ -416,7 +417,6 @@ app.use(
   `${process.env.API_PREFIX}/quotations`,
   technicianProtecter,
   autoCodeGeneratorRouter,
-
 );
 
 app.use(
@@ -438,16 +438,22 @@ app.get(
   getDefaultTaxPercentageController,
 );
 
-//default quotation api 
+//default quotation api
 app.get(
   `${process.env.API_PREFIX}/default-quotation-status`,
   technicianProtecter,
   getDefaultQuotationStatusController,
 );
 
-app.get(`${process.env.API_PREFIX}/test-mobile-access`, adminProtecter, (req: Request, res: Response) => {
-  return res.status(200).json({ status: true, message: "Mobile Access Successfully." })
-})
+app.get(
+  `${process.env.API_PREFIX}/test-mobile-access`,
+  adminProtecter,
+  (req: Request, res: Response) => {
+    return res
+      .status(200)
+      .json({ status: true, message: "Mobile Access Successfully." });
+  },
+);
 
 // 11-02-2026
 app.use(
@@ -470,7 +476,7 @@ app.get(
   technicianDashboardJobsStatisticsController,
 );
 
-app.get(
+app.put(
   `${process.env.API_PREFIX}/update-technician-quotation-status`,
   technicianProtecter,
   updateTechnicianQuotationStatusController,
@@ -485,10 +491,7 @@ app.use(
   productAttributesRoutes,
 );
 
-app.use(
-  `${process.env.API_PREFIX}/products`,
-  productRoutes,
-);
+app.use(`${process.env.API_PREFIX}/products`, productRoutes);
 
 app.use(
   `${process.env.API_PREFIX}/ai`,
@@ -501,7 +504,6 @@ app.use(
 
   purchaseOrderRoutes,
 );
-
 
 app.use(
   `${process.env.API_PREFIX}/grn`,
@@ -518,12 +520,9 @@ app.use(
 app.use(
   `${process.env.API_PREFIX}/marketplace-templates`,
   marketplaceTemplateRoutes,
-)
+);
 
-app.use(
-  `${process.env.API_PREFIX}/marketplace`,
-  marketplaceRoute,
-)
+app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
 // Health check route

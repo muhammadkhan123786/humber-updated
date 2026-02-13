@@ -1,16 +1,18 @@
 import React from "react";
 import FormSection from "../../suppliers/components/FormSection";
 import FormField from "../../suppliers/components/FormInput";
-import { User, Mail, Phone } from "lucide-react";
+import { User, Mail, Phone, Loader2 } from "lucide-react";
 
 interface PersonalInfoSectionProps {
   formData: any;
   handleChange: (e: any) => void;
+  isLoadingEmployeeCode?: boolean;
 }
 
 const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
   formData,
   handleChange,
+  isLoadingEmployeeCode = false,
 }) => {
   return (
     <FormSection
@@ -82,15 +84,23 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
           hoverColor="pink"
           onChange={handleChange}
         />
-        <FormField
-          label="Employee ID"
-          name="employeeId"
-          value={formData.employeeId}
-          onChange={handleChange}
-          hoverColor="blue"
-          placeholder="EMP-001"
-          className="[&_input]:bg-[#F0FDFF]"
-        />
+        <div className="relative">
+          <FormField
+            label="Employee ID"
+            name="employeeId"
+            value={formData.employeeId}
+            onChange={handleChange}
+            hoverColor="blue"
+            placeholder="Auto-generated"
+            className="[&_input]:bg-[#F0FDFF] [&_input]:cursor-not-allowed [&_input]:opacity-75"
+            disabled={true}
+          />
+          {isLoadingEmployeeCode && (
+            <div className="absolute right-3 top-9">
+              <Loader2 size={16} className="animate-spin text-blue-500" />
+            </div>
+          )}
+        </div>
       </div>
     </FormSection>
   );

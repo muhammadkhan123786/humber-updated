@@ -13,14 +13,18 @@ import {
   Edit,
   Loader2,
 } from "lucide-react";
-
-import { getAlls } from "../../../../helper/apiHelper";
+import { getAlls, updateItem } from "../../../../helper/apiHelper";
 import Pagination from "../../../../components/ui/Pagination";
-
+import toast from "react-hot-toast";
+interface QuotationStatus {
+  _id: string;
+  ticketQuationStatus: string;
+}
 const QuotationTable: React.FC = () => {
   const [quotations, setQuotations] = useState<any[]>([]);
-  const [statusOptions, setStatusOptions] = useState<any[]>([]);
+  const [statusOptions, setStatusOptions] = useState<QuotationStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [counts, setCounts] = useState({
@@ -29,20 +33,21 @@ const QuotationTable: React.FC = () => {
     draft: 0,
     rejected: 0,
   });
+  const ENDPOINT = "/update-technician-quotation-status";
   const fetchStatusOptions = useCallback(async () => {
     try {
-      const response = await getAlls<any>("ticket-quotation-status");
+      const response = await getAlls<any>("/ticket-quotation-status");
       const data = (response as any).data || [];
       setStatusOptions(data);
     } catch (error) {
       console.error("Failed to fetch status options:", error);
+      toast.error("Failed to load status options");
     }
   }, []);
-
   const fetchQuotations = useCallback(async (page: number) => {
     try {
       setLoading(true);
-      const response = await getAlls<any>("technician-ticket-quotation", {
+      const response = await getAlls<any>("/technician-ticket-quotation", {
         page,
         limit: 10,
       });
@@ -62,19 +67,100 @@ const QuotationTable: React.FC = () => {
         },
         { sent: 0, approved: 0, draft: 0, rejected: 0 },
       );
-
       setCounts(newCounts);
     } catch (error) {
       console.error("Failed to fetch quotations:", error);
+      toast.error("Failed to load quotations");
     } finally {
       setLoading(false);
     }
   }, []);
-
   useEffect(() => {
     fetchStatusOptions();
     fetchQuotations(currentPage);
   }, [currentPage, fetchQuotations, fetchStatusOptions]);
+  const getCurrentStatusId = (quotation: any): string => {
+    if (!quotation.quotationStatusId) return "";
+
+    if (
+      typeof quotation.quotationStatusId === "object" &&
+      quotation.quotationStatusId?._id
+    ) {
+      return quotation.quotationStatusId._id;
+    }
+    if (typeof quotation.quotationStatusId === "string") {
+      return quotation.quotationStatusId;
+    }
+
+    return "";
+  };
+  const findStatusIdByName = (statusName: string): string => {
+    const status = statusOptions.find(
+      (opt) =>
+        opt.ticketQuationStatus?.toLowerCase() === statusName?.toLowerCase(),
+    );
+    return status?._id || "";
+  };
+  const handleStatusChange = async (
+    quotationId: string,
+    statusId: string,
+    currentStatus: string,
+  ) => {
+    if (!statusId) {
+      toast.error("Please select a valid status");
+      return;
+    }
+    try {
+      setUpdatingId(quotationId);
+
+      const payload = {
+        techncianQuotationId: quotationId,
+        techncianQuotationStatusId: statusId,
+      };
+      const response = await updateItem<any>(ENDPOINT, "", payload);
+
+      if (response?.success) {
+        toast.success("Status updated successfully!");
+        setQuotations((prevQuotations) =>
+          prevQuotations.map((q) =>
+            q._id === quotationId
+              ? {
+                  ...q,
+                  quotationStatusId: statusId,
+                  quotationStatus:
+                    statusOptions.find((opt) => opt._id === statusId)
+                      ?.ticketQuationStatus || q.quotationStatus,
+                }
+              : q,
+          ),
+        );
+        const selectedStatus =
+          statusOptions
+            .find((opt) => opt._id === statusId)
+            ?.ticketQuationStatus?.toLowerCase() || "";
+        const oldStatus = currentStatus.toLowerCase();
+
+        if (oldStatus !== selectedStatus) {
+          setCounts((prev) => ({
+            ...prev,
+            [oldStatus]: Math.max(
+              0,
+              (prev[oldStatus as keyof typeof prev] || 0) - 1,
+            ),
+            [selectedStatus]:
+              (prev[selectedStatus as keyof typeof prev] || 0) + 1,
+          }));
+        }
+      } else {
+        toast.error(response?.message || "Failed to update status");
+      }
+    } catch (error: any) {
+      console.error("Error updating status:", error);
+      toast.error(error?.message || "Failed to update status");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -94,7 +180,7 @@ const QuotationTable: React.FC = () => {
   return (
     <div className="p-8 bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 text-slate-600 min-h-screen">
       <div className="h-1 bg-linear-to-r from-indigo-500 to-purple-500 rounded-md" />
-      <div className="max-w-6xl mx-auto bg-white rounded-md shadow-sm border border-slate-200 p-6 mt-4">
+      <div className="max-w-6xl mx-auto bg-white rounded-md shadow-sm border border-slate-200 p-6 mb-6">
         <div className="flex justify-between items-center mb-6">
           <div className="leading-none flex items-center gap-2 font-bold">
             <FileText size={20} className="text-[#6366F1]" />
@@ -148,78 +234,106 @@ const QuotationTable: React.FC = () => {
                   </td>
                 </tr>
               ) : quotations.length > 0 ? (
-                quotations.map((row) => (
-                  <tr
-                    key={row._id}
-                    className="hover:bg-slate-50 transition-colors"
-                  >
-                    <td className="p-4">
-                      <span className="inline-flex items-center px-2 py-0.5 bg-indigo-50 font-mono text-xs rounded-md">
-                        {row.quotationAutoId}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="bg-slate-50 px-2 py-1 font-medium rounded border border-slate-200 text-[11px] text-slate-500 uppercase">
-                        {row.ticket?.ticketCode || "N/A"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm font-bold text-slate-700">
-                      <div className="flex items-center gap-2">
-                        <User size={14} className="text-slate-400" />
-                        {row.customer?.firstName || "Unknown"}
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-slate-500">
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} />
-                        {new Date(row.createdAt).toLocaleDateString()}
-                      </div>
-                    </td>
-                    <td className="p-4 text-[#4F46E5] font-bold text-base">
-                      £{row.netTotal?.toFixed(2)}
-                    </td>
-                    <td className="p-4 text-slate-600 text-sm font-medium">
-                      {row.ticket?.decision || "N/A"}
-                    </td>
-                    <td className="p-4">
-                      <select
-                        defaultValue={row.quotationStatus}
-                        className={`px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider focus:outline-none cursor-pointer ${getStatusDropdownStyle(row.quotationStatus)}`}
-                      >
-                        {statusOptions.length > 0 ? (
-                          statusOptions.map((opt: any) => (
-                            <option
-                              key={opt._id}
-                              value={opt.ticketQuationStatus}
-                            >
-                              {opt.ticketQuationStatus}
-                            </option>
-                          ))
-                        ) : (
-                          <option value={row.quotationStatus}>
-                            {row.quotationStatus}
-                          </option>
-                        )}
-                      </select>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="flex justify-center gap-2">
-                        <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-md hover:bg-indigo-50">
-                          <Eye size={14} />
-                        </button>
-                        <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-md hover:bg-indigo-50">
-                          <Edit size={14} />
-                        </button>
-                        <button className="p-1.5 border border-red-200 text-red-500 rounded-md hover:bg-red-50">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                quotations.map((row) => {
+                  const isUpdating = updatingId === row._id;
+                  let currentStatusId = getCurrentStatusId(row);
+                  if (!currentStatusId && row.quotationStatus) {
+                    currentStatusId = findStatusIdByName(row.quotationStatus);
+                  }
+
+                  return (
+                    <tr
+                      key={row._id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="p-4">
+                        <span className="inline-flex items-center px-2 py-0.5 bg-indigo-50 font-mono text-xs rounded-md">
+                          {row.quotationAutoId}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="bg-slate-50 px-2 py-1 font-medium rounded border border-slate-200 text-[11px] text-slate-500 uppercase">
+                          {row.ticket?.ticketCode || "N/A"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm font-bold text-slate-700">
+                        <div className="flex items-center gap-2">
+                          <User size={14} className="text-slate-400" />
+                          {row.customer?.firstName || "Unknown"}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-slate-500">
+                        <div className="flex items-center gap-2">
+                          <Calendar size={14} />
+                          {new Date(row.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </div>
+                      </td>
+                      <td className="p-4 text-[#4F46E5] font-bold text-base">
+                        £{row.netTotal?.toFixed(2)}
+                      </td>
+                      <td className="p-4 text-slate-600 text-sm font-medium">
+                        {row.ticket?.decision || "N/A"}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={currentStatusId}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                row._id,
+                                e.target.value,
+                                row.quotationStatus,
+                              )
+                            }
+                            disabled={isUpdating}
+                            className={`px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider focus:outline-none cursor-pointer ${getStatusDropdownStyle(
+                              row.quotationStatus,
+                            )} ${isUpdating ? "opacity-50 cursor-not-allowed" : ""}`}
+                          >
+                            <option value="">Select Status</option>
+                            {statusOptions.length > 0 ? (
+                              statusOptions.map((opt: QuotationStatus) => (
+                                <option key={opt._id} value={opt._id}>
+                                  {opt.ticketQuationStatus}
+                                </option>
+                              ))
+                            ) : (
+                              <option value={row.quotationStatus}>
+                                {row.quotationStatus}
+                              </option>
+                            )}
+                          </select>
+                          {isUpdating && (
+                            <Loader2
+                              size={14}
+                              className="animate-spin text-indigo-600"
+                            />
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="flex justify-center gap-2">
+                          <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-md hover:bg-indigo-50">
+                            <Eye size={14} />
+                          </button>
+                          <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-md hover:bg-indigo-50">
+                            <Edit size={14} />
+                          </button>
+                          <button className="p-1.5 border border-red-200 text-red-500 rounded-md hover:bg-red-50">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-10 text-center">
+                  <td colSpan={8} className="p-10 text-center text-slate-400">
                     No quotations found.
                   </td>
                 </tr>

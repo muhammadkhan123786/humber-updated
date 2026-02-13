@@ -1,10 +1,19 @@
 "use client";
 
-import { Check, Wrench, Home, Truck, Users, Info, MapPin } from "lucide-react";
+import {
+  Check,
+  Wrench,
+  Home,
+  Truck,
+  Users,
+  Info,
+  MapPin,
+  Search,
+} from "lucide-react";
 import { Controller } from "react-hook-form";
 import ScooterDeliveryMethod from "./ScooterDeliveryMethod";
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 declare global {
   interface Window {
     google: any;
@@ -50,6 +59,7 @@ const StepLocationPriority = ({
   } = form;
   const currentLoc = watch("location") || "Workshop";
   const selectedTechIds: string[] = watch("assignedTechnicianId") || [];
+  const [searchTerm, setSearchTerm] = useState("");
 
   const googleMapLoader = useGoogleMapLoad();
 
@@ -90,6 +100,22 @@ const StepLocationPriority = ({
           )
           .join(", ")
       : null;
+
+  const filteredTechnicians = technicians?.filter((tech: any) => {
+    if (!searchTerm) return true;
+
+    const fullName =
+      `${tech.personId?.firstName || ""} ${tech.personId?.lastName || ""}`.toLowerCase();
+    const status = tech.technicianStatus?.toLowerCase() || "";
+    const skills = tech.skills?.join(" ").toLowerCase() || "";
+    const searchLower = searchTerm.toLowerCase();
+
+    return (
+      fullName.includes(searchLower) ||
+      status.includes(searchLower) ||
+      skills.includes(searchLower)
+    );
+  });
 
   useEffect(() => {
     if (!googleMapLoader || !window.google?.maps?.places || !showAddressField)
@@ -391,112 +417,156 @@ const StepLocationPriority = ({
                   <Info size={12} /> Select a technician now or assign later
                   from the ticket details page
                 </p>
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                  {technicians?.map((tech: any) => {
-                    const isSelected = field.value?.includes(tech._id);
-                    const isBusy =
-                      tech.technicianStatus?.toLowerCase() === "busy" ||
-                      tech.technicianStatus?.toLowerCase() === "bzy";
-                    const displaySkills =
-                      tech.skills?.length > 0
-                        ? tech.skills
-                        : ["Mechanical", "Diagnostics"];
 
-                    return (
-                      <button
-                        key={tech._id}
-                        type="button"
-                        disabled={isBusy}
-                        onClick={() => {
-                          if (isSelected) {
-                            field.onChange(
-                              (field.value || []).filter(
-                                (id: string) => id !== tech._id,
-                              ),
-                            );
-                          } else {
-                            field.onChange([...(field.value || []), tech._id]);
-                          }
-                        }}
-                        className={`shrink-0 w-64 p-4 rounded-2xl border transition-all text-left relative h-full
-                          ${
-                            isSelected
-                              ? "bg-[#6322F2] text-white border-transparent shadow-lg scale-[1.02]"
-                              : "bg-white border-gray-100 text-gray-800 hover:border-[#4F39F6] hover:shadow-md"
-                          }
-                          ${isBusy ? "opacity-60 cursor-not-allowed grayscale-[0.5]" : "cursor-pointer"}
-                        `}
-                      >
-                        <div className="flex items-center gap-3 mb-4">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center font-medium text-xs ${
+                {/* Search Input */}
+                <div className="relative mb-4">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={16}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search technician by name, status, or skills..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0EFFF] rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-[#4F39F6] transition-all"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-xs text-gray-500">
+                    {filteredTechnicians?.length || 0} technician(s) found
+                  </span>
+                  {selectedTechIds.length > 0 && (
+                    <span className="text-xs font-medium text-[#4F39F6] bg-[#EEF2FF] px-2 py-1 rounded-full">
+                      {selectedTechIds.length} selected
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {filteredTechnicians?.length > 0 ? (
+                    filteredTechnicians.map((tech: any) => {
+                      const isSelected = field.value?.includes(tech._id);
+                      const isBusy =
+                        tech.technicianStatus?.toLowerCase() === "busy" ||
+                        tech.technicianStatus?.toLowerCase() === "bzy";
+                      const displaySkills =
+                        tech.skills?.length > 0
+                          ? tech.skills
+                          : ["Mechanical", "Diagnostics"];
+
+                      return (
+                        <button
+                          key={tech._id}
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => {
+                            if (isSelected) {
+                              field.onChange(
+                                (field.value || []).filter(
+                                  (id: string) => id !== tech._id,
+                                ),
+                              );
+                            } else {
+                              field.onChange([
+                                ...(field.value || []),
+                                tech._id,
+                              ]);
+                            }
+                          }}
+                          className={`shrink-0 w-64 p-4 rounded-2xl border transition-all text-left relative h-full
+                            ${
                               isSelected
-                                ? "bg-white/20"
-                                : "bg-[#8E79FF] text-white"
-                            }`}
-                          >
-                            {tech.personId?.firstName?.[0]}
-                            {tech.personId?.lastName?.[0]}
-                          </div>
-                          <div className="flex flex-col">
-                            <p
-                              className={`font-medium text-sm ${isSelected ? "text-white" : "text-gray-700"}`}
-                            >
-                              {tech.personId?.firstName}{" "}
-                              {tech.personId?.lastName}
-                            </p>
-                            <div className="flex">
-                              <span
-                                className={`text-[12px] px-2 py-0.5 rounded-md font-medium ${
-                                  isBusy
-                                    ? "bg-[#FFE9E9] text-[#FF5B5B]"
-                                    : isSelected
-                                      ? "bg-white/30 text-white"
-                                      : "bg-[#E6F9EF] text-[#2ECC71]"
-                                }`}
-                              >
-                                {tech.technicianStatus}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div
-                          className={`text-[11px] mb-4 flex justify-between items-center ${
-                            isSelected ? "text-white/90" : "text-gray-500"
-                          }`}
+                                ? "bg-[#6322F2] text-white border-transparent shadow-lg scale-[1.02]"
+                                : "bg-white border-gray-100 text-gray-800 hover:border-[#4F39F6] hover:shadow-md"
+                            }
+                            ${isBusy ? "opacity-60 cursor-not-allowed grayscale-[0.5]" : "cursor-pointer"}
+                          `}
                         >
-                          <span>Active Jobs:</span>
-                          <span
-                            className={`font-normal ${isSelected ? "text-white" : "text-[#4F39F6]"}`}
-                          >
-                            {tech.activeJobs || 0}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-1.5 min-h-6">
-                          {displaySkills.map((skill: string) => (
-                            <span
-                              key={skill}
-                              className={`text-[10px] px-3 py-1 rounded-lg font-medium ${
+                          <div className="flex items-center gap-3 mb-4">
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center font-medium text-xs ${
                                 isSelected
-                                  ? "bg-white/20 text-white"
-                                  : "bg-[#EEF2FF] text-[#4F39F6]"
+                                  ? "bg-white/20"
+                                  : "bg-[#8E79FF] text-white"
                               }`}
                             >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-
-                        {isSelected && (
-                          <div className="mt-3 pt-3 border-t border-white/20 flex justify-center items-center gap-1.5 text-[12px] font-medium animate-in fade-in slide-in-from-top-1">
-                            <Check size={14} /> Selected
+                              {tech.personId?.firstName?.[0]}
+                              {tech.personId?.lastName?.[0]}
+                            </div>
+                            <div className="flex flex-col">
+                              <p
+                                className={`font-medium text-sm ${isSelected ? "text-white" : "text-gray-700"}`}
+                              >
+                                {tech.personId?.firstName}{" "}
+                                {tech.personId?.lastName}
+                              </p>
+                              <div className="flex">
+                                <span
+                                  className={`text-[12px] px-2 py-0.5 rounded-md font-medium ${
+                                    isBusy
+                                      ? "bg-[#FFE9E9] text-[#FF5B5B]"
+                                      : isSelected
+                                        ? "bg-white/30 text-white"
+                                        : "bg-[#E6F9EF] text-[#2ECC71]"
+                                  }`}
+                                >
+                                  {tech.technicianStatus}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                      </button>
-                    );
-                  })}
+
+                          <div
+                            className={`text-[11px] mb-4 flex justify-between items-center ${
+                              isSelected ? "text-white/90" : "text-gray-500"
+                            }`}
+                          >
+                            <span>Active Jobs:</span>
+                            <span
+                              className={`font-normal ${isSelected ? "text-white" : "text-[#4F39F6]"}`}
+                            >
+                              {tech.activeJobs || 0}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1.5 min-h-6">
+                            {displaySkills.map((skill: string) => (
+                              <span
+                                key={skill}
+                                className={`text-[10px] px-3 py-1 rounded-lg font-medium ${
+                                  isSelected
+                                    ? "bg-white/20 text-white"
+                                    : "bg-[#EEF2FF] text-[#4F39F6]"
+                                }`}
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+
+                          {isSelected && (
+                            <div className="mt-3 pt-3 border-t border-white/20 flex justify-center items-center gap-1.5 text-[12px] font-medium animate-in fade-in slide-in-from-top-1">
+                              <Check size={14} /> Selected
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="w-full py-8 text-center text-gray-500">
+                      No technicians found matching {searchTerm}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

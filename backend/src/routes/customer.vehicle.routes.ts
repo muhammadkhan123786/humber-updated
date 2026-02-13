@@ -8,7 +8,10 @@ import { customerVehicleSchemaValidation } from "../schemas/customer.vehicles.sc
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { createUploader } from "../config/multer";
 import { mapUploadedFilesToBody } from "../middleware/mapUploadedFiles";
-import { getCompanyOwnedVehiclesByCustomer, getCustomerOwnedVehiclesByCustomer } from "../controllers/customer-vehicles-controller/customer.vehicle.controller";
+import {
+  getCompanyOwnedVehiclesByCustomer,
+  getCustomerOwnedVehiclesByCustomer,
+} from "../controllers/customer-vehicles-controller/customer.vehicle.controller";
 
 const vehicleUpload = createUploader([
   {
@@ -26,7 +29,13 @@ const customerVehicleServices = new GenericService<CustomerVehicleDoc>(
 
 const customerVehicleController = new AdvancedGenericController({
   service: customerVehicleServices,
-  populate: ["userId", "vehicleBrandId", "vehicleModelId", "customerId"],
+  populate: [
+    "userId",
+    "vehicleBrandId",
+    "vehicleModelId",
+    "customerId",
+    "colorId",
+  ],
   validationSchema: customerVehicleSchemaValidation,
   searchFields: ["serialNumber"],
 });
@@ -52,11 +61,17 @@ customerVehicleRouter.put(
 );
 
 customerVehicleRouter.delete("/:id", customerVehicleController.delete);
-//customer owned vehicles 
+//customer owned vehicles
 
-customerVehicleRouter.get("/customer-owned-vehicles/:customerId", getCustomerOwnedVehiclesByCustomer)
+customerVehicleRouter.get(
+  "/customer-owned-vehicles/:customerId",
+  getCustomerOwnedVehiclesByCustomer,
+);
 
-//company owned vehicles 
-customerVehicleRouter.get("/company-owned-vehicles/:customerId", getCompanyOwnedVehiclesByCustomer)
+//company owned vehicles
+customerVehicleRouter.get(
+  "/company-owned-vehicles/:customerId",
+  getCompanyOwnedVehiclesByCustomer,
+);
 
 export default customerVehicleRouter;
