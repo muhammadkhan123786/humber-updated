@@ -142,20 +142,19 @@ export const technicianProtecter = (
             process.env.JWT_SECRET as string
         ) as JwtPayload;
 
-        console.log("Technician Decoded:", decoded);
-
-        // ✅ Role check FIRST
-        if (decoded.role !== "Technician") {
-            return res.status(403).json({
-                message: "Not authorized, Technician access only",
+        if (decoded.role !== "Technician" && decoded.role !== "Admin") {
+            return res.status(401).json({
+                message: "Not authorized, token invalid",
             });
         }
 
-        // ✅ Attach to request
-        req.user = decoded;
-        req.role = decoded.role;
-        req.technicianId = decoded.technicianId;
-
+        // ✅ Role check FIRST
+        if (decoded.role === "Technician" || decoded.role === 'Admin') {
+            // ✅ Attach to request
+            req.user = decoded;
+            req.role = decoded.role;
+            req.technicianId = decoded.technicianId;
+        }
         next();
     } catch (error) {
         return res.status(401).json({
