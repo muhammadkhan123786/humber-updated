@@ -11,9 +11,12 @@ interface Part {
   unitPrice: number;
 }
 
-const PartsAndComponents = () => {
-  // Start with an empty array so the "No parts" state shows by default
-  const [parts, setParts] = useState<Part[]>([]);
+interface PartsAndComponentsProps {
+  parts: Part[];
+  setParts: React.Dispatch<React.SetStateAction<Part[]>>;
+}
+
+const PartsAndComponents = ({ parts, setParts }: PartsAndComponentsProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleInventorySelect = (items: any[]) => {

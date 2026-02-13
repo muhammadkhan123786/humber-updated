@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { Trash2, Plus, Clock } from "lucide-react";
 
 interface LabourItem {
@@ -9,10 +9,15 @@ interface LabourItem {
   rate: number;
 }
 
-const LabourSection: React.FC = () => {
-  // 1. Initialized as empty array to show the empty state by default
-  const [labourItems, setLabourItems] = useState<LabourItem[]>([]);
+interface LabourSectionProps {
+  labourItems: LabourItem[];
+  setLabourItems: React.Dispatch<React.SetStateAction<LabourItem[]>>;
+}
 
+const LabourSection: React.FC<LabourSectionProps> = ({
+  labourItems,
+  setLabourItems,
+}) => {
   const addLabour = () => {
     const newId = Date.now();
     setLabourItems([
@@ -38,7 +43,7 @@ const LabourSection: React.FC = () => {
   };
 
   const subtotal = labourItems.reduce(
-    (acc, item) => acc + item.hours * item.rate,
+    (acc, item) => acc + (item.hours || 0) * (item.rate || 0),
     0,
   );
 
@@ -157,7 +162,7 @@ const LabourSection: React.FC = () => {
                     Line Total:
                   </span>
                   <span className="text-purple-600 text-2xl font-bold">
-                    £{(item.hours * item.rate).toFixed(2)}
+                    £{((item.hours || 0) * (item.rate || 0)).toFixed(2)}
                   </span>
                 </div>
               </div>
