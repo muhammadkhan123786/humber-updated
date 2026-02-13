@@ -83,17 +83,17 @@ export const useGoodsReturn = () => {
   }, []);
 
 
-  useEffect(() => {
-      (async () => {
-        try {
-          const grnNumRes = await fetchNextDocumentNumber("GOODS_RETURN");          
-          setGRTNNumber(grnNumRes.nextNumber);          
-        } catch (err) {
-          console.error("Failed to fetch document numbers", err);
-          toast.error("Failed to fetch document numbers");
-        }
-      })();
-    }, []);
+  // useEffect(() => {
+  //     (async () => {
+  //       try {
+  //         const grnNumRes = await fetchNextDocumentNumber("GOODS_RETURN");          
+  //         setGRTNNumber(grnNumRes.nextNumber);          
+  //       } catch (err) {
+  //         console.error("Failed to fetch document numbers", err);
+  //         toast.error("Failed to fetch document numbers");
+  //       }
+  //     })();
+  //   }, []);
 
 
    const handleExportReturn = async (returnNote: GoodsReturnNote) => {
@@ -242,7 +242,6 @@ const handleGRNSelection = (grnId: string) => {
   const payload: Partial<CreateGoodsReturnDto> = {
   grnId: selectedGRN,
   returnedBy,
-  grtnNumber,
   returnDate: new Date(returnDate),
   returnReason: returnReason || "General return",
   notes: returnNotes,

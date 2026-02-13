@@ -73,7 +73,6 @@ export default function GoodsReturnPage() {
     resetForm();
   };
 
-  console.log("filteredReturns", filteredReturns)
   return (
     <div className="space-y-6 relative p-4 md:p-6">
       {/* Animated Background */}
@@ -152,6 +151,7 @@ export default function GoodsReturnPage() {
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
         grtn={viewingReturn}
+        onDownload={handleDownloadReturn}
       />
     </div>
   );

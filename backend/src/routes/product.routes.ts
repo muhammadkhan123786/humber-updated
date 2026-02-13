@@ -6,6 +6,7 @@ import { ProductDoc, ProductModal } from '../models/product.models';
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { createUploader } from "../config/multer";
 import { mapUploadedFilesToBody } from "../middleware/mapUploadedFiles";
+import { syncImageFilenames} from "../middleware/imageSync.middleware"
 
 const productRoutes = Router();
 
@@ -81,6 +82,7 @@ productRoutes.post(
         },
         ["featuredImage", "thumbnail"] // These are single fields
     ),
+    // syncImageFilenames,
     productController.create
 );
 

@@ -18,7 +18,7 @@ const goodsReturnController = new AdvancedGenericController({
       select: "grnNumber items purchaseOrderId", 
       populate: {
         path: "purchaseOrderId",
-        select: "items supplier",
+        select: "items orderNumber supplier",
         populate: {
           path: "supplier",
           select: "contactInformation", 

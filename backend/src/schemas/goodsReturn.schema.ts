@@ -1,7 +1,7 @@
 import { Schema, SchemaDefinition } from "mongoose";
 import { z } from "zod";
 import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
-
+import { generateNextDocumentNumber } from "../services/documentNumber.service"
 export const GoodsReturnItemSchema = new Schema(
   {
     status: {
@@ -23,9 +23,10 @@ export const GoodsReturnItemSchema = new Schema(
   { _id: false },
 );
 
-export const GoodsReturnSchema: SchemaDefinition = {
+export const GoodsReturnSchema = new Schema( {
   ...commonSchema,
-  grtnNumber: { type: String, required: true},
+  grtnNumber: { type: String},
+  returnReference: { type: String },
   grnId: { type: Schema.Types.ObjectId, ref: "grn", required: true },
   returnedBy: { type: String, required: true },
   returnReason: { type: String, required: true },
@@ -35,7 +36,19 @@ export const GoodsReturnSchema: SchemaDefinition = {
   },
   items: [GoodsReturnItemSchema],
   notes: String,
-};
+});
+
+GoodsReturnSchema.pre("save", async function (this: any) {
+  if (this.isNew) {
+    if (!this.grtnNumber) {
+      this.grtnNumber = await generateNextDocumentNumber("GOODS_RETURN", this.constructor);
+    }
+
+    if (!this.returnReference) {
+      this.returnReference = await generateNextDocumentNumber("GOODS_RETURN_REFERENCE", this.constructor);
+    }
+  }
+});
 
 // schemas/goodsReturn.validation.ts
 
@@ -48,9 +61,11 @@ export const GoodsReturnItemValidation = z.object({
   itemsNotes: z.string().optional(),
 });
 
+
 export const CreateGoodsReturnValidation = z.object({
   ...commonSchemaValidation,
-  grtnNumber: z.string(),
+  grtnNumber: z.string().optional(),
+  returnReference: z.string().optional(),
   grnId: z.string(),
   returnedBy: z.string().min(2),
   returnReason: z.string().min(2),

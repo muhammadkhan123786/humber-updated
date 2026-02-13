@@ -5,9 +5,7 @@ import path from 'path';
 
 export const generatePdfFromTemplate = async (templateName: string, data: any): Promise<Buffer> => {
   let browser;
-  try {
-    console.log(`[PDF] Starting generation for: ${templateName}`);
-    
+  try {  
     const filePath = path.join(process.cwd(), 'templates', `${templateName}.hbs`);
     if (!await fs.pathExists(filePath)) {
       throw new Error(`Template file not found at ${filePath}`);
@@ -19,7 +17,7 @@ export const generatePdfFromTemplate = async (templateName: string, data: any): 
 
     console.log("[PDF] Launching Puppeteer...");
     browser = await puppeteer.launch({
-      headless: true,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
     });
 

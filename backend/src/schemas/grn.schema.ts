@@ -1,6 +1,7 @@
 import { string, z } from "zod";
 import { Schema, SchemaDefinition } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
+import { generateNextDocumentNumber } from "../services/documentNumber.service"
 
 export const GRNItemSchema = new Schema(
   {
@@ -14,7 +15,7 @@ export const GRNItemSchema = new Schema(
     unitPrice: Number,
     condition: {
       type: String,
-      enum: ["good", "damaged", "expired", "other"],
+      enum: ["good", "damaged", "defective", "other"],
       required: true,
     },
 
@@ -26,7 +27,8 @@ export const GRNItemSchema = new Schema(
 export const GoodsReceivedSchema = new Schema(
   {
     ...commonSchema,
-    grnNumber: { type: String, required: true, unique: true },  
+    grnNumber: { type: String }, 
+    grnReference: { type: String}, 
     receivedDate: Date,
     receivedBy: String,
     purchaseOrderId: { type: Schema.Types.ObjectId, ref: "PurchaseOrder", required: true },
@@ -40,6 +42,19 @@ export const GoodsReceivedSchema = new Schema(
   { timestamps: true },
 );
 
+GoodsReceivedSchema.pre("save", async function (this: any) {
+  if (this.isNew) {
+    if (!this.grnNumber) {
+      // ✅ Pass the model's constructor
+      this.grnNumber = await generateNextDocumentNumber("GRN", this.constructor);
+    }
+
+    if (!this.grnReference) {
+      this.grnReference = await generateNextDocumentNumber("GRN_REFERENCE", this.constructor);
+    }
+  }
+});
+
 export const grnItemSchema = z
   .object({
     
@@ -51,7 +66,7 @@ export const grnItemSchema = z
     rejectedQuantity: z.number().min(0),
     damageQuantity: z.number().min(0),
     unitPrice: z.number().min(0),
-    condition: z.enum(["good", "damaged", "expired", "other"]),
+    condition: z.enum(["good", "damaged", "defective", "other"]),
     notes: z.string().optional(),
   })
   .refine(
@@ -65,7 +80,8 @@ export const grnItemSchema = z
 
 export const createGRNValidationsSchema = z.object({
   ...commonSchemaValidation,
-  grnNumber: z.string(), 
+   grnNumber: z.string().optional(), 
+  grnReference: z.string().optional(),
   purchaseOrderId: z.string().min(1, "Purchase Order ID is required"),
   receivedDate: z.coerce.date().optional(),
   receivedBy: z.string().min(2),

@@ -12,7 +12,7 @@ export interface ColorDropdownOption extends DropdownOption {
 
 // Icon dropdown needs icon array
 export interface IconDropdownOption extends DropdownOption {
-  icon: string[];
+  icon: string;
 }
 
 export interface DropdownData {
@@ -131,7 +131,7 @@ export class DropdownService {
       }>("/tax", { limit: 100 });
       return response.data.map((item) => ({
         value: item._id,
-        label: `${item.taxName} (${item.percentage * 100}%)`,
+        label: `${item.taxName} (${item.percentage}%)`,
         rate: item.percentage,
       }));
     } catch (error) {
@@ -360,7 +360,7 @@ private static async fetchIcons(): Promise<IconDropdownOption[]> {
   try {
     const response = await getAll<{
       _id: string;
-      icon: string[];
+      icon: string;
       iconName: string;
     }>("/icons", { limit: 100 });
       return response.data.map((item) => ({

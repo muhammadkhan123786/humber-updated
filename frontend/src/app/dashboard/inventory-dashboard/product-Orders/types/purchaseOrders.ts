@@ -106,9 +106,10 @@ export interface ISupplier {
   legalBusinessName: string;
   email: string;
   phoneNumber: string;
-  operationalInformation: {
-    orderContactName: string;
-    orderContactEmail: string;
+  contactInformation: {
+    contactInformation: string;
+    emailAddress: string;
+    primaryContactName: string
   };
 }
 

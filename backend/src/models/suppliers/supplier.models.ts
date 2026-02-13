@@ -125,6 +125,6 @@ export const SupplierSchema = new Schema<SupplierBaseDoc>(
 );
 
 export const SupplierModel: Model<SupplierBaseDoc> = model<SupplierBaseDoc>(
-  "SupplierModel",
+  "Supplier",
   SupplierSchema,
 );

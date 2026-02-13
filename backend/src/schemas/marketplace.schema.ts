@@ -8,18 +8,16 @@ export const MarketplaceSchema: SchemaDefinition = {
     required: true,
   },
 
+  type: {
+    type: Types.ObjectId,
+    ref: "MarketplaceTemplate",
+  },
   name: {
     type: String,
     required: true,
     trim: true,
   },
 
-  code: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
 
   credentials: {
     type: String,
@@ -31,15 +29,8 @@ export const MarketplaceSchema: SchemaDefinition = {
     default: "",
   },
 
-  icon: {
-    type: Types.ObjectId,
-    ref: "Icon",
-  },
+ 
 
-  color: {
-    type: Types.ObjectId,
-    ref: "Color",
-  },
 
   status: {
     type: String,
@@ -86,8 +77,6 @@ export const marketplaceValidationSchema = z.object({
 
   name: z.string().min(1, "Name is required"),
 
-  code: z.string().min(1, "Code is required"),
-
   credentials: z.string().min(1, "Credentials are required"),
 
   description: z.string().optional(),
@@ -96,8 +85,7 @@ export const marketplaceValidationSchema = z.object({
     .enum(["connected", "disconnected", "error"])
     .default("disconnected"),
 
-  icon: z.string().optional(),   
-  color: z.string().optional(),  
+  type: z.string().optional(),   
   isActive: z.boolean().optional(),
   isDeleted: z.boolean().optional(),
   isDefault: z.boolean().optional(),

@@ -221,15 +221,29 @@ export interface MarketplaceTemplate {
   fields: string[];
   isActive: boolean;
   isDefault: boolean;
+  id: string;
+  status: any;
+  type: any;
 }
 
 /* =========================
    CONNECTED MARKETPLACE
 ========================= */
 export interface Marketplace {
+  _id: string;
   id: string;
   name: string;
-  type: string;
+ type: {
+    _id: string;
+    icon?: {
+      _id: string;
+      icon: string;
+    };
+    color?: {
+      _id: string;
+      colorCode: string;
+    };
+  };
   status: 'connected' | 'disconnected' | 'error';
   lastSync?: Date;
   totalSales?: number;
@@ -237,8 +251,8 @@ export interface Marketplace {
   pendingOrders?: number;
   revenue24h?: number;
   growth?: number;
-  icon: string;
-  color: string;
+   icon: any;
+  color: any;
   description: string;
   apiKey?: string;
   shopUrl?: string;

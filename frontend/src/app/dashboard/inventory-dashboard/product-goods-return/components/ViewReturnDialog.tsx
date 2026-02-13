@@ -33,12 +33,14 @@ interface ViewReturnDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   grtn: GoodsReturnNote | null;
+  onDownload: any;
 }
 
 export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
   open,
   onOpenChange,
   grtn,
+  onDownload,
 }) => {
   if (!grtn) return null;
 
@@ -46,11 +48,6 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
     return grtn.items.reduce((sum, item) => sum + item.totalAmount, 0);
   }, [grtn.items]);
   const StatusIcon = getStatusIcon(grtn.status);
-
-  const handleDownloadPDF = () => {
-    // In a real app, this would generate and download a PDF
-    alert(`PDF export for ${grtn.returnNumber} would be implemented here`);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -65,11 +62,12 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
             >
               <PackageX className="h-4 w-4 text-white" />
             </div>
-            {grtn.returnNumber}
+            {grtn.grtnNumber}
           </DialogTitle>
-          {/* <DialogDescription>
-            Goods Return Note Details - {grtn.grnReference}
-          </DialogDescription> */}
+          <DialogDescription>
+            Goods Return Note Details - {grtn.grnId?.grnNumber} /{" "}
+            {grtn.grnId?.purchaseOrderId?.orderNumber}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -81,7 +79,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
                   GRN Reference
                 </p>
                 <p className="text-lg font-bold text-orange-900">
-                  {grtn.grnNumber}
+                  {grtn.grnId?.grnNumber}
                 </p>
               </CardContent>
             </Card>
@@ -202,13 +200,13 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
                         <div className="space-y-1">
                           <p className="text-xs text-gray-600">Status</p>
                           <Badge
-  className={cn(
-    "text-white border-0 bg-gradient-to-r",
-    getStatusColor(returnItem?.status)
-  )}
->
-  {returnItem?.status}
-</Badge>
+                            className={cn(
+                              "text-white border-0 bg-gradient-to-r",
+                              getStatusColor(returnItem?.status),
+                            )}
+                          >
+                            {returnItem?.status}
+                          </Badge>
                         </div>
                       </div>
 
@@ -281,7 +279,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
             Close
           </Button>
           <Button
-            onClick={handleDownloadPDF}
+            onClick={() => onDownload?.(grtn)}
             className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
           >
             <Download className="h-4 w-4 mr-2" />

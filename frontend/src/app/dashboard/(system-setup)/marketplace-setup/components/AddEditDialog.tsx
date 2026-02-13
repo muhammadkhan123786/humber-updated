@@ -49,18 +49,7 @@ export function AddEditDialog({
   onFormChange,
 }: AddEditDialogProps) {
   const [fieldSearch, setFieldSearch] = useState('');
-
-  // Helper function to get the correct image URL
-  const getImageUrl = (iconPath: string) => {
-    if (!iconPath) return '';
-    
-    // Remove '/api' from the base URL for static file serving
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    const staticBaseUrl = baseUrl.replace('/api', '');
-    
-    // Construct the full URL
-    return `${staticBaseUrl}${iconPath}`;
-  };
+console.log("form", formData);
 
   const toggleFieldSelection = (field: string) => {
     if (formData.fields.includes(field)) {
@@ -85,30 +74,21 @@ export function AddEditDialog({
     });
   };
 
-  const handleIconChange = (value: string) => {
-    const selectedIcon = icons.find(i => i.value === value);
-    onFormChange({ 
-      ...formData, 
-      icon: value,
-      iconUrl: selectedIcon?.icon?.[0] || ''
-    });
-  };
+  const handleIconChange = (selectedIconBase64: string) => {
+  
+  const selectedIconObject = icons.find(i => i.icon === selectedIconBase64);
+  
+  onFormChange({ 
+    ...formData, 
+    icon: selectedIconBase64,               
+    selectedIconId: selectedIconObject?.value || '', 
+    label: selectedIconObject?.label || '' 
+  });
+};
 
   const filteredFields = AVAILABLE_FIELDS.filter(field =>
     field.label.toLowerCase().includes(fieldSearch.toLowerCase())
   );
-
-  // Get current icon URL for display
-  const getCurrentIconUrl = () => {
-    if (formData.iconUrl) {
-      return formData.iconUrl;
-    }
-    const currentIcon = icons.find(i => i.value === formData.icon);
-    return currentIcon?.icon?.[0] || '';
-  };
-
-  const currentIconUrl = getCurrentIconUrl();
-  const fullIconUrl = getImageUrl(currentIconUrl);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -164,7 +144,7 @@ export function AddEditDialog({
 
           {/* Icon & Color */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            {/* <div>
               <Label>Icon</Label>
               <Select
                 value={formData.icon}
@@ -172,45 +152,36 @@ export function AddEditDialog({
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select icon">
-                    {currentIconUrl ? (
+                 
                       <div className="flex items-center gap-2">
                         <img
-                          src={fullIconUrl}
+                          src={formData.icon}
                           alt="Selected icon"
                           className="h-5 w-5 object-contain"
                           onError={(e) => {
-                            console.error('Icon failed to load:', fullIconUrl);
+                            console.error('Icon failed to load:');
                             e.currentTarget.style.border = '1px solid red';
                           }}
                         />
                         <span className="text-sm">
-                          {icons.find(i => i.value === formData.icon)?.label || 'Select icon'}
+                          { formData.icon|| 'Select icon'}
                         </span>
                       </div>
-                    ) : (
-                      <span className="text-sm text-gray-500">Select icon</span>
-                    )}
+                    
                   </SelectValue>
                 </SelectTrigger>
 
                 <SelectContent>
-                  {icons.length === 0 ? (
-                    <div className="p-2 text-sm text-gray-500">No icons available</div>
-                  ) : (
-                    icons.map((item) => {
-                      const iconPath = item.icon?.[0] || '';
-                      const iconFullUrl = getImageUrl(iconPath);
-                      
-                      return (
-                        <SelectItem key={item.value} value={item.value}>
+                  
+                        <SelectItem>
                           <div className="flex items-center gap-2">
-                            {iconPath ? (
+                            {formData.icon ? (
                               <img
-                                src={iconFullUrl}
-                                alt={item.label}
+                                src={formData.icon}
+                                alt={formData.label}
                                 className="h-6 w-6 object-contain"
                                 onError={(e) => {
-                                  console.error('Dropdown icon failed:', iconFullUrl);
+                                 
                                   // Replace with placeholder on error
                                   e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"%3E%3Ccircle cx="12" cy="12" r="10"%3E%3C/circle%3E%3Ctext x="12" y="16" text-anchor="middle" font-size="12"%3E?%3C/text%3E%3C/svg%3E';
                                 }}
@@ -220,16 +191,42 @@ export function AddEditDialog({
                                 ?
                               </div>
                             )}
-                            <span className="text-sm">{item.label}</span>
+                            <span className="text-sm">{formData.iconName}</span>
                           </div>
                         </SelectItem>
-                      );
-                    })
-                  )}
+                   
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
+<div>
+      <Label>Icon</Label>
+      <Select 
+        value={formData.icon} 
+        onValueChange={handleIconChange}
+      >
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Select icon">
+            <div className="flex items-center gap-2">
+              {formData.icon ? (
+                <img src={formData.icon} className="h-5 w-5 object-contain" alt="" />
+              ) : null}
+              <span>{formData.label || 'Select icon'}</span>
+            </div>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {icons.map((item) => (
+            <SelectItem key={item.value} value={item.icon}>
+              <div className="flex items-center gap-2">
+                <img src={item.icon} className="h-5 w-5 object-contain" alt={item.label} />
+                <span>{item.label}</span>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
             <div>
               <Label>Color Theme</Label>
               <Select
@@ -276,23 +273,19 @@ export function AddEditDialog({
               }}
             >
               <div className="flex items-center gap-3">
-                {currentIconUrl ? (
+              
                   <div className="h-12 w-12 bg-white/10 rounded p-2 flex items-center justify-center">
                     <img
-                      src={fullIconUrl}
+                      src={formData.icon}
                       alt="Preview icon"
                       className="h-full w-full object-contain"
                       onError={(e) => {
-                        console.error('Preview icon failed:', fullIconUrl);
+                        console.error('Preview icon failed:');
                         e.currentTarget.style.display = 'none';
                       }}
                     />
                   </div>
-                ) : (
-                  <div className="h-12 w-12 bg-white/20 rounded flex items-center justify-center text-2xl">
-                    ?
-                  </div>
-                )}
+               
                 <div>
                   <p className="font-semibold">{formData.name || 'Marketplace Name'}</p>
                   <p className="text-sm text-white/80">{formData.description || 'Description'}</p>

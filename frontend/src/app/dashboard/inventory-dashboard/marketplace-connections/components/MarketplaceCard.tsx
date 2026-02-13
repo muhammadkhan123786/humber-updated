@@ -47,36 +47,7 @@ export function MarketplaceCard({
   onEdit,
   onDelete
 }: MarketplaceCardProps) {
-  const getStatusIcon = () => {
-    switch (marketplace.status) {
-      case 'connected':
-        return (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="relative"
-          >
-            <CheckCircle2 className="h-6 w-6 text-green-500" />
-            <motion.div
-              className="absolute inset-0 bg-green-500 rounded-full opacity-30"
-              animate={{ scale: [1, 1.5, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-            />
-          </motion.div>
-        );
-      case 'disconnected':
-        return <WifiOff className="h-6 w-6 text-gray-400" />;
-      case 'error':
-        return (
-          <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-          >
-            <AlertCircle className="h-6 w-6 text-red-500" />
-          </motion.div>
-        );
-    }
-  };
+  
 
   const getStatusBadge = () => {
     switch (marketplace.status) {
@@ -114,9 +85,14 @@ export function MarketplaceCard({
     }
   };
 
+
+
+const iconSrc = marketplace?.type?.icon?.icon;
+const colorCode =
+  marketplace.type?.color?.colorCode || "#6366f1";
   return (
     <motion.div
-      key={marketplace.id}
+      key={marketplace._id}
       layout
       initial={{ opacity: 0, scale: 0.8, rotateY: -90 }}
       animate={{ opacity: 1, scale: 1, rotateY: 0 }}
@@ -131,7 +107,7 @@ export function MarketplaceCard({
     >
       {/* Animated Background Gradient */}
       <motion.div
-        className={`absolute inset-0 bg-gradient-to-br ${marketplace.color} opacity-5`}
+        className={`absolute inset-0 bg-gradient-to-br ${colorCode} opacity-5`}
         whileHover={{ opacity: 0.1 }}
         transition={{ duration: 0.3 }}
       />
@@ -147,54 +123,42 @@ export function MarketplaceCard({
       </motion.div>
 
       {/* Card Header */}
-      <div className={`relative bg-gradient-to-r ${marketplace.color} p-6 text-white`}>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <motion.div 
-              className="text-5xl"
-              whileHover={{ scale: 1.2, rotate: 10 }}
-              transition={{ type: "spring" }}
-            >
-              {marketplace.icon}
-            </motion.div>
-            <div>
-              <motion.h3 
-                className="text-2xl font-bold drop-shadow-lg"
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1 + 0.2 }}
-              >
-                {marketplace.name}
-              </motion.h3>
-              <motion.p 
-                className="text-white/90 text-sm font-semibold"
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1 + 0.3 }}
-              >
-                {marketplace.type.toUpperCase()}
-              </motion.p>
-            </div>
-          </div>
-          {getStatusIcon()}
-        </div>
-        <motion.p 
-          className="text-white/95 text-sm"
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: index * 0.1 + 0.4 }}
-        >
-          {marketplace.description}
-        </motion.p>
+      <div
+  className="relative p-6 text-white"
+  style={{
+    background: `linear-gradient(135deg, ${colorCode}, ${colorCode}cc)`
+  }}
+>
+  <div className="flex items-center gap-3">
+    <motion.div
+      className="text-5xl"
+      whileHover={{ scale: 1.2, rotate: 10 }}
+      transition={{ type: "spring" }}
+    >
+      
+  <img
+  src={iconSrc}
+  alt={marketplace?.name}
+  className="w-10 h-10 object-contain rounded-md bg-white p-1"
+  onError={(e) => {
+    e.currentTarget.style.display = "none";
+  }}
+/>
 
-        {/* Animated Wave */}
-        <motion.div
-          className="absolute bottom-0 left-0 right-0 h-1 bg-white/30"
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: index * 0.1 + 0.5 }}
-        />
-      </div>
+     
+    </motion.div>
+
+    <div>
+      <h3 className="text-2xl font-bold">
+        {marketplace.name}
+      </h3>
+      <p className="text-white/90 text-sm">
+        {/* {marketplace?.type?.toUpperCase()} */}
+      </p>
+    </div>
+  </div>
+</div>
+
 
       {/* Card Body */}
       <div className="relative p-6 space-y-4">
@@ -361,14 +325,14 @@ export function MarketplaceCard({
             <Button
               size="sm"
               onClick={() => onTestConnection(marketplace)}
-              disabled={testingConnection === marketplace.id}
+              disabled={testingConnection === marketplace._id}
               className={`w-full gap-2 ${
                 marketplace.status === 'connected'
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
                   : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
               } text-white border-0 shadow-lg`}
             >
-              {testingConnection === marketplace.id ? (
+              {testingConnection === marketplace._id ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Testing...
@@ -390,7 +354,7 @@ export function MarketplaceCard({
                 disabled={syncingMarketplace === marketplace.id}
                 className="gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg"
               >
-                {syncingMarketplace === marketplace.id ? (
+                {syncingMarketplace === marketplace._id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <RefreshCw className="h-4 w-4" />
@@ -430,10 +394,13 @@ export function MarketplaceCard({
           </motion.div>
         </motion.div>
       </div>
-
       {/* Bottom Accent */}
       <motion.div
-        className={`h-2 bg-gradient-to-r ${marketplace.color}`}
+         className="h-2"
+  style={{
+    background: `linear-gradient(to right, ${colorCode}, white)`
+  }}
+      
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ delay: index * 0.1 + 1.3 }}

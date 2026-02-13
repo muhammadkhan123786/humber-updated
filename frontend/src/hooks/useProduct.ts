@@ -189,32 +189,72 @@ export const useProducts = (options: UseProductsOptions = {}) => {
   /**
    * Update a product
    */
-  const updateProduct = useCallback(async (id: string, productData: any) => {
-    try {
-      setLoading(true);
-      setError(null);
+  // const updateProduct = useCallback(async (id: string, productData: any) => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
 
-      const response = await axios.put(`${API_URL}/${id}`, productData, getAuthConfig());
+  //     const response = await axios.put(`${API_URL}/${id}`, productData, getAuthConfig());
 
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to update product');
-      }
+  //     if (!response.data.success) {
+  //       throw new Error(response.data.message || 'Failed to update product');
+  //     }
 
-      // Update the product in the list
-      setProducts(prev => 
-        prev.map(p => p.id === id ? transformProduct(response.data.data) : p)
-      );
+  //     // Update the product in the list
+  //     setProducts(prev => 
+  //       prev.map(p => p.id === id ? transformProduct(response.data.data) : p)
+  //     );
 
-      return { success: true, data: response.data.data };
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+  //     return { success: true, data: response.data.data };
+  //   } catch (err: any) {
+  //     const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
+  //     setError(errorMessage);
+  //     return { success: false, error: errorMessage };
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
+
+
+  // ✅ NEW CODE - USE THIS:
+const updateProduct = useCallback(async (id: string, productData: any) => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    console.log('🔄 Updating product ID:', id);
+    // console.log('📝 Product data:', productData);
+
+    const response = await axios.put(
+      `${API_URL}/${id}`, 
+      productData, 
+      getAuthConfig()
+    );
+
+    console.log('✅ API Response:', response.data);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update product');
     }
-  }, []);
 
+    // Transform the updated product
+    const transformedProduct = transformProduct(response.data.data);
+    
+    // Update the product in the local state
+    setProducts(prev => 
+      prev.map(p => p.id === id ? transformedProduct : p)
+    );
+
+    return { success: true, data: transformedProduct };
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
+    setError(errorMessage);
+    console.error('❌ Update error:', err);
+    return { success: false, error: errorMessage };
+  } finally {
+    setLoading(false);
+  }
+}, []);
   /**
    * Delete a product
    */

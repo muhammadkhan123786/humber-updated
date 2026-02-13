@@ -42,7 +42,7 @@ export function DeleteDialog({ isOpen, marketplace, onClose, onConfirm }: Delete
             <div className="text-4xl">{marketplace.icon}</div>
             <div>
               <p className="font-bold text-gray-900 text-lg">{marketplace.name}</p>
-              <p className="text-sm text-gray-600">{marketplace.type.toUpperCase()}</p>
+              {/* <p className="text-sm text-gray-600">{marketplace.type.toUpperCase()}</p> */}
             </div>
           </div>
         </motion.div>

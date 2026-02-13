@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 
 export interface IMarketplace {
   userId: Types.ObjectId | string;
-
+type?: string;
   name: string;
   code: string;
 

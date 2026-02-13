@@ -30,7 +30,7 @@ export const fetchMarketplaceTemplates = async (): Promise<MarketplaceTemplate[]
       userId: getUserId(),
     },
   });
-
+console.log("res", res);
  return res.data.data || res.data;
 };
 

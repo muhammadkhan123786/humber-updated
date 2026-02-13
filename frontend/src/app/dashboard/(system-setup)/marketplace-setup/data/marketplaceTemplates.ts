@@ -30,7 +30,8 @@ export interface ColorOption {
 export interface IconOption {
    value: string;
   label: string;
-  icon: string[]; 
+  icon: string; 
+  iconName?:  string;
 }
 
 export const AVAILABLE_FIELDS: AvailableField[] = [
@@ -56,20 +57,53 @@ export interface FormData {
   fields: string[];
   isActive: boolean;
   isDefault: boolean;
+  label: string | undefined;
+  selectedIconId: string;
+}
+
+// export const getInitialFormData = (
+//   colors: ColorOption[], 
+//   icons: IconOption[],
+// ): FormData => ({
+//   name: '',
+//   code: '',
+//   description: '',
+//   color: colors?.length > 0 ? colors[0]?.value : '',
+//   colorCode: colors?.length > 0 ? colors[0]?.colorCode : '#6366f1',
+//   icon: icons?.length > 0 ? icons[0].icon : '' ,
+//   label: icons?.length > 0 ? icons[0]?.label : '',
+
+//   fields: [],
+//   isActive: true,
+//   isDefault: false
+// });
+
+export interface IconOption {
+  value: string; // The ID from backend
+  label: string; // The Name (e.g., "Amazon")
+  icon: string;  // The Base64 string
+  iconName?: string;
 }
 
 export const getInitialFormData = (
   colors: ColorOption[], 
-  icons: IconOption[]
-): FormData => ({
-  name: '',
-  code: '',
-  description: '',
-  color: colors?.length > 0 ? colors[0]?.value : '',
-  colorCode: colors?.length > 0 ? colors[0]?.colorCode : '#6366f1',
-  icon: icons?.length > 0 ? icons[0]?.value : '',
-  iconUrl: icons?.length > 0 ? icons[0]?.icon[0] : '',
-  fields: [],
-  isActive: true,
-  isDefault: false
-});
+  icons: IconOption[],
+): FormData => {
+  const defaultColor = colors?.length > 0 ? colors[0] : null;
+  const defaultIcon = icons?.length > 0 ? icons[0] : null;
+
+  return {
+    name: '',
+    code: '',
+    description: '',
+    color: defaultColor ? defaultColor.value : '',
+    colorCode: defaultColor ? defaultColor.colorCode : '#6366f1',
+    // We store the Base64 string in 'icon' so the <img> tag can render it directly
+    icon: defaultIcon ? defaultIcon.icon : '', 
+    label: defaultIcon ? defaultIcon.label : '',
+    selectedIconId: defaultIcon ? defaultIcon.value: '',
+    fields: [],
+    isActive: true,
+    isDefault: false
+  };
+};

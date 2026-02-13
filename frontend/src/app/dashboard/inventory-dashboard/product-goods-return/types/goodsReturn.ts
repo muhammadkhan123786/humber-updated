@@ -19,6 +19,7 @@ export interface PurchaseOrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+
 }
 
 export interface GRNItem {
@@ -52,7 +53,8 @@ export interface PurchaseOrder {
       primaryContactName?: string;
     };
   };
-  items: PurchaseOrderItem[]; // <-- added items
+  orderNumber?: string;
+  items: PurchaseOrderItem[];
 }
 
 
