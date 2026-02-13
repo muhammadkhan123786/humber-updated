@@ -50,6 +50,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   getTicketNumber,
   getStatusInfo,
 }) => {
+  console.log("Rendering QuotationTable with quotations:", quotations);
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-GB", {

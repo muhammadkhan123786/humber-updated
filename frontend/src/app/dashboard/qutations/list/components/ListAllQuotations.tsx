@@ -75,7 +75,7 @@ const ListAllQuotations = () => {
       // The backend returns "tickets" not "data" for this endpoint
       const quotationsData = Array.isArray(quotationsRes.tickets) ? quotationsRes.tickets : [];
       
-      setQuotations(quotationsData);
+      setQuotations(quotationsRes.data || []);
       setFilteredQuotations(quotationsData);
       
     } catch (error) {
