@@ -61,7 +61,7 @@ const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await getAlls<any>("/job-statistics");
+        const res = await getAlls<any>("/technician-dashboard-jobs-statistics");
         const apiData = res?.data as any;
 
         if (!apiData) return;

@@ -258,13 +258,18 @@ const JobCardsSection = ({
                       key={job._id || index}
                       className="hover:bg-indigo-50/30 transition-colors group"
                     >
-                      <td className="p-4 font-bold text-sm text-indigo-950">
-                        {job.jobId}
+                      <td className="p-4">
+                        <div className="font-bold text-sm text-indigo-950">
+                          {job.jobId}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {job.ticketId?.ticketCode}
+                        </div>
                       </td>
 
                       <td className="p-4">
                         <span
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm inline-block ${statusStyle.bg} ${statusStyle.text}`}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm inline-block ${statusStyle.bg} ${statusStyle.text}`}
                         >
                           {status}
                         </span>
@@ -272,7 +277,7 @@ const JobCardsSection = ({
 
                       <td className="p-4">
                         <div
-                          className="px-2 py-0.5 border rounded text-[9px] font-black uppercase inline-block"
+                          className="px-2.5 py-1 bg-amber-100 text-amber-500  border border-amber-500 rounded-full text-[12px] font-semibold lowercase inline-block"
                           style={{
                             backgroundColor: `${job.ticketId?.priorityId?.backgroundColor}15`,
                             color: job.ticketId?.priorityId?.backgroundColor,
@@ -283,35 +288,76 @@ const JobCardsSection = ({
                         </div>
                       </td>
 
-                      <td className="p-4 text-sm font-semibold text-gray-900">
-                        {job.technicianId?.personId?.firstName}
+                      <td className="p-4">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {job.technicianId?.personId?.firstName}{" "}
+                          {job.technicianId?.personId?.lastName}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {job.technicianId?.contactId?.phoneNumber}
+                        </div>
                       </td>
 
-                      <td className="p-4 text-sm font-semibold text-gray-900">
-                        {job.ticketId?.customerId?.personId?.firstName}
+                      <td className="p-4">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {job.ticketId?.customerId?.personId?.firstName}{" "}
+                          {job.ticketId?.customerId?.personId?.lastName}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {job.ticketId?.customerId?.contactId?.phoneNumber}
+                        </div>
                       </td>
 
-                      <td className="p-4 text-sm text-gray-700">
-                        {job.ticketId?.vehicleId?.productName}
+                      <td className="p-4">
+                        <div className="text-sm font-semibold text-gray-900">
+                          {job.ticketId?.vehicleId?.productName ||
+                            job.ticketId?.vehicleId?.vehicleType}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {job.ticketId?.vehicleId?.vehicleModelId?.modelName}
+                        </div>
                       </td>
 
-                      <td className="p-4 text-xs text-gray-600">
-                        {job.ticketId?.customerId?.addressId?.address}
+                      <td className="p-4">
+                        <div className="flex items-center gap-1.5 text-gray-700">
+                          <MapPin size={14} className="text-gray-400" />
+                          <span className="text-xs">
+                            {job.ticketId?.customerId?.addressId?.city ||
+                              job.ticketId?.customerId?.addressId?.address}
+                          </span>
+                        </div>
                       </td>
 
-                      <td className="p-4 text-xs text-gray-500">
-                        {formatDate(job.createdAt)}
+                      <td className="p-4">
+                        <div className="flex items-center gap-1.5 text-gray-700">
+                          <Calendar size={14} className="text-gray-400" />
+                          <div>
+                            <div className="text-xs font-medium">
+                              {formatDate(job.createdAt)}
+                            </div>
+                            <div className="text-[10px] text-gray-500">
+                              {job.createdAt
+                                ? new Date(job.createdAt).toLocaleTimeString(
+                                    "en-US",
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    }
+                                  )
+                                : "N/A"}
+                            </div>
+                          </div>
+                        </div>
                       </td>
 
                       <td className="p-4 text-center">
-                        <div className="flex justify-center gap-2">
-                          <button
-                            onClick={() => handleView(job)}
-                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-green-600 hover:text-white transition-all shadow-sm"
-                          >
-                            <Eye size={16} />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleView(job)}
+                          className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                        >
+                          <Eye size={16} />
+                        </button>
                       </td>
                     </tr>
                   );

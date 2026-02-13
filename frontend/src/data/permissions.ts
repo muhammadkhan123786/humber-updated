@@ -367,13 +367,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: Warehouse,
     roleId: [1],
   },
-  {
-    _id: nanoid(),
-    label: "Customers",
-    href: "/dashboard/customers",
-    icon: Users,
-    roleId: [1],
-  },
+  // {
+  //   _id: nanoid(),
+  //   label: "Customers",
+  //   href: "/dashboard/customers",
+  //   icon: Users,
+  //   roleId: [1],
+  // },
   {
     _id: nanoid(),
     label: "Bookings",
