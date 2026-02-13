@@ -1,7 +1,7 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Eye,
-  Edit2,
   Trash2,
   Search,
   FileText,
@@ -10,81 +10,98 @@ import {
   AlertCircle,
   User,
   Calendar,
+  Edit,
+  Loader2,
 } from "lucide-react";
 
-type Status = "sent" | "approved" | "draft" | "rejected";
-
-interface Quotation {
-  id: string;
-  ticket: string;
-  customer: string;
-  date: string;
-  amount: string;
-  status: Status;
-  payBy: string;
-}
+import { getAlls } from "../../../../helper/apiHelper";
+import Pagination from "../../../../components/ui/Pagination";
 
 const QuotationTable: React.FC = () => {
-  const data: Quotation[] = [
-    {
-      id: "QUO-1738654321001",
-      ticket: "TKT001",
-      customer: "John Smith",
-      date: "01 Feb 2024",
-      amount: "£ 389.40",
-      status: "sent",
-      payBy: "Cash",
-    },
-    {
-      id: "QUO-1738654321002",
-      ticket: "TKT002",
-      customer: "Mary Johnson",
-      date: "02 Feb 2024",
-      amount: "£ 156.00",
-      status: "approved",
-      payBy: "Cheque",
-    },
-    {
-      id: "QUO-1738654321003",
-      ticket: "TKT003",
-      customer: "David Brown",
-      date: "03 Feb 2024",
-      amount: "£ 159.60",
-      status: "draft",
-      payBy: "Bank Transfer",
-    },
-    {
-      id: "QUO-1738654321004",
-      ticket: "TKT005",
-      customer: "Michael Davis",
-      date: "05 Feb 2024",
-      amount: "£ 234.00",
-      status: "rejected",
-      payBy: "Card",
-    },
-  ];
+  const [quotations, setQuotations] = useState<any[]>([]);
+  const [statusOptions, setStatusOptions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [counts, setCounts] = useState({
+    sent: 0,
+    approved: 0,
+    draft: 0,
+    rejected: 0,
+  });
+  const fetchStatusOptions = useCallback(async () => {
+    try {
+      const response = await getAlls<any>("ticket-quotation-status");
+      const data = (response as any).data || [];
+      setStatusOptions(data);
+    } catch (error) {
+      console.error("Failed to fetch status options:", error);
+    }
+  }, []);
 
-  const getStatusStyle = (status: Status): string => {
-    const styles: Record<Status, string> = {
+  const fetchQuotations = useCallback(async (page: number) => {
+    try {
+      setLoading(true);
+      const response = await getAlls<any>("technician-ticket-quotation", {
+        page,
+        limit: 10,
+      });
+      const fetchedData = (response as any).data || [];
+      const paginationInfo = (response as any).pagination || {};
+
+      setQuotations(fetchedData);
+      setTotalPages(paginationInfo.pages || 1);
+
+      const newCounts = fetchedData.reduce(
+        (acc: any, item: any) => {
+          const status = item.quotationStatus?.toLowerCase();
+          if (acc.hasOwnProperty(status)) {
+            acc[status] = (acc[status] || 0) + 1;
+          }
+          return acc;
+        },
+        { sent: 0, approved: 0, draft: 0, rejected: 0 },
+      );
+
+      setCounts(newCounts);
+    } catch (error) {
+      console.error("Failed to fetch quotations:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStatusOptions();
+    fetchQuotations(currentPage);
+  }, [currentPage, fetchQuotations, fetchStatusOptions]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const getStatusDropdownStyle = (status: string): string => {
+    const styles: Record<string, string> = {
       sent: "bg-blue-50 text-blue-500 border-blue-200",
       approved: "bg-green-50 text-green-500 border-green-200",
       draft: "bg-gray-50 text-gray-500 border-gray-200",
       rejected: "bg-red-50 text-red-500 border-red-200",
     };
-    return styles[status];
+    return styles[status?.toLowerCase()] || styles["draft"];
   };
 
   return (
-    <div className="p-8  bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 text-slate-600">
-      <div className="h-1 bg-linear-to-r from-indigo-500  to-purple-500 rounded-md" />
-      <div className="max-w-6xl mx-auto bg-white rounded-md shadow-sm border border-slate-200 p-6">
+    <div className="p-8 bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 text-slate-600 min-h-screen">
+      <div className="h-1 bg-linear-to-r from-indigo-500 to-purple-500 rounded-md" />
+      <div className="max-w-6xl mx-auto bg-white rounded-md shadow-sm border border-slate-200 p-6 mt-4">
         <div className="flex justify-between items-center mb-6">
           <div className="leading-none flex items-center gap-2 font-bold">
             <FileText size={20} className="text-[#6366F1]" />
             All Quotations
           </div>
           <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-md text-xs font-semibold border border-slate-200">
-            4 quotations
+            {quotations.length} items on this page
           </span>
         </div>
 
@@ -95,122 +112,151 @@ const QuotationTable: React.FC = () => {
           />
           <input
             type="text"
-            placeholder="Search by quotation number, ticket ID, or customer name..."
+            placeholder="Search by quotation number..."
             className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
           />
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 mb-8">
+        <div className="overflow-hidden rounded-xl border border-slate-200 mb-6">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#8B5CF6] text-white">
-                <th className="px-4 py-3 text-left text-sm font-semibold">
+                <th className="px-4 py-3 text-sm font-semibold">
                   Quotation No.
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
-                  Ticket No.
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
-                  Customer Name
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
-                  Created Date
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
+                <th className="px-4 py-3 text-sm font-semibold">Ticket No.</th>
+                <th className="px-4 py-3 text-sm font-semibold">Customer</th>
+                <th className="px-4 py-3 text-sm font-semibold">Date</th>
+                <th className="px-4 py-3 text-sm font-semibold">
                   Total Amount
                 </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
-                  Pay By
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-semibold">
+                <th className="px-4 py-3 text-sm font-semibold">Decision</th>
+                <th className="px-4 py-3 text-sm font-semibold">Status</th>
+                <th className="px-4 py-3 text-sm font-semibold text-center">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {data.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                  <td className="p-4">
-                    <span className="inline-flex items-center justify-center rounded-md  px-2 py-0.5 font-medium w-fit   bg-indigo-50 font-mono text-xs">
-                      {row.id}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className="bg-slate-50 px-2 py-1 font-medium rounded border border-slate-200 text-[11px] text-slate-500">
-                      {row.ticket}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm font-bold text-slate-700">
-                    <div className="flex items-center gap-2">
-                      <User size={14} className="text-slate-400" />
-                      {row.customer}
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm text-slate-500">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} />
-                      {row.date}
-                    </div>
-                  </td>
-                  <td className="p-4 text-[#4F46E5] font-bold text-base">
-                    {row.amount}
-                  </td>
-                  <td className="p-4 text-sm text-slate-700">
-                    {/* NEW COLUMN CELL */}
-                    {row.payBy || "N/A"}
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(row.status)}`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-center gap-2">
-                      <button className="flex items-center gap-1 px-3 py-1 border border-indigo-200 text-indigo-600 rounded-md text-xs font-semibold hover:bg-indigo-50 transition-all">
-                        <Eye size={14} /> View
-                      </button>
-                      <button className="flex items-center gap-1 px-3 py-1 border border-blue-200 text-blue-600 rounded-md text-xs font-semibold hover:bg-blue-50 transition-all">
-                        <Edit2 size={14} /> Edit
-                      </button>
-                      <button className="p-1.5 border border-red-200 text-red-500 rounded-md hover:bg-red-50 transition-all">
-                        <Trash2 size={14} />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="p-10 text-center text-slate-400">
+                    <div className="flex justify-center items-center gap-2">
+                      <Loader2 className="animate-spin" size={18} /> Loading
+                      data...
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : quotations.length > 0 ? (
+                quotations.map((row) => (
+                  <tr
+                    key={row._id}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="p-4">
+                      <span className="inline-flex items-center px-2 py-0.5 bg-indigo-50 font-mono text-xs rounded-md">
+                        {row.quotationAutoId}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className="bg-slate-50 px-2 py-1 font-medium rounded border border-slate-200 text-[11px] text-slate-500 uppercase">
+                        {row.ticket?.ticketCode || "N/A"}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm font-bold text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <User size={14} className="text-slate-400" />
+                        {row.customer?.firstName || "Unknown"}
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-slate-500">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} />
+                        {new Date(row.createdAt).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="p-4 text-[#4F46E5] font-bold text-base">
+                      £{row.netTotal?.toFixed(2)}
+                    </td>
+                    <td className="p-4 text-slate-600 text-sm font-medium">
+                      {row.ticket?.decision || "N/A"}
+                    </td>
+                    <td className="p-4">
+                      <select
+                        defaultValue={row.quotationStatus}
+                        className={`px-2 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider focus:outline-none cursor-pointer ${getStatusDropdownStyle(row.quotationStatus)}`}
+                      >
+                        {statusOptions.length > 0 ? (
+                          statusOptions.map((opt: any) => (
+                            <option
+                              key={opt._id}
+                              value={opt.ticketQuationStatus}
+                            >
+                              {opt.ticketQuationStatus}
+                            </option>
+                          ))
+                        ) : (
+                          <option value={row.quotationStatus}>
+                            {row.quotationStatus}
+                          </option>
+                        )}
+                      </select>
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center gap-2">
+                        <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-md hover:bg-indigo-50">
+                          <Eye size={14} />
+                        </button>
+                        <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-md hover:bg-indigo-50">
+                          <Edit size={14} />
+                        </button>
+                        <button className="p-1.5 border border-red-200 text-red-500 rounded-md hover:bg-red-50">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="p-10 text-center">
+                    No quotations found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
-        <div className="grid grid-cols-4 gap-4">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+
+        <div className="grid grid-cols-4 gap-4 mt-8">
           <SummaryCard
             icon={<FileText size={16} />}
             label="Sent"
-            count="1"
+            count={counts.sent.toString()}
             color="blue"
           />
           <SummaryCard
             icon={<CheckCircle size={16} />}
             label="Approved"
-            count="1"
+            count={counts.approved.toString()}
             color="green"
           />
           <SummaryCard
             icon={<File size={16} />}
             label="Draft"
-            count="1"
+            count={counts.draft.toString()}
             color="slate"
           />
           <SummaryCard
             icon={<AlertCircle size={16} />}
             label="Rejected"
-            count="1"
+            count={counts.rejected.toString()}
             color="red"
           />
         </div>
@@ -225,6 +271,7 @@ interface CardProps {
   count: string;
   color: "blue" | "green" | "slate" | "red";
 }
+
 const SummaryCard: React.FC<CardProps> = ({ icon, label, count, color }) => {
   const colors = {
     blue: {
@@ -248,9 +295,7 @@ const SummaryCard: React.FC<CardProps> = ({ icon, label, count, color }) => {
       count: "text-[#991B1B]",
     },
   };
-
   const style = colors[color];
-
   return (
     <div className={`p-4 rounded-xl border ${style.container}`}>
       <div
