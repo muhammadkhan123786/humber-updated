@@ -304,7 +304,7 @@ const JobCardsSection = ({
                           {job.ticketId?.customerId?.personId?.lastName}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {job.ticketId?.customerId?.contactId?.phoneNumber}
+                          {job.ticketId?.customerId?.contactId?.mobileNumber}
                         </div>
                       </td>
 
