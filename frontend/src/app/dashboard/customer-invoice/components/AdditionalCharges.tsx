@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { CustomSelect } from "../../../common-form/CustomSelect";
 
-const AdditionalCharges: React.FC = () => {
+const AdditionalCharges: React.FC = ({}) => {
   const [calloutFee, setCalloutFee] = useState<number>(0);
   const [discountValue, setDiscountValue] = useState<number>(0);
   const [discountType, setDiscountType] = useState<string>("percentage");
