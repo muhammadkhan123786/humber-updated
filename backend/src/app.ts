@@ -432,14 +432,14 @@ app.use(
 //10-02-2026
 app.get(
   `${process.env.API_PREFIX}/default-tax`,
-  technicianMasterProtector,
+  technicianProtecter,
   getDefaultTaxPercentageController,
 );
 
 //default quotation api 
 app.get(
   `${process.env.API_PREFIX}/default-quotation-status`,
-  technicianMasterProtector,
+  technicianProtecter,
   getDefaultQuotationStatusController,
 );
 
