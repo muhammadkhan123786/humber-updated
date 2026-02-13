@@ -334,7 +334,9 @@ const ManageTechnicianList = ({
                   <div className="text-[10px] font-bold text-gray-500 uppercase">
                     Active Jobs
                   </div>
-                  <div className="text-2xl font-black text-orange-600">3</div>
+                  <div className="text-2xl font-black text-orange-600">
+                    {tech.activeJobs}
+                  </div>
                 </div>
                 <div className="bg-linear-to-br from-emerald-50 to-green-50 p-3 rounded-xl border border-green-100/50">
                   <div className="text-[10px] font-bold text-gray-500 uppercase">
