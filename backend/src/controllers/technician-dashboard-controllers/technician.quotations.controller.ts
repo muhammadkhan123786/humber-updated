@@ -1,14 +1,15 @@
-import { AuthRequest, TechnicianAuthRequest } from "../../middleware/auth.middleware";
+import {
+  AuthRequest,
+  TechnicianAuthRequest,
+} from "../../middleware/auth.middleware";
 import { Request, Response } from "express";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { TicketQuations } from "../../models/ticket-quation-models/ticket.quotation.models";
 import { Types } from "mongoose";
 
-
-
 export const technicianTicketsQuotationsController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     console.log("Login role:", req.role);
@@ -248,6 +249,7 @@ export const technicianTicketsQuotationsController = async (
           _id: "$ticket._id",
           ticketCode: "$ticket.ticketCode",
           issue_Details: "$ticket.issue_Details",
+          decision: "$ticket.decisionId",
           ticketStatus: {
             $ifNull: [
               "$ticketStatusDetails.label",
@@ -280,11 +282,11 @@ export const technicianTicketsQuotationsController = async (
         filter === "all"
           ? null
           : {
-            total,
-            page,
-            limit,
-            pages: Math.ceil(total / limit),
-          },
+              total,
+              page,
+              limit,
+              pages: Math.ceil(total / limit),
+            },
     });
   } catch (error) {
     console.error("Technician Ticket quotations Error:", error);
@@ -294,6 +296,3 @@ export const technicianTicketsQuotationsController = async (
     });
   }
 };
-
-
-
