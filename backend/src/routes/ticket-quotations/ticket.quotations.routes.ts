@@ -13,7 +13,12 @@ const ticketQuotationServices = new GenericService<ticketQuatationDoc>(TicketQua
 
 const ticketQuotationController = new AdvancedGenericController({
   service: ticketQuotationServices,
-  populate: ["userId", "technicianId", "ticketId", "quotationStatusId", "partsList"],
+  populate: ["userId", "technicianId", "ticketId", "quotationStatusId", 
+    "partsList",
+    {
+      path: "ticketId",
+      populate: [{ path: "ticketStatusId",select:"code" }, { path: "customerId",populate:[{path:"personId",select:"firstName lastName"}] },{path: "vehicleId",select:"productName"}],
+    },],
   validationSchema: ticketQuotationValidation,
   searchFields: ["quotationAutoId"]
 });
