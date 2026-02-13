@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { getAll } from "@/helper/apiHelper";
+import { toast } from "react-hot-toast";
 import {
   X,
   FileText,
@@ -89,12 +91,81 @@ interface QuotationViewData {
 }
 
 interface ViewProps {
-  quotation: QuotationViewData | null;
+  quotationId: string | null;
   onClose: () => void;
 }
 
-const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
-  if (!quotation) return null;
+const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
+  const [quotation, setQuotation] = useState<QuotationViewData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch quotation data when component mounts
+  useEffect(() => {
+    if (quotationId) {
+      fetchQuotationData(quotationId);
+    }
+  }, [quotationId]);
+
+  const fetchQuotationData = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const response: any = await getAll(`/technician-ticket-quotation/${id}`);
+      
+      const data = response?.data || response;
+      
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // Map the API response to match QuotationViewData interface
+        const mappedQuotation: QuotationViewData = {
+          _id: data._id,
+          quotationAutoId: data.quotationAutoId,
+          ticketCode: data.ticketId?.ticketCode || '',
+          quotationStatus: data.quotationStatusId?.ticketQuationStatus || data.quotationStatus || 'Unknown',
+          ticket: {
+            ticketCode: data.ticketId?.ticketCode || '',
+            decision: data.ticketId?.decisionId || 'N/A',
+          },
+          customer: {
+            _id: data.ticketId?.customerId?._id || '',
+            firstName: data.ticketId?.customerId?.personId?.firstName || '',
+            lastName: data.ticketId?.customerId?.personId?.lastName || '',
+            email: data.ticketId?.customerId?.contactId?.email || '',
+            phone: data.ticketId?.customerId?.contactId?.phone || '',
+          },
+          partsList: (data.partsList || []).map((part: any) => ({
+            _id: part._id || part.partId?._id || '',
+            partName: part.partName || part.partId?.partName || 'Unknown Part',
+            partNumber: part.partNumber || part.partId?.partNumber || 'N/A',
+            quantity: Number(part.quantity) || 1,
+            unitCost: Number(part.unitCost) || Number(part.partId?.unitCost) || 0,
+            stock: part.stock || part.partId?.stock,
+            description: part.description || part.partId?.description || '',
+          })),
+          labourTime: data.labourTime,
+          labourRate: data.labourRate,
+          partTotalBill: data.partTotalBill,
+          labourTotalBill: data.labourTotalBill,
+          subTotalBill: data.subTotalBill,
+          taxAmount: data.taxAmount,
+          netTotal: data.netTotal,
+          aditionalNotes: data.aditionalNotes,
+          validityDate: data.validityDate,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        };
+        
+        setQuotation(mappedQuotation);
+      } else {
+        toast.error('Invalid quotation data received');
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error fetching quotation:', error);
+      toast.error('Failed to load quotation details');
+      onClose();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -104,17 +175,21 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
     };
   }, []);
 
+  if (!quotationId) return null;
+
   // Aggregate parts by part ID to combine duplicate items
   const aggregateParts = (parts: Part[]) => {
     const partMap = new Map<string, Part>();
     
     parts.forEach((part) => {
       const key = part._id;
+      const quantity = Number(part.quantity) || 1;
+      
       if (partMap.has(key)) {
         const existingPart = partMap.get(key)!;
-        existingPart.quantity += part.quantity;
+        existingPart.quantity = (Number(existingPart.quantity) || 0) + quantity;
       } else {
-        partMap.set(key, { ...part });
+        partMap.set(key, { ...part, quantity });
       }
     });
     
@@ -163,6 +238,16 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
           className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-slideUp"
           onClick={(e) => e.stopPropagation()}
         >
+        {isLoading ? (
+          <div className="flex items-center justify-center h-96">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        ) : !quotation ? (
+          <div className="flex items-center justify-center h-96">
+            <p className="text-gray-500">No quotation data available</p>
+          </div>
+        ) : (
+          <>
         {/* Header */}
         <div className="bg-linear-to-r from-indigo-600 to-purple-600 text-white p-4">
           <div className="flex justify-between items-start">
@@ -295,13 +380,13 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
                           {part.partNumber || "N/A"}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-center">
-                          {part.quantity}
+                          {Number(part.quantity) || 0}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-900 text-right">
                           {formatCurrency(part.unitCost || 0)}
                         </td>
                         <td className="px-4 py-3 text-sm font-semibold text-indigo-600 text-right">
-                          {formatCurrency((part.unitCost || 0) * (part.quantity || 1))}
+                          {formatCurrency((Number(part.unitCost) || 0) * (Number(part.quantity) || 0))}
                         </td>
                       </tr>
                     ))}
@@ -433,8 +518,8 @@ const View: React.FC<ViewProps> = ({ quotation, onClose }) => {
               Close
             </button>
           </div>
-        </div> */}
-      </div>
+        </div> */}        </>
+        )}      </div>
     </div>
     </>
   );

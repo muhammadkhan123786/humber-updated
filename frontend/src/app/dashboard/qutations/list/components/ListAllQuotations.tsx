@@ -49,8 +49,7 @@ const ListAllQuotations = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [viewingQuotation, setViewingQuotation] = useState<QuotationFromBackend | null>(null);
-  const [editingQuotation, setEditingQuotation] = useState<QuotationFromBackend | null>(null);
+  const [viewingQuotationId, setViewingQuotationId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -183,16 +182,11 @@ const ListAllQuotations = () => {
   };
 
   const handleView = (id: string) => {
-    const quotation = quotations.find(q => q._id === id);
-    if (quotation) {
-      setViewingQuotation(quotation);
-    } else {
-      toast.error("Quotation not found");
-    }
+    setViewingQuotationId(id);
   };
 
   const handleCloseView = () => {
-    setViewingQuotation(null);
+    setViewingQuotationId(null);
   };
 
   const handleEdit = (id: string) => {
@@ -292,21 +286,12 @@ const ListAllQuotations = () => {
         />       
         </div>
         {/* View Modal */}
-        {viewingQuotation && (
+        {viewingQuotationId && (
           <View
-            quotation={viewingQuotation}
+            quotationId={viewingQuotationId}
             onClose={handleCloseView}
           />
         )}
-
-        {/* Edit Modal */}
-        {/* {editingQuotation && (
-          <Edit
-            quotation={editingQuotation}
-            onClose={handleCloseEdit}
-            onSuccess={handleUpdateSuccess}
-          />
-        )} */}
 
         {/* Delete Confirmation Modal */}
         <DeleteConfirmModal

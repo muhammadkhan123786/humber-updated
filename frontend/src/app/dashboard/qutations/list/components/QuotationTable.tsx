@@ -141,12 +141,12 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className=" font-bold text-indigo-600">
+                    <span className=" font-bold text-indigo-600 whitespace-nowrap">
                       {formatCurrency(quotation.netTotal)}
                     </span>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className="text-sm font-medium text-indigo-600">
+                  <td className="px-4 py-4 ">
+                    <span className="text-sm font-medium text-indigo-600 whitespace-nowrap">
                       {quotation?.ticket?.decision || "N/A"}
                     </span>
                   </td>
