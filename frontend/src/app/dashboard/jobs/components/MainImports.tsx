@@ -2,6 +2,7 @@
 import TechnicianHeader from './Header'
 import { useEffect, useState, useMemo, useCallback } from "react";
 import StatsDashboard from './StatsCard';
+import CountCard from './CountCard';
 import FilterSection from './SearchBar';
 import JobCardsSection from './CardSection';
 
@@ -21,6 +22,7 @@ const MainImports = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [jobs, setJobs] = useState<TechnicianJobType[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
@@ -105,7 +107,14 @@ const MainImports = () => {
     <div className="flex flex-col gap-6">
       <TechnicianHeader activeView={viewMode} setActiveView={setViewMode} />
 
-      <StatsDashboard />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <StatsDashboard refreshTrigger={refreshTrigger} />
+        </div>
+        <div className="w-full sm:w-auto">
+          <CountCard refreshTrigger={refreshTrigger} />
+        </div>
+      </div>
 
       <FilterSection
         searchTerm={searchTerm}
@@ -125,6 +134,7 @@ const MainImports = () => {
           jobs={filteredJobs}
           loading={loading}
           viewMode={viewMode}
+          onJobUpdate={() => setRefreshTrigger(prev => prev + 1)}
         />
       )}
 
