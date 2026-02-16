@@ -6,8 +6,11 @@ import Cards from "./Cards";
 import QuotationTable from "./QuotationTable";
 import View from "./View";
 import DeleteConfirmModal from "../../../my-tickets/components/DeleteConfirmModal";
-import { getAlls, deleteItem } from "@/helper/apiHelper";
+import { getAlls, deleteItem, updateItem } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
+import axios from "axios";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
 interface QuotationFromBackend {
   _id: string;
@@ -42,6 +45,14 @@ interface QuotationFromBackend {
   updatedAt?: string;
 }
 
+interface QuotationStatus {
+  _id: string;
+  ticketQuationStatus: string;
+  statusColor: string;
+  statusIcon?: string;
+  isActive: boolean;
+}
+
 const ListAllQuotations = () => {
   const router = useRouter();
   const [quotations, setQuotations] = useState<QuotationFromBackend[]>([]);
@@ -51,6 +62,7 @@ const ListAllQuotations = () => {
   const [loading, setLoading] = useState(true);
   const [viewingQuotationId, setViewingQuotationId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [quotationStatuses, setQuotationStatuses] = useState<QuotationStatus[]>([]);
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -73,11 +85,33 @@ const ListAllQuotations = () => {
         "/technician-ticket-quotation"
       );
       
+      // Fetch ticket quotation statuses
+      const statusesRes: any = await getAlls<QuotationStatus>(
+        "/ticket-quotation-status"
+      );
+      
       // The backend returns "tickets" not "data" for this endpoint
       const quotationsData = Array.isArray(quotationsRes.tickets) ? quotationsRes.tickets : [];
+      const statusesData = Array.isArray(statusesRes.data) ? statusesRes.data.filter((s: QuotationStatus) => s.isActive) : [];
       
-      setQuotations(quotationsRes.data || []);
+      // Map quotationStatus name to quotationStatusId for each quotation
+      const mappedQuotations = (quotationsRes.data || []).map((quotation: QuotationFromBackend) => {
+        if (!quotation.quotationStatusId && quotation.quotationStatus) {
+          // Find the matching status ID from the status name
+          const matchedStatus = statusesData.find(
+            (s: QuotationStatus) => 
+              s.ticketQuationStatus?.toLowerCase() === quotation.quotationStatus?.toLowerCase()
+          );
+          if (matchedStatus) {
+            return { ...quotation, quotationStatusId: matchedStatus._id };
+          }
+        }
+        return quotation;
+      });
+      
+      setQuotations(mappedQuotations);
       setFilteredQuotations(quotationsData);
+      setQuotationStatuses(statusesData);
       
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -131,10 +165,25 @@ const ListAllQuotations = () => {
     return quotation?.ticket?.ticketCode || "N/A";
   };
 
-  const getStatusInfo = (quotation: any): { name: string; color: string; bgColor: string } => {
+  const getStatusInfo = (quotation: any): { name: string; color: string; bgColor: string; statusColor?: string } => {
     // quotationStatus is already populated from backend as a string
     const statusName = quotation?.quotationStatus || "Unknown";
     
+    // Find matching status from fetched statuses
+    const matchedStatus = quotationStatuses.find(
+      (s) => s?.ticketQuationStatus && statusName && s.ticketQuationStatus.toLowerCase() === statusName.toLowerCase()
+    );
+    
+    if (matchedStatus && matchedStatus.statusColor) {
+      return {
+        name: statusName,
+        color: "text-white",
+        bgColor: ``,
+        statusColor: matchedStatus.statusColor,
+      };
+    }
+    
+    // Fallback to default colors if no match found
     const statusLower = String(statusName).toLowerCase();
 
     if (statusLower.includes("sent") || statusLower.includes("send")) {
@@ -223,6 +272,58 @@ const ListAllQuotations = () => {
       setSelectedStatus("");
     } else {
       setSelectedStatus(status);
+    }
+  };
+
+  const handleStatusChange = async (quotationId: string, newStatusId: string) => {
+    try {
+      // Find the status from the status ID
+      const selectedStatus = quotationStatuses.find(s => s._id === newStatusId);
+      if (!selectedStatus) {
+        toast.error("Invalid status selected");
+        return;
+      }
+
+      // Optimistically update local state first for immediate UI feedback
+      const updatedQuotation = {
+        quotationStatus: selectedStatus.ticketQuationStatus,
+        quotationStatusId: newStatusId
+      };
+
+      setQuotations(prevQuotations =>
+        prevQuotations.map(q =>
+          q._id === quotationId ? { ...q, ...updatedQuotation } : q
+        )
+      );
+      
+      setFilteredQuotations(prevFiltered =>
+        prevFiltered.map(q =>
+          q._id === quotationId ? { ...q, ...updatedQuotation } : q
+        )
+      );
+
+      // Update the quotation status in backend using the specific endpoint
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${BASE_URL}/update-technician-quotation-status`,
+        {
+          techncianQuotationId: quotationId,
+          techncianQuotationStatusId: newStatusId,
+        },
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
+      // Revert the change on error
+      fetchData();
     }
   };
 
@@ -315,6 +416,8 @@ const ListAllQuotations = () => {
           getCustomerName={getCustomerName}
           getTicketNumber={getTicketNumber}
           getStatusInfo={getStatusInfo}
+          quotationStatuses={quotationStatuses}
+          onStatusChange={handleStatusChange}
         />       
         </div>
         {/* View Modal */}
