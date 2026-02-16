@@ -409,7 +409,7 @@ app.use(
 //05-02-2026
 app.use(
   `${process.env.API_PREFIX}/ticket-quotation-status`,
-  adminProtecter,
+  technicianProtecter,
   ticketQuotationStatusRouter,
 );
 

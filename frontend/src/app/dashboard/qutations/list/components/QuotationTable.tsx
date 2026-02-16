@@ -8,6 +8,7 @@ interface QuotationFromBackend {
   ticketId: any;
   ticketCode: string;
   quotationStatus: string;
+  quotationStatusId?: string;
   quotationAutoId?: string;
   customer: {
     _id: string;
@@ -31,6 +32,14 @@ interface QuotationFromBackend {
   updatedAt?: string;
 }
 
+interface QuotationStatus {
+  _id: string;
+  ticketQuationStatus: string;
+  statusColor: string;
+  statusIcon?: string;
+  isActive: boolean;
+}
+
 interface QuotationTableProps {
   quotations: QuotationFromBackend[];
   onView: (id: string) => void;
@@ -38,7 +47,9 @@ interface QuotationTableProps {
   onDelete: (id: string) => void;
   getCustomerName: (quotation: any) => string;
   getTicketNumber: (quotation: any) => string;
-  getStatusInfo: (quotation: any) => { name: string; color: string; bgColor: string };
+  getStatusInfo: (quotation: any) => { name: string; color: string; bgColor: string; statusColor?: string };
+  quotationStatuses: QuotationStatus[];
+  onStatusChange: (quotationId: string, newStatusId: string) => void;
 }
 
 const QuotationTable: React.FC<QuotationTableProps> = ({
@@ -49,6 +60,8 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   getCustomerName,
   getTicketNumber,
   getStatusInfo,
+  quotationStatuses,
+  onStatusChange,
 }) => {
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "N/A";
@@ -62,6 +75,43 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   const formatCurrency = (amount: number | undefined) => {
     if (!amount) return "£ 0.00";
     return `£ ${amount.toFixed(2)}`;
+  };
+
+  // Get color styling based on status name
+  const getStatusColors = (statusName: string) => {
+    const statusLower = String(statusName || '').toLowerCase();
+
+    if (statusLower.includes("sent") || statusLower.includes("send")) {
+      return {
+        bgColor: "#3B82F620", // Blue with 12% opacity
+        textColor: "#1E40AF",
+        borderColor: "#3B82F6",
+      };
+    } else if (statusLower.includes("approved") || statusLower.includes("approve")) {
+      return {
+        bgColor: "#10B98120", // Green with 12% opacity
+        textColor: "#047857",
+        borderColor: "#10B981",
+      };
+    } else if (statusLower.includes("draft")) {
+      return {
+        bgColor: "#6B728020", // Gray with 12% opacity
+        textColor: "#374151",
+        borderColor: "#6B7280",
+      };
+    } else if (statusLower.includes("reject")) {
+      return {
+        bgColor: "#EF444420", // Red with 12% opacity
+        textColor: "#B91C1C",
+        borderColor: "#EF4444",
+      };
+    }
+
+    return {
+      bgColor: "#F3F4F6",
+      textColor: "#6B7280",
+      borderColor: "#E5E7EB",
+    };
   };
 
   return (
@@ -137,6 +187,18 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
           ) : (
             quotations.map((quotation, index) => {
               const statusInfo = getStatusInfo(quotation);
+              
+              // Find the current status ID from quotation status name if not set
+              const currentStatusId = quotation.quotationStatusId || quotationStatuses.find(
+                s => s.ticketQuationStatus?.toLowerCase() === quotation.quotationStatus?.toLowerCase()
+              )?._id || '';
+              
+              // Find the current status object
+              const currentStatus = quotationStatuses.find(s => s._id === currentStatusId);
+              
+              // Get colors based on current status name
+              const statusColors = getStatusColors(currentStatus?.ticketQuationStatus || quotation.quotationStatus || '');
+              
               return (
                 <tr
                   key={quotation._id}
@@ -181,11 +243,32 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex px-3 py-1 rounded-full   text-xs font-medium ${statusInfo.bgColor} ${statusInfo.color}`}
+                    <select
+                      value={currentStatusId}
+                      onChange={(e) => onStatusChange(quotation._id, e.target.value)}
+                      className="px-2 py-1.5 rounded-full text-xs font-semibold border focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all cursor-pointer min-w-[50px] text-center capitalize"
+                      style={{
+                        backgroundColor: statusColors.bgColor,
+                        color: statusColors.textColor,
+                        borderColor: statusColors.borderColor,
+                        fontWeight: '600',
+                      }}
                     >
-                      {statusInfo.name}
-                    </span>
+                      {quotationStatuses.map((status) => (
+                        <option
+                          key={status._id}
+                          value={status._id}
+                          className="font-semibold py-2 capitalize"
+                          style={{
+                            backgroundColor: '#ffffff',
+                            color: '#000000',
+                            padding: '8px 12px'
+                          }}
+                        >
+                          {status.ticketQuationStatus}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                   <td className="px-4 py-4">
                     <ActionButtons
