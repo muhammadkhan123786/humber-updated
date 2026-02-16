@@ -99,6 +99,7 @@ import {
   technicianDashboardJobsStatisticsController,
   updateTechnicianQuotationStatusController,
 } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
+import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoices.routes";
 
 // Create express app
 const app: Application = express();
@@ -409,7 +410,7 @@ app.use(
 //05-02-2026
 app.use(
   `${process.env.API_PREFIX}/ticket-quotation-status`,
-  adminProtecter,
+  technicianProtecter,
   ticketQuotationStatusRouter,
 );
 
@@ -480,6 +481,13 @@ app.put(
   `${process.env.API_PREFIX}/update-technician-quotation-status`,
   technicianProtecter,
   updateTechnicianQuotationStatusController,
+);
+
+//16-02-2026
+app.put(
+  `${process.env.API_PREFIX}/customer-invoices`,
+  adminProtecter,
+  customerInvoiceRouter,
 );
 //Muhammad Imran code ended here.
 
