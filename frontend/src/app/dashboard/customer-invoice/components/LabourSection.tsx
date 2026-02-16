@@ -4,6 +4,7 @@ import { Trash2, Plus, Clock } from "lucide-react";
 
 interface LabourItem {
   id: number;
+  serviceType: string;
   description: string;
   hours: number;
   rate: number;
@@ -22,7 +23,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
     const newId = Date.now();
     setLabourItems([
       ...labourItems,
-      { id: newId, description: "", hours: 0, rate: 0 },
+      { id: newId, serviceType: "", description: "", hours: 0, rate: 0 },
     ]);
   };
 
@@ -49,7 +50,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
 
   return (
     <div className="w-full p-6 bg-white rounded-2xl outline outline-purple-100 flex flex-col gap-6 font-sans">
-      {/* Header Section */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center gap-2 text-purple-600 font-bold">
@@ -76,9 +77,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
       <div className="flex flex-col gap-4">
         {labourItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-purple-50 rounded-2xl bg-purple-50/20">
-            <div>
-              <Clock size={48} className="text-purple-200" />
-            </div>
+            <Clock size={48} className="text-purple-200" />
             <p className="text-slate-500 font-medium">
               No labour items added yet.
             </p>
@@ -91,7 +90,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
             {labourItems.map((item, index) => (
               <div
                 key={item.id}
-                className="w-full p-4 bg-linear-to-r from-purple-50 to-pink-50 rounded-xl outline-2 outline-purple-100 flex flex-col gap-4 transition-all"
+                className="w-full p-4 bg-linear-to-r from-purple-50 to-pink-50 rounded-xl outline-2 outline-purple-100 flex flex-col gap-4"
               >
                 <div className="flex justify-between items-center">
                   <span className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-full">
@@ -100,14 +99,34 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                   <button
                     onClick={() => removeLabour(item.id)}
                     className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                    title="Delete item"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-12 gap-4">
-                  <div className="col-span-12 md:col-span-6 flex flex-col gap-1">
+                  {/* ✅ Service Type Field */}
+                  <div className="col-span-12 md:col-span-4 flex flex-col gap-1">
+                    <label className="text-indigo-950 text-xs font-semibold">
+                      Service Type
+                    </label>
+                    <select
+                      value={item.serviceType}
+                      onChange={(e) =>
+                        updateItem(item.id, "serviceType", e.target.value)
+                      }
+                      className="w-full h-10 px-3 bg-white rounded-xl border border-purple-100 text-sm focus:outline-none focus:ring-2 ring-purple-300"
+                    >
+                      <option value="">Select Service</option>
+                      <option value="Repair">Repair</option>
+                      <option value="Installation">Installation</option>
+                      <option value="Maintenance">Maintenance</option>
+                      <option value="Inspection">Inspection</option>
+                    </select>
+                  </div>
+
+                  {/* Description */}
+                  <div className="col-span-12 md:col-span-4 flex flex-col gap-1">
                     <label className="text-indigo-950 text-xs font-semibold">
                       Description
                     </label>
@@ -118,10 +137,12 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                         updateItem(item.id, "description", e.target.value)
                       }
                       placeholder="Enter service description..."
-                      className="w-full h-10 px-3 bg-white rounded-xl border border-purple-100 text-sm focus:outline-none focus:ring-2 ring-purple-300 transition-all"
+                      className="w-full h-10 px-3 bg-white rounded-xl border border-purple-100 text-sm focus:outline-none focus:ring-2 ring-purple-300"
                     />
                   </div>
-                  <div className="col-span-6 md:col-span-3 flex flex-col gap-1">
+
+                  {/* Hours */}
+                  <div className="col-span-6 md:col-span-2 flex flex-col gap-1">
                     <label className="text-indigo-950 text-xs font-semibold">
                       Hours
                     </label>
@@ -138,7 +159,9 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                       className="w-full h-10 px-3 bg-white rounded-xl border border-purple-100 text-sm focus:outline-none focus:ring-2 ring-purple-300"
                     />
                   </div>
-                  <div className="col-span-6 md:col-span-3 flex flex-col gap-1">
+
+                  {/* Rate */}
+                  <div className="col-span-6 md:col-span-2 flex flex-col gap-1">
                     <label className="text-indigo-950 text-xs font-semibold">
                       Rate (£/hr)
                     </label>
@@ -168,7 +191,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
               </div>
             ))}
 
-            <div className="mt-2 p-5 bg-linear-to-r from-purple-600 to-pink-600 rounded-2xl flex justify-between items-center text-white shadow-lg shadow-purple-100">
+            <div className="mt-2 p-5 bg-linear-to-r from-purple-600 to-pink-600 rounded-2xl flex justify-between items-center text-white shadow-lg">
               <div className="flex flex-col">
                 <span className="text-purple-100 text-xs uppercase tracking-wider font-bold">
                   Total Estimate
