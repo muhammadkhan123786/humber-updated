@@ -129,6 +129,52 @@ const JobCardsSection = ({
     }
   };
 
+  // Handle completion toggle
+  const handleCompletionToggle = async (jobId: string, currentStatus: boolean) => {
+    const newCompletionStatus = !currentStatus;
+
+    // Optimistic update: Update local state immediately
+    const updatedJobs = localJobs.map((job) => {
+      if (job._id === jobId) {
+        return {
+          ...job,
+          isJobCompleted: newCompletionStatus,
+        };
+      }
+      return job;
+    });
+    setLocalJobs(updatedJobs);
+
+    try {
+      const rawToken = localStorage.getItem("token");
+      const cleanToken = rawToken ? rawToken.replace(/"/g, "").trim() : "";
+      
+      const response = await axios.put(
+        `${BASE_URL}/update-technician-job-status`,
+        {
+          techncianJobId: jobId,
+          isJobCompleted: newCompletionStatus,
+        },
+        {
+          headers: { Authorization: `Bearer ${cleanToken}` },
+        }
+      );
+      
+      if (response.data?.success) {
+        toast.success(newCompletionStatus ? "Job marked as completed" : "Job marked as incomplete");
+        // Optional: Call parent refresh callback if provided
+        if (onJobUpdate) {
+          onJobUpdate();
+        }
+      }
+    } catch (error: any) {
+      console.error("Error updating job completion:", error);
+      toast.error(error.response?.data?.message || "Failed to update job completion");
+      // Rollback on error
+      setLocalJobs(jobs);
+    }
+  };
+
   if (loading) return <div className="p-10 text-center">Loading jobs...</div>;
 
   const formatDate = (dateString: string) => {
@@ -181,11 +227,12 @@ const JobCardsSection = ({
               const status = job.jobStatusId?.technicianJobStatus || "Open";
               const statusColor = getStatusColor(status);
               const currentStatusId = job.jobStatusId?._id || "";
+              const isCompleted = job.isJobCompleted || false;
 
               return (
                 <div
                   key={job._id || index}
-                  className="w-full  bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-shadow duration-300"
+                  className={`w-full bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-all duration-300 ${!isCompleted ? 'opacity-50' : 'opacity-100'}`}
                 >
                   <div
                     className="w-full h-1.5"
@@ -309,6 +356,23 @@ const JobCardsSection = ({
                         <Eye size={14} /> VIEW
                       </button>
                     </div>
+
+                    {/* Completion Toggle */}
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-600">Job Completed</span>
+                      <button
+                        onClick={() => handleCompletionToggle(job._id, isCompleted)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                          isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            isCompleted ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -347,6 +411,9 @@ const JobCardsSection = ({
                   <th className="p-4 text-xs font-semibold uppercase text-gray-700">
                     Scheduled
                   </th>
+                  <th className="p-4 text-xs font-semibold uppercase text-gray-700">
+                    Toggle
+                  </th>
                   <th className="p-4 text-xs font-semibold uppercase text-gray-700 text-center">
                     Actions
                   </th>
@@ -358,11 +425,12 @@ const JobCardsSection = ({
                   const status = job.jobStatusId?.technicianJobStatus || "Open";
                   const statusColor = getStatusColor(status);
                   const currentStatusId = job.jobStatusId?._id || "";
+                  const isCompleted = job.isJobCompleted || false;
 
                   return (
                     <tr
                       key={job._id || index}
-                      className="hover:bg-indigo-50/30 transition-colors group"
+                      className={`hover:bg-indigo-50/30 transition-all group ${!isCompleted ? 'opacity-50' : 'opacity-100'}`}
                     >
                       <td className="p-4">
                         <div className="font-bold text-sm text-indigo-950">
@@ -469,6 +537,21 @@ const JobCardsSection = ({
                             </div>
                           </div>
                         </div>
+                      </td>
+
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleCompletionToggle(job._id, isCompleted)}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                            isCompleted ? 'bg-green-500' : 'bg-gray-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              isCompleted ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
                       </td>
 
                       <td className="p-4 text-center">
