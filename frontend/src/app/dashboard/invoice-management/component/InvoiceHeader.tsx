@@ -3,8 +3,15 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FileText, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const InvoiceHeader: React.FC = () => {
+  const router = useRouter();
+
+  const handleCreateInvoice = () => {
+    router.push("/dashboard/customer-invoice");
+  };
+
   return (
     <div className="w-full h-32 px-8 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-2xl flex items-center justify-between overflow-hidden relative">
       <div className="flex items-center gap-6 z-10">
@@ -15,7 +22,7 @@ const InvoiceHeader: React.FC = () => {
             repeat: Infinity,
             ease: "linear",
           }}
-          className="w-16  h-16 bg-white/20 rounded-2xl shadow-xl flex justify-center items-center backdrop-blur-sm border border-white/30"
+          className="w-16 h-16 bg-white/20 rounded-2xl shadow-xl flex justify-center items-center backdrop-blur-sm border border-white/30"
         >
           <FileText className="text-white w-10 h-10" />
         </motion.div>
@@ -31,6 +38,7 @@ const InvoiceHeader: React.FC = () => {
       </div>
 
       <motion.button
+        onClick={handleCreateInvoice}
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
         className="flex items-center gap-2 px-6 py-3 bg-white text-indigo-600 rounded-xl shadow-lg transition-colors duration-200 z-10"
