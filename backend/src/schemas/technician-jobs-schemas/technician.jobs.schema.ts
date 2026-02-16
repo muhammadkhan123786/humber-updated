@@ -58,6 +58,7 @@ export const TechnicianJobSchema = {
   jobId: { type: String, required: true },
   ticketId: { type: Types.ObjectId, ref: "customerTicketBase", required: true },
   technicianId: { type: Types.ObjectId, ref: "Technicians", required: true },
+  isJobCompleted: { type: Boolean, default: false },
 
   services: { type: [ServiceSchema], default: [] },
   parts: { type: [PartSchema], default: [] },

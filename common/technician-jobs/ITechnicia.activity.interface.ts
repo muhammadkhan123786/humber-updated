@@ -49,4 +49,5 @@ export interface ITechnicianRecordActivity<
     completionSummary?: string;
     jobNotes: JobNotes;
     jobStatusId: TJOBSTATUSID;
+    isJobCompleted?: boolean;
 }
