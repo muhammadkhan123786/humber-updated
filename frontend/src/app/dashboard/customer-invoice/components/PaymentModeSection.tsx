@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import React from "react";
 import {
   Banknote,
   Building2,
@@ -11,9 +12,20 @@ import {
   LucideIcon,
   CheckCircle2,
 } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+import { InvoiceFormData } from "../../../../schema/invoice.schema";
+
+// From your schema
+type PAYMENTMETHOD =
+  | "CASH"
+  | "BANK TRANSFER"
+  | "CARD PAYMENT"
+  | "ONLINE PAYMENT"
+  | "QR CODE"
+  | "PENDING";
 
 interface PaymentMode {
-  id: string;
+  id: PAYMENTMETHOD;
   title: string;
   desc: string;
   Icon: LucideIcon;
@@ -21,12 +33,22 @@ interface PaymentMode {
   bgColor: string;
 }
 
-const PaymentModeSection = () => {
-  const [selectedId, setSelectedId] = useState<string>("Pending");
+interface PaymentModeSectionProps {
+  form: UseFormReturn<InvoiceFormData>;
+}
+
+const PaymentModeSection: React.FC<PaymentModeSectionProps> = ({ form }) => {
+  const { watch, setValue } = form;
+  const currentPaymentMethod = watch("paymentMethod") || "PENDING";
+  const currentPaymentStatus = watch("paymentStatus") || "PENDING";
+
+  // Add console logs to debug
+  console.log("🔵 PaymentMethod from form:", currentPaymentMethod);
+  console.log("🔵 PaymentStatus from form:", currentPaymentStatus);
 
   const modes: PaymentMode[] = [
     {
-      id: "Cash",
+      id: "CASH",
       title: "Cash",
       desc: "Cash payment",
       Icon: Banknote,
@@ -34,7 +56,7 @@ const PaymentModeSection = () => {
       bgColor: "bg-green-100",
     },
     {
-      id: "Transfer",
+      id: "BANK TRANSFER",
       title: "Bank Transfer",
       desc: "Direct bank deposit",
       Icon: Building2,
@@ -42,7 +64,7 @@ const PaymentModeSection = () => {
       bgColor: "bg-blue-100",
     },
     {
-      id: "Card",
+      id: "CARD PAYMENT",
       title: "Card Payment",
       desc: "Credit/Debit card",
       Icon: CreditCard,
@@ -50,7 +72,7 @@ const PaymentModeSection = () => {
       bgColor: "bg-purple-100",
     },
     {
-      id: "Online",
+      id: "ONLINE PAYMENT",
       title: "Online Payment",
       desc: "PayPal, Stripe, etc.",
       Icon: Globe,
@@ -58,7 +80,7 @@ const PaymentModeSection = () => {
       bgColor: "bg-cyan-100",
     },
     {
-      id: "QR",
+      id: "QR CODE",
       title: "QR Code",
       desc: "Digital wallet",
       Icon: QrCode,
@@ -66,19 +88,42 @@ const PaymentModeSection = () => {
       bgColor: "bg-orange-100",
     },
     {
-      id: "Pending",
+      id: "PENDING",
       title: "Pending",
-      desc: "To be decided",
+      desc: "Awaiting payment",
       Icon: Clock,
       iconColor: "text-slate-600",
       bgColor: "bg-slate-100",
     },
   ];
 
-  const activeMode = modes.find((m) => m.id === selectedId);
+  const activeMode = modes.find((m) => m.id === currentPaymentMethod);
+
+  const handleModeSelect = (modeId: PAYMENTMETHOD) => {
+    console.log("🟢 Selecting payment method:", modeId);
+
+    // Set the payment method
+    setValue("paymentMethod", modeId, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+
+    // Set payment status based on selection
+    if (modeId === "PENDING") {
+      setValue("paymentStatus", "PENDING", {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    } else {
+      setValue("paymentStatus", "PAID", {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+  };
 
   return (
-    <div className="w-full bg-linear-to-r from-violet-50 via-purple-50 to-fuchsia-50 rounded-2xl  outline-2 -outline-offset-2 outline-violet-100 overflow-hidden font-sans">
+    <div className="w-full bg-linear-to-r from-violet-50 via-purple-50 to-fuchsia-50 rounded-2xl outline-2 -outline-offset-2 outline-violet-100 overflow-hidden font-sans">
       <div className="w-full px-6 pt-6 pb-4 flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <WalletCards size={20} className="text-violet-600" />
@@ -91,35 +136,34 @@ const PaymentModeSection = () => {
         </p>
       </div>
 
-      {/* Responsive Grid Section */}
       <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {modes.map((mode) => {
-          const isActive = selectedId === mode.id;
+          const isActive = mode.id === currentPaymentMethod;
 
           let activeClass = "";
           if (isActive) {
             switch (mode.id) {
-              case "Cash":
+              case "CASH":
                 activeClass =
                   "bg-gradient-to-br from-green-500 to-emerald-500 text-white outline-green-500 shadow-lg shadow-green-500/20";
                 break;
-              case "Transfer":
+              case "BANK TRANSFER":
                 activeClass =
                   "bg-gradient-to-br from-blue-500 to-indigo-500 text-white outline-blue-400 shadow-lg shadow-blue-500/20";
                 break;
-              case "Card":
+              case "CARD PAYMENT":
                 activeClass =
                   "bg-gradient-to-br from-purple-500 to-pink-500 text-white outline-purple-400 shadow-lg shadow-purple-500/20";
                 break;
-              case "Online":
+              case "ONLINE PAYMENT":
                 activeClass =
                   "bg-gradient-to-br from-cyan-500 to-teal-500 text-white outline-cyan-400 shadow-lg shadow-cyan-500/20";
                 break;
-              case "QR":
+              case "QR CODE":
                 activeClass =
                   "bg-gradient-to-br from-orange-500 to-red-500 text-white outline-orange-400 shadow-lg shadow-orange-500/20";
                 break;
-              case "Pending":
+              case "PENDING":
                 activeClass =
                   "bg-slate-700 text-white outline-slate-600 shadow-lg";
                 break;
@@ -129,8 +173,8 @@ const PaymentModeSection = () => {
           return (
             <div
               key={mode.id}
-              onClick={() => setSelectedId(mode.id)}
-              className={`relative h-44 p-6 rounded-2xl  outline-2 -outline-offset-2 flex flex-col items-center justify-center gap-4 transition-all duration-300 cursor-pointer ${
+              onClick={() => handleModeSelect(mode.id)}
+              className={`relative h-44 p-6 rounded-2xl outline-2 -outline-offset-2 flex flex-col items-center justify-center gap-4 transition-all duration-300 cursor-pointer ${
                 isActive
                   ? activeClass
                   : "bg-white outline-gray-200 hover:outline-violet-200 shadow-sm"
@@ -175,11 +219,12 @@ const PaymentModeSection = () => {
           <CheckCircle2 size={20} className="text-white" />
         </div>
         <div>
-          <p className="text-xs text-violet-600 font-medium">
-            Selected Payment Mode:
-          </p>
+          <p className="text-xs text-violet-600 font-medium">Payment Method:</p>
           <p className="text-lg font-bold text-violet-900">
-            {activeMode?.title} Payment
+            {activeMode?.title || "Not selected"}
+          </p>
+          <p className="text-xs text-violet-600 mt-1">
+            Status: {currentPaymentStatus === "PAID" ? "Paid" : "Pending"}
           </p>
         </div>
       </div>

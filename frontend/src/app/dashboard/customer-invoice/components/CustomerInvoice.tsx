@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useInvoice } from "@/hooks/useInvoice";
 import HeaderSection from "./HeaderSection";
 import CardSection from "./CardSection";
 import JobSelectionSection from "./JobSelection";
@@ -12,29 +13,123 @@ import PaymentLinkHeader from "./PaymentLinkHeader";
 import PaymentModeSection from "./PaymentModeSection";
 import InvoiceFooter from "./InvoiceFooter";
 
-interface Part {
-  id: number;
-  name: string;
-  sku: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-interface LabourItem {
-  id: number;
-  description: string;
-  hours: number;
-  rate: number;
-}
-
 const CustomerInvoice = () => {
-  const [parts, setParts] = useState<Part[]>([]);
-  const [labourItems, setLabourItems] = useState<LabourItem[]>([]);
+  const {
+    form,
+    jobs,
+    partsInventory,
+    serviceTypes,
+    selectedJob,
+    defaultTaxRate,
+    handleJobSelect,
+    addService,
+    addPart,
+    onSubmit,
+    isSubmitting,
+    serviceFields,
+    partFields,
+    invoiceCode,
+  } = useInvoice();
+
   const [calloutFee, setCalloutFee] = useState<number>(0);
   const [discountValue, setDiscountValue] = useState<number>(0);
-  const [discountType, setDiscountType] = useState<string>("percentage");
+  const [discountType, setDiscountType] = useState<string>("Percentage");
   const [isVatExempt, setIsVatExempt] = useState<boolean>(false);
-  const [vatRate, setVatRate] = useState<number>(20);
+
+  const isSyncing = useRef(false);
+
+  const watchedParts = form.watch("parts");
+  const watchedServices = form.watch("services");
+
+  useEffect(() => {
+    if (isSyncing.current) return;
+    isSyncing.current = true;
+
+    const subscription = form.watch((value, { name }) => {
+      if (name === "callOutFee" && value.callOutFee !== calloutFee) {
+        setCalloutFee(value.callOutFee || 0);
+      }
+      if (name === "discountAmount") {
+        const newValue = value.discountAmount || 0;
+        if (newValue !== discountValue) {
+          setDiscountValue(newValue);
+        }
+      }
+      if (name === "discountType") {
+        const type = value.discountType;
+        if (
+          (type === "Percentage" || type === "Fix Amount") &&
+          type !== discountType
+        ) {
+          setDiscountType(type);
+        }
+      }
+      if (name === "isVATEXEMPT" && value.isVATEXEMPT !== isVatExempt) {
+        setIsVatExempt(value.isVATEXEMPT || false);
+      }
+    });
+
+    setTimeout(() => {
+      isSyncing.current = false;
+    }, 100);
+
+    return () => {
+      subscription.unsubscribe();
+      isSyncing.current = false;
+    };
+  }, [form, calloutFee, discountValue, discountType, isVatExempt]);
+
+  const parts = useMemo(() => {
+    const formParts = watchedParts || [];
+    return formParts.map((part: any, index: number) => ({
+      id: index + 1,
+      name:
+        part.partName ||
+        partsInventory.find((p: any) => p._id === part.partId)?.partName ||
+        "",
+      sku:
+        part.partNumber ||
+        partsInventory.find((p: any) => p._id === part.partId)?.partNumber ||
+        "",
+      quantity: part.quantity,
+      unitPrice: part.unitCost,
+      partId: part.partId,
+      source: part.source,
+    }));
+  }, [watchedParts, partsInventory]);
+  const labourItems = useMemo(() => {
+    const formServices = watchedServices || [];
+    return formServices.map((service: any, index: number) => {
+      let hours = 1;
+      if (service?.duration) {
+        if (
+          typeof service.duration === "string" &&
+          service.duration.includes(":")
+        ) {
+          const [h, m] = service.duration.split(":").map(Number);
+          hours = h + (m || 0) / 60;
+        } else {
+          hours = parseFloat(String(service.duration)) || 1;
+        }
+      }
+
+      return {
+        id: index + 1,
+        description: service.description,
+        hours: hours,
+        duration: service.duration || "1:00",
+        rate: service.rate || 50,
+        activityId: service.activityId,
+        source: service.source,
+      };
+    });
+  }, [watchedServices]);
+
+  const handleSubmit = async () => {
+    console.log("Handle Submit in Customer invoice.");
+    await onSubmit(form.getValues());
+  };
+
   const partsSubtotal = parts.reduce(
     (acc, part) => acc + (part.quantity || 0) * (part.unitPrice || 0),
     0,
@@ -46,15 +141,18 @@ const CustomerInvoice = () => {
   );
 
   const subtotal = partsSubtotal + labourSubtotal + (calloutFee || 0);
+
   let discountAmount = 0;
-  if (discountType === "percentage") {
+  if (discountType === "Percentage") {
     discountAmount = (subtotal * (discountValue || 0)) / 100;
   } else {
     discountAmount = discountValue || 0;
   }
 
   const afterDiscount = subtotal - discountAmount;
-  const vatAmount = !isVatExempt ? (afterDiscount * (vatRate || 0)) / 100 : 0;
+  const vatAmount = !isVatExempt
+    ? (afterDiscount * (defaultTaxRate || 20)) / 100
+    : 0;
   const grandTotal = afterDiscount + vatAmount;
 
   return (
@@ -63,18 +161,29 @@ const CustomerInvoice = () => {
       <div className="my-3">
         <CardSection />
       </div>
-
-      <JobSelectionSection />
-
+      <JobSelectionSection
+        jobs={jobs}
+        onJobSelect={handleJobSelect}
+        selectedJob={selectedJob}
+        form={form}
+        invoiceCode={invoiceCode}
+      />
       <div className="my-7">
-        <PartsAndComponents parts={parts} setParts={setParts} />
+        <PartsAndComponents
+          parts={parts}
+          partsInventory={partsInventory}
+          form={form}
+          addPart={addPart}
+          partFields={partFields}
+        />
       </div>
-
       <LabourSection
         labourItems={labourItems}
-        setLabourItems={setLabourItems}
+        serviceTypes={serviceTypes}
+        form={form}
+        addService={addService}
+        serviceFields={serviceFields}
       />
-
       <div className="my-3">
         <AdditionalCharges
           calloutFee={calloutFee}
@@ -85,12 +194,12 @@ const CustomerInvoice = () => {
           setDiscountType={setDiscountType}
           isVatExempt={isVatExempt}
           setIsVatExempt={setIsVatExempt}
-          vatRate={vatRate}
-          setVatRate={setVatRate}
+          vatRate={defaultTaxRate}
+          setVatRate={() => {}}
           subtotal={subtotal}
+          form={form}
         />
       </div>
-
       <InvoiceSummary
         partsSubtotal={partsSubtotal}
         labourSubtotal={labourSubtotal}
@@ -101,22 +210,18 @@ const CustomerInvoice = () => {
         subtotal={subtotal}
         afterDiscount={afterDiscount}
         isVatExempt={isVatExempt}
-        vatRate={vatRate}
+        vatRate={defaultTaxRate}
         vatAmount={vatAmount}
         grandTotal={grandTotal}
       />
-
       <div className="my-3">
-        <NotesAndTerms />
+        <NotesAndTerms form={form} />
       </div>
-
-      <PaymentLinkHeader />
-
+      <PaymentLinkHeader form={form} />
       <div className="my-3">
-        <PaymentModeSection />
+        <PaymentModeSection form={form} />
       </div>
-
-      <InvoiceFooter />
+      <InvoiceFooter onSubmit={handleSubmit} isSubmitting={isSubmitting} />
     </div>
   );
 };

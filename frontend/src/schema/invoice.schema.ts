@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const invoiceServiceSchema = z.object({
   activityId: z.string().min(1, "Activity is required"),
+  rate: z.number().default(50),
   duration: z.string().min(1, "Duration is required"),
   description: z.string().min(1, "Description is required"),
   additionalNotes: z.string().optional(),
@@ -10,6 +11,8 @@ export const invoiceServiceSchema = z.object({
 
 export const invoicePartSchema = z.object({
   partId: z.string().min(1, "Product is required"),
+  partName: z.string().optional(),
+  partNumber: z.string().optional(),
   oldPartConditionDescription: z.string().optional(),
   newSerialNumber: z.string().optional(),
   quantity: z.number().min(1, "Quantity must be at least 1"),
@@ -35,17 +38,28 @@ export const invoiceSchema = z.object({
   discountType: z.enum(["Percentage", "Fix Amount"]).default("Percentage"),
   isVATEXEMPT: z.boolean().default(false),
 
-  partsTotal: z.number().optional(),
-  labourTotal: z.number().optional(),
-  subTotal: z.number().optional(),
-  discountAmount: z.number().optional(),
-  taxAmount: z.number().optional(),
-  netTotal: z.number().optional(),
+  // Make these required with defaults
+  partsTotal: z.number().default(0),
+  labourTotal: z.number().default(0),
+  subTotal: z.number().default(0),
+  discountAmount: z.number().default(0),
+  taxAmount: z.number().default(0),
+  netTotal: z.number().default(0),
 
   invoiceNotes: z.string().optional(),
   termsAndConditions: z.string().optional(),
   paymentLink: z.string().url().optional(),
 
+  paymentMethod: z
+    .enum([
+      "CASH",
+      "BANK TRANSFER",
+      "CARD PAYMENT",
+      "ONLINE PAYMENT",
+      "QR CODE",
+      "PENDING",
+    ])
+    .default("PENDING"),
   paymentStatus: z.enum(["PENDING", "PAID"]).default("PENDING"),
   status: z.enum(["DRAFT", "ISSUED", "CANCELLED", "PAID"]).default("DRAFT"),
 });

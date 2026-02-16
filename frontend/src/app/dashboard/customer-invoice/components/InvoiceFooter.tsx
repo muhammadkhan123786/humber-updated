@@ -1,31 +1,55 @@
-import React from "react";
-import { Save, Send, CheckCircle2 } from "lucide-react";
+"use client";
 
-const InvoiceFooter = () => {
+import React from "react";
+import { CheckCircle2, Save, Send } from "lucide-react";
+
+interface InvoiceFooterProps {
+  onSubmit: () => Promise<void>;
+  isSubmitting: boolean;
+}
+
+const InvoiceFooter = ({ onSubmit, isSubmitting }: InvoiceFooterProps) => {
+  const handleGenerateInvoice = async () => {
+    console.log("Handle Generate Invoice.");
+    await onSubmit();
+  };
+
   return (
     <div className="w-full py-6 px-6 flex justify-end items-center gap-3 bg-transparent">
-      <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-lg border border-slate-200 transition-all duration-200 shadow-sm group">
-        <Save
-          size={18}
-          className="text-slate-600 group-hover:scale-110 transition-transform"
-        />
+      {/* Save Draft Button */}
+      <button
+        type="button"
+        disabled={isSubmitting}
+        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+      >
+        <Save size={18} className="text-gray-500" />
         <span className="text-sm font-medium">Save Draft</span>
       </button>
 
-      <button className="flex items-center gap-2 px-5 py-2 bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-blue-200 group">
-        <Send
-          size={18}
-          className="text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
-        />
+      {/* Send to Customer Button */}
+      <button
+        type="button"
+        disabled={isSubmitting}
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-blue-100 disabled:opacity-50"
+      >
+        <Send size={18} />
         <span className="text-sm font-medium">Send to Customer</span>
       </button>
 
-      <button className="flex items-center gap-2 px-5 py-2 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-green-200 group">
+      {/* Generate Invoice Button */}
+      <button
+        type="button"
+        onClick={handleGenerateInvoice}
+        disabled={isSubmitting}
+        className="flex items-center gap-2 px-5 py-2 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-green-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         <CheckCircle2
           size={18}
           className="text-white group-hover:scale-110 transition-transform"
         />
-        <span className="text-sm font-medium">Generate Invoice</span>
+        <span className="text-sm font-medium">
+          {isSubmitting ? "Generating..." : "Generate Invoice"}
+        </span>
       </button>
     </div>
   );

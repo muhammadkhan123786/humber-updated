@@ -1,54 +1,41 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Search, X, Package, CheckCircle2, Minus, Plus } from "lucide-react";
 
 interface InventoryItem {
-  id: string;
-  name: string;
-  sku: string;
-  unitPrice: number;
-  stock: number;
+  _id: string;
+  partName: string;
+  partNumber: string;
+  unitCost: number;
+  stock?: number;
+  isActive?: boolean;
 }
 
 interface InventoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectMultiple: (items: (InventoryItem & { quantity: number })[]) => void;
+  partsInventory: InventoryItem[];
 }
 
 const InventoryModal = ({
   isOpen,
   onClose,
   onSelectMultiple,
+  partsInventory,
 }: InventoryModalProps) => {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  // Track quantities for each item ID
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const filteredInventory = useMemo(() => {
+    if (!search.trim()) return partsInventory || [];
 
-  const inventoryData: InventoryItem[] = [
-    {
-      id: "1",
-      name: "12V 35Ah Battery",
-      sku: "BAT-12V35AH",
-      unitPrice: 89.99,
-      stock: 0,
-    },
-    {
-      id: "2",
-      name: "Front Wheel Assembly",
-      sku: "WHL-FNT-8IN",
-      unitPrice: 45.5,
-      stock: 5,
-    },
-    {
-      id: "3",
-      name: "Tiller Adjustment Kit",
-      sku: "TLR-ADJ-KIT",
-      unitPrice: 25.0,
-      stock: 3,
-    },
-  ];
+    return (partsInventory || []).filter(
+      (item) =>
+        item.partName?.toLowerCase().includes(search.toLowerCase()) ||
+        item.partNumber?.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [partsInventory, search]);
 
   const toggleItem = (id: string) => {
     const newSelected = new Set(selectedIds);
@@ -56,7 +43,6 @@ const InventoryModal = ({
       newSelected.delete(id);
     } else {
       newSelected.add(id);
-      // Default quantity to 1 when first selected
       if (!quantities[id]) {
         setQuantities((prev) => ({ ...prev, [id]: 1 }));
       }
@@ -72,19 +58,26 @@ const InventoryModal = ({
   };
 
   const handleAddParts = () => {
-    const itemsToAdd = inventoryData
-      .filter((item) => selectedIds.has(item.id))
+    const itemsToAdd = filteredInventory
+      .filter((item) => selectedIds.has(item._id))
       .map((item) => ({
         ...item,
-        quantity: quantities[item.id] || 1,
+        quantity: quantities[item._id] || 1,
       }));
 
     if (typeof onSelectMultiple === "function") {
       onSelectMultiple(itemsToAdd);
-    } else {
-      console.error("onSelectMultiple is not defined on the parent component");
     }
+    setSelectedIds(new Set());
+    setQuantities({});
+    setSearch("");
+    onClose();
+  };
 
+  const handleClose = () => {
+    setSelectedIds(new Set());
+    setQuantities({});
+    setSearch("");
     onClose();
   };
 
@@ -111,7 +104,7 @@ const InventoryModal = ({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-slate-400 hover:text-slate-600"
           >
             <X size={20} />
@@ -137,101 +130,113 @@ const InventoryModal = ({
 
         {/* List */}
         <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4">
-          {inventoryData.map((item) => {
-            const isSelected = selectedIds.has(item.id);
-            const quantity = quantities[item.id] || 1;
+          {filteredInventory.length === 0 ? (
+            <div className="text-center py-8">
+              <Package size={48} className="text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">No parts found</p>
+              <p className="text-slate-400 text-sm">
+                Try adjusting your search
+              </p>
+            </div>
+          ) : (
+            filteredInventory.map((item) => {
+              const isSelected = selectedIds.has(item._id);
+              const quantity = quantities[item._id] || 1;
 
-            return (
-              <div
-                key={item.id}
-                onClick={() => toggleItem(item.id)}
-                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                  isSelected
-                    ? "border-blue-500 bg-blue-50/30"
-                    : "border-slate-100 hover:border-slate-200"
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex gap-3">
-                    <div
-                      className={`mt-1 w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
-                        isSelected
-                          ? "bg-blue-600 border-blue-600"
-                          : "border-slate-300"
-                      }`}
-                    >
-                      {isSelected && (
-                        <CheckCircle2 size={14} className="text-white" />
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800">{item.name}</h4>
-                      <div className="flex gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded uppercase">
-                          {item.sku}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            item.stock === 0
-                              ? "bg-red-50 text-red-600"
-                              : "bg-emerald-50 text-emerald-600"
-                          }`}
-                        >
-                          Stock: {item.stock}
-                        </span>
+              return (
+                <div
+                  key={item._id}
+                  onClick={() => toggleItem(item._id)}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-50/30"
+                      : "border-slate-100 hover:border-slate-200"
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-3">
+                      <div
+                        className={`mt-1 w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
+                          isSelected
+                            ? "bg-blue-600 border-blue-600"
+                            : "border-slate-300"
+                        }`}
+                      >
+                        {isSelected && (
+                          <CheckCircle2 size={14} className="text-white" />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800">
+                          {item.partName}
+                        </h4>
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded uppercase">
+                            {item.partNumber}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              item.stock === 0
+                                ? "bg-red-50 text-red-600"
+                                : "bg-emerald-50 text-emerald-600"
+                            }`}
+                          >
+                            Stock: {item.stock || "N/A"}
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    {/* Quantity Selector - Only visible when selected */}
+                    {isSelected && (
+                      <div
+                        className="flex flex-col items-end gap-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
+                          <button
+                            onClick={() => updateQuantity(item._id, -1)}
+                            className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-500"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="w-8 text-center font-bold text-slate-700">
+                            {quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item._id, 1)}
+                            className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-500"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          Total
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Quantity Selector - Only visible when selected */}
-                  {isSelected && (
-                    <div
-                      className="flex flex-col items-end gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
-                        <button
-                          onClick={() => updateQuantity(item.id, -1)}
-                          className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-500"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="w-8 text-center font-bold text-slate-700">
-                          {quantity}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, 1)}
-                          className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-100 text-slate-500"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-medium">
-                        Total
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-3 flex justify-between items-end">
-                  <p className="text-xl font-bold text-emerald-600">
-                    £{item.unitPrice.toFixed(2)}
-                  </p>
-                  {isSelected && (
-                    <p className="text-lg font-bold text-blue-600">
-                      £{(item.unitPrice * quantity).toFixed(2)}
+                  <div className="mt-3 flex justify-between items-end">
+                    <p className="text-xl font-bold text-emerald-600">
+                      £{item.unitCost?.toFixed(2) || "0.00"}
                     </p>
-                  )}
+                    {isSelected && (
+                      <p className="text-lg font-bold text-blue-600">
+                        £{(item.unitCost * quantity).toFixed(2)}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
 
         {/* Footer */}
         <div className="p-6 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="px-6 py-2 font-bold text-slate-500 hover:bg-slate-200 rounded-xl transition-colors"
           >
             Cancel
@@ -246,7 +251,8 @@ const InventoryModal = ({
             }`}
           >
             <CheckCircle2 size={18} />
-            Add {selectedIds.size} Parts to Invoice
+            Add {selectedIds.size} Part{selectedIds.size > 1 ? "s" : ""} to
+            Invoice
           </button>
         </div>
       </div>

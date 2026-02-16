@@ -88,5 +88,17 @@ export const CutomerInvoiceSchema = {
     default: "DRAFT",
   } as const,
   taxAmount: { type: Number, default: 0 },
+  paymentMethod: {
+    type: String,
+    enum: [
+      "CASH",
+      "BANK TRANSFER",
+      "CARD PAYMENT",
+      "ONLINE PAYMENT",
+      "QR CODE",
+      "PENDING",
+    ],
+    default: "PENDING",
+  },
   ...commonSchema,
 };

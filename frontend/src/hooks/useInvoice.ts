@@ -1,6 +1,5 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -77,12 +76,16 @@ export const useInvoice = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [partsInventory, setPartsInventory] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<any[]>([]);
+  const [invoiceCode, setInvoiceCode] = useState<string>("");
 
   const [isFetchingJobs, setIsFetchingJobs] = useState(false);
   const [isFetchingParts, setIsFetchingParts] = useState(false);
   const [isFetchingServices, setIsFetchingServices] = useState(false);
 
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
+
+  const isUpdating = useRef(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(invoiceSchema) as any,
@@ -108,10 +111,22 @@ export const useInvoice = () => {
       termsAndConditions: "",
       paymentLink: "",
       paymentStatus: "PENDING",
+      paymentMethod: "PENDING",
       status: "DRAFT",
     },
     mode: "onBlur",
   });
+
+  useEffect(() => {
+    const loadInvoiceCode = async () => {
+      if (!editingId) {
+        const code = await generateInvoiceCode();
+        setInvoiceCode(code);
+        form.setValue("invoiceId", code);
+      }
+    };
+    loadInvoiceCode();
+  }, [editingId, form]);
 
   const {
     fields: serviceFields,
@@ -131,49 +146,128 @@ export const useInvoice = () => {
     name: "parts",
   });
 
-  const watchedServices = form.watch("services");
-  const watchedParts = form.watch("parts");
-  const watchedCallOutFee = form.watch("callOutFee");
-  const watchedDiscountType = form.watch("discountType");
-  const watchedDiscountAmount = form.watch("discountAmount");
-  const watchedIsVATEXEMPT = form.watch("isVATEXEMPT");
+  const services = form.watch("services");
+  const parts = form.watch("parts");
+  const callOutFee = form.watch("callOutFee");
+  const discountType = form.watch("discountType");
+  const discountAmount = form.watch("discountAmount");
+  const isVATEXEMPT = form.watch("isVATEXEMPT");
 
+  // FIXED: Use debounced updates to prevent infinite loop
   useEffect(() => {
-    const partsTotal = (watchedParts || []).reduce((sum, part) => {
+    // Clear any pending timeout
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    // Prevent recursive updates
+    if (isUpdating.current) return;
+
+    const partsTotal = (parts || []).reduce((sum, part) => {
       return (
         sum + (part.totalCost || (part.quantity || 0) * (part.unitCost || 0))
       );
     }, 0);
-    const labourTotal = (watchedServices || []).length * 50;
 
-    const subTotal = partsTotal + labourTotal + (watchedCallOutFee || 0);
+    const labourTotal = (services || []).reduce((sum, service) => {
+      let hours = 1;
+      if (service?.duration) {
+        if (
+          typeof service.duration === "string" &&
+          service.duration.includes(":")
+        ) {
+          const [h, m] = service.duration.split(":").map(Number);
+          hours = h + (m || 0) / 60;
+        } else {
+          hours = parseFloat(String(service.duration)) || 1;
+        }
+      }
+      const rate = service?.rate || 50;
+      return sum + hours * rate;
+    }, 0);
 
-    let discountAmount = 0;
-    if (watchedDiscountType === "Percentage") {
-      discountAmount = (subTotal * (watchedDiscountAmount || 0)) / 100;
+    const subTotal = partsTotal + labourTotal + (callOutFee || 0);
+
+    let calculatedDiscountAmount = 0;
+    if (discountType === "Percentage") {
+      calculatedDiscountAmount = (subTotal * (discountAmount || 0)) / 100;
     } else {
-      discountAmount = watchedDiscountAmount || 0;
+      calculatedDiscountAmount = discountAmount || 0;
     }
 
-    const afterDiscount = subTotal - discountAmount;
-    const taxAmount = watchedIsVATEXEMPT
-      ? 0
-      : afterDiscount * (defaultTaxRate / 100);
+    const afterDiscount = subTotal - calculatedDiscountAmount;
+    const taxAmount = isVATEXEMPT ? 0 : afterDiscount * (defaultTaxRate / 100);
     const netTotal = afterDiscount + taxAmount;
 
-    form.setValue("partsTotal", partsTotal);
-    form.setValue("labourTotal", labourTotal);
-    form.setValue("subTotal", subTotal);
-    form.setValue("discountAmount", discountAmount);
-    form.setValue("taxAmount", taxAmount);
-    form.setValue("netTotal", netTotal);
+    // Check if values actually changed
+    const currentPartsTotal = form.getValues("partsTotal");
+    const currentLabourTotal = form.getValues("labourTotal");
+    const currentSubTotal = form.getValues("subTotal");
+    const currentDiscountAmount = form.getValues("discountAmount");
+    const currentTaxAmount = form.getValues("taxAmount");
+    const currentNetTotal = form.getValues("netTotal");
+
+    // If no changes, exit early
+    if (
+      Math.abs(currentPartsTotal - partsTotal) < 0.01 &&
+      Math.abs(currentLabourTotal - labourTotal) < 0.01 &&
+      Math.abs(currentSubTotal - subTotal) < 0.01 &&
+      Math.abs(currentDiscountAmount - calculatedDiscountAmount) < 0.01 &&
+      Math.abs(currentTaxAmount - taxAmount) < 0.01 &&
+      Math.abs(currentNetTotal - netTotal) < 0.01
+    ) {
+      return;
+    }
+
+    // Set updating flag to true
+    isUpdating.current = true;
+
+    // Use timeout to debounce updates
+    updateTimeoutRef.current = setTimeout(() => {
+      // Batch update all values
+      form.setValue("partsTotal", partsTotal, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+      form.setValue("labourTotal", labourTotal, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+      form.setValue("subTotal", subTotal, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+      form.setValue("discountAmount", calculatedDiscountAmount, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+      form.setValue("taxAmount", taxAmount, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+      form.setValue("netTotal", netTotal, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
+
+      // Reset the flag after updates
+      setTimeout(() => {
+        isUpdating.current = false;
+      }, 50);
+    }, 100);
+
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
   }, [
-    watchedServices,
-    watchedParts,
-    watchedCallOutFee,
-    watchedDiscountType,
-    watchedDiscountAmount,
-    watchedIsVATEXEMPT,
+    services,
+    parts,
+    callOutFee,
+    discountType,
+    discountAmount,
+    isVATEXEMPT,
     defaultTaxRate,
     form,
   ]);
@@ -268,6 +362,7 @@ export const useInvoice = () => {
                 description: service.description || "",
                 additionalNotes: service.additionalNotes || "",
                 source: "JOB",
+                rate: service.rate || 50,
               }));
             form.setValue("services", servicesFromJob);
           }
@@ -338,6 +433,7 @@ export const useInvoice = () => {
               description: service.description || "",
               additionalNotes: service.additionalNotes || "",
               source: service.source || "INVOICE",
+              rate: service.rate || 50,
             }))
           : [],
         parts: Array.isArray(invoice.parts)
@@ -373,6 +469,7 @@ export const useInvoice = () => {
         invoiceNotes: invoice.invoiceNotes || "",
         termsAndConditions: invoice.termsAndConditions || "",
         paymentLink: invoice.paymentLink || "",
+        paymentMethod: invoice.paymentMethod || "PENDING",
         paymentStatus: invoice.paymentStatus || "PENDING",
         status: invoice.status || "DRAFT",
       });
@@ -388,17 +485,19 @@ export const useInvoice = () => {
 
   const onSubmit = async (data: InvoiceFormData) => {
     try {
+      console.log("🔵 onSubmit called with data:", data);
+      console.log("🔵 editingId:", editingId);
+
       setIsSubmitting(true);
       setError(null);
       setSuccess(null);
-
-      if (!data.jobId || data.jobId.trim() === "") {
+      if (!data.jobId?.trim()) {
         toast.error("Job is required");
         setIsSubmitting(false);
         return;
       }
 
-      if (!data.customerId || data.customerId.trim() === "") {
+      if (!data.customerId?.trim()) {
         toast.error("Customer is required");
         setIsSubmitting(false);
         return;
@@ -410,6 +509,24 @@ export const useInvoice = () => {
         return;
       }
 
+      // FIXED: Only validate INVOICE source parts, JOB source parts are automatically valid
+      const invalidManualParts = (data.parts || []).filter((part) => {
+        // If part is from INVOICE (manually added), it must have a partId
+        if (part.source === "INVOICE") {
+          return !part.partId?.trim();
+        }
+        // Parts from JOB are always valid even without partId
+        return false;
+      });
+
+      if (invalidManualParts.length > 0) {
+        toast.error(
+          `Please select a part from inventory for manually added parts. ${invalidManualParts.length} part(s) need to be selected.`,
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       const userId = localStorage.getItem("userId") || "";
       if (!userId) {
         toast.error("User ID not found. Please login again.");
@@ -417,68 +534,126 @@ export const useInvoice = () => {
         return;
       }
 
+      const partsTotal = (data.parts || []).reduce((sum, part) => {
+        const totalCost =
+          part.totalCost !== undefined
+            ? part.totalCost
+            : (part.quantity || 0) * (part.unitCost || 0);
+        return sum + totalCost;
+      }, 0);
+
+      const labourTotal = (data.services || []).reduce((sum, service) => {
+        let hours = 1;
+
+        if (service?.duration) {
+          if (
+            typeof service.duration === "string" &&
+            service.duration.includes(":")
+          ) {
+            const [h, m] = service.duration.split(":").map(Number);
+            hours = (h || 0) + (m || 0) / 60;
+          } else {
+            hours = parseFloat(String(service.duration)) || 1;
+          }
+        }
+
+        const rate = service?.rate || 50;
+        return sum + hours * rate;
+      }, 0);
+
+      const subTotal = partsTotal + labourTotal + (data.callOutFee || 0);
+
+      const discountAmount =
+        data.discountType === "Percentage"
+          ? (subTotal * (data.discountAmount || 0)) / 100
+          : data.discountAmount || 0;
+
+      const afterDiscount = subTotal - discountAmount;
+      const taxAmount = data.isVATEXEMPT
+        ? 0
+        : afterDiscount * (defaultTaxRate / 100);
+
+      const netTotal = afterDiscount + taxAmount;
+
+      console.log("🔴 Recalculated totals:", {
+        partsTotal,
+        labourTotal,
+        subTotal,
+        discountAmount,
+        taxAmount,
+        netTotal,
+      });
+
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
       const payload: any = {
         jobId: data.jobId,
         customerId: data.customerId,
-        services: data.services.map((service) => ({
+        services: (data.services || []).map((service) => ({
           activityId: service.activityId,
-          duration: service.duration,
-          description: service.description,
-          additionalNotes: service.additionalNotes,
+          duration: String(service.duration || "1:00"),
+          description: service.description || "",
+          additionalNotes: service.additionalNotes || "",
           source: service.source,
           userId,
         })),
-        parts: data.parts.map((part) => ({
-          partId: part.partId,
-          oldPartConditionDescription: part.oldPartConditionDescription,
-          newSerialNumber: part.newSerialNumber,
-          quantity: part.quantity,
-          unitCost: part.unitCost,
-          totalCost: part.totalCost || part.quantity * part.unitCost,
-          reasonForChange: part.reasonForChange,
+        parts: (data.parts || []).map((part) => ({
+          partId: part.source === "JOB" ? part.partId || "" : part.partId, // For JOB parts, allow empty partId
+          oldPartConditionDescription: part.oldPartConditionDescription || "",
+          newSerialNumber: part.newSerialNumber || "",
+          quantity: part.quantity || 0,
+          unitCost: part.unitCost || 0,
+          totalCost:
+            part.totalCost !== undefined
+              ? part.totalCost
+              : (part.quantity || 0) * (part.unitCost || 0),
+          reasonForChange: part.reasonForChange || "",
           source: part.source,
           userId,
         })),
         completionSummary: data.completionSummary || "",
-        invoiceDate: data.invoiceDate,
-        dueDate: data.dueDate,
+        invoiceDate: new Date(data.invoiceDate).toISOString(),
+        dueDate: new Date(data.dueDate).toISOString(),
         callOutFee: data.callOutFee || 0,
         discountType: data.discountType,
         isVATEXEMPT: data.isVATEXEMPT,
-        partsTotal: data.partsTotal || 0,
-        labourTotal: data.labourTotal || 0,
-        subTotal: data.subTotal || 0,
-        discountAmount: data.discountAmount || 0,
-        taxAmount: data.taxAmount || 0,
-        netTotal: data.netTotal || 0,
+        partsTotal,
+        labourTotal,
+        subTotal,
+        discountAmount,
+        taxAmount,
+        netTotal,
         invoiceNotes: data.invoiceNotes || "",
         termsAndConditions: data.termsAndConditions || "",
         paymentLink: data.paymentLink || "",
+        paymentMethod: data.paymentMethod || "PENDING",
         paymentStatus: data.paymentStatus,
         status: data.status,
         userId,
       };
 
-      if (!editingId) {
-        payload.invoiceId = await generateInvoiceCode();
-      }
+      // Include invoiceId if editing
+      if (editingId) payload.invoiceId = data.invoiceId;
 
       const apiEndpoint = editingId
         ? `${baseUrl}/customer-invoices/${editingId}`
         : `${baseUrl}/customer-invoices`;
 
+      console.log("📡 API Endpoint:", apiEndpoint);
+      console.log("📦 Payload:", JSON.stringify(payload, null, 2));
+
+      // -----------------------------
+      // SEND TO BACKEND
+      // -----------------------------
       const res = await axios({
         method: editingId ? "put" : "post",
         url: apiEndpoint,
         data: payload,
-        headers: {
-          ...getAuthHeader(),
-          "Content-Type": "application/json",
-        },
+        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
       });
+
+      console.log("✅ Response:", res.data);
 
       if (res.data?.success || res.data?.data) {
         clearEdit();
@@ -492,7 +667,7 @@ export const useInvoice = () => {
             ? "Invoice updated successfully!"
             : "Invoice created successfully!",
         );
-        router.push("/dashboard/invoices");
+        router.push("/dashboard/invoice-management");
         return res.data;
       } else {
         const errorMsg = res.data?.message || "Submission failed";
@@ -501,21 +676,13 @@ export const useInvoice = () => {
         return res.data;
       }
     } catch (err: any) {
-      console.error("Error submitting invoice:", err);
-      if (err.response?.data?.errors) {
-        const serverErrors = err.response.data.errors;
-        Object.keys(serverErrors).forEach((key) => {
-          toast.error(`${key}: ${serverErrors[key][0]}`);
-        });
-      } else if (err.response?.data?.message) {
-        toast.error(err.response.data.message);
-      } else {
-        toast.error("Submission failed. Please try again.");
-      }
-      setError(
-        err.response?.data?.message || err.message || "Submission failed",
-      );
-      throw err;
+      console.error("❌ Error submitting invoice:", err);
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        "Submission failed. Check console.";
+      toast.error(msg);
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -525,6 +692,7 @@ export const useInvoice = () => {
     appendService({
       activityId: "",
       duration: "1:00",
+      rate: 50,
       description: "",
       additionalNotes: "",
       source: "INVOICE",
@@ -543,6 +711,7 @@ export const useInvoice = () => {
       source: "INVOICE",
     });
   };
+
   useEffect(() => {
     fetchJobs();
     fetchPartsInventory();
@@ -563,6 +732,7 @@ export const useInvoice = () => {
     defaultTaxRate,
     serviceFields,
     partFields,
+    invoiceCode,
 
     error,
     success,
