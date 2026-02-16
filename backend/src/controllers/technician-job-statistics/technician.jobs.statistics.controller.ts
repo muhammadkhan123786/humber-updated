@@ -722,3 +722,49 @@ export const updateTechnicianJobStatusController = async (
     });
   }
 };
+
+//count total completed job where status is Completed 
+export const TechnicianCompletedJobCountController = async (
+  req: TechnicianAuthRequest,
+  res: Response
+) => {
+  try {
+    if (!req.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access.",
+      });
+    }
+
+    if (req.role === "Technician" && !req.technicianId) {
+      return res.status(401).json({
+        success: false,
+        message: "Technician not authorized.",
+      });
+    }
+
+    const filter: any = {
+      isDeleted: false,
+      isJobCompleted: true,
+      ...(req.role === "Technician" && {
+        technicianId: req.technicianId,
+      }),
+    };
+
+    const totalCompletedJobs =
+      await TechniciansJobs.countDocuments(filter);
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician completed jobs count fetched successfully.",
+      data: totalCompletedJobs,
+    });
+
+  } catch (error) {
+    console.error("Technician Jobs Count Failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch jobs count.",
+    });
+  }
+};
