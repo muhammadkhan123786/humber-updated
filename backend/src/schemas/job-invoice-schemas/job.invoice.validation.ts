@@ -57,6 +57,11 @@ export const createInvoiceSchemaValidation = z
     }),
     callOutFee: z.number().min(0).default(0),
     generalNotes: z.string().optional(),
+    partsTotal: z.number().default(0),
+    labourTotal: z.number().default(0),
+    subTotal: z.number().default(0),
+    discountAmount: z.number().default(0),
+    netTotal: z.number().default(0),
 
     discountType: z.enum(["Percentage", "Fix Amount"]).default("Percentage"),
     isVATEXEMPT: z.boolean().default(false),
@@ -68,6 +73,16 @@ export const createInvoiceSchemaValidation = z
       .url({ message: "Invalid payment link URL" })
       .optional(),
     paymentStatus: z.enum(["PENDING", "PAID"]).default("PENDING"),
+    paymentMethod: z
+      .enum([
+        "CASH",
+        "BANK TRANSFER",
+        "CARD PAYMENT",
+        "ONLINE PAYMENT",
+        "QR CODE",
+        "PENDING",
+      ])
+      .default("PENDING"),
     status: z.enum(["DRAFT", "ISSUED", "CANCELLED", "PAID"]).default("DRAFT"),
   })
   // ----------------------------

@@ -486,7 +486,7 @@ app.put(
 );
 
 //16-02-2026
-app.put(
+app.use(
   `${process.env.API_PREFIX}/customer-invoices`,
   adminProtecter,
   customerInvoiceRouter,

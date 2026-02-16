@@ -1,15 +1,37 @@
 "use client";
-import React, { useState } from "react";
-import { Link2, Info, Check } from "lucide-react";
 
-const PaymentLinkCard = () => {
+import React, { useState, useEffect } from "react";
+import { Link2, Info, Check } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
+import { InvoiceFormData } from "../../../../schema/invoice.schema";
+
+interface PaymentLinkHeaderProps {
+  form: UseFormReturn<InvoiceFormData>;
+}
+
+const PaymentLinkHeader: React.FC<PaymentLinkHeaderProps> = ({ form }) => {
   const [copied, setCopied] = useState(false);
-  const paymentUrl = "https://payment.mobilityscooter.com/pay/INV-2026-1136";
+  const { watch, setValue } = form;
+
+  // Watch invoiceId and generate payment URL
+  const invoiceId = watch("invoiceId");
+  const paymentUrl = invoiceId
+    ? `https://payment.mobilityscooter.com/pay/${invoiceId}`
+    : "";
+
+  // Update form's paymentLink when invoiceId changes
+  useEffect(() => {
+    if (paymentUrl) {
+      setValue("paymentLink", paymentUrl);
+    }
+  }, [paymentUrl, setValue]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(paymentUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (paymentUrl) {
+      navigator.clipboard.writeText(paymentUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
@@ -33,15 +55,20 @@ const PaymentLinkCard = () => {
           <div className="flex-1 h-9 px-3 py-1 bg-white rounded-[10px] outline-2 -outline-offset-2 outline-blue-200 flex justify-start items-center overflow-hidden focus-within:outline-blue-500 transition-all">
             <input
               readOnly
-              value={paymentUrl}
+              value={paymentUrl || "Generating payment link..."}
               className="w-full bg-transparent border-none outline-none text-indigo-950 text-sm font-normal font-['Consolas'] leading-5"
             />
           </div>
 
           <button
             onClick={handleCopy}
+            disabled={!paymentUrl}
             className={`w-28 h-9 shrink-0 relative rounded-[10px] flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 ${
-              copied ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"
+              !paymentUrl
+                ? "bg-gray-400 cursor-not-allowed"
+                : copied
+                  ? "bg-green-600"
+                  : "bg-blue-600 hover:bg-blue-700"
             }`}
           >
             {copied ? (
@@ -75,4 +102,4 @@ const PaymentLinkCard = () => {
   );
 };
 
-export default PaymentLinkCard;
+export default PaymentLinkHeader;

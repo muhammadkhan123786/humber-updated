@@ -1,3 +1,5 @@
+"use client";
+
 import { CheckCircle2 } from "lucide-react";
 
 interface InvoiceSummaryProps {
@@ -28,6 +30,16 @@ const InvoiceSummary = ({
   vatAmount,
   grandTotal,
 }: InvoiceSummaryProps) => {
+  // Format discount type for display
+  const getDiscountLabel = () => {
+    if (discountType === "Percentage") {
+      return ` (${discountValue}%)`;
+    } else if (discountType === "Fix Amount") {
+      return " (Fixed)";
+    }
+    return "";
+  };
+
   return (
     <div className="w-full bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl outline-2 -outline-offset-2 outline-green-200 p-6 flex flex-col gap-6 font-sans">
       <div className="flex items-center gap-3 text-green-600">
@@ -40,6 +52,7 @@ const InvoiceSummary = ({
       </div>
 
       <div className="flex flex-col gap-3">
+        {/* Parts */}
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
             Parts:
@@ -48,6 +61,8 @@ const InvoiceSummary = ({
             £{partsSubtotal.toFixed(2)}
           </span>
         </div>
+
+        {/* Labour */}
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
             Labour:
@@ -56,6 +71,8 @@ const InvoiceSummary = ({
             £{labourSubtotal.toFixed(2)}
           </span>
         </div>
+
+        {/* Callout Fee */}
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
             Callout Fee:
@@ -64,13 +81,13 @@ const InvoiceSummary = ({
             £{calloutFee.toFixed(2)}
           </span>
         </div>
+
+        {/* Discount - Only show if there is a discount */}
         {discountAmount > 0 && (
           <div className="flex justify-between items-center text-amber-600">
             <span className="text-lg font-normal font-['Arial'] leading-7">
               Discount:
-              {discountType === "percentage"
-                ? ` (${discountValue}%)`
-                : " (Fixed)"}
+              {getDiscountLabel()}
             </span>
             <span className="text-lg font-bold font-['Arial'] leading-7">
               -£{discountAmount.toFixed(2)}
@@ -78,8 +95,10 @@ const InvoiceSummary = ({
           </div>
         )}
 
+        {/* Separator */}
         <div className="h-px w-full bg-indigo-600/10" />
 
+        {/* Subtotal after discount */}
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
             Subtotal:
@@ -88,7 +107,9 @@ const InvoiceSummary = ({
             £{afterDiscount.toFixed(2)}
           </span>
         </div>
-        {!isVatExempt && (
+
+        {/* VAT - Show either amount or exempt badge */}
+        {!isVatExempt ? (
           <div className="flex justify-between items-center">
             <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
               VAT ({vatRate}%):
@@ -97,9 +118,7 @@ const InvoiceSummary = ({
               £{vatAmount.toFixed(2)}
             </span>
           </div>
-        )}
-
-        {isVatExempt && (
+        ) : (
           <div className="flex justify-between items-center text-green-600">
             <span className="text-lg font-normal font-['Arial'] leading-7">
               VAT:
@@ -110,6 +129,7 @@ const InvoiceSummary = ({
           </div>
         )}
 
+        {/* Separator */}
         <div className="h-px w-full bg-green-300" />
 
         {/* Grand Total */}

@@ -3,6 +3,8 @@
 import React from "react";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { CustomSelect } from "../../../common-form/CustomSelect";
+import { UseFormReturn } from "react-hook-form";
+import { InvoiceFormData } from "../../../../schema/invoice.schema";
 
 interface AdditionalChargesProps {
   calloutFee: number;
@@ -16,6 +18,7 @@ interface AdditionalChargesProps {
   vatRate: number;
   setVatRate: (value: number) => void;
   subtotal: number;
+  form: UseFormReturn<InvoiceFormData>;
 }
 
 const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
@@ -28,18 +31,70 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
   isVatExempt,
   setIsVatExempt,
   vatRate,
-  setVatRate,
   subtotal,
+  form,
 }) => {
   const discountOptions = [
-    { id: "percentage", label: "Percentage (%)" },
-    { id: "fixed", label: "Fixed Amount (£)" },
+    { id: "Percentage", label: "Percentage (%)" },
+    { id: "Fix Amount", label: "Fixed Amount (£)" },
   ];
 
-  const calculatedDiscount =
-    discountType === "percentage"
-      ? (subtotal * (discountValue || 0)) / 100
-      : discountValue || 0;
+  const handleCalloutFeeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setCalloutFee(value);
+    // Use setTimeout to break the update cycle
+    setTimeout(() => {
+      form.setValue("callOutFee", value, {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }, 0);
+  };
+
+  const handleDiscountValueChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const value = parseFloat(e.target.value) || 0;
+    setDiscountValue(value);
+    // Use setTimeout to break the update cycle
+    setTimeout(() => {
+      form.setValue("discountAmount", value, {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }, 0);
+  };
+
+  const handleDiscountTypeChange = (value: string) => {
+    setDiscountType(value);
+    // Use setTimeout to break the update cycle
+    setTimeout(() => {
+      form.setValue("discountType", value as "Percentage" | "Fix Amount", {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }, 0);
+  };
+
+  const handleVatExemptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setIsVatExempt(checked);
+    // Use setTimeout to break the update cycle
+    setTimeout(() => {
+      form.setValue("isVATEXEMPT", checked, {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }, 0);
+  };
+
+  const isPercentage = discountType === "Percentage";
+  const calculatedDiscount = isPercentage
+    ? (subtotal * (discountValue || 0)) / 100
+    : discountValue || 0;
+
+  const afterDiscount = subtotal - calculatedDiscount;
+  const vatAmount = !isVatExempt ? (afterDiscount * (vatRate || 0)) / 100 : 0;
 
   const inputFocusClasses =
     "focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all";
@@ -54,6 +109,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
       </div>
 
       <div className="flex flex-col gap-6">
+        {/* Callout Fee */}
         <div className="flex flex-col gap-2">
           <label className="text-indigo-950 text-sm font-medium">
             Callout Fee (£)
@@ -61,8 +117,10 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
           <div className="w-full md:w-1/2">
             <input
               type="number"
+              min="0"
+              step="0.01"
               value={calloutFee}
-              onChange={(e) => setCalloutFee(parseFloat(e.target.value) || 0)}
+              onChange={handleCalloutFeeChange}
               className={`w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
             />
           </div>
@@ -70,6 +128,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
 
         <div className="h-px w-full bg-indigo-600/10" />
 
+        {/* Discount Section */}
         <div className="flex flex-col gap-3">
           <label className="text-indigo-950 text-sm font-medium">
             Discount
@@ -79,7 +138,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
               <CustomSelect
                 options={discountOptions}
                 value={discountType}
-                onChange={setDiscountType}
+                onChange={handleDiscountTypeChange}
                 placeholder="Select Type"
                 isSearchable={false}
               />
@@ -87,13 +146,11 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
             <div className="w-full">
               <input
                 type="number"
-                placeholder={
-                  discountType === "percentage" ? "Enter %" : "Enter £"
-                }
+                min="0"
+                step={isPercentage ? "1" : "0.01"}
+                placeholder={isPercentage ? "Enter %" : "Enter £"}
                 value={discountValue}
-                onChange={(e) =>
-                  setDiscountValue(parseFloat(e.target.value) || 0)
-                }
+                onChange={handleDiscountValueChange}
                 className={`w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
               />
             </div>
@@ -108,6 +165,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
 
         <div className="h-px w-full bg-indigo-600/10" />
 
+        {/* VAT Settings */}
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center">
             <span className="text-indigo-950 text-sm font-medium">
@@ -117,7 +175,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
               <input
                 type="checkbox"
                 checked={isVatExempt}
-                onChange={() => setIsVatExempt(!isVatExempt)}
+                onChange={handleVatExemptChange}
                 className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
               />
               <span className="text-indigo-950 text-sm group-hover:text-indigo-700">
@@ -127,34 +185,34 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
           </div>
 
           {isVatExempt ? (
-            <div className="h-12 px-4 rounded-xl bg-green-50 outline-2 outline-green-200 text-green-700 flex items-center gap-3 transition-all duration-300">
+            <div className="h-12 px-4 rounded-xl bg-green-50 outline-2 outline-green-200 text-green-700 flex items-center gap-3">
               <CheckCircle2 size={20} className="text-green-600" />
               <span className="text-sm">
                 VAT exemption applied for eligible customer
               </span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-indigo-950 text-xs font-medium">
                   VAT Rate (%)
                 </label>
                 <input
                   type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
                   value={vatRate}
-                  onChange={(e) => setVatRate(parseFloat(e.target.value) || 0)}
-                  className={`w-full h-12 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
+                  onChange={() => {}} // Remove handler since we don't need to update
+                  readOnly
+                  className={`w-full h-12 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses} opacity-75 cursor-not-allowed`}
                 />
               </div>
               <div className="flex flex-col gap-2 justify-end">
                 <div className="h-12 px-4 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center">
                   <span className="text-gray-600 text-sm">VAT Amount:</span>
                   <span className="text-amber-600 text-lg font-bold">
-                    £
-                    {(
-                      ((subtotal - calculatedDiscount) * (vatRate || 0)) /
-                      100
-                    ).toFixed(2)}
+                    £{vatAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
