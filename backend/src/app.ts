@@ -96,6 +96,7 @@ import {
 import technicianJobsStatisticsRouter from "./routes/technician-jobs/technician.jobs.statistics";
 import technicianDashboardJobsRouter from "./routes/technician-dashboard/technician-jobs/technician.jobs.routes";
 import {
+  TechnicianCompletedJobCountController,
   technicianDashboardJobsStatisticsController,
   updateTechnicianJobStatusController,
   updateTechnicianQuotationStatusController,
@@ -494,8 +495,11 @@ app.put(
 app.put(
   `${process.env.API_PREFIX}/update-technician-job-status`,
   technicianProtecter,
-  updateTechnicianJobStatusController,
+  TechnicianCompletedJobCountController,
 );
+
+//total technician completed jobs. 
+
 
 //Muhammad Imran code ended here.
 
