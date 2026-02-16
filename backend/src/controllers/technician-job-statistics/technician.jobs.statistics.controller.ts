@@ -543,7 +543,7 @@ export const getTechniciansWithActiveJobsController = async (
   }
 };
 
-//update techncian job status
+//update quotation job status
 export const updateTechnicianQuotationStatusController = async (
   req: TechnicianAuthRequest,
   res: Response
@@ -623,6 +623,102 @@ export const updateTechnicianQuotationStatusController = async (
     return res.status(500).json({
       success: false,
       message: "Failed to update technician Quotation status.",
+    });
+  }
+};
+
+//update technician job status and is completed job 
+export const updateTechnicianJobStatusController = async (
+  req: TechnicianAuthRequest,
+  res: Response
+) => {
+  try {
+    const { techncianJobStatusId, techncianJobId, isJobCompleted } = req.body;
+
+    // ✅ Role validation
+    if (!req.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access.",
+      });
+    }
+
+    // ✅ Validate job id
+    if (!techncianJobId || !Types.ObjectId.isValid(techncianJobId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid technician job id.",
+      });
+    }
+
+    // ✅ Validate status id (if provided)
+    if (techncianJobStatusId) {
+      if (!Types.ObjectId.isValid(techncianJobStatusId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid technician job status id.",
+        });
+      }
+    }
+    // ✅ Require at least one update field
+    if (!techncianJobStatusId && typeof isJobCompleted !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "Nothing to update.",
+      });
+    }
+
+    const filter: any = {
+      _id: techncianJobId,
+      isDeleted: false,
+    };
+
+    // ✅ Technician restriction
+    if (req.role === "Technician") {
+      if (!req.technicianId) {
+        return res.status(401).json({
+          success: false,
+          message: "Technician not authorized.",
+        });
+      }
+
+      filter.technicianId = req.technicianId;
+    }
+
+    // ✅ Build update object safely
+    const updateData: any = {};
+
+    if (techncianJobStatusId) {
+      updateData.jobStatusId = techncianJobStatusId;
+    }
+
+    if (typeof isJobCompleted === "boolean") {
+      updateData.isJobCompleted = isJobCompleted;
+    }
+
+    const updatedJob = await TechniciansJobs.findOneAndUpdate(
+      filter,
+      { $set: updateData },
+      { new: true }
+    ).lean();
+
+    if (!updatedJob) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician Job not found or access denied.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician Job Status Updated Successfully.",
+      data: updatedJob,
+    });
+  } catch (error) {
+    console.error("Update Technician Job Status Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update technician Job status.",
     });
   }
 };

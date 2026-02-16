@@ -52,6 +52,7 @@ export const technicianJobSchemaValidation = z.object({
   completionSummary: z.string().optional(),
 
   jobNotes: jobNotesSchemaValidation,
+  isJobCompleted: z.boolean().optional().default(false),
 
   ...commonSchemaValidation,
 });

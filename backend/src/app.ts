@@ -97,6 +97,7 @@ import technicianJobsStatisticsRouter from "./routes/technician-jobs/technician.
 import technicianDashboardJobsRouter from "./routes/technician-dashboard/technician-jobs/technician.jobs.routes";
 import {
   technicianDashboardJobsStatisticsController,
+  updateTechnicianJobStatusController,
   updateTechnicianQuotationStatusController,
 } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
 import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoices.routes";
@@ -489,6 +490,13 @@ app.put(
   adminProtecter,
   customerInvoiceRouter,
 );
+
+app.put(
+  `${process.env.API_PREFIX}/update-technician-job-status`,
+  technicianProtecter,
+  updateTechnicianJobStatusController,
+);
+
 //Muhammad Imran code ended here.
 
 //  Muzmil Hassan 8/1/2026
