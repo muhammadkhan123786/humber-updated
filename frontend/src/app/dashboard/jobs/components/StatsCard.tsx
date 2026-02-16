@@ -39,10 +39,6 @@ const statusConfig: Record<string, { icon: any; bg: string }> = {
     icon: PauseCircle,
     bg: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
-  Completed: {
-    icon: CheckCircle2,
-    bg: "bg-gradient-to-br from-emerald-500 to-green-500",
-  },
   Cancelled: {
     icon: XCircle,
     bg: "bg-gradient-to-br from-rose-500 to-red-600",
@@ -99,7 +95,7 @@ const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
   }, [refreshTrigger]); // Jab bhi refreshTrigger change hoga (delete ke baad), ye foran fetch karega.
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 bg-gray-50 rounded-xl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 bg-gray-50 rounded-xl">
       {stats.map((item, index) => (
         <div
           key={index}

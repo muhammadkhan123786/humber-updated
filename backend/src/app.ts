@@ -495,11 +495,15 @@ app.put(
 app.put(
   `${process.env.API_PREFIX}/update-technician-job-status`,
   technicianProtecter,
-  TechnicianCompletedJobCountController,
+  updateTechnicianJobStatusController,
 );
 
 //total technician completed jobs. 
-
+app.put(
+  `${process.env.API_PREFIX}/technician-job-completed-count`,
+  technicianProtecter,
+  TechnicianCompletedJobCountController,
+);
 
 //Muhammad Imran code ended here.
 
