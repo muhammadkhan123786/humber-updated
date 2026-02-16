@@ -246,7 +246,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                     <select
                       value={currentStatusId}
                       onChange={(e) => onStatusChange(quotation._id, e.target.value)}
-                      className="px-2 py-1.5 rounded-full text-xs font-semibold border focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all cursor-pointer min-w-[50px] text-center capitalize"
+                      className="px-1.5 py-1 rounded-full text-xs font-semibold border focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all cursor-pointer  text-center capitalize"
                       style={{
                         backgroundColor: statusColors.bgColor,
                         color: statusColors.textColor,

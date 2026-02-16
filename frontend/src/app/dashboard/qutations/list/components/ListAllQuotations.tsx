@@ -8,6 +8,9 @@ import View from "./View";
 import DeleteConfirmModal from "../../../my-tickets/components/DeleteConfirmModal";
 import { getAlls, deleteItem, updateItem } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
+import axios from "axios";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
 interface QuotationFromBackend {
   _id: string;
@@ -299,10 +302,21 @@ const ListAllQuotations = () => {
         )
       );
 
-      // Update the quotation in backend
-      await updateItem("/technician-ticket-quotation", quotationId, {
-        quotationStatusId: newStatusId,
-      });
+      // Update the quotation status in backend using the specific endpoint
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${BASE_URL}/update-technician-quotation-status`,
+        {
+          techncianQuotationId: quotationId,
+          techncianQuotationStatusId: newStatusId,
+        },
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+            "Content-Type": "application/json",
+          },
+        }
+      );
       
       toast.success("Status updated successfully");
     } catch (error) {

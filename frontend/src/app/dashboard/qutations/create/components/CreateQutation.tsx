@@ -221,7 +221,7 @@ const CreateQuotationPage = () => {
                 onClick={handleBack}
                 className="p-2 hover:bg-white/50 rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-6 h-6 text-gray-700" />
+                <ArrowLeft className="w-4 h-4 text-gray-700" />
               </button>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
