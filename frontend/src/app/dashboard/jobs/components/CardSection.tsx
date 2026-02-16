@@ -232,8 +232,9 @@ const JobCardsSection = ({
               return (
                 <div
                   key={job._id || index}
-                  className={`w-full bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-all duration-300 ${!isCompleted ? 'opacity-50' : 'opacity-100'}`}
+                  className={`w-full bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-all duration-300 `}
                 >
+                 
                   <div
                     className="w-full h-1.5"
                     style={{
@@ -243,6 +244,7 @@ const JobCardsSection = ({
                   />
 
                   <div className="p-5 pb-6">
+                    <div className={`${isCompleted ? 'opacity-50' : 'opacity-100'}`}>
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-indigo-950 text-lg font-bold leading-none tracking-tight">
@@ -356,9 +358,9 @@ const JobCardsSection = ({
                         <Eye size={14} /> VIEW
                       </button>
                     </div>
-
+                    </div>
                     {/* Completion Toggle */}
-                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between opacity-100!">
                       <span className="text-xs font-medium text-gray-600">Job Completed</span>
                       <button
                         onClick={() => handleCompletionToggle(job._id, isCompleted)}
@@ -430,7 +432,7 @@ const JobCardsSection = ({
                   return (
                     <tr
                       key={job._id || index}
-                      className={`hover:bg-indigo-50/30 transition-all group ${!isCompleted ? 'opacity-50' : 'opacity-100'}`}
+                      className={`hover:bg-indigo-50/30 transition-all group ${isCompleted ? 'opacity-50' : 'opacity-100'}`}
                     >
                       <td className="p-4">
                         <div className="font-bold text-sm text-indigo-950">
@@ -539,7 +541,7 @@ const JobCardsSection = ({
                         </div>
                       </td>
 
-                      <td className="p-4">
+                      <td className="p-4 opacity-100!">
                         <button
                           onClick={() => handleCompletionToggle(job._id, isCompleted)}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
