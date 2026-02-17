@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X, Key, AlertCircle, Save } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 import AnimationStyles from './Animation';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const ChangePasswordForm = ({ onClose }: Props) => {
+  const router = useRouter();
   const [passwords, setPasswords] = useState({
     currentPassword: '',
     newPassword: '',
@@ -77,10 +79,17 @@ const ChangePasswordForm = ({ onClose }: Props) => {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success(data.message || 'Password changed successfully!');
+        toast.success(data.message || 'Password changed successfully! Redirecting to sign in...');
         setPasswords({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        
+        // Clear session data
         setTimeout(() => {
-          onClose();
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          localStorage.clear();
+          
+          // Redirect to sign-in page
+          router.push('/auth/signIn');
         }, 1500);
       } else {
         toast.error(data.message || 'Failed to change password');

@@ -25,27 +25,46 @@ interface LayoutProps {
 export default function Layout({ children, onLogout }: LayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
+  
+  // ALL STATE HOOKS MUST BE AT THE TOP
   const [roleId, setRoleId] = useState<number | null>(null);
   const [today, setToday] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        // No token found, redirect to sign-in
+        router.push("/auth/signIn");
+        return;
+      }
+      
+      // Token exists, user is authenticated
+      setIsAuthenticated(true);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
 
   useEffect(() => {
-    const storedRoleId = localStorage.getItem("roleId");
-    if (storedRoleId) {
-      setRoleId(Number(storedRoleId));
+    if (isAuthenticated) {
+      const storedRoleId = localStorage.getItem("roleId");
+      if (storedRoleId) {
+        setRoleId(Number(storedRoleId));
+      }
     }
-  }, []);
+  }, [isAuthenticated]);
+  
   useEffect(() => {
     setToday(new Date().toDateString());
   }, []);
-
-  // States
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>(
-    {},
-  );
-
-
 
   const navBarLinks = useMemo<NavItem[]>(() => {
     if (!roleId) return [];
@@ -64,6 +83,18 @@ export default function Layout({ children, onLogout }: LayoutProps) {
   const toggleMenu = (id: string) => {
     setExpandedMenus((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  // Show loading while checking authentication (AFTER all hooks)
+  if (isCheckingAuth || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderNavItem = (
     item: NavItem,
