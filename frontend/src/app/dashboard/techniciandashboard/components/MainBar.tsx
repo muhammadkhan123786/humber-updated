@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Key } from 'lucide-react';
 import ChangePasswordForm from './ChangePasswordForm';
-import toast from 'react-hot-toast';
+import { useTechnicianProfile } from '@/hooks/useTechnicianProfile';
 
 interface MainBarProps {
   refreshTrigger?: number;
@@ -10,46 +10,21 @@ interface MainBarProps {
 
 const MainBar = ({ refreshTrigger = 0 }: MainBarProps) => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [userData, setUserData] = useState({
-    name: 'Loading...',
-    businessType: '',
-    city: ''
-  });
+  
+  // Use TanStack Query hook
+  const { profile, isLoading, refetch } = useTechnicianProfile();
 
+  // Refetch when refreshTrigger changes
   useEffect(() => {
-    fetchUserData();
-  }, [refreshTrigger]);
-
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch('http://127.0.0.1:4000/api/technician-profile', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        const { technician, shop } = result.data;
-        setUserData({
-          name: `${technician.personId?.firstName || ''} ${technician.personId?.lastName || ''}`.trim(),
-          businessType: shop?.shopName || '',
-          city: technician.addressId?.address || ''
-        });
-      }
-    } catch (error) {
-      toast.error('Error fetching user data');
-      setUserData({
-        name: 'Technician',
-        businessType: '',
-        city: ''
-      });
+    if (refreshTrigger > 0) {
+      refetch();
     }
+  }, [refreshTrigger, refetch]);
+
+  const userData = {
+    name: profile ? `${profile.firstName} ${profile.lastName}`.trim() : 'Loading...',
+    businessType: profile?.shopName || '',
+    city: profile?.address || ''
   };
 
   return (

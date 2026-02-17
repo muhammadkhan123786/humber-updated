@@ -16,6 +16,7 @@ import Link from 'next/link';
 // import google from '../../../assets/google.png';
 // import apple from '../../../assets/apple.png';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 export default function LoginPage() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -28,7 +29,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (email === '' || password === '') {
-      alert('Please enter credentials.');
+      toast.error('Please enter credentials.');
       return;
     }
     setIsLoading(true);
@@ -46,7 +47,7 @@ export default function LoginPage() {
       const result = await res.json();
       console.log('Login response:', result);
       if (!res.ok) {
-        alert(result.message || 'Login failed. Please check your credentials.');
+        toast.error(result.message || 'Login failed. Please check your credentials.');
         return;
       }
       // Success Logic
@@ -78,7 +79,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      alert('Did Not Connect the Server');
+      toast.error('Did Not Connect the Server');
     } finally {
       setIsLoading(false);
     }

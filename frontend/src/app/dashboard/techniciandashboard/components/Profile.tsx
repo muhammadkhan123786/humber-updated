@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User, Camera, Save, Key, Shield } from 'lucide-react';
 import ChangePasswordForm from './ChangePasswordForm';
 import AnimationStyles from './Animation';
-import toast from 'react-hot-toast';
+import { useTechnicianProfile } from '@/hooks/useTechnicianProfile';
 
 interface ProfileData {
   firstName: string;
@@ -23,10 +23,13 @@ interface ProfileProps {
 
 const Profile = ({ onProfileUpdate }: ProfileProps) => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const scrollPositionRef = useRef<number>(0);
-  const [profileData, setProfileData] = useState<ProfileData>({
+  
+  // Use TanStack Query hook
+  const { profile, isLoading, updateProfile, isUpdating } = useTechnicianProfile();
+  
+  // Local state for form data
+  const [formData, setFormData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
     email: '',
@@ -38,105 +41,54 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
     specializations: []
   });
 
+  // Update form data when profile is fetched
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch('http://127.0.0.1:4000/api/technician-profile', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      const result = await response.json();
-      
-      if (result.success && result.data) {
-        const { technician, shop } = result.data;
-        setProfileData({
-          firstName: technician.personId?.firstName || '',
-          lastName: technician.personId?.lastName || '',
-          email: technician.accountId?.email || '',
-          phoneNumber: technician.contactId?.phoneNumber || '',
-          address: technician.addressId?.address || '',
-          employeeId: technician.employeeId || '',
-          dateOfJoining: technician.dateOfJoining || '',
-          shopName: shop?.shopName || '',
-          specializations: technician.specializationIds?.map((spec: any) => spec.MasterServiceType) || []
-        });
-      }
-    } catch (error) {
-      toast.error('Error fetching profile');
-    } finally {
-      setLoading(false);
+    if (profile) {
+      setFormData(profile);
     }
-  };
+  }, [profile]);
 
   const handleInputChange = (field: keyof ProfileData, value: string) => {
-    setProfileData(prev => ({
+    setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSaveProfile = async () => {
-    try {
-      setSaving(true);
-      const token = localStorage.getItem('token');
-      
-      const response = await fetch('http://127.0.0.1:4000/api/update-technician-profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          firstName: profileData.firstName,
-          lastName: profileData.lastName,
-          email: profileData.email,
-          phoneNumber: profileData.phoneNumber,
-          address: profileData.address
-        })
-      });
-
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success('Profile updated successfully!');
-        
-        // Save current scroll position before any updates
-        scrollPositionRef.current = window.scrollY;
-        
-        // Update profile data without refetching (to avoid re-render scroll issues)
-        if (onProfileUpdate) {
-          onProfileUpdate();
-        }
-        
-        // Restore scroll position immediately and persistently
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
-        });
-        
-        // Keep restoring for a few frames to override any scroll attempts
-        for (let i = 0; i < 5; i++) {
-          setTimeout(() => {
+  const handleSaveProfile = () => {
+    // Save current scroll position
+    scrollPositionRef.current = window.scrollY;
+    
+    // Update profile using TanStack Query mutation
+    updateProfile(
+      {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address
+      },
+      {
+        onSuccess: () => {
+          // Call parent callback
+          if (onProfileUpdate) {
+            onProfileUpdate();
+          }
+          
+          // Restore scroll position
+          requestAnimationFrame(() => {
             window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
-          }, i * 50);
+          });
+          
+          // Keep restoring for a few frames
+          for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+              window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
+            }, i * 50);
+          }
         }
-      } else {
-        toast.error('Failed to update profile');
       }
-    } catch (error) {
-      toast.error('Error updating profile');
-    } finally {
-      setSaving(false);
-    }
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -149,7 +101,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
     });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <>
         <AnimationStyles />
@@ -186,12 +138,12 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
           {/* Profile Info */}
           <div className="flex-1">
             <h3 className="text-xl font-bold text-gray-900">
-              {profileData.firstName} {profileData.lastName}
+              {formData.firstName} {formData.lastName}
             </h3>
-            <p className="text-gray-600 mt-1">{profileData.shopName}</p>
+            <p className="text-gray-600 mt-1">{formData.shopName}</p>
             <div className="mt-2 inline-flex items-center gap-2 bg-indigo-100 border border-indigo-200 px-3 py-1 rounded-xl">
                 <span className='text-indigo-800'><Shield size={12} /></span>
-              <span className="text-xs text-indigo-800 font-medium">Employee ID: {profileData.employeeId}</span>
+              <span className="text-xs text-indigo-800 font-medium">Employee ID: {formData.employeeId}</span>
             </div>
           </div>
         </div>
@@ -204,7 +156,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
               <label className="block text-sm font-medium text-gray-700 ">Full Name</label>
               <input
                 type="text"
-                value={`${profileData.firstName} ${profileData.lastName}`}
+                value={`${formData.firstName} ${formData.lastName}`}
                 onChange={(e) => {
                   const [first, ...rest] = e.target.value.split(' ');
                   handleInputChange('firstName', first || '');
@@ -217,7 +169,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
               <label className="block text-sm font-medium text-gray-700 ">Email</label>
               <input
                 type="email"
-                value={profileData.email}
+                value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className="w-full px-4 py-1.5 bg-[#f3f4f6] rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
@@ -230,7 +182,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
               <label className="block text-sm font-medium text-gray-700 ">Phone</label>
               <input
                 type="text"
-                value={profileData.phoneNumber}
+                value={formData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
                 className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
@@ -239,7 +191,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
               <label className="block text-sm font-medium text-gray-700 ">Location</label>
               <input
                 type="text"
-                value={profileData.address}
+                value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
@@ -250,7 +202,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Specialization</label>
             <div className="flex items-center gap-3 flex-wrap">
-              {profileData.specializations.map((spec, index) => (
+              {formData.specializations.map((spec, index) => (
                 <div
                   key={index}
                   className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-2xl border border-green-200"
@@ -269,11 +221,11 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-xs text-gray-600 mb-1">Employee ID</label>
-              <p className="text-base font-semibold text-gray-800">{profileData.employeeId}</p>
+              <p className="text-base font-semibold text-gray-800">{formData.employeeId}</p>
             </div>
             <div>
-              <label className="block text-xs text-gray-600 mb-1">Joined Date</label>
-              <p className="text-base font-semibold text-gray-800">{formatDate(profileData.dateOfJoining)}</p>
+              <label className="block text-sm text-gray-600 mb-1">Joined Date</label>
+              <p className="text-base font-semibold text-gray-800">{formatDate(formData.dateOfJoining)}</p>
             </div>
           </div>
         </div>
@@ -282,11 +234,11 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleSaveProfile}
-            disabled={saving}
-            className="flex items-center text-sm gap-2 px-3 py-1.5 h-9  bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isUpdating}
+            className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={16} />
-            {saving ? 'Saving...' : 'Save Profile'}
+            <Save size={18} />
+            {isUpdating ? 'Saving...' : 'Save Profile'}
           </button>
           <button
             onClick={() => setShowPasswordForm(true)}
