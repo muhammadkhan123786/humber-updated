@@ -142,24 +142,11 @@ const CustomerInvoice = () => {
 
   const subtotal = partsSubtotal + labourSubtotal + (calloutFee || 0);
 
-  let discountAmount = 0;
-  if (discountType === "Percentage") {
-    discountAmount = (subtotal * (discountValue || 0)) / 100;
-  } else {
-    discountAmount = discountValue || 0;
-  }
-
-  const afterDiscount = subtotal - discountAmount;
-  const vatAmount = !isVatExempt
-    ? (afterDiscount * (defaultTaxRate || 20)) / 100
-    : 0;
-  const grandTotal = afterDiscount + vatAmount;
-
   return (
     <div>
-      <HeaderSection />
+      <HeaderSection invoiceCode={invoiceCode} />
       <div className="my-3">
-        <CardSection />
+        <CardSection form={form} vatRate={defaultTaxRate} />
       </div>
       <JobSelectionSection
         jobs={jobs}
@@ -191,20 +178,7 @@ const CustomerInvoice = () => {
           form={form}
         />
       </div>
-      <InvoiceSummary
-        partsSubtotal={partsSubtotal}
-        labourSubtotal={labourSubtotal}
-        calloutFee={calloutFee}
-        discountAmount={discountAmount}
-        discountType={discountType}
-        discountValue={discountValue}
-        subtotal={subtotal}
-        afterDiscount={afterDiscount}
-        isVatExempt={isVatExempt}
-        vatRate={defaultTaxRate}
-        vatAmount={vatAmount}
-        grandTotal={grandTotal}
-      />
+      <InvoiceSummary form={form} vatRate={defaultTaxRate} />
       <div className="my-3">
         <NotesAndTerms form={form} />
       </div>

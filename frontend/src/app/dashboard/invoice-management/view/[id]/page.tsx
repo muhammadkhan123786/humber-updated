@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { downloadInvoicePDF } from "../../component/InvoicePDF";
+
 const getAuthHeader = () => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;

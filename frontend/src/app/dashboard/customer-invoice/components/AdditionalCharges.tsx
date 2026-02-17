@@ -1,39 +1,72 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, DollarSign } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { CustomSelect } from "../../../common-form/CustomSelect";
 import { UseFormReturn, Controller } from "react-hook-form";
 import { InvoiceFormData } from "../../../../schema/invoice.schema";
 
 interface AdditionalChargesProps {
   vatRate: number;
-  subtotal: number;
   form: UseFormReturn<InvoiceFormData>;
+  subtotal: number;
 }
 
 const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
   vatRate,
-  subtotal,
   form,
 }) => {
   const { control, watch } = form;
-  const discountValueRaw = watch("discountAmount");
+  const parts = watch("parts") || [];
+  const services = watch("services") || [];
+
+  // Safe parsing for calculations
+  const callOutFee = parseFloat(String(watch("callOutFee") || 0));
+  const discountValueRaw = watch("discountAmount") || 0;
   const discountType = watch("discountType") || "Percentage";
   const isVatExempt = watch("isVATEXEMPT") || false;
 
-  const discountValue = parseFloat(discountValueRaw as any) || 0;
+  const discountValue = parseFloat(String(discountValueRaw)) || 0;
 
+  // Calculate parts subtotal
+  const partsSubtotal = parts.reduce(
+    (acc: number, part: any) =>
+      acc + (part.quantity || 0) * (part.unitCost || 0),
+    0,
+  );
+
+  // Calculate labour subtotal
+  const labourSubtotal = services.reduce((acc: number, service: any) => {
+    let hours = 1;
+    if (service?.duration) {
+      if (
+        typeof service.duration === "string" &&
+        service.duration.includes(":")
+      ) {
+        const [h, m] = service.duration.split(":").map(Number);
+        hours = h + (m || 0) / 60;
+      } else {
+        hours = parseFloat(String(service.duration)) || 1;
+      }
+    }
+    return acc + hours * (service.rate || 50);
+  }, 0);
+
+  const subtotalRaw = partsSubtotal + labourSubtotal + callOutFee;
+
+  const discountAmount =
+    discountType === "Percentage"
+      ? Math.round(subtotalRaw * discountValue) / 100
+      : Math.round(discountValue * 100) / 100;
+
+  const afterDiscount = subtotalRaw - discountAmount;
+
+  const vatAmount = !isVatExempt
+    ? Math.round(afterDiscount * vatRate) / 100
+    : 0;
+
+  const formatValue = (val: number) => val.toFixed(2);
   const isPercentage = discountType === "Percentage";
-  const calculatedDiscount: number = isPercentage
-    ? (subtotal * discountValue) / 100
-    : discountValue;
-
-  const afterDiscount = subtotal - calculatedDiscount;
-  const vatAmount = !isVatExempt ? (afterDiscount * (vatRate || 0)) / 100 : 0;
-
-  const inputFocusClasses =
-    "focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 focus:outline-none transition-all";
 
   const discountOptions = [
     { id: "Percentage", label: "Percentage (%)" },
@@ -55,23 +88,22 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
           <label className="text-indigo-950 text-sm font-medium">
             Callout Fee (£)
           </label>
-          <div className="w-full md:w-1/2">
-            <Controller
-              control={control}
-              name="callOutFee"
-              render={({ field }) => (
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  {...field}
-                  value={field.value ?? 0}
-                  onChange={(e) => field.onChange(Number(e.target.value))} // <-- string to number
-                  className={`w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
-                />
-              )}
-            />
-          </div>
+          <Controller
+            control={control}
+            name="callOutFee"
+            render={({ field }) => (
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                {...field}
+                value={field.value ?? 0}
+                // FIXED: Wrapped in String() to match expected parameter type
+                onChange={(e) => field.onChange(Number(e.target.value))}
+                className="w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm"
+              />
+            )}
+          />
         </div>
 
         <div className="h-px w-full bg-indigo-600/10" />
@@ -81,9 +113,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
           <label className="text-indigo-950 text-sm font-medium">
             Discount
           </label>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Discount Type */}
             <div className="h-12">
               <Controller
                 control={control}
@@ -100,7 +130,6 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
               />
             </div>
 
-            {/* Discount Value */}
             <div className="w-full">
               <Controller
                 control={control}
@@ -114,23 +143,20 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
                     {...field}
                     value={field.value ?? 0}
                     onChange={(e) => field.onChange(Number(e.target.value))}
-                    className={`w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses}`}
+                    className="w-full h-10 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm"
                   />
                 )}
               />
             </div>
 
-            {/* Calculated Discount */}
             <div className="h-12 px-4 bg-amber-50 rounded-xl outline-2 outline-amber-200 flex justify-between items-center">
               <span className="text-gray-600 text-sm">Discount Amount:</span>
               <span className="text-amber-600 text-lg font-bold">
-                -£{Number(calculatedDiscount).toFixed(2)}
+                -£{formatValue(discountAmount)}
               </span>
             </div>
           </div>
         </div>
-
-        <div className="h-px w-full bg-indigo-600/10" />
 
         {/* VAT Section */}
         <div className="flex flex-col gap-3">
@@ -138,7 +164,6 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
             <span className="text-indigo-950 text-sm font-medium">
               VAT Settings
             </span>
-
             <Controller
               control={control}
               name="isVATEXEMPT"
@@ -148,7 +173,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
                     type="checkbox"
                     checked={field.value}
                     onChange={field.onChange}
-                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                   />
                   <span className="text-indigo-950 text-sm group-hover:text-indigo-700">
                     VAT Exempt
@@ -158,14 +183,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
             />
           </div>
 
-          {isVatExempt ? (
-            <div className="h-12 px-4 rounded-xl bg-green-50 outline-2 outline-green-200 text-green-700 flex items-center gap-3">
-              <CheckCircle2 size={20} className="text-green-600" />
-              <span className="text-sm">
-                VAT exemption applied for eligible customer
-              </span>
-            </div>
-          ) : (
+          {!isVatExempt && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-indigo-950 text-xs font-medium">
@@ -175,7 +193,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
                   type="number"
                   value={vatRate}
                   readOnly
-                  className={`w-full h-12 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm ${inputFocusClasses} opacity-75 cursor-not-allowed`}
+                  className="w-full h-12 px-3 bg-gray-100 rounded-xl outline-2 outline-amber-100 border border-transparent text-indigo-950 text-sm opacity-75 cursor-not-allowed"
                 />
               </div>
 
@@ -183,7 +201,7 @@ const AdditionalCharges: React.FC<AdditionalChargesProps> = ({
                 <div className="h-12 px-4 bg-amber-50 rounded-xl border border-amber-200 flex justify-between items-center">
                   <span className="text-gray-600 text-sm">VAT Amount:</span>
                   <span className="text-amber-600 text-lg font-bold">
-                    £{Number(vatAmount).toFixed(2)}
+                    £{formatValue(vatAmount)}
                   </span>
                 </div>
               </div>

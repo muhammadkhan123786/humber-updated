@@ -570,6 +570,7 @@ export const useInvoice = () => {
       setIsSubmitting(true);
       setError(null);
       setSuccess(null);
+
       if (!data.jobId?.trim()) {
         toast.error("Job is required");
         setIsSubmitting(false);
@@ -587,16 +588,13 @@ export const useInvoice = () => {
         setIsSubmitting(false);
         return;
       }
-      const invalidManualParts = (data.parts || []).filter((part) => {
-        if (part.source === "INVOICE") {
-          return !part.partId?.trim();
-        }
-        return false;
-      });
+      const invalidJobParts = (data.parts || []).filter(
+        (part) => part.source === "JOB" && !part.partId?.trim(),
+      );
 
-      if (invalidManualParts.length > 0) {
+      if (invalidJobParts.length > 0) {
         toast.error(
-          `Please select a part from inventory for manually added parts. ${invalidManualParts.length} part(s) need to be selected.`,
+          `Please select a part from inventory for job parts. ${invalidJobParts.length} part(s) need to be selected.`,
         );
         setIsSubmitting(false);
         return;
@@ -619,7 +617,6 @@ export const useInvoice = () => {
 
       const labourTotal = (data.services || []).reduce((sum, service) => {
         let hours = 1;
-
         if (service?.duration) {
           if (
             typeof service.duration === "string" &&
@@ -631,13 +628,11 @@ export const useInvoice = () => {
             hours = parseFloat(String(service.duration)) || 1;
           }
         }
-
         const rate = service?.rate || 50;
         return sum + hours * rate;
       }, 0);
 
       const subTotal = partsTotal + labourTotal + (data.callOutFee || 0);
-
       const roundedDiscountAmount =
         data.discountType === "Percentage"
           ? Math.round((data.discountAmount || 0) * 10) / 10
@@ -652,10 +647,46 @@ export const useInvoice = () => {
       const taxAmount = data.isVATEXEMPT
         ? 0
         : afterDiscount * (defaultTaxRate / 100);
-
       const netTotal = afterDiscount + taxAmount;
+
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      const cleanedParts = [];
+
+      for (const part of data.parts || []) {
+        let partId = part.partId;
+
+        if (part.source === "INVOICE" && !partId) {
+          const createPartRes = await axios.post(
+            `${baseUrl}/mobility-parts`,
+            {
+              partName: part.partName,
+              partNumber: part.partNumber,
+              unitCost: part.unitCost,
+              userId,
+            },
+            { headers: getAuthHeader() },
+          );
+
+          partId = createPartRes.data?.data?._id;
+        }
+
+        cleanedParts.push({
+          partId,
+          oldPartConditionDescription: part.oldPartConditionDescription || "",
+          newSerialNumber: part.newSerialNumber || "",
+          quantity: part.quantity || 0,
+          unitCost: part.unitCost || 0,
+          totalCost:
+            part.totalCost !== undefined
+              ? part.totalCost
+              : (part.quantity || 0) * (part.unitCost || 0),
+          reasonForChange: part.reasonForChange || "",
+          source: part.source,
+          userId,
+        });
+      }
 
       const payload: any = {
         jobId: data.jobId,
@@ -668,20 +699,7 @@ export const useInvoice = () => {
           source: service.source,
           userId,
         })),
-        parts: (data.parts || []).map((part) => ({
-          partId: part.source === "JOB" ? part.partId || "" : part.partId,
-          oldPartConditionDescription: part.oldPartConditionDescription || "",
-          newSerialNumber: part.newSerialNumber || "",
-          quantity: part.quantity || 0,
-          unitCost: part.unitCost || 0,
-          totalCost:
-            part.totalCost !== undefined
-              ? part.totalCost
-              : (part.quantity || 0) * (part.unitCost || 0),
-          reasonForChange: part.reasonForChange || "",
-          source: part.source,
-          userId,
-        })),
+        parts: cleanedParts,
         completionSummary: data.completionSummary || "",
         invoiceDate: new Date(data.invoiceDate).toISOString(),
         dueDate: new Date(data.dueDate).toISOString(),
@@ -704,6 +722,8 @@ export const useInvoice = () => {
       };
 
       if (editingId) payload.invoiceId = data.invoiceId;
+
+      console.log("📦 Cleaned Payload:", JSON.stringify(payload, null, 2));
 
       const apiEndpoint = editingId
         ? `${baseUrl}/customer-invoices/${editingId}`

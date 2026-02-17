@@ -184,24 +184,24 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.text("01482 561964", 190, 32, { align: "right" });
   doc.text("info@humbermobility.co.uk", 190, 38, { align: "right" });
 
-  // VAT - adjusted
   doc.setTextColor(colors.gray700.r, colors.gray700.g, colors.gray700.b);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.text("VAT: GB123456789", 190, 46, { align: "right" });
+  const detailsStartY = 55;
 
-  // Bill To & Invoice Details Section - adjusted start Y
-  const detailsStartY = 55; // Reduced from 75
-
-  // Bill To box
+  // Combined Box for Bill To + Issue Details
   doc.setFillColor(colors.gray50.r, colors.gray50.g, colors.gray50.b);
   doc.setDrawColor(
     colors.borderLight.r,
     colors.borderLight.g,
     colors.borderLight.b,
   );
-  doc.roundedRect(20, detailsStartY, 85, 60, 8, 8, "FD");
 
+  // Ek hi box cover kare dono sections
+  doc.roundedRect(20, detailsStartY, 170, 60, 8, 8, "FD"); // width 85+85=170, height same
+
+  // === Bill To Section ===
   doc.setTextColor(colors.gray500.r, colors.gray500.g, colors.gray500.b);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
@@ -228,10 +228,7 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.text(email, 25, detailsStartY + 41);
   doc.text(phone, 25, detailsStartY + 48);
 
-  // Invoice Details box
-  doc.setFillColor(colors.gray50.r, colors.gray50.g, colors.gray50.b);
-  doc.roundedRect(105, detailsStartY, 85, 60, 8, 8, "FD");
-
+  // === Issue Details Section ===
   const details = [
     { label: "Issue Date:", value: formatDate(invoice.invoiceDate) },
     { label: "Due Date:", value: formatDate(invoice.dueDate) },
@@ -255,25 +252,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     yPos += 10;
   });
 
-  //   // Payment Status Badge
-  //   const isPaid = invoice.paymentStatus === "PAID";
-  //   const badgeColor = isPaid ? colors.green100 : colors.yellow100;
-  //   const badgeTextColor = isPaid ? colors.green700 : colors.yellow700;
-  //   const badgeBorderColor = isPaid ? colors.green300 : colors.yellow300;
-
-  //   doc.setFillColor(badgeColor.r, badgeColor.g, badgeColor.b);
-  //   doc.setDrawColor(badgeBorderColor.r, badgeBorderColor.g, badgeBorderColor.b);
-  //   doc.roundedRect(20, detailsStartY + 65, 50, 16, 5, 5, "FD");
-
-  //   doc.setFillColor(badgeTextColor.r, badgeTextColor.g, badgeTextColor.b);
-  //   doc.circle(28, detailsStartY + 73, 2.5, "F");
-
-  //   doc.setTextColor(badgeTextColor.r, badgeTextColor.g, badgeTextColor.b);
-  //   doc.setFontSize(9);
-  //   doc.setFont("helvetica", "normal");
-  //   doc.text(invoice.paymentStatus || "PENDING", 35, detailsStartY + 76);
-
-  // Parts Section
   let currentY = detailsStartY + 90;
 
   doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
@@ -286,7 +264,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.line(20, currentY, 190, currentY);
   currentY += 6;
 
-  // Parts Headers
   doc.setTextColor(colors.gray700.r, colors.gray700.g, colors.gray700.b);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
@@ -299,8 +276,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.setDrawColor(colors.gray100.r, colors.gray100.g, colors.gray100.b);
   doc.line(20, currentY, 190, currentY);
   currentY += 6;
-
-  // Parts Rows
   if (invoice.parts && invoice.parts.length > 0) {
     invoice.parts.forEach((part) => {
       doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
@@ -334,7 +309,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
 
   currentY += 5;
 
-  // Labour Section
   doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -345,7 +319,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.line(20, currentY, 190, currentY);
   currentY += 6;
 
-  // Labour Headers
   doc.setTextColor(colors.gray700.r, colors.gray700.g, colors.gray700.b);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
@@ -359,7 +332,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.line(20, currentY, 190, currentY);
   currentY += 6;
 
-  // Labour Rows
   if (invoice.services && invoice.services.length > 0) {
     invoice.services.forEach((service) => {
       let hours = 1;
@@ -408,11 +380,8 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
 
   currentY += 10;
 
-  // Totals Section - Right aligned
   const totalsX = 120;
   let totalsY = currentY;
-
-  // Subtotal
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.gray400.r, colors.gray400.g, colors.gray400.b);
@@ -423,7 +392,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.text(formatCurrency(subtotal), 190, totalsY, { align: "right" });
   totalsY += 6;
 
-  // Discount if exists
   if (invoice.discountAmount > 0) {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.gray400.r, colors.gray400.g, colors.gray400.b);
@@ -437,7 +405,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     totalsY += 6;
   }
 
-  // VAT if not exempt
   if (!invoice.isVATEXEMPT) {
     const vatRate =
       invoice.taxAmount && afterDiscount > 0
@@ -456,7 +423,6 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     totalsY += 6;
   }
 
-  // Total
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
@@ -466,15 +432,13 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.text(formatCurrency(invoice.netTotal), 190, totalsY, { align: "right" });
   totalsY += 12;
 
-  // Payment Status if PAID
   if (invoice.paymentStatus === "PAID") {
-    // 1. Amount Paid Label and Value
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.gray400.r, colors.gray400.g, colors.gray400.b);
     doc.text("Amount Paid", totalsX, totalsY);
 
-    doc.setFontSize(11); // Increased for prominence
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.green600.r, colors.green600.g, colors.green600.b);
     doc.text(formatCurrency(invoice.netTotal), 190, totalsY, {
@@ -483,38 +447,29 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
 
     totalsY += 6;
 
-    // 2. Setup Box Dimensions
     const boxWidth = 70;
-    const boxX = 190 - boxWidth; // Aligns box right edge to 190
+    const boxX = 190 - boxWidth;
     const boxHeight = 20;
-
-    // 3. Draw the Paid Box
     doc.setFillColor(colors.green50.r, colors.green50.g, colors.green50.b);
     doc.setDrawColor(colors.green300.r, colors.green300.g, colors.green300.b);
     doc.roundedRect(boxX, totalsY, boxWidth, boxHeight, 5, 5, "FD");
-
-    // 4. "PAID" Status Text (Left side of box)
     doc.setTextColor(colors.green800.r, colors.green800.g, colors.green800.b);
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("PAID", boxX + 8, totalsY + 12);
 
-    // 5. Payment Details (Right side of box with padding)
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.gray600.r, colors.gray600.g, colors.gray600.b);
 
     const paymentMethod = (invoice.paymentMethod || "CASH").toUpperCase();
     const paymentDate = formatDate(invoice.updatedAt || "");
-
-    // Using 185 instead of 190 provides 5 units of "padding" from the box border
     doc.text(paymentMethod, 185, totalsY + 7, { align: "right" });
     doc.text(paymentDate, 185, totalsY + 15, { align: "right" });
 
     totalsY += boxHeight + 10;
   }
 
-  // Notes Section
   if (invoice.invoiceNotes) {
     doc.setDrawColor(colors.gray300.r, colors.gray300.g, colors.gray300.b);
     doc.line(20, totalsY, 190, totalsY);
@@ -536,16 +491,13 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
 
-    // Handle long notes with word wrap
     const splitNotes = doc.splitTextToSize(invoice.invoiceNotes, 150);
     doc.text(splitNotes, 30, totalsY + 16);
     totalsY += 30 + (splitNotes.length - 1) * 6;
   }
 
-  // Footer - Matching web component exactly
   const footerY = Math.max(totalsY + 15, 265);
 
-  // Top border - thicker like web component
   doc.setDrawColor(colors.gray200.r, colors.gray200.g, colors.gray200.b);
   doc.setLineWidth(0.5);
   doc.line(20, footerY, 190, footerY);
@@ -565,6 +517,5 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     { align: "center" },
   );
 
-  // Save the PDF
   doc.save(`Invoice-${invoice.invoiceId || "download"}.pdf`);
 };

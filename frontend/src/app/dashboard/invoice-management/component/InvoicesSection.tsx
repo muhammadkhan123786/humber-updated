@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Pagination from "@/components/ui/Pagination";
+
 import {
   Search,
   List,
@@ -35,22 +37,36 @@ const InvoicesSection = () => {
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const limit = 10;
 
   useEffect(() => {
-    fetchInvoices();
-  }, []);
+    fetchInvoices(currentPage);
+  }, [currentPage]);
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (page = 1) => {
     try {
       setLoading(true);
+
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-      const response = await axios.get(`${baseUrl}/customer-invoices`, {
-        headers: getAuthHeader(),
-      });
 
-      if (response.data?.success && response.data?.data) {
-        setInvoices(response.data.data);
+      const response = await axios.get(
+        `${baseUrl}/customer-invoices?page=${page}&limit=${limit}`,
+        {
+          headers: getAuthHeader(),
+        },
+      );
+
+      if (response.data?.success) {
+        setInvoices(response.data.data || []);
+        setCurrentPage(response.data.page || 1);
+
+        const total = response.data.total || 0;
+        setTotalPages(Math.ceil(total / limit));
       }
     } catch (error) {
       console.error("Error fetching invoices:", error);
@@ -58,6 +74,10 @@ const InvoicesSection = () => {
     } finally {
       setLoading(false);
     }
+  };
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
   };
 
   const handleView = (id: string) => {
@@ -91,7 +111,7 @@ const InvoicesSection = () => {
 
       if (response.data?.success) {
         toast.success("Invoice deleted successfully");
-        // Refresh the invoices list
+
         fetchInvoices();
       } else {
         toast.error("Failed to delete invoice");
@@ -168,8 +188,13 @@ const InvoicesSection = () => {
   ];
 
   const filteredInvoices = invoices.filter((inv: any) => {
-    if (statusFilter === "all") return true;
-    return inv.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
+
+    const matchesSearch = inv.invoiceId
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    return matchesStatus && matchesSearch;
   });
 
   const sortedInvoices = [...filteredInvoices].sort((a: any, b: any) => {
@@ -195,7 +220,12 @@ const InvoicesSection = () => {
           <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search by invoice number, customer..."
+            placeholder="Search by invoice number..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full h-10 pl-10 pr-4 bg-gray-100 border-2 border-indigo-50 rounded-[10px] text-sm outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
         </div>
@@ -384,6 +414,11 @@ const InvoicesSection = () => {
           ))}
         </div>
       )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };
