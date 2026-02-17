@@ -254,25 +254,27 @@ const JobCardsSection = ({
                           Ticket: {job.ticketId?.ticketCode}
                         </p>
                       </div>
-                      <div className="relative group">
-                        <select
-                          value={currentStatusId}
-                          onChange={(e) => handleStatusChange(job._id, e.target.value)}
-                          className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm appearance-none cursor-pointer pr-6 border-2 transition-all"
-                          style={{
-                            backgroundColor: statusColor,
-                            color: "white",
-                            borderColor: statusColor,
-                          }}
-                        >
-                          {jobStatuses.map((s) => (
-                            <option key={s._id} value={s._id} style={{ backgroundColor: "white", color: "black" }}>
-                              {s.technicianJobStatus}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" size={12} style={{ color: "white" }} />
-                      </div>
+                      {!isCompleted && (
+                        <div className="relative group">
+                          <select
+                            value={currentStatusId}
+                            onChange={(e) => handleStatusChange(job._id, e.target.value)}
+                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm appearance-none cursor-pointer pr-6 border-2 transition-all"
+                            style={{
+                              backgroundColor: statusColor,
+                              color: "white",
+                              borderColor: statusColor,
+                            }}
+                          >
+                            {jobStatuses.map((s) => (
+                              <option key={s._id} value={s._id} style={{ backgroundColor: "white", color: "black" }}>
+                                {s.technicianJobStatus}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" size={12} style={{ color: "white" }} />
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-3.5">
@@ -444,25 +446,29 @@ const JobCardsSection = ({
                       </td>
 
                       <td className="p-4">
-                        <div className="relative inline-block">
-                          <select
-                            value={currentStatusId}
-                            onChange={(e) => handleStatusChange(job._id, e.target.value)}
-                            className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm appearance-none cursor-pointer pr-6 border-2 transition-all"
-                            style={{
-                              backgroundColor: statusColor,
-                              color: "white",
-                              borderColor: statusColor,
-                            }}
-                          >
-                            {jobStatuses.map((s) => (
-                              <option key={s._id} value={s._id} style={{ backgroundColor: "white", color: "black" }}>
-                                {s.technicianJobStatus}
-                              </option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" size={12} style={{ color: "white" }} />
-                        </div>
+                        {!isCompleted ? (
+                          <div className="relative inline-block">
+                            <select
+                              value={currentStatusId}
+                              onChange={(e) => handleStatusChange(job._id, e.target.value)}
+                              className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm appearance-none cursor-pointer pr-6 border-2 transition-all"
+                              style={{
+                                backgroundColor: statusColor,
+                                color: "white",
+                                borderColor: statusColor,
+                              }}
+                            >
+                              {jobStatuses.map((s) => (
+                                <option key={s._id} value={s._id} style={{ backgroundColor: "white", color: "black" }}>
+                                  {s.technicianJobStatus}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" size={12} style={{ color: "white" }} />
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Completed</span>
+                        )}
                       </td>
 
                       <td className="p-4">

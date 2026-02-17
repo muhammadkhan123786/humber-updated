@@ -290,7 +290,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
           </button>
           <button
             onClick={() => setShowPasswordForm(true)}
-            className="flex items-center text-sm gap-2 px-3 py-1.5 h-9 bg-[#f3f4f6] text-gray-900 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-all hover:scale-105"
+            className="flex items-center text-sm gap-2 px-3 py-1.5 h-9 bg-[#f3f4f6] hover:bg-[#10b981] hover:text-white text-gray-900 border border-gray-300 rounded-lg font-medium  transition-all hover:scale-105"
           >
             <Key size={18} />
             Change Password

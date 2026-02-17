@@ -4,6 +4,8 @@ import MainBar from './MainBar';
 import RouteBar, { RouteType } from './RouteBar';
 import StatsOverview from './StatsOverview';
 import Profile from './Profile';
+import CountCard from '../../jobs/components/CountCard';
+import StatsDashboard from './StatsOverview';
 
 const TechnicianDashboard = () => {
   const [activeRoute, setActiveRoute] = useState<RouteType>('overview');
@@ -16,7 +18,14 @@ const TechnicianDashboard = () => {
   return (
     <div>
       <MainBar refreshTrigger={refreshTrigger} />
-       <StatsOverview />
+        <div className="flex flex-col sm:flex-row gap-4 mt-5">
+        <div className="flex-1 ">
+          <StatsDashboard refreshTrigger={refreshTrigger} />
+        </div>
+        <div className="w-full sm:w-auto">
+          <CountCard refreshTrigger={refreshTrigger} />
+        </div>
+      </div>
       <RouteBar activeRoute={activeRoute} onRouteChange={setActiveRoute} />
       
       {/* Conditional Rendering based on active route */}
