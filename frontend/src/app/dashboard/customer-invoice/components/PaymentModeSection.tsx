@@ -42,10 +42,6 @@ const PaymentModeSection: React.FC<PaymentModeSectionProps> = ({ form }) => {
   const currentPaymentMethod = watch("paymentMethod") || "PENDING";
   const currentPaymentStatus = watch("paymentStatus") || "PENDING";
 
-  // Add console logs to debug
-  console.log("🔵 PaymentMethod from form:", currentPaymentMethod);
-  console.log("🔵 PaymentStatus from form:", currentPaymentStatus);
-
   const modes: PaymentMode[] = [
     {
       id: "CASH",

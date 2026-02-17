@@ -186,17 +186,8 @@ const CustomerInvoice = () => {
       />
       <div className="my-3">
         <AdditionalCharges
-          calloutFee={calloutFee}
-          setCalloutFee={setCalloutFee}
-          discountValue={discountValue}
-          setDiscountValue={setDiscountValue}
-          discountType={discountType}
-          setDiscountType={setDiscountType}
-          isVatExempt={isVatExempt}
-          setIsVatExempt={setIsVatExempt}
-          vatRate={defaultTaxRate}
-          setVatRate={() => {}}
           subtotal={subtotal}
+          vatRate={defaultTaxRate}
           form={form}
         />
       </div>

@@ -30,15 +30,32 @@ const InvoiceSummary = ({
   vatAmount,
   grandTotal,
 }: InvoiceSummaryProps) => {
-  // Format discount type for display
-  const getDiscountLabel = () => {
+  const safeNumber = (value: any): number => {
+    if (value === null || value === undefined || value === "") return 0;
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  };
+  const formatValue = (value: any): string => {
+    return safeNumber(value).toFixed(2);
+  };
+
+  const getDiscountLabel = (): string => {
     if (discountType === "Percentage") {
-      return ` (${discountValue}%)`;
+      return ` (${safeNumber(discountValue)}%)`;
     } else if (discountType === "Fix Amount") {
       return " (Fixed)";
     }
     return "";
   };
+
+  // Safely parse all props to numbers
+  const safePartsSubtotal = safeNumber(partsSubtotal);
+  const safeLabourSubtotal = safeNumber(labourSubtotal);
+  const safeCalloutFee = safeNumber(calloutFee);
+  const safeDiscountAmount = safeNumber(discountAmount);
+  const safeAfterDiscount = safeNumber(afterDiscount);
+  const safeVatAmount = safeNumber(vatAmount);
+  const safeGrandTotal = safeNumber(grandTotal);
 
   return (
     <div className="w-full bg-linear-to-r from-green-50 to-emerald-50 rounded-2xl outline-2 -outline-offset-2 outline-green-200 p-6 flex flex-col gap-6 font-sans">
@@ -58,7 +75,7 @@ const InvoiceSummary = ({
             Parts:
           </span>
           <span className="text-indigo-950 text-lg font-bold font-['Arial'] leading-7">
-            £{partsSubtotal.toFixed(2)}
+            £{formatValue(safePartsSubtotal)}
           </span>
         </div>
 
@@ -68,34 +85,33 @@ const InvoiceSummary = ({
             Labour:
           </span>
           <span className="text-indigo-950 text-lg font-bold font-['Arial'] leading-7">
-            £{labourSubtotal.toFixed(2)}
+            £{formatValue(safeLabourSubtotal)}
           </span>
         </div>
 
-        {/* Callout Fee */}
+        {/* Callout Fee - FIXED */}
         <div className="flex justify-between items-center">
           <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
             Callout Fee:
           </span>
           <span className="text-indigo-950 text-lg font-bold font-['Arial'] leading-7">
-            £{calloutFee.toFixed(2)}
+            £{formatValue(safeCalloutFee)}
           </span>
         </div>
 
-        {/* Discount - Only show if there is a discount */}
-        {discountAmount > 0 && (
+        {/* Discount */}
+        {safeDiscountAmount > 0 && (
           <div className="flex justify-between items-center text-amber-600">
             <span className="text-lg font-normal font-['Arial'] leading-7">
               Discount:
               {getDiscountLabel()}
             </span>
             <span className="text-lg font-bold font-['Arial'] leading-7">
-              -£{discountAmount.toFixed(2)}
+              -£{formatValue(safeDiscountAmount)}
             </span>
           </div>
         )}
 
-        {/* Separator */}
         <div className="h-px w-full bg-indigo-600/10" />
 
         {/* Subtotal after discount */}
@@ -104,18 +120,18 @@ const InvoiceSummary = ({
             Subtotal:
           </span>
           <span className="text-indigo-950 text-lg font-bold font-['Arial'] leading-7">
-            £{afterDiscount.toFixed(2)}
+            £{formatValue(safeAfterDiscount)}
           </span>
         </div>
 
-        {/* VAT - Show either amount or exempt badge */}
+        {/* VAT */}
         {!isVatExempt ? (
           <div className="flex justify-between items-center">
             <span className="text-gray-600 text-lg font-normal font-['Arial'] leading-7">
               VAT ({vatRate}%):
             </span>
             <span className="text-indigo-950 text-lg font-bold font-['Arial'] leading-7">
-              £{vatAmount.toFixed(2)}
+              £{formatValue(safeVatAmount)}
             </span>
           </div>
         ) : (
@@ -123,13 +139,12 @@ const InvoiceSummary = ({
             <span className="text-lg font-normal font-['Arial'] leading-7">
               VAT:
             </span>
-            <span className="text-lg font-bold font-['Arial'] leading-7 bg-green-100 px-3 py-1 rounded-full">
+            <span className="text-lg font-bold font-['Arial'] leading-7 bg-green-100 px-3 py-1 rounded-full text-[12px]">
               EXEMPT
             </span>
           </div>
         )}
 
-        {/* Separator */}
         <div className="h-px w-full bg-green-300" />
 
         {/* Grand Total */}
@@ -138,7 +153,7 @@ const InvoiceSummary = ({
             Grand Total:
           </span>
           <span className="text-white text-4xl font-bold font-['Arial'] leading-10">
-            £{grandTotal.toFixed(2)}
+            £{formatValue(safeGrandTotal)}
           </span>
         </div>
       </div>
