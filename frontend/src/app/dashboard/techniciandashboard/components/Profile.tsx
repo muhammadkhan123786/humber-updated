@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { User, Camera, Save, Key } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, Camera, Save, Key, Shield } from 'lucide-react';
 import ChangePasswordForm from './ChangePasswordForm';
 import AnimationStyles from './Animation';
 import toast from 'react-hot-toast';
@@ -25,6 +25,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const scrollPositionRef = useRef<number>(0);
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -108,9 +109,25 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
       
       if (result.success) {
         toast.success('Profile updated successfully!');
-        await fetchProfile();
+        
+        // Save current scroll position before any updates
+        scrollPositionRef.current = window.scrollY;
+        
+        // Update profile data without refetching (to avoid re-render scroll issues)
         if (onProfileUpdate) {
           onProfileUpdate();
+        }
+        
+        // Restore scroll position immediately and persistently
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
+        });
+        
+        // Keep restoring for a few frames to override any scroll attempts
+        for (let i = 0; i < 5; i++) {
+          setTimeout(() => {
+            window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
+          }, i * 50);
         }
       } else {
         toast.error('Failed to update profile');
@@ -146,7 +163,8 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
   return (
     <>
       <AnimationStyles />
-      <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 animate-slideUp">
+      <div className="relative bg-white border border-indigo-100 rounded-2xl mt-8 shadow-lg p-6 pt-10 animate-slideUp">
+        <div className='absolute inset-0 h-2  bg-linear-to-r from-purple-500 to-pink-500'></div>
         {/* Header */}
         <div className="flex items-center gap-2 mb-6">
           <User className="text-indigo-600" size={24} />
@@ -157,8 +175,8 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
         <div className="flex items-start gap-6 mb-8 pb-8 border-b border-gray-200">
           {/* Profile Image */}
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-linear-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-              {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)}
+            <div className="w-24 h-24 rounded-full bg-linear-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+              {/* {profileData.firstName.charAt(0)}{profileData.lastName.charAt(0)} */} 👨‍🔧
             </div>
             <button className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-indigo-100 hover:bg-indigo-50 transition-all">
               <Camera size={16} className="text-indigo-600" />
@@ -167,12 +185,13 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
 
           {/* Profile Info */}
           <div className="flex-1">
-            <h3 className="text-2xl font-bold text-gray-800">
+            <h3 className="text-xl font-bold text-gray-900">
               {profileData.firstName} {profileData.lastName}
             </h3>
             <p className="text-gray-600 mt-1">{profileData.shopName}</p>
-            <div className="mt-2 inline-flex items-center gap-2 bg-indigo-50 px-3 py-1 rounded-lg">
-              <span className="text-sm text-indigo-600 font-medium">Employee ID: {profileData.employeeId}</span>
+            <div className="mt-2 inline-flex items-center gap-2 bg-indigo-100 border border-indigo-200 px-3 py-1 rounded-xl">
+                <span className='text-indigo-800'><Shield size={12} /></span>
+              <span className="text-xs text-indigo-800 font-medium">Employee ID: {profileData.employeeId}</span>
             </div>
           </div>
         </div>
@@ -182,7 +201,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
           {/* Row 1: Full Name and Email */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 ">Full Name</label>
               <input
                 type="text"
                 value={`${profileData.firstName} ${profileData.lastName}`}
@@ -191,16 +210,16 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
                   handleInputChange('firstName', first || '');
                   handleInputChange('lastName', rest.join(' ') || '');
                 }}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 ">Email</label>
               <input
                 type="email"
                 value={profileData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6] rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
@@ -208,33 +227,33 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
           {/* Row 2: Phone and Location */}
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
+              <label className="block text-sm font-medium text-gray-700 ">Phone</label>
               <input
                 type="text"
                 value={profileData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+              <label className="block text-sm font-medium text-gray-700 ">Location</label>
               <input
                 type="text"
                 value={profileData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
 
           {/* Specialization */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Specialization</label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Specialization</label>
             <div className="flex items-center gap-3 flex-wrap">
               {profileData.specializations.map((spec, index) => (
                 <div
                   key={index}
-                  className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-lg border border-green-200"
+                  className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-2xl border border-green-200"
                 >
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   <span className="text-sm font-medium">{spec}</span>
@@ -245,33 +264,33 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
         </div>
 
         {/* Employment Information */}
-        <div className="bg-gray-50 rounded-xl p-6 mb-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Employment Information</h3>
+        <div className="bg-[#f3f4f6] rounded-xl p-6 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-3">Employment Information</h3>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Employee ID</label>
+              <label className="block text-xs text-gray-600 mb-1">Employee ID</label>
               <p className="text-base font-semibold text-gray-800">{profileData.employeeId}</p>
             </div>
             <div>
-              <label className="block text-sm text-gray-600 mb-1">Joined Date</label>
+              <label className="block text-xs text-gray-600 mb-1">Joined Date</label>
               <p className="text-base font-semibold text-gray-800">{formatDate(profileData.dateOfJoining)}</p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleSaveProfile}
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center text-sm gap-2 px-3 py-1.5 h-9  bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium hover:shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={18} />
+            <Save size={16} />
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
           <button
             onClick={() => setShowPasswordForm(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-all hover:scale-105"
+            className="flex items-center text-sm gap-2 px-3 py-1.5 h-9 bg-[#f3f4f6] text-gray-900 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-all hover:scale-105"
           >
             <Key size={18} />
             Change Password
