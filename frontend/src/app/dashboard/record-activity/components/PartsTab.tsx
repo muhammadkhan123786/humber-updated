@@ -58,11 +58,7 @@ export const PartsTab = ({
       alert("Please fill all required fields (*)");
       return;
     }
-
-    // Add the part
     addPart();
-
-    // Reset new row immediately
     const newIndex = nextIndex + 1;
     setValue(
       `parts.${newIndex}`,
@@ -99,9 +95,9 @@ export const PartsTab = ({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#FFF6FB] border border-pink-100 rounded-3xl p-8 flex flex-wrap justify-between items-center shadow-sm"
+            className="bg-[#FFF6FB] border border-pink-100 rounded-3xl p-8 flex flex-wrap justify-around items-center shadow-sm"
           >
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center text-center mx-4">
               <Package className="text-[#A855F7] mb-2" size={32} />
               <span className="text-2xl font-black text-[#A855F7]">
                 {completedParts.length}
@@ -111,7 +107,7 @@ export const PartsTab = ({
               </span>
             </div>
 
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center text-center mx-4">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 Total Units
               </span>
@@ -123,7 +119,7 @@ export const PartsTab = ({
               </span>
             </div>
 
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center text-center mx-4">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                 Total Cost
               </span>
@@ -271,7 +267,6 @@ export const PartsTab = ({
         </button>
       </div>
 
-      {/* Completed Parts */}
       <AnimatePresence>
         {completedParts.length > 0 && (
           <motion.div

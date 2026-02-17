@@ -108,11 +108,9 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
     additionalNotes: "",
     technicianStatus: "Available",
   });
-
-  // Auto-generate employee code on mount (only for new technicians)
   useEffect(() => {
     const generateEmployeeCode = async () => {
-      if (isEditMode) return; // Don't generate for edit mode
+      if (isEditMode) return;
 
       setIsLoadingEmployeeCode(true);
       try {
@@ -164,8 +162,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       setDocuments([{ id: 1, file: null }]);
     }
   }, [isEditMode, initialData]);
-
-  // Initialize Google Maps Autocomplete with TypeScript fixes
   useEffect(() => {
     if (!googleMapLoader || typeof window === "undefined" || !window.google)
       return;
@@ -174,20 +170,14 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
       "street-address-input",
     ) as HTMLInputElement;
     if (!input) return;
-
-    // Create autocomplete instance
     const autocomplete = new window.google.maps.places.Autocomplete(input, {
       types: ["address"],
       componentRestrictions: { country: "uk" },
     });
-
-    // Add place changed listener
     const listener = autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace() as GooglePlaceResult;
 
       if (!place?.place_id) return;
-
-      // Create PlacesService for details
       const service = new window.google.maps.places.PlacesService(
         document.createElement("div"),
       );
@@ -202,10 +192,8 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
             status === window.google.maps.places.PlacesServiceStatus.OK &&
             result
           ) {
-            // Get address components
             const addressComponents = result.address_components || [];
 
-            // Extract address components
             const getComponent = (types: string[]): string => {
               const component = addressComponents.find((comp) =>
                 types.some((type) => comp.types.includes(type)),
@@ -213,28 +201,22 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
               return component?.long_name || "";
             };
 
-            // Get formatted address or build from components
             const streetNumber = getComponent(["street_number"]);
             const route = getComponent(["route"]);
             const address =
               streetNumber && route
                 ? `${streetNumber} ${route}`
                 : result.formatted_address || input.value;
-
-            // Get city (locality or postal_town)
             const city =
               getComponent(["locality"]) ||
               getComponent(["postal_town"]) ||
               getComponent(["administrative_area_level_3"]);
 
-            // Get postal code
             const zipCode = getComponent(["postal_code"]);
 
-            // Get coordinates
             const lat = result.geometry?.location?.lat() || 0;
             const lng = result.geometry?.location?.lng() || 0;
 
-            // Update form values
             setFormData((prev) => ({
               ...prev,
               streetAddress: address,
@@ -478,7 +460,6 @@ const ModalForm = ({ onClose, initialData }: ModalFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.streetAddress) {
       alert("Please enter a valid address.");
       return;

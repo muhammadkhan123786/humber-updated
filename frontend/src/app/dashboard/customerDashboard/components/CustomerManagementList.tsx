@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
   List,
@@ -17,8 +16,8 @@ import {
   MapPin,
   Calendar,
   Grid3X3,
+  X,
 } from "lucide-react";
-
 import { fetchCustomers, removeCustomer } from "../../../../hooks/useCustomer";
 import CustomerCard from "./CustomerCard";
 import Pagination from "@/components/ui/Pagination";
@@ -28,49 +27,118 @@ type ViewMode = "Grid" | "Table";
 interface CustomerManagementListProps {
   onEdit: (id: string) => void;
   refreshTrigger?: number;
+  onDataChange: () => void;
 }
 
 const CustomerManagementList = ({
   onEdit,
   refreshTrigger,
+  onDataChange,
 }: CustomerManagementListProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>("Grid");
   const [searchTerm, setSearchTerm] = useState("");
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [allCustomers, setAllCustomers] = useState<any[]>([]);
+  const [filteredCustomers, setFilteredCustomers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
 
-  const loadCustomers = useCallback(
-    async (page = 1) => {
-      setIsLoading(true);
-      try {
-        const response = await fetchCustomers(page, 10, searchTerm);
-        if (response.success) {
-          setCustomers(response.data);
-          const totalItems = response.total || 0;
-          const limitPerPage = response.limit || 10;
-          const calculatedTotalPages = Math.ceil(totalItems / limitPerPage);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-          setTotalPages(calculatedTotalPages);
-          setCurrentPage(page);
-        }
-      } catch (error) {
-        console.error("Failed to load customers:", error);
-      } finally {
-        setIsLoading(false);
+  const loadAllCustomers = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchCustomers(1, 100, "");
+
+      if (response.success) {
+        setAllCustomers(response.data);
+        setTotalItems(response.total || 0);
+
+        applyFilter("", response.data, 1);
       }
-    },
-    [searchTerm],
-  );
+    } catch (error) {
+      console.error("Failed to load customers:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
+  // Apply client-side filtering
+  const applyFilter = (
+    search: string,
+    data: any[] = allCustomers,
+    page: number = currentPage,
+  ) => {
+    let filtered = [...data];
+
+    if (search) {
+      const query = search.toLowerCase();
+      filtered = data.filter((c) => {
+        const name =
+          c.customerType === "corporate"
+            ? c.companyName?.toLowerCase() || ""
+            : `${c.personId?.firstName || ""} ${c.personId?.lastName || ""}`.toLowerCase();
+
+        const email = c.contactId?.emailId?.toLowerCase() || "";
+        const phone = c.contactId?.mobileNumber || "";
+
+        return (
+          name.includes(query) || email.includes(query) || phone.includes(query)
+        );
+      });
+    }
+
+    setFilteredCustomers(filtered);
+    setTotalItems(filtered.length);
+    const calculatedTotalPages = Math.ceil(filtered.length / itemsPerPage);
+    setTotalPages(calculatedTotalPages);
+    const startIndex = (page - 1) * itemsPerPage;
+    const paginatedData = filtered.slice(startIndex, startIndex + itemsPerPage);
+    setCustomers(paginatedData);
+  };
+
+  const [customers, setCustomers] = useState<any[]>([]);
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      loadCustomers(1);
+    loadAllCustomers();
+  }, [refreshTrigger, loadAllCustomers]);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      console.log("🔎 Searching for:", value);
+      setCurrentPage(1);
+      applyFilter(value, allCustomers, 1);
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
-  }, [loadCustomers, refreshTrigger]);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+    applyFilter("", allCustomers, 1);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+
+    const startIndex = (page - 1) * itemsPerPage;
+    const paginatedData = filteredCustomers.slice(
+      startIndex,
+      startIndex + itemsPerPage,
+    );
+    setCustomers(paginatedData);
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleEdit = (id: string) => {
     onEdit(id);
@@ -84,7 +152,10 @@ const CustomerManagementList = ({
     try {
       const response = await removeCustomer(id);
       if (response.success) {
-        setCustomers((prev) => prev.filter((c) => c._id !== id));
+        const updatedAll = allCustomers.filter((c) => c._id !== id);
+        setAllCustomers(updatedAll);
+        applyFilter(searchTerm, updatedAll, currentPage);
+        if (onDataChange) onDataChange();
       } else {
         alert(response.message || "Failed to delete customer");
       }
@@ -105,7 +176,6 @@ const CustomerManagementList = ({
 
   return (
     <div className="space-y-8 mt-10 px-4 md:px-0">
-      {/* Search and Toggle UI (Same as before) */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
         <div className="relative w-full md:w-3/4">
           <Search
@@ -113,43 +183,79 @@ const CustomerManagementList = ({
             size={18}
           />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="Search by name, email, or phone..."
-            className="w-full pl-14 pr-6 py-4 bg-[#F8FAFC] border-[3px] border-indigo-100 rounded-[1.2rem] outline-none transition-all duration-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 font-medium text-slate-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus:shadow-[0_10px_25px_rgba(99,102,241,0.1)]"
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="w-full pl-14 pr-12 py-4 bg-[#F8FAFC] border-[3px] border-indigo-100 rounded-[1.2rem] outline-none transition-all duration-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10 font-medium text-slate-500 shadow-[0_8px_30px_rgb(0,0,0,0.04)] focus:shadow-[0_10px_25px_rgba(99,102,241,0.1)]"
           />
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-white rounded-full p-1"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         <div className="flex bg-slate-100/80 p-1.5 rounded-2xl border border-slate-100">
           <button
             onClick={() => setViewMode("Grid")}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-300 ${
-              viewMode === "Grid"
-                ? "bg-linear-to-r from-[#6366f1] to-[#a855f7] text-white shadow-[0_10px_20px_-5px_rgba(99,102,241,0.4)]"
-                : "bg-white text-slate-500 border border-slate-100"
-            }`}
+            className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all h-9 px-4 py-2
+    ${
+      viewMode === "Grid"
+        ? "bg-linear-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-700 hover:to-purple-700"
+        : "bg-white text-slate-500 border border-slate-100"
+    }`}
           >
             <Grid3X3 size={16} strokeWidth={3} />
-            <span className="text-sm font-normal font-['Arial'] leading-5 text-center">
+            <span className="text-sm font-medium font-['Arial'] leading-5 text-center">
               Grid
             </span>
           </button>
+
           <button
             onClick={() => setViewMode("Table")}
-            className={`flex items-center gap-2 px-6 py-2 rounded-xl text-xs font-extrabold transition-all duration-300 ${
-              viewMode === "Table"
-                ? "bg-[#7C3AED] text-white shadow-lg"
-                : "text-slate-500"
-            }`}
+            className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all h-9 px-4 py-2
+    ${
+      viewMode === "Table"
+        ? "bg-linear-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-700 hover:to-purple-700"
+        : "bg-white text-slate-500 border border-slate-100"
+    }`}
           >
-            <List size={16} /> Table
+            <List size={16} strokeWidth={3} />
+            <span className="text-sm font-medium font-['Arial'] leading-5 text-center">
+              Table
+            </span>
           </button>
         </div>
       </div>
 
+      {searchTerm && (
+        <div className="text-sm text-gray-600 px-2">
+          Showing results for:{" "}
+          <span className="font-semibold">{searchTerm}</span> (
+          {customers.length} of {totalItems} customers)
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="animate-spin text-indigo-500" size={40} />
+        </div>
+      ) : customers.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border-2 border-indigo-100">
+          <p className="text-gray-500 text-lg">No customers found</p>
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              className="mt-4 text-indigo-600 hover:text-indigo-800 underline"
+            >
+              Clear search
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -172,7 +278,7 @@ const CustomerManagementList = ({
                   address={c.addressId?.address}
                   status={c.isActive ? "Active" : "Inactive"}
                   registeredDate={new Date(c.createdAt).toLocaleDateString()}
-                  onEdit={() => handleEdit(c._id)} // Grid Edit Trigger
+                  onEdit={() => handleEdit(c._id)}
                   onDelete={() => handleDelete(c._id)}
                 />
               ))}
@@ -219,7 +325,6 @@ const CustomerManagementList = ({
                         key={c._id}
                         className="hover:bg-slate-50/50 transition-colors group"
                       >
-                        {/* ID with light purple badge */}
                         <td className="px-6 py-5">
                           <span className="bg-[#EEF2FF] text-[#6366F1] px-3 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider">
                             {c._id.slice(-4).toUpperCase()}
@@ -253,7 +358,6 @@ const CustomerManagementList = ({
                           </span>
                         </td>
 
-                        {/* Separate Email */}
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500">
                             <Mail size={14} className="text-[#3B82F6]" />
@@ -261,7 +365,6 @@ const CustomerManagementList = ({
                           </div>
                         </td>
 
-                        {/* Separate Phone */}
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500">
                             <Phone size={14} className="text-[#A855F7]" />
@@ -269,7 +372,6 @@ const CustomerManagementList = ({
                           </div>
                         </td>
 
-                        {/* Address with Logo */}
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-2 text-[12px] font-bold text-slate-500">
                             <MapPin size={14} className="text-[#10B981]" />
@@ -279,7 +381,6 @@ const CustomerManagementList = ({
                           </div>
                         </td>
 
-                        {/* Status */}
                         <td className="px-6 py-5">
                           <span
                             className={`px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm flex items-center gap-1.5 text-white w-fit ${c.isActive ? "bg-[#00D169]" : "bg-slate-300"}`}
@@ -295,30 +396,44 @@ const CustomerManagementList = ({
                             {new Date(c.createdAt).toLocaleDateString("en-GB")}
                           </div>
                         </td>
+                        <td className="px-6 py-5">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => handleEdit(c._id)}
+                              className="flex items-center gap-2 px-4 py-2 border border-[#EEF2FF] rounded-xl text-slate-700 text-xs font-bold transition-all duration-300 bg-white hover:bg-linear-to-r hover:from-[#2563eb] hover:to-[#0891b2] hover:text-white hover:border-transparent hover:shadow-md active:scale-95 group/btn"
+                            >
+                              <SquarePen
+                                size={14}
+                                className="text-slate-500 group-hover/btn:text-white transition-colors"
+                              />
+                              <span>Edit</span>
+                            </button>
 
-                        <div className="flex justify-center gap-2 mt-5">
-                          <button
-                            onClick={() => handleEdit(c._id)}
-                            className="group flex items-center gap-2 px-4 py-2 border border-[#EEF2FF] rounded-xl text-slate-700 text-xs font-bold transition-all duration-300 bg-white hover:bg-linear-to-r hover:from-[#2563eb] hover:to-[#0891b2] hover:text-white hover:border-transparent hover:shadow-md active:scale-95"
-                          >
-                            <SquarePen
-                              size={14}
-                              className="text-slate-500 group-hover:text-white transition-colors"
-                            />
-                            <span>Edit</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleDelete(c._id)}
-                            className="group flex items-center gap-2 px-4 py-2 border border-[#EEF2FF] rounded-xl text-slate-700 text-xs font-bold transition-all duration-300 bg-white hover:bg-linear-to-r hover:from-[#e11d48] hover:to-[#db2777] hover:text-white hover:border-transparent hover:shadow-md active:scale-95"
-                          >
-                            <Trash2
-                              size={14}
-                              className="text-slate-500 group-hover:text-white transition-colors"
-                            />
-                            <span>Delete</span>
-                          </button>
-                        </div>
+                            <button
+                              onClick={() => handleDelete(c._id)}
+                              disabled={isDeleting === c._id}
+                              className={`flex items-center gap-2 px-4 py-2 border border-[#EEF2FF] rounded-xl text-slate-700 text-xs font-bold transition-all duration-300 bg-white hover:bg-linear-to-r hover:from-[#e11d48] hover:to-[#db2777] hover:text-white hover:border-transparent hover:shadow-md active:scale-95 group/del ${
+                                isDeleting === c._id
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              {isDeleting === c._id ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <Trash2
+                                  size={14}
+                                  className="text-slate-500 group-hover/del:text-white transition-colors"
+                                />
+                              )}
+                              <span>
+                                {isDeleting === c._id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </span>
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -326,12 +441,13 @@ const CustomerManagementList = ({
               </div>
             </div>
           )}
+
           {!isLoading && customers.length > 0 && totalPages > 1 && (
-            <div className=" flex justify-end border-t border-slate-100 ">
+            <div className="flex justify-end border-t border-slate-100 pt-4">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={(page) => loadCustomers(page)}
+                onPageChange={handlePageChange}
               />
             </div>
           )}

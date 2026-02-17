@@ -25,7 +25,7 @@ const MetricCard: React.FC<MetricProps> = ({
   icon: Icon,
   gradient,
   className = "",
-  width = "w-[210px]", // Default width
+  width = "w-[]", // Default width
   height = "h-[200px]", // Default height
 }) => {
   return (
@@ -52,18 +52,18 @@ const MetricCard: React.FC<MetricProps> = ({
             hover: { x: "150%", skewX: "-20deg" },
           }}
           transition={{ duration: 1.5, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent z-20 pointer-events-none"
+          className="absolute inset-0 w-full h-full bg-linear-to-r from-transparent via-white/20 to-transparent z-20 pointer-events-none"
         />
 
         {/* Decorative Dots */}
-        <div className="absolute right-[18px] top-[8px] flex gap-1 z-10">
+        <div className="absolute right-[18px] top-2 flex gap-1 z-10">
           <div className="w-2 h-2 bg-white/40 rounded-full" />
           <div className="w-2 h-2 bg-white/30 rounded-full" />
           <div className="w-2 h-2 bg-white/20 rounded-full" />
         </div>
 
         {/* Main Content (Top Section) */}
-        <div className="absolute left-[24px] top-[24px] right-[24px] flex justify-between items-start">
+        <div className="absolute left-6 top-6 right-6 flex justify-between items-start">
           <div className="flex flex-col gap-3">
             <h3 className="text-white/90 text-[13px] font-normal uppercase leading-5 tracking-tight font-['Arial'] max-w-[100px]">
               {title}

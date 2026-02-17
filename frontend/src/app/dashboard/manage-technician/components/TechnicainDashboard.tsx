@@ -206,7 +206,7 @@ const TechnicianDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-4  gap-2 mb-16 mt-4 ">
+      <div className="grid grid-cols-4  gap-4 mb-16 mt-4 ">
         <MetricCard
           title="Total Technicians"
           value={loading ? "..." : summary?.total?.current || 0}
@@ -214,7 +214,6 @@ const TechnicianDashboard = () => {
           isPositive={true}
           icon={User}
           gradient="bg-gradient-to-br from-orange-500 via-red-500 to-pink-500"
-          width="w-66"
           height="h-48"
         />
         <MetricCard
@@ -224,7 +223,6 @@ const TechnicianDashboard = () => {
           isPositive={true}
           icon={UserCheck}
           gradient="bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500"
-          width="w-66"
           height="h-48"
         />
         <MetricCard
@@ -234,7 +232,6 @@ const TechnicianDashboard = () => {
           isPositive={false}
           icon={Briefcase}
           gradient="bg-gradient-to-br from-[#2193b0] to-[#6dd5ed]"
-          width="w-66"
           height="h-48"
         />
         <MetricCard
@@ -244,7 +241,6 @@ const TechnicianDashboard = () => {
           isPositive={true}
           icon={Star}
           gradient="bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500"
-          width="w-66"
           height="h-48"
         />
       </div>
