@@ -235,10 +235,10 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Contact
+                    scooter model
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {selectedTicket.customerId?.contactId?.mobileNumber ||
+                    {selectedTicket.vehicleId?.vehicleModelId?.modelName ||
                       "N/A"}
                   </p>
                 </div>
@@ -375,7 +375,7 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Vehicle
+                    scooter model
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
                     {selectedTicket.vehicleId?.vehicleBrandId?.brandName}{" "}

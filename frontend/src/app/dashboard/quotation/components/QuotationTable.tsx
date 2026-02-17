@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getAlls, updateItem } from "../../../../helper/apiHelper";
 import Pagination from "../../../../components/ui/Pagination";
+import Cards from "../../qutations/list/components/Cards";
 import toast from "react-hot-toast";
 
 interface QuotationStatus {
@@ -22,149 +23,138 @@ interface QuotationStatus {
   ticketQuationStatus: string;
 }
 
-interface StatusCard {
-  _id: string;
-  name: string;
+interface StatusCount {
+  status: string;
   count: number;
-  color: "blue" | "green" | "slate" | "red" | "purple" | "orange" | "teal";
-  icon: React.ReactNode;
 }
-
-const getStatusColor = (
-  statusName: string,
-): "blue" | "green" | "slate" | "red" | "purple" | "orange" | "teal" => {
-  const name = statusName.toLowerCase();
-
-  if (name.includes("sent") || name.includes("pending")) return "blue";
-  if (name.includes("approve") || name.includes("complete")) return "green";
-  if (name.includes("draft")) return "slate";
-  if (name.includes("reject") || name.includes("cancel")) return "red";
-  if (name.includes("review") || name.includes("check")) return "purple";
-  if (name.includes("wait") || name.includes("hold")) return "orange";
-  if (name.includes("process")) return "teal";
-
-  return "slate";
-};
-const getStatusIcon = (statusName: string): React.ReactNode => {
-  const name = statusName.toLowerCase();
-
-  if (name.includes("sent") || name.includes("pending"))
-    return <FileText size={18} />;
-  if (name.includes("approve") || name.includes("complete"))
-    return <CheckCircle size={18} />;
-  if (name.includes("draft")) return <File size={18} />;
-  if (name.includes("reject") || name.includes("cancel"))
-    return <AlertCircle size={18} />;
-
-  return <FileText size={18} />;
-};
 
 const QuotationTable: React.FC = () => {
   const [quotations, setQuotations] = useState<any[]>([]);
+  const [filteredQuotations, setFilteredQuotations] = useState<any[]>([]);
   const [statusOptions, setStatusOptions] = useState<QuotationStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [statusCards, setStatusCards] = useState<StatusCard[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const ENDPOINT = "/update-technician-quotation-status";
 
-  const fetchStatusOptions = useCallback(async () => {
+  const fetchAllQuotationsForCounts = useCallback(async () => {
     try {
-      const response = await getAlls<any>(
-        "/ticket-quotation-status?filter=all",
-      );
-      const data = (response as any).data || [];
-      setStatusOptions(data);
+      const response = await getAlls<any>("/technician-ticket-quotation", {
+        limit: 1000,
+        page: 1,
+      });
+      return (response as any).data || [];
     } catch (error) {
-      console.error("Failed to fetch status options:", error);
-      toast.error("Failed to load status options");
+      console.error("Failed to fetch all quotations:", error);
+      return [];
     }
   }, []);
 
-  const calculateStatusCounts = useCallback(
-    (data: any[], statusList: QuotationStatus[]) => {
-      const countMap = new Map<string, number>();
-      statusList.forEach((status) => {
-        countMap.set(status._id, 0);
-      });
+  const fetchInitialData = useCallback(async () => {
+    try {
+      setInitialLoading(true);
 
-      data.forEach((item: any) => {
-        let statusId = "";
+      const statusResponse = await getAlls<any>(
+        "/ticket-quotation-status?filter=all",
+      );
+      const statusData = (statusResponse as any).data || [];
+      setStatusOptions(statusData);
 
-        if (item.quotationStatusId) {
-          if (
-            typeof item.quotationStatusId === "object" &&
-            item.quotationStatusId._id
-          ) {
-            statusId = item.quotationStatusId._id;
-          } else if (typeof item.quotationStatusId === "string") {
-            statusId = item.quotationStatusId;
-          }
-        }
-
-        if (statusId && countMap.has(statusId)) {
-          countMap.set(statusId, (countMap.get(statusId) || 0) + 1);
-        }
-      });
-
-      const cards: StatusCard[] = statusList.map((status) => ({
-        _id: status._id,
-        name: status.ticketQuationStatus,
-        count: countMap.get(status._id) || 0,
-        color: getStatusColor(status.ticketQuationStatus),
-        icon: getStatusIcon(status.ticketQuationStatus),
-      }));
-
-      setStatusCards(cards);
-    },
-    [],
-  );
-
-  const fetchQuotations = useCallback(
-    async (page: number) => {
-      try {
-        setLoading(true);
-        const response = await getAlls<any>("/technician-ticket-quotation", {
-          page,
-          limit: 10,
-        });
-
-        const fetchedData = (response as any).data || [];
-        const paginationInfo = (response as any).pagination || {};
-
-        setQuotations(fetchedData);
-        setTotalPages(paginationInfo.pages || 1);
-        setTotalItems(paginationInfo.total || fetchedData.length);
-
-        if (statusOptions.length > 0) {
-          calculateStatusCounts(fetchedData, statusOptions);
-        }
-      } catch (error) {
-        console.error("Failed to fetch quotations:", error);
-        toast.error("Failed to load quotations");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [statusOptions, calculateStatusCounts],
-  );
+      const allQuotations = await fetchAllQuotationsForCounts();
+      setTotalItems(allQuotations.length);
+    } catch (error) {
+      console.error("Failed to fetch initial data:", error);
+      toast.error("Failed to load data");
+    } finally {
+      setInitialLoading(false);
+    }
+  }, [fetchAllQuotationsForCounts]);
 
   useEffect(() => {
-    fetchStatusOptions();
-  }, [fetchStatusOptions]);
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  const fetchQuotations = useCallback(async (page: number) => {
+    try {
+      setLoading(true);
+      const response = await getAlls<any>("/technician-ticket-quotation", {
+        page,
+        limit: 10,
+      });
+
+      const fetchedData = (response as any).data || [];
+      const paginationInfo = (response as any).pagination || {};
+
+      setQuotations(fetchedData);
+      setFilteredQuotations(fetchedData);
+      setTotalPages(paginationInfo.pages || 1);
+    } catch (error) {
+      console.error("Failed to fetch quotations:", error);
+      toast.error("Failed to load quotations");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (statusOptions.length > 0) {
+    if (!initialLoading) {
       fetchQuotations(currentPage);
     }
-  }, [currentPage, statusOptions, fetchQuotations]);
+  }, [currentPage, initialLoading, fetchQuotations]);
+  useEffect(() => {
+    let filtered = [...quotations];
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (q) =>
+          q.quotationAutoId?.toLowerCase().includes(query) ||
+          q.ticket?.ticketCode?.toLowerCase().includes(query) ||
+          q.customer?.firstName?.toLowerCase().includes(query) ||
+          q.customer?.lastName?.toLowerCase().includes(query),
+      );
+    }
+
+    if (selectedStatus) {
+      filtered = filtered.filter((q) => {
+        const statusName = q.quotationStatus || "";
+        return statusName.toLowerCase() === selectedStatus.toLowerCase();
+      });
+    }
+
+    setFilteredQuotations(filtered);
+  }, [searchQuery, selectedStatus, quotations]);
+
+  const getStatusCounts = (): StatusCount[] => {
+    const counts: { [key: string]: number } = {};
+    quotations.forEach((q) => {
+      const statusName = q.quotationStatus || "Unknown";
+      counts[statusName] = (counts[statusName] || 0) + 1;
+    });
+
+    return Object.entries(counts).map(([status, count]) => ({
+      status,
+      count,
+    }));
+  };
+
+  const handleFilterByStatus = (status: string) => {
+    if (selectedStatus === status) {
+      setSelectedStatus("");
+    } else {
+      setSelectedStatus(status);
+    }
+    setCurrentPage(1);
+  };
 
   const getCurrentStatusId = (quotation: any): string => {
     if (!quotation.quotationStatusId) return "";
-
     if (
       typeof quotation.quotationStatusId === "object" &&
       quotation.quotationStatusId?._id
@@ -174,7 +164,6 @@ const QuotationTable: React.FC = () => {
     if (typeof quotation.quotationStatusId === "string") {
       return quotation.quotationStatusId;
     }
-
     return "";
   };
 
@@ -195,7 +184,6 @@ const QuotationTable: React.FC = () => {
       toast.error("Please select a valid status");
       return;
     }
-    console.log(currentStatus);
 
     try {
       setUpdatingId(quotationId);
@@ -223,12 +211,6 @@ const QuotationTable: React.FC = () => {
               : q,
           ),
         );
-        setTimeout(() => {
-          setQuotations((currentQuotations) => {
-            calculateStatusCounts(currentQuotations, statusOptions);
-            return currentQuotations;
-          });
-        }, 100);
       } else {
         toast.error(response?.message || "Failed to update status");
       }
@@ -258,33 +240,25 @@ const QuotationTable: React.FC = () => {
     return styles[status?.toLowerCase()] || styles["draft"];
   };
 
-  const getGridCols = (count: number) => {
-    if (count === 1) return "grid-cols-1";
-    if (count === 2) return "grid-cols-2";
-    if (count === 3) return "grid-cols-3";
-    if (count === 4) return "grid-cols-4";
-    if (count >= 5) return "grid-cols-5";
-    return "grid-cols-4";
-  };
+  if (initialLoading) {
+    return (
+      <div className="p-8 bg-linear-to-br from-indigo-900 via-purple-900 to-pink-900 text-slate-600 min-h-screen flex items-center justify-center">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-8 flex flex-col items-center gap-4">
+          <Loader2 size={40} className="animate-spin text-indigo-600" />
+          <p className="text-slate-600">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 bg-linear-to-br from-indigo-900 via-purple-900 to-pink-900 text-slate-600 min-h-screen">
-      <div className="h-2 bg-linear-to-r from-amber-400 via-orange-400 to-yellow-400 rounded-t-lg mb-6" />
+    <div className="p-8 text-slate-600 min-h-screen overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm animate-slideUp">
+      <div className="h-2  rounded-t-lg mb-6" />
+      <Cards
+        statusCounts={getStatusCounts()}
+        onFilterByStatus={handleFilterByStatus}
+      />
 
-      {statusCards.length > 0 && (
-        <div className={`grid ${getGridCols(statusCards.length)} gap-6 mb-8`}>
-          {statusCards.map((card) => (
-            <SummaryCard
-              key={card._id}
-              icon={card.icon}
-              label={card.name}
-              count={card.count.toString()}
-              color={card.color}
-              total={totalItems}
-            />
-          ))}
-        </div>
-      )}
       <div className="max-w-7xl mx-auto bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 p-8">
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200">
           <div className="leading-none flex items-center gap-3">
@@ -296,10 +270,9 @@ const QuotationTable: React.FC = () => {
             </h2>
           </div>
           <span className="bg-linear-to-r from-slate-100 to-slate-200 text-slate-600 px-4 py-2 rounded-lg text-xs font-semibold border border-slate-200">
-            {quotations.length} of {totalItems} items
+            {filteredQuotations.length} of {totalItems} items
           </span>
         </div>
-
         <div className="relative mb-6">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -307,8 +280,10 @@ const QuotationTable: React.FC = () => {
           />
           <input
             type="text"
-            placeholder="Search by quotation number..."
-            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by quotation number, ticket ID, or customer name..."
+            className="w-full pl-10 pr-4 py-3 bg-[#f3f4f6] h-12 rounded-lg placeholder:text-[#6b7280] text-sm focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all"
           />
         </div>
 
@@ -342,8 +317,8 @@ const QuotationTable: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ) : quotations.length > 0 ? (
-                quotations.map((row) => {
+              ) : filteredQuotations.length > 0 ? (
+                filteredQuotations.map((row) => {
                   const isUpdating = updatingId === row._id;
                   let currentStatusId = getCurrentStatusId(row);
                   if (!currentStatusId && row.quotationStatus) {
@@ -456,109 +431,6 @@ const QuotationTable: React.FC = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
         />
-      </div>
-    </div>
-  );
-};
-
-interface CardProps {
-  icon: React.ReactNode;
-  label: string;
-  count: string;
-  color: "blue" | "green" | "slate" | "red" | "purple" | "orange" | "teal";
-  total: number;
-}
-
-const SummaryCard: React.FC<CardProps> = ({
-  icon,
-  label,
-  count,
-  color,
-  total,
-}) => {
-  const colors = {
-    blue: {
-      gradient: "from-blue-500 to-indigo-600",
-      bgLight: "bg-blue-50",
-      text: "text-blue-600",
-      border: "border-blue-200",
-      shadow: "shadow-blue-500/20",
-    },
-    green: {
-      gradient: "from-emerald-500 to-green-600",
-      bgLight: "bg-green-50",
-      text: "text-green-600",
-      border: "border-green-200",
-      shadow: "shadow-green-500/20",
-    },
-    slate: {
-      gradient: "from-slate-500 to-gray-600",
-      bgLight: "bg-slate-50",
-      text: "text-slate-600",
-      border: "border-slate-200",
-      shadow: "shadow-slate-500/20",
-    },
-    red: {
-      gradient: "from-rose-500 to-red-600",
-      bgLight: "bg-red-50",
-      text: "text-red-600",
-      border: "border-red-200",
-      shadow: "shadow-red-500/20",
-    },
-    purple: {
-      gradient: "from-purple-500 to-pink-600",
-      bgLight: "bg-purple-50",
-      text: "text-purple-600",
-      border: "border-purple-200",
-      shadow: "shadow-purple-500/20",
-    },
-    orange: {
-      gradient: "from-orange-500 to-amber-600",
-      bgLight: "bg-orange-50",
-      text: "text-orange-600",
-      border: "border-orange-200",
-      shadow: "shadow-orange-500/20",
-    },
-    teal: {
-      gradient: "from-teal-500 to-cyan-600",
-      bgLight: "bg-teal-50",
-      text: "text-teal-600",
-      border: "border-teal-200",
-      shadow: "shadow-teal-500/20",
-    },
-  };
-
-  const style = colors[color];
-  const percentage =
-    total > 0 ? Math.round((parseInt(count) / total) * 100) : 0;
-
-  return (
-    <div
-      className={`relative overflow-hidden rounded-2xl bg-linear-to-br ${style.gradient} p-6 shadow-xl ${style.shadow} transform hover:scale-105 transition-all duration-300`}
-    >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-8 -mt-8" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-8 -mb-8" />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
-            <div className="text-white">{icon}</div>
-          </div>
-          <span className="text-white/80 text-sm font-medium">
-            {percentage}%
-          </span>
-        </div>
-
-        <div className="text-white/90 text-sm font-medium mb-1">{label}</div>
-        <div className="text-3xl font-bold text-white mb-2">{count}</div>
-
-        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-white rounded-full transition-all duration-500"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-
-        <div className="mt-2 text-white/60 text-xs">out of {total} total</div>
       </div>
     </div>
   );

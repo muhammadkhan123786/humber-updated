@@ -125,7 +125,14 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
   if (isDeleted) {
     return null;
   }
-
+  const statusColors: Record<string, string> = {
+    open: "bg-blue-500 text-white",
+    Assigned: "bg-purple-500 text-white",
+    "In Progress": "bg-yellow-500 text-white",
+    "On Hold": "bg-orange-500 text-white",
+    Completed: "bg-green-500 text-white",
+    Cancelled: "bg-red-500 text-white",
+  };
   return (
     <div className="relative w-full bg-white/80 rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6 transition-all duration-300 ease-in-out">
       {isDeleting && (
@@ -156,9 +163,14 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
                   {job.ticketId?.decisionId}
                 </span>
 
-                <span className="px-2 py-0.5 text-xs text-white rounded-[10px] bg-linear-to-r from-green-500 to-emerald-500 flex items-center gap-1">
+                <span
+                  className={`px-2 py-0.5 text-xs rounded-[10px] flex items-center gap-1 ${
+                    statusColors[job.jobStatusId?.technicianJobStatus] ||
+                    "bg-gray-400 text-white"
+                  }`}
+                >
                   <CheckCircle size={12} />
-                  {job.status}
+                  {job.jobStatusId?.technicianJobStatus || "Unknown"}
                 </span>
               </div>
 

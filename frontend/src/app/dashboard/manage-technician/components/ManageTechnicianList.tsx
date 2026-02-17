@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+"use client";
+import React, { useState, useMemo, useRef } from "react";
 import {
   Search,
   List,
@@ -9,10 +10,11 @@ import {
   Grid3X3,
   User,
   CheckCircle2,
-  Ban,
   Mail,
   Edit3,
   Clock,
+  X,
+  Clock1,
 } from "lucide-react";
 
 interface ManageTechnicianListProps {
@@ -26,7 +28,46 @@ const ManageTechnicianList = ({
   onEdit,
   onDelete,
 }: ManageTechnicianListProps) => {
-  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const filteredTechnicians = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return technicians;
+    }
+
+    const query = searchTerm.toLowerCase().trim();
+    return technicians.filter((tech) => {
+      const fullName =
+        `${tech.personId?.firstName || ""} ${tech.personId?.lastName || ""}`.toLowerCase();
+      const email = tech.contactId?.emailId?.toLowerCase() || "";
+      const phone = tech.contactId?.mobileNumber || "";
+      const employeeId = tech.employeeId?.toLowerCase() || "";
+      const specialization =
+        tech.specializationIds
+          ?.map((s: any) => s.MasterServiceType?.toLowerCase())
+          .join(" ") || "";
+
+      return (
+        fullName.includes(query) ||
+        email.includes(query) ||
+        phone.includes(query) ||
+        employeeId.includes(query) ||
+        specialization.includes(query)
+      );
+    });
+  }, [searchTerm, technicians]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 space-y-6 font-sans">
@@ -37,12 +78,23 @@ const ManageTechnicianList = ({
             size={20}
           />
           <input
+            ref={searchInputRef}
             type="text"
-            placeholder="Search technicians by name, email, or phone..."
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl text-sm border-2 border-orange-100 outline-none transition-all
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search technicians by name, email, phone, or ID..."
+            className="w-full pl-12 pr-12 py-3 bg-gray-50 rounded-xl text-sm border-2 border-orange-100 outline-none transition-all
                      placeholder:text-gray-500
                      focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:shadow-sm"
           />
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-white rounded-full p-1"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
         <div className="flex bg-slate-100 p-1 rounded-xl">
           <button
@@ -60,7 +112,27 @@ const ManageTechnicianList = ({
         </div>
       </div>
 
-      {viewMode === "table" ? (
+      {searchTerm && (
+        <div className="text-sm text-gray-600 px-2">
+          Showing results for:{" "}
+          <span className="font-semibold">{searchTerm}</span> (
+          {filteredTechnicians.length} of {technicians.length} technicians)
+        </div>
+      )}
+
+      {filteredTechnicians.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border-2 border-orange-100">
+          <p className="text-gray-500 text-lg">No technicians found</p>
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              className="mt-4 text-orange-600 hover:text-orange-800 underline"
+            >
+              Clear search
+            </button>
+          )}
+        </div>
+      ) : viewMode === "table" ? (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="w-full bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="h-1 w-full bg-linear-to-r from-orange-500 via-red-500 to-pink-500" />
@@ -98,7 +170,7 @@ const ManageTechnicianList = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {technicians.map((tech) => (
+                  {filteredTechnicians.map((tech) => (
                     <tr
                       key={tech._id}
                       className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors"
@@ -115,7 +187,7 @@ const ManageTechnicianList = ({
                             <User size={20} />
                           </div>
                           <div className="min-w-fit">
-                            <div className="text-sm font-bold text-slate-800 leading-none truncate max-w-[150px]">{`${tech.personId?.firstName} ${tech.personId?.lastName}`}</div>
+                            <div className="text-sm font-bold text-slate-800 leading-none truncate max-w-[150px]">{`${tech.personId?.firstName || ""} ${tech.personId?.lastName || ""}`}</div>
                             <div className="text-[11px] text-slate-400 mt-1 truncate max-w-[150px]">
                               {tech.contactId?.emailId}
                             </div>
@@ -183,7 +255,6 @@ const ManageTechnicianList = ({
                         </div>
                       </td>
 
-                      {/* 4. Jobs Styled as Boxes */}
                       <td className="p-5">
                         <div className="flex flex-col gap-1.5 items-center">
                           <div className="bg-[#FFF1F1] border border-red-50 px-3 py-1 rounded-xl flex flex-col items-center min-w-[55px]">
@@ -214,7 +285,6 @@ const ManageTechnicianList = ({
                         </div>
                       </td>
 
-                      {/* 5. Fixed Actions Section */}
                       <td className="p-5">
                         <div className="flex justify-center gap-2 min-w-[180px]">
                           <button
@@ -240,7 +310,7 @@ const ManageTechnicianList = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {technicians.map((tech) => (
+          {filteredTechnicians.map((tech) => (
             <div
               key={tech._id}
               className="relative bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border-t-0 hover:shadow-2xl transition-all overflow-hidden"
@@ -262,7 +332,6 @@ const ManageTechnicianList = ({
                   </div>
                 </div>
 
-                {/* 3. Status Badge: Updated logos for Available (✓) and Busy (⊘) */}
                 <span
                   className={`text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm ${
                     tech.technicianStatus === "Available"
@@ -272,11 +341,11 @@ const ManageTechnicianList = ({
                 >
                   {tech.technicianStatus === "Available" ? (
                     <>
-                      <CheckCircle2 size={12} /> Available
+                      <CheckCircle2 size={12} />
                     </>
                   ) : (
                     <>
-                      <Ban size={12} /> Busy
+                      <Clock1 size={12} /> Busy
                     </>
                   )}
                 </span>
@@ -296,7 +365,6 @@ const ManageTechnicianList = ({
                 <span className="text-sm font-bold text-gray-700">4.8</span>
               </div>
 
-              {/* 5. Specialization: Updated to Full Length with Figma Gradient */}
               <div className="w-full mb-5">
                 <div className="w-full flex items-center gap-2 px-3 py-1.5 bg-linear-to-r from-purple-100 to-pink-100 rounded-full border border-purple-200/50">
                   <div className="w-2 h-2 rounded-full bg-purple-600 animate-pulse" />
@@ -307,7 +375,6 @@ const ManageTechnicianList = ({
                 </div>
               </div>
 
-              {/* Contact Info: Using soft gradients per Figma */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3 px-3 py-2.5 bg-linear-to-r from-blue-50 to-cyan-50 rounded-xl text-xs text-gray-700 border border-blue-100/50">
                   <Mail size={14} className="text-blue-500" />
@@ -328,7 +395,6 @@ const ManageTechnicianList = ({
                 </div>
               </div>
 
-              {/* Stats Grid */}
               <div className="grid grid-cols-2 gap-4 mb-6 pt-4 border-t border-gray-100">
                 <div className="bg-linear-to-br from-orange-50 to-red-50 p-3 rounded-xl border border-orange-100/50">
                   <div className="text-[10px] font-bold text-gray-500 uppercase">
@@ -348,21 +414,16 @@ const ManageTechnicianList = ({
                 </div>
               </div>
 
-              {/* Salary & Actions */}
               <div className="flex justify-between items-center bg-linear-to-r from-purple-50 to-pink-50 p-4 rounded-xl mb-4">
                 <div className="w-full">
-                  {/* Container for Label and Frequency */}
                   <div className="flex justify-between items-center w-full mb-1">
                     <span className="text-[10px] font-bold text-gray-500 uppercase">
                       Salary
                     </span>
-                    {/* Frequency is now pushed to the right side */}
                     <span className="text-purple-600 text-[10px] font-black uppercase">
                       {tech.paymentFrequency || "Monthly"}
                     </span>
                   </div>
-
-                  {/* Large Salary Value */}
                   <div className="text-2xl font-black text-purple-600">
                     £{tech.salary?.toLocaleString() || "0"}
                   </div>

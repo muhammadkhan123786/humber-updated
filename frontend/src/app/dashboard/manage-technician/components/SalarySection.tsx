@@ -16,6 +16,21 @@ const SalarySection: React.FC<SalarySectionProps> = ({
   paymentFreq,
   setPaymentFreq,
 }) => {
+  // Handle frequency change and update both local state and formData
+  const handleFrequencyChange = (freq: string) => {
+    setPaymentFreq(freq);
+
+    // Create a synthetic event to update formData
+    const event = {
+      target: {
+        name: "paymentFrequency",
+        value: freq,
+      },
+    } as React.ChangeEvent<HTMLInputElement>;
+
+    handleChange(event);
+  };
+
   return (
     <FormSection
       icon={PoundSterling}
@@ -108,7 +123,7 @@ const SalarySection: React.FC<SalarySectionProps> = ({
                 <button
                   key={freq.label}
                   type="button"
-                  onClick={() => setPaymentFreq(freq.label)}
+                  onClick={() => handleFrequencyChange(freq.label)}
                   className={`w-32 h-20 px-3.5 pt-3.5 pb-0.5 rounded-2xl outline-2 -outline-offset-2 transition-all duration-300 flex flex-col justify-start items-center gap-1 ${
                     isSelected
                       ? freq.activeBg

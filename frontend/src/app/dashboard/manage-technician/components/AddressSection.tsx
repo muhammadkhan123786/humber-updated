@@ -32,9 +32,6 @@ const AddressSection: React.FC<AddressSectionProps> = ({
           className="w-full h-9 px-4 bg-[#F0FDF4] border border-[#DCFCE7] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#10B981]/10 focus:border-[#10B981] transition-all font-medium text-slate-600 placeholder:text-slate-400 text-sm"
           required
         />
-        <p className="text-xs text-slate-500 ml-1">
-          Start typing your UK address and select from suggestions
-        </p>
       </div>
 
       <div className="p-3.5 rounded-xl bg-[#EBFFF3] border border-[#C6F6D5] flex gap-3 items-center mb-4">

@@ -197,15 +197,14 @@ const JobCardsSection = ({
                     <div className="space-y-3.5">
                       <div className="flex items-center gap-3">
                         <div className="p-1.5 bg-blue-50 rounded-lg">
-                          <MapPin size={14} className="text-blue-600" />
+                          <User size={14} className="text-blue-600" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
                             {job.ticketId?.customerId?.personId?.firstName}
                           </p>
                           <p className="text-gray-500 text-[11px] mt-0.5 line-clamp-1">
-                            {job.ticketId?.customerId?.addressId?.address},{" "}
-                            {job.ticketId?.customerId?.addressId?.city}
+                            {job.ticketId?.customerId?.contactId?.mobileNumber}
                           </p>
                         </div>
                       </div>

@@ -105,7 +105,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
 
   return (
     <div
-      className="relative bg-white rounded-lg shadow-2xl shadow-gray-200/50 border border-gray-50 w-full max-w-[400px] overflow-hidden
+      className="relative bg-white rounded-lg shadow-2xl shadow-gray-200/50 border border-gray-50 w-full  overflow-hidden
   transition-transform duration-300 ease-out hover:scale-[1.03]"
     >
       <div className="h-1 w-full bg-linear-to-r from-[#4F46E5] via-[#E11DBC] to-[#FB7185]" />
@@ -132,7 +132,11 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
             <currentType.icon size={14} strokeWidth={2.5} />
             {currentType.label}
           </div>
-          <div className="bg-[#00D169] text-white px-4 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold shadow-sm">
+          <div
+            className={`px-4 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold shadow-sm text-white ${
+              status === "Active" ? "bg-[#00D169]" : "bg-gray-400"
+            }`}
+          >
             <Check size={14} strokeWidth={4} />
             {status}
           </div>

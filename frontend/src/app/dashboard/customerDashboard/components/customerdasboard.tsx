@@ -165,6 +165,7 @@ const CustomerDashboardContent = () => {
         <CustomerManagementList
           onEdit={handleEditCustomer}
           refreshTrigger={refreshTrigger}
+          onDataChange={handleDataChange}
         />
       </div>
     </div>
