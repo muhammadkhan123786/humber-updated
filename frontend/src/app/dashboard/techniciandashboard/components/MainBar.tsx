@@ -1,32 +1,56 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Key } from 'lucide-react';
 import ChangePasswordForm from './ChangePasswordForm';
+import toast from 'react-hot-toast';
 
-const MainBar = () => {
+interface MainBarProps {
+  refreshTrigger?: number;
+}
+
+const MainBar = ({ refreshTrigger = 0 }: MainBarProps) => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [userData, setUserData] = useState({
+    name: 'Loading...',
+    businessType: '',
+    city: ''
+  });
 
-  // Get user data from localStorage (adjust according to your user structure)
-  const getUserData = () => {
-    if (typeof window !== 'undefined') {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const user = JSON.parse(userStr);
-        return {
-          name: user.name || 'John Smith',
-          businessType: user.businessType || 'Mobility Scooters & Wheelchairs',
-          city: user.city || 'Hull, UK'
-        };
+  useEffect(() => {
+    fetchUserData();
+  }, [refreshTrigger]);
+
+  const fetchUserData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://127.0.0.1:4000/api/technician-profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        const { technician, shop } = result.data;
+        setUserData({
+          name: `${technician.personId?.firstName || ''} ${technician.personId?.lastName || ''}`.trim(),
+          businessType: shop?.shopName || '',
+          city: technician.addressId?.address || ''
+        });
       }
+    } catch (error) {
+      toast.error('Error fetching user data');
+      setUserData({
+        name: 'Technician',
+        businessType: '',
+        city: ''
+      });
     }
-    return {
-      name: 'John Smith',
-      businessType: 'Mobility Scooters & Wheelchairs',
-      city: 'Hull, UK'
-    };
   };
-
-  const userData = getUserData();
 
   return (
     <>

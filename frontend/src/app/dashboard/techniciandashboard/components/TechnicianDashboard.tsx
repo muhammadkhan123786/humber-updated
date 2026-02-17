@@ -7,16 +7,21 @@ import Profile from './Profile';
 
 const TechnicianDashboard = () => {
   const [activeRoute, setActiveRoute] = useState<RouteType>('overview');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleProfileUpdate = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div>
-      <MainBar />
+      <MainBar refreshTrigger={refreshTrigger} />
        <StatsOverview />
       <RouteBar activeRoute={activeRoute} onRouteChange={setActiveRoute} />
       
       {/* Conditional Rendering based on active route */}
       
-      {activeRoute === 'profile' && <Profile />}
+      {activeRoute === 'profile' && <Profile onProfileUpdate={handleProfileUpdate} />}
       {activeRoute === 'myjobs' && (
         <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
           <h2 className="text-2xl font-bold text-gray-800">My Jobs</h2>

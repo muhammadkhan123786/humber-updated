@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { User, Camera, Save, Key } from 'lucide-react';
 import ChangePasswordForm from './ChangePasswordForm';
+import AnimationStyles from './Animation';
+import toast from 'react-hot-toast';
 
 interface ProfileData {
   firstName: string;
@@ -15,7 +17,11 @@ interface ProfileData {
   specializations: string[];
 }
 
-const Profile = () => {
+interface ProfileProps {
+  onProfileUpdate?: () => void;
+}
+
+const Profile = ({ onProfileUpdate }: ProfileProps) => {
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,7 +71,7 @@ const Profile = () => {
         });
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      toast.error('Error fetching profile');
     } finally {
       setLoading(false);
     }
@@ -101,14 +107,16 @@ const Profile = () => {
       const result = await response.json();
       
       if (result.success) {
-        alert('Profile updated successfully!');
+        toast.success('Profile updated successfully!');
         await fetchProfile();
+        if (onProfileUpdate) {
+          onProfileUpdate();
+        }
       } else {
-        alert('Failed to update profile');
+        toast.error('Failed to update profile');
       }
     } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Error updating profile');
+      toast.error('Error updating profile');
     } finally {
       setSaving(false);
     }
@@ -126,15 +134,19 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading profile...</div>
-      </div>
+      <>
+        <AnimationStyles />
+        <div className="flex items-center justify-center h-64 animate-fadeIn">
+          <div className="text-gray-500">Loading profile...</div>
+        </div>
+      </>
     );
   }
 
   return (
     <>
-      <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8">
+      <AnimationStyles />
+      <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 animate-slideUp">
         {/* Header */}
         <div className="flex items-center gap-2 mb-6">
           <User className="text-indigo-600" size={24} />
@@ -179,7 +191,7 @@ const Profile = () => {
                   handleInputChange('firstName', first || '');
                   handleInputChange('lastName', rest.join(' ') || '');
                 }}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
@@ -188,7 +200,7 @@ const Profile = () => {
                 type="email"
                 value={profileData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
@@ -201,7 +213,7 @@ const Profile = () => {
                 type="text"
                 value={profileData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
@@ -210,7 +222,7 @@ const Profile = () => {
                 type="text"
                 value={profileData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
               />
             </div>
           </div>
