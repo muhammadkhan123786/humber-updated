@@ -798,8 +798,7 @@ export const TechnicianProfileController = async (
     const technicianProfile = await Technicians.findOne({
       _id: req.technicianId,
       isDeleted: false,
-    }).select('employeeId')
-      .select('dateOfJoining')
+    }).select('employeeId dateOfJoining userId')
       .populate({ path: "personId", select: "firstName lastName" })
       .populate({ path: "accountId", select: "email" })
       .populate({ path: "contactId", select: "phoneNumber" })
@@ -807,20 +806,20 @@ export const TechnicianProfileController = async (
       .populate({ path: "specializationIds", select: "MasterServiceType" })
       .lean();
 
+   
     if (!technicianProfile) {
       return res.status(404).json({
         success: false,
         message: "Technician profile not found.",
       });
     }
-
     // ✅ Get shop using userId (assuming technician.userId = shop owner id)
     const technicianShop = await Shop.findOne({
       userId: technicianProfile.userId,
       isDeleted: false,
 
     }).select('shopName').lean();
-
+    console.log("Technician Profile:", technicianShop);
     return res.status(200).json({
       success: true,
       message: "Technician profile fetched successfully.",
@@ -853,8 +852,7 @@ export const UpdateTechnicianProfileController = async (
     }
 
     const {
-      employeeId,
-      dateOfJoining,
+     
       firstName,
       lastName,
       email,
@@ -894,10 +892,6 @@ export const UpdateTechnicianProfileController = async (
     /* ===============================
        UPDATE TECHNICIAN
     =============================== */
-    if (employeeId) technician.employeeId = employeeId;
-    if (dateOfJoining) technician.dateOfJoining = dateOfJoining;
-    await technician.save();
-
     if (firstName || lastName) {
       await Person.findByIdAndUpdate(technician.personId, {
         ...(firstName && { firstName }),
