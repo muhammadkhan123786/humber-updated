@@ -7,6 +7,11 @@ import { customerTicketBase } from "../../models/ticket-management-system-models
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { TicketQuations } from "../../models/ticket-quation-models/ticket.quotation.models";
+import { Shop } from "../../models/shop.models";
+import { User } from "../../models/user.models";
+import { Person } from "../../models/person.models";
+import { Contact } from "../../models/contact.models";
+import { Address } from "../../models/addresses.models";
 
 export const technicianJobsStatisticsController = async (
   req: Request,
@@ -765,6 +770,180 @@ export const TechnicianCompletedJobCountController = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch jobs count.",
+    });
+  }
+};
+
+//technician profile 
+export const TechnicianProfileController = async (
+  req: TechnicianAuthRequest,
+  res: Response
+) => {
+  try {
+    if (!req.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access.",
+      });
+    }
+
+    if (req.role === "Technician" && !req.technicianId) {
+      return res.status(401).json({
+        success: false,
+        message: "Technician not authorized.",
+      });
+    }
+
+    // ✅ Get technician profile
+    const technicianProfile = await Technicians.findOne({
+      _id: req.technicianId,
+      isDeleted: false,
+    }).select('employeeId')
+      .select('dateOfJoining')
+      .populate({ path: "personId", select: "firstName lastName" })
+      .populate({ path: "accountId", select: "email" })
+      .populate({ path: "contactId", select: "phoneNumber" })
+      .populate({ path: "addressId", select: "address" })
+      .populate({ path: "specializationIds", select: "MasterServiceType" })
+      .lean();
+
+    if (!technicianProfile) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician profile not found.",
+      });
+    }
+
+    // ✅ Get shop using userId (assuming technician.userId = shop owner id)
+    const technicianShop = await Shop.findOne({
+      userId: technicianProfile.userId,
+      isDeleted: false,
+
+    }).select('shopName').lean();
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician profile fetched successfully.",
+      data: {
+        technician: technicianProfile,
+        shop: technicianShop || null,
+      },
+    });
+
+  } catch (error) {
+    console.error("Technician Profile Fetch Failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch technician profile.",
+    });
+  }
+};
+
+//update technician profile 
+export const UpdateTechnicianProfileController = async (
+  req: TechnicianAuthRequest,
+  res: Response
+) => {
+  try {
+    if (!req.role || req.role !== "Technician" || !req.technicianId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access.",
+      });
+    }
+
+    const {
+      employeeId,
+      dateOfJoining,
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      address,
+    } = req.body;
+
+    const technician = await Technicians.findOne({
+      _id: req.technicianId,
+      isDeleted: false,
+    });
+
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician not found.",
+      });
+    }
+
+    /* ===============================
+       ✅ CHECK EMAIL UNIQUENESS
+    =============================== */
+    if (email) {
+      const existingEmail = await User.findOne({
+        email: email.toLowerCase(),
+        _id: { $ne: technician.accountId }, // exclude current user
+      });
+
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already in use by another account.",
+        });
+      }
+    }
+
+    /* ===============================
+       UPDATE TECHNICIAN
+    =============================== */
+    if (employeeId) technician.employeeId = employeeId;
+    if (dateOfJoining) technician.dateOfJoining = dateOfJoining;
+    await technician.save();
+
+    if (firstName || lastName) {
+      await Person.findByIdAndUpdate(technician.personId, {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+      });
+    }
+
+    if (email) {
+      await User.findByIdAndUpdate(technician.accountId, {
+        email: email.toLowerCase(),
+      });
+    }
+
+    if (phoneNumber) {
+      await Contact.findByIdAndUpdate(technician.contactId, {
+        phoneNumber,
+      });
+    }
+
+    if (address) {
+      await Address.findByIdAndUpdate(technician.addressId, {
+        address,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Technician profile updated successfully.",
+    });
+
+  } catch (error: any) {
+
+    /* ===============================
+       🔥 HANDLE UNIQUE INDEX ERROR
+    =============================== */
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate email detected.",
+      });
+    }
+
+    console.error("Update Technician Profile Failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update technician profile.",
     });
   }
 };

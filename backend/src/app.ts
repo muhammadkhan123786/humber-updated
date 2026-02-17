@@ -98,7 +98,9 @@ import technicianDashboardJobsRouter from "./routes/technician-dashboard/technic
 import {
   TechnicianCompletedJobCountController,
   technicianDashboardJobsStatisticsController,
+  TechnicianProfileController,
   updateTechnicianJobStatusController,
+  UpdateTechnicianProfileController,
   updateTechnicianQuotationStatusController,
 } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
 import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoices.routes";
@@ -503,6 +505,19 @@ app.put(
   `${process.env.API_PREFIX}/technician-job-completed-count`,
   technicianProtecter,
   TechnicianCompletedJobCountController,
+);
+
+//17-02-2026
+app.get(
+  `${process.env.API_PREFIX}/technician-profile`,
+  technicianProtecter,
+  TechnicianProfileController,
+);
+
+app.put(
+  `${process.env.API_PREFIX}/update-technician-profile`,
+  technicianProtecter,
+  UpdateTechnicianProfileController,
 );
 
 //Muhammad Imran code ended here.
