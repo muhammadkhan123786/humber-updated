@@ -1,11 +1,14 @@
 "use client";
-import React, { useState } from 'react';
-import { Target, Briefcase, Activity, User, ListTodo } from 'lucide-react';
+import { Target,  Activity, User, ListTodo } from 'lucide-react';
 
-type RouteType = 'overview' | 'myjobs' | 'activities' | 'profile';
+export type RouteType = 'overview' | 'myjobs' | 'activities' | 'profile';
 
-const RouteBar = () => {
-  const [activeRoute, setActiveRoute] = useState<RouteType>('overview');
+interface RouteBarProps {
+  activeRoute: RouteType;
+  onRouteChange: (route: RouteType) => void;
+}
+
+const RouteBar = ({ activeRoute, onRouteChange }: RouteBarProps) => {
 
   const routes = [
     {
@@ -40,7 +43,7 @@ const RouteBar = () => {
           return (
             <button
               key={route.id}
-              onClick={() => setActiveRoute(route.id)}
+              onClick={() => onRouteChange(route.id)}
               className={`
                 flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm
                 transition-all duration-200 hover:scale-105
