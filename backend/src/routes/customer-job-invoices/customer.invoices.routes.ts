@@ -13,10 +13,58 @@ const customerInvoiceRouter = Router();
 const customerInvoiceServices = new GenericService<customerInvoiceDoc>(
   CustomerJobsInvoices,
 );
-
 const customerInvoiceController = new AdvancedGenericController({
   service: customerInvoiceServices,
-  populate: ["userId", "jobId", "customerId"],
+  populate: [
+    "userId",
+
+    // ✅ JOB LEVEL
+    {
+      path: "jobId",
+      populate: [
+        {
+          path: "ticketId",
+          populate: {
+            path: "vehicleId",
+            populate: { path: "vehicleModelId" },
+          },
+        },
+        { path: "technicianId" },
+
+        // 👇 Job Services
+        {
+          path: "services.activityId",
+        },
+
+        // 👇 Job Parts
+        {
+          path: "parts.partId",
+        },
+      ],
+    },
+
+    // ✅ CUSTOMER LEVEL
+    {
+      path: "customerId",
+      populate: [
+        { path: "personId" },
+        { path: "addressId" },
+        { path: "contactId" },
+        { path: "accountId" },
+        { path: "sourceId" },
+      ],
+    },
+
+    // ✅ INVOICE SERVICES
+    {
+      path: "services.activityId",
+    },
+
+    // ✅ INVOICE PARTS
+    {
+      path: "parts.partId",
+    },
+  ],
   validationSchema: createInvoiceSchemaValidation,
   searchFields: ["invoiceId"],
 });

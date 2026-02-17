@@ -1,6 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Pagination from "@/components/ui/Pagination";
+
 import {
   Search,
   List,
@@ -10,25 +12,173 @@ import {
   Calendar,
   Send,
   Table,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { CustomSelect } from "../../../common-form/CustomSelect";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { downloadInvoicePDF } from "./InvoicePDF";
+
+const getAuthHeader = () => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  if (!token) return {};
+  const cleanToken = token.replace(/^"|"$/g, "").trim();
+  return { Authorization: `Bearer ${cleanToken}` };
+};
 
 const InvoicesSection = () => {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("desc");
   const [viewType, setViewType] = useState("table");
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const handleView = (id: any) => {
+  const limit = 10;
+
+  useEffect(() => {
+    fetchInvoices(currentPage);
+  }, [currentPage]);
+
+  const fetchInvoices = async (page = 1) => {
+    try {
+      setLoading(true);
+
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      const response = await axios.get(
+        `${baseUrl}/customer-invoices?page=${page}&limit=${limit}`,
+        {
+          headers: getAuthHeader(),
+        },
+      );
+
+      if (response.data?.success) {
+        setInvoices(response.data.data || []);
+        setCurrentPage(response.data.page || 1);
+
+        const total = response.data.total || 0;
+        setTotalPages(Math.ceil(total / limit));
+      }
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      toast.error("Failed to fetch invoices");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const handleView = (id: string) => {
     router.push(`/dashboard/invoice-management/view/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/dashboard/customer-invoice?id=${id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this invoice? This action cannot be undone.",
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      const response = await axios.delete(
+        `${baseUrl}/customer-invoices/${id}`,
+        {
+          headers: getAuthHeader(),
+        },
+      );
+
+      if (response.data?.success) {
+        toast.success("Invoice deleted successfully");
+
+        fetchInvoices();
+      } else {
+        toast.error("Failed to delete invoice");
+      }
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      toast.error("Failed to delete invoice");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDownload = async (id: string) => {
+    try {
+      setDownloadingId(id);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+      const response = await axios.get(`${baseUrl}/customer-invoices/${id}`, {
+        headers: getAuthHeader(),
+      });
+
+      if (response.data?.success && response.data?.data) {
+        const invoiceData = response.data.data;
+        downloadInvoicePDF(invoiceData);
+        toast.success("PDF downloaded successfully");
+      } else {
+        toast.error("Failed to fetch invoice details");
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      toast.error("Failed to download PDF");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB");
+  };
+
+  const formatCurrency = (amount: number) => {
+    return amount.toFixed(2);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toUpperCase()) {
+      case "PAID":
+        return "bg-green-100 text-green-700 border-green-300";
+      case "SENT":
+      case "ISSUED":
+        return "bg-blue-100 text-blue-700 border-blue-300";
+      case "DRAFT":
+        return "bg-gray-100 text-gray-700 border-gray-300";
+      case "CANCELLED":
+        return "bg-red-100 text-red-700 border-red-300";
+      default:
+        return "bg-blue-100 text-blue-700 border-blue-300";
+    }
   };
 
   const statusOptions = [
     { id: "all", label: "All Statuses" },
-    { id: "sent", label: "Sent" },
-    { id: "paid", label: "Paid" },
-    { id: "overdue", label: "Overdue" },
-    { id: "draft", label: "Draft" },
+    { id: "ISSUED", label: "Sent" },
+    { id: "PAID", label: "Paid" },
+    { id: "DRAFT", label: "Draft" },
+    { id: "CANCELLED", label: "Cancelled" },
   ];
 
   const sortOptions = [
@@ -37,42 +187,45 @@ const InvoicesSection = () => {
     { id: "newest", label: "Newest Date" },
   ];
 
-  const invoicesData = [
-    {
-      id: "INV-2026-0002",
-      jobId: "JOB-2024-002",
-      ticket: "TKT-2024-002",
-      customer: "John Davies",
-      email: "john.davies@email.com",
-      model: "Invacare Colibri",
-      date: "11/01/2026",
-      dueDate: "25/01/2026",
-      amount: "634.11",
-      status: "Sent",
-    },
-    {
-      id: "INV-2026-0004",
-      jobId: "JOB-2024-004",
-      ticket: "TKT-2024-004",
-      customer: "Robert Johnson",
-      email: "robert.j@email.com",
-      model: "Kymco Midi XLS",
-      date: "11/01/2026",
-      dueDate: "25/01/2026",
-      amount: "425.50",
-      status: "Sent",
-    },
-  ];
+  const filteredInvoices = invoices.filter((inv: any) => {
+    const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
+
+    const matchesSearch = inv.invoiceId
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+
+    return matchesStatus && matchesSearch;
+  });
+
+  const sortedInvoices = [...filteredInvoices].sort((a: any, b: any) => {
+    if (sortOrder === "desc") return b.netTotal - a.netTotal;
+    if (sortOrder === "asc") return a.netTotal - b.netTotal;
+    if (sortOrder === "newest")
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return 0;
+  });
+
+  if (loading) {
+    return (
+      <div className="w-full flex justify-center items-center h-64">
+        <div className="text-gray-500">Loading invoices...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col gap-6 font-sans">
-      {/* Search and Filters Section */}
       <div className="w-full p-4 bg-white rounded-2xl border-2 border-indigo-100 flex flex-col lg:flex-row items-center gap-4 shadow-sm">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search by invoice number, customer..."
+            placeholder="Search by invoice number..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full h-10 pl-10 pr-4 bg-gray-100 border-2 border-indigo-50 rounded-[10px] text-sm outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
         </div>
@@ -112,16 +265,18 @@ const InvoicesSection = () => {
         </div>
       </div>
 
-      {viewType === "table" ? (
+      {sortedInvoices.length === 0 ? (
+        <div className="w-full p-12 bg-white rounded-2xl border-2 border-indigo-100 flex flex-col items-center justify-center">
+          <p className="text-gray-500 text-lg">No invoices found</p>
+        </div>
+      ) : viewType === "table" ? (
         <div className="w-full overflow-x-auto bg-white rounded-2xl border-2 border-indigo-100 shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b-2 border-indigo-50 bg-slate-50/50">
                 <th className="p-4 font-bold text-gray-900">Invoice No.</th>
                 <th className="p-4 font-bold text-gray-900">Job ID</th>
-                <th className="p-4 font-bold text-gray-900">Ticket No.</th>
                 <th className="p-4 font-bold text-gray-900">Customer Name</th>
-                <th className="p-4 font-bold text-gray-900">Scooter Model</th>
                 <th className="p-4 font-bold text-gray-900">Invoice Date</th>
                 <th className="p-4 font-bold text-gray-900">Due Date</th>
                 <th className="p-4 font-bold text-gray-900 text-right">
@@ -134,40 +289,39 @@ const InvoicesSection = () => {
               </tr>
             </thead>
             <tbody>
-              {invoicesData.map((inv) => (
+              {sortedInvoices.map((inv: any) => (
                 <tr
-                  key={inv.id}
+                  key={inv._id}
                   className="border-b border-indigo-50 hover:bg-indigo-50/30 transition-colors"
                 >
                   <td className="p-4 text-sm font-medium text-indigo-600">
-                    {inv.id}
+                    {inv.invoiceId}
                   </td>
                   <td className="p-4 text-sm text-gray-600 font-mono">
-                    {inv.jobId}
-                  </td>
-                  <td className="p-4 text-sm text-gray-600 font-mono">
-                    {inv.ticket}
+                    {inv.jobId?.jobId || inv.jobId}
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-gray-900">
-                        {inv.customer}
+                        {inv.customerId?.personId?.firstName || "N/A"}
                       </span>
                       <span className="text-[10px] text-gray-400">
-                        {inv.email}
+                        {inv.customerId?.contactId?.emailId || ""}
                       </span>
                     </div>
                   </td>
-                  <td className="p-4 text-sm text-gray-600">{inv.model}</td>
-                  <td className="p-4 text-sm text-gray-600">{inv.date}</td>
-                  <td className="p-4 text-sm text-gray-600">{inv.dueDate}</td>
+                  <td className="p-4 text-sm text-gray-600">
+                    {formatDate(inv.invoiceDate)}
+                  </td>
+                  <td className="p-4 text-sm text-gray-600">
+                    {formatDate(inv.dueDate)}
+                  </td>
                   <td className="p-4 text-sm font-bold text-green-700 text-right">
-                    £{inv.amount}
+                    £{formatCurrency(inv.netTotal)}
                   </td>
                   <td className="p-4">
                     <span
-                      className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 w-fit
-                      ${inv.status === "Sent" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}
+                      className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase flex items-center gap-1 w-fit ${getStatusColor(inv.status)}`}
                     >
                       <Send size={10} /> {inv.status}
                     </span>
@@ -175,15 +329,47 @@ const InvoicesSection = () => {
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        onClick={() => handleView(inv.id)}
+                        onClick={() => handleView(inv._id)}
                         className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                        title="View Invoice"
                       >
                         <Eye size={14} />
                       </button>
-                      <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50">
+                      <button
+                        onClick={() => handleEdit(inv._id)}
+                        className="p-1.5 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                        title="Edit Invoice"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(inv._id)}
+                        disabled={deletingId === inv._id}
+                        className={`p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors ${
+                          deletingId === inv._id
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                        title="Delete Invoice"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDownload(inv._id)}
+                        disabled={downloadingId === inv._id}
+                        className={`p-1.5 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors ${
+                          downloadingId === inv._id
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                        title="Download PDF"
+                      >
                         <Download size={14} />
                       </button>
-                      <button className="p-1.5 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50">
+                      <button
+                        className="p-1.5 border border-indigo-200 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors"
+                        title="Send Email"
+                      >
                         <Send size={14} />
                       </button>
                     </div>
@@ -195,18 +381,48 @@ const InvoicesSection = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {invoicesData.map((inv) => (
+          {sortedInvoices.map((inv: any) => (
             <InvoiceCard
-              key={inv.id}
-              {...inv}
-              onView={() => handleView(inv.id)}
+              key={inv._id}
+              id={inv.invoiceId}
+              mongoId={inv._id}
+              date={formatDate(inv.invoiceDate)}
+              status={inv.status}
+              customer={inv.customerId?.personId?.firstName || "N/A"}
+              model={
+                inv.jobId?.ticketId?.vehicleId?.vehicleModelId?.modelName ||
+                "N/A"
+              }
+              jobId={inv.jobId?.jobId || inv.jobId}
+              ticket={inv.jobId?.ticketId?.ticketCode || "N/A"}
+              amount={formatCurrency(inv.netTotal)}
+              dueDate={formatDate(inv.dueDate)}
+              statusColor={
+                inv.status === "PAID"
+                  ? "green"
+                  : inv.status === "DRAFT"
+                    ? "gray"
+                    : "blue"
+              }
+              onView={() => handleView(inv._id)}
+              onEdit={() => handleEdit(inv._id)}
+              onDelete={() => handleDelete(inv._id)}
+              onDownload={() => handleDownload(inv._id)}
+              isDownloading={downloadingId === inv._id}
+              isDeleting={deletingId === inv._id}
             />
           ))}
         </div>
       )}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 };
+
 const InvoiceCard = ({
   id,
   date,
@@ -219,11 +435,18 @@ const InvoiceCard = ({
   dueDate,
   statusColor = "blue",
   onView,
+  onEdit,
+  onDelete,
+  onDownload,
+  onEmail,
+  isDownloading,
+  isDeleting,
 }: any) => {
   const colors: any = {
     blue: "bg-blue-100 border-blue-300 text-blue-700",
     green: "bg-green-100 border-green-300 text-green-700",
     red: "bg-red-100 border-red-300 text-red-700",
+    gray: "bg-gray-100 border-gray-300 text-gray-700",
   };
 
   return (
@@ -287,10 +510,38 @@ const InvoiceCard = ({
           <Eye size={16} />
           <span className="text-sm font-medium">View</span>
         </button>
-        <button className="w-11 h-10 bg-slate-50 border-2 border-indigo-100 rounded-[10px] flex items-center justify-center text-indigo-900 hover:bg-indigo-50 transition-all">
+        <button
+          onClick={onEdit}
+          className="w-11 h-10 bg-amber-500 text-white rounded-[10px] flex items-center justify-center hover:bg-amber-600 transition-all"
+          title="Edit Invoice"
+        >
+          <Edit size={18} />
+        </button>
+        <button
+          onClick={onDelete}
+          disabled={isDeleting}
+          className={`w-11 h-10 bg-red-500 text-white rounded-[10px] flex items-center justify-center hover:bg-red-600 transition-all ${
+            isDeleting ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          title="Delete Invoice"
+        >
+          <Trash2 size={18} />
+        </button>
+        <button
+          onClick={onDownload}
+          disabled={isDownloading}
+          className={`w-11 h-10 bg-slate-50 border-2 border-indigo-100 rounded-[10px] flex items-center justify-center text-indigo-900 hover:bg-indigo-50 transition-all ${
+            isDownloading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          title="Download PDF"
+        >
           <Download size={18} />
         </button>
-        <button className="w-11 h-10 bg-slate-50 border-2 border-emerald-100 rounded-[10px] flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-all">
+        <button
+          onClick={onEmail}
+          className="w-11 h-10 bg-slate-50 border-2 border-emerald-100 rounded-[10px] flex items-center justify-center text-emerald-700 hover:bg-emerald-50 transition-all"
+          title="Send Email"
+        >
           <Send size={18} />
         </button>
       </div>

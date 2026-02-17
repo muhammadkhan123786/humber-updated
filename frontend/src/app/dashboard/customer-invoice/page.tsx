@@ -1,12 +1,20 @@
-import React from "react";
+"use client";
 import CustomerInvoice from "./components/CustomerInvoice";
 
-const page = () => {
+import { Suspense } from "react";
+
+const Page = () => {
   return (
-    <div>
+    <Suspense
+      fallback={
+        <div className="flex justify-center p-10 text-gray-500">
+          Loading invoices...
+        </div>
+      }
+    >
       <CustomerInvoice />
-    </div>
+    </Suspense>
   );
 };
 
-export default page;
+export default Page;

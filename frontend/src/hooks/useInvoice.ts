@@ -11,7 +11,7 @@ import {
 import { getAlls } from "../helper/apiHelper";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export interface PaginatedResponse<T> {
   success: boolean;
@@ -22,7 +22,6 @@ export interface PaginatedResponse<T> {
   limit: number;
   data: T[];
 }
-
 const getAuthHeader = () => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -49,7 +48,6 @@ const generateInvoiceCode = async (): Promise<string> => {
     return `INV-${year}${month}${day}-${random}`;
   }
 };
-
 const fetchDefaultTax = async (): Promise<number> => {
   try {
     const baseUrl =
@@ -63,15 +61,29 @@ const fetchDefaultTax = async (): Promise<number> => {
     return 20;
   }
 };
-
+const fetchInvoiceById = async (id: string): Promise<any> => {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    const response = await axios.get(`${baseUrl}/customer-invoices/${id}`, {
+      headers: getAuthHeader(),
+    });
+    return response.data?.data || null;
+  } catch (error) {
+    console.error("Error fetching invoice:", error);
+    return null;
+  }
+};
 export const useInvoice = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const invoiceIdFromUrl = searchParams.get("id");
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(invoiceIdFromUrl);
   const [defaultTaxRate, setDefaultTaxRate] = useState<number>(20);
   const [jobs, setJobs] = useState<any[]>([]);
   const [partsInventory, setPartsInventory] = useState<any[]>([]);
@@ -118,6 +130,40 @@ export const useInvoice = () => {
   });
 
   useEffect(() => {
+    const loadInvoiceForEditing = async () => {
+      if (invoiceIdFromUrl) {
+        setIsLoading(true);
+        try {
+          const invoiceData = await fetchInvoiceById(invoiceIdFromUrl);
+          if (invoiceData) {
+            console.log("📥 Invoice data loaded:", {
+              callOutFee: invoiceData.callOutFee,
+              discountType: invoiceData.discountType,
+              partsCount: invoiceData.parts?.length,
+              parts: invoiceData.parts?.map((p: any) => ({
+                partId: p.partId?._id || p.partId,
+                quantity: p.quantity,
+                unitCost: p.unitCost,
+              })),
+            });
+            setEditData(invoiceData);
+            toast.success("Invoice loaded for editing");
+          } else {
+            toast.error("Invoice not found");
+          }
+        } catch (error) {
+          console.error("Error loading invoice:", error);
+          toast.error("Failed to load invoice");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadInvoiceForEditing();
+  }, [invoiceIdFromUrl]);
+
+  useEffect(() => {
     const loadInvoiceCode = async () => {
       if (!editingId) {
         const code = await generateInvoiceCode();
@@ -153,14 +199,10 @@ export const useInvoice = () => {
   const discountAmount = form.watch("discountAmount");
   const isVATEXEMPT = form.watch("isVATEXEMPT");
 
-  // FIXED: Use debounced updates to prevent infinite loop
   useEffect(() => {
-    // Clear any pending timeout
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
-
-    // Prevent recursive updates
     if (isUpdating.current) return;
 
     const partsTotal = (parts || []).reduce((sum, part) => {
@@ -187,7 +229,6 @@ export const useInvoice = () => {
     }, 0);
 
     const subTotal = partsTotal + labourTotal + (callOutFee || 0);
-
     let calculatedDiscountAmount = 0;
     if (discountType === "Percentage") {
       calculatedDiscountAmount = (subTotal * (discountAmount || 0)) / 100;
@@ -199,32 +240,23 @@ export const useInvoice = () => {
     const taxAmount = isVATEXEMPT ? 0 : afterDiscount * (defaultTaxRate / 100);
     const netTotal = afterDiscount + taxAmount;
 
-    // Check if values actually changed
     const currentPartsTotal = form.getValues("partsTotal");
     const currentLabourTotal = form.getValues("labourTotal");
     const currentSubTotal = form.getValues("subTotal");
-    const currentDiscountAmount = form.getValues("discountAmount");
     const currentTaxAmount = form.getValues("taxAmount");
     const currentNetTotal = form.getValues("netTotal");
 
-    // If no changes, exit early
     if (
       Math.abs(currentPartsTotal - partsTotal) < 0.01 &&
       Math.abs(currentLabourTotal - labourTotal) < 0.01 &&
       Math.abs(currentSubTotal - subTotal) < 0.01 &&
-      Math.abs(currentDiscountAmount - calculatedDiscountAmount) < 0.01 &&
       Math.abs(currentTaxAmount - taxAmount) < 0.01 &&
       Math.abs(currentNetTotal - netTotal) < 0.01
     ) {
       return;
     }
-
-    // Set updating flag to true
     isUpdating.current = true;
-
-    // Use timeout to debounce updates
     updateTimeoutRef.current = setTimeout(() => {
-      // Batch update all values
       form.setValue("partsTotal", partsTotal, {
         shouldDirty: false,
         shouldValidate: false,
@@ -237,10 +269,7 @@ export const useInvoice = () => {
         shouldDirty: false,
         shouldValidate: false,
       });
-      form.setValue("discountAmount", calculatedDiscountAmount, {
-        shouldDirty: false,
-        shouldValidate: false,
-      });
+
       form.setValue("taxAmount", taxAmount, {
         shouldDirty: false,
         shouldValidate: false,
@@ -249,8 +278,6 @@ export const useInvoice = () => {
         shouldDirty: false,
         shouldValidate: false,
       });
-
-      // Reset the flag after updates
       setTimeout(() => {
         isUpdating.current = false;
       }, 50);
@@ -331,7 +358,7 @@ export const useInvoice = () => {
   }, []);
 
   const fetchJobById = useCallback(
-    async (jobId: string) => {
+    async (jobId: string, shouldOverrideForm: boolean = true) => {
       setIsLoading(true);
       try {
         const baseUrl =
@@ -345,8 +372,7 @@ export const useInvoice = () => {
 
         const jobData = response.data?.data || response.data;
         setSelectedJob(jobData);
-
-        if (jobData) {
+        if (jobData && shouldOverrideForm && !editingId) {
           if (jobData.ticketId?.customerId) {
             const customerId =
               typeof jobData.ticketId.customerId === "object"
@@ -406,13 +432,14 @@ export const useInvoice = () => {
         setIsLoading(false);
       }
     },
-    [form, partsInventory],
+    [form, partsInventory, editingId],
   );
 
   const handleJobSelect = async (jobId: string) => {
     if (!jobId) return;
     form.setValue("jobId", jobId);
-    await fetchJobById(jobId);
+
+    await fetchJobById(jobId, !editingId);
   };
 
   const setEditData = useCallback(
@@ -421,35 +448,80 @@ export const useInvoice = () => {
 
       const id = invoice._id || invoice.id;
       setEditingId(id);
+      setInvoiceCode(invoice.invoiceId || "");
+
+      const processedServices = Array.isArray(invoice.services)
+        ? invoice.services.map((service: any) => ({
+            activityId: service.activityId?._id || service.activityId || "",
+            duration: String(service.duration || "1:00"),
+            description: service.description || "",
+            additionalNotes: service.additionalNotes || "",
+            source: service.source || "INVOICE",
+            rate: service.rate || 50,
+          }))
+        : [];
+
+      const processedParts = Array.isArray(invoice.parts)
+        ? invoice.parts.map((part: any) => {
+            let partId = part.partId;
+            let partDetails = null;
+
+            if (typeof partId === "object" && partId !== null) {
+              partDetails = partId;
+              partId = partId._id;
+            } else if (typeof partId === "string") {
+              partDetails = partsInventory.find((p) => p._id === partId);
+            }
+
+            return {
+              partId: partId || "",
+              partName: partDetails?.partName || part.partName || "",
+              partNumber: partDetails?.partNumber || part.partNumber || "",
+              oldPartConditionDescription:
+                part.oldPartConditionDescription || "",
+              newSerialNumber: part.newSerialNumber || "",
+              quantity: part.quantity || 1,
+              unitCost: part.unitCost || partDetails?.unitCost || 0,
+              totalCost:
+                part.totalCost !== undefined
+                  ? part.totalCost
+                  : (part.quantity || 1) *
+                    (part.unitCost || partDetails?.unitCost || 0),
+              reasonForChange: part.reasonForChange || "",
+              source: part.source || "INVOICE",
+            };
+          })
+        : [];
+
+      let formDiscountValue = 0;
+
+      if (invoice.discountType === "Percentage" && invoice.subTotal > 0) {
+        if (invoice.discountAmount > invoice.subTotal) {
+          console.warn("⚠️ Invalid discount amount detected, using 0");
+          formDiscountValue = 0;
+        } else {
+          const rawPercentage =
+            (invoice.discountAmount / invoice.subTotal) * 100;
+          formDiscountValue = Math.round(rawPercentage * 10) / 10;
+        }
+      } else {
+        formDiscountValue = invoice.discountAmount || 0;
+      }
+
+      console.log("📋 Processing invoice data:", {
+        callOutFee: invoice.callOutFee,
+        discountType: invoice.discountType,
+        originalDiscountAmount: invoice.discountAmount,
+        calculatedPercentage: formDiscountValue,
+        subTotal: invoice.subTotal,
+      });
 
       form.reset({
         invoiceId: invoice.invoiceId || "",
         jobId: invoice.jobId?._id || invoice.jobId || "",
         customerId: invoice.customerId?._id || invoice.customerId || "",
-        services: Array.isArray(invoice.services)
-          ? invoice.services.map((service: any) => ({
-              activityId: service.activityId?._id || service.activityId || "",
-              duration: String(service.duration || "1:00"),
-              description: service.description || "",
-              additionalNotes: service.additionalNotes || "",
-              source: service.source || "INVOICE",
-              rate: service.rate || 50,
-            }))
-          : [],
-        parts: Array.isArray(invoice.parts)
-          ? invoice.parts.map((part: any) => ({
-              partId: part.partId?._id || part.partId || "",
-              oldPartConditionDescription:
-                part.oldPartConditionDescription || "",
-              newSerialNumber: part.newSerialNumber || "",
-              quantity: part.quantity || 1,
-              unitCost: part.unitCost || 0,
-              totalCost:
-                part.totalCost || (part.quantity || 1) * (part.unitCost || 0),
-              reasonForChange: part.reasonForChange || "",
-              source: part.source || "INVOICE",
-            }))
-          : [],
+        services: processedServices,
+        parts: processedParts,
         completionSummary: invoice.completionSummary || "",
         invoiceDate: invoice.invoiceDate
           ? new Date(invoice.invoiceDate)
@@ -457,13 +529,13 @@ export const useInvoice = () => {
         dueDate: invoice.dueDate
           ? new Date(invoice.dueDate)
           : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-        callOutFee: invoice.callOutFee || 0,
+        callOutFee: Number(invoice.callOutFee) || 0,
         discountType: invoice.discountType || "Percentage",
+        discountAmount: formDiscountValue,
         isVATEXEMPT: invoice.isVATEXEMPT || false,
         partsTotal: invoice.partsTotal || 0,
         labourTotal: invoice.labourTotal || 0,
         subTotal: invoice.subTotal || 0,
-        discountAmount: invoice.discountAmount || 0,
         taxAmount: invoice.taxAmount || 0,
         netTotal: invoice.netTotal || 0,
         invoiceNotes: invoice.invoiceNotes || "",
@@ -473,13 +545,20 @@ export const useInvoice = () => {
         paymentStatus: invoice.paymentStatus || "PENDING",
         status: invoice.status || "DRAFT",
       });
-    },
-    [form],
-  );
 
+      if (invoice.jobId?._id || invoice.jobId) {
+        const jobId = invoice.jobId._id || invoice.jobId;
+        form.setValue("jobId", jobId);
+        fetchJobById(jobId, false).catch(console.error);
+      }
+    },
+    [form, fetchJobById, partsInventory],
+  );
   const clearEdit = () => {
     setEditingId(null);
     setSelectedJob(null);
+
+    router.push("/dashboard/customer-invoice");
     form.reset();
   };
 
@@ -491,6 +570,7 @@ export const useInvoice = () => {
       setIsSubmitting(true);
       setError(null);
       setSuccess(null);
+
       if (!data.jobId?.trim()) {
         toast.error("Job is required");
         setIsSubmitting(false);
@@ -508,20 +588,13 @@ export const useInvoice = () => {
         setIsSubmitting(false);
         return;
       }
+      const invalidJobParts = (data.parts || []).filter(
+        (part) => part.source === "JOB" && !part.partId?.trim(),
+      );
 
-      // FIXED: Only validate INVOICE source parts, JOB source parts are automatically valid
-      const invalidManualParts = (data.parts || []).filter((part) => {
-        // If part is from INVOICE (manually added), it must have a partId
-        if (part.source === "INVOICE") {
-          return !part.partId?.trim();
-        }
-        // Parts from JOB are always valid even without partId
-        return false;
-      });
-
-      if (invalidManualParts.length > 0) {
+      if (invalidJobParts.length > 0) {
         toast.error(
-          `Please select a part from inventory for manually added parts. ${invalidManualParts.length} part(s) need to be selected.`,
+          `Please select a part from inventory for job parts. ${invalidJobParts.length} part(s) need to be selected.`,
         );
         setIsSubmitting(false);
         return;
@@ -544,7 +617,6 @@ export const useInvoice = () => {
 
       const labourTotal = (data.services || []).reduce((sum, service) => {
         let hours = 1;
-
         if (service?.duration) {
           if (
             typeof service.duration === "string" &&
@@ -556,36 +628,65 @@ export const useInvoice = () => {
             hours = parseFloat(String(service.duration)) || 1;
           }
         }
-
         const rate = service?.rate || 50;
         return sum + hours * rate;
       }, 0);
 
       const subTotal = partsTotal + labourTotal + (data.callOutFee || 0);
+      const roundedDiscountAmount =
+        data.discountType === "Percentage"
+          ? Math.round((data.discountAmount || 0) * 10) / 10
+          : data.discountAmount || 0;
 
       const discountAmount =
         data.discountType === "Percentage"
-          ? (subTotal * (data.discountAmount || 0)) / 100
+          ? (subTotal * roundedDiscountAmount) / 100
           : data.discountAmount || 0;
 
       const afterDiscount = subTotal - discountAmount;
       const taxAmount = data.isVATEXEMPT
         ? 0
         : afterDiscount * (defaultTaxRate / 100);
-
       const netTotal = afterDiscount + taxAmount;
-
-      console.log("🔴 Recalculated totals:", {
-        partsTotal,
-        labourTotal,
-        subTotal,
-        discountAmount,
-        taxAmount,
-        netTotal,
-      });
 
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      const cleanedParts = [];
+
+      for (const part of data.parts || []) {
+        let partId = part.partId;
+
+        if (part.source === "INVOICE" && !partId) {
+          const createPartRes = await axios.post(
+            `${baseUrl}/mobility-parts`,
+            {
+              partName: part.partName,
+              partNumber: part.partNumber,
+              unitCost: part.unitCost,
+              userId,
+            },
+            { headers: getAuthHeader() },
+          );
+
+          partId = createPartRes.data?.data?._id;
+        }
+
+        cleanedParts.push({
+          partId,
+          oldPartConditionDescription: part.oldPartConditionDescription || "",
+          newSerialNumber: part.newSerialNumber || "",
+          quantity: part.quantity || 0,
+          unitCost: part.unitCost || 0,
+          totalCost:
+            part.totalCost !== undefined
+              ? part.totalCost
+              : (part.quantity || 0) * (part.unitCost || 0),
+          reasonForChange: part.reasonForChange || "",
+          source: part.source,
+          userId,
+        });
+      }
 
       const payload: any = {
         jobId: data.jobId,
@@ -598,20 +699,7 @@ export const useInvoice = () => {
           source: service.source,
           userId,
         })),
-        parts: (data.parts || []).map((part) => ({
-          partId: part.source === "JOB" ? part.partId || "" : part.partId, // For JOB parts, allow empty partId
-          oldPartConditionDescription: part.oldPartConditionDescription || "",
-          newSerialNumber: part.newSerialNumber || "",
-          quantity: part.quantity || 0,
-          unitCost: part.unitCost || 0,
-          totalCost:
-            part.totalCost !== undefined
-              ? part.totalCost
-              : (part.quantity || 0) * (part.unitCost || 0),
-          reasonForChange: part.reasonForChange || "",
-          source: part.source,
-          userId,
-        })),
+        parts: cleanedParts,
         completionSummary: data.completionSummary || "",
         invoiceDate: new Date(data.invoiceDate).toISOString(),
         dueDate: new Date(data.dueDate).toISOString(),
@@ -633,27 +721,20 @@ export const useInvoice = () => {
         userId,
       };
 
-      // Include invoiceId if editing
       if (editingId) payload.invoiceId = data.invoiceId;
+
+      console.log("📦 Cleaned Payload:", JSON.stringify(payload, null, 2));
 
       const apiEndpoint = editingId
         ? `${baseUrl}/customer-invoices/${editingId}`
         : `${baseUrl}/customer-invoices`;
 
-      console.log("📡 API Endpoint:", apiEndpoint);
-      console.log("📦 Payload:", JSON.stringify(payload, null, 2));
-
-      // -----------------------------
-      // SEND TO BACKEND
-      // -----------------------------
       const res = await axios({
         method: editingId ? "put" : "post",
         url: apiEndpoint,
         data: payload,
         headers: { ...getAuthHeader(), "Content-Type": "application/json" },
       });
-
-      console.log("✅ Response:", res.data);
 
       if (res.data?.success || res.data?.data) {
         clearEdit();
