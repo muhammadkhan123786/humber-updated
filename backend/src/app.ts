@@ -104,6 +104,7 @@ import {
   updateTechnicianQuotationStatusController,
 } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
 import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoices.routes";
+import { customerInvoiceStatisticsController } from "./controllers/customer-invoice-statistics/customer.invoice.statistics.controller";
 
 // Create express app
 const app: Application = express();
@@ -518,6 +519,13 @@ app.put(
   `${process.env.API_PREFIX}/update-technician-profile`,
   technicianProtecter,
   UpdateTechnicianProfileController,
+);
+
+//18-02-2026 
+app.get(
+  `${process.env.API_PREFIX}/customer-invoices-statistics`,
+  adminProtecter,
+  customerInvoiceStatisticsController,
 );
 
 //Muhammad Imran code ended here.
