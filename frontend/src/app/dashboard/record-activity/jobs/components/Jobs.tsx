@@ -8,6 +8,10 @@ import {
   PlayCircle,
   CheckCircle,
   Loader2,
+  PauseCircle,
+  XCircle,
+  Briefcase,
+  HelpCircle,
 } from "lucide-react";
 import JobFilters from "./JobFilters";
 import JobDetailCard from "./JobDetailCard";
@@ -15,9 +19,46 @@ import { useActivityRecordForm } from "../../../../../hooks/useActivity";
 import Pagination from "@/components/ui/Pagination";
 import { getAlls } from "@/helper/apiHelper";
 
+const statusConfig: Record<string, { icon: any; gradient: string }> = {
+  Pending: {
+    icon: Clock,
+    gradient: "bg-gradient-to-br from-gray-500 to-gray-600",
+  },
+  Assigned: {
+    icon: Clock,
+    gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
+  },
+  "In Progress": {
+    icon: PlayCircle,
+    gradient: "bg-gradient-to-br from-orange-500 to-amber-500",
+  },
+  "On Hold": {
+    icon: PauseCircle,
+    gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+  },
+  Completed: {
+    icon: CheckCircle,
+    gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
+  },
+  Cancelled: {
+    icon: XCircle,
+    gradient: "bg-gradient-to-br from-rose-500 to-red-600",
+  },
+  open: {
+    icon: Briefcase,
+    gradient: "bg-gradient-to-br from-teal-500 to-emerald-500",
+  },
+};
+
+const defaultStyle = {
+  icon: HelpCircle,
+  gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
+};
+
 const Jobs = () => {
   const { jobList: initialJobList, isLoading } = useActivityRecordForm();
   const [jobs, setJobs] = useState<any[]>([]);
+  const [apiStats, setApiStats] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [availableStatuses, setAvailableStatuses] = useState<any[]>([]);
@@ -29,15 +70,50 @@ const Jobs = () => {
   }, [initialJobList]);
 
   useEffect(() => {
-    const fetchStatuses = async () => {
+    const fetchData = async () => {
       try {
-        const res = await getAlls<any>("/technician-job-status?filter=all");
-        setAvailableStatuses(res.data || []);
+        const statusRes = await getAlls<any>(
+          "/technician-job-status?filter=all",
+        );
+        setAvailableStatuses(statusRes.data || []);
+
+        const statsRes = await getAlls<any>("/job-statistics");
+        const apiData = statsRes.data as any;
+
+        if (apiData) {
+          const formattedStats = [];
+
+          if (apiData.overallTotalJobs > 0) {
+            formattedStats.push({
+              value: apiData.overallTotalJobs.toString(),
+              label: "Total Activities",
+              badgeText: "Total",
+              gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
+              icon: Activity,
+            });
+          }
+
+          apiData.statusCounts?.forEach((status: any) => {
+            if (status.totalJobs > 0) {
+              const config =
+                statusConfig[status.technicianJobStatus] || defaultStyle;
+              formattedStats.push({
+                value: status.totalJobs.toString(),
+                label: status.technicianJobStatus,
+                badgeText: status.technicianJobStatus,
+                gradient: config.gradient,
+                icon: config.icon,
+              });
+            }
+          });
+
+          setApiStats(formattedStats);
+        }
       } catch (error) {
-        console.error("Error fetching statuses:", error);
+        console.error("Error fetching data:", error);
       }
     };
-    fetchStatuses();
+    fetchData();
   }, []);
 
   const handleDeleteJob = (deletedJobId: string) => {
@@ -65,55 +141,20 @@ const Jobs = () => {
     currentPage * itemsPerPage,
   );
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const stats = [
-    {
-      value: jobs.length.toString(),
-      label: "Total Activities",
-      badgeText: "Total",
-      gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
-      icon: Activity,
-    },
-    {
-      value: jobs
-        .filter((j) => j.jobStatusId?.name?.toLowerCase() === "assigned")
-        .length.toString(),
-      label: "Awaiting Start",
-      badgeText: "Assigned",
-      gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
-      icon: Clock,
-    },
-    {
-      value: jobs
-        .filter((j) => j.jobStatusId?.name?.toLowerCase() === "in progress")
-        .length.toString(),
-      label: "In Progress",
-      badgeText: "Active",
-      gradient: "bg-gradient-to-br from-orange-500 to-amber-500",
-      icon: PlayCircle,
-    },
-    {
-      value: jobs
-        .filter((j) => j.jobStatusId?.name?.toLowerCase() === "completed")
-        .length.toString(),
-      label: "Completed",
-      badgeText: "Done",
-      gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-      icon: CheckCircle,
-    },
-  ];
-
   return (
     <div className="p-6 flex flex-col gap-8 bg-gray-50 min-h-screen">
       <TechnicianHeader />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <StatCard key={index} {...stat} Icon={stat.icon} />
-        ))}
+        {apiStats.length > 0 ? (
+          apiStats.map((stat, index) => (
+            <StatCard key={index} {...stat} Icon={stat.icon} />
+          ))
+        ) : !isLoading ? (
+          <div className="col-span-full h-24 flex items-center justify-center bg-white rounded-xl border border-dashed text-gray-400">
+            No active jobs or statistics to display.
+          </div>
+        ) : null}
       </div>
 
       <JobFilters
@@ -139,8 +180,8 @@ const Jobs = () => {
               />
             ))
           ) : (
-            <div className="text-center py-10 bg-white rounded-xl border border-dashed text-gray-400">
-              No jobs found.
+            <div className="text-center py-20 bg-white rounded-xl border border-dashed text-gray-400">
+              No jobs found matching your criteria.
             </div>
           )}
         </div>
@@ -149,7 +190,7 @@ const Jobs = () => {
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={handlePageChange}
+        onPageChange={(p) => setCurrentPage(p)}
       />
     </div>
   );
