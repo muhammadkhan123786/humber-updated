@@ -27,6 +27,7 @@ interface JobStatus {
   _id: string;
   technicianJobStatus: string;
   isActive: boolean;
+  canChooseTechnician?: boolean;
 }
 
 const getStatusColor = (statusName: string) => {
@@ -66,7 +67,7 @@ const JobCardsSection = ({
           { limit: 100 }
         );
         if (response.success) {
-          setJobStatuses(response.data?.filter((s: JobStatus) => s.isActive) || []);
+          setJobStatuses(response.data?.filter((s: JobStatus) => s.isActive && s.canChooseTechnician) || []);
         }
       } catch (error) {
         console.error("Error fetching job statuses:", error);
