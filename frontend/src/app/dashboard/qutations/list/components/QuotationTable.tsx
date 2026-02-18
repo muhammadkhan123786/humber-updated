@@ -38,6 +38,7 @@ interface QuotationStatus {
   statusColor: string;
   statusIcon?: string;
   isActive: boolean;
+  canChooseTechnician?: boolean;
 }
 
 interface QuotationTableProps {

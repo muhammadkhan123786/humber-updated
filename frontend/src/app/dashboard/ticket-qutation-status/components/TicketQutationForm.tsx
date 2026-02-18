@@ -14,6 +14,7 @@ import { useFormActions } from "@/hooks/useFormActions";
 // Schema Validation
 const ticketQuotationStatusValidation = z.object({
     ticketQuationStatus: z.string().min(1, "Please enter ticket quotation status name."),
+    canChooseTechnician: z.boolean(),
     isActive: z.boolean(),
     isDefault: z.boolean(),
 });
@@ -38,6 +39,7 @@ const TicketQutationForm = ({ editingData, onClose, themeColor }: Props) => {
         resolver: zodResolver(ticketQuotationStatusValidation),
         defaultValues: {
             ticketQuationStatus: "",
+            canChooseTechnician: false,
             isActive: true,
             isDefault: false,
         },
@@ -49,6 +51,7 @@ const TicketQutationForm = ({ editingData, onClose, themeColor }: Props) => {
         if (editingData) {
             reset({
                 ticketQuationStatus: editingData.ticketQuationStatus,
+                canChooseTechnician: Boolean(editingData.canChooseTechnician),
                 isActive: Boolean(editingData.isActive),
                 isDefault: Boolean(editingData.isDefault),
             });
@@ -91,6 +94,18 @@ const TicketQutationForm = ({ editingData, onClose, themeColor }: Props) => {
                     placeholder="e.g. Pending, Approved, Rejected"
                     {...register("ticketQuationStatus")}
                     error={errors.ticketQuationStatus?.message}
+                />
+
+                <Controller
+                    control={control}
+                    name="canChooseTechnician"
+                    render={({ field }) => (
+                        <FormToggle
+                            label="Technician Select"
+                            checked={field.value}
+                            onChange={field.onChange}
+                        />
+                    )}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
