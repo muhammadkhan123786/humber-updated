@@ -35,7 +35,6 @@ export const PartsTab = ({
 
   const selectedPart = parts.find((p) => p._id === currentPartId);
 
-  // Set unit cost when a part is selected
   useEffect(() => {
     if (!selectedPart) return;
     setValue(`parts.${nextIndex}.unitCost`, selectedPart.unitCost || 0, {
@@ -43,7 +42,6 @@ export const PartsTab = ({
     });
   }, [selectedPart, nextIndex, setValue]);
 
-  // Update total cost for current row
   useEffect(() => {
     const total = currentQuantity * currentUnitCost;
     setValue(`parts.${nextIndex}.totalCost`, total, { shouldDirty: true });
@@ -81,12 +79,19 @@ export const PartsTab = ({
   const getPartNumber = (partId: string) =>
     parts.find((p) => p._id === partId)?.partNumber || "N/A";
 
-  const totalUnits = partFields
-    .filter((field) => field.partId)
-    .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
-
   const currentTotalCost = currentQuantity * currentUnitCost;
   const completedParts = partFields.filter((f) => f.partId);
+
+  const totalUnits = partFields.reduce((acc, field) => {
+    if (field.partId) {
+      const qty =
+        field.quantity !== undefined && field.quantity !== null
+          ? Number(field.quantity)
+          : 1;
+      return acc + qty;
+    }
+    return acc;
+  }, 0);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

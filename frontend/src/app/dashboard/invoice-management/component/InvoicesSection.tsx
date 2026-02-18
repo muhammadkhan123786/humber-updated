@@ -265,6 +265,11 @@ const InvoicesSection = () => {
           </div>
         </div>
       </div>
+      {sortedInvoices.length > 0 && (
+        <div className="text-sm text-gray-500 pl-2">
+          Showing {sortedInvoices.length} of {invoices.length} invoices
+        </div>
+      )}
 
       {sortedInvoices.length === 0 ? (
         <div className="w-full p-12 bg-white rounded-2xl border-2 border-indigo-100 flex flex-col items-center justify-center">
@@ -277,6 +282,7 @@ const InvoicesSection = () => {
               <tr className="border-b-2 border-indigo-50 bg-slate-50/50">
                 <th className="p-4 font-bold text-gray-900">Invoice No.</th>
                 <th className="p-4 font-bold text-gray-900">Job ID</th>
+                <th className="p-4 font-bold text-gray-900">Ticket No.</th>
                 <th className="p-4 font-bold text-gray-900">Customer Name</th>
                 <th className="p-4 font-bold text-gray-900">Invoice Date</th>
                 <th className="p-4 font-bold text-gray-900">Due Date</th>
@@ -301,6 +307,10 @@ const InvoicesSection = () => {
                   <td className="p-4 text-sm text-gray-600 font-mono">
                     {inv.jobId?.jobId || inv.jobId}
                   </td>
+
+                  <td className="p-4 text-sm text-gray-600 font-mono">
+                    {inv.jobId?.ticketId?.ticketCode || "N/A"}
+                  </td>
                   <td className="p-4">
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold text-gray-900">
@@ -317,7 +327,7 @@ const InvoicesSection = () => {
                   <td className="p-4 text-sm text-gray-600">
                     {formatDate(inv.dueDate)}
                   </td>
-                  <td className="p-4 text-sm font-bold text-green-700 text-right">
+                  <td className="p-4 text-[18px] font-bold text-green-700 text-right">
                     £{formatCurrency(inv.netTotal)}
                   </td>
                   <td className="p-4">
