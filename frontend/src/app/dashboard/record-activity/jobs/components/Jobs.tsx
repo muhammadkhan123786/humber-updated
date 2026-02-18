@@ -20,27 +20,27 @@ import Pagination from "@/components/ui/Pagination";
 import { getAlls } from "@/helper/apiHelper";
 
 const statusConfig: Record<string, { icon: any; gradient: string }> = {
-  Pending: {
+  pending: {
     icon: Clock,
     gradient: "bg-gradient-to-br from-gray-500 to-gray-600",
   },
-  Assigned: {
+  assigned: {
     icon: Clock,
     gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
   },
-  "In Progress": {
+  "in progress": {
     icon: PlayCircle,
     gradient: "bg-gradient-to-br from-orange-500 to-amber-500",
   },
-  "On Hold": {
+  "on hold": {
     icon: PauseCircle,
     gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
-  Completed: {
+  completed: {
     icon: CheckCircle,
     gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
   },
-  Cancelled: {
+  cancelled: {
     icon: XCircle,
     gradient: "bg-gradient-to-br from-rose-500 to-red-600",
   },
@@ -95,8 +95,9 @@ const Jobs = () => {
 
           apiData.statusCounts?.forEach((status: any) => {
             if (status.totalJobs > 0) {
-              const config =
-                statusConfig[status.technicianJobStatus] || defaultStyle;
+              const normalizedStatus = status.technicianJobStatus.toLowerCase();
+              const config = statusConfig[normalizedStatus] || defaultStyle;
+
               formattedStats.push({
                 value: status.totalJobs.toString(),
                 label: status.technicianJobStatus,
