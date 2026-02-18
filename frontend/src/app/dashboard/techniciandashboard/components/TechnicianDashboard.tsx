@@ -6,6 +6,7 @@ import RouteBar, { RouteType } from './RouteBar';
 import Profile from './Profile';
 import CountCard from '../../jobs/components/CountCard';
 import StatsDashboard from './StatsOverview';
+import Overview from './Overview';
 
 const TechnicianDashboard = () => {
   const router = useRouter();
@@ -56,6 +57,7 @@ const TechnicianDashboard = () => {
       <RouteBar activeRoute={activeRoute} onRouteChange={setActiveRoute} />
       
       {/* Conditional Rendering based on active route */}
+      {activeRoute === 'overview' && <Overview refreshTrigger={refreshTrigger} />}
       
       {activeRoute === 'profile' && <Profile onProfileUpdate={handleProfileUpdate} />}
       {activeRoute === 'myjobs' && (

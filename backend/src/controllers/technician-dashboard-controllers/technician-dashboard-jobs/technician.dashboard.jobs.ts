@@ -44,6 +44,17 @@ export const technicianDashboardJobsController = async (
         const jobs = await TechniciansJobs.find(query)
             .populate([
                 {
+                    path:"services",
+                    select: "activityId duration description additionalNotes",
+                    populate: { path: "activityId", select: "technicianServiceType" }        
+
+                },
+                {
+                    path:"parts",
+                    select: "partId",
+                    populate: { path: "partId", select: "partName" }
+                },
+                {
                     path: "technicianId",
                     select: "personId contactId",
                     populate: [
