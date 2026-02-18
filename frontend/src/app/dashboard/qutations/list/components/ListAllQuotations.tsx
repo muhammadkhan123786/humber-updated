@@ -51,6 +51,7 @@ interface QuotationStatus {
   statusColor: string;
   statusIcon?: string;
   isActive: boolean;
+  canChooseTechnician?: boolean;
 }
 
 const ListAllQuotations = () => {
@@ -92,7 +93,7 @@ const ListAllQuotations = () => {
       
       // The backend returns "tickets" not "data" for this endpoint
       const quotationsData = Array.isArray(quotationsRes.tickets) ? quotationsRes.tickets : [];
-      const statusesData = Array.isArray(statusesRes.data) ? statusesRes.data.filter((s: QuotationStatus) => s.isActive) : [];
+      const statusesData = Array.isArray(statusesRes.data) ? statusesRes.data.filter((s: QuotationStatus) => s.isActive && s.canChooseTechnician) : [];
       
       // Map quotationStatus name to quotationStatusId for each quotation
       const mappedQuotations = (quotationsRes.data || []).map((quotation: QuotationFromBackend) => {
