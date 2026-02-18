@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CheckCircle2, Save, Send } from "lucide-react";
+import { CheckCircle2, FileText, Send } from "lucide-react";
 
 interface InvoiceFooterProps {
   onSubmit: () => Promise<void>;
@@ -19,11 +19,17 @@ const InvoiceFooter = ({ onSubmit, isSubmitting }: InvoiceFooterProps) => {
       {/* Save Draft Button */}
       <button
         type="button"
+        onClick={handleGenerateInvoice} // Aapka existing function
         disabled={isSubmitting}
-        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
+        className="flex items-center gap-2 px-5 py-2 bg-linear-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white rounded-lg transition-all duration-200 shadow-md shadow-slate-200 group disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <Save size={18} className="text-gray-500" />
-        <span className="text-sm font-medium">Save Draft</span>
+        <FileText
+          size={18}
+          className="text-white group-hover:scale-110 transition-transform"
+        />
+        <span className="text-sm font-medium">
+          {isSubmitting ? "Saving..." : "Save as Draft"}
+        </span>
       </button>
 
       {/* Send to Customer Button */}

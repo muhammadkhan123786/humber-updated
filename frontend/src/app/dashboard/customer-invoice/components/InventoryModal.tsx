@@ -95,11 +95,11 @@ const InventoryModal = ({
               strokeWidth={2.5}
             />
             <div>
-              <h3 className="text-xl font-bold text-slate-800">
+              <h3 className="text-[24px] font-semibold text-slate-800">
                 Select Parts from Inventory
               </h3>
               <p className="text-slate-500 text-sm">
-                Choose parts and quantities to add
+                Choose parts from your inventory to add to this invoice
               </p>
             </div>
           </div>
@@ -121,7 +121,7 @@ const InventoryModal = ({
             <input
               type="text"
               placeholder="Search by part name or number..."
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-purple-500 outline-none transition-all"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -150,7 +150,7 @@ const InventoryModal = ({
                   className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
                     isSelected
                       ? "border-blue-500 bg-blue-50/30"
-                      : "border-slate-100 hover:border-slate-200"
+                      : "border-slate-100 hover:border-blue-500"
                   }`}
                 >
                   <div className="flex justify-between items-start">

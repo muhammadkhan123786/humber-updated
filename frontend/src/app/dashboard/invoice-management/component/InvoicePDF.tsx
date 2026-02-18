@@ -145,40 +145,44 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   // Set font
   doc.setFont("helvetica");
 
-  // Header with Company Info - REDUCED SIZE to match web component
-  // Logo placeholder - smaller to match web (24x24 instead of 92x92 scale)
+  // Page dimensions
+  const pageHeight = doc.internal.pageSize.height;
+  const marginBottom = 40; // Space for footer
+  const marginTop = 15;
+
+  // Header with Company Info
   doc.setFillColor(colors.gray100.r, colors.gray100.g, colors.gray100.b);
   doc.setDrawColor(
     colors.borderLight.r,
     colors.borderLight.g,
     colors.borderLight.b,
   );
-  doc.roundedRect(20, 15, 20, 20, 3, 3, "FD"); // Smaller logo background
+  doc.roundedRect(20, 15, 20, 20, 3, 3, "FD");
 
-  // INVOICE title - smaller font size
+  // INVOICE title
   doc.setTextColor(
     colors.blueGradient.r,
     colors.blueGradient.g,
     colors.blueGradient.b,
   );
-  doc.setFontSize(36); // Reduced from 48
+  doc.setFontSize(36);
   doc.setFont("helvetica", "bold");
   doc.text("INVOICE", 45, 30);
 
-  // Invoice number - smaller font
+  // Invoice number
   doc.setTextColor(colors.gray600.r, colors.gray600.g, colors.gray600.b);
-  doc.setFontSize(12); // Reduced from 16
+  doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   doc.text(`#${invoice.invoiceId || "N/A"}`, 45, 38);
 
-  // Company Info - Right side - adjusted positioning
+  // Company Info - Right side
   doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
-  doc.setFontSize(14); // Reduced from 20
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("Humber Mobility Scooter", 190, 18, { align: "right" });
 
   doc.setTextColor(colors.gray600.r, colors.gray600.g, colors.gray600.b);
-  doc.setFontSize(9); // Reduced from 11
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("376 Anlaby Road, Hull, HU3 6PB", 190, 26, { align: "right" });
   doc.text("01482 561964", 190, 32, { align: "right" });
@@ -188,6 +192,7 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.text("VAT: GB123456789", 190, 46, { align: "right" });
+
   const detailsStartY = 55;
 
   // Combined Box for Bill To + Issue Details
@@ -197,9 +202,7 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     colors.borderLight.g,
     colors.borderLight.b,
   );
-
-  // Ek hi box cover kare dono sections
-  doc.roundedRect(20, detailsStartY, 170, 60, 8, 8, "FD"); // width 85+85=170, height same
+  doc.roundedRect(20, detailsStartY, 170, 60, 8, 8, "FD");
 
   // === Bill To Section ===
   doc.setTextColor(colors.gray500.r, colors.gray500.g, colors.gray500.b);
@@ -254,6 +257,19 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
 
   let currentY = detailsStartY + 90;
 
+  // Check if we need a new page for parts section
+  const checkPageBreak = (requiredSpace: number) => {
+    if (currentY + requiredSpace > pageHeight - marginBottom) {
+      doc.addPage();
+      currentY = marginTop;
+      return true;
+    }
+    return false;
+  };
+
+  // Parts & Components Section
+  checkPageBreak(30);
+
   doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -276,8 +292,36 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.setDrawColor(colors.gray100.r, colors.gray100.g, colors.gray100.b);
   doc.line(20, currentY, 190, currentY);
   currentY += 6;
+
   if (invoice.parts && invoice.parts.length > 0) {
     invoice.parts.forEach((part) => {
+      // Check if we need a new page for each part
+      if (checkPageBreak(10)) {
+        // Re-render headers on new page
+        doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Parts & Components (Continued)", 20, currentY);
+
+        currentY += 8;
+        doc.setDrawColor(colors.gray200.r, colors.gray200.g, colors.gray200.b);
+        doc.line(20, currentY, 190, currentY);
+        currentY += 6;
+
+        doc.setTextColor(colors.gray700.r, colors.gray700.g, colors.gray700.b);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("Description", 20, currentY);
+        doc.text("Qty", 140, currentY, { align: "right" });
+        doc.text("Price", 165, currentY, { align: "right" });
+        doc.text("Total", 190, currentY, { align: "right" });
+
+        currentY += 6;
+        doc.setDrawColor(colors.gray100.r, colors.gray100.g, colors.gray100.b);
+        doc.line(20, currentY, 190, currentY);
+        currentY += 6;
+      }
+
       doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
@@ -309,6 +353,9 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
 
   currentY += 5;
 
+  // Labour & Services Section
+  checkPageBreak(30);
+
   doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
@@ -334,6 +381,33 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
 
   if (invoice.services && invoice.services.length > 0) {
     invoice.services.forEach((service) => {
+      // Check if we need a new page for each service
+      if (checkPageBreak(10)) {
+        // Re-render headers on new page
+        doc.setTextColor(colors.gray900.r, colors.gray900.g, colors.gray900.b);
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Labour & Services (Continued)", 20, currentY);
+
+        currentY += 8;
+        doc.setDrawColor(colors.gray200.r, colors.gray200.g, colors.gray200.b);
+        doc.line(20, currentY, 190, currentY);
+        currentY += 6;
+
+        doc.setTextColor(colors.gray700.r, colors.gray700.g, colors.gray700.b);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("Description", 20, currentY);
+        doc.text("Hours", 140, currentY, { align: "right" });
+        doc.text("Rate", 165, currentY, { align: "right" });
+        doc.text("Total", 190, currentY, { align: "right" });
+
+        currentY += 6;
+        doc.setDrawColor(colors.gray100.r, colors.gray100.g, colors.gray100.b);
+        doc.line(20, currentY, 190, currentY);
+        currentY += 6;
+      }
+
       let hours = 1;
       if (service?.duration) {
         if (
@@ -379,6 +453,9 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   }
 
   currentY += 10;
+
+  // Totals Section - ensure it's on the same page or start new page if needed
+  checkPageBreak(50);
 
   const totalsX = 120;
   let totalsY = currentY;
@@ -433,6 +510,9 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   totalsY += 12;
 
   if (invoice.paymentStatus === "PAID") {
+    // Check if we need a new page for PAID section
+    checkPageBreak(40);
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.gray400.r, colors.gray400.g, colors.gray400.b);
@@ -470,7 +550,10 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     totalsY += boxHeight + 10;
   }
 
+  // Notes Section
   if (invoice.invoiceNotes) {
+    checkPageBreak(30);
+
     doc.setDrawColor(colors.gray300.r, colors.gray300.g, colors.gray300.b);
     doc.line(20, totalsY, 190, totalsY);
     totalsY += 8;
@@ -496,16 +579,17 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     totalsY += 30 + (splitNotes.length - 1) * 6;
   }
 
-  const footerY = Math.max(totalsY + 15, 265);
+  // Always ensure footer is on the last page
+  const footerY = pageHeight - 20;
 
   doc.setDrawColor(colors.gray200.r, colors.gray200.g, colors.gray200.b);
   doc.setLineWidth(0.5);
-  doc.line(20, footerY, 190, footerY);
+  doc.line(20, footerY - 10, 190, footerY - 10);
 
   doc.setTextColor(colors.gray600.r, colors.gray600.g, colors.gray600.b);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("Thank you for choosing Humber Mobility Scooter", 105, footerY + 8, {
+  doc.text("Thank you for choosing Humber Mobility Scooter", 105, footerY - 2, {
     align: "center",
   });
 
@@ -513,7 +597,7 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
   doc.text(
     "For any queries, please contact us at info@humbermobility.co.uk or 01482 561964",
     105,
-    footerY + 16,
+    footerY + 6,
     { align: "center" },
   );
 

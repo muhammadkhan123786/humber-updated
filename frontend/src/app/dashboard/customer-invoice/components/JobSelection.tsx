@@ -101,7 +101,7 @@ const JobSelectionSection: React.FC<JobSelectionSectionProps> = ({
         {/* Job + Invoice Number */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm ml-1">Job ID *</label>
+            <label className="text-[14px] ml-1 font-medium">Job ID *</label>
             <CustomSelect
               options={jobOptions}
               value={selectedId}
@@ -112,7 +112,9 @@ const JobSelectionSection: React.FC<JobSelectionSectionProps> = ({
           </div>
 
           <div>
-            <label className="text-sm ml-1">Invoice Number</label>
+            <label className="text-[14px] ml-1 font-medium ">
+              Invoice Number
+            </label>
             <div className="h-9 px-3 rounded-[10px] outline-2 outline-green-100 flex items-center bg-gray-50">
               <span className="text-sm font-medium text-indigo-950">
                 {displayInvoiceId}
@@ -133,7 +135,7 @@ const JobSelectionSection: React.FC<JobSelectionSectionProps> = ({
         {/* Dates */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm ml-1">Invoice Date</label>
+            <label className="text-[14px] ml-1 font-medium">Invoice Date</label>
             <div className="relative">
               <input
                 type="date"
@@ -149,7 +151,7 @@ const JobSelectionSection: React.FC<JobSelectionSectionProps> = ({
           </div>
 
           <div>
-            <label className="text-sm ml-1">Due Date</label>
+            <label className="text-[14px] ml-1 font-medium">Due Date</label>
             <div className="relative">
               <input
                 type="date"

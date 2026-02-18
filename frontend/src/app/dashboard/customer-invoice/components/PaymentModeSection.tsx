@@ -40,7 +40,6 @@ interface PaymentModeSectionProps {
 const PaymentModeSection: React.FC<PaymentModeSectionProps> = ({ form }) => {
   const { watch, setValue } = form;
   const currentPaymentMethod = watch("paymentMethod") || "PENDING";
-  const currentPaymentStatus = watch("paymentStatus") || "PENDING";
 
   const modes: PaymentMode[] = [
     {
@@ -215,12 +214,11 @@ const PaymentModeSection: React.FC<PaymentModeSectionProps> = ({ form }) => {
           <CheckCircle2 size={20} className="text-white" />
         </div>
         <div>
-          <p className="text-xs text-violet-600 font-medium">Payment Method:</p>
+          <p className="text-xs text-violet-600 font-medium">
+            Selected Payment Mode:
+          </p>
           <p className="text-lg font-bold text-violet-900">
             {activeMode?.title || "Not selected"}
-          </p>
-          <p className="text-xs text-violet-600 mt-1">
-            Status: {currentPaymentStatus === "PAID" ? "Paid" : "Pending"}
           </p>
         </div>
       </div>

@@ -32,7 +32,7 @@ const InvoicesSection = () => {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [viewType, setViewType] = useState("table");
+  const [viewType, setViewType] = useState("grid");
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);

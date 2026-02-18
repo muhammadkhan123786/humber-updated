@@ -173,7 +173,7 @@ const PartsAndComponents = ({
 
                     <div className="md:col-span-3">
                       <label className="text-slate-900 text-xs font-semibold mb-1.5 block">
-                        Part Number
+                        SKU
                       </label>
                       <input
                         {...register(`parts.${index}.partNumber` as any)}
@@ -195,7 +195,7 @@ const PartsAndComponents = ({
 
                     <div className="md:col-span-2">
                       <label className="text-slate-900 text-xs font-semibold mb-1.5 block">
-                        Qty
+                        Quantity
                       </label>
                       <input
                         type="number"
@@ -226,7 +226,7 @@ const PartsAndComponents = ({
 
                     <div className="md:col-span-3">
                       <label className="text-slate-900 text-xs font-semibold mb-1.5 block">
-                        Unit Cost (£)
+                        Unit Price (£)
                       </label>
                       <input
                         type="number"
@@ -258,7 +258,7 @@ const PartsAndComponents = ({
                   </div>
 
                   <div className="bg-white/60 rounded-xl p-3 flex justify-between items-center border border-white/40">
-                    <span className="text-gray-600 text-sm font-medium">
+                    <span className="text-gray-600 text-sm font-semibold">
                       Line Total:
                     </span>
                     <span className="text-blue-600 text-2xl font-bold">

@@ -41,6 +41,22 @@ const CustomerInvoice = () => {
   const watchedParts = form.watch("parts");
   const watchedServices = form.watch("services");
 
+  console.log("seletected job", selectedJob);
+
+  useEffect(() => {
+    if (!selectedJob?.ticketId?.customerId) return;
+
+    const vatExempt = selectedJob.ticketId.customerId.isVatExemption === true;
+
+    const currentValue = form.getValues("isVATEXEMPT");
+
+    if (currentValue !== vatExempt) {
+      form.setValue("isVATEXEMPT", vatExempt, {
+        shouldDirty: true,
+      });
+    }
+  }, [selectedJob, form]);
+
   useEffect(() => {
     if (isSyncing.current) return;
     isSyncing.current = true;
@@ -97,6 +113,7 @@ const CustomerInvoice = () => {
       source: part.source,
     }));
   }, [watchedParts, partsInventory]);
+
   const labourItems = useMemo(() => {
     const formServices = watchedServices || [];
     return formServices.map((service: any, index: number) => {
