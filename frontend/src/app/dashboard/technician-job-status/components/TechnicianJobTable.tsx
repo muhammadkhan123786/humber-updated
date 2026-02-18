@@ -2,7 +2,7 @@
 import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
-import { Star, Activity, Trash2 } from "lucide-react";
+import { Star, Activity } from "lucide-react";
 import { ITechnicianJobStatus } from "../../../../../../common/technician-jobs/ITechnician.activity.status.interface";
 import { toast } from "react-hot-toast";
 
@@ -59,6 +59,16 @@ const TechnicianJobTable = ({ data, displayView, onEdit, onDelete, onStatusChang
                     <Star size={16} className="text-yellow-500 fill-yellow-500" />
                   )}
                 </h3>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <span className="font-medium">Technician Select:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                    item.canChooseTechnician 
+                      ? "bg-green-100 text-green-700" 
+                      : "bg-gray-100 text-gray-600"
+                  }`}>
+                    {item.canChooseTechnician ? "Yes" : "No"}
+                  </span>
+                </div>
               </div>
 
               {/* Action Buttons */}
@@ -95,6 +105,7 @@ const TechnicianJobTable = ({ data, displayView, onEdit, onDelete, onStatusChang
           <tr>
             <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700 whitespace-nowrap">Status Name</th>
+            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Technician Select</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Status</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">Actions</th>
           </tr>
@@ -114,6 +125,15 @@ const TechnicianJobTable = ({ data, displayView, onEdit, onDelete, onStatusChang
                     <Star size={16} className="text-yellow-500 fill-yellow-500" />
                   )}
                 </div>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                  item.canChooseTechnician 
+                    ? "bg-green-100 text-green-700" 
+                    : "bg-gray-100 text-gray-600"
+                }`}>
+                  {item.canChooseTechnician ? "Yes" : "No"}
+                </span>
               </td>
               <td className="px-6 py-4 text-center">
                 <StatusBadge
@@ -138,7 +158,7 @@ const TechnicianJobTable = ({ data, displayView, onEdit, onDelete, onStatusChang
           ))}
           {data.length === 0 && (
             <tr>
-              <td colSpan={4} className="text-center py-10 text-gray-400">
+              <td colSpan={5} className="text-center py-10 text-gray-400">
                 No job statuses found.
               </td>
             </tr>

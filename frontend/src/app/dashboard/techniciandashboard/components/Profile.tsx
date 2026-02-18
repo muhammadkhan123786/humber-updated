@@ -162,7 +162,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
                   handleInputChange('firstName', first || '');
                   handleInputChange('lastName', rest.join(' ') || '');
                 }}
-                className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6]   rounded-xl border border-transparent    focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all outline-none duration-200"
               />
             </div>
             <div>
@@ -171,7 +171,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full px-4 py-1.5 bg-[#f3f4f6] rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6]   rounded-xl border border-transparent    focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all outline-none duration-200"
               />
             </div>
           </div>
@@ -184,7 +184,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
                 type="text"
                 value={formData.phoneNumber}
                 onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6]   rounded-xl border border-transparent    focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all outline-none duration-200"
               />
             </div>
             <div>
@@ -193,7 +193,7 @@ const Profile = ({ onProfileUpdate }: ProfileProps) => {
                 type="text"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                className="w-full px-4 py-1.5 bg-[#f3f4f6] placeholder:text-sm   rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-1.5 bg-[#f3f4f6]   rounded-xl border border-transparent    focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all outline-none duration-200"
               />
             </div>
           </div>

@@ -13,6 +13,7 @@ import { useFormActions } from "@/hooks/useFormActions";
 
 const statusSchemaValidation = z.object({
     technicianJobStatus: z.string().min(1, "Job status name is required."),
+    canChooseTechnician: z.boolean(),
     isActive: z.boolean(),
     isDefault: z.boolean(),
 });
@@ -38,6 +39,7 @@ const TechnicianJobForm = ({ editingData, onClose, themeColor }: Props) => {
         resolver: zodResolver(statusSchemaValidation),
         defaultValues: {
             technicianJobStatus: "",
+            canChooseTechnician: false,
             isActive: true,
             isDefault: false,
         },
@@ -49,6 +51,7 @@ const TechnicianJobForm = ({ editingData, onClose, themeColor }: Props) => {
         if (editingData) {
             reset({
                 technicianJobStatus: editingData.technicianJobStatus,
+                canChooseTechnician: Boolean(editingData.canChooseTechnician),
                 isActive: Boolean(editingData.isActive),
                 isDefault: Boolean(editingData.isDefault),
             });
@@ -93,6 +96,18 @@ const TechnicianJobForm = ({ editingData, onClose, themeColor }: Props) => {
                     placeholder="e.g. In Progress, Completed"
                     {...register("technicianJobStatus")}
                     error={errors.technicianJobStatus?.message}
+                />
+
+                <Controller
+                    control={control}
+                    name="canChooseTechnician"
+                    render={({ field }) => (
+                        <FormToggle
+                            label="Technician Select"
+                            checked={field.value}
+                            onChange={field.onChange}
+                        />
+                    )}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
