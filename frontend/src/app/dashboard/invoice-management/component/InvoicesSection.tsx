@@ -113,6 +113,7 @@ const InvoicesSection = () => {
         toast.success("Invoice deleted successfully");
 
         fetchInvoices();
+        window.dispatchEvent(new Event("invoiceUpdated"));
       } else {
         toast.error("Failed to delete invoice");
       }
