@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { FileText, CheckCircle, AlertCircle, XCircle } from "lucide-react";
+import { FileText, CheckCircle, AlertCircle,  } from "lucide-react";
 
 interface StatusCount {
   status: string;
@@ -19,11 +19,12 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
     
     if (statusLower.includes("sent") || statusLower.includes("send")) {
       return {
-        icon: <FileText size={18} />, // Slightly smaller to match text height
+        icon: <FileText size={18} />,
         bgColor: "bg-blue-50/50",
         borderColor: "border-blue-100",
         accentColor: "text-blue-600",
         label: "Sent",
+        order: 1,
       };
     } else if (statusLower.includes("approved") || statusLower.includes("approve")) {
       return {
@@ -32,6 +33,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         borderColor: "border-green-100",
         accentColor: "text-green-600",
         label: "Approved",
+        order: 2,
       };
     } else if (statusLower.includes("draft")) {
       return {
@@ -40,6 +42,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         borderColor: "border-gray-100",
         accentColor: "text-slate-600",
         label: "Draft",
+        order: 3,
       };
     } else if (statusLower.includes("reject")) {
       return {
@@ -48,6 +51,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         borderColor: "border-red-100",
         accentColor: "text-red-600",
         label: "Rejected",
+        order: 4,
       };
     }
     
@@ -57,8 +61,23 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
       borderColor: "border-gray-100",
       accentColor: "text-gray-600",
       label: status,
+      order: 5,
     };
   };
+
+  // Define the desired order of cards
+  const desiredOrder = ["Sent", "Approved", "Draft", "Rejected"];
+  
+  // Create a map of status counts
+  const statusMap = new Map(
+    statusCounts.map(item => [getStatusConfig(item.status).label, item.count])
+  );
+  
+  // Build ordered cards array
+  const orderedCards = desiredOrder.map(label => ({
+    status: label,
+    count: statusMap.get(label) || 0,
+  }));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -78,7 +97,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
           opacity: 0;
         }
       `}</style>
-      {statusCounts.map((item, index) => {
+      {orderedCards.map((item, index) => {
         const config = getStatusConfig(item.status);
         return (
           <div
@@ -97,7 +116,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
 
             {/* Content: Number on next line */}
             <div>
-              <p className={`text-3xl font-bold ${config.accentColor}`}>
+              <p className={`text-2xl font-bold ${config.accentColor}`}>
                 {item.count}
               </p>
             </div>
