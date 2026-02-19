@@ -1,14 +1,13 @@
 "use client";
 import { Calculator, AlertCircle, Save, Send, Download } from 'lucide-react';
-import { createItem, getAlls, updateItem } from '@/helper/apiHelper';
+import { createItem,  updateItem } from '@/helper/apiHelper';
 import { toast } from "react-hot-toast";
-import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface Part {
-  _id: string;
+  _id: string;      
   partName: string;
   partNumber: string;
   description?: string;
@@ -50,6 +49,7 @@ const QuotationSummary = ({
   technicianId: technicianIdProp = '' // Renamed to avoid shadowing
 }: QuotationSummaryProps) => {
   const [saving, setSaving] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<string>('draft');
   // Calculate totals based on selected parts (MOVED BEFORE FUNCTIONS)
   const partsTotal = selectedParts.reduce((sum, part) => sum + ((part.unitCost || 0) * part.quantity), 0);
   const laborTotal = laborHours * ratePerHour;
@@ -69,7 +69,7 @@ const QuotationSummary = ({
   };
   const formattedValidUntil = calculateValidUntil();
 
-  const createOrUpdateQuotation = async () => {
+  const createOrUpdateQuotation = async (status: string) => {
     if (!selectedTicket) {
       toast.error('Please select a ticket first');
       return;
@@ -115,7 +115,7 @@ const QuotationSummary = ({
       const quotationData = {
         userId: userId,
         ticketId: selectedTicket._id,
-        quotationStatusId: "SENT TO ADMIN", // Default to "sent" when creating/updating
+        quotationStatusId: status,
         partsList: selectedParts.flatMap(part => Array(part.quantity).fill(part._id)),
         labourTime: laborHours,
         labourRate: ratePerHour,
@@ -148,6 +148,9 @@ const QuotationSummary = ({
         toast.success('Quotation created successfully!');
       }
       
+      // Update current status
+      setCurrentStatus(status === 'DRAFTED' ? 'draft' : 'sent to admin');
+      
       // Redirect to quotations list page
       setTimeout(() => {
         window.location.href = '/dashboard/qutations';
@@ -178,12 +181,12 @@ const QuotationSummary = ({
   };
 
   const handleSaveDraft = () => {
-    createOrUpdateQuotation();
+    createOrUpdateQuotation('DRAFTED');
   };
 
   const handleSendToAdmin = () => {
-    console.log('Sending quotation to admin with status "sent"');
-    createOrUpdateQuotation();
+    console.log('Sending quotation to admin with status "SENT TO ADMIN"');
+    createOrUpdateQuotation('SENT TO ADMIN');
   };
 
   const handleDownloadPDF = () => {
@@ -464,7 +467,7 @@ const QuotationSummary = ({
           <div className="space-y-2 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Status:</span>
-              <span className="text-sm font-medium text-gray-900">draft</span>
+              <span className="text-sm font-medium text-gray-900">{currentStatus}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Valid Until:</span>
