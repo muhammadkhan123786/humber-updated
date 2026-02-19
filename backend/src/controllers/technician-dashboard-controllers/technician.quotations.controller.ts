@@ -22,32 +22,50 @@ export const technicianTicketsQuotationsController = async (
     const ticketStatusId = req.query.ticketStatusId as string;
 
     const skip = (page - 1) * limit;
+    const isTechnician = req.role === "Technician";
 
     // =====================================================
     // ✅ ROLE BASED MATCH
     // =====================================================
     const matchQuery: any = { isDeleted: false };
 
-    if (req.role === "Technician") {
+    if (isTechnician) {
       if (!req.technicianId) {
         return res.status(400).json({
           success: false,
           message: "Technician user not provided.",
         });
       }
+
       matchQuery.technicianId = new Types.ObjectId(req.technicianId);
+    } else {
+      // Admin / other roles cannot see DRAFTED
+      matchQuery.quotationStatusId = { $ne: "DRAFTED" };
     }
 
     // =====================================================
-    // ✅ ENUM STATUS FILTER (STRING BASED)
+    // ✅ STATUS FILTER (ROLE SAFE)
     // =====================================================
-    const allowedStatuses = [
+    const technicianAllowedStatuses = [
+      "DRAFTED",
       "SENT TO ADMIN",
       "SEND TO CUSTOMER",
       "SEND TO INSURANCE",
       "APPROVED",
       "REJECTED",
     ];
+
+    const adminAllowedStatuses = [
+      "SENT TO ADMIN",
+      "SEND TO CUSTOMER",
+      "SEND TO INSURANCE",
+      "APPROVED",
+      "REJECTED",
+    ];
+
+    const allowedStatuses = isTechnician
+      ? technicianAllowedStatuses
+      : adminAllowedStatuses;
 
     if (quotationStatusId && allowedStatuses.includes(quotationStatusId)) {
       matchQuery.quotationStatusId = quotationStatusId;
@@ -59,7 +77,6 @@ export const technicianTicketsQuotationsController = async (
     const pipeline: any[] = [
       { $match: matchQuery },
 
-      // Ticket
       {
         $lookup: {
           from: "customerticketbases",
@@ -70,7 +87,6 @@ export const technicianTicketsQuotationsController = async (
       },
       { $unwind: "$ticket" },
 
-      // Ticket Status
       {
         $lookup: {
           from: "ticketstatuses",
@@ -86,7 +102,6 @@ export const technicianTicketsQuotationsController = async (
         },
       },
 
-      // Customer
       {
         $lookup: {
           from: "customerbases",
@@ -97,7 +112,6 @@ export const technicianTicketsQuotationsController = async (
       },
       { $unwind: "$customer" },
 
-      // Person
       {
         $lookup: {
           from: "people",
@@ -108,7 +122,6 @@ export const technicianTicketsQuotationsController = async (
       },
       { $unwind: "$person" },
 
-      // Contact
       {
         $lookup: {
           from: "contacts",
@@ -124,7 +137,6 @@ export const technicianTicketsQuotationsController = async (
         },
       },
 
-      // Vehicle
       {
         $lookup: {
           from: "customervehiclemodels",
@@ -140,7 +152,6 @@ export const technicianTicketsQuotationsController = async (
         },
       },
 
-      // Vehicle Brand
       {
         $lookup: {
           from: "vechiclebrands",
@@ -156,7 +167,6 @@ export const technicianTicketsQuotationsController = async (
         },
       },
 
-      // Vehicle Model
       {
         $lookup: {
           from: "vechiclemodels",
@@ -172,7 +182,6 @@ export const technicianTicketsQuotationsController = async (
         },
       },
 
-      // Parts
       {
         $lookup: {
           from: "parts",
@@ -204,7 +213,7 @@ export const technicianTicketsQuotationsController = async (
       });
     }
 
-    // Ticket status filter
+    // Ticket Status Filter
     if (ticketStatusId && Types.ObjectId.isValid(ticketStatusId)) {
       pipeline.push({
         $match: {
@@ -239,7 +248,7 @@ export const technicianTicketsQuotationsController = async (
         labourTotalBill: 1,
         netTotal: 1,
         createdAt: 1,
-        quotationStatus: "$quotationStatusId", // ✅ DIRECT ENUM VALUE
+        quotationStatus: "$quotationStatusId",
 
         ticket: {
           _id: "$ticket._id",
@@ -292,4 +301,6 @@ export const technicianTicketsQuotationsController = async (
     });
   }
 };
+
+
 
