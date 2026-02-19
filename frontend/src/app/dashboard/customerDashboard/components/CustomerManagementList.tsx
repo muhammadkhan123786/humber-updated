@@ -276,8 +276,6 @@ const CustomerManagementList = ({
                   email={c.contactId?.emailId}
                   phone={c.contactId?.mobileNumber}
                   address={c.addressId?.address}
-                  city={c.addressId?.city || "N/A"}
-                  zipCode={c.addressId?.zipCode || "N/A"}
                   status={c.isActive ? "Active" : "Inactive"}
                   registeredDate={new Date(c.createdAt).toLocaleDateString()}
                   onEdit={() => handleEdit(c._id)}
