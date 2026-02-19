@@ -49,34 +49,7 @@ const QuotationSummary = ({
   isEditMode = false,
   technicianId: technicianIdProp = '' // Renamed to avoid shadowing
 }: QuotationSummaryProps) => {
-  const [defaultStatuses, setDefaultStatuses] = useState<any>({});
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetchDefaultStatuses();
-  }, []);
-
-  const fetchDefaultStatuses = async () => {
-    try {
-      const response = await getAlls<any>('/default-quotation-status');
-      if (response.data) {
-        // Create a map of status names to IDs
-        const statusMap: any = {};
-        response.data.forEach((status: any) => {
-          const statusName = status.ticketQuationStatus?.toLowerCase();
-          if (statusName?.includes('draft')) {
-            statusMap.draft = status._id;
-          } else if (statusName?.includes('sent') || statusName?.includes('send')) {
-            statusMap.sent = status._id;
-          }
-        });
-        setDefaultStatuses(statusMap);
-      }
-    } catch (error) {
-      console.error('Error fetching default statuses:', error);
-    }
-  };
-
   // Calculate totals based on selected parts (MOVED BEFORE FUNCTIONS)
   const partsTotal = selectedParts.reduce((sum, part) => sum + ((part.unitCost || 0) * part.quantity), 0);
   const laborTotal = laborHours * ratePerHour;
@@ -105,22 +78,7 @@ const QuotationSummary = ({
     setSaving(true);
     try {
       // Fetch default quotation status using axios directly
-      const token = localStorage.getItem('token')?.replace(/"/g, '').trim();
-      const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
-      
-      const statusesRes = await axios.get(`${BASE_URL}/default-quotation-status`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      console.log('Fetched default statuses:', statusesRes.data);
-      
-      if (!statusesRes.data?.defaultQuotationStatusId) {
-        toast.error('Default quotation status not found. Please configure default statuses.');
-        setSaving(false);
-        return;
-      }
+     
 
       // Get technician ID - priority: 1) Passed prop (from edit), 2) localStorage, 3) Selected ticket
       const technicianId = technicianIdProp || localStorage.getItem('technicianId') || selectedTicket.assignedTechnician?._id;
@@ -157,7 +115,7 @@ const QuotationSummary = ({
       const quotationData = {
         userId: userId,
         ticketId: selectedTicket._id,
-        quotationStatusId: statusesRes.data.defaultQuotationStatusId,
+        quotationStatusId: "SENT TO ADMIN", // Default to "sent" when creating/updating
         partsList: selectedParts.flatMap(part => Array(part.quantity).fill(part._id)),
         labourTime: laborHours,
         labourRate: ratePerHour,

@@ -62,7 +62,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   getTicketNumber,
   getStatusInfo,
   quotationStatuses,
-  onStatusChange,
+ 
 }) => {
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "N/A";
@@ -244,32 +244,9 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <select
-                      value={currentStatusId}
-                      onChange={(e) => onStatusChange(quotation._id, e.target.value)}
-                      className="px-1.5 py-1 rounded-full text-xs font-semibold border focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all cursor-pointer  text-center capitalize"
-                      style={{
-                        backgroundColor: statusColors.bgColor,
-                        color: statusColors.textColor,
-                        borderColor: statusColors.borderColor,
-                        fontWeight: '600',
-                      }}
-                    >
-                      {quotationStatuses.map((status) => (
-                        <option
-                          key={status._id}
-                          value={status._id}
-                          className="font-semibold py-2 capitalize"
-                          style={{
-                            backgroundColor: '#ffffff',
-                            color: '#000000',
-                            padding: '8px 12px'
-                          }}
-                        >
-                          {status.ticketQuationStatus}
-                        </option>
-                      ))}
-                    </select>
+                   <span className="text-xs bg-blue-50 border border-blue-200 px-1.5 py-1 rounded-full font-medium text-indigo-600 whitespace-nowrap">
+                      {quotation?.quotationStatus || "N/A"}
+                    </span>
                   </td>
                   <td className="px-4 py-4">
                     <ActionButtons
