@@ -109,7 +109,6 @@ autoCodeGeneratorRouter.get(
 autoCodeGeneratorRouter.get(
   "/purchase-auto-code",
   async (req: Request, res: Response) => {
-    console.log('Imran...');
     try {
       const purchaseOrderAutoCode = await getCurrentPurchaseOrderCode();
       res.json({ purchaseOrderAutoCode: purchaseOrderAutoCode });

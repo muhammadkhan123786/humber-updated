@@ -143,16 +143,13 @@ export const updatePurchaseOrderStatus = async (
 /**
  * Generate next order number
  */
-export const generateNextOrderNumber = async (): Promise<{
-  nextOrderNumber: string;
-}> => {
-  const res = await axios.get(`${API_URL}/next-order-number`, {
+export const generateNextOrderNumber = async (): Promise<any> => {
+  const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auto-generate-codes/purchase-auto-code`, {
     ...getAuthConfig(),
     params: {
       userId: getUserId(),
     },
   });
-  console.log("res", res.data);
   return res.data;
 };
 

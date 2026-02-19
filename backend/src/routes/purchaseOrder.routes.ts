@@ -1,9 +1,10 @@
-import { Router } from "express";
+import { NextFunction, Request, Router, Response } from "express";
 import { GenericService } from "../services/generic.crud.services";
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { PurchaseDoc, PurchaseOrder } from "../models/purchaseOrder.model";
 import { purchaseOrderZodSchema } from "../schemas/purchaseOrder.schema";
 import { purchaseOrderCustomController } from "../controllers/purchaseOrder.controller";
+import { generatePurchaseOrderCode } from "../utils/generate.AutoCode.Counter";
 
 const purchaseOrderRoutes = Router();
 
@@ -12,12 +13,14 @@ const purchaseOrderBaseService = new GenericService<PurchaseDoc>(PurchaseOrder);
 
 const purchaseOrderController = new AdvancedGenericController({
   service: purchaseOrderBaseService,
-  populate: ["userId", 
-     {
-        path: "supplier",
-        select: "contactInformation"
-      }],
-  searchFields: ["orderNumber", "supplier","supplierContact", "notes"],
+  populate: [
+    "userId",
+    {
+      path: "supplier",
+      select: "contactInformation",
+    },
+  ],
+  searchFields: ["orderNumber", "supplier", "supplierContact", "notes"],
   validationSchema: purchaseOrderZodSchema,
 });
 
@@ -27,20 +30,41 @@ const purchaseOrderController = new AdvancedGenericController({
 // ==========================================
 
 // Custom business logic routes (specific paths)
-purchaseOrderRoutes.get("/next-order-number", purchaseOrderCustomController.generateNextOrderNumber);
-purchaseOrderRoutes.get("/stats/dashboard", purchaseOrderCustomController.getStats);
+purchaseOrderRoutes.get(
+  "/next-order-number",
+  purchaseOrderCustomController.generateNextOrderNumber,
+);
+purchaseOrderRoutes.get(
+  "/stats/dashboard",
+  purchaseOrderCustomController.getStats,
+);
 purchaseOrderRoutes.get("/export", purchaseOrderCustomController.exportToPDF);
-purchaseOrderRoutes.patch("/bulk-update", purchaseOrderCustomController.bulkUpdate);
+purchaseOrderRoutes.patch(
+  "/bulk-update",
+  purchaseOrderCustomController.bulkUpdate,
+);
 purchaseOrderRoutes.get("/", purchaseOrderCustomController.getAllWithSearch);
 
 // Standard CRUD operations (generic controller)
 // purchaseOrderRoutes.get("/", purchaseOrderController.getAll);
-purchaseOrderRoutes.post("/", purchaseOrderController.create);
+purchaseOrderRoutes.post(
+  "/",
+  async (req: Request, res: Response, next: NextFunction) => {
+    const purchaseCode = await generatePurchaseOrderCode();
+    req.body.orderNumber = purchaseCode;
+
+    next();
+  },
+  purchaseOrderController.create,
+);
 purchaseOrderRoutes.get("/:id", purchaseOrderController.getById);
 purchaseOrderRoutes.put("/:id", purchaseOrderController.update);
 purchaseOrderRoutes.delete("/:id", purchaseOrderController.delete);
 
 // Custom update operation (specific path with parameter)
-purchaseOrderRoutes.patch("/:id/status", purchaseOrderCustomController.updateStatus);
+purchaseOrderRoutes.patch(
+  "/:id/status",
+  purchaseOrderCustomController.updateStatus,
+);
 
 export default purchaseOrderRoutes;

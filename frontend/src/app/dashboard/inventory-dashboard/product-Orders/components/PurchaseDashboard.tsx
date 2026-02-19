@@ -48,6 +48,7 @@ const [nextNumber, setNextNumber] = useState();
     handleExportSingleOrder,
   } = usePurchaseOrders();
 
+  console.log("purchaseOrderAutoCode", orderNumber);
   const handleOpenCreateOrder = () => {
     resetForm();
     setIsOrderDialogOpen(true);
