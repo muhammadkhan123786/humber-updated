@@ -1,5 +1,8 @@
 import { Response } from "express";
-import { AuthRequest, TechnicianAuthRequest } from "../../middleware/auth.middleware";
+import {
+  AuthRequest,
+  TechnicianAuthRequest,
+} from "../../middleware/auth.middleware";
 import { Technicians } from "../../models/technician-models/technician.models";
 import { customerTicketBase } from "../../models/ticket-management-system-models/customer.ticket.base.models";
 import { TechniciansJobs } from "../../models/technician-jobs-models/technician.jobs.models";
@@ -9,11 +12,16 @@ import { TicketQuationStatus } from "../../models/ticket-quation-models/ticket.q
 
 export const technicianTicketsController = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
-    const technicianId = req.technicianId;
-    console.log("Technician Tickets Controller invoked for user:", technicianId);
+    const technicianId = req.technicianId || req.body.technicianId;
+    // const technicianId = req.user?.userId;
+    console.log("Body: ", req);
+    console.log(
+      "Technician Tickets Controller invoked for user:",
+      technicianId,
+    );
     if (!technicianId) {
       return res.status(400).json({
         success: false,
@@ -71,7 +79,10 @@ export const technicianTicketsController = async (
       .populate({
         path: "vehicleId",
         select: "vehicleBrandId vehicleModelId serialNumber vehicleType",
-        populate: [{ path: "vehicleBrandId", select: "brandName" }, { path: "vehicleModelId", select: "modelName" }],
+        populate: [
+          { path: "vehicleBrandId", select: "brandName" },
+          { path: "vehicleModelId", select: "modelName" },
+        ],
       })
       .lean();
 
@@ -79,8 +90,8 @@ export const technicianTicketsController = async (
     const formattedTickets = tickets.map((t: any) => {
       const myTechnician = Array.isArray(t.assignedTechnicianId)
         ? t.assignedTechnicianId.find(
-          (tech: any) => tech?._id?.toString() === technicianId
-        )
+            (tech: any) => tech?._id?.toString() === technicianId,
+          )
         : null;
 
       return {
@@ -97,10 +108,10 @@ export const technicianTicketsController = async (
         // ✅ single technician object
         assignedTechnician: myTechnician
           ? {
-            _id: myTechnician._id,
-            firstName: myTechnician.personId?.firstName || "",
-            lastName: myTechnician.personId?.lastName || "",
-          }
+              _id: myTechnician._id,
+              firstName: myTechnician.personId?.firstName || "",
+              lastName: myTechnician.personId?.lastName || "",
+            }
           : null,
 
         customer: {
@@ -137,7 +148,7 @@ export const technicianTicketsController = async (
 
 export const technicianJobsController = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const technicianId = req.technicianId;
@@ -276,19 +287,17 @@ export const technicianJobsController = async (
   }
 };
 
-//default tax get to add tax amount in technician quotations 
+//default tax get to add tax amount in technician quotations
 export const getDefaultTaxPercentageController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
-
     const tax = await Tax.findOne({
       userId: req.user.userId,
       isDefault: true,
       isDeleted: false,
     }).select("percentage");
-
 
     if (!tax) {
       return res.status(401).json({
@@ -314,10 +323,9 @@ export const getDefaultTaxPercentageController = async (
 //default quotation status get to add default status in technician quotations
 export const getDefaultQuotationStatusController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
-
     const defaultStatus = await TicketQuationStatus.findOne({
       userId: req.user.userId,
       isDefault: true,
@@ -336,7 +344,6 @@ export const getDefaultQuotationStatusController = async (
       message: "Default quotation status fetched successfully.",
       defaultQuotationStatusId: defaultStatus._id,
     });
-
   } catch (error) {
     console.error("Get Default Quotation Status Error:", error);
     return res.status(500).json({
@@ -345,6 +352,3 @@ export const getDefaultQuotationStatusController = async (
     });
   }
 };
-
-
-
