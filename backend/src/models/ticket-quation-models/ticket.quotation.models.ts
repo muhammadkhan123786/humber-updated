@@ -5,7 +5,7 @@ import { ITicketQuotation } from "../../../../common/ticket-quations-interfaces/
 
 import { ticketQuotationSchema } from "../../schemas/ticket-quation-schemas/ticket.quotation.schema";
 
-export type ticketQuatationDoc = ITicketQuotation<Types.ObjectId, Types.ObjectId, Types.ObjectId, Types.ObjectId[], Types.ObjectId, Date> & Document;
+export type ticketQuatationDoc = ITicketQuotation<Types.ObjectId, Types.ObjectId, Types.ObjectId[], Types.ObjectId, Date> & Document;
 
 const ticketQuotationDbSchema = new Schema<ticketQuatationDoc>({
 
