@@ -4,6 +4,7 @@ import { Types } from "mongoose";
 import { objectIdSchema } from "../../validators/objectId.schema";
 export const QUOTATION_STATUS = [
     "SENT TO ADMIN",
+    "DRAFTED",
     "SEND TO CUSTOMER",
     "SEND TO INSURANCE",
     "APPROVED",
@@ -26,8 +27,6 @@ export const ticketQuotationSchema = {
         required: true,
         default: QUOTATION_STATUS[0],
     },
-
-
     partsList: [
         { type: Types.ObjectId, ref: "Parts" }
     ],
@@ -58,7 +57,7 @@ export const ticketQuotationSchema = {
 };
 export const ticketQuotationValidation = z.object({
     ticketId: objectIdSchema,
-    quotationStatusId: z.enum(["SENT TO ADMIN", "SEND TO CUSTOMER", "SEND TO INSURANCE", "APPROVED", "REJECTED"]).default("SENT TO ADMIN"),
+    quotationStatusId: z.enum(["SENT TO ADMIN", "DRAFTED", "SEND TO CUSTOMER", "SEND TO INSURANCE", "APPROVED", "REJECTED"]).default("SENT TO ADMIN"),
     partsList: z.array(objectIdSchema).optional(),
 
     labourTime: z.number().optional(),
