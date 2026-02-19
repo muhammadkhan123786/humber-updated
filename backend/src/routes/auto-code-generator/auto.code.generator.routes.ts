@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Response, Request } from "express";
 import {
+  getCurrentPurchaseOrderCode,
   getCurrentTechnicianJobCode,
   getCurrentTicketCode,
   getCustomerInvoiceCurrentCode,
@@ -102,5 +103,25 @@ autoCodeGeneratorRouter.get(
     }
   },
 );
+
+
+//purchase order 
+autoCodeGeneratorRouter.get(
+  "/purchase-auto-code",
+  async (req: Request, res: Response) => {
+    console.log('Imran...');
+    try {
+      const purchaseOrderAutoCode = await getCurrentPurchaseOrderCode();
+      res.json({ purchaseOrderAutoCode: purchaseOrderAutoCode });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ error: error.message || "Failed to get purchase order auto code." });
+    }
+  },
+);
+
+
+
 
 export default autoCodeGeneratorRouter;
