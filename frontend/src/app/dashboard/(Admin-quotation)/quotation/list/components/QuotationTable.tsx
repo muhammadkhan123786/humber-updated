@@ -3,6 +3,14 @@ import React from "react";
 import { User, Calendar } from "lucide-react";
 import ActionButtons from "./ActionButtons";
 
+export const QUOTATION_STATUS = [
+  "SENT TO ADMIN",
+  "SEND TO CUSTOMER",
+  "SEND TO INSURANCE",
+  "APPROVED",
+  "REJECTED",
+] as const;
+
 interface QuotationFromBackend {
   _id: string;
   ticketId: any;
@@ -19,26 +27,11 @@ interface QuotationFromBackend {
   ticket: {
     _id: string;
     ticketCode: string;
+    decision?: string;
     [key: string]: any;
   };
-  labourTime?: number;
-  labourRate?: number;
-  partTotalBill?: number;
-  labourTotalBill?: number;
-  subTotalBill?: number;
-  taxAmount?: number;
   netTotal?: number;
   createdAt?: string;
-  updatedAt?: string;
-}
-
-interface QuotationStatus {
-  _id: string;
-  ticketQuationStatus: string;
-  statusColor: string;
-  statusIcon?: string;
-  isActive: boolean;
-  canChooseTechnician?: boolean;
 }
 
 interface QuotationTableProps {
@@ -48,9 +41,7 @@ interface QuotationTableProps {
   onDelete: (id: string) => void;
   getCustomerName: (quotation: any) => string;
   getTicketNumber: (quotation: any) => string;
-  getStatusInfo: (quotation: any) => { name: string; color: string; bgColor: string; statusColor?: string };
-  quotationStatuses: QuotationStatus[];
-  onStatusChange: (quotationId: string, newStatusId: string) => void;
+  onStatusChange: (quotationId: string, newStatus: string) => void;
 }
 
 const QuotationTable: React.FC<QuotationTableProps> = ({
@@ -60,10 +51,22 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   onDelete,
   getCustomerName,
   getTicketNumber,
-  getStatusInfo,
-  quotationStatuses,
   onStatusChange,
 }) => {
+  const dropdownStatuses = QUOTATION_STATUS.filter(
+    (status) => status !== "SENT TO ADMIN",
+  );
+  const formatStatusLabel = (status: string) => {
+    const upper = status?.toUpperCase();
+
+    const statusMap: Record<string, string> = {
+      "SEND TO CUSTOMER": "SENT TO CUSTOMER",
+      "SEND TO INSURANCE": "SENT TO INSURANCE",
+    };
+
+    return statusMap[upper] || upper;
+  };
+
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-GB", {
@@ -78,41 +81,33 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
     return `£ ${amount.toFixed(2)}`;
   };
 
-  // Get color styling based on status name
   const getStatusColors = (statusName: string) => {
-    const statusLower = String(statusName || '').toLowerCase();
+    const statusUpper = String(statusName || "").toUpperCase();
 
-    if (statusLower.includes("sent") || statusLower.includes("send")) {
+    if (
+      statusUpper.includes("CUSTOMER") ||
+      statusUpper.includes("INSURANCE") ||
+      statusUpper.includes("ADMIN")
+    ) {
       return {
-        bgColor: "#3B82F620", // Blue with 12% opacity
+        bgColor: "#3B82F620",
         textColor: "#1E40AF",
         borderColor: "#3B82F6",
       };
-    } else if (statusLower.includes("approved") || statusLower.includes("approve")) {
+    } else if (statusUpper === "APPROVED") {
       return {
-        bgColor: "#10B98120", // Green with 12% opacity
+        bgColor: "#10B98120",
         textColor: "#047857",
         borderColor: "#10B981",
       };
-    } else if (statusLower.includes("draft")) {
+    } else if (statusUpper === "REJECTED") {
       return {
-        bgColor: "#6B728020", // Gray with 12% opacity
-        textColor: "#374151",
-        borderColor: "#6B7280",
-      };
-    } else if (statusLower.includes("reject")) {
-      return {
-        bgColor: "#EF444420", // Red with 12% opacity
+        bgColor: "#EF444420",
         textColor: "#B91C1C",
         borderColor: "#EF4444",
       };
     }
-
-    return {
-      bgColor: "#F3F4F6",
-      textColor: "#6B7280",
-      borderColor: "#E5E7EB",
-    };
+    return { bgColor: "#F3F4F6", textColor: "#6B7280", borderColor: "#E5E7EB" };
   };
 
   return (
@@ -155,7 +150,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
             <th className="px-4 py-5 text-left text-sm font-semibold">
               Ticket No.
             </th>
-            <th className="px-4 py-5  text-left text-sm font-semibold">
+            <th className="px-4 py-5 text-left text-sm font-semibold">
               Customer Name
             </th>
             <th className="px-4 py-5 text-left text-sm font-semibold">
@@ -178,28 +173,16 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
         <tbody className="bg-white divide-y divide-gray-200">
           {quotations.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-6 py-12 text-center">
-                <div className="flex flex-col items-center justify-center text-gray-500">
-                  <p className="text-lg font-medium">No quotations found</p>
-                  <p className="text-sm">Try adjusting your search criteria</p>
-                </div>
+              <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                No quotations found
               </td>
             </tr>
           ) : (
             quotations.map((quotation, index) => {
-              const statusInfo = getStatusInfo(quotation);
-              
-              // Find the current status ID from quotation status name if not set
-              const currentStatusId = quotation.quotationStatusId || quotationStatuses.find(
-                s => s.ticketQuationStatus?.toLowerCase() === quotation.quotationStatus?.toLowerCase()
-              )?._id || '';
-              
-              // Find the current status object
-              const currentStatus = quotationStatuses.find(s => s._id === currentStatusId);
-              
-              // Get colors based on current status name
-              const statusColors = getStatusColors(currentStatus?.ticketQuationStatus || quotation.quotationStatus || '');
-              
+              const currentStatus =
+                quotation.quotationStatus?.toUpperCase() || "";
+              const colors = getStatusColors(currentStatus);
+
               return (
                 <tr
                   key={quotation._id}
@@ -211,7 +194,6 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                       {quotation.quotationAutoId || "N/A"}
                     </span>
                   </td>
-
                   <td className="px-3 py-4">
                     <span className="font-mono text-xs text-gray-700 bg-indigo-50 px-2 py-1 rounded-full border border-indigo-100 whitespace-nowrap">
                       {getTicketNumber(quotation)}
@@ -233,40 +215,39 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
-                    <span className=" font-bold text-indigo-600 whitespace-nowrap">
-                      {formatCurrency(quotation.netTotal)}
-                    </span>
+                  <td className="px-4 py-4 font-bold text-indigo-600">
+                    {formatCurrency(quotation.netTotal)}
                   </td>
-                  <td className="px-4 py-4 ">
-                    <span className="text-sm font-medium text-indigo-600 whitespace-nowrap">
-                      {quotation?.ticket?.decision || "N/A"}
-                    </span>
+                  <td className="px-4 py-4 text-sm font-medium text-indigo-600 capitalize">
+                    {quotation?.ticket?.decision || "N/A"}
                   </td>
                   <td className="px-4 py-4">
                     <select
-                      value={currentStatusId}
-                      onChange={(e) => onStatusChange(quotation._id, e.target.value)}
-                      className="px-1.5 py-1 rounded-full text-xs font-semibold border focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all cursor-pointer  text-center capitalize"
+                      value={currentStatus}
+                      onChange={(e) =>
+                        onStatusChange(quotation._id, e.target.value)
+                      }
+                      className="px-2 py-1 rounded-full text-[10px] font-bold border focus:outline-none transition-all cursor-pointer text-center uppercase min-w-[140px]"
                       style={{
-                        backgroundColor: statusColors.bgColor,
-                        color: statusColors.textColor,
-                        borderColor: statusColors.borderColor,
-                        fontWeight: '600',
+                        backgroundColor: colors.bgColor,
+                        color: colors.textColor,
+                        borderColor: colors.borderColor,
                       }}
                     >
-                      {quotationStatuses.map((status) => (
+                      {!dropdownStatuses.includes(currentStatus as any) &&
+                        currentStatus !== "" && (
+                          <option value={currentStatus}>
+                            {formatStatusLabel(currentStatus)}
+                          </option>
+                        )}
+
+                      {dropdownStatuses.map((status) => (
                         <option
-                          key={status._id}
-                          value={status._id}
-                          className="font-semibold py-2 capitalize"
-                          style={{
-                            backgroundColor: '#ffffff',
-                            color: '#000000',
-                            padding: '8px 12px'
-                          }}
+                          key={status}
+                          value={status}
+                          className="bg-white text-black"
                         >
-                          {status.ticketQuationStatus}
+                          {formatStatusLabel(status)}
                         </option>
                       ))}
                     </select>

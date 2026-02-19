@@ -16,16 +16,19 @@ interface CardsProps {
 const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
   const getStatusConfig = (status: string) => {
     const statusLower = status.toLowerCase();
-    
+
     if (statusLower.includes("sent") || statusLower.includes("send")) {
       return {
-        icon: <FileText size={18} />, // Slightly smaller to match text height
+        icon: <FileText size={18} />,
         bgColor: "bg-blue-50/50",
         borderColor: "border-blue-100",
         accentColor: "text-blue-600",
         label: "Sent",
       };
-    } else if (statusLower.includes("approved") || statusLower.includes("approve")) {
+    } else if (
+      statusLower.includes("approved") ||
+      statusLower.includes("approve")
+    ) {
       return {
         icon: <CheckCircle size={18} />,
         bgColor: "bg-green-50/50",
@@ -50,7 +53,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         label: "Rejected",
       };
     }
-    
+
     return {
       icon: <FileText size={18} />,
       bgColor: "bg-gray-50/50",
@@ -88,11 +91,11 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
             style={{ animationDelay: `${index * 80}ms` }}
           >
             {/* Header: Icon and Label side-by-side */}
-            <div className={`flex items-center gap-2 mb-3  ${config.accentColor}`}>
+            <div
+              className={`flex items-center gap-2 mb-3  ${config.accentColor}`}
+            >
               {config.icon}
-              <span className="text-sm font-semibold">
-                {config.label}
-              </span>
+              <span className="text-sm font-semibold">{config.label}</span>
             </div>
 
             {/* Content: Number on next line */}
