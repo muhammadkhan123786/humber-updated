@@ -23,8 +23,8 @@ export interface CustomerCardProps {
   email: string;
   phone: string;
   address: string;
-  city: string; // ✅ NEW
-  zipCode: string;
+  city?: string; // ✅ NEW
+  zipCode?: string;
   registeredDate: string;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -159,17 +159,18 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
             bgColor="bg-[#FFF1FA]"
             iconColor="text-[#E11DBC]"
           />
+          {/* Address Row */}
           <div className="bg-[#F0FFF7] flex items-start gap-3 p-3.5 rounded-2xl hover:opacity-80 transition-all">
             <MapPin size={18} className="text-[#00C853] mt-1" />
-
             <div className="flex flex-col">
               <span className="text-slate-700 text-[13px] font-semibold">
-                {address}
+                {address} {/* Street address */}
               </span>
-
-              <span className="text-slate-400 text-[11px] font-medium mt-0.5">
-                {city} {zipCode}
-              </span>
+              {(city || zipCode) && (
+                <span className="text-slate-400 text-[11px] font-medium mt-0.5">
+                  {city ?? "N/A"} {zipCode ?? ""}
+                </span>
+              )}
             </div>
           </div>
         </div>
