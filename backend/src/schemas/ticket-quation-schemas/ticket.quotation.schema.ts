@@ -2,6 +2,15 @@ import { z } from "zod";
 import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 import { Types } from "mongoose";
 import { objectIdSchema } from "../../validators/objectId.schema";
+export const QUOTATION_STATUS = [
+    "SENT TO ADMIN",
+    "SEND TO CUSTOMER",
+    "SEND TO INSURANCE",
+    "APPROVED",
+    "REJECTED"
+] as const;
+
+//export type QuotationStatuses = typeof QUOTATION_STATUS[number];
 
 export const ticketQuotationSchema = {
     ticketId: {
@@ -13,11 +22,11 @@ export const ticketQuotationSchema = {
 
     quotationStatusId: {
         type: String,
-        enum: ["SENT TO ADMIN", "SEND TO CUSTOMER", "SEND TO INSURANCE", "APPROVED", "REJECTED"],
-        index: true,
+        enum: QUOTATION_STATUS,
         required: true,
-        default: "SENT TO ADMIN"
+        default: QUOTATION_STATUS[0],
     },
+
 
     partsList: [
         { type: Types.ObjectId, ref: "Parts" }
