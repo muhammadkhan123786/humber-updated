@@ -1,6 +1,5 @@
 
-
-""
+"use client"
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
@@ -26,7 +25,9 @@ export const usePurchaseOrders = () => {
   // ============================================================================
   // STATE
   // ============================================================================
-  
+  interface INumber {
+
+  }
   const [orders, setOrders] = useState<IPurchaseOrder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -110,8 +111,9 @@ const fetchOrdersData = async () => {
   const fetchOrderNumber = async () => {
     try {
       setLoadingOrderNumber(true);
-      const { nextOrderNumber } = await PurchaseOrderAPI.generateNextOrderNumber();
-      setOrderNumber(nextOrderNumber);
+      const  nextOrderNumber  = await PurchaseOrderAPI.generateNextOrderNumber();
+      console.log("purchaseOrderNumber", nextOrderNumber);
+      setOrderNumber(nextOrderNumber?.purchaseOrderAutoCode);
     } catch (err) {
       console.error("Failed to generate order number", err);
       toast.error('Failed to generate order number');

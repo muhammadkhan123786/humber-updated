@@ -21,6 +21,7 @@ export const PurchaseOrderSchema = new Schema(
     ...commonSchema,
     orderNumber: {
       type: String,
+      unique: true,
     },
     poReference: {
       type: String,
@@ -76,18 +77,18 @@ export const PurchaseOrderSchema = new Schema(
   { timestamps: true } // ✅ Add timestamps
 );
 
-// ✅ Now you can use .pre() hook on the Schema instance
-PurchaseOrderSchema.pre("save", async function (this: any) {
-  if (this.isNew) {
-    if (!this.orderNumber) {
-      this.orderNumber = await generateNextDocumentNumber("PO", this.constructor);
-    }
+// // ✅ Now you can use .pre() hook on the Schema instance
+// PurchaseOrderSchema.pre("save", async function (this: any) {
+//   if (this.isNew) {
+//     if (!this.orderNumber) {
+//       this.orderNumber = await generateNextDocumentNumber("PO", this.constructor);
+//     }
 
-    if (!this.poReference) {
-      this.poReference = await generateNextDocumentNumber("PO_REFERENCE", this.constructor);
-    }
-  }
-});
+//     if (!this.poReference) {
+//       this.poReference = await generateNextDocumentNumber("PO_REFERENCE", this.constructor);
+//     }
+//   }
+// });
 
 PurchaseOrderSchema.index(
   { orderNumber: 1 },
