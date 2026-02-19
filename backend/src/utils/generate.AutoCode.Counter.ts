@@ -117,7 +117,7 @@ export const generatePurchaseOrderCode = async (): Promise<string> => {
     throw new Error("Failed to generate purchase Code sequence");
   }
 
-  return `QUO-${year}-${String(counter.seq).padStart(3, "0")}`;
+  return `PO-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 
