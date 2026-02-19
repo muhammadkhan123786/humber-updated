@@ -89,6 +89,14 @@ PurchaseOrderSchema.pre("save", async function (this: any) {
   }
 });
 
+PurchaseOrderSchema.index(
+  { orderNumber: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { isDeleted: false },
+  }
+);
+
 // ✅ Zod validation schemas
 export const purchaseOrderItemZodSchema = z.object({
   productName: z.string().min(1, "Product name is required"),

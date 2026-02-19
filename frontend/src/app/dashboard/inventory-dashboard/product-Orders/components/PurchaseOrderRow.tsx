@@ -55,10 +55,10 @@ const isSupplierObject = (
          {isSupplierObject(order.supplier) && (
   <>
     <p className="font-medium text-gray-900">
-      {order.supplier.contactInformation?.primaryContactName}
+      {order?.supplier?.contactInformation?.primaryContactName}
     </p>
     <p className="text-sm text-gray-500">
-      {order.supplier.contactInformation.emailAddress}
+      {order?.supplier?.contactInformation.emailAddress}
     </p>
   </>
 )}
