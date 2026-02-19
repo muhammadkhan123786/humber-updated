@@ -144,7 +144,15 @@ const ListAllQuotations = () => {
     // Filter by status
     if (selectedStatus) {
       filtered = filtered.filter((q) => {
-        return q.quotationStatus?.toLowerCase() === selectedStatus.toLowerCase();
+        const quotationStatusLower = q.quotationStatus?.toLowerCase() || "";
+        const selectedStatusLower = selectedStatus.toLowerCase();
+        
+        // Match by checking if the status contains the filter text
+        return quotationStatusLower.includes(selectedStatusLower) ||
+               (selectedStatusLower === "sent" && quotationStatusLower.includes("send")) ||
+               (selectedStatusLower === "draft" && quotationStatusLower.includes("draft")) ||
+               (selectedStatusLower === "approved" && quotationStatusLower.includes("approve")) ||
+               (selectedStatusLower === "rejected" && quotationStatusLower.includes("reject"));
       });
     }
 
