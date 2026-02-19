@@ -564,7 +564,7 @@ export const updateTechnicianQuotationStatusController = async (
       });
     }
 
-    // ✅ Validate IDs
+    // ✅ Validate quotation ID
     if (!techncianQuotationId || !Types.ObjectId.isValid(techncianQuotationId)) {
       return res.status(400).json({
         success: false,
@@ -572,10 +572,19 @@ export const updateTechnicianQuotationStatusController = async (
       });
     }
 
-    if (!techncianQuotationStatusId || !Types.ObjectId.isValid(techncianQuotationStatusId)) {
+    // ✅ Validate ENUM status
+    const allowedStatuses = [
+      "SEND TO CUSTOMER",
+      "SEND TO INSURANCE",
+      "APPROVED",
+      "REJECTED"
+    ];
+
+    if (!techncianQuotationStatusId ||
+      !allowedStatuses.includes(techncianQuotationStatusId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid technician job status id.",
+        message: "Invalid quotation status value.",
       });
     }
 
@@ -587,7 +596,6 @@ export const updateTechnicianQuotationStatusController = async (
       isDeleted: false,
     };
 
-    // ✅ Technician → can update ONLY own job
     if (req.role === "Technician") {
       if (!req.technicianId) {
         return res.status(401).json({
@@ -599,19 +607,15 @@ export const updateTechnicianQuotationStatusController = async (
       filter.technicianId = req.technicianId;
     }
 
-    // ✅ Admin → no technician filter (can update all)
-
-    const updatedJob = await TicketQuations.findOneAndUpdate(
+    const updatedQuotation = await TicketQuations.findOneAndUpdate(
       filter,
       {
         $set: { quotationStatusId: techncianQuotationStatusId },
       },
-      {
-        new: true,
-      }
+      { new: true }
     ).lean();
 
-    if (!updatedJob) {
+    if (!updatedQuotation) {
       return res.status(404).json({
         success: false,
         message: "Quotation not found or access denied.",
@@ -620,17 +624,19 @@ export const updateTechnicianQuotationStatusController = async (
 
     return res.status(200).json({
       success: true,
-      message: "Quoation Status Updated Successfully.",
-      data: updatedJob,
+      message: "Quotation status updated successfully.",
+      data: updatedQuotation,
     });
+
   } catch (error) {
     console.error("Update Technician Quotation Status Error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to update technician Quotation status.",
+      message: "Failed to update technician quotation status.",
     });
   }
 };
+
 
 //update technician job status and is completed job 
 export const updateTechnicianJobStatusController = async (
@@ -806,7 +812,7 @@ export const TechnicianProfileController = async (
       .populate({ path: "specializationIds", select: "MasterServiceType" })
       .lean();
 
-   
+
     if (!technicianProfile) {
       return res.status(404).json({
         success: false,
@@ -852,7 +858,7 @@ export const UpdateTechnicianProfileController = async (
     }
 
     const {
-     
+
       firstName,
       lastName,
       email,
