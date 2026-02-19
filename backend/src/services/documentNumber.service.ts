@@ -28,13 +28,13 @@ export const generateNextDocumentNumber = async (
       const { PurchaseOrderModel } = require("../models/purchaseOrder.models");
       model = PurchaseOrderModel;
     } else if (type === "GOODS_RETURN" || type === "GOODS_RETURN_REFERENCE") {
-     try {
-       const { GoodsReturn } = require("../models/goodsReturn.model"); // ✅ Add this
-      model = GoodsReturn;
-     } catch (error) {
-       throw new Error(`GoodsReturnModel not found. Please create the model file first.`);
-      
-     }
+      try {
+        const { GoodsReturn } = require("../models/goodsReturn.model"); // ✅ Add this
+        model = GoodsReturn;
+      } catch (error) {
+        throw new Error(`GoodsReturnModel not found. Please create the model file first.`);
+
+      }
 
 
     }
@@ -52,11 +52,12 @@ export const generateNextDocumentNumber = async (
   if (latestDoc?.[config.field]) {
     const parts = (latestDoc[config.field] as string).split("-");
     const lastNumber = parseInt(parts[parts.length - 1], 10);
-    
+
     if (!isNaN(lastNumber)) {
       nextSequence = lastNumber + 1;
     }
   }
+  console.log("Next sequence:", nextSequence);
 
   const paddedNumber = String(nextSequence).padStart(3, "0");
   return `${config.prefix}-${currentYear}-${paddedNumber}`;

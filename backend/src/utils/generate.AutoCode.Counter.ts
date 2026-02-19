@@ -4,6 +4,7 @@ import { EmployeeSequenceCounter } from "../models/auto-generate-code-models/tec
 import { SuplierSequenceCounter } from "../models/auto-generate-code-models/supplier.code.models";
 import { CustomerInvoiceSequenceCounter } from "../models/auto-generate-code-models/invoice.code.models";
 import { QuotationSequenceCounter } from "../models/auto-generate-code-models/quotation.code.model";
+import { PurchaseOrderCounter } from "../models/auto-generate-code-models/purchase.order.code.models";
 
 //generate for db
 export const generateTicketCode = async (): Promise<string> => {
@@ -102,8 +103,26 @@ export const generateQuotationCode = async (): Promise<string> => {
 
   return `QUO-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
+//real code to save in db update
+export const generatePurchaseOrderCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
 
-//generate for view
+  const counter = await PurchaseOrderCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to generate purchase Code sequence");
+  }
+
+  return `QUO-${year}-${String(counter.seq).padStart(3, "0")}`;
+};
+
+
+
+//generate for view start from here
 
 export const getCurrentTechnicianJobCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
@@ -172,3 +191,14 @@ export const getQuotationCurrentCode = async (): Promise<string> => {
   return `QUO-${year}-${String(seq).padStart(3, "0")}`;
 };
 
+//get Purchase Order Code 
+export const getCurrentPurchaseOrderCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  // Just fetch current counter without updating
+  const counter = await PurchaseOrderCounter.findOne({ year });
+
+  const seq = counter ? counter.seq + 1 : 1;
+
+  return `PO-${year}-${String(seq).padStart(3, "0")}`;
+};
