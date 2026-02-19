@@ -15,26 +15,34 @@ export const technicianTicketsController = async (
   res: Response,
 ) => {
   try {
-    const technicianId = req.technicianId || req.body.technicianId;
-    // const technicianId = req.user?.userId;
-    console.log("Body: ", req);
+    // ✅ Flexible Technician ID
+    const technicianId =
+      req.technicianId ||
+      req.user?.userId ||
+      req.body.technicianId ||
+      (req.query.technicianId as string);
+
+    console.log("Body: ", req.body);
+    console.log("Query: ", req.query);
     console.log(
       "Technician Tickets Controller invoked for user:",
       technicianId,
     );
+
     if (!technicianId) {
       return res.status(400).json({
         success: false,
         message: "Technician user not provided.",
       });
     }
+
     // ✅ Pagination
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const search = (req.query.search as string) || "";
 
-    // ✅ Base Filter (array-safe)
+    // ✅ Base Filter
     const filter: any = {
       assignedTechnicianId: technicianId,
       isDeleted: false,
@@ -65,16 +73,12 @@ export const technicianTicketsController = async (
           { path: "contactId", select: "emailId" },
         ],
       })
-
       .populate("priorityId", "serviceRequestPrioprity")
       .populate("ticketStatusId", "label")
       .populate({
         path: "assignedTechnicianId",
         select: "personId",
-        populate: {
-          path: "personId",
-          select: "firstName lastName",
-        },
+        populate: { path: "personId", select: "firstName lastName" },
       })
       .populate({
         path: "vehicleId",
@@ -86,13 +90,15 @@ export const technicianTicketsController = async (
       })
       .lean();
 
-    // ✅ Format Response (ONLY LOGGED-IN TECHNICIAN)
+    // ✅ Format Response
     const formattedTickets = tickets.map((t: any) => {
       const myTechnician = Array.isArray(t.assignedTechnicianId)
         ? t.assignedTechnicianId.find(
             (tech: any) => tech?._id?.toString() === technicianId,
           )
-        : null;
+        : t.assignedTechnicianId?._id?.toString() === technicianId
+          ? t.assignedTechnicianId
+          : null;
 
       return {
         _id: t._id,

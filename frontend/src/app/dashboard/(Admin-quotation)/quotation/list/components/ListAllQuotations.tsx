@@ -83,12 +83,10 @@ const ListAllQuotations = () => {
       filtered = filtered.filter((q) => {
         const qStatus = q.quotationStatus?.toUpperCase() || "";
 
-        if (statusFilter === "SENT") {
-          return (
-            qStatus.includes("CUSTOMER") ||
-            qStatus.includes("INSURANCE") ||
-            qStatus.includes("ADMIN") ||
-            qStatus.includes("SENT")
+        if (selectedStatus) {
+          filtered = filtered.filter(
+            (q) =>
+              q.quotationStatus?.toUpperCase() === selectedStatus.toUpperCase(),
           );
         }
 
@@ -141,20 +139,19 @@ const ListAllQuotations = () => {
 
   const getStatusCounts = () => {
     const counts: { [key: string]: number } = {
-      SENT: 0,
+      "SEND TO CUSTOMER": 0,
+      "SEND TO INSURANCE": 0,
       APPROVED: 0,
       REJECTED: 0,
     };
 
     quotations.forEach((q) => {
       const status = q.quotationStatus?.toUpperCase() || "";
-      if (
-        status.includes("CUSTOMER") ||
-        status.includes("INSURANCE") ||
-        status.includes("ADMIN") ||
-        status.includes("SENT")
-      ) {
-        counts["SENT"] = (counts["SENT"] || 0) + 1;
+
+      if (status === "SEND TO CUSTOMER") {
+        counts["SEND TO CUSTOMER"] = (counts["SEND TO CUSTOMER"] || 0) + 1;
+      } else if (status === "SEND TO INSURANCE") {
+        counts["SEND TO INSURANCE"] = (counts["SEND TO INSURANCE"] || 0) + 1;
       } else if (status === "APPROVED") {
         counts["APPROVED"] = (counts["APPROVED"] || 0) + 1;
       } else if (status === "REJECTED") {
@@ -217,7 +214,7 @@ const ListAllQuotations = () => {
             quotations={filteredQuotations}
             onView={setViewingQuotationId}
             onEdit={(id) =>
-              router.push(`/dashboard/qutations/create?mode=edit&id=${id}`)
+              router.push(`/dashboard/quotation/create?mode=edit&id=${id}`)
             }
             onDelete={setDeletingId}
             getCustomerName={getCustomerName}
