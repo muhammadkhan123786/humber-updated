@@ -12,10 +12,11 @@ export const ticketQuotationSchema = {
     },
 
     quotationStatusId: {
-        type: Types.ObjectId,
-        ref: "TicketQuationStatus",
+        type: String,
+        enum: ["SENT TO ADMIN", "SEND TO CUSTOMER", "SEND TO INSURANCE", "APPROVED", "REJECTED"],
         index: true,
         required: true,
+        default: "SENT TO ADMIN"
     },
 
     partsList: [
@@ -46,13 +47,9 @@ export const ticketQuotationSchema = {
 
     ...commonSchema,
 };
-
-
-
 export const ticketQuotationValidation = z.object({
     ticketId: objectIdSchema,
-    quotationStatusId: objectIdSchema,
-
+    quotationStatusId: z.enum(["SENT TO ADMIN", "SEND TO CUSTOMER", "SEND TO INSURANCE", "APPROVED", "REJECTED"]).default("SENT TO ADMIN"),
     partsList: z.array(objectIdSchema).optional(),
 
     labourTime: z.number().optional(),

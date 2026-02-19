@@ -1,7 +1,8 @@
 import { IBaseEntity } from '../Base.Interface';
-export interface ITicketQuotation<TUserId = string, TTICKETID = string, TTICKETQUOTATIONSTATUSID = string, TQUOTATIONPARTS = string[], TTTECHNICIANID = string, VALIDITYDATE = string> extends IBaseEntity<TUserId> {
+export type QuotationStatuses = "SENT TO ADMIN" | "SEND TO CUSTOMER" | "SEND TO INSURANCE" | "APPROVED" | "REJECTED";
+export interface ITicketQuotation<TUserId = string, TTICKETID = string, TQUOTATIONPARTS = string[], TTTECHNICIANID = string, VALIDITYDATE = string> extends IBaseEntity<TUserId> {
     ticketId: TTICKETID,
-    quotationStatusId: TTICKETQUOTATIONSTATUSID,
+    quotationStatusId: QuotationStatuses,
     partsList?: TQUOTATIONPARTS,
     labourTime?: number,
     labourRate?: number,
