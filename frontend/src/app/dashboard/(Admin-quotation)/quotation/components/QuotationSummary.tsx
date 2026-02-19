@@ -161,7 +161,7 @@ const QuotationSummary = ({
       }
 
       setTimeout(() => {
-        window.location.href = "/dashboard/qutations";
+        window.location.href = "/dashboard/quotation";
       }, 1500);
     } catch (error: any) {
       console.error(
