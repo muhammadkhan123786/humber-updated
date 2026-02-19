@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-
 import {
   AreaChart,
   Area,
@@ -11,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Loader2 } from "lucide-react";
+import { BarChart3, Loader2 } from "lucide-react";
 import { getAlls } from "../../../../helper/apiHelper";
 
 type ViewType = "Daily" | "Weekly" | "Monthly" | "Custom";
@@ -20,6 +19,9 @@ const CustomerGrowthAnalytics: React.FC = () => {
   const [view, setView] = useState<ViewType>("Weekly");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const COLORS = {
     individual: "#6366f1",
@@ -32,20 +34,27 @@ const CustomerGrowthAnalytics: React.FC = () => {
       setLoading(true);
       try {
         let url = `/customers/summary?filter=${filter.toLowerCase()}`;
-        if (filter === "Custom" && from && to)
+
+        if (filter === "Custom") {
+          if (!from || !to) {
+            setLoading(false);
+            return;
+          }
           url = `/customers/summary?from=${from}&to=${to}`;
+        }
 
         const response: any = await getAlls(url);
         const chartArray = Array.isArray(response)
           ? response
           : response?.data || [];
 
+        // Agar data khali ho toh empty array set karein taake Recharts default line dikhaye
         setData(
           chartArray.map((item: any) => ({
             name: formatPeriod(item.period, filter),
-            individual: item.domestic,
-            corporate: item.corporate,
-            total: item.total,
+            individual: item.domestic || 0,
+            corporate: item.corporate || 0,
+            total: item.total || 0,
           })),
         );
       } catch (error) {
@@ -59,41 +68,64 @@ const CustomerGrowthAnalytics: React.FC = () => {
   );
 
   const formatPeriod = (period: string, filter: string) => {
-    if (filter === "Daily" || filter === "Custom") {
-      return new Date(period).toLocaleDateString("en-US", {
-        weekday: "short",
-        day: "numeric",
-      });
+    try {
+      if (filter === "Daily" || filter === "Custom") {
+        return new Date(period).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        });
+      }
+      return period;
+    } catch (e) {
+      return period;
     }
-    return period;
   };
 
   useEffect(() => {
-    if (view !== "Custom") fetchChartData(view);
-  }, [view, fetchChartData]);
+    if (view !== "Custom") {
+      fetchChartData(view);
+    } else if (fromDate && toDate) {
+      fetchChartData("Custom", fromDate, toDate);
+    }
+  }, [view, fromDate, toDate, fetchChartData]);
 
   return (
     <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-gray-200/50 border border-gray-50 mt-10">
-      <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4 px-2">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            {/* PUBLIC IMAGE ICON */}
-            <img
-              src="/graph.PNG"
-              alt="Graph Icon"
-              className="w-[18px] h-[18px]"
-            />
+      <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-6 px-2">
+        <div className="flex flex-col gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <BarChart3 size={21} className="text-[#8b5cf6]" />
 
-            <h2 className="text-xl font-bold text-[#8b5cf6] tracking-tight">
-              Customer Growth Analytics
-            </h2>
+              <h2 className="text-xl font-bold text-[#8b5cf6] tracking-tight">
+                Customer Growth Analytics
+              </h2>
+            </div>
+            <p className="text-slate-500 text-sm font-medium">
+              Track customer acquisition trends
+            </p>
           </div>
 
-          <p className="text-slate-500 text-sm font-medium">
-            Track customer acquisition trends
-          </p>
+          {view === "Custom" && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 bg-slate-50 p-2 rounded-xl border border-slate-100 w-fit">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="text-xs bg-transparent border-none outline-none font-semibold text-slate-600 cursor-pointer"
+              />
+              <span className="text-slate-400 text-[10px] font-black uppercase">
+                to
+              </span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="text-xs bg-transparent border-none outline-none font-semibold text-slate-600 cursor-pointer"
+              />
+            </div>
+          )}
         </div>
-
         <div className="bg-slate-50 p-1.5 rounded-2xl flex gap-1 border border-slate-100">
           {(["Daily", "Weekly", "Monthly", "Custom"] as ViewType[]).map(
             (type) => (
@@ -112,8 +144,6 @@ const CustomerGrowthAnalytics: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* GRAPH CONTAINER - FIXED MARGINS TO SHOW ALL TEXT */}
       <div className="h-[420px] w-full relative p-6 bg-white rounded-4xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.06)] border border-slate-50/50">
         {loading && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-4xl">
@@ -123,7 +153,11 @@ const CustomerGrowthAnalytics: React.FC = () => {
 
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
-            data={data}
+            data={
+              data.length > 0
+                ? data
+                : [{ name: "", individual: 0, corporate: 0, total: 0 }]
+            }
             margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
           >
             <defs>
@@ -167,7 +201,6 @@ const CustomerGrowthAnalytics: React.FC = () => {
               tickLine={false}
               tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 600 }}
               dy={15}
-              padding={{ left: 10, right: 10 }}
             />
             <YAxis
               axisLine={false}
@@ -189,6 +222,7 @@ const CustomerGrowthAnalytics: React.FC = () => {
               stroke={COLORS.individual}
               strokeWidth={3}
               fill="url(#colorInd)"
+              connectNulls={true}
             />
             <Area
               type="monotone"
@@ -196,6 +230,7 @@ const CustomerGrowthAnalytics: React.FC = () => {
               stroke={COLORS.corporate}
               strokeWidth={3}
               fill="url(#colorCorp)"
+              connectNulls={true}
             />
             <Area
               type="monotone"
@@ -203,12 +238,13 @@ const CustomerGrowthAnalytics: React.FC = () => {
               stroke={COLORS.total}
               strokeWidth={3}
               fill="url(#colorTotal)"
+              connectNulls={true}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* CENTERED LEGEND */}
+      {/* LEGEND Section */}
       <div className="flex justify-center flex-wrap items-center gap-8 mt-8">
         <div className="flex items-center gap-2">
           <div
