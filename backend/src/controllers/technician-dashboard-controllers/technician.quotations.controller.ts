@@ -28,7 +28,6 @@ export const technicianTicketsQuotationsController = async (
     // =====================================================
     const matchQuery: any = { isDeleted: false };
 
-    // Technician → only own quotations
     if (req.role === "Technician") {
       if (!req.technicianId) {
         return res.status(400).json({
@@ -39,11 +38,19 @@ export const technicianTicketsQuotationsController = async (
       matchQuery.technicianId = new Types.ObjectId(req.technicianId);
     }
 
-    // Admin → fetch all (no technician filter)
+    // =====================================================
+    // ✅ ENUM STATUS FILTER (STRING BASED)
+    // =====================================================
+    const allowedStatuses = [
+      "SENT TO ADMIN",
+      "SEND TO CUSTOMER",
+      "SEND TO INSURANCE",
+      "APPROVED",
+      "REJECTED",
+    ];
 
-    // Optional filters
-    if (quotationStatusId && Types.ObjectId.isValid(quotationStatusId)) {
-      matchQuery.quotationStatusId = new Types.ObjectId(quotationStatusId);
+    if (quotationStatusId && allowedStatuses.includes(quotationStatusId)) {
+      matchQuery.quotationStatusId = quotationStatusId;
     }
 
     // =====================================================
@@ -79,17 +86,6 @@ export const technicianTicketsQuotationsController = async (
         },
       },
 
-      // Quotation Status
-      {
-        $lookup: {
-          from: "ticketquationstatuses",
-          localField: "quotationStatusId",
-          foreignField: "_id",
-          as: "quotationStatus",
-        },
-      },
-      { $unwind: "$quotationStatus" },
-
       // Customer
       {
         $lookup: {
@@ -112,7 +108,7 @@ export const technicianTicketsQuotationsController = async (
       },
       { $unwind: "$person" },
 
-      // Contact (🔥 missing in your code earlier)
+      // Contact
       {
         $lookup: {
           from: "contacts",
@@ -218,14 +214,14 @@ export const technicianTicketsQuotationsController = async (
     }
 
     // =====================================================
-    // 🔢 COUNT PIPELINE (OPTIMIZED)
+    // 🔢 COUNT PIPELINE
     // =====================================================
     const countPipeline = [...pipeline, { $count: "total" }];
     const countResult = await TicketQuations.aggregate(countPipeline);
     const total = countResult[0]?.total || 0;
 
     // =====================================================
-    // 📄 PAGINATION (skip if filter=all)
+    // 📄 PAGINATION
     // =====================================================
     pipeline.push({ $sort: { createdAt: -1 } });
 
@@ -243,7 +239,7 @@ export const technicianTicketsQuotationsController = async (
         labourTotalBill: 1,
         netTotal: 1,
         createdAt: 1,
-        quotationStatus: "$quotationStatus.ticketQuationStatus",
+        quotationStatus: "$quotationStatusId", // ✅ DIRECT ENUM VALUE
 
         ticket: {
           _id: "$ticket._id",
@@ -282,11 +278,11 @@ export const technicianTicketsQuotationsController = async (
         filter === "all"
           ? null
           : {
-              total,
-              page,
-              limit,
-              pages: Math.ceil(total / limit),
-            },
+            total,
+            page,
+            limit,
+            pages: Math.ceil(total / limit),
+          },
     });
   } catch (error) {
     console.error("Technician Ticket quotations Error:", error);
@@ -296,3 +292,4 @@ export const technicianTicketsQuotationsController = async (
     });
   }
 };
+
