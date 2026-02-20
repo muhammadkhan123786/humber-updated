@@ -1,66 +1,3 @@
-// export interface PurchaseOrderItem {
-//   id: string;
-//   productName: string;
-//   sku: string;
-//   quantity: number;
-//   unitPrice: number;
-//   totalPrice: number;
-// }
-
-// export interface Supplier {
-//   _id: string;
-//   operationalInformation: {
-//     orderContactName: string;
-//     orderContactEmail: string;
-//   };
-// }
-
-
-// export interface PurchaseOrder {
-//   _id: string;
-//   orderNumber: string;
-//    supplier: string | Supplier;
-//   orderContactEmail: string;
-//   orderDate: Date;
-//   expectedDelivery: Date;
-//   status: 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
-//   items: PurchaseOrderItem[];
-//   subtotal: number;
-//   tax: number;
-//   total: number;
-//   notes: string;
-// }
-
-// export interface Supplier {
-//   id: string;
-//   legalBusinessName: string;
-//   email: string;
-//   phoneNumber: string;
-// }
-
-// export interface PurchaseOrderStats {
-//   totalOrders: number;
-//   pendingOrders: number;
-//   orderedCount: number;
-//   receivedCount: number;
-// }
-
-// export interface OrderFormData {
-//   supplier: string;
-//   orderContactEmail: string;
-//   expectedDelivery: string;
-//   notes: string;
-// }
-
-// export interface OrderItemForm {
-//   productName: string;
-//   sku: string;
-//   quantity: string;
-//   unitPrice: string;
-// }
-
-
-
 // ============================================================================
 // CORE TYPES (from backend/common interfaces)
 // ============================================================================
@@ -69,24 +6,25 @@ import { IBaseEntity } from "../../../../../../../common/Base.Interface";
 
 /**
  * Purchase Order Item - represents a single line item in an order
+ * productId is stored in DB; productName/sku are display-only on the frontend
  */
 export interface IPurchaseOrderItem {
-  productName: string;
-  sku: string;
+  productId: string;           // ← ADDED: stored in DB as ObjectId ref to Product
+  productName: string;         // display only (not stored in DB)
+  sku: string;                 // display only (not stored in DB)
   quantity: number;
   unitPrice: number;
-  totalPrice: number;
+  totalPrice: number;          // display only (computed, not stored in DB)
   orderContactEmail?: string;
   _id?: string;
 }
 
 /**
  * Purchase Order - main order entity
- * Generic TUserId allows flexibility for different user ID types
  */
 export interface IPurchaseOrder<TUserId = string> extends IBaseEntity<TUserId> {
   orderNumber: string;
-  supplier: string; // Can be ID reference to supplier
+  supplier: string;
   orderDate: Date;
   expectedDelivery: Date;
   status: 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
@@ -109,19 +47,16 @@ export interface ISupplier {
   contactInformation: {
     contactInformation: string;
     emailAddress: string;
-    primaryContactName: string
+    primaryContactName: string;
   };
 }
 
 // ============================================================================
-// DTO TYPES (Data Transfer Objects - for API calls)
+// DTO TYPES
 // ============================================================================
 
-/**
- * DTO for creating a new purchase order
- */
 export interface CreatePurchaseOrderDTO {
-  orderNumber?: string; // Auto-generated if not provided
+  orderNumber?: string;
   supplier: string;
   expectedDelivery: Date | string;
   items: IPurchaseOrderItem[];
@@ -131,9 +66,6 @@ export interface CreatePurchaseOrderDTO {
   updatedBy?: string;
 }
 
-/**
- * DTO for updating an existing purchase order
- */
 export interface UpdatePurchaseOrderDTO {
   supplier?: string;
   expectedDelivery?: Date | string;
@@ -146,9 +78,6 @@ export interface UpdatePurchaseOrderDTO {
   updatedBy?: string;
 }
 
-/**
- * Query filters for fetching purchase orders
- */
 export interface PurchaseOrderFilters {
   userId?: string;
   status?: string;
@@ -160,33 +89,23 @@ export interface PurchaseOrderFilters {
   limit?: number;
   sortBy?: string;
   order?: 'asc' | 'desc';
-  orderId?: string; // For filtering by specific order
+  orderId?: string;
 }
 
 // ============================================================================
-// FRONTEND-SPECIFIC TYPES (for UI state management)
+// FRONTEND-SPECIFIC TYPES
 // ============================================================================
 
-/**
- * Purchase order with populated supplier information
- * Used when displaying orders with full supplier details
- */
 export interface IPurchaseOrderWithSupplier extends Omit<IPurchaseOrder, 'supplier'> {
-  supplier: ISupplier; // Populated supplier object instead of just ID
+  supplier: ISupplier;
 }
 
-/**
- * Type guard to check if supplier is populated
- */
 export function isSupplierPopulated(
   order: IPurchaseOrder | IPurchaseOrderWithSupplier
 ): order is IPurchaseOrderWithSupplier {
   return typeof order.supplier === 'object' && order.supplier !== null;
 }
 
-/**
- * Statistics for purchase orders dashboard
- */
 export interface PurchaseOrderStats {
   totalOrders: number;
   pendingOrders: number;
@@ -194,47 +113,35 @@ export interface PurchaseOrderStats {
   receivedCount: number;
 }
 
-/**
- * Form data for creating/editing orders
- * Uses string values for form inputs (will be converted to proper types on submit)
- */
 export interface OrderFormData {
   supplier: string;
   orderContactEmail: string;
-  expectedDelivery: string; // ISO date string for input[type="date"]
+  expectedDelivery: string;
   notes: string;
 }
 
 /**
  * Form data for adding new items to an order
- * Uses string values for form inputs
+ * productId holds product._id — this is what gets saved to MongoDB
  */
 export interface OrderItemForm {
-  productName: string;
-  sku: string;
-  quantity: string; // String for input, converted to number on submit
-  unitPrice: string; // String for input, converted to number on submit
+  productId: string;    // ← KEPT: holds product._id for DB storage
+  productName: string;  // display only
+  sku: string;          // display only
+  quantity: string;
+  unitPrice: string;
 }
 
 // ============================================================================
-// UTILITY TYPES (Flexible helpers)
+// UTILITY TYPES
 // ============================================================================
 
-/**
- * Partial order for updates - makes all fields optional except ID
- */
 export type PartialPurchaseOrder = Partial<Omit<IPurchaseOrder, '_id'>> & {
   _id: string;
 };
 
-/**
- * Order status type - extracted for reuse
- */
 export type OrderStatus = IPurchaseOrder['status'];
 
-/**
- * Available order statuses as array (for dropdowns, filters)
- */
 export const ORDER_STATUSES: OrderStatus[] = [
   'draft',
   'pending',
@@ -244,52 +151,33 @@ export const ORDER_STATUSES: OrderStatus[] = [
   'cancelled'
 ];
 
-/**
- * Status display configuration
- */
 export const STATUS_CONFIG: Record<OrderStatus, {
   label: string;
   color: string;
   bgColor: string;
 }> = {
-  draft: {
-    label: 'Draft',
-    color: 'text-gray-700',
-    bgColor: 'bg-gray-100'
-  },
-  pending: {
-    label: 'Pending',
-    color: 'text-yellow-700',
-    bgColor: 'bg-yellow-100'
-  },
-  approved: {
-    label: 'Approved',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-100'
-  },
-  ordered: {
-    label: 'Ordered',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100'
-  },
-  received: {
-    label: 'Received',
-    color: 'text-green-700',
-    bgColor: 'bg-green-100'
-  },
-  cancelled: {
-    label: 'Cancelled',
-    color: 'text-red-700',
-    bgColor: 'bg-red-100'
-  }
+  draft:     { label: 'Draft',     color: 'text-gray-700',   bgColor: 'bg-gray-100'   },
+  pending:   { label: 'Pending',   color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
+  approved:  { label: 'Approved',  color: 'text-blue-700',   bgColor: 'bg-blue-100'   },
+  ordered:   { label: 'Ordered',   color: 'text-purple-700', bgColor: 'bg-purple-100' },
+  received:  { label: 'Received',  color: 'text-green-700',  bgColor: 'bg-green-100'  },
+  cancelled: { label: 'Cancelled', color: 'text-red-700',    bgColor: 'bg-red-100'    },
 };
 
 // ============================================================================
-// CONVERSION HELPERS (Transform between types)
+// CONVERSION HELPERS
 // ============================================================================
 
 /**
- * Convert form data to create DTO
+ * Convert form data + items → create DTO sent to backend.
+ *
+ * FIX: items are now mapped to { productId, quantity, unitPrice } which
+ * matches the Zod schema:
+ *   purchaseOrderItemZodSchema = z.object({
+ *     productId: z.string(),
+ *     quantity:  z.number().min(1),
+ *     unitPrice: z.number().nonnegative(),
+ *   })
  */
 export function formDataToCreateDTO(
   formData: OrderFormData,
@@ -301,36 +189,46 @@ export function formDataToCreateDTO(
     supplier: formData.supplier,
     orderContactEmail: formData.orderContactEmail,
     expectedDelivery: new Date(formData.expectedDelivery),
-    items,
-    notes: formData.notes || undefined
+    notes: formData.notes || undefined,
+    // ↓ Only send what the backend Zod schema requires for each item
+    items: items.map((item) => ({
+      productId: item.productId,   // ← FIX: was missing → caused "received undefined"
+      quantity:  item.quantity,
+      unitPrice: item.unitPrice,   // ← FIX: was `price` in old version; Zod expects `unitPrice`
+      // productName / sku / totalPrice are NOT sent — backend doesn't want them
+    })) as unknown as IPurchaseOrderItem[],
   };
 }
 
 /**
- * Convert order item form to purchase order item
+ * Convert item form row → IPurchaseOrderItem (used in the frontend list).
+ * productId is carried through so formDataToCreateDTO can access it later.
  */
 export function itemFormToOrderItem(itemForm: OrderItemForm): IPurchaseOrderItem {
-  const quantity = parseInt(itemForm.quantity);
+  const quantity  = parseInt(itemForm.quantity,  10);
   const unitPrice = parseFloat(itemForm.unitPrice);
-  
+
   return {
-    productName: itemForm.productName.trim(),
-    sku: itemForm.sku.trim(),
+    productId:   itemForm.productId,           // ← FIX: must be mapped here
+    productName: itemForm.productName.trim(),   // display only
+    sku:         itemForm.sku.trim(),           // display only
     quantity,
     unitPrice,
-    totalPrice: quantity * unitPrice
+    totalPrice:  quantity * unitPrice,          // display only
   };
 }
 
 /**
- * Convert purchase order to form data (for editing)
+ * Convert purchase order → form data (for the edit flow)
  */
-export function orderToFormData(order: IPurchaseOrder | IPurchaseOrderWithSupplier): OrderFormData {
+export function orderToFormData(
+  order: IPurchaseOrder | IPurchaseOrderWithSupplier
+): OrderFormData {
   return {
     supplier: isSupplierPopulated(order) ? order.supplier._id : order.supplier,
     orderContactEmail: order.orderContactEmail || '',
     expectedDelivery: new Date(order.expectedDelivery).toISOString().split('T')[0],
-    notes: order.notes || ''
+    notes: order.notes || '',
   };
 }
 
@@ -338,78 +236,59 @@ export function orderToFormData(order: IPurchaseOrder | IPurchaseOrderWithSuppli
 // VALIDATION HELPERS
 // ============================================================================
 
-/**
- * Validate order form data
- */
 export function validateOrderForm(formData: OrderFormData): string[] {
   const errors: string[] = [];
-  
-  if (!formData.supplier) {
-    errors.push('Supplier is required');
-  }
-  
-  if (!formData.expectedDelivery) {
-    errors.push('Expected delivery date is required');
-  }
-  
+  if (!formData.supplier)         errors.push('Supplier is required');
+  if (!formData.expectedDelivery) errors.push('Expected delivery date is required');
   return errors;
 }
 
-/**
- * Validate order items
- */
 export function validateOrderItems(items: IPurchaseOrderItem[]): string[] {
   const errors: string[] = [];
-  
+
   if (items.length === 0) {
     errors.push('At least one item is required');
   }
-  
+
   items.forEach((item, index) => {
-    if (!item.productName) {
-      errors.push(`Item ${index + 1}: Product name is required`);
-    }
-    if (!item.sku) {
-      errors.push(`Item ${index + 1}: SKU is required`);
-    }
-    if (item.quantity <= 0) {
-      errors.push(`Item ${index + 1}: Quantity must be greater than 0`);
-    }
-    if (item.unitPrice <= 0) {
-      errors.push(`Item ${index + 1}: Unit price must be greater than 0`);
-    }
+    if (!item.productId)   errors.push(`Item ${index + 1}: Product must be selected from the list`);
+    if (!item.productName) errors.push(`Item ${index + 1}: Product name is required`);
+    if (!item.sku)         errors.push(`Item ${index + 1}: SKU is required`);
+    if (item.quantity  <= 0) errors.push(`Item ${index + 1}: Quantity must be greater than 0`);
+    if (item.unitPrice <= 0) errors.push(`Item ${index + 1}: Unit price must be greater than 0`);
   });
-  
+
   return errors;
 }
 
 /**
- * Validate item form before adding
+ * Validate item form before adding to the list.
+ * Checks productId first — if user typed a name but didn't pick from the
+ * dropdown, productId will be "" and we catch it here with a clear message.
  */
 export function validateItemForm(itemForm: OrderItemForm): string | null {
+  // ← FIX: this check was missing entirely in the old version
+  if (!itemForm.productId)
+    return 'Please select a product from the dropdown (do not type manually)';
+
   if (!itemForm.productName) return 'Product name is required';
-  if (!itemForm.sku) return 'SKU is required';
-  
-  const quantity = parseInt(itemForm.quantity);
-  if (isNaN(quantity) || quantity <= 0) {
+  if (!itemForm.sku)         return 'SKU is required';
+
+  const quantity = parseInt(itemForm.quantity, 10);
+  if (isNaN(quantity) || quantity <= 0)
     return 'Quantity must be a number greater than 0';
-  }
-  
+
   const unitPrice = parseFloat(itemForm.unitPrice);
-  if (isNaN(unitPrice) || unitPrice <= 0) {
+  if (isNaN(unitPrice) || unitPrice <= 0)
     return 'Unit price must be a number greater than 0';
-  }
-  
-  return null; // No errors
+
+  return null;
 }
 
 // ============================================================================
 // CALCULATION HELPERS
 // ============================================================================
 
-/**
- * Calculate order totals
- */
 export interface OrderTotals {
   subtotal: number;
   tax: number;
@@ -421,12 +300,12 @@ export function calculateOrderTotals(
   taxRate: number = 0
 ): OrderTotals {
   const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-  const tax = subtotal * (taxRate / 100);
-  const total = subtotal + tax;
-  
+  const tax      = subtotal * (taxRate / 100);
+  const total    = subtotal + tax;
+
   return {
     subtotal: Math.round(subtotal * 100) / 100,
-    tax: Math.round(tax * 100) / 100,
-    total: Math.round(total * 100) / 100
+    tax:      Math.round(tax      * 100) / 100,
+    total:    Math.round(total    * 100) / 100,
   };
 }

@@ -122,6 +122,7 @@ const CategoryForm = ({
       if (editingData?._id) {
         await updateCategory(editingData._id, payload as any);
       } else {
+        console.log("pay", payload);
         await createCategory(payload as any);
       }
 

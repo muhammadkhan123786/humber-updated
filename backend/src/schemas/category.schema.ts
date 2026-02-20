@@ -17,7 +17,7 @@ export const categorySchemaValidation = z.object({
     userId: z.string().min(1, "userId is required"),  // will be converted to ObjectId
     categoryName: z.string().min(1, "Currency name is required"),
     name:z.string().optional(),
-    parentId: z.string().regex(/^[0-9a-fA-F]{24}$/).nullable(),
+    parentId: z.string().regex(/^[0-9a-fA-F]{24}$/).nullable().optional(),
     isActive: z.boolean().optional(),
     isDeleted: z.boolean().optional(),
     isDefault: z.boolean().optional(),

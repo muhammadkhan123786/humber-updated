@@ -40,6 +40,7 @@ export const usePurchaseOrders = () => {
   });
   const [orderItems, setOrderItems] = useState<IPurchaseOrderItem[]>([]);
   const [newItem, setNewItem] = useState<OrderItemForm>({
+    productId: '',
     productName: '',
     sku: '',
     quantity: '',
@@ -79,7 +80,7 @@ const fetchOrdersData = async () => {
     }
     
     const response = await PurchaseOrderAPI.fetchOrders(params.page, params.limit, params.search, params.status);
-    setOrders(response.data || []);
+    setOrders(response?.data as any || []);
     setTotal(response.total || 0);
   } catch (error) {
     console.error("Failed to load orders", error);
@@ -97,9 +98,8 @@ const fetchOrdersData = async () => {
     try {
       const res = await PurchaseOrderAPI.fetchSuppliers();
       setSupplierList(res);
-      console.log("Suppliers:", res);
     } catch (error) {
-      console.log("Error in fetching suppliers", error);
+      console.error("Error in fetching suppliers", error);
       toast.error('Failed to load suppliers');
     }
   };
@@ -175,7 +175,7 @@ const fetchOrdersData = async () => {
     const item = itemFormToOrderItem(newItem);
     
     setOrderItems(prev => [...prev, item]);
-    setNewItem({ productName: '', sku: '', quantity: '', unitPrice: '' });
+    setNewItem({productId: '', productName: '', sku: '', quantity: '', unitPrice: '' });
     toast.success('Item added to order');
   };
 
@@ -225,8 +225,8 @@ const fetchOrdersData = async () => {
           notes: orderForm.notes
         };
 
-        await PurchaseOrderAPI.updatePurchaseOrder(editingOrder._id, updatePayload);
-        toast.success('Purchase order updated successfully!');
+        await PurchaseOrderAPI.updatePurchaseOrder(editingOrder._id, updatePayload as any);
+        // toast.success('Purchase order updated successfully!');
       } else {
         // Create new order
         const newOrder = formDataToCreateDTO(orderForm, orderItems, orderNumber);
@@ -234,9 +234,8 @@ const fetchOrdersData = async () => {
         newOrder.subtotal = subtotal;
         newOrder.tax = tax;
         newOrder.total = total;
-
         await PurchaseOrderAPI.createPurchaseOrder(newOrder);
-        toast.success('Purchase order created successfully!');
+        // toast.success('Purchase order created successfully!');
       }
 
       resetForm();
@@ -312,7 +311,7 @@ const fetchOrdersData = async () => {
       notes: ''
     });
     setOrderItems([]);
-    setNewItem({ productName: '', sku: '', quantity: '', unitPrice: '' });
+    setNewItem({productId: '', productName: '', sku: '', quantity: '', unitPrice: '' });
   };
 
   // ============================================================================

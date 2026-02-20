@@ -151,8 +151,8 @@ const totals = React.useMemo(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  {grn.items.map(item => (
-                    <tr key={item._id!} className="border-t border-gray-100">
+                  {grn.items.map((item, index) => (
+                    <tr key={item._id! || index} className="border-t border-gray-100">
                       <td className="p-3">
                         <p className="font-medium">{item.productName}</p>
                         <p className="text-xs text-gray-500 font-mono">{item.sku}</p>
