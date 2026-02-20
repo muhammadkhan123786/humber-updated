@@ -1,19 +1,29 @@
 import { z } from "zod";
 import { Schema, SchemaDefinition, Types } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
-import { generateNextDocumentNumber } from "../services/documentNumber.service";
 
 // ✅ Define the item schema as a Schema instance
 export const PurchaseOrderItemSchema = new Schema(
   {
-    productName: { type: String, required: true },
-    sku: { type: String, required: true },
-    quantity: { type: Number, required: true },
-    unitPrice: { type: Number, required: true },
-    totalPrice: { type: Number, required: true },
+    productId: {
+      type: Types.ObjectId,
+      ref: "Product",   
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
   },
-  { _id: true } // Set to false if you don't want _id for subdocuments
+  { _id: false }
 );
+
 
 // ✅ Create the main schema as a Schema instance
 export const PurchaseOrderSchema = new Schema(
@@ -45,7 +55,7 @@ export const PurchaseOrderSchema = new Schema(
       default: "draft",
     },
     items: {
-      type: [PurchaseOrderItemSchema], // ✅ Use the Schema instance
+      type: [PurchaseOrderItemSchema], 
       required: true,
       validate: {
         validator: function (v: any[]) {
@@ -74,21 +84,10 @@ export const PurchaseOrderSchema = new Schema(
       default: "",
     },
   },
-  { timestamps: true } // ✅ Add timestamps
+  { timestamps: true } 
 );
 
-// // ✅ Now you can use .pre() hook on the Schema instance
-// PurchaseOrderSchema.pre("save", async function (this: any) {
-//   if (this.isNew) {
-//     if (!this.orderNumber) {
-//       this.orderNumber = await generateNextDocumentNumber("PO", this.constructor);
-//     }
 
-//     if (!this.poReference) {
-//       this.poReference = await generateNextDocumentNumber("PO_REFERENCE", this.constructor);
-//     }
-//   }
-// });
 
 PurchaseOrderSchema.index(
   { orderNumber: 1 },
@@ -100,12 +99,11 @@ PurchaseOrderSchema.index(
 
 // ✅ Zod validation schemas
 export const purchaseOrderItemZodSchema = z.object({
-  productName: z.string().min(1, "Product name is required"),
-  sku: z.string().min(1, "SKU is required"),
-  quantity: z.number().positive("Quantity must be positive"),
-  unitPrice: z.number().positive("Unit price must be positive"),
-  totalPrice: z.number().positive("Total price must be positive"),
+  productId: z.string(),
+  quantity: z.number().min(1),
+  unitPrice: z.number().nonnegative(),
 });
+
 
 export const purchaseOrderZodSchema = z.object({
   ...commonSchemaValidation,

@@ -8,7 +8,8 @@ export const useFormActions = <T extends { _id: string }>(
   queryKey: string, // Unique key for caching e.g., "businessTypes"
   moduleName: string, // Naya parameter: e.g., "Business Type"
   page: number = 1,
-  search: string = ""
+  search: string = "",
+  enabled: boolean = true
 ) => {
   const queryClient = useQueryClient();
 
@@ -21,6 +22,7 @@ export const useFormActions = <T extends { _id: string }>(
         search: search.trim() 
     }),
     placeholderData: (previousData) => previousData, // Smooth transition between pages
+    enabled, 
   });
 
   // 2. DELETE MUTATION (Delete)

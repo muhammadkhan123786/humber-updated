@@ -69,7 +69,11 @@ export class PurchaseOrderCustomController {
       // Execute query with population
       const data = await PurchaseOrder.find(queryFilters)
         .populate('userId', 'email role')
-        .populate('supplier') // Populate full supplier details
+        .populate('supplier')
+        .populate({
+          path: 'items.productId',
+          select: 'productName sku'
+        })  
         .sort(sortOption)
         .skip(skip)
         .limit(pageSize)

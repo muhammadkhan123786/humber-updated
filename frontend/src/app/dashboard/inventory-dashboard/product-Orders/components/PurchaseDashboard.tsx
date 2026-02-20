@@ -48,7 +48,6 @@ const [nextNumber, setNextNumber] = useState();
     handleExportSingleOrder,
   } = usePurchaseOrders();
 
-  console.log("purchaseOrderAutoCode", orderNumber);
   const handleOpenCreateOrder = () => {
     resetForm();
     setIsOrderDialogOpen(true);
@@ -70,7 +69,6 @@ const [nextNumber, setNextNumber] = useState();
   };
 
 const handleConfirmDelete = async () => {
-  console.log("deletingOrderId", deletingOrderId)
 
   try {
     await handleDeleteOrder(deletingOrderId);

@@ -63,6 +63,11 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
     alert("PDF export functionality would be implemented here");
   };
 
+  const isProductPopulated = (
+  product: string | { _id: string; productName: string; sku: string }
+): product is { _id: string; productName: string; sku: string } => {
+  return typeof product === "object" && product !== null;
+};
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -181,14 +186,14 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {order.items.map((item) => (
+                  {order.items.map((item, index) => (
                     <tr
-                      key={item._id}
+                      key={item._id || index}
                       className="border-t border-gray-100 hover:bg-gray-50"
                     >
-                      <td className="p-3 text-sm">{item.productName}</td>
+                      <td className="p-3 text-sm"> {isProductPopulated(item.productId) ? item.productId.productName : ""}</td>
                       <td className="p-3 text-sm font-mono text-gray-600">
-                        {item.sku}
+                       {isProductPopulated(item.productId) ? item.productId.sku : ""}
                       </td>
                       <td className="p-3 text-sm text-center">
                         {item.quantity}
@@ -197,7 +202,7 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
                         £{item.unitPrice.toFixed(2)}
                       </td>
                       <td className="p-3 text-sm text-right font-semibold">
-                        £{item.totalPrice.toFixed(2)}
+                        £{(item.unitPrice * item.quantity).toFixed(2)}
                       </td>
                     </tr>
                   ))}
