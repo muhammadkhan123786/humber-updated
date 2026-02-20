@@ -132,13 +132,13 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
             phone: data.ticketId?.customerId?.contactId?.phone || '',
           },
           partsList: (data.partsList || []).map((part: any) => ({
-            _id: part._id || part.partId?._id || '',
-            partName: part.partName || part.partId?.partName || 'Unknown Part',
-            partNumber: part.partNumber || part.partId?.partNumber || 'N/A',
+            _id: part.partId || part._id || '', // partId is now a string ID
+            partName: part.partName || 'Unknown Part',
+            partNumber: part.partNumber || 'N/A', // This might not be in IQuotationPartItem
             quantity: Number(part.quantity) || 1,
-            unitCost: Number(part.unitCost) || Number(part.partId?.unitCost) || 0,
-            stock: part.stock || part.partId?.stock,
-            description: part.description || part.partId?.description || '',
+            unitCost: Number(part.unitPrice) || 0, // Changed from unitCost to unitPrice
+            stock: 0, // Not available in IQuotationPartItem
+            description: '',
           })),
           labourTime: data.labourTime,
           labourRate: data.labourRate,

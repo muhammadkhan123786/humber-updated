@@ -112,36 +112,38 @@ const CreateQuotationPage = () => {
           setShowTicketInfo(true);
         }
         
-        // Set parts list - group duplicates by ID and sum quantities
+        // Set parts list - map from IQuotationPartItem format to SelectedPart format
         if (quotation.partsList && Array.isArray(quotation.partsList)) {
           const partsMap = new Map<string, SelectedPart>();
           
           quotation.partsList
-            .filter((part: any) => part && part._id)
+            .filter((part: any) => part && part.partId)
             .forEach((part: any) => {
-              const partId = part._id;
+              // Use partId instead of _id (based on IQuotationPartItem interface)
+              const partId = part.partId;
               
               if (partsMap.has(partId)) {
                 // If part already exists, increment its quantity
                 const existingPart = partsMap.get(partId)!;
                 existingPart.quantity += (part.quantity || 1);
               } else {
-                // Add new part
+                // Add new part - map from IQuotationPartItem to SelectedPart format
                 partsMap.set(partId, {
-                  _id: part._id,
+                  _id: part.partId, // Map partId to _id
                   partName: part.partName || 'Unknown Part',
-                  partNumber: part.partNumber || 'N/A',
+                  partNumber: 'N/A', // Part number not stored in IQuotationPartItem
                   quantity: part.quantity || 1,
-                  unitCost: part.unitCost || 0,
-                  stock: part.stock,
-                  description: part.description || '',
-                  isActive: part.isActive
+                  unitCost: part.unitPrice || 0, // Map unitPrice to unitCost
+                  stock: 0, // Not available in IQuotationPartItem
+                  description: '',
+                  isActive: true
                 });
               }
             });
           
           // Convert map to array
           const formattedParts = Array.from(partsMap.values());
+          console.log('Loaded parts for edit:', formattedParts);
           setSelectedParts(formattedParts);
         }
         
