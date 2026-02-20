@@ -1,10 +1,11 @@
 "use client";
 import { Calculator, AlertCircle, Save, Send, Download } from 'lucide-react';
-import { createItem,  updateItem } from '@/helper/apiHelper';
 import { toast } from "react-hot-toast";
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useCreateQuotation, useUpdateQuotation } from '@/hooks/quotations/useQuotationMutations';
 
 interface Part {
   _id: string;      
@@ -48,9 +49,16 @@ const QuotationSummary = ({
   isEditMode = false,
   technicianId: technicianIdProp = '' // Renamed to avoid shadowing
 }: QuotationSummaryProps) => {
-  const [saving, setSaving] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<string>('draft');
-  // Calculate totals based on selected parts (MOVED BEFORE FUNCTIONS)
+  const router = useRouter();
+  
+  // TanStack Query Mutations
+  const createQuotationMutation = useCreateQuotation();
+  const updateQuotationMutation = useUpdateQuotation();
+  
+  const saving = createQuotationMutation.isPending || updateQuotationMutation.isPending;
+  
+  // Calculate totals based on selected parts
   const partsTotal = selectedParts.reduce((sum, part) => sum + ((part.unitCost || 0) * part.quantity), 0);
   const laborTotal = laborHours * ratePerHour;
   const subtotal = partsTotal + laborTotal;
@@ -75,91 +83,76 @@ const QuotationSummary = ({
       return;
     }
 
-    setSaving(true);
+    // Get technician ID - priority: 1) Passed prop (from edit), 2) localStorage, 3) Selected ticket
+    const technicianId = technicianIdProp || localStorage.getItem('technicianId') || selectedTicket.assignedTechnician?._id;
+    
+    if (!technicianId) {
+      toast.error('Technician ID not found. Please log in again.');
+      return;
+    }
+
+    // Get userId - required by backend
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        userId = user._id || user.userId;
+      }
+    }
+
+    if (!userId) {
+      toast.error('User ID not found. Please log in again.');
+      return;
+    }
+    
+    const quotationData = {
+      userId: userId,
+      ticketId: selectedTicket._id,
+      quotationStatusId: status,
+      partsList: selectedParts.map(part => ({
+        partId: part._id,
+        partName: part.partName,
+        quantity: part.quantity,
+        unitPrice: part.unitCost || 0,
+        discount: 0,
+        total: (part.unitCost || 0) * part.quantity
+      })),
+      labourTime: laborHours,
+      labourRate: ratePerHour,
+      aditionalNotes: additionalNotes,
+      validityDate: validUntil ? new Date(validUntil).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      technicianId: technicianId,
+      partTotalBill: partsTotal,
+      labourTotalBill: laborTotal,
+      subTotalBill: subtotal,
+      taxAmount: vatAmount,
+      netTotal: total,
+      quotationAutoId: quotationAutoId,
+      isActive: true
+    };
+
+    console.log('Quotation data:', quotationData);
+    
     try {
-      // Fetch default quotation status using axios directly
-     
-
-      // Get technician ID - priority: 1) Passed prop (from edit), 2) localStorage, 3) Selected ticket
-      const technicianId = technicianIdProp || localStorage.getItem('technicianId') || selectedTicket.assignedTechnician?._id;
-      
-      console.log('Technician ID sources:', { 
-        technicianIdProp, 
-        localStorageTechnicianId: localStorage.getItem('technicianId'),
-        assignedTechnicianId: selectedTicket.assignedTechnician?._id,
-        finalTechnicianId: technicianId 
-      });
-      
-      if (!technicianId) {
-        toast.error('Technician ID not found. Please log in again.');
-        setSaving(false);
-        return;
-      }
-
-      // Get userId - required by backend
-      let userId = localStorage.getItem('userId');
-      if (!userId) {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const user = JSON.parse(userStr);
-          userId = user._id || user.userId;
-        }
-      }
-
-      if (!userId) {
-        toast.error('User ID not found. Please log in again.');
-        setSaving(false);
-        return;
-      }
-      
-      const quotationData = {
-        userId: userId,
-        ticketId: selectedTicket._id,
-        quotationStatusId: status,
-        partsList: selectedParts.flatMap(part => Array(part.quantity).fill(part._id)),
-        labourTime: laborHours,
-        labourRate: ratePerHour,
-        aditionalNotes: additionalNotes,
-        validityDate: validUntil ? new Date(validUntil).toISOString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        technicianId: technicianId,
-        partTotalBill: partsTotal,
-        labourTotalBill: laborTotal,
-        subTotalBill: subtotal,
-        taxAmount: vatAmount,
-        netTotal: total,
-        quotationAutoId: quotationAutoId,
-        isActive: true
-      };
-
-      console.log('Selected parts:', selectedParts);
-      console.log('Parts list being sent (with duplicates for quantity):', quotationData.partsList);
-      console.log(isEditMode ? 'Updating quotation with data:' : 'Creating quotation with data:', quotationData);
-      
-      let response;
       if (isEditMode && quotationId) {
-        // Update existing quotation
-        response = await updateItem('/technician-ticket-quotation', quotationId, quotationData);
-        console.log('Quotation updated successfully:', response);
-        toast.success('Quotation updated successfully!');
+        // Update existing quotation using TanStack Query mutation
+        await updateQuotationMutation.mutateAsync({ id: quotationId, data: quotationData });
       } else {
-        // Create new quotation
-        response = await createItem('/technician-ticket-quotation', quotationData);
-        console.log('Quotation created successfully:', response);
-        toast.success('Quotation created successfully!');
+        // Create new quotation using TanStack Query mutation
+        await createQuotationMutation.mutateAsync(quotationData);
       }
       
       // Update current status
       setCurrentStatus(status === 'DRAFTED' ? 'draft' : 'sent to admin');
       
-      // Redirect to quotations list page
+      // Navigate to quotations list page smoothly
       setTimeout(() => {
-        window.location.href = '/dashboard/qutations';
+        router.push('/dashboard/qutations');
       }, 1500);
-    } catch (error: any) {
-      console.error(isEditMode ? 'Error updating quotation:' : 'Error creating quotation:', error);
-      toast.error(error?.message || (isEditMode ? 'Failed to update quotation' : 'Failed to create quotation'));
-    } finally {
-      setSaving(false);
+    } catch (error) {
+      // Error handling is done in the mutation hooks
+      console.error('Quotation operation failed:', error);
     }
   };
 
