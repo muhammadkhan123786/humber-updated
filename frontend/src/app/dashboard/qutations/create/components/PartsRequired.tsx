@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wrench, Plus, Search, Trash2 } from 'lucide-react';
-import { getAll } from '@/helper/apiHelper';
 import { toast } from 'react-hot-toast';
+import { useParts } from '@/hooks/parts/useParts';
 
 interface Part {
   _id: string;
@@ -25,39 +25,25 @@ interface PartsRequiredProps {
 
 const PartsRequired = ({ selectedParts, onPartsChange }: PartsRequiredProps) => {
   const [showPartsList, setShowPartsList] = useState(false);
-  const [parts, setParts] = useState<Part[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const partsListRef = React.useRef<HTMLDivElement>(null);
+
+  // Use TanStack Query for fetching parts
+  const { data: parts = [], isLoading, refetch } = useParts({
+    limit: '1000',
+    search: searchQuery.trim(),
+    enabled: showPartsList, // Only fetch when parts list is shown
+  });
 
   useEffect(() => {
     if (showPartsList) {
-      loadParts();
+      refetch(); // Refetch parts when showing the list
       // Smooth scroll to parts list
       setTimeout(() => {
         partsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
     }
-  }, [showPartsList]);
-
-  const loadParts = async () => {
-    setIsLoading(true);
-    try {
-      const response = await getAll<any>('/master-parts-technician-dashboard', {
-        limit: '1000',
-        search: searchQuery.trim(),
-      });
-      
-      // Filter only active parts
-      const activeParts = response.data?.filter((part: Part) => part.isActive) || [];
-      setParts(activeParts);
-    } catch (error) {
-      console.error('Error loading parts:', error);
-      toast.error('Failed to load parts');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [showPartsList, refetch]);
 
   const filteredParts = useMemo(() => {
     if (!searchQuery) return parts;

@@ -20,7 +20,6 @@ interface Props {
   job: any;
   onDelete?: (jobId: string) => void;
 }
-
 const JobDetailCard = ({ job, onDelete }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,30 +33,16 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleString() : "-";
 
-  const servicesCount = job.services?.length || 0;
-  const partsCount = job.parts?.length || 0;
-
-  const passedInspections =
-    job.inspections?.filter((i: any) => i.status === "PASS").length || 0;
-  const totalInspections = job.inspections?.length || 0;
-
-  const totalMinutes =
-    job.services?.reduce(
-      (acc: number, s: any) => acc + Number(s.duration || 0),
-      0,
-    ) || 0;
-
+  const partsCount = job.quotationId?.partsList?.length || 0;
+  const servicesCount = 0;
+  const passedInspections = 0;
+  const totalInspections = 0;
+  const totalMinutes = job.quotationId?.labourTime || 0;
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-
-  const partsCost =
-    job.parts?.reduce(
-      (acc: number, p: any) => acc + Number(p.totalCost || 0),
-      0,
-    ) || 0;
-
-  const labourCost = job.labourCost || 0;
-  const totalBill = partsCost + labourCost;
+  const partsCost = job.quotationId?.partTotalBill || 0;
+  const labourCost = job.quotationId?.labourTotalBill || 0;
+  const totalBill = job.quotationId?.netTotal || 0;
 
   const handleUpdate = () => {
     router.push(`/dashboard/record-activity?edit=${job._id || job.id}`);
@@ -75,7 +60,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/technician-jobs/${job._id || job.id}`,
+        `${API_BASE_URL}/technician-job-by-admin/${job._id || job.id}`,
         {
           method: "DELETE",
           headers: {
@@ -93,6 +78,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
         toast.error("Failed to delete job");
         throw new Error("Failed to delete job");
       }
+
       toast.success(
         <div>
           <p className="font-semibold">Job deleted successfully!</p>
@@ -110,6 +96,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
           },
         },
       );
+
       setIsDeleted(true);
       setShowDeleteConfirm(false);
       if (onDelete) {
@@ -125,14 +112,54 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
   if (isDeleted) {
     return null;
   }
+
   const statusColors: Record<string, string> = {
-    open: "bg-blue-500 text-white",
-    Assigned: "bg-purple-500 text-white",
-    "In Progress": "bg-yellow-500 text-white",
-    "On Hold": "bg-orange-500 text-white",
-    Completed: "bg-green-500 text-white",
-    Cancelled: "bg-red-500 text-white",
+    PENDING: "bg-gray-500 text-white",
+    START: "bg-orange-500 text-white",
+    "ON HOLD": "bg-purple-500 text-white",
+    END: "bg-green-500 text-white",
   };
+
+  const getStatusDisplay = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return "Pending";
+      case "START":
+        return "Start";
+      case "ON HOLD":
+        return "On Hold";
+      case "END":
+        return "End";
+      default:
+        return status || "Unknown";
+    }
+  };
+
+  // Simplified technician name function
+  const getTechnicianName = () => {
+    try {
+      if (!job?.leadingTechnicianId) {
+        return "No technician assigned";
+      }
+
+      const person = job.leadingTechnicianId.personId;
+      if (!person) {
+        return "Technician details incomplete";
+      }
+      const nameParts = [];
+      if (person.firstName) nameParts.push(person.firstName);
+      if (person.middleName) nameParts.push(person.middleName);
+      if (person.lastName) nameParts.push(person.lastName);
+
+      return nameParts.length > 0 ? nameParts.join(" ") : "Unknown Technician";
+    } catch (error) {
+      console.error("Error getting technician name:", error);
+      return "Error loading name";
+    }
+  };
+
+  const technicianName = getTechnicianName();
+
   return (
     <div className="relative w-full bg-white/80 rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-6 transition-all duration-300 ease-in-out">
       {isDeleting && (
@@ -160,37 +187,32 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
                 </span>
 
                 <span className="px-2 py-0.5 text-xs font-bold text-white rounded-[10px] bg-linear-to-r from-purple-500 to-pink-500">
-                  {job.ticketId?.decisionId}
+                  {job.ticketId?.decisionId || "N/A"}
                 </span>
 
                 <span
                   className={`px-2 py-0.5 text-xs rounded-[10px] flex items-center gap-1 ${
-                    statusColors[job.jobStatusId?.technicianJobStatus] ||
-                    "bg-gray-400 text-white"
+                    statusColors[job.jobStatusId] || "bg-gray-400 text-white"
                   }`}
                 >
                   <CheckCircle size={12} />
-                  {job.jobStatusId?.technicianJobStatus || "Unknown"}
+                  {getStatusDisplay(job.jobStatusId)}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <User size={16} />
-                {job.technicianId?.personId
-                  ? `${job.technicianId.personId.firstName || ""} ${
-                      job.technicianId.personId.middleName || ""
-                    } ${job.technicianId.personId.lastName || ""}`.trim()
-                  : "-"}
+                <span className="font-medium">{technicianName}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-linear-to-r from-blue-50 to-purple-50">
               {[
-                ["Assigned", job.ticketId?.createdAt],
-                ["Started", job.createdAt],
-                ["Completed", job.updatedAt],
-              ].map(([label, value]) => (
-                <div key={label}>
+                ["Created", job.createdAt],
+                ["Quotation Date", job.quotationId?.createdAt],
+                ["Last Updated", job.updatedAt],
+              ].map(([label, value], index) => (
+                <div key={`date-${index}-${label}`}>
                   <p className="text-xs text-gray-600">{label}</p>
                   <p className="text-sm font-bold text-indigo-950">
                     {formatDate(value as string)}
@@ -201,8 +223,9 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
             <div className="grid grid-cols-3 gap-4">
               <Stat
+                key="services-stat"
                 icon={<Settings size={16} className="text-blue-600" />}
-                label="Service Activities"
+                label="Services"
                 value={servicesCount}
                 bg="from-blue-50 to-cyan-50"
                 border="border-blue-100"
@@ -210,8 +233,9 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
               />
 
               <Stat
+                key="parts-stat"
                 icon={<Package size={16} className="text-purple-600" />}
-                label="Parts Changed"
+                label="Parts"
                 value={partsCount}
                 bg="from-purple-50 to-pink-50"
                 border="border-purple-100"
@@ -219,8 +243,9 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
               />
 
               <Stat
+                key="inspections-stat"
                 icon={<CheckCircle size={16} className="text-green-600" />}
-                label="Inspection"
+                label="Inspections"
                 value={`${passedInspections}/${totalInspections}`}
                 bg="from-green-50 to-emerald-50"
                 border="border-green-100"
@@ -230,7 +255,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <Clock size={16} />
-              Total Duration:
+              Labour Time:
               <span className="font-bold text-gray-900">
                 {hours}h {minutes}m
               </span>
@@ -243,8 +268,16 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
               </div>
 
               <div className="space-y-2 text-sm">
-                <Row label="Parts Cost:" value={`£${partsCost.toFixed(2)}`} />
-                <Row label="Labour Cost:" value={`£${labourCost.toFixed(2)}`} />
+                <Row
+                  key="parts-cost"
+                  label="Parts Cost:"
+                  value={`£${partsCost.toFixed(2)}`}
+                />
+                <Row
+                  key="labour-cost"
+                  label="Labour Cost:"
+                  value={`£${labourCost.toFixed(2)}`}
+                />
 
                 <div className="pt-3 mt-2 border-t-2 border-emerald-200 flex justify-between items-center">
                   <span className="font-bold text-gray-900">Total Bill:</span>
@@ -258,6 +291,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
           <div className="w-24 space-y-2">
             <button
+              key="view-btn"
               onClick={() => setIsModalOpen(true)}
               className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-colors"
             >
@@ -265,6 +299,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
             </button>
 
             <button
+              key="update-btn"
               onClick={handleUpdate}
               className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-colors"
             >
@@ -273,14 +308,16 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
             {!showDeleteConfirm ? (
               <button
+                key="delete-btn"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="w-full h-8 rounded-[10px] bg-slate-50 border border-red-200 text-sm flex items-center justify-center gap-2 hover:bg-red-600 hover:text-white transition-colors"
               >
                 <Trash2 size={14} /> Delete
               </button>
             ) : (
-              <div className="space-y-1">
+              <div key="delete-confirm" className="space-y-1">
                 <button
+                  key="confirm-delete"
                   onClick={handleDelete}
                   disabled={isDeleting}
                   className="w-full h-8 rounded-[10px] bg-red-600 text-white text-sm flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -288,6 +325,7 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
                   {isDeleting ? "Deleting..." : "Confirm"}
                 </button>
                 <button
+                  key="cancel-delete"
                   onClick={() => setShowDeleteConfirm(false)}
                   className="w-full h-8 rounded-[10px] bg-gray-100 text-gray-700 text-sm flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >

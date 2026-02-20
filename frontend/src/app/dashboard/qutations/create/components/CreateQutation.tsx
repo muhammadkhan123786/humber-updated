@@ -7,7 +7,10 @@ import AvailableTickets from '../../components/AvailableTickets';
 import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
 import LaborAdditionalCost from './LaborAdditionalCost';
-import { getAll, getById } from '@/helper/apiHelper';
+import { useQuotationById, useQuotationAutoCode } from '@/hooks/quotations/useQuotations';
+import { useDefaultTax } from '@/hooks/settings/useSettings';
+import { usePartsByIds } from '@/hooks/parts/useParts';
+import { getAll } from '@/helper/apiHelper';
 
 interface Part {
   _id: string;
@@ -34,7 +37,6 @@ const CreateQuotationPage = () => {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [showTicketInfo, setShowTicketInfo] = useState(false);
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   
   // Labor and additional cost states
   const [laborHours, setLaborHours] = useState(0);
@@ -46,26 +48,32 @@ const CreateQuotationPage = () => {
     return date.toISOString().split('T')[0];
   });
   
-  // Tax state
-  const [defaultTaxPercentage, setDefaultTaxPercentage] = useState(20);
+  // TanStack Query hooks
+  const { data: quotationAutoCode, isLoading: loadingAutoCode } = useQuotationAutoCode();
+  const { data: defaultTaxPercentage = 20, isLoading: loadingTax } = useDefaultTax();
+  const { data: quotationData, isLoading: loadingQuotation } = useQuotationById(
+    isEditMode ? editQuotationId : null
+  );
+  
+  const isLoading = loadingQuotation || loadingAutoCode || loadingTax;
 
+  
+  // Set quotation auto code when not in edit mode
   useEffect(() => {
-    if (isEditMode && editQuotationId) {
-      loadEditQuotation(editQuotationId);
-    } else if (!isEditMode) {
-      fetchQuotationAutoCode();
+    if (!isEditMode && quotationAutoCode) {
+      setQuotationId(quotationAutoCode);
     }
-    fetchDefaultTax();
-  }, [isEditMode, editQuotationId]);
+  }, [isEditMode, quotationAutoCode]);
 
-  const loadEditQuotation = async (id: string) => {
+  // Load quotation data for edit mode
+  useEffect(() => {
+    if (isEditMode && quotationData) {
+      loadEditQuotation(quotationData);
+    }
+  }, [isEditMode, quotationData]);
+
+  const loadEditQuotation = async (quotation: any) => {
     try {
-      setIsLoading(true);
-      const response: any = await getAll(`/technician-ticket-quotation/${id}`);
-      
-      // Handle response - it might be response.data or just response depending on API structure
-      const quotation = response?.data || response;
-      
       if (quotation && typeof quotation === 'object' && !Array.isArray(quotation)) {
         // Set quotation auto ID
         setQuotationId(quotation.quotationAutoId || '');
@@ -112,37 +120,81 @@ const CreateQuotationPage = () => {
           setShowTicketInfo(true);
         }
         
-        // Set parts list - group duplicates by ID and sum quantities
+        // Set parts list - map from IQuotationPartItem format to SelectedPart format
         if (quotation.partsList && Array.isArray(quotation.partsList)) {
-          const partsMap = new Map<string, SelectedPart>();
+          const partsMap = new Map<string, any>();
           
+          // First, group parts by ID and aggregate quantities
           quotation.partsList
-            .filter((part: any) => part && part._id)
+            .filter((part: any) => part && part.partId)
             .forEach((part: any) => {
-              const partId = part._id;
+              const partId = part.partId;
               
               if (partsMap.has(partId)) {
-                // If part already exists, increment its quantity
                 const existingPart = partsMap.get(partId)!;
                 existingPart.quantity += (part.quantity || 1);
               } else {
-                // Add new part
                 partsMap.set(partId, {
-                  _id: part._id,
+                  partId: part.partId,
                   partName: part.partName || 'Unknown Part',
-                  partNumber: part.partNumber || 'N/A',
                   quantity: part.quantity || 1,
-                  unitCost: part.unitCost || 0,
-                  stock: part.stock,
-                  description: part.description || '',
-                  isActive: part.isActive
+                  unitPrice: part.unitPrice || 0,
                 });
               }
             });
           
-          // Convert map to array
-          const formattedParts = Array.from(partsMap.values());
-          setSelectedParts(formattedParts);
+          // Fetch full part details for each part ID
+          const partIds = Array.from(partsMap.keys());
+          
+          try {
+            // Fetch all parts details in parallel
+            const partDetailsPromises = partIds.map(partId => 
+              getAll(`/master-parts-technician-dashboard/${partId}`).catch((err: any) => {
+                console.error(`Error fetching part ${partId}:`, err);
+                return null;
+              })
+            );
+            
+            const partDetailsResponses = await Promise.all(partDetailsPromises);
+            
+            // Map parts with full details
+            const formattedParts: SelectedPart[] = partIds.map((partId, index) => {
+              const quotationPart = partsMap.get(partId);
+              const partDetailsResponse: any = partDetailsResponses[index];
+              const partDetails = partDetailsResponse?.data || partDetailsResponse;
+              
+              return {
+                _id: partId,
+                partName: partDetails?.partName || quotationPart.partName,
+                partNumber: partDetails?.partNumber || 'N/A',
+                quantity: quotationPart.quantity,
+                unitCost: partDetails?.unitCost || quotationPart.unitPrice,
+                stock: partDetails?.stock || 0,
+                description: partDetails?.description || '',
+                isActive: partDetails?.isActive !== false
+              };
+            });
+            
+            console.log('Loaded parts for edit with full details:', formattedParts);
+            setSelectedParts(formattedParts);
+          } catch (error) {
+            console.error('Error fetching part details:', error);
+            // Fallback: use basic part info without full details
+            const formattedParts: SelectedPart[] = partIds.map(partId => {
+              const quotationPart = partsMap.get(partId);
+              return {
+                _id: partId,
+                partName: quotationPart.partName,
+                partNumber: 'N/A',
+                quantity: quotationPart.quantity,
+                unitCost: quotationPart.unitPrice,
+                stock: 0,
+                description: '',
+                isActive: true
+              };
+            });
+            setSelectedParts(formattedParts);
+          }
         }
         
         // Set labor information
@@ -161,31 +213,6 @@ const CreateQuotationPage = () => {
     } catch (error) {
       console.error('Error loading quotation:', error);
       toast.error('Failed to load quotation data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchQuotationAutoCode = async () => {
-    try {
-      const response = await getAll<{ quotationAutoCode: string }>('/quotations/quotation-auto-code');
-      if ((response as any)?.quotationAutoCode) {
-        setQuotationId((response as any).quotationAutoCode);
-      }
-    } catch (error) {
-      console.error('Error fetching quotation auto code:', error);
-    }
-  };
-
-  const fetchDefaultTax = async () => {
-    try {
-      const response = await getAll<{ taxPercentage: number }>('/default-tax');
-      if ((response as any)?.taxPercentage !== undefined) {
-        setDefaultTaxPercentage((response as any).taxPercentage);
-      }
-    } catch (error) {
-      console.error('Error fetching default tax:', error);
-      // Keep default 20% if API fails
     }
   };
 

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { getAll } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import {
   X,
@@ -18,6 +17,8 @@ import {
   MessageSquare,
   CheckCircle,
 } from "lucide-react";
+import { useQuotationById } from "@/hooks/quotations/useQuotations";
+import { getAll } from "@/helper/apiHelper";
 
 // Add custom animations
 const animations = `
@@ -97,29 +98,106 @@ interface ViewProps {
 
 const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
   const [quotation, setQuotation] = useState<QuotationViewData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch quotation data when component mounts
+  // Use TanStack Query to fetch quotation data
+  const { data: quotationData, isLoading, isError, error } = useQuotationById(quotationId);
+
+  // Process quotation data when it's loaded
   useEffect(() => {
-    if (quotationId) {
-      fetchQuotationData(quotationId);
+    if (quotationData) {
+      fetchAndMapQuotationData(quotationData);
     }
-  }, [quotationId]);
+  }, [quotationData]);
 
-  const fetchQuotationData = async (id: string) => {
+  // Show error if fetch fails
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load quotation details');
+      onClose();
+    }
+  }, [isError, onClose]);
+
+  const fetchAndMapQuotationData = async (data: any) => {
     try {
-      setIsLoading(true);
-      const response: any = await getAll(`/technician-ticket-quotation/${id}`);
-      
-      const data = response?.data || response;
-      
       if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // First, aggregate parts by ID from quotation
+        const partsMap = new Map<string, any>();
+        
+        (data.partsList || []).forEach((part: any) => {
+          if (part && part.partId) {
+            const partId = part.partId;
+            
+            if (partsMap.has(partId)) {
+              const existingPart = partsMap.get(partId)!;
+              existingPart.quantity += (Number(part.quantity) || 1);
+            } else {
+              partsMap.set(partId, {
+                partId: part.partId,
+                partName: part.partName || 'Unknown Part',
+                quantity: Number(part.quantity) || 1,
+                unitPrice: Number(part.unitPrice) || 0,
+              });
+            }
+          }
+        });
+        
+        // Fetch full part details for each part ID
+        let partsList: Part[] = [];
+        
+        if (partsMap.size > 0) {
+          const partIds = Array.from(partsMap.keys());
+          
+          try {
+            // Fetch all parts details in parallel
+            const partDetailsPromises = partIds.map(partId => 
+              getAll(`/master-parts-technician-dashboard/${partId}`).catch(err => {
+                console.error(`Error fetching part ${partId}:`, err);
+                return null;
+              })
+            );
+            
+            const partDetailsResponses = await Promise.all(partDetailsPromises);
+            
+            // Map parts with full details
+            partsList = partIds.map((partId, index) => {
+              const quotationPart = partsMap.get(partId);
+              const partDetailsResponse: any = partDetailsResponses[index];
+              const partDetails = partDetailsResponse?.data || partDetailsResponse;
+              
+              return {
+                _id: partId,
+                partName: partDetails?.partName || quotationPart.partName,
+                partNumber: partDetails?.partNumber || 'N/A',
+                quantity: quotationPart.quantity,
+                unitCost: partDetails?.unitCost || quotationPart.unitPrice,
+                stock: partDetails?.stock || 0,
+                description: partDetails?.description || '',
+              };
+            });
+          } catch (error) {
+            console.error('Error fetching part details:', error);
+            // Fallback: use basic part info without full details
+            partsList = partIds.map(partId => {
+              const quotationPart = partsMap.get(partId);
+              return {
+                _id: partId,
+                partName: quotationPart.partName,
+                partNumber: 'N/A',
+                quantity: quotationPart.quantity,
+                unitCost: quotationPart.unitPrice,
+                stock: 0,
+                description: '',
+              };
+            });
+          }
+        }
+        
         // Map the API response to match QuotationViewData interface
         const mappedQuotation: QuotationViewData = {
           _id: data._id,
           quotationAutoId: data.quotationAutoId,
           ticketCode: data.ticketId?.ticketCode || '',
-          quotationStatus: data.quotationStatusId?.ticketQuationStatus || data.quotationStatus || 'Unknown',
+          quotationStatus: data.quotationStatusId || data.quotationStatus || 'Unknown',
           ticket: {
             ticketCode: data.ticketId?.ticketCode || '',
             decision: data.ticketId?.decisionId || 'N/A',
@@ -131,15 +209,7 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
             email: data.ticketId?.customerId?.contactId?.email || '',
             phone: data.ticketId?.customerId?.contactId?.phone || '',
           },
-          partsList: (data.partsList || []).map((part: any) => ({
-            _id: part._id || part.partId?._id || '',
-            partName: part.partName || part.partId?.partName || 'Unknown Part',
-            partNumber: part.partNumber || part.partId?.partNumber || 'N/A',
-            quantity: Number(part.quantity) || 1,
-            unitCost: Number(part.unitCost) || Number(part.partId?.unitCost) || 0,
-            stock: part.stock || part.partId?.stock,
-            description: part.description || part.partId?.description || '',
-          })),
+          partsList: partsList,
           labourTime: data.labourTime,
           labourRate: data.labourRate,
           partTotalBill: data.partTotalBill,
@@ -159,11 +229,9 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
         onClose();
       }
     } catch (error) {
-      console.error('Error fetching quotation:', error);
-      toast.error('Failed to load quotation details');
+      console.error('Error mapping quotation data:', error);
+      toast.error('Failed to process quotation details');
       onClose();
-    } finally {
-      setIsLoading(false);
     }
   };
 
