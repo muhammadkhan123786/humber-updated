@@ -8,7 +8,6 @@ import shopRouter from "./routes/shop.routes";
 import authRouter from "./routes/auth.routes";
 import {
   adminProtecter,
-  technicianMasterProtector,
   technicianProtecter,
 } from "./middleware/auth.middleware";
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
@@ -106,6 +105,7 @@ import {
 import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoices.routes";
 import { customerInvoiceStatisticsController } from "./controllers/customer-invoice-statistics/customer.invoice.statistics.controller";
 import techncianJobsByAdminRouter from "./routes/technician-jobs-by-admin-routes/technician.jobs.by.admin.routes";
+import vehicleInspectionsRouter from "./routes/technician-vehicle-inspections-routes/technician.vehicle.inspections.routes";
 
 
 // Create express app
@@ -534,6 +534,12 @@ app.get(
 app.use(
   `${process.env.API_PREFIX}/technician-job-by-admin`,
   techncianJobsByAdminRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-vehicle-inspections`,
+  technicianProtecter,
+  vehicleInspectionsRouter,
 );
 
 //Muhammad Imran code ended here.
