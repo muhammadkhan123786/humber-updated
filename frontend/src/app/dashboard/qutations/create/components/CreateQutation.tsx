@@ -114,37 +114,79 @@ const CreateQuotationPage = () => {
         
         // Set parts list - map from IQuotationPartItem format to SelectedPart format
         if (quotation.partsList && Array.isArray(quotation.partsList)) {
-          const partsMap = new Map<string, SelectedPart>();
+          const partsMap = new Map<string, any>();
           
+          // First, group parts by ID and aggregate quantities
           quotation.partsList
             .filter((part: any) => part && part.partId)
             .forEach((part: any) => {
-              // Use partId instead of _id (based on IQuotationPartItem interface)
               const partId = part.partId;
               
               if (partsMap.has(partId)) {
-                // If part already exists, increment its quantity
                 const existingPart = partsMap.get(partId)!;
                 existingPart.quantity += (part.quantity || 1);
               } else {
-                // Add new part - map from IQuotationPartItem to SelectedPart format
                 partsMap.set(partId, {
-                  _id: part.partId, // Map partId to _id
+                  partId: part.partId,
                   partName: part.partName || 'Unknown Part',
-                  partNumber: 'N/A', // Part number not stored in IQuotationPartItem
                   quantity: part.quantity || 1,
-                  unitCost: part.unitPrice || 0, // Map unitPrice to unitCost
-                  stock: 0, // Not available in IQuotationPartItem
-                  description: '',
-                  isActive: true
+                  unitPrice: part.unitPrice || 0,
                 });
               }
             });
           
-          // Convert map to array
-          const formattedParts = Array.from(partsMap.values());
-          console.log('Loaded parts for edit:', formattedParts);
-          setSelectedParts(formattedParts);
+          // Fetch full part details for each part ID
+          const partIds = Array.from(partsMap.keys());
+          
+          try {
+            // Fetch all parts details in parallel
+            const partDetailsPromises = partIds.map(partId => 
+              getAll(`/master-parts-technician-dashboard/${partId}`).catch(err => {
+                console.error(`Error fetching part ${partId}:`, err);
+                return null;
+              })
+            );
+            
+            const partDetailsResponses = await Promise.all(partDetailsPromises);
+            
+            // Map parts with full details
+            const formattedParts: SelectedPart[] = partIds.map((partId, index) => {
+              const quotationPart = partsMap.get(partId);
+              const partDetailsResponse: any = partDetailsResponses[index];
+              const partDetails = partDetailsResponse?.data || partDetailsResponse;
+              
+              return {
+                _id: partId,
+                partName: partDetails?.partName || quotationPart.partName,
+                partNumber: partDetails?.partNumber || 'N/A',
+                quantity: quotationPart.quantity,
+                unitCost: partDetails?.unitCost || quotationPart.unitPrice,
+                stock: partDetails?.stock || 0,
+                description: partDetails?.description || '',
+                isActive: partDetails?.isActive !== false
+              };
+            });
+            
+            console.log('Loaded parts for edit with full details:', formattedParts);
+            setSelectedParts(formattedParts);
+          } catch (error) {
+            console.error('Error fetching part details:', error);
+            // Fallback: use basic part info without full details
+            const formattedParts: SelectedPart[] = partIds.map(partId => {
+              const quotationPart = partsMap.get(partId);
+              return {
+                _id: partId,
+                partName: quotationPart.partName,
+                partNumber: 'N/A',
+                quantity: quotationPart.quantity,
+                unitCost: quotationPart.unitPrice,
+                stock: 0,
+                description: '',
+                isActive: true
+              };
+            });
+            setSelectedParts(formattedParts);
+          }
         }
         
         // Set labor information
