@@ -105,6 +105,7 @@ import {
 } from "./controllers/technician-job-statistics/technician.jobs.statistics.controller";
 import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoices.routes";
 import { customerInvoiceStatisticsController } from "./controllers/customer-invoice-statistics/customer.invoice.statistics.controller";
+import techncianJobsByAdminRouter from "./routes/technician-jobs-by-admin-routes/technician.jobs.by.admin.routes";
 
 
 // Create express app
@@ -529,7 +530,11 @@ app.get(
   customerInvoiceStatisticsController,
 );
 
-//19-02-2026
+//20-02-2026
+app.use(
+  `${process.env.API_PREFIX}/technician-job-by-admin`,
+  techncianJobsByAdminRouter,
+);
 
 //Muhammad Imran code ended here.
 
