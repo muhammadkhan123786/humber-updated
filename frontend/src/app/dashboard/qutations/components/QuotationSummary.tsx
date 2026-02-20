@@ -116,7 +116,14 @@ const QuotationSummary = ({
         userId: userId,
         ticketId: selectedTicket._id,
         quotationStatusId: status,
-        partsList: selectedParts.flatMap(part => Array(part.quantity).fill(part._id)),
+        partsList: selectedParts.map(part => ({
+          partId: part._id,
+          partName: part.partName,
+          quantity: part.quantity,
+          unitPrice: part.unitCost || 0,
+          discount: 0,
+          total: (part.unitCost || 0) * part.quantity
+        })),
         labourTime: laborHours,
         labourRate: ratePerHour,
         aditionalNotes: additionalNotes,
@@ -132,7 +139,7 @@ const QuotationSummary = ({
       };
 
       console.log('Selected parts:', selectedParts);
-      console.log('Parts list being sent (with duplicates for quantity):', quotationData.partsList);
+      console.log('Parts list being sent:', quotationData.partsList);
       console.log(isEditMode ? 'Updating quotation with data:' : 'Creating quotation with data:', quotationData);
       
       let response;
