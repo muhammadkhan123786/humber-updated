@@ -37,7 +37,7 @@ const TechnicianJob = () => {
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAlls<TechnicianJobType>("/technician-jobs", {
+      const res = await getAlls<TechnicianJobType>("/technician-job-by-admin", {
         page: currentPage,
         limit,
       });
@@ -76,11 +76,11 @@ const TechnicianJob = () => {
           ?.toLowerCase()
           .includes(searchStr) ||
         job.ticketId?.vehicleId?.productName?.toLowerCase().includes(searchStr);
-
-      const currentStatus = job.jobStatusId?.technicianJobStatus || "";
+      const currentStatus = job.jobStatusId || "";
       const matchesStatus =
         statusFilter === "All Statuses" ||
-        currentStatus.toLowerCase() === statusFilter.toLowerCase();
+        statusFilter === "all" ||
+        currentStatus.toString().toLowerCase() === statusFilter.toLowerCase();
 
       const currentPriority =
         job.ticketId?.priorityId?.serviceRequestPrioprity || "";
@@ -91,7 +91,6 @@ const TechnicianJob = () => {
       return matchesSearch && matchesStatus && matchesPriority;
     });
   }, [jobs, searchTerm, statusFilter, priorityFilter]);
-
   return (
     <div className="flex flex-col gap-6">
       <TechnicianHeader activeView={viewMode} setActiveView={setViewMode} />

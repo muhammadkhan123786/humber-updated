@@ -7,7 +7,7 @@ interface JobFiltersProps {
   setSearchQuery: (value: string) => void;
   statusFilter: string;
   setStatusFilter: (value: string) => void;
-  statuses: any[];
+  statuses: Array<{ id: string; name: string }>;
 }
 
 const JobFilters: React.FC<JobFiltersProps> = ({
@@ -30,7 +30,7 @@ const JobFilters: React.FC<JobFiltersProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by Job ID..."
+            placeholder="Search by Job ID, Ticket Code, or Technician Name..."
             className="w-full h-12 pl-12 pr-4 bg-gray-100 border-2 border-orange-50 rounded-xl focus:outline-none focus:border-orange-200 text-sm transition-all"
           />
         </div>
@@ -43,8 +43,8 @@ const JobFilters: React.FC<JobFiltersProps> = ({
           >
             <option value="all">All Statuses</option>
             {statuses.map((status) => (
-              <option key={status._id} value={status._id}>
-                {status.name || status.technicianJobStatus}
+              <option key={status.id} value={status.id}>
+                {status.name}
               </option>
             ))}
           </select>

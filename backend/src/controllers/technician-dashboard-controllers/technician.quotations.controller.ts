@@ -86,7 +86,20 @@ export const technicianTicketsQuotationsController = async (
         },
       },
       { $unwind: "$ticket" },
-
+      {
+        $lookup: {
+          from: "servicerequestpriopritymodels",
+          localField: "ticket.priorityId", // correct field
+          foreignField: "_id",
+          as: "ticketPrioprity",
+        },
+      },
+      {
+        $unwind: {
+          path: "$ticketPrioprity",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       {
         $lookup: {
           from: "ticketstatuses",
@@ -262,7 +275,10 @@ export const technicianTicketsQuotationsController = async (
             ],
           },
         },
-
+        ticketPrioprity: {
+          serviceRequestPrioprity: "$ticketPrioprity.serviceRequestPrioprity",
+          backgroundColor: "$ticketPrioprity.backgroundColor",
+        },
         customer: {
           _id: "$customer._id",
           firstName: "$person.firstName",
@@ -287,11 +303,11 @@ export const technicianTicketsQuotationsController = async (
         filter === "all"
           ? null
           : {
-            total,
-            page,
-            limit,
-            pages: Math.ceil(total / limit),
-          },
+              total,
+              page,
+              limit,
+              pages: Math.ceil(total / limit),
+            },
     });
   } catch (error) {
     console.error("Technician Ticket quotations Error:", error);
@@ -301,6 +317,3 @@ export const technicianTicketsQuotationsController = async (
     });
   }
 };
-
-
-

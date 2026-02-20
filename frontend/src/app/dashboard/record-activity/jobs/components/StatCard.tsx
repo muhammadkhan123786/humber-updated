@@ -20,7 +20,7 @@ const StatCard = ({
 }: StatCardProps) => {
   return (
     <div
-      className={`flex-1 min-w-60 p-6 ${gradient} rounded-3xl shadow-lg flex flex-col justify-start items-start gap-4 transition-transform hover:scale-[1.02]`}
+      className={`flex-1 p-6 ${gradient} rounded-3xl shadow-lg flex flex-col justify-start items-start gap-4 transition-transform hover:scale-[1.02]`}
     >
       <div className="self-stretch flex justify-between items-center">
         <div className="w-12 h-12 bg-white/20 rounded-2xl flex justify-center items-center backdrop-blur-sm">

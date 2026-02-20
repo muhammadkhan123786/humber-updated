@@ -3,118 +3,165 @@ import React, { useState, useEffect, useMemo } from "react";
 import TechnicianHeader from "./TechnicianHeader";
 import StatCard from "./StatCard";
 import {
-  Activity,
+  Briefcase,
   Clock,
   PlayCircle,
   CheckCircle,
   Loader2,
   PauseCircle,
-  XCircle,
-  Briefcase,
-  HelpCircle,
 } from "lucide-react";
 import JobFilters from "./JobFilters";
 import JobDetailCard from "./JobDetailCard";
-import { useActivityRecordForm } from "../../../../../hooks/useActivity";
 import Pagination from "@/components/ui/Pagination";
 import { getAlls } from "@/helper/apiHelper";
+import toast from "react-hot-toast";
 
-const statusConfig: Record<string, { icon: any; gradient: string }> = {
-  pending: {
+const statusConfig: Record<
+  string,
+  { icon: any; gradient: string; label: string }
+> = {
+  TOTAL: {
+    icon: Briefcase,
+    gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    label: "Total Jobs",
+  },
+  PENDING: {
     icon: Clock,
     gradient: "bg-gradient-to-br from-gray-500 to-gray-600",
+    label: "Pending",
   },
-  assigned: {
-    icon: Clock,
-    gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
-  },
-  "in progress": {
+  START: {
     icon: PlayCircle,
     gradient: "bg-gradient-to-br from-orange-500 to-amber-500",
+    label: "Start",
   },
-  "on hold": {
+  "ON HOLD": {
     icon: PauseCircle,
     gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
+    label: "On Hold",
   },
-  completed: {
+  END: {
     icon: CheckCircle,
     gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
-  },
-  cancelled: {
-    icon: XCircle,
-    gradient: "bg-gradient-to-br from-rose-500 to-red-600",
-  },
-  open: {
-    icon: Briefcase,
-    gradient: "bg-gradient-to-br from-teal-500 to-emerald-500",
+    label: "End",
   },
 };
 
-const defaultStyle = {
-  icon: HelpCircle,
-  gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
-};
+const statusOptions = [
+  { id: "PENDING", name: "Pending" },
+  { id: "START", name: "Start" },
+  { id: "ON HOLD", name: "On Hold" },
+  { id: "END", name: "End" },
+];
 
 const Jobs = () => {
-  const { jobList: initialJobList, isLoading } = useActivityRecordForm();
   const [jobs, setJobs] = useState<any[]>([]);
-  const [apiStats, setApiStats] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [availableStatuses, setAvailableStatuses] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    setJobs(initialJobList);
-  }, [initialJobList]);
+    const fetchJobs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getAlls<any>("/technician-job-by-admin");
+        const jobsData = response?.data || [];
+        setJobs(jobsData);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        toast.error("Failed to load jobs");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
       try {
-        const statusRes = await getAlls<any>(
-          "/technician-job-status?filter=all",
-        );
-        setAvailableStatuses(statusRes.data || []);
-
         const statsRes = await getAlls<any>("/job-statistics");
         const apiData = statsRes.data as any;
 
-        if (apiData) {
-          const formattedStats = [];
+        // Create 5 cards: 1 Total + 4 status cards
+        const formattedStats = [];
 
-          if (apiData.overallTotalJobs > 0) {
-            formattedStats.push({
-              value: apiData.overallTotalJobs.toString(),
-              label: "Total Activities",
-              badgeText: "Total",
-              gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
-              icon: Activity,
-            });
-          }
+        // Add Total Jobs card
+        formattedStats.push({
+          value: apiData?.overallTotalJobs?.toString() || "0",
+          label: statusConfig.TOTAL.label,
+          badgeText: statusConfig.TOTAL.label,
+          gradient: statusConfig.TOTAL.gradient,
+          icon: statusConfig.TOTAL.icon,
+        });
 
-          apiData.statusCounts?.forEach((status: any) => {
-            if (status.totalJobs > 0) {
-              const normalizedStatus = status.technicianJobStatus.toLowerCase();
-              const config = statusConfig[normalizedStatus] || defaultStyle;
+        // Add status cards
+        const statuses = ["PENDING", "START", "ON HOLD", "END"];
+        statuses.forEach((status) => {
+          const count =
+            apiData?.statusCounts?.find((s: any) => s.jobStatusId === status)
+              ?.totalJobs || 0;
 
-              formattedStats.push({
-                value: status.totalJobs.toString(),
-                label: status.technicianJobStatus,
-                badgeText: status.technicianJobStatus,
-                gradient: config.gradient,
-                icon: config.icon,
-              });
-            }
+          formattedStats.push({
+            value: count.toString(),
+            label: statusConfig[status]?.label || status,
+            badgeText: statusConfig[status]?.label || status,
+            gradient:
+              statusConfig[status]?.gradient ||
+              "bg-gradient-to-br from-gray-500 to-gray-600",
+            icon: statusConfig[status]?.icon || Clock,
           });
+        });
 
-          setApiStats(formattedStats);
-        }
+        setStats(formattedStats);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching stats:", error);
+
+        const defaultStats = [
+          {
+            value: "0",
+            label: "Total Jobs",
+            badgeText: "Total Jobs",
+            gradient: "bg-gradient-to-br from-indigo-500 to-purple-500",
+            icon: Briefcase,
+          },
+          {
+            value: "0",
+            label: "Pending",
+            badgeText: "Pending",
+            gradient: statusConfig.PENDING.gradient,
+            icon: statusConfig.PENDING.icon,
+          },
+          {
+            value: "0",
+            label: "Start",
+            badgeText: "Start",
+            gradient: statusConfig.START.gradient,
+            icon: statusConfig.START.icon,
+          },
+          {
+            value: "0",
+            label: "On Hold",
+            badgeText: "On Hold",
+            gradient: statusConfig["ON HOLD"].gradient,
+            icon: statusConfig["ON HOLD"].icon,
+          },
+          {
+            value: "0",
+            label: "End",
+            badgeText: "End",
+            gradient: statusConfig.END.gradient,
+            icon: statusConfig.END.icon,
+          },
+        ];
+        setStats(defaultStats);
       }
     };
-    fetchData();
+    fetchStats();
   }, []);
 
   const handleDeleteJob = (deletedJobId: string) => {
@@ -125,12 +172,19 @@ const Jobs = () => {
     return jobs.filter((job) => {
       const matchesSearch =
         job.jobId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job._id?.toLowerCase().includes(searchQuery.toLowerCase());
+        job._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.ticketId?.ticketCode
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        job.leadingTechnicianId?.personId?.firstName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        job.leadingTechnicianId?.personId?.lastName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
       const matchesStatus =
-        statusFilter === "all" ||
-        job.jobStatusId?._id === statusFilter ||
-        job.jobStatusId?.name === statusFilter;
+        statusFilter === "all" || job.jobStatusId === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -146,16 +200,19 @@ const Jobs = () => {
     <div className="p-6 flex flex-col gap-8 bg-gray-50 min-h-screen">
       <TechnicianHeader />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {apiStats.length > 0 ? (
-          apiStats.map((stat, index) => (
-            <StatCard key={index} {...stat} Icon={stat.icon} />
-          ))
-        ) : !isLoading ? (
-          <div className="col-span-full h-24 flex items-center justify-center bg-white rounded-xl border border-dashed text-gray-400">
-            No active jobs or statistics to display.
-          </div>
-        ) : null}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        {stats.length > 0
+          ? stats.map((stat, index) => (
+              <StatCard key={index} {...stat} Icon={stat.icon} />
+            ))
+          : Array(5)
+              .fill(0)
+              .map((_, index) => (
+                <div
+                  key={index}
+                  className="h-32 bg-gray-200 rounded-3xl animate-pulse"
+                ></div>
+              ))}
       </div>
 
       <JobFilters
@@ -163,7 +220,7 @@ const Jobs = () => {
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        statuses={availableStatuses}
+        statuses={statusOptions}
       />
 
       {isLoading ? (
