@@ -17,87 +17,69 @@ import { JOB_STATUS } from "../../schemas/technicians-jobs-by-admin/techncian.jo
 
 export const technicianJobsStatisticsController = async (
   req: Request,
-  res: Response
+  res: Response,
 ) => {
   try {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    // 🔹 Aggregate
     const result = await TechnicianJobsByAdmin.aggregate([
       {
         $match: { isDeleted: false },
       },
       {
         $facet: {
-          // ✅ Count jobs per status
-          statusCounts: JOB_STATUS.map((status) => ({
-            $group: {
-              _id: status,
-              totalJobs: {
-                $sum: {
-                  $cond: [{ $eq: ["$jobStatusId", status] }, 1, 0],
-                },
+          // ✅ Count jobs by status
+          statusCounts: [
+            {
+              $group: {
+                _id: "$jobStatusId",
+                totalJobs: { $sum: 1 },
               },
             },
-          })),
+          ],
+
           // ✅ Overall total jobs
-          overallTotal: [{ $count: "overallTotalJobs" }],
-          // ✅ Today jobs
+          overallTotal: [
+            {
+              $count: "overallTotalJobs",
+            },
+          ],
+
+          // ✅ Today's jobs
           todayJobs: [
             {
               $match: { createdAt: { $gte: todayStart } },
             },
-            { $count: "todayJobs" },
-          ],
-        },
-      },
-      {
-        $project: {
-          // Flatten results
-          statusCounts: {
-            $map: {
-              input: JOB_STATUS,
-              as: "status",
-              in: {
-                status: "$$status",
-                totalJobs: {
-                  $let: {
-                    vars: {
-                      matchStatus: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$statusCounts",
-                              cond: { $eq: ["$$this._id", "$$status"] },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                    in: { $ifNull: ["$$matchStatus.totalJobs", 0] },
-                  },
-                },
-              },
+            {
+              $count: "todayJobs",
             },
-          },
-          overallTotalJobs: {
-            $ifNull: [{ $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] }, 0],
-          },
-          todayJobs: {
-            $ifNull: [{ $arrayElemAt: ["$todayJobs.todayJobs", 0] }, 0],
-          },
+          ],
         },
       },
     ]);
 
+    const aggregationResult = result[0] || {};
+
+    // ✅ Normalize status counts (so missing statuses show 0)
+    const formattedStatusCounts = JOB_STATUS.map((status) => {
+      const found = aggregationResult.statusCounts?.find(
+        (s: any) => s._id === status,
+      );
+
+      return {
+        status,
+        totalJobs: found ? found.totalJobs : 0,
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      data: result[0] || {
-        statusCounts: JOB_STATUS.map((status) => ({ status, totalJobs: 0 })),
-        overallTotalJobs: 0,
-        todayJobs: 0,
+      data: {
+        statusCounts: formattedStatusCounts,
+        overallTotalJobs:
+          aggregationResult.overallTotal?.[0]?.overallTotalJobs || 0,
+        todayJobs: aggregationResult.todayJobs?.[0]?.todayJobs || 0,
       },
     });
   } catch (error) {
@@ -496,7 +478,7 @@ export const getTechniciansWithActiveJobsController = async (
 //update quotation job status
 export const updateTechnicianQuotationStatusController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { techncianQuotationStatusId, techncianQuotationId } = req.body;
@@ -510,7 +492,10 @@ export const updateTechnicianQuotationStatusController = async (
     }
 
     // ✅ Validate quotation ID
-    if (!techncianQuotationId || !Types.ObjectId.isValid(techncianQuotationId)) {
+    if (
+      !techncianQuotationId ||
+      !Types.ObjectId.isValid(techncianQuotationId)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid technician quotation id.",
@@ -522,11 +507,13 @@ export const updateTechnicianQuotationStatusController = async (
       "SEND TO CUSTOMER",
       "SEND TO INSURANCE",
       "APPROVED",
-      "REJECTED"
+      "REJECTED",
     ];
 
-    if (!techncianQuotationStatusId ||
-      !allowedStatuses.includes(techncianQuotationStatusId)) {
+    if (
+      !techncianQuotationStatusId ||
+      !allowedStatuses.includes(techncianQuotationStatusId)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Invalid quotation status value.",
@@ -557,7 +544,7 @@ export const updateTechnicianQuotationStatusController = async (
       {
         $set: { quotationStatusId: techncianQuotationStatusId },
       },
-      { new: true }
+      { new: true },
     ).lean();
 
     if (!updatedQuotation) {
@@ -572,7 +559,6 @@ export const updateTechnicianQuotationStatusController = async (
       message: "Quotation status updated successfully.",
       data: updatedQuotation,
     });
-
   } catch (error) {
     console.error("Update Technician Quotation Status Error:", error);
     return res.status(500).json({
@@ -582,11 +568,10 @@ export const updateTechnicianQuotationStatusController = async (
   }
 };
 
-
-//update technician job status and is completed job 
+//update technician job status and is completed job
 export const updateTechnicianJobStatusController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const { techncianJobStatusId, techncianJobId, isJobCompleted } = req.body;
@@ -655,7 +640,7 @@ export const updateTechnicianJobStatusController = async (
     const updatedJob = await TechniciansJobs.findOneAndUpdate(
       filter,
       { $set: updateData },
-      { new: true }
+      { new: true },
     ).lean();
 
     if (!updatedJob) {
@@ -679,10 +664,10 @@ export const updateTechnicianJobStatusController = async (
   }
 };
 
-//count total completed job where status is Completed 
+//count total completed job where status is Completed
 export const TechnicianCompletedJobCountController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     if (!req.role) {
@@ -707,15 +692,13 @@ export const TechnicianCompletedJobCountController = async (
       }),
     };
 
-    const totalCompletedJobs =
-      await TechniciansJobs.countDocuments(filter);
+    const totalCompletedJobs = await TechniciansJobs.countDocuments(filter);
 
     return res.status(200).json({
       success: true,
       message: "Technician completed jobs count fetched successfully.",
       data: totalCompletedJobs,
     });
-
   } catch (error) {
     console.error("Technician Jobs Count Failed:", error);
     return res.status(500).json({
@@ -725,10 +708,10 @@ export const TechnicianCompletedJobCountController = async (
   }
 };
 
-//technician profile 
+//technician profile
 export const TechnicianProfileController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     if (!req.role) {
@@ -749,14 +732,14 @@ export const TechnicianProfileController = async (
     const technicianProfile = await Technicians.findOne({
       _id: req.technicianId,
       isDeleted: false,
-    }).select('employeeId dateOfJoining userId')
+    })
+      .select("employeeId dateOfJoining userId")
       .populate({ path: "personId", select: "firstName lastName" })
       .populate({ path: "accountId", select: "email" })
       .populate({ path: "contactId", select: "phoneNumber" })
       .populate({ path: "addressId", select: "address" })
       .populate({ path: "specializationIds", select: "MasterServiceType" })
       .lean();
-
 
     if (!technicianProfile) {
       return res.status(404).json({
@@ -768,8 +751,9 @@ export const TechnicianProfileController = async (
     const technicianShop = await Shop.findOne({
       userId: technicianProfile.userId,
       isDeleted: false,
-
-    }).select('shopName').lean();
+    })
+      .select("shopName")
+      .lean();
     console.log("Technician Profile:", technicianShop);
     return res.status(200).json({
       success: true,
@@ -779,7 +763,6 @@ export const TechnicianProfileController = async (
         shop: technicianShop || null,
       },
     });
-
   } catch (error) {
     console.error("Technician Profile Fetch Failed:", error);
     return res.status(500).json({
@@ -789,10 +772,10 @@ export const TechnicianProfileController = async (
   }
 };
 
-//update technician profile 
+//update technician profile
 export const UpdateTechnicianProfileController = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     if (!req.role || req.role !== "Technician" || !req.technicianId) {
@@ -802,14 +785,7 @@ export const UpdateTechnicianProfileController = async (
       });
     }
 
-    const {
-
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      address,
-    } = req.body;
+    const { firstName, lastName, email, phoneNumber, address } = req.body;
 
     const technician = await Technicians.findOne({
       _id: req.technicianId,
@@ -872,9 +848,7 @@ export const UpdateTechnicianProfileController = async (
       success: true,
       message: "Technician profile updated successfully.",
     });
-
   } catch (error: any) {
-
     /* ===============================
        🔥 HANDLE UNIQUE INDEX ERROR
     =============================== */
