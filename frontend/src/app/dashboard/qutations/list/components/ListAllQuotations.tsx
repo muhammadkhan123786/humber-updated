@@ -254,11 +254,41 @@ const ListAllQuotations = () => {
   };
 
   const handleEdit = (id: string) => {
+    // Find the quotation by ID
+    const quotation = quotations.find(q => q._id === id);
+    
+    if (!quotation) {
+      toast.error("Quotation not found");
+      return;
+    }
+    
+    // Check if status is approved
+    const statusLower = quotation.quotationStatus?.toLowerCase() || "";
+    if (statusLower.includes("approve")) {
+      toast.error("Approved quotations cannot be edited");
+      return;
+    }
+    
     // Navigate to edit page with quotation ID
     router.push(`/dashboard/qutations/create?mode=edit&id=${id}`);
   };
 
   const handleDelete = (id: string) => {
+    // Find the quotation by ID
+    const quotation = quotations.find(q => q._id === id);
+    
+    if (!quotation) {
+      toast.error("Quotation not found");
+      return;
+    }
+    
+    // Check if status is approved
+    const statusLower = quotation.quotationStatus?.toLowerCase() || "";
+    if (statusLower.includes("approve")) {
+      toast.error("Approved quotations cannot be deleted");
+      return;
+    }
+    
     setDeletingId(id);
   };
 
