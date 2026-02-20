@@ -253,6 +253,8 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                       onView={() => onView(quotation._id)}
                       onEdit={() => onEdit(quotation._id)}
                       onDelete={() => onDelete(quotation._id)}
+                      isEditDisabled={quotation.quotationStatus?.toLowerCase().includes('approve') || false}
+                      isDeleteDisabled={quotation.quotationStatus?.toLowerCase().includes('approve') || false}
                     />
                   </td>
                 </tr>
