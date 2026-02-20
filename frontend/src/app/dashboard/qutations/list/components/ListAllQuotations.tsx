@@ -6,7 +6,7 @@ import Cards from "./Cards";
 import QuotationTable from "./QuotationTable";
 import View from "./View";
 import DeleteConfirmModal from "../../../my-tickets/components/DeleteConfirmModal";
-import { getAlls, deleteItem, updateItem } from "@/helper/apiHelper";
+import { getAlls, deleteItem } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 
@@ -74,29 +74,28 @@ const ListAllQuotations = () => {
   }, []);
 
   useEffect(() => {
-    filterQuotations();
+    // Only filter if we have quotations loaded
+    if (quotations.length > 0 || searchQuery || selectedStatus) {
+      filterQuotations();
+    }
   }, [searchQuery, selectedStatus, quotations]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       
-      // Fetch quotations from technician endpoint
-      const quotationsRes: any = await getAlls<any>(
-        "/technician-ticket-quotation"
-      );
+      // Fetch quotations and statuses in parallel
+      const [quotationsRes, statusesRes]: any = await Promise.all([
+        getAlls<any>("/technician-ticket-quotation"),
+        getAlls<QuotationStatus>("/ticket-quotation-status")
+      ]);
       
-      // Fetch ticket quotation statuses
-      const statusesRes: any = await getAlls<QuotationStatus>(
-        "/ticket-quotation-status"
-      );
-      
-      // The backend returns "tickets" not "data" for this endpoint
-      const quotationsData = Array.isArray(quotationsRes.tickets) ? quotationsRes.tickets : [];
+      // Get data arrays
+      const quotationsData = Array.isArray(quotationsRes.data) ? quotationsRes.data : [];
       const statusesData = Array.isArray(statusesRes.data) ? statusesRes.data.filter((s: QuotationStatus) => s.isActive && s.canChooseTechnician) : [];
       
       // Map quotationStatus name to quotationStatusId for each quotation
-      const mappedQuotations = (quotationsRes.data || []).map((quotation: QuotationFromBackend) => {
+      const mappedQuotations = quotationsData.map((quotation: QuotationFromBackend) => {
         if (!quotation.quotationStatusId && quotation.quotationStatus) {
           // Find the matching status ID from the status name
           const matchedStatus = statusesData.find(
@@ -110,13 +109,16 @@ const ListAllQuotations = () => {
         return quotation;
       });
       
-      setQuotations(mappedQuotations);
-      setFilteredQuotations(quotationsData);
+      // Batch state updates to prevent multiple re-renders
       setQuotationStatuses(statusesData);
+      setQuotations(mappedQuotations);
+      setFilteredQuotations(mappedQuotations);
       
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load quotations");
+      setQuotations([]);
+      setFilteredQuotations([]);
     } finally {
       setLoading(false);
     }
@@ -338,14 +340,44 @@ const ListAllQuotations = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="shadow-xl bg-white/80 backdrop-blur-sm border-t-4 border-indigo-600 p-6 min-h-[calc(100vh-200px)]">
+        <div className="max-w-7xl mx-auto">
+          {/* Header Skeleton */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div className="h-6 w-24 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Search Bar Skeleton */}
+          <div className="mb-6">
+            <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+          </div>
+
+          {/* Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+
+          {/* Table Skeleton */}
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="shadow-xl bg-white/80 backdrop-blur-sm border-t-4 border-indigo-600 p-6 animate-fadeIn">
+    <div className="shadow-xl bg-white/80 backdrop-blur-sm border-t-4 border-indigo-600 p-6 min-h-[calc(100vh-200px)]">
       <style jsx>{`
         @keyframes fadeIn {
           from {
@@ -358,7 +390,7 @@ const ListAllQuotations = () => {
         @keyframes slideUp {
           from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(10px);
           }
           to {
             opacity: 1;
@@ -366,10 +398,10 @@ const ListAllQuotations = () => {
           }
         }
         .animate-fadeIn {
-          animation: fadeIn 0.4s ease-out;
+          animation: fadeIn 0.2s ease-out;
         }
         .animate-slideUp {
-          animation: slideUp 0.5s ease-out;
+          animation: slideUp 0.3s ease-out;
         }
       `}</style>
       <div className="max-w-7xl mx-auto">
@@ -395,7 +427,7 @@ const ListAllQuotations = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="space-y-4 animate-slideUp" style={{ animationDelay: '100ms' }}>
+        <div className="space-y-4 animate-slideUp">
           <div className="relative">
             <Search
               className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors"
