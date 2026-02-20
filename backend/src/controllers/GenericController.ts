@@ -1,9 +1,9 @@
+// controllers/GenericController.enhanced.ts
 import { Request, Response } from "express";
-import { Types, Document, PopulateOptions } from "mongoose";
-import { ZodObject, ZodRawShape, ZodTypeAny } from "zod";
-import { normalizeToStringArray } from "../utils/query.utils";
 import { GenericService } from "../services/generic.crud.services";
-
+import { Document, PopulateOptions, Types } from "mongoose";
+import { ZodObject, ZodRawShape } from "zod";
+import { normalizeToStringArray } from "../utils/query.utils";
 interface ControllerOptions<T extends Document> {
   service: GenericService<T>;
   populate?: (string | PopulateOptions)[];
@@ -14,10 +14,10 @@ interface ControllerOptions<T extends Document> {
 export class AdvancedGenericController<T extends Document> {
   constructor(private options: ControllerOptions<T>) { }
 
-  // 🔹 CREATE
   create = async (req: Request, res: Response) => {
     try {
       let data = req.body;
+      console.log("Creating document with data:", data);
 
       if (this.options.validationSchema) {
         data = this.options.validationSchema.parse(data);
@@ -36,8 +36,6 @@ export class AdvancedGenericController<T extends Document> {
       });
     }
   };
-
-  // 🔹 GET ALL (generic aggregation with nested array search)
   getAll = async (req: Request, res: Response) => {
     try {
       const {
@@ -48,131 +46,160 @@ export class AdvancedGenericController<T extends Document> {
         search,
         filter,
         includeStats = "false",
+        // Category filters
+        categoryId,
+        level1CategoryId,
+        level2CategoryId,
+        level3CategoryId,
+        // Other filters
+
+        stockStatus,
+        featured,
         ...rawFilters
       } = req.query;
 
       const pageNumber = Number(page);
       const pageSize = Number(limit);
+      const queryFilters: Record<string, any> = { isDeleted: false };
 
-      // Base match filter
-      const matchFilters: Record<string, any> = { isDeleted: false };
 
-      // 🔹 Dynamic filters (ObjectId or plain value)
+      // ✅ GENERIC SEARCH across searchFields
+      if (search && this.options.searchFields?.length) {
+        queryFilters.$or = this.options.searchFields.map((field) => ({
+          [field]: { $regex: search, $options: "i" },
+        }));
+      }
+
+
+
+      // ✅ CATEGORY FILTERS
+      // Direct category filter
+      if (categoryId && Types.ObjectId.isValid(categoryId as string)) {
+        queryFilters.categoryId = new Types.ObjectId(categoryId as string);
+      }
+
+      // Level 1 category filter
+      if (level1CategoryId && Types.ObjectId.isValid(level1CategoryId as string)) {
+        queryFilters.categoryId = new Types.ObjectId(level1CategoryId as string);
+      }
+
+      // Level 2 category filter (check categoryPath array)
+      if (level2CategoryId && Types.ObjectId.isValid(level2CategoryId as string)) {
+        queryFilters.categoryPath = new Types.ObjectId(level2CategoryId as string);
+      }
+
+      // Level 3 category filter (check categoryPath array)
+      if (level3CategoryId && Types.ObjectId.isValid(level3CategoryId as string)) {
+        queryFilters.categoryPath = new Types.ObjectId(level3CategoryId as string);
+      }
+
+
+
+      // ✅ STOCK STATUS FILTER
+      if (stockStatus) {
+        // This assumes you have stock status in the main product document
+        // If it's in attributes, you'll need to adjust this
+        queryFilters['attributes.stock.stockStatus'] = stockStatus;
+      }
+
+      // ✅ FEATURED FILTER
+      if (featured === 'true') {
+        queryFilters['attributes.stock.featured'] = true;
+      }
+
+      // ✅ Dynamic filters from rawFilters
       Object.keys(rawFilters).forEach((key) => {
         const value = rawFilters[key];
+
+        // Handle array of IDs (e.g., categoryIds, warehouseIds)
         if (key.endsWith("Ids")) {
           const ids = normalizeToStringArray(value)
             .filter((id) => Types.ObjectId.isValid(id))
             .map((id) => new Types.ObjectId(id));
-          if (ids.length) matchFilters[key.replace("Ids", "Id")] = { $in: ids };
+
+          if (ids.length) {
+            queryFilters[key.replace("Ids", "Id")] = { $in: ids };
+          }
           return;
         }
 
+        // Handle single ObjectId
         if (typeof value === "string" && Types.ObjectId.isValid(value)) {
-          matchFilters[key] = new Types.ObjectId(value);
+          queryFilters[key] = new Types.ObjectId(value);
         } else {
-          matchFilters[key] = value;
+          queryFilters[key] = value;
         }
       });
 
-      const pipeline: any[] = [{ $match: matchFilters }];
-
-      // 🔹 Generic $lookup for populated fields
-      if (this.options.populate?.length) {
-        for (const field of this.options.populate) {
-          const localField = typeof field === "string" ? field : field.path;
-          const fromCollection = localField.replace(/Id$/, "") + "s";
-
-          pipeline.push({
-            $lookup: {
-              from: fromCollection,
-              localField,
-              foreignField: "_id",
-              as: localField,
-            },
-          });
-
-          pipeline.push({
-            $unwind: { path: `$${localField}`, preserveNullAndEmptyArrays: true },
-          });
-        }
+      // ✅ Get product statistics (only if requested and model is Product)
+      let statistics = null;
+      if (
+        includeStats === "true" &&
+        this.options.service.model.modelName === "Product"
+      ) {
+        statistics = await this.options.service.getProductStats(queryFilters);
       }
 
-      // 🔹 Generic search (supports nested arrays recursively)
-      if (search && this.options.searchFields?.length) {
-        const unwindedArrays = new Set<string>();
-        const orConditions: any[] = [];
-
-        this.options.searchFields.forEach((field: string) => {
-          const parts = field.split(".");
-          if (parts.length > 1) {
-            // recursive unwind for nested arrays
-            for (let i = 0; i < parts.length - 1; i++) {
-              const path = parts.slice(0, i + 1).join(".");
-              if (!unwindedArrays.has(path)) {
-                pipeline.push({
-                  $unwind: { path: `$${path}`, preserveNullAndEmptyArrays: true },
-                });
-                unwindedArrays.add(path);
-              }
-            }
-            orConditions.push({ [field]: { $regex: search, $options: "i" } });
-          } else {
-            orConditions.push({ [field]: { $regex: search, $options: "i" } });
-          }
+      let { query, total, activeCount, inactiveCount } =
+        await this.options.service.getQuery(queryFilters, {
+          populate: this.options.populate,
         });
 
-        pipeline.push({ $match: { $or: orConditions } });
-
-        // Group back to avoid duplicates
-        pipeline.push({
-          $group: { _id: "$_id", doc: { $first: "$$ROOT" } },
-        });
-        pipeline.push({ $replaceRoot: { newRoot: "$doc" } });
-      }
-
-      // 🔹 Sorting
-      const sortOption: Record<string, number> = {};
+      const sortOption: any = {};
       sortOption[sortBy as string] = order === "asc" ? 1 : -1;
-      pipeline.push({ $sort: sortOption });
 
-      // 🔹 Count total documents
-      const countPipeline = [...pipeline, { $count: "total" }];
-      const totalResult = await this.options.service.model.aggregate(countPipeline);
-      const total = totalResult[0]?.total || 0;
+      // ✅ Check if filter=all, then skip pagination
+      if (filter === "all") {
+        const data = await query
+          .sort(sortOption)
+          .find({ isActive: true })
+          .exec();
 
-      // 🔹 Pagination
-      if (filter !== "all") {
-        pipeline.push({ $skip: (pageNumber - 1) * pageSize });
-        pipeline.push({ $limit: pageSize });
+        const response: any = {
+          success: true,
+          total,
+          page: 1,
+          limit: total,
+          data,
+        };
+
+        if (statistics) {
+          response.statistics = statistics;
+        }
+
+        return res.status(200).json(response);
       }
 
-      // 🔹 Execute final aggregation
-      const data = await this.options.service.model.aggregate(pipeline);
+      // 🔹 Normal pagination
+      const data = await query
+        .sort(sortOption)
+        .skip((pageNumber - 1) * pageSize)
+        .limit(pageSize)
+        .exec();
 
       const response: any = {
         success: true,
         total,
+        activeCount,
+        inactiveCount,
         page: pageNumber,
         limit: pageSize,
         data,
       };
 
-      // 🔹 Optional statistics
-      if (includeStats === "true" && this.options.service.getProductStats) {
-        response.statistics = await this.options.service.getProductStats(matchFilters);
+      if (statistics) {
+        response.statistics = statistics;
       }
 
-      return res.status(200).json(response);
+      res.status(200).json(response);
     } catch (err: any) {
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: err.message || "Failed to fetch documents",
       });
     }
   };
 
-  // 🔹 GET BY ID
   getById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -181,13 +208,16 @@ export class AdvancedGenericController<T extends Document> {
       }
 
       const populateQuery = req.query.populate as string | undefined;
+
       const populate = populateQuery
         ? populateQuery.split(",").map((p) => p.trim())
         : this.options.populate;
 
       const doc = await this.options.service.getById(id, { populate });
 
-      if (!doc) return res.status(404).json({ message: "Document not found" });
+      if (!doc) {
+        return res.status(404).json({ message: "Document not found" });
+      }
 
       res.status(200).json({ success: true, data: doc });
     } catch (err: any) {
@@ -198,11 +228,11 @@ export class AdvancedGenericController<T extends Document> {
     }
   };
 
-  // 🔹 UPDATE
   update = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid ID" });
+      if (!Types.ObjectId.isValid(id))
+        return res.status(400).json({ message: "Invalid ID" });
 
       let data = req.body;
       if (this.options.validationSchema) {
@@ -212,7 +242,8 @@ export class AdvancedGenericController<T extends Document> {
       const updated = await this.options.service.updateById(id, data, {
         populate: this.options.populate,
       });
-      if (!updated) return res.status(404).json({ message: "Document not found" });
+      if (!updated)
+        return res.status(404).json({ message: "Document not found" });
 
       res.status(200).json({ success: true, data: updated });
     } catch (err: any) {
@@ -223,16 +254,21 @@ export class AdvancedGenericController<T extends Document> {
     }
   };
 
-  // 🔹 DELETE
   delete = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid ID" });
+      console.log("id", id);
+      if (!Types.ObjectId.isValid(id))
+        return res.status(400).json({ message: "Invalid ID" });
 
       const deleted = await this.options.service.deleteById(id);
-      if (!deleted) return res.status(404).json({ message: "Document not found" });
+      console.log("deleted", deleted);
+      if (!deleted)
+        return res.status(404).json({ message: "Document not found" });
 
-      res.status(200).json({ success: true, message: "Document deleted successfully" });
+      res
+        .status(200)
+        .json({ success: true, message: "Document deleted successfully" });
     } catch (err: any) {
       res.status(500).json({
         success: false,
@@ -241,3 +277,4 @@ export class AdvancedGenericController<T extends Document> {
     }
   };
 }
+

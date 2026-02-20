@@ -26,7 +26,7 @@ const ticketQuotationController = new AdvancedGenericController({
 
 
 ticketQuotationRouter.get("/", technicianProtecter, technicianTicketsQuotationsController);
-ticketQuotationRouter.get("/:id", ticketQuotationController.getById);
+ticketQuotationRouter.get("/:id", technicianProtecter, ticketQuotationController.getById);
 ticketQuotationRouter.post("/", async (req, res, next) => {
   try {
     const quotationId = await generateQuotationCode();
@@ -52,14 +52,14 @@ ticketQuotationRouter.put(
     if (req.technicianId) {
       const { id } = req.params;
       if (!Types.ObjectId.isValid(id))
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(200).json({ status: false, message: "Invalid ID" });
 
       const quotation = await TicketQuations.findOne({ _id: id, isDeleted: false });
       if (!quotation)
-        return res.status(400).json({ message: "Quotation Not Found." });
+        return res.status(200).json({ status: false, message: "Quotation Not Found." });
 
       if (quotation.quotationStatusId === "APPROVED") {
-        return res.status(400).json({ message: "You cannot update approved quotations." });
+        return res.status(200).json({ status: false, message: "You cannot update approved quotations." });
       }
     }
 
@@ -76,14 +76,14 @@ ticketQuotationRouter.delete(
       if (req.technicianId) {
         const { id } = req.params;
         if (!Types.ObjectId.isValid(id))
-          return res.status(400).json({ message: "Invalid ID" });
+          return res.status(200).json({ message: "Invalid ID" });
 
         const quotation = await TicketQuations.findOne({ _id: id, isDeleted: false });
         if (!quotation)
-          return res.status(404).json({ message: "Quotation Not Found." });
+          return res.status(200).json({ message: "Quotation Not Found." });
 
         if (quotation.quotationStatusId === "APPROVED") {
-          return res.status(400).json({ message: "You cannot delete approved quotations." });
+          return res.status(200).json({ message: "You cannot delete approved quotations." });
         }
       }
 
