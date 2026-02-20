@@ -36,12 +36,12 @@ const MainImports = () => {
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAlls<TechnicianJobType>("/technician-dashboard-jobs", {
+      const res = await getAlls<TechnicianJobType>("/technician-job-by-admin", {
         page: currentPage,
         limit,
       });
       
-      console.log("API Response:", res); // Debug log to check API response structure
+      console.log("API Response JOBS NEW:", res); // Debug log to check API response structure
       
       // Handle nested response structure: res.data.jobs
       const responseData = res.data as any;
