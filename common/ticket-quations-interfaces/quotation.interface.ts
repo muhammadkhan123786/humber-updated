@@ -1,9 +1,18 @@
 import { IBaseEntity } from '../Base.Interface';
 export type QuotationStatuses = "SENT TO ADMIN" | "DRAFTED" | "SEND TO CUSTOMER" | "SEND TO INSURANCE" | "APPROVED" | "REJECTED";
-export interface ITicketQuotation<TUserId = string, TTICKETID = string, TQUOTATIONPARTS = string[], TTTECHNICIANID = string, VALIDITYDATE = string> extends IBaseEntity<TUserId> {
+export interface IQuotationPartItem {
+    partId: string;
+    partName: string;
+    quantity: number;
+    unitPrice: number;
+    discount?: number;
+    total: number;
+}
+
+export interface ITicketQuotation<TUserId = string, TTICKETID = string, TPARTS = IQuotationPartItem[], TTTECHNICIANID = string, VALIDITYDATE = string> extends IBaseEntity<TUserId> {
     ticketId: TTICKETID,
     quotationStatusId: QuotationStatuses,
-    partsList?: TQUOTATIONPARTS,
+    partsList?: TPARTS,
     labourTime?: number,
     labourRate?: number,
     aditionalNotes?: string,

@@ -1,11 +1,11 @@
 
 import { Document, Model, model, Schema, Types } from "mongoose";
 
-import { ITicketQuotation } from "../../../../common/ticket-quations-interfaces/quotation.interface";
+import { IQuotationPartItem, ITicketQuotation } from "../../../../common/ticket-quations-interfaces/quotation.interface";
 
 import { ticketQuotationSchema } from "../../schemas/ticket-quation-schemas/ticket.quotation.schema";
 
-export type ticketQuatationDoc = ITicketQuotation<Types.ObjectId, Types.ObjectId, Types.ObjectId[], Types.ObjectId, Date> & Document;
+export type ticketQuatationDoc = ITicketQuotation<Types.ObjectId, Types.ObjectId, IQuotationPartItem[], Types.ObjectId, Date> & Document;
 
 const ticketQuotationDbSchema = new Schema<ticketQuatationDoc>({
 
