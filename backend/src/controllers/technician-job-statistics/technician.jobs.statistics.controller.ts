@@ -12,133 +12,78 @@ import { User } from "../../models/user.models";
 import { Person } from "../../models/person.models";
 import { Contact } from "../../models/contact.models";
 import { Address } from "../../models/addresses.models";
+import { TechnicianJobsByAdmin } from "../../models/techncian-jobs-by-admin-models/technician.jobs.by.admin.models"; // your mongoose model
+import { JOB_STATUS } from "../../schemas/technicians-jobs-by-admin/techncian.jobs.by.admin.schema";
 
 export const technicianJobsStatisticsController = async (
   req: Request,
-  res: Response,
+  res: Response
 ) => {
   try {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const result = await TechnicianJobStatus.aggregate([
+    // 🔹 Aggregate
+    const result = await TechnicianJobsByAdmin.aggregate([
+      {
+        $match: { isDeleted: false },
+      },
       {
         $facet: {
-          // ✅ 1️⃣ STATUS COUNTS (Show ALL statuses)
-          statusCounts: [
-            {
-              $lookup: {
-                from: "techniciansjobs",
-                let: { statusId: "$_id" },
-                pipeline: [
-                  {
-                    $match: {
-                      $expr: {
-                        $and: [
-                          {
-                            $eq: [
-                              {
-                                $cond: [
-                                  {
-                                    $eq: [{ $type: "$jobStatusId" }, "string"],
-                                  },
-                                  { $toObjectId: "$jobStatusId" },
-                                  "$jobStatusId",
-                                ],
-                              },
-                              "$$statusId",
-                            ],
-                          },
-                          { $eq: ["$isDeleted", false] },
-                        ],
-                      },
-                    },
-                  },
-                  { $count: "totalJobs" },
-                ],
-                as: "jobsData",
-              },
-            },
-            {
-              $addFields: {
-                totalJobs: {
-                  $ifNull: [{ $arrayElemAt: ["$jobsData.totalJobs", 0] }, 0],
+          // ✅ Count jobs per status
+          statusCounts: JOB_STATUS.map((status) => ({
+            $group: {
+              _id: status,
+              totalJobs: {
+                $sum: {
+                  $cond: [{ $eq: ["$jobStatusId", status] }, 1, 0],
                 },
               },
             },
-            {
-              $project: {
-                _id: 1,
-                technicianJobStatus: 1,
-                totalJobs: 1,
-              },
-            },
-          ],
-
-          // ✅ 2️⃣ OVERALL TOTAL JOBS (REAL JOBS COLLECTION)
-          overallTotal: [
-            {
-              $lookup: {
-                from: "techniciansjobs",
-                pipeline: [
-                  { $match: { isDeleted: false } },
-                  { $count: "overallTotalJobs" },
-                ],
-                as: "overall",
-              },
-            },
-            {
-              $unwind: {
-                path: "$overall",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-            {
-              $limit: 1,
-            },
-            {
-              $project: {
-                overallTotalJobs: "$overall.overallTotalJobs",
-              },
-            },
-          ],
-
-          // ✅ 3️⃣ TODAY JOBS
+          })),
+          // ✅ Overall total jobs
+          overallTotal: [{ $count: "overallTotalJobs" }],
+          // ✅ Today jobs
           todayJobs: [
             {
-              $lookup: {
-                from: "techniciansjobs",
-                pipeline: [
-                  {
-                    $match: {
-                      isDeleted: false,
-                      createdAt: { $gte: todayStart },
-                    },
-                  },
-                  { $count: "todayJobs" },
-                ],
-                as: "today",
-              },
+              $match: { createdAt: { $gte: todayStart } },
             },
-            { $unwind: { path: "$today", preserveNullAndEmptyArrays: true } },
-            { $limit: 1 },
-            {
-              $project: {
-                todayJobs: "$today.todayJobs",
-              },
-            },
+            { $count: "todayJobs" },
           ],
         },
       },
       {
         $project: {
-          statusCounts: 1,
-          technicianJobStatus: 1,
+          // Flatten results
+          statusCounts: {
+            $map: {
+              input: JOB_STATUS,
+              as: "status",
+              in: {
+                status: "$$status",
+                totalJobs: {
+                  $let: {
+                    vars: {
+                      matchStatus: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$statusCounts",
+                              cond: { $eq: ["$$this._id", "$$status"] },
+                            },
+                          },
+                          0,
+                        ],
+                      },
+                    },
+                    in: { $ifNull: ["$$matchStatus.totalJobs", 0] },
+                  },
+                },
+              },
+            },
+          },
           overallTotalJobs: {
-            $ifNull: [
-              { $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] },
-              0,
-            ],
+            $ifNull: [{ $arrayElemAt: ["$overallTotal.overallTotalJobs", 0] }, 0],
           },
           todayJobs: {
             $ifNull: [{ $arrayElemAt: ["$todayJobs.todayJobs", 0] }, 0],
@@ -150,7 +95,7 @@ export const technicianJobsStatisticsController = async (
     return res.status(200).json({
       success: true,
       data: result[0] || {
-        statusCounts: [],
+        statusCounts: JOB_STATUS.map((status) => ({ status, totalJobs: 0 })),
         overallTotalJobs: 0,
         todayJobs: 0,
       },
