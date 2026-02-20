@@ -12,6 +12,7 @@ import {
 } from "../../middleware/auth.middleware";
 import { technicianTicketsQuotationsController } from "../../controllers/technician-dashboard-controllers/technician.quotations.controller";
 import { generateQuotationCode } from "../../utils/generate.AutoCode.Counter";
+import { Types } from "mongoose";
 
 const ticketQuotationRouter = Router();
 
@@ -62,26 +63,64 @@ ticketQuotationRouter.post(
         .json({ message: "Failed to generate quotation ID" });
     }
 
-    next();
-  },
-  technicianProtecter,
-  (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
-    req.body.userId = req.user.userId;
-    req.body.technicianId = req.technicianId;
-    next();
-  },
-  ticketQuotationController.create,
-);
+  next();
+}, technicianProtecter, (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
+  req.body.userId = req.user.userId;
+  req.body.technicianId = req.technicianId;
+  next();
+}, ticketQuotationController.create);
 ticketQuotationRouter.put(
   "/:id",
   technicianProtecter,
-  (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
+  async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
     req.body.userId = req.user.userId;
     req.body.technicianId = req.technicianId;
+
+    if (req.technicianId) {
+      const { id } = req.params;
+      if (!Types.ObjectId.isValid(id))
+        return res.status(400).json({ message: "Invalid ID" });
+
+      const quotation = await TicketQuations.findOne({ _id: id, isDeleted: false });
+      if (!quotation)
+        return res.status(400).json({ message: "Quotation Not Found." });
+
+      if (quotation.quotationStatusId === "APPROVED") {
+        return res.status(400).json({ message: "You cannot update approved quotations." });
+      }
+    }
+
     next();
   },
-  ticketQuotationController.update,
+  ticketQuotationController.update
 );
-ticketQuotationRouter.delete("/:id", ticketQuotationController.delete);
+
+ticketQuotationRouter.delete(
+  "/:id",
+  technicianProtecter,
+  async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
+    try {
+      if (req.technicianId) {
+        const { id } = req.params;
+        if (!Types.ObjectId.isValid(id))
+          return res.status(400).json({ message: "Invalid ID" });
+
+        const quotation = await TicketQuations.findOne({ _id: id, isDeleted: false });
+        if (!quotation)
+          return res.status(404).json({ message: "Quotation Not Found." });
+
+        if (quotation.quotationStatusId === "APPROVED") {
+          return res.status(400).json({ message: "You cannot delete approved quotations." });
+        }
+      }
+
+      next();
+    } catch (err: any) {
+      console.error("Delete quotation error:", err);
+      return res.status(500).json({ message: "Failed to delete quotation." });
+    }
+  },
+  ticketQuotationController.delete
+);
 
 export default ticketQuotationRouter;
