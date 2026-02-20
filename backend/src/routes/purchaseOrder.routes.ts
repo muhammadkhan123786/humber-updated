@@ -19,10 +19,7 @@ const purchaseOrderController = new AdvancedGenericController({
       path: "supplier",
       select: "contactInformation",
     },
-    {
-      path: "items.productId",
-      select: "productName sku",
-    },
+    
   ],
   searchFields: ["orderNumber", "supplier", "supplierContact", "notes"],
   validationSchema: purchaseOrderZodSchema,

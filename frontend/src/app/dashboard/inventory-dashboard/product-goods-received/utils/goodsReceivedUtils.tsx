@@ -20,12 +20,17 @@ export const getStatusIcon = (status: string): LucideIcon => {
 };
 
 export const getDeliveryStatusBadge = (grn: GoodsReceivedNote) => {
-  if (grn.totalReceived === grn.totalOrdered && grn.totalRejected === 0) {
+  const totalReceived = grn.totalReceived ?? 0;
+  const totalOrdered = grn.totalOrdered ?? 0;
+  const totalRejected = grn.totalRejected ?? 0;
+
+  if (totalReceived === totalOrdered && totalRejected === 0) {
     return 'Fully Delivered';
-  } else if (grn.totalReceived < grn.totalOrdered) {
+  } else if (totalReceived < totalOrdered) {
     return 'Partially Delivered';
-  } else if (grn.totalRejected > 0) {
+  } else if (totalRejected > 0) {
     return 'With Rejections';
   }
+
   return 'Received';
 };

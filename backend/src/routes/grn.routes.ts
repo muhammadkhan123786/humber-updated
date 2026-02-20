@@ -17,12 +17,13 @@ const grnController = new AdvancedGenericController({
     "userId", 
     {
       path: "purchaseOrderId",
-      select: "orderNumber expectedDelivery supplier",
+      select: "orderNumber expectedDelivery  items.productId",
       populate: {
         path: "supplier",
         select: "contactInformation"
       }
-    }
+    },
+    
   ],
   validationSchema: createGRNValidationsSchema, 
 });

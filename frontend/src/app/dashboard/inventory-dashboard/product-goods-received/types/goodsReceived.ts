@@ -1,151 +1,65 @@
-// // types/index.ts
-// export interface PurchaseOrderItem {
-//   id: string;
-//   productName: string;
-//   sku: string;
-//   quantity: number;
-//   receivedQuantity: number;
-//   rejectedQuantity: number;
-//   unitPrice: number;
-//   totalPrice: number;
-//   _id?: string;
-// }
-
-// export interface PurchaseOrder {
-//   _id: string;
-//   orderNumber: string;
-//   supplierContact: string;
-//   orderDate: Date;
-//   expectedDelivery: Date;
-//   status:
-//     | "ordered"
-//     | "received"
-//     | "cancelled"
-//     | "pending"
-//     | "approved"
-//     | "draft";
-//   deliveryStatus: "not-delivered" | "partially-delivered" | "fully-delivered";
-//   items: PurchaseOrderItem[];
-//   subtotal: number;
-//   tax: number;
-//   total: number;
-//   notes: string;
-//   supplier: Supplier;
-// }
-
-// export interface GoodsReceivedNoteItem {
-//   _id?: string;
-//  purchaseOrderItemId?: string;
-//   productName: string;
-//   sku: string;
-//   orderedQuantity: number;
-//   receivedQuantity: number;
-//   acceptedQuantity: number;
-//   rejectedQuantity: number;
-//   damageQuantity: number;
-//   unitPrice: number;
-//   condition: "good" | "damaged" | "defective";
-//   notes: string;
-// }
-
-// interface Supplier {
-//   _id: string;
-//   contactInformation: {
-//     primaryContactName: string;
-//     email?: string;
-//     phone?: string;
-//   };
-// }
-
-// export interface GoodsReceivedNote {
-//   _id: string;
-//   grnNumber: string;
-//   purchaseOrderId: PurchaseOrder;
-//   supplier: string;
-//   receivedDate: Date;
-//   receivedBy: string;
-//   items: GoodsReceivedNoteItem[];
-//   totalOrdered: number;
-//   totalReceived: number;
-//   totalAccepted: number;
-//   totalRejected: number;
-//   status: "draft" | "completed" | "discrepancy";
-//   notes: string;
-//   signature?: string;
-// }
-
-// export interface ReceivingItem {
-//   id: string;
-//   productName: string;
-//   sku: string;
-//   orderedQuantity: number;
-//   receivedQuantity: number;
-//   acceptedQuantity: number;
-//   rejectedQuantity: number;
-//   damageQuantity: number;
-//   condition: "good" | "damaged" | "defective";
-//   notes: string;
-//   unitPrice: number;
-//   isManual?: boolean;
-// }
-
-// export interface NewProductForm {
-//   productName: string;
-//   sku: string;
-//   orderedQuantity: string;
-//   receivedQuantity: string;
-//   unitPrice: string;
-// }
-
-// export interface GRNStats {
-//   totalGRNs: number;
-//   completedGRNs: number;
-//   discrepancyGRNs: number;
-//   totalItemsReceived: number;
-// }
-
-
-
 // types/goodsReceived.ts
-export interface PurchaseOrderItem {
+
+// ── Populated productId object (what the backend actually returns after populate)
+export interface PopulatedProduct {
   _id: string;
   productName: string;
   sku: string;
-  quantity: number;
-  receivedQuantity: number;
-  rejectedQuantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  ui_price?: number;
+  ui_totalStock?: number;
+  id?: string;
 }
 
+// ── Single item inside a PurchaseOrder (matches real backend shape)
+export interface PurchaseOrderItem {
+  _id?: string;
+  // productId is a populated object from the backend, not just a string
+  productId: PopulatedProduct;
+  quantity: number;
+  unitPrice: number;
+}
+
+// ── Populated supplier shape (what the backend returns)
 export interface Supplier {
   _id: string;
   contactInformation: {
     primaryContactName: string;
+    emailAddress?: string;
     email?: string;
     phone?: string;
   };
+  supplierIdentification?: {
+    legalBusinessName?: string;
+    tradingName?: string;
+  };
+  operationalInformation?: {
+    orderContactEmail?: string;
+    orderContactName?: string;
+  };
 }
 
+// ── Full PurchaseOrder (matches real backend shape from document 6)
 export interface PurchaseOrder {
   _id: string;
   orderNumber: string;
-  supplierContact: string;
   orderDate: Date | string;
   expectedDelivery: Date | string;
   status: "ordered" | "received" | "cancelled" | "pending" | "approved" | "draft";
-  deliveryStatus: "not-delivered" | "partially-delivered" | "fully-delivered";
   items: PurchaseOrderItem[];
   subtotal: number;
   tax: number;
   total: number;
-  notes: string;
-  supplier: Supplier;
+  notes?: string;
+  supplier: Supplier;           // always populated from backend
 }
 
+// ── Item inside a GRN (what we store and display)
 export interface GoodsReceivedNoteItem {
   _id?: string;
-  purchaseOrderItemId: string;
+  purchaseOrderItemId: string;  // references PurchaseOrderItem._id (or productId._id as fallback)
+  // We keep productId as the populated object so the dialog table can read from it
+  productId?: PopulatedProduct;
+  // Flat copies for manual entries and display convenience
   productName: string;
   sku: string;
   orderedQuantity: number;
@@ -154,28 +68,27 @@ export interface GoodsReceivedNoteItem {
   rejectedQuantity: number;
   damageQuantity: number;
   unitPrice: number;
-  condition: "good" | "damaged" | "defective";
+  condition: "good" | "damaged" | "defective" | "other";
   notes: string;
-  status?: string
+  status?: string;
 }
 
 export interface GoodsReceivedNote {
   _id: string;
   grnNumber: string;
+  grnReference: string;
   purchaseOrderId: PurchaseOrder | string;
-  supplier: string;
+  supplier?: string;
   receivedDate: Date | string;
   receivedBy: string;
   items: GoodsReceivedNoteItem[];
-  totalOrdered: number;
-  totalReceived: number;
-  totalAccepted: number;
-  totalRejected: number;
-  status: "received"| "ordered";
+  totalOrdered?: number;
+  totalReceived?: number;
+  totalAccepted?: number;
+  totalRejected?: number;
+  status: "received" | "ordered";
   notes?: string;
   signature?: string;
-  grnReference: string
-  
 }
 
 export interface GRNStats {
@@ -192,5 +105,5 @@ export interface NewProductForm {
   orderedQuantity: number;
   receivedQuantity: number;
   unitPrice: number;
-  status: "received"| "ordered";
+  status: "received" | "ordered";
 }

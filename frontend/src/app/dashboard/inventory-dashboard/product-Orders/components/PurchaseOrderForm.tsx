@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,9 +15,10 @@ import { Label } from "@/components/form/Label";
 import { Textarea } from "@/components/form/Textarea";
 import { IPurchaseOrder, IPurchaseOrderItem } from "../types/purchaseOrders";
 import { OrderFormData, OrderItemForm } from "../types/purchaseOrders";
-import { Plus, Trash2, Building2, Truck, Box, X } from "lucide-react";
+import { Plus, Trash2, Building2, Truck, Box } from "lucide-react";
 import { toast } from "sonner";
 import { useFormActions } from "@/hooks/useFormActions";
+import { SearchableCombobox, ComboboxItemConfig } from "@/components/SearchableCombobox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,14 +46,11 @@ export interface ProductAttribute {
   _id: string;
   sku: string;
   pricing: ProductPricing[];
-  stock: {
-    stockQuantity: number;
-    onHand: number;
-  };
+  stock: { stockQuantity: number; onHand: number };
 }
 
 export interface ProductFull {
-  _id: string;           // ← this is what gets stored as productId in the DB
+  _id: string;
   productName: string;
   sku: string;
   attributes: ProductAttribute[];
@@ -82,6 +80,17 @@ interface PurchaseOrderFormProps {
   };
 }
 
+// ─── Combobox config for ProductFull ─────────────────────────────────────────
+
+const productConfig: ComboboxItemConfig<ProductFull> = {
+  getKey:          (p: any) => p._id,
+  getLabel:        (p: any) => p.productName,
+  getSubLabel:     (p: any) => p.sku,
+  getRightSubLabel:(p: any) => `Stock: ${p.ui_totalStock}`,
+  getRightLabel:   (p: any) => `£${p.ui_price.toFixed(2)}`,
+  getSearchFields: (p: any) => [p.productName, p.sku],
+};
+
 // ─── Pricing Selector ────────────────────────────────────────────────────────
 
 interface PricingSelectorProps {
@@ -96,7 +105,6 @@ const PricingSelector: React.FC<PricingSelectorProps> = ({
   onSelect,
 }) => {
   if (pricingOptions.length <= 1) return null;
-
   return (
     <div className="col-span-5">
       <p className="text-xs text-indigo-500 font-medium mb-1.5">
@@ -116,9 +124,7 @@ const PricingSelector: React.FC<PricingSelectorProps> = ({
           >
             {p.marketplaceName}
             <span className="ml-1.5 font-bold">£{p.sellingPrice.toFixed(2)}</span>
-            {p.vatExempt && (
-              <span className="ml-1 opacity-70">(VAT exempt)</span>
-            )}
+            {p.vatExempt && <span className="ml-1 opacity-70">(VAT exempt)</span>}
           </button>
         ))}
       </div>
@@ -145,21 +151,12 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   calculateTotals,
   orderNumber,
 }) => {
-  const [isSaving, setIsSaving] = useState(false);
-
-  // API is only called after user first clicks the product input
+  const [isSaving, setIsSaving]         = useState(false);
   const [fetchProducts, setFetchProducts] = useState(false);
-
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // Pricing state for the currently selected product
   const [availablePricing, setAvailablePricing] = useState<ProductPricing[]>([]);
   const [selectedPricingId, setSelectedPricingId] = useState<string>("");
 
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // ── Lazy fetch — only fires once, when the user first clicks the input ────
+  // Lazy fetch — only fires after onFirstOpen is called (user first clicks input)
   const { data: products, isLoading } = useFormActions<ProductFull>(
     "/products",
     "products",
@@ -169,45 +166,18 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     fetchProducts,
   );
 
-  // ── Close dropdown on outside click ──────────────────────────────────────
-  useEffect(() => {
-    const handle = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, []);
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
-  // ── Filter list as user types ─────────────────────────────────────────────
-  const filtered = ((products as ProductFull[] | undefined) ?? []).filter((p) => {
-    const q = (newItem.productName ?? "").toLowerCase();
-    return (
-      p.productName.toLowerCase().includes(q) ||
-      p.sku.toLowerCase().includes(q)
-    );
-  });
-
-  // ── Typing in the combobox ────────────────────────────────────────────────
-  const handleInputChange = (value: string) => {
-    // If user edits the text manually after a product was selected,
-    // clear the productId so validation catches an incomplete selection
+  // User types in the combobox → clear productId so validation catches it
+  const handleProductInputChange = (value: string) => {
     onNewItemChange({ ...newItem, productName: value, productId: "" });
-    setIsDropdownOpen(true);
     if (availablePricing.length > 0) {
       setAvailablePricing([]);
       setSelectedPricingId("");
     }
   };
 
-  // ── First focus/click: trigger the one-time API call ─────────────────────
-  const handleInputFocus = useCallback(() => {
-    if (!fetchProducts) setFetchProducts(true);
-    setIsDropdownOpen(true);
-  }, [fetchProducts]);
-
-  // ── User picks a product ──────────────────────────────────────────────────
+  // User picks a product from the list
   const handleProductSelect = (product: ProductFull) => {
     const allPricing = product.attributes.flatMap((a) => a.pricing);
     const firstPricing = allPricing[0];
@@ -216,42 +186,30 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setAvailablePricing(allPricing);
     setSelectedPricingId(firstPricing?._id ?? "");
 
-    // ↓ productId = product._id  — this is what gets saved to MongoDB
     onNewItemChange({
       ...newItem,
-      productId: product._id,          // ← THE KEY CHANGE: store the DB id
-      productName: product.productName, // display only
-      sku: attrSku,                     // display only
-      quantity: newItem.quantity || "1",
-      unitPrice: firstPricing
+      productId:   product._id,           // stored in DB
+      productName: product.productName,   // display only
+      sku:         attrSku,               // display only
+      quantity:    newItem.quantity || "1",
+      unitPrice:   firstPricing
         ? String(firstPricing.sellingPrice)
         : String(product.ui_price),
     });
-
-    setIsDropdownOpen(false);
   };
 
-  // ── User picks a different marketplace price ──────────────────────────────
+  // User clears the product field
+  const handleProductClear = () => {
+    onNewItemChange({ ...newItem, productId: "", productName: "", sku: "", unitPrice: "" });
+    setAvailablePricing([]);
+    setSelectedPricingId("");
+  };
+
   const handlePricingSelect = (pricing: ProductPricing) => {
     setSelectedPricingId(pricing._id);
     onNewItemChange({ ...newItem, unitPrice: String(pricing.sellingPrice) });
   };
 
-  // ── Clear product field ───────────────────────────────────────────────────
-  const handleClearProduct = () => {
-    onNewItemChange({
-      ...newItem,
-      productId: "",     // ← clear the id too
-      productName: "",
-      sku: "",
-      unitPrice: "",
-    });
-    setAvailablePricing([]);
-    setSelectedPricingId("");
-    inputRef.current?.focus();
-  };
-
-  // ── Add item, reset pricing UI ────────────────────────────────────────────
   const handleAddItem = () => {
     onAddItem();
     setAvailablePricing([]);
@@ -259,12 +217,11 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   };
 
   const handleSupplierChange = (supplierId: string) => {
-    const selectedSupplier = suppliers.find((s) => s._id === supplierId);
+    const found = suppliers.find((s) => s._id === supplierId);
     onOrderFormChange({
       ...orderForm,
       supplier: supplierId,
-      orderContactEmail:
-        selectedSupplier?.contactInformation?.emailAddress || "",
+      orderContactEmail: found?.contactInformation?.emailAddress || "",
     });
   };
 
@@ -290,9 +247,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             {editingOrder ? "Edit Purchase Order" : "Create Purchase Order"}
           </DialogTitle>
           <DialogDescription>
-            {editingOrder
-              ? "Update purchase order details"
-              : "Fill in the details to create a new purchase order"}
+            {editingOrder ? "Update purchase order details" : "Fill in the details to create a new purchase order"}
           </DialogDescription>
         </DialogHeader>
 
@@ -301,17 +256,13 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
           <div className="p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-lg border-2 border-indigo-200">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-xs text-gray-600 mb-1 block">
-                  Purchase Order Number
-                </Label>
+                <Label className="text-xs text-gray-600 mb-1 block">Purchase Order Number</Label>
                 <p className="text-xl font-bold text-gray-900 font-mono bg-white px-3 py-2 rounded border border-indigo-200">
                   {editingOrder ? editingOrder.orderNumber : orderNumber}
                 </p>
               </div>
               <div>
-                <Label className="text-xs text-gray-600 mb-1 block">
-                  Order Date
-                </Label>
+                <Label className="text-xs text-gray-600 mb-1 block">Order Date</Label>
                 <p className="text-xl font-bold text-gray-900 bg-white px-3 py-2 rounded border border-indigo-200">
                   {editingOrder
                     ? new Date(editingOrder.orderDate).toLocaleDateString("en-GB")
@@ -338,9 +289,9 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   disabled={isSaving}
                 >
                   <option value="">Select a supplier...</option>
-                  {suppliers.map((supplier) => (
-                    <option key={supplier._id} value={supplier._id}>
-                      {supplier?.contactInformation?.primaryContactName}
+                  {suppliers.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s?.contactInformation?.primaryContactName}
                     </option>
                   ))}
                 </select>
@@ -372,12 +323,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   id="expectedDelivery"
                   type="date"
                   value={orderForm.expectedDelivery}
-                  onChange={(e) =>
-                    onOrderFormChange({
-                      ...orderForm,
-                      expectedDelivery: e.target.value,
-                    })
-                  }
+                  onChange={(e) => onOrderFormChange({ ...orderForm, expectedDelivery: e.target.value })}
                   className="border-2 border-teal-100 hover:border-teal-300 focus:border-teal-400"
                   disabled={isSaving}
                 />
@@ -387,9 +333,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <Textarea
                   id="notes"
                   value={orderForm.notes}
-                  onChange={(e) =>
-                    onOrderFormChange({ ...orderForm, notes: e.target.value })
-                  }
+                  onChange={(e) => onOrderFormChange({ ...orderForm, notes: e.target.value })}
                   placeholder="Additional notes..."
                   className="border-2 border-teal-100 hover:border-teal-300 focus:border-teal-400"
                   rows={3}
@@ -406,95 +350,32 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
               Order Items
             </h3>
 
-            {/* Add Item Row */}
             <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-100">
               <div className="grid grid-cols-5 gap-3">
 
-                {/* ── Combobox ── */}
-                <div className="col-span-2 relative" ref={wrapperRef}>
-                  <div className="relative">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      placeholder="Search product..."
-                      value={newItem.productName}
-                      onChange={(e) => handleInputChange(e.target.value)}
-                      onFocus={handleInputFocus}
-                      onClick={handleInputFocus}
-                      disabled={isSaving}
-                      autoComplete="off"
-                      className="w-full h-10 px-3 pr-8 rounded-md border-2 border-gray-200
-                                 hover:border-indigo-300 focus:border-indigo-400 focus:outline-none
-                                 transition-colors text-sm bg-white placeholder:text-gray-400
-                                 disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                    {newItem.productName && (
-                      <button
-                        type="button"
-                        tabIndex={-1}
-                        onClick={handleClearProduct}
-                        className="absolute right-2 top-1/2 -translate-y-1/2
-                                   text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
+                {/* ── SearchableCombobox replaces the old inline input block ── */}
+                <SearchableCombobox<ProductFull>
+                  items={(products as ProductFull[] | undefined) ?? []}
+                  inputValue={newItem.productName}
+                  isSelected={!!newItem.productId}
+                  onInputChange={handleProductInputChange}
+                  onSelect={handleProductSelect}
+                  onClear={handleProductClear}
+                  onFirstOpen={() => setFetchProducts(true)}
+                  config={productConfig}
+                  placeholder="Search product..."
+                  isLoading={isLoading}
+                  disabled={isSaving}
+                  colorTheme="indigo"
+                  className="col-span-2"
+                />
 
-                  {/* Dropdown */}
-                  {isDropdownOpen && (
-                    <ul
-                      className="absolute z-50 top-full mt-1 w-full bg-white
-                                 border-2 border-indigo-100 rounded-lg shadow-xl
-                                 max-h-52 overflow-y-auto divide-y divide-gray-50"
-                    >
-                      {isLoading ? (
-                        <li className="px-3 py-3 text-sm text-gray-400 text-center">
-                          Loading products…
-                        </li>
-                      ) : filtered.length === 0 ? (
-                        <li className="px-3 py-3 text-sm text-gray-400 text-center">
-                          No products found.
-                        </li>
-                      ) : (
-                        filtered.map((product) => (
-                          <li
-                            key={product._id}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => handleProductSelect(product)}
-                            className="flex items-center justify-between px-3 py-2.5
-                                       cursor-pointer hover:bg-indigo-50 transition-colors
-                                       text-sm group"
-                          >
-                            <div className="min-w-0">
-                              <p className="font-medium text-gray-900 truncate group-hover:text-indigo-700">
-                                {product.productName}
-                              </p>
-                              <p className="text-xs text-gray-400 font-mono">
-                                {product.sku}
-                              </p>
-                            </div>
-                            <div className="text-right text-xs text-gray-500 shrink-0 ml-3">
-                              <p>Stock: {product.ui_totalStock}</p>
-                              <p className="text-indigo-600 font-semibold">
-                                £{product.ui_price.toFixed(2)}
-                              </p>
-                            </div>
-                          </li>
-                        ))
-                      )}
-                    </ul>
-                  )}
-                </div>
-
-                {/* SKU (auto-filled, display only) */}
+                {/* SKU (auto-filled) */}
                 <div>
                   <Input
                     placeholder="SKU"
                     value={newItem.sku}
-                    onChange={(e) =>
-                      onNewItemChange({ ...newItem, sku: e.target.value })
-                    }
+                    onChange={(e) => onNewItemChange({ ...newItem, sku: e.target.value })}
                     className="h-10"
                     disabled={isSaving}
                   />
@@ -506,9 +387,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                     type="number"
                     placeholder="Qty"
                     value={newItem.quantity}
-                    onChange={(e) =>
-                      onNewItemChange({ ...newItem, quantity: e.target.value })
-                    }
+                    onChange={(e) => onNewItemChange({ ...newItem, quantity: e.target.value })}
                     className="h-10"
                     min="1"
                     disabled={isSaving}
@@ -522,9 +401,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                     step="0.01"
                     placeholder="Price"
                     value={newItem.unitPrice}
-                    onChange={(e) =>
-                      onNewItemChange({ ...newItem, unitPrice: e.target.value })
-                    }
+                    onChange={(e) => onNewItemChange({ ...newItem, unitPrice: e.target.value })}
                     className="h-10"
                     min="0"
                     disabled={isSaving}
@@ -540,7 +417,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                   </Button>
                 </div>
 
-                {/* Multi-pricing pills */}
+                {/* Multi-marketplace pricing pills */}
                 <PricingSelector
                   pricingOptions={availablePricing}
                   selectedPricingId={selectedPricingId}
@@ -555,42 +432,22 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <table className="w-full">
                   <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                     <tr>
-                      <th className="text-left p-3 text-sm font-semibold text-gray-700">
-                        Product
-                      </th>
-                      <th className="text-left p-3 text-sm font-semibold text-gray-700">
-                        SKU
-                      </th>
-                      <th className="text-center p-3 text-sm font-semibold text-gray-700">
-                        Qty
-                      </th>
-                      <th className="text-right p-3 text-sm font-semibold text-gray-700">
-                        Unit Price
-                      </th>
-                      <th className="text-right p-3 text-sm font-semibold text-gray-700">
-                        Total
-                      </th>
-                      <th className="text-center p-3 text-sm font-semibold text-gray-700">
-                        Action
-                      </th>
+                      <th className="text-left p-3 text-sm font-semibold text-gray-700">Product</th>
+                      <th className="text-left p-3 text-sm font-semibold text-gray-700">SKU</th>
+                      <th className="text-center p-3 text-sm font-semibold text-gray-700">Qty</th>
+                      <th className="text-right p-3 text-sm font-semibold text-gray-700">Unit Price</th>
+                      <th className="text-right p-3 text-sm font-semibold text-gray-700">Total</th>
+                      <th className="text-center p-3 text-sm font-semibold text-gray-700">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {orderItems.map((item, index) => (
                       <tr key={index} className="border-t border-gray-100">
                         <td className="p-3 text-sm">{item.productName}</td>
-                        <td className="p-3 text-sm font-mono text-gray-600">
-                          {item.sku}
-                        </td>
-                        <td className="p-3 text-sm text-center">
-                          {item.quantity}
-                        </td>
-                        <td className="p-3 text-sm text-right">
-                          £{item.unitPrice.toFixed(2)}
-                        </td>
-                        <td className="p-3 text-sm text-right font-semibold">
-                          £{item.totalPrice.toFixed(2)}
-                        </td>
+                        <td className="p-3 text-sm font-mono text-gray-600">{item.sku}</td>
+                        <td className="p-3 text-sm text-center">{item.quantity}</td>
+                        <td className="p-3 text-sm text-right">£{item.unitPrice.toFixed(2)}</td>
+                        <td className="p-3 text-sm text-right font-semibold">£{item.totalPrice.toFixed(2)}</td>
                         <td className="p-3 text-center">
                           <Button
                             size="sm"
@@ -620,21 +477,15 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-semibold">
-                      £{calculateTotals(orderItems).subtotal.toFixed(2)}
-                    </span>
+                    <span className="font-semibold">£{calculateTotals(orderItems).subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">VAT (20%):</span>
-                    <span className="font-semibold">
-                      £{calculateTotals(orderItems).tax.toFixed(2)}
-                    </span>
+                    <span className="font-semibold">£{calculateTotals(orderItems).tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-lg border-t-2 border-emerald-200 pt-2">
                     <span className="font-bold text-gray-900">Total:</span>
-                    <span className="font-bold text-emerald-600">
-                      £{calculateTotals(orderItems).total.toFixed(2)}
-                    </span>
+                    <span className="font-bold text-emerald-600">£{calculateTotals(orderItems).total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -643,12 +494,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSaving}
-            type="button"
-          >
+          <Button variant="outline" onClick={onCancel} disabled={isSaving} type="button">
             Cancel
           </Button>
           <Button
@@ -657,11 +503,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
             disabled={isSaving || orderItems.length === 0}
             type="button"
           >
-            {isSaving
-              ? "Saving..."
-              : editingOrder
-                ? "Update Order"
-                : "Create Order"}
+            {isSaving ? "Saving..." : editingOrder ? "Update Order" : "Create Order"}
           </Button>
         </DialogFooter>
       </DialogContent>
