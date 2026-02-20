@@ -10,9 +10,6 @@ import { cn } from '@/lib/utils';
 interface GRNStatsProps {
   stats: GRNStats;
 }
-
-
-
 const statCards = [
   {
     key: 'totalGRNs' as const,

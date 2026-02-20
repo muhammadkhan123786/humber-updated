@@ -12,7 +12,6 @@ const grnBaseService = new GenericService<GrnDoc>(GrnModel);
 
 const grnController = new AdvancedGenericController({
   service: grnBaseService,
-   searchFields: ["grnNumber", "receivedBy", "notes"], 
   populate: [
     "userId", 
     {
@@ -26,6 +25,7 @@ const grnController = new AdvancedGenericController({
     
   ],
   validationSchema: createGRNValidationsSchema, 
+  searchFields: ["grnNumber", "receivedBy", "notes"], 
 });
 
 grnRoutes.get("/export/:id", exportGRNToPDF);

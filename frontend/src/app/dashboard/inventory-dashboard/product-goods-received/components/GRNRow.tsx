@@ -64,7 +64,6 @@ const totals = React.useMemo(() => {
       return "bg-red-100 text-red-700 border-red-200";
     return "bg-blue-100 text-blue-700 border-blue-200";
   };
-console.log("grns", grn)
   return (
     <motion.tr
       key={grn._id}

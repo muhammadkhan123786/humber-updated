@@ -28,7 +28,6 @@ export const GoodsReturnGridView: React.FC<GoodsReturnGridViewProps> = ({
       </Card>
     );
   }
-console.log("return", returns);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

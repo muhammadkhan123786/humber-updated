@@ -58,10 +58,7 @@ export const ViewOrderDialog: React.FC<ViewOrderDialogProps> = ({
     } finally {
     }
   };
-  const handleExportPDF = () => {
-    // In a real app, this would generate and download a PDF
-    alert("PDF export functionality would be implemented here");
-  };
+ 
 
   const isProductPopulated = (
   product: string | { _id: string; productName: string; sku: string }
