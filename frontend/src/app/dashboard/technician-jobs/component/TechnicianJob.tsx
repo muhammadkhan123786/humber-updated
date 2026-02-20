@@ -37,7 +37,7 @@ const TechnicianJob = () => {
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAlls<TechnicianJobType>("/technician-jobs", {
+      const res = await getAlls<TechnicianJobType>("/technician-job-by-admin", {
         page: currentPage,
         limit,
       });
