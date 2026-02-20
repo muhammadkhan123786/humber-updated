@@ -4,12 +4,9 @@ import React, { useEffect, useState } from "react";
 import {
   Briefcase,
   Clock,
-  User,
   PlayCircle,
   PauseCircle,
   CheckCircle2,
-  XCircle,
-  HelpCircle,
 } from "lucide-react";
 import { getAlls } from "@/helper/apiHelper";
 
@@ -24,85 +21,117 @@ interface StatsDashboardProps {
   refreshTrigger?: number;
 }
 
-const statusConfig: Record<string, { icon: any; bg: string }> = {
-  Pending: {
-    icon: Clock,
-    bg: "bg-gradient-to-br from-gray-500 to-gray-600",
-  },
-  Assigned: {
-    icon: User,
-    bg: "bg-gradient-to-br from-blue-500 to-cyan-500",
-  },
-  "In Progress": {
-    icon: PlayCircle,
-    bg: "bg-gradient-to-br from-amber-500 to-orange-500",
-  },
-  "On Hold": {
-    icon: PauseCircle,
-    bg: "bg-gradient-to-br from-purple-500 to-pink-500",
-  },
-  Completed: {
-    icon: CheckCircle2,
-    bg: "bg-gradient-to-br from-emerald-500 to-green-500",
-  },
-  Cancelled: {
-    icon: XCircle,
-    bg: "bg-gradient-to-br from-rose-500 to-red-600",
-  },
-  open: {
+const staticCards = [
+  {
+    label: "Total Jobs",
     icon: Briefcase,
     bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    statusKey: null,
   },
-};
-
-const defaultStyle = {
-  icon: HelpCircle,
-  bg: "bg-gradient-to-br from-slate-500 to-slate-700",
-};
+  {
+    label: "Pending",
+    icon: Clock,
+    bg: "bg-gradient-to-br from-gray-500 to-gray-600",
+    statusKey: "PENDING",
+  },
+  {
+    label: "In Progress",
+    icon: PlayCircle,
+    bg: "bg-gradient-to-br from-amber-500 to-orange-500",
+    statusKey: "START",
+  },
+  {
+    label: "On Hold",
+    icon: PauseCircle,
+    bg: "bg-gradient-to-br from-purple-500 to-pink-500",
+    statusKey: "ON HOLD",
+  },
+  {
+    label: "Completed",
+    icon: CheckCircle2,
+    bg: "bg-gradient-to-br from-emerald-500 to-green-500",
+    statusKey: "END",
+  },
+];
 
 const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
   const [stats, setStats] = useState<StatItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
+      setIsLoading(true);
       try {
         const res = await getAlls<any>("/job-statistics");
         const apiData = res?.data as any;
 
-        if (!apiData) return;
-
-        const dynamicStats: StatItem[] = [];
-
-        dynamicStats.push({
-          label: "Total Jobs",
-          value: apiData.overallTotalJobs || 0,
-          icon: Briefcase,
-          bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
-        });
-
-        apiData.statusCounts?.forEach((status: any) => {
-          const config =
-            statusConfig[status.technicianJobStatus] || defaultStyle;
-
-          dynamicStats.push({
-            label: status.technicianJobStatus,
-            value: status.totalJobs,
-            icon: config.icon,
-            bg: config.bg,
-          });
+        if (!apiData) {
+          const defaultStats = staticCards.map((card) => ({
+            label: card.label,
+            value: 0,
+            icon: card.icon,
+            bg: card.bg,
+          }));
+          setStats(defaultStats);
+          return;
+        }
+        const dynamicStats = staticCards.map((card) => {
+          if (card.statusKey === null) {
+            return {
+              label: card.label,
+              value: apiData.overallTotalJobs || 0,
+              icon: card.icon,
+              bg: card.bg,
+            };
+          } else {
+            const statusCount = apiData.statusCounts?.find(
+              (s: any) => s.jobStatusId === card.statusKey,
+            );
+            return {
+              label: card.label,
+              value: statusCount?.totalJobs || 0,
+              icon: card.icon,
+              bg: card.bg,
+            };
+          }
         });
 
         setStats(dynamicStats);
       } catch (error) {
         console.error("Error fetching job statistics:", error);
+
+        const defaultStats = staticCards.map((card) => ({
+          label: card.label,
+          value: 0,
+          icon: card.icon,
+          bg: card.bg,
+        }));
+        setStats(defaultStats);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchStats();
   }, [refreshTrigger]);
 
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 bg-gray-50 rounded-xl">
+        {Array(5)
+          .fill(0)
+          .map((_, index) => (
+            <div
+              key={index}
+              className="w-full h-24 rounded-2xl bg-gray-200 animate-pulse"
+            ></div>
+          ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 bg-gray-50 rounded-xl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 bg-gray-50 rounded-xl">
       {stats.map((item, index) => (
         <div
           key={index}

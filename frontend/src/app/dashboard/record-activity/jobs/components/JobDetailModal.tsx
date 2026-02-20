@@ -110,7 +110,6 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-white">
-          {/* Overview Tab */}
           {activeTab === "overview" && (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
@@ -236,17 +235,16 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
                 <div className="flex items-center gap-2 mb-4">
                   <FileText className="text-orange-500" size={20} />
                   <h2 className="text-lg font-bold text-slate-800">
-                    Completion Summary
+                    Admin Notes
                   </h2>
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
-                  {job.completionSummary || "No summary provided."}
+                  {job.adminNotes || "No summary provided."}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Services Tab */}
           {activeTab === "services" && (
             <div className="grid grid-cols-1 gap-4">
               {job.services?.length > 0 ? (

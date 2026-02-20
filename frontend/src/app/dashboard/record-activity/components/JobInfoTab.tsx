@@ -46,7 +46,6 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
   const { watch, setValue } = form;
 
   const selectedQuotationId = watch("quotationId");
-  // ✅ Fix: Use correct field name
   const selectedTechnicianId = watch("leadingTechnicianId");
   const [jobId, setJobId] = useState<string>("");
   const [isGeneratingJobId, setIsGeneratingJobId] = useState(false);
@@ -71,6 +70,7 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
     if (!selectedQuotationId) return null;
     return quotations.find((q: any) => q._id === selectedQuotationId) || null;
   }, [selectedQuotationId, quotations]);
+
   const selectedTicket = useMemo(() => {
     return selectedQuotation?.ticket || null;
   }, [selectedQuotation]);
@@ -137,6 +137,21 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
     id: tech._id,
     label: `${getTechnicianName(tech)} (${getTechnicianSpecialization(tech)})`,
   }));
+
+  const getPriorityInfo = () => {
+    if (!selectedQuotation?.ticketPrioprity) return null;
+
+    const priority = selectedQuotation.ticketPrioprity;
+    const priorityName = priority.serviceRequestPrioprity || "Medium";
+    const backgroundColor = priority.backgroundColor || "#3B82F6";
+
+    return {
+      name: priorityName,
+      backgroundColor: backgroundColor,
+    };
+  };
+
+  const priorityInfo = getPriorityInfo();
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -274,7 +289,6 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
             </label>
             <CustomSelectNoBorder
               options={technicianOptions}
-              // ✅ Fix: Use correct field name
               value={selectedTechnicianId}
               onChange={(id: any) => setValue("leadingTechnicianId", id)}
               placeholder="Select Technician"
@@ -345,7 +359,23 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Priority Section Removed */}
+                <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
+                    Priority
+                  </p>
+                  {priorityInfo ? (
+                    <span
+                      className="font-bold text-gray-900 text-sm px-3 py-1.5 rounded-lg inline-block"
+                      style={{
+                        backgroundColor: priorityInfo.backgroundColor + "20",
+                      }}
+                    >
+                      {priorityInfo.name}
+                    </span>
+                  ) : (
+                    <p className="font-bold text-gray-800 text-sm">N/A</p>
+                  )}
+                </div>
                 <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
                     Quotation Created
@@ -407,7 +437,6 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
             </motion.div>
           )}
         </AnimatePresence>
-        {/* Admin Notes Section */}
         <div className="mt-6 bg-[#F5F8FF] border border-blue-100 rounded-3xl p-6 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 text-[#4F39F6] font-bold">
             <FileText size={18} />
@@ -423,6 +452,7 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
             />
           </div>
         </div>
+
         <div className="mt-6 flex items-center gap-2 p-4 bg-blue-50/50 border border-blue-100 rounded-2xl text-[#4F39F6] text-[11px] font-bold">
           <AlertCircle size={16} />
           <span>Fields marked with * are required</span>
