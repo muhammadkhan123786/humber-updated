@@ -42,11 +42,12 @@ const generateJobId = async (): Promise<string> => {
   }
 };
 
-export const JobInfoTab = ({ form, tickets, technicians }: any) => {
+export const JobInfoTab = ({ form, technicians, quotations }: any) => {
   const { watch, setValue } = form;
 
-  const selectedTicketId = watch("ticketId");
-  const selectedTechnicianId = watch("technicianId");
+  const selectedQuotationId = watch("quotationId");
+  // ✅ Fix: Use correct field name
+  const selectedTechnicianId = watch("leadingTechnicianId");
   const [jobId, setJobId] = useState<string>("");
   const [isGeneratingJobId, setIsGeneratingJobId] = useState(false);
 
@@ -66,9 +67,13 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
     fetchJobId();
   }, []);
 
+  const selectedQuotation = useMemo(() => {
+    if (!selectedQuotationId) return null;
+    return quotations.find((q: any) => q._id === selectedQuotationId) || null;
+  }, [selectedQuotationId, quotations]);
   const selectedTicket = useMemo(() => {
-    return tickets.find((t: any) => t._id === selectedTicketId) || null;
-  }, [selectedTicketId, tickets]);
+    return selectedQuotation?.ticket || null;
+  }, [selectedQuotation]);
 
   const selectedTechnician = useMemo(() => {
     return technicians.find((t: any) => t._id === selectedTechnicianId) || null;
@@ -84,37 +89,12 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
     });
   };
 
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getCustomerName = (ticket: any) => {
-    if (!ticket?.customerId?.personId) return "Unknown Customer";
-    const person = ticket.customerId.personId;
-    return `${person.firstName} ${person.middleName ? person.middleName + " " : ""}${person.lastName || ""}`.trim();
-  };
-
-  const getPriority = (ticket: any) => {
-    if (!ticket?.priorityId) return "NORMAL";
-    return ticket.priorityId.label || ticket.priorityId.serviceRequestPrioprity;
-  };
-
-  const getPriorityColor = (ticket: any) => {
-    if (!ticket?.priorityId?.backgroundColor) return "#E65100";
-    return ticket.priorityId.backgroundColor;
-  };
-
-  const getTicketStatus = (ticket: any) => {
-    if (!ticket?.ticketStatusId) return "Unknown";
-    return ticket.ticketStatusId.label || ticket.ticketStatusId.code;
+  const getCustomerName = (quotation: any) => {
+    if (!quotation?.customer) return "Unknown Customer";
+    const customer = quotation.customer;
+    const firstName = customer.firstName || "";
+    const lastName = customer.lastName || "";
+    return `${firstName} ${lastName}`.trim() || "Unknown Customer";
   };
 
   const getTechnicianName = (technician: any) => {
@@ -138,19 +118,20 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
     return "General";
   };
 
-  const getVehicleDetails = (ticket: any) => {
-    const vehicle = ticket?.vehicleId;
+  const getVehicleDetails = (vehicle: any) => {
     if (!vehicle) return "N/A";
-    const brand = vehicle.vehicleBrandId?.brandName || "";
-    const model = vehicle.vehicleModelId?.modelName || "";
+    const brand = vehicle.brandName || "";
+    const model = vehicle.modelName || "";
     const year = vehicle.year || "";
     return `${brand} ${model} ${year ? `(${year})` : ""}`.trim();
   };
 
-  const ticketOptions = tickets.map((t: any) => ({
-    id: t._id,
-    label: `${t.ticketCode} - ${getCustomerName(t)} (${getPriority(t)})`,
-  }));
+  const quotationOptions = quotations
+    .filter((q: any) => q.quotationStatus?.toUpperCase() === "APPROVED")
+    .map((q: any) => ({
+      id: q._id,
+      label: `${q.quotationAutoId || "N/A"} - ${q.ticket?.ticketCode || "No Ticket"} - ${q.customer?.firstName || "Unknown"}`,
+    }));
 
   const technicianOptions = technicians.map((tech: any) => ({
     id: tech._id,
@@ -163,25 +144,29 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
         <div className="flex items-center gap-2 mb-4 text-[#4F39F6] font-bold">
           <Calendar size={20} />
           <span className="leading-none flex items-center gap-2 text-indigo-600">
-            Select Service Ticket
+            Select Approved Quotation
           </span>
         </div>
 
         <div className="space-y-2">
-          <label className=" font-medium text-sm tracking-widest">
-            Service Ticket <span className="text-red-500">*</span>
+          <label className="font-medium text-sm tracking-widest">
+            Approved Quotation <span className="text-red-500">*</span>
           </label>
           <CustomSelectNoBorder
-            options={ticketOptions}
-            value={selectedTicketId}
-            onChange={(id: any) => setValue("ticketId", id)}
-            placeholder="Select a ticket..."
-            error={!selectedTicketId}
+            options={quotationOptions}
+            value={selectedQuotationId}
+            onChange={(id: any) => setValue("quotationId", id)}
+            placeholder="Select an approved quotation..."
           />
+          {quotationOptions.length === 0 && (
+            <p className="text-xs text-amber-600 mt-1">
+              No approved quotations available
+            </p>
+          )}
         </div>
 
         <AnimatePresence>
-          {selectedTicket && (
+          {selectedQuotation && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -190,16 +175,16 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
             >
               <div className="flex items-center gap-2 text-[#4F39F6] font-bold border-b border-blue-50 pb-3 mb-2">
                 <FileText size={18} />
-                <span className="text-sm">Selected Ticket Details</span>
+                <span className="text-sm">Selected Quotation Details</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Ticket ID
+                    Quotation ID
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {selectedTicket.ticketCode}
+                    {selectedQuotation.quotationAutoId || "N/A"}
                   </p>
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
@@ -208,18 +193,12 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                   </p>
                   <p className="font-bold text-gray-800 text-sm">{jobId}</p>
                 </div>
-
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Priority
+                    Status
                   </p>
-                  <span
-                    className="inline-block text-white text-[10px] font-black px-3 py-1 rounded-lg mt-1"
-                    style={{
-                      backgroundColor: getPriorityColor(selectedTicket),
-                    }}
-                  >
-                    {getPriority(selectedTicket)}
+                  <span className="inline-block bg-green-50 border border-green-200 text-green-600 text-[10px] font-black px-3 py-1 rounded-lg">
+                    {selectedQuotation.quotationStatus || "N/A"}
                   </span>
                 </div>
               </div>
@@ -230,54 +209,27 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                     Customer
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {getCustomerName(selectedTicket)}
+                    {selectedQuotation.customer?.firstName || "Unknown"}{" "}
+                    {selectedQuotation.customer?.lastName || ""}
                   </p>
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-blue-50">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    scooter model
+                    Ticket Code
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {selectedTicket.vehicleId?.vehicleModelId?.modelName ||
-                      "N/A"}
+                    {selectedQuotation.ticket?.ticketCode || "N/A"}
                   </p>
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-2xl border border-blue-50">
                 <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                  Issue Description
+                  Net Total
                 </p>
                 <p className="font-bold text-gray-800 text-sm">
-                  {selectedTicket.issue_Details || "No description provided"}
+                  £{selectedQuotation.netTotal?.toFixed(2) || "0.00"}
                 </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-2xl border border-blue-50">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Location
-                  </p>
-                  <p className="font-bold text-gray-800 text-sm capitalize">
-                    {selectedTicket.location || "Workshop"}
-                  </p>
-                </div>
-                <div className="bg-white p-4 rounded-2xl border border-blue-50">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Created Date
-                  </p>
-                  <p className="font-bold text-gray-800 text-sm">
-                    {formatDateTime(selectedTicket.createdAt)}
-                  </p>
-                </div>
-                <div className="bg-white p-4 rounded-2xl border border-blue-50">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Status
-                  </p>
-                  <span className="inline-block bg-blue-50 border border-blue-200 text-blue-600 text-[10px] font-black px-3 py-1 rounded-lg mt-1 capitalize">
-                    {getTicketStatus(selectedTicket)}
-                  </span>
-                </div>
               </div>
             </motion.div>
           )}
@@ -312,18 +264,19 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
           </div>
 
           <FormDisplay
-            label="Ticket id"
-            value={selectedTicket?.ticketCode || "Select a ticket"}
+            label="Ticket ID"
+            value={selectedTicket?.ticketCode || "Select a quotation first"}
           />
 
           <div className="space-y-2">
-            <label className=" font-medium text-sm tracking-widest">
+            <label className="font-medium text-sm tracking-widest">
               Technician Name <span className="text-red-500">*</span>
             </label>
             <CustomSelectNoBorder
               options={technicianOptions}
+              // ✅ Fix: Use correct field name
               value={selectedTechnicianId}
-              onChange={(id: any) => setValue("technicianId", id)}
+              onChange={(id: any) => setValue("leadingTechnicianId", id)}
               placeholder="Select Technician"
               className="border-0 focus:border-0 focus:ring-0 ring-0 outline-none shadow-none"
               error={!selectedTechnicianId}
@@ -332,19 +285,17 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
 
           <FormDisplay
             label="Customer Name"
-            value={
-              selectedTicket ? getCustomerName(selectedTicket) : "john doe"
-            }
+            value={selectedQuotation ? getCustomerName(selectedQuotation) : "-"}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-6 mb-6">
           <FormDisplay
-            label="Scooter model"
+            label="Vehicle Model"
             value={
-              selectedTicket
-                ? getVehicleDetails(selectedTicket)
-                : "Select a ticket"
+              selectedQuotation
+                ? getVehicleDetails(selectedQuotation.vehicle)
+                : "Select a quotation first"
             }
           />
         </div>
@@ -370,16 +321,18 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                     Customer Name
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {getCustomerName(selectedTicket)}
+                    {selectedQuotation
+                      ? getCustomerName(selectedQuotation)
+                      : "-"}
                   </p>
                 </div>
                 <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    scooter model
+                    Vehicle Model
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {selectedTicket.vehicleId?.vehicleBrandId?.brandName}{" "}
-                    {selectedTicket.vehicleId?.vehicleModelId?.modelName}
+                    {selectedQuotation?.vehicle?.brandName || ""}{" "}
+                    {selectedQuotation?.vehicle?.modelName || ""}
                   </p>
                 </div>
               </div>
@@ -392,25 +345,13 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Priority Section Removed */}
                 <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
                   <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Priority Level
-                  </p>
-                  <span
-                    className="inline-block text-white text-[10px] font-black px-3 py-1 rounded-lg mt-1"
-                    style={{
-                      backgroundColor: getPriorityColor(selectedTicket),
-                    }}
-                  >
-                    {getPriority(selectedTicket)}
-                  </span>
-                </div>
-                <div className="bg-white p-4 rounded-2xl border border-orange-50/50 shadow-sm">
-                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
-                    Ticket Created
+                    Quotation Created
                   </p>
                   <p className="font-bold text-gray-800 text-sm">
-                    {formatDate(selectedTicket.createdAt)}
+                    {formatDate(selectedQuotation?.createdAt)}
                   </p>
                 </div>
               </div>
@@ -466,7 +407,22 @@ export const JobInfoTab = ({ form, tickets, technicians }: any) => {
             </motion.div>
           )}
         </AnimatePresence>
+        {/* Admin Notes Section */}
+        <div className="mt-6 bg-[#F5F8FF] border border-blue-100 rounded-3xl p-6 space-y-4 shadow-sm">
+          <div className="flex items-center gap-2 text-[#4F39F6] font-bold">
+            <FileText size={18} />
+            <span className="text-sm">Admin Notes</span>
+          </div>
 
+          <div className="bg-white p-4 rounded-2xl border border-blue-50 shadow-sm">
+            <textarea
+              rows={4}
+              placeholder="Enter admin notes here..."
+              {...form.register("adminNotes")}
+              className="w-full resize-none bg-transparent outline-none text-sm text-gray-700 placeholder:text-gray-400"
+            />
+          </div>
+        </div>
         <div className="mt-6 flex items-center gap-2 p-4 bg-blue-50/50 border border-blue-100 rounded-2xl text-[#4F39F6] text-[11px] font-bold">
           <AlertCircle size={16} />
           <span>Fields marked with * are required</span>

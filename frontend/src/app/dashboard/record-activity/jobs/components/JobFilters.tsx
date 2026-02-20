@@ -42,9 +42,12 @@ const JobFilters: React.FC<JobFiltersProps> = ({
             className="w-full h-12 pl-10 pr-10 bg-white border-2 border-orange-50 rounded-xl appearance-none focus:outline-none focus:border-orange-200 text-sm font-medium text-indigo-950 cursor-pointer"
           >
             <option value="all">All Statuses</option>
-            {statuses.map((status) => (
-              <option key={status._id} value={status._id}>
-                {status.name || status.technicianJobStatus}
+            {statuses.map((status, index) => (
+              <option
+                key={status._id || status.name || index}
+                value={status._id || status.name || index}
+              >
+                {status.name || status.technicianJobStatus || "Unknown"}
               </option>
             ))}
           </select>

@@ -9,26 +9,19 @@ import {
   CheckCircle,
   Loader2,
   PauseCircle,
-  XCircle,
-  Briefcase,
-  HelpCircle,
 } from "lucide-react";
 import JobFilters from "./JobFilters";
 import JobDetailCard from "./JobDetailCard";
-import { useActivityRecordForm } from "../../../../../hooks/useActivity";
 import Pagination from "@/components/ui/Pagination";
 import { getAlls } from "@/helper/apiHelper";
+import toast from "react-hot-toast";
 
 const statusConfig: Record<string, { icon: any; gradient: string }> = {
   pending: {
     icon: Clock,
     gradient: "bg-gradient-to-br from-gray-500 to-gray-600",
   },
-  assigned: {
-    icon: Clock,
-    gradient: "bg-gradient-to-br from-blue-500 to-cyan-500",
-  },
-  "in progress": {
+  start: {
     icon: PlayCircle,
     gradient: "bg-gradient-to-br from-orange-500 to-amber-500",
   },
@@ -36,47 +29,49 @@ const statusConfig: Record<string, { icon: any; gradient: string }> = {
     icon: PauseCircle,
     gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
-  completed: {
+  end: {
     icon: CheckCircle,
     gradient: "bg-gradient-to-br from-green-500 to-emerald-500",
   },
-  cancelled: {
-    icon: XCircle,
-    gradient: "bg-gradient-to-br from-rose-500 to-red-600",
-  },
-  open: {
-    icon: Briefcase,
-    gradient: "bg-gradient-to-br from-teal-500 to-emerald-500",
-  },
 };
 
-const defaultStyle = {
-  icon: HelpCircle,
-  gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
-};
+const statusOptions = [
+  { id: "PENDING", name: "Pending" },
+  { id: "START", name: "Start" },
+  { id: "ON HOLD", name: "On Hold" },
+  { id: "END", name: "End" },
+];
 
 const Jobs = () => {
-  const { jobList: initialJobList, isLoading } = useActivityRecordForm();
   const [jobs, setJobs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [apiStats, setApiStats] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [availableStatuses, setAvailableStatuses] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
-    setJobs(initialJobList);
-  }, [initialJobList]);
+    const fetchJobs = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getAlls<any>("/technician-job-by-admin");
+        const jobsData = response?.data || [];
+        setJobs(jobsData);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        toast.error("Failed to load jobs");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStats = async () => {
       try {
-        const statusRes = await getAlls<any>(
-          "/technician-job-status?filter=all",
-        );
-        setAvailableStatuses(statusRes.data || []);
-
         const statsRes = await getAlls<any>("/job-statistics");
         const apiData = statsRes.data as any;
 
@@ -93,28 +88,68 @@ const Jobs = () => {
             });
           }
 
-          apiData.statusCounts?.forEach((status: any) => {
-            if (status.totalJobs > 0) {
-              const normalizedStatus = status.technicianJobStatus.toLowerCase();
-              const config = statusConfig[normalizedStatus] || defaultStyle;
+          if (apiData.statusCounts) {
+            const pendingCount =
+              apiData.statusCounts.find((s: any) => s.jobStatusId === "PENDING")
+                ?.totalJobs || 0;
+            const startCount =
+              apiData.statusCounts.find((s: any) => s.jobStatusId === "START")
+                ?.totalJobs || 0;
+            const onHoldCount =
+              apiData.statusCounts.find((s: any) => s.jobStatusId === "ON HOLD")
+                ?.totalJobs || 0;
+            const endCount =
+              apiData.statusCounts.find((s: any) => s.jobStatusId === "END")
+                ?.totalJobs || 0;
 
+            if (pendingCount > 0) {
               formattedStats.push({
-                value: status.totalJobs.toString(),
-                label: status.technicianJobStatus,
-                badgeText: status.technicianJobStatus,
-                gradient: config.gradient,
-                icon: config.icon,
+                value: pendingCount.toString(),
+                label: "Pending",
+                badgeText: "Pending",
+                gradient: statusConfig.pending.gradient,
+                icon: statusConfig.pending.icon,
               });
             }
-          });
+
+            if (startCount > 0) {
+              formattedStats.push({
+                value: startCount.toString(),
+                label: "Start",
+                badgeText: "Start",
+                gradient: statusConfig.start.gradient,
+                icon: statusConfig.start.icon,
+              });
+            }
+
+            if (onHoldCount > 0) {
+              formattedStats.push({
+                value: onHoldCount.toString(),
+                label: "On Hold",
+                badgeText: "On Hold",
+                gradient: statusConfig["on hold"].gradient,
+                icon: statusConfig["on hold"].icon,
+              });
+            }
+
+            if (endCount > 0) {
+              formattedStats.push({
+                value: endCount.toString(),
+                label: "End",
+                badgeText: "End",
+                gradient: statusConfig.end.gradient,
+                icon: statusConfig.end.icon,
+              });
+            }
+          }
 
           setApiStats(formattedStats);
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching stats:", error);
       }
     };
-    fetchData();
+    fetchStats();
   }, []);
 
   const handleDeleteJob = (deletedJobId: string) => {
@@ -125,12 +160,19 @@ const Jobs = () => {
     return jobs.filter((job) => {
       const matchesSearch =
         job.jobId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job._id?.toLowerCase().includes(searchQuery.toLowerCase());
+        job._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        job.ticketId?.ticketCode
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        job.leadingTechnicianId?.personId?.firstName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        job.leadingTechnicianId?.personId?.lastName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
       const matchesStatus =
-        statusFilter === "all" ||
-        job.jobStatusId?._id === statusFilter ||
-        job.jobStatusId?.name === statusFilter;
+        statusFilter === "all" || job.jobStatusId === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -163,7 +205,7 @@ const Jobs = () => {
         setSearchQuery={setSearchQuery}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
-        statuses={availableStatuses}
+        statuses={statusOptions}
       />
 
       {isLoading ? (

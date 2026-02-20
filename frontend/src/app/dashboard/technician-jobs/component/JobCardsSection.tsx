@@ -72,7 +72,7 @@ const JobCardsSection = ({
         return;
       }
       const response = await fetch(
-        `${API_BASE_URL}/technician-jobs/${job._id || job.id}`,
+        `${API_BASE_URL}/technician-job-by-admin/${job._id || job.id}`,
         {
           method: "DELETE",
           headers: {
@@ -161,7 +161,7 @@ const JobCardsSection = ({
         visibleJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
             {visibleJobs?.map((job, index) => {
-              const status = job.jobStatusId?.technicianJobStatus || "open";
+              const status = job.jobStatusId || "open";
               const statusStyle = getStatusStyle(status);
 
               return (
@@ -214,11 +214,11 @@ const JobCardsSection = ({
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
-                            {job.technicianId?.personId?.firstName}{" "}
-                            {job.technicianId?.personId?.lastName}
+                            {job.leadingTechnicianId?.personId?.firstName}{" "}
+                            {job.leadingTechnicianId?.personId?.lastName}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {job.technicianId?.contactId?.phoneNumber}
+                            {job.leadingTechnicianId?.contactId?.phoneNumber}
                           </p>
                         </div>
                       </div>
@@ -327,7 +327,7 @@ const JobCardsSection = ({
 
               <tbody className="divide-y divide-gray-50">
                 {visibleJobs?.map((job, index) => {
-                  const status = job.jobStatusId?.technicianJobStatus || "open";
+                  const status = job.jobStatusId || "open";
                   const statusStyle = getStatusStyle(status);
                   const isDeleting = deletingJobId === (job._id || job.id);
 
@@ -368,11 +368,11 @@ const JobCardsSection = ({
 
                       <td className="p-4">
                         <div className="text-sm font-semibold text-gray-900">
-                          {job.technicianId?.personId?.firstName}{" "}
-                          {job.technicianId?.personId?.lastName}
+                          {job.leadingTechnicianId?.personId?.firstName}{" "}
+                          {job.leadingTechnicianId?.personId?.lastName}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {job.technicianId?.contactId?.phoneNumber}
+                          {job.leadingTechnicianId?.contactId?.phoneNumber}
                         </div>
                       </td>
 
