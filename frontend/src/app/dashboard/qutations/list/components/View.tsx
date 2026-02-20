@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { getAll } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import {
   X,
@@ -18,6 +17,8 @@ import {
   MessageSquare,
   CheckCircle,
 } from "lucide-react";
+import { useQuotationById } from "@/hooks/quotations/useQuotations";
+import { getAll } from "@/helper/apiHelper";
 
 // Add custom animations
 const animations = `
@@ -97,22 +98,27 @@ interface ViewProps {
 
 const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
   const [quotation, setQuotation] = useState<QuotationViewData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch quotation data when component mounts
+  // Use TanStack Query to fetch quotation data
+  const { data: quotationData, isLoading, isError, error } = useQuotationById(quotationId);
+
+  // Process quotation data when it's loaded
   useEffect(() => {
-    if (quotationId) {
-      fetchQuotationData(quotationId);
+    if (quotationData) {
+      fetchAndMapQuotationData(quotationData);
     }
-  }, [quotationId]);
+  }, [quotationData]);
 
-  const fetchQuotationData = async (id: string) => {
+  // Show error if fetch fails
+  useEffect(() => {
+    if (isError) {
+      toast.error('Failed to load quotation details');
+      onClose();
+    }
+  }, [isError, onClose]);
+
+  const fetchAndMapQuotationData = async (data: any) => {
     try {
-      setIsLoading(true);
-      const response: any = await getAll(`/technician-ticket-quotation/${id}`);
-      
-      const data = response?.data || response;
-      
       if (data && typeof data === 'object' && !Array.isArray(data)) {
         // First, aggregate parts by ID from quotation
         const partsMap = new Map<string, any>();
@@ -191,7 +197,7 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
           _id: data._id,
           quotationAutoId: data.quotationAutoId,
           ticketCode: data.ticketId?.ticketCode || '',
-          quotationStatus: data.quotationStatusId?.ticketQuationStatus || data.quotationStatus || 'Unknown',
+          quotationStatus: data.quotationStatusId || data.quotationStatus || 'Unknown',
           ticket: {
             ticketCode: data.ticketId?.ticketCode || '',
             decision: data.ticketId?.decisionId || 'N/A',
@@ -223,11 +229,9 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
         onClose();
       }
     } catch (error) {
-      console.error('Error fetching quotation:', error);
-      toast.error('Failed to load quotation details');
+      console.error('Error mapping quotation data:', error);
+      toast.error('Failed to process quotation details');
       onClose();
-    } finally {
-      setIsLoading(false);
     }
   };
 

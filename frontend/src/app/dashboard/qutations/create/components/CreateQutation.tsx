@@ -7,7 +7,10 @@ import AvailableTickets from '../../components/AvailableTickets';
 import QuotationSummary from '../../components/QuotationSummary';
 import TicketInformation from './TicketInformation';
 import LaborAdditionalCost from './LaborAdditionalCost';
-import { getAll, getById } from '@/helper/apiHelper';
+import { useQuotationById, useQuotationAutoCode } from '@/hooks/quotations/useQuotations';
+import { useDefaultTax } from '@/hooks/settings/useSettings';
+import { usePartsByIds } from '@/hooks/parts/useParts';
+import { getAll } from '@/helper/apiHelper';
 
 interface Part {
   _id: string;
@@ -34,7 +37,6 @@ const CreateQuotationPage = () => {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [showTicketInfo, setShowTicketInfo] = useState(false);
   const [selectedParts, setSelectedParts] = useState<SelectedPart[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   
   // Labor and additional cost states
   const [laborHours, setLaborHours] = useState(0);
@@ -46,26 +48,32 @@ const CreateQuotationPage = () => {
     return date.toISOString().split('T')[0];
   });
   
-  // Tax state
-  const [defaultTaxPercentage, setDefaultTaxPercentage] = useState(20);
+  // TanStack Query hooks
+  const { data: quotationAutoCode, isLoading: loadingAutoCode } = useQuotationAutoCode();
+  const { data: defaultTaxPercentage = 20, isLoading: loadingTax } = useDefaultTax();
+  const { data: quotationData, isLoading: loadingQuotation } = useQuotationById(
+    isEditMode ? editQuotationId : null
+  );
+  
+  const isLoading = loadingQuotation || loadingAutoCode || loadingTax;
 
+  
+  // Set quotation auto code when not in edit mode
   useEffect(() => {
-    if (isEditMode && editQuotationId) {
-      loadEditQuotation(editQuotationId);
-    } else if (!isEditMode) {
-      fetchQuotationAutoCode();
+    if (!isEditMode && quotationAutoCode) {
+      setQuotationId(quotationAutoCode);
     }
-    fetchDefaultTax();
-  }, [isEditMode, editQuotationId]);
+  }, [isEditMode, quotationAutoCode]);
 
-  const loadEditQuotation = async (id: string) => {
+  // Load quotation data for edit mode
+  useEffect(() => {
+    if (isEditMode && quotationData) {
+      loadEditQuotation(quotationData);
+    }
+  }, [isEditMode, quotationData]);
+
+  const loadEditQuotation = async (quotation: any) => {
     try {
-      setIsLoading(true);
-      const response: any = await getAll(`/technician-ticket-quotation/${id}`);
-      
-      // Handle response - it might be response.data or just response depending on API structure
-      const quotation = response?.data || response;
-      
       if (quotation && typeof quotation === 'object' && !Array.isArray(quotation)) {
         // Set quotation auto ID
         setQuotationId(quotation.quotationAutoId || '');
@@ -141,7 +149,7 @@ const CreateQuotationPage = () => {
           try {
             // Fetch all parts details in parallel
             const partDetailsPromises = partIds.map(partId => 
-              getAll(`/master-parts-technician-dashboard/${partId}`).catch(err => {
+              getAll(`/master-parts-technician-dashboard/${partId}`).catch((err: any) => {
                 console.error(`Error fetching part ${partId}:`, err);
                 return null;
               })
@@ -205,31 +213,6 @@ const CreateQuotationPage = () => {
     } catch (error) {
       console.error('Error loading quotation:', error);
       toast.error('Failed to load quotation data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchQuotationAutoCode = async () => {
-    try {
-      const response = await getAll<{ quotationAutoCode: string }>('/quotations/quotation-auto-code');
-      if ((response as any)?.quotationAutoCode) {
-        setQuotationId((response as any).quotationAutoCode);
-      }
-    } catch (error) {
-      console.error('Error fetching quotation auto code:', error);
-    }
-  };
-
-  const fetchDefaultTax = async () => {
-    try {
-      const response = await getAll<{ taxPercentage: number }>('/default-tax');
-      if ((response as any)?.taxPercentage !== undefined) {
-        setDefaultTaxPercentage((response as any).taxPercentage);
-      }
-    } catch (error) {
-      console.error('Error fetching default tax:', error);
-      // Keep default 20% if API fails
     }
   };
 
