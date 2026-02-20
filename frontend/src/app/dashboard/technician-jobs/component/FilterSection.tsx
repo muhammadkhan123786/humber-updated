@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Search, ChevronDown } from "lucide-react";
 
 interface FilterSectionProps {
@@ -12,6 +12,14 @@ interface FilterSectionProps {
   setPriorityFilter: (val: string) => void;
 }
 
+// Static status options - exactly 4
+const staticStatuses = [
+  { id: "PENDING", name: "Pending" },
+  { id: "START", name: "Start" },
+  { id: "ON HOLD", name: "On Hold" },
+  { id: "END", name: "End" },
+];
+
 const FilterSection = ({
   searchTerm,
   setSearchTerm,
@@ -20,13 +28,12 @@ const FilterSection = ({
   priorityFilter,
   setPriorityFilter,
 }: FilterSectionProps) => {
-  const [dbStatuses, setDbStatuses] = useState<any[]>([]);
-  const [dbPriorities, setDbPriorities] = useState<any[]>([]);
+  const [dbPriorities, setDbPriorities] = React.useState<any[]>([]);
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchFilters = async () => {
       const token = localStorage.getItem("token");
       const headers = {
@@ -35,16 +42,7 @@ const FilterSection = ({
       };
 
       try {
-        const statusRes = await fetch(
-          `${API_BASE_URL}/technician-job-status?filter=all`,
-          {
-            headers,
-          },
-        );
-        const statusData = await statusRes.json();
-        setDbStatuses(
-          Array.isArray(statusData) ? statusData : statusData.data || [],
-        );
+        // Only fetch priorities from API
         const priorityRes = await fetch(
           `${API_BASE_URL}/service-request-prioprity-level?filter=all`,
           { headers },
@@ -77,16 +75,17 @@ const FilterSection = ({
       </div>
 
       <div className="flex gap-3 w-full md:w-auto">
+        {/* Status Filter - Static 4 options */}
         <div className="relative flex-1 md:w-48">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="appearance-none w-full bg-white border border-gray-300 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-1.5 focus:ring-orange-500 focus:border-orange-500 transition-all cursor-pointer"
           >
-            <option value="All Statuses">All Statuses</option>
-            {dbStatuses.map((s: any) => (
-              <option key={s._id} value={s.technicianJobStatus}>
-                {s.technicianJobStatus}
+            <option value="all">All Statuses</option>
+            {staticStatuses.map((status) => (
+              <option key={status.id} value={status.id}>
+                {status.name}
               </option>
             ))}
           </select>
@@ -94,6 +93,7 @@ const FilterSection = ({
             <ChevronDown className="h-4 w-4 text-gray-600" />
           </div>
         </div>
+
         <div className="relative flex-1 md:w-48">
           <select
             value={priorityFilter}

@@ -61,17 +61,8 @@ const TechnicianActivityPage = () => {
         )}
       </div>
       <h3 className="text-xl font-bold text-gray-800 mb-2">
-        {tabName} Coming Soon
+        {tabName} no data
       </h3>
-      <p className="text-gray-500 text-sm text-center max-w-md">
-        This feature is under development and will be available in the next
-        update. Please check back later.
-      </p>
-      <div className="mt-8 px-6 py-3 bg-blue-50 rounded-2xl border border-blue-100">
-        <p className="text-xs font-medium text-[#4F39F6]">
-          ⏱️ Expected release: Next Sprint
-        </p>
-      </div>
     </div>
   );
 
