@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { FileText, CheckCircle, AlertCircle,  } from "lucide-react";
+import { FileText, CheckCircle, AlertCircle, Send, Shield } from "lucide-react";
 
 interface StatusCount {
   status: string;
@@ -17,14 +17,33 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
   const getStatusConfig = (status: string) => {
     const statusLower = status.toLowerCase();
     
-    if (statusLower.includes("sent") || statusLower.includes("send")) {
+    // Check for specific statuses first
+    if (statusLower.includes("customer")) {
+      return {
+        icon: <Send size={18} />,
+        bgColor: "bg-purple-50/50",
+        borderColor: "border-purple-100",
+        accentColor: "text-purple-600",
+        label: "Send to Customer",
+        order: 1,
+      };
+    } else if (statusLower.includes("insurance")) {
+      return {
+        icon: <Shield size={18} />,
+        bgColor: "bg-cyan-50/50",
+        borderColor: "border-cyan-100",
+        accentColor: "text-cyan-600",
+        label: "Sent to Insurance",
+        order: 2,
+      };
+    } else if (statusLower.includes("admin")) {
       return {
         icon: <FileText size={18} />,
         bgColor: "bg-blue-50/50",
         borderColor: "border-blue-100",
         accentColor: "text-blue-600",
-        label: "Sent",
-        order: 1,
+        label: "Sent to Admin",
+        order: 3,
       };
     } else if (statusLower.includes("approved") || statusLower.includes("approve")) {
       return {
@@ -33,7 +52,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         borderColor: "border-green-100",
         accentColor: "text-green-600",
         label: "Approved",
-        order: 2,
+        order: 4,
       };
     } else if (statusLower.includes("draft")) {
       return {
@@ -42,7 +61,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         borderColor: "border-gray-100",
         accentColor: "text-slate-600",
         label: "Draft",
-        order: 3,
+        order: 5,
       };
     } else if (statusLower.includes("reject")) {
       return {
@@ -51,7 +70,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
         borderColor: "border-red-100",
         accentColor: "text-red-600",
         label: "Rejected",
-        order: 4,
+        order: 6,
       };
     }
     
@@ -61,12 +80,19 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
       borderColor: "border-gray-100",
       accentColor: "text-gray-600",
       label: status,
-      order: 5,
+      order: 7,
     };
   };
 
   // Define the desired order of cards
-  const desiredOrder = ["Sent", "Approved", "Draft", "Rejected"];
+  const desiredOrder = [
+    "Send to Customer",
+    "Sent to Insurance",
+    "Sent to Admin",
+    "Approved",
+    "Draft",
+    "Rejected"
+  ];
   
   // Create a map of status counts
   const statusMap = new Map(
@@ -80,7 +106,7 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
   }));
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-2 mb-6">
       <style jsx>{`
         @keyframes scaleIn {
           from {
@@ -103,20 +129,20 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
           <div
             key={index}
             onClick={() => onFilterByStatus(item.status)}
-            className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 cursor-pointer hover:shadow-md hover:scale-105 transition-all duration-200 animate-card`}
+            className={`${config.bgColor} ${config.borderColor} border rounded-lg p-3 cursor-pointer hover:shadow-md hover:scale-105 transition-all duration-200 animate-card`}
             style={{ animationDelay: `${index * 80}ms` }}
           >
-            {/* Header: Icon and Label side-by-side */}
-            <div className={`flex items-center gap-2 mb-3  ${config.accentColor}`}>
+            {/* Icon and Label in one line */}
+            <div className={`flex items-center gap-1.5 mb-1.5 ${config.accentColor}`}>
               {config.icon}
-              <span className="text-sm font-semibold">
+              <span className="text-xs font-semibold whitespace-nowrap truncate flex-1">
                 {config.label}
               </span>
             </div>
 
-            {/* Content: Number on next line */}
+            {/* Count */}
             <div>
-              <p className={`text-2xl font-bold ${config.accentColor}`}>
+              <p className={`text-xl font-bold ${config.accentColor}`}>
                 {item.count}
               </p>
             </div>
