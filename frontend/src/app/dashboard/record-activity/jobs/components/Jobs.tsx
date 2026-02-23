@@ -69,23 +69,23 @@ const Jobs = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0); // Add this
   const itemsPerPage = 10;
+  const fetchJobs = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
+    try {
+      const response = await getAlls<any>("/technician-job-by-admin");
+      const jobsData = response?.data || [];
+      setJobs(jobsData);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      toast.error("Failed to load jobs");
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      setIsLoading(true);
-      try {
-        const response = await getAlls<any>("/technician-job-by-admin");
-        const jobsData = response?.data || [];
-        setJobs(jobsData);
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-        toast.error("Failed to load jobs");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchJobs();
   }, []);
 
@@ -99,6 +99,7 @@ const Jobs = () => {
             ? statsRes.data[0]
             : statsRes.data;
           const formattedStats: StatCardData[] = [];
+
           formattedStats.push({
             value: apiData?.overallTotalJobs?.toString() || "0",
             label: statusConfig.TOTAL.label,
@@ -106,6 +107,7 @@ const Jobs = () => {
             gradient: statusConfig.TOTAL.gradient,
             icon: statusConfig.TOTAL.icon,
           });
+
           const statusOrder = ["PENDING", "START", "ON HOLD", "END"];
           statusOrder.forEach((status) => {
             const statusData = apiData?.statusCounts?.find(
@@ -175,10 +177,13 @@ const Jobs = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [statsRefreshTrigger]);
 
   const handleDeleteJob = (deletedJobId: string) => {
     setJobs((prevJobs) => prevJobs.filter((job) => job._id !== deletedJobId));
+
+    setStatsRefreshTrigger((prev) => prev + 1);
+    fetchJobs(false);
   };
 
   const filteredJobs = useMemo(() => {
