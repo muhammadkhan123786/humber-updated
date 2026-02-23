@@ -122,7 +122,7 @@ export const saveCustomer = async (
   next: NextFunction,
 ) => {
   try {
-    const { id } = req.params;
+    const id  = req.params.id as string;
     const { customerType } = req.body;
     let targetService: GenericService<CustomerBaseDoc>;
     let validationSchema;

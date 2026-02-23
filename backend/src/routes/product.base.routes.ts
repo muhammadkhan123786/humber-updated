@@ -10,7 +10,7 @@ const productBaseService = new GenericService<productDoc>(ProductBasic);
 
 const productSourceController = new AdvancedGenericController({
     service: productBaseService,
-    populate: ["userId"],
+    populate: ["userId", 'taxId'],
     validationSchema: productBasicSchemaValidation,
     searchFields: ["productName"]
 });
