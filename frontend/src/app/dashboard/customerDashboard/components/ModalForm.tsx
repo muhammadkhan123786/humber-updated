@@ -194,62 +194,13 @@ const ModalForm: React.FC<ModalProps> = ({
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
+        console.log(data);
         if (data.success) {
           const activeSources = data.data?.filter((s: any) => s.isActive) || [];
-          if (activeSources.length < 3) {
-            const defaultSources = [
-              {
-                _id: "walk-in",
-                customerSource: "Walk-in",
-                isActive: true,
-                icon: "walk",
-              },
-              {
-                _id: "phone",
-                customerSource: "Phone",
-                isActive: true,
-                icon: "phone",
-              },
-              {
-                _id: "web",
-                customerSource: "Web",
-                isActive: true,
-                icon: "web",
-              },
-            ];
-            const mergedSources = [...activeSources];
-            defaultSources.forEach((def) => {
-              if (
-                !mergedSources.some(
-                  (s) =>
-                    s.customerSource.toLowerCase() ===
-                    def.customerSource.toLowerCase(),
-                )
-              ) {
-                mergedSources.push(def);
-              }
-            });
-            setSourceOptions(mergedSources);
-          } else {
-            setSourceOptions(activeSources);
-          }
-        } else {
-          setSourceOptions([
-            {
-              _id: "walk-in",
-              customerSource: "Walk-in",
-              isActive: true,
-              icon: "walk",
-            },
-            {
-              _id: "phone",
-              customerSource: "Phone",
-              isActive: true,
-              icon: "phone",
-            },
-            { _id: "web", customerSource: "Web", isActive: true, icon: "web" },
-          ]);
-        }
+          setSourceOptions(activeSources);
+          
+        } 
+        
       } catch (err) {
         console.error(err);
         setSourceOptions([
