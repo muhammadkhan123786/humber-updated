@@ -179,6 +179,8 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   // User picks a product from the list
   const handleProductSelect = (product: ProductFull) => {
+
+    console.log("product", product);
     const allPricing = product.attributes.flatMap((a) => a.pricing);
     const firstPricing = allPricing[0];
     const attrSku = product.attributes[0]?.sku ?? product.sku;
