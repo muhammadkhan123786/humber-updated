@@ -96,7 +96,7 @@ export const assignTicketToTechnicianController = async (
   res: Response,
 ) => {
   try {
-    const { id } = req.params; // ✅ ticketId
+    const  id  = req.params.id as string; // ✅ ticketId
     const { technicianId } = req.body; // ✅ technicianId
 
     // Validate ObjectIds
