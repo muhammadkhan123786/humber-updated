@@ -10,7 +10,7 @@ export const technicianDashboardJobsController = async (
 ) => {
   try {
     const technicianId = req.technicianId;
-
+    console.log("Technician ID from Request:", technicianId); // Debug log to check technicianId
     if (!technicianId) {
       return res.status(400).json({
         success: false,
