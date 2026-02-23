@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import JobDetailModal from "./JobsDetail";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { getAlls } from "@/helper/apiHelper";
 import {
   Briefcase,
   User,
@@ -113,7 +112,6 @@ const JobCardsSection = ({
       if (job._id === jobId) {
         return {
           ...job,
-          isJobCompleted: newCompletionStatus,
           jobStatusId: newJobStatus,
         };
       }
@@ -201,7 +199,8 @@ const JobCardsSection = ({
             {localJobs?.map((job, index) => {
               // Static status logic: PENDING (default) -> START -> ON HOLD -> END
               const currentStatus = job.jobStatusId || "PENDING";
-              const isCompleted = job.isJobCompleted || false;
+              // Determine completion from status - if status is "END", job is completed
+              const isCompleted = currentStatus === "END";
               const isOnHold = currentStatus === "ON HOLD";
               const isStart = currentStatus === "START";
 
@@ -234,12 +233,12 @@ const JobCardsSection = ({
                         <button
                           onClick={() => handleStartPauseToggle(job._id, currentStatus)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md ${
-                            isOnHold
+                            isStart
                               ? "bg-orange-500 text-white"
                               : "bg-blue-500 text-white"
                           }`}
                         >
-                          {isOnHold ? (
+                          {isStart ? (
                             <>
                               <Pause size={14} />
                               <span>Pause</span>
@@ -405,7 +404,8 @@ const JobCardsSection = ({
                 {localJobs?.map((job, index) => {
                   // Static status logic: PENDING (default) -> START -> ON HOLD -> END
                   const currentStatus = job.jobStatusId || "PENDING";
-                  const isCompleted = job.isJobCompleted || false;
+                  // Determine completion from status - if status is "END", job is completed
+                  const isCompleted = currentStatus === "END";
                   const isOnHold = currentStatus === "ON HOLD";
                   const isStart = currentStatus === "START";
 
@@ -428,12 +428,12 @@ const JobCardsSection = ({
                           <button
                             onClick={() => handleStartPauseToggle(job._id, currentStatus)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md ${
-                              isOnHold
+                              isStart
                                 ? "bg-orange-500 text-white"
                                 : "bg-blue-500 text-white"
                             }`}
                           >
-                            {isOnHold ? (
+                            {isStart ? (
                               <>
                                 <Pause size={14} />
                                 <span>Pause</span>
