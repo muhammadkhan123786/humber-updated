@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import { useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useRouter } from "next/navigation";
 
 interface Part {
   _id: string;
@@ -32,6 +33,7 @@ interface QuotationSummaryProps {
   quotationId?: string;
   isEditMode?: boolean;
   technicianId?: string;
+  originalStatus?: string;
 }
 
 const QuotationSummary = ({
@@ -46,7 +48,9 @@ const QuotationSummary = ({
   quotationId = "",
   isEditMode = false,
   technicianId: technicianIdProp = "",
+  originalStatus = "SENT TO ADMIN",
 }: QuotationSummaryProps) => {
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const partsTotal = selectedParts.reduce(
     (sum, part) => sum + (part.unitCost || 0) * part.quantity,
@@ -92,6 +96,7 @@ const QuotationSummary = ({
         setSaving(false);
         return;
       }
+
       let userId = localStorage.getItem("userId");
       if (!userId) {
         const userStr = localStorage.getItem("user");
@@ -107,13 +112,20 @@ const QuotationSummary = ({
         return;
       }
 
+      const partsList = selectedParts.map((part) => ({
+        partId: part._id,
+        partName: part.partName,
+        partNumber: part.partNumber,
+        quantity: part.quantity,
+        unitPrice: part.unitCost || 0,
+        total: (part.unitCost || 0) * part.quantity,
+      }));
+
       const quotationData = {
         userId: userId,
         ticketId: selectedTicket._id,
-        quotationStatusId: "SENT TO ADMIN",
-        partsList: selectedParts.flatMap((part) =>
-          Array(part.quantity).fill(part._id),
-        ),
+        quotationStatusId: isEditMode ? originalStatus : "SENT TO ADMIN",
+        partsList: partsList,
         labourTime: laborHours,
         labourRate: ratePerHour,
         aditionalNotes: additionalNotes,
@@ -132,8 +144,8 @@ const QuotationSummary = ({
 
       console.log("Selected parts:", selectedParts);
       console.log(
-        "Parts list being sent (with duplicates for quantity):",
-        quotationData.partsList,
+        "Parts list being sent (as objects with unitPrice and total):",
+        partsList,
       );
       console.log(
         isEditMode
@@ -161,8 +173,8 @@ const QuotationSummary = ({
       }
 
       setTimeout(() => {
-        window.location.href = "/dashboard/quotation";
-      }, 1500);
+        router.push("/dashboard/quotation");
+      }, 1000);
     } catch (error: any) {
       console.error(
         isEditMode ? "Error updating quotation:" : "Error creating quotation:",
@@ -480,7 +492,7 @@ const QuotationSummary = ({
                     ? "Updating..."
                     : "Sending..."
                   : isEditMode
-                    ? "Update & Send to Admin"
+                    ? "Update Quotation"
                     : "Send to Admin"}
               </span>
             </button>

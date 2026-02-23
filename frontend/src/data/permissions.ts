@@ -91,6 +91,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
       {
         _id: nanoid(),
+        label: "Customer Quotation",
+        href: "/dashboard/quotation",
+        icon: Wrench,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
         label: "Create Ticket",
         href: "/dashboard/ticket-masterdata/createTicket",
         icon: FilePlus,
@@ -167,13 +174,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
   },
 
   //quotation
-  {
-    _id: nanoid(),
-    label: "Quotation",
-    href: "/dashboard/quotation",
-    icon: Wrench,
-    roleId: [1],
-  },
+
   /* ================= INVENTORY SYSTEM ================= */
   {
     _id: nanoid(),
