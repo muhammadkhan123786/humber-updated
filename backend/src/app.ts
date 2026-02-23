@@ -533,7 +533,7 @@ app.get(
 //20-02-2026
 app.use(
   `${process.env.API_PREFIX}/technician-job-by-admin`,
-  techncianJobsByAdminRouter,
+  techncianJobsByAdminRouter
 );
 
 app.use(

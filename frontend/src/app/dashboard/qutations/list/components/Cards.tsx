@@ -129,20 +129,20 @@ const Cards: React.FC<CardsProps> = ({ statusCounts, onFilterByStatus }) => {
           <div
             key={index}
             onClick={() => onFilterByStatus(item.status)}
-            className={`${config.bgColor} ${config.borderColor} border rounded-xl p-4 cursor-pointer hover:shadow-md hover:scale-105 transition-all duration-200 animate-card`}
+            className={`${config.bgColor} ${config.borderColor} border rounded-lg p-3 cursor-pointer hover:shadow-md hover:scale-105 transition-all duration-200 animate-card`}
             style={{ animationDelay: `${index * 80}ms` }}
           >
-            {/* Header: Icon and Label side-by-side */}
-            <div className={`flex items-center gap-2 mb-3  ${config.accentColor}`}>
+            {/* Icon and Label in one line */}
+            <div className={`flex items-center gap-1.5 mb-1.5 ${config.accentColor}`}>
               {config.icon}
-              <span className="text-sm font-semibold">
+              <span className="text-xs font-semibold whitespace-nowrap truncate flex-1">
                 {config.label}
               </span>
             </div>
 
-            {/* Content: Number on next line */}
+            {/* Count */}
             <div>
-              <p className={`text-2xl font-bold ${config.accentColor}`}>
+              <p className={`text-xl font-bold ${config.accentColor}`}>
                 {item.count}
               </p>
             </div>
