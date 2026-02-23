@@ -600,6 +600,8 @@ export const updateTechnicianJobStatusController = async (
       });
     }
 
+    
+
     const filter: any = {
       _id: techncianJobId,
       isDeleted: false,
@@ -616,14 +618,14 @@ export const updateTechnicianJobStatusController = async (
 
       filter.leadingTechnicianId = req.technicianId; // updated for new schema
     }
-
+    console.log("Filter for updating job status:", filter);
     // ✅ Update jobStatusId
     const updatedJob = await TechnicianJobsByAdmin.findOneAndUpdate(
       filter,
       { $set: { jobStatusId } },
       { new: true }
     ).lean();
-
+    
     if (!updatedJob) {
       return res.status(404).json({
         success: false,

@@ -11,7 +11,8 @@ import {
   Calendar,
   Eye,
   Inbox,
-  ChevronDown,
+  Play,
+  Pause,
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -49,8 +50,6 @@ const JobCardsSection = ({
 }: JobCardsProps) => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [jobStatuses, setJobStatuses] = useState<JobStatus[]>([]);
-  const [loadingStatuses, setLoadingStatuses] = useState(true);
   const [localJobs, setLocalJobs] = useState<any[]>(jobs);
 
   // Update local jobs when props change
@@ -58,42 +57,17 @@ const JobCardsSection = ({
     setLocalJobs(jobs);
   }, [jobs]);
 
-  // Fetch job statuses from API
-  useEffect(() => {
-    const fetchStatuses = async () => {
-      try {
-        const response: any = await getAlls<JobStatus>(
-          "/technician-job-status",
-          { limit: 100 }
-        );
-        if (response.success) {
-          setJobStatuses(response.data?.filter((s: JobStatus) => s.isActive && s.canChooseTechnician) || []);
-        }
-      } catch (error) {
-        console.error("Error fetching job statuses:", error);
-        toast.error("Failed to load job statuses");
-      } finally {
-        setLoadingStatuses(false);
-      }
-    };
-    fetchStatuses();
-  }, []);
-
-  // Handle status change
-  const handleStatusChange = async (jobId: string, newStatusId: string) => {
-    // Find the new status object
-    const newStatus = jobStatuses.find((s) => s._id === newStatusId);
-    if (!newStatus) return;
+  // Handle START/PAUSE toggle (START <-> ON HOLD)
+  const handleStartPauseToggle = async (jobId: string, currentStatus: string) => {
+    // Toggle between START and ON HOLD
+    const newStatus = currentStatus === "START" ? "ON HOLD" : "START";
 
     // Optimistic update: Update local state immediately
     const updatedJobs = localJobs.map((job) => {
       if (job._id === jobId) {
         return {
           ...job,
-          jobStatusId: {
-            _id: newStatus._id,
-            technicianJobStatus: newStatus.technicianJobStatus,
-          },
+          jobStatusId: newStatus,
         };
       }
       return job;
@@ -107,8 +81,8 @@ const JobCardsSection = ({
       const response = await axios.put(
         `${BASE_URL}/update-technician-job-status`,
         {
+          jobStatusId: newStatus,
           techncianJobId: jobId,
-          techncianJobStatusId: newStatusId,
         },
         {
           headers: { Authorization: `Bearer ${cleanToken}` },
@@ -116,8 +90,7 @@ const JobCardsSection = ({
       );
       
       if (response.data?.success) {
-        toast.success("Job status updated successfully");
-        // Optional: Call parent refresh callback if provided
+        toast.success(`Job ${newStatus === "START" ? "started" : "paused"} successfully`);
         if (onJobUpdate) {
           onJobUpdate();
         }
@@ -130,9 +103,10 @@ const JobCardsSection = ({
     }
   };
 
-  // Handle completion toggle
+  // Handle completion toggle (changes status to END)
   const handleCompletionToggle = async (jobId: string, currentStatus: boolean) => {
     const newCompletionStatus = !currentStatus;
+    const newJobStatus = newCompletionStatus ? "END" : "PENDING";
 
     // Optimistic update: Update local state immediately
     const updatedJobs = localJobs.map((job) => {
@@ -140,6 +114,7 @@ const JobCardsSection = ({
         return {
           ...job,
           isJobCompleted: newCompletionStatus,
+          jobStatusId: newJobStatus,
         };
       }
       return job;
@@ -153,8 +128,8 @@ const JobCardsSection = ({
       const response = await axios.put(
         `${BASE_URL}/update-technician-job-status`,
         {
+          jobStatusId: newJobStatus,
           techncianJobId: jobId,
-          isJobCompleted: newCompletionStatus,
         },
         {
           headers: { Authorization: `Bearer ${cleanToken}` },
@@ -162,8 +137,7 @@ const JobCardsSection = ({
       );
       
       if (response.data?.success) {
-        toast.success(newCompletionStatus ? "Job marked as completed" : "Job marked as incomplete");
-        // Optional: Call parent refresh callback if provided
+        toast.success(newCompletionStatus ? "Job completed" : "Job reopened");
         if (onJobUpdate) {
           onJobUpdate();
         }
@@ -225,10 +199,11 @@ const JobCardsSection = ({
         localJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
             {localJobs?.map((job, index) => {
-              const status = job.jobStatusId?.technicianJobStatus || "Open";
-              const statusColor = getStatusColor(status);
-              const currentStatusId = job.jobStatusId?._id || "";
+              // Static status logic: PENDING (default) -> START -> ON HOLD -> END
+              const currentStatus = job.jobStatusId || "PENDING";
               const isCompleted = job.isJobCompleted || false;
+              const isOnHold = currentStatus === "ON HOLD";
+              const isStart = currentStatus === "START";
 
               return (
                 <div
@@ -256,25 +231,26 @@ const JobCardsSection = ({
                         </p>
                       </div>
                       {!isCompleted && (
-                        <div className="relative group">
-                          <select
-                            value={currentStatusId}
-                            onChange={(e) => handleStatusChange(job._id, e.target.value)}
-                            className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm appearance-none cursor-pointer pr-6 border-2 transition-all"
-                            style={{
-                              backgroundColor: statusColor,
-                              color: "white",
-                              borderColor: statusColor,
-                            }}
-                          >
-                            {jobStatuses.map((s) => (
-                              <option key={s._id} value={s._id} style={{ backgroundColor: "white", color: "black" }}>
-                                {s.technicianJobStatus}
-                              </option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" size={12} style={{ color: "white" }} />
-                        </div>
+                        <button
+                          onClick={() => handleStartPauseToggle(job._id, currentStatus)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md ${
+                            isOnHold
+                              ? "bg-orange-500 text-white"
+                              : "bg-blue-500 text-white"
+                          }`}
+                        >
+                          {isOnHold ? (
+                            <>
+                              <Pause size={14} />
+                              <span>Pause</span>
+                            </>
+                          ) : (
+                            <>
+                              <Play size={14} />
+                              <span>Start</span>
+                            </>
+                          )}
+                        </button>
                       )}
                     </div>
 
@@ -427,10 +403,11 @@ const JobCardsSection = ({
 
               <tbody className="divide-y divide-gray-50">
                 {localJobs?.map((job, index) => {
-                  const status = job.jobStatusId?.technicianJobStatus || "Open";
-                  const statusColor = getStatusColor(status);
-                  const currentStatusId = job.jobStatusId?._id || "";
+                  // Static status logic: PENDING (default) -> START -> ON HOLD -> END
+                  const currentStatus = job.jobStatusId || "PENDING";
                   const isCompleted = job.isJobCompleted || false;
+                  const isOnHold = currentStatus === "ON HOLD";
+                  const isStart = currentStatus === "START";
 
                   return (
                     <tr
@@ -448,27 +425,28 @@ const JobCardsSection = ({
 
                       <td className="p-4">
                         {!isCompleted ? (
-                          <div className="relative inline-block">
-                            <select
-                              value={currentStatusId}
-                              onChange={(e) => handleStatusChange(job._id, e.target.value)}
-                              className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm appearance-none cursor-pointer pr-6 border-2 transition-all"
-                              style={{
-                                backgroundColor: statusColor,
-                                color: "white",
-                                borderColor: statusColor,
-                              }}
-                            >
-                              {jobStatuses.map((s) => (
-                                <option key={s._id} value={s._id} style={{ backgroundColor: "white", color: "black" }}>
-                                  {s.technicianJobStatus}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown className="absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" size={12} style={{ color: "white" }} />
-                          </div>
+                          <button
+                            onClick={() => handleStartPauseToggle(job._id, currentStatus)}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md ${
+                              isOnHold
+                                ? "bg-orange-500 text-white"
+                                : "bg-blue-500 text-white"
+                            }`}
+                          >
+                            {isOnHold ? (
+                              <>
+                                <Pause size={14} />
+                                <span>Pause</span>
+                              </>
+                            ) : (
+                              <>
+                                <Play size={14} />
+                                <span>Start</span>
+                              </>
+                            )}
+                          </button>
                         ) : (
-                          <span className="text-xs text-gray-400 italic">Completed</span>
+                          <span className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase bg-green-100 text-green-700">End</span>
                         )}
                       </td>
 
