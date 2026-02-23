@@ -3,7 +3,8 @@ import { getAll } from "./apiHelper";
 
 interface DropdownOption {
   value: string;
-  label: string;  
+  label: string;
+  isActive?: true | false  
 }
 // Color dropdown needs colorCode
 export interface ColorDropdownOption extends DropdownOption {
@@ -128,9 +129,17 @@ export class DropdownService {
         _id: string;
         taxName: string;
         percentage: number;
+        isActive: boolean
       }>("/tax", { limit: 100 });
-      return response.data.map((item) => ({
-        value: item._id,
+      // return response.data.map((item) => ({
+      //   value: item._id,
+      //   label: `${item.taxName} (${item.percentage}%)`,
+      //   rate: item.percentage,
+      // }));
+       return response.data
+      .filter((item) => item.isActive === true) 
+      .map((item) => ({
+       value: item._id,
         label: `${item.taxName} (${item.percentage}%)`,
         rate: item.percentage,
       }));
@@ -231,12 +240,18 @@ export class DropdownService {
 
   private static async fetchStatus(): Promise<DropdownOption[]> {
     try {
-      const response = await getAll<{ _id: string; orderStatus: string }>(
+      const response = await getAll<{ _id: string; orderStatus: string; isActive: boolean }>(
         "/order-status",
         { limit: 100 }
       );
 
-      return response.data.map((item) => ({
+      // return response.data.map((item) => ({
+      //   value: item._id,
+      //   label: item.orderStatus,
+      // }));
+       return response.data
+      .filter((item) => item.isActive === true) 
+      .map((item) => ({
         value: item._id,
         label: item.orderStatus,
       }));
@@ -325,12 +340,13 @@ export class DropdownService {
 
   private static async fetchWherehouesStatus(): Promise<DropdownOption[]> {
     try {
-      const response = await getAll<{ _id: string; wareHouseStatus: string }>(
+      const response = await getAll<{ _id: string; wareHouseStatus: string; isActive: boolean; }>(
         "/warehouse-status",
         { limit: 100 }
       );
-
-      return response.data.map((item) => ({
+      return response.data
+      .filter((item) => item.isActive === true) 
+      .map((item) => ({
         value: item._id,
         label: item.wareHouseStatus,
       }));
@@ -342,11 +358,13 @@ export class DropdownService {
 
   private static async fetchConditions(): Promise<DropdownOption[]> {
     try {
-      const response = await getAll<{ _id: string; itemConditionName: string }>(
+      const response = await getAll<{ _id: string; itemConditionName: string; isActive: boolean }>(
         "/items-conditions",
         { limit: 100 }
-      );
-      return response.data.map((item) => ({
+      );      
+       return response.data
+      .filter((item) => item.isActive === true) 
+      .map((item) => ({
         value: item._id,
         label: item.itemConditionName,
       }));
