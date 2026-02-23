@@ -150,11 +150,21 @@ const ListAllQuotations = () => {
         const selectedStatusLower = selectedStatus.toLowerCase();
         
         // Match by checking if the status contains the filter text
-        return quotationStatusLower.includes(selectedStatusLower) ||
-               (selectedStatusLower === "sent" && quotationStatusLower.includes("send")) ||
-               (selectedStatusLower === "draft" && quotationStatusLower.includes("draft")) ||
-               (selectedStatusLower === "approved" && quotationStatusLower.includes("approve")) ||
-               (selectedStatusLower === "rejected" && quotationStatusLower.includes("reject"));
+        if (selectedStatusLower === "send to customer") {
+          return quotationStatusLower.includes("customer");
+        } else if (selectedStatusLower === "sent to insurance") {
+          return quotationStatusLower.includes("insurance");
+        } else if (selectedStatusLower === "sent to admin") {
+          return quotationStatusLower.includes("admin");
+        } else if (selectedStatusLower === "approved") {
+          return quotationStatusLower.includes("approve");
+        } else if (selectedStatusLower === "draft") {
+          return quotationStatusLower.includes("draft");
+        } else if (selectedStatusLower === "rejected") {
+          return quotationStatusLower.includes("reject");
+        }
+        
+        return quotationStatusLower.includes(selectedStatusLower);
       });
     }
 
