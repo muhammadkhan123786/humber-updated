@@ -156,7 +156,8 @@ if (parseResult.success) {
     }
 
     if (!id) {
-      const customer = await targetService.create(req.body);
+      console.log("Creating customer with sourceId:", req.body.sourceId);
+const customer = await targetService.create(req.body);
       return res.status(201).json({
         message: "Customer created successfully",
         data: customer,
