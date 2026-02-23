@@ -19,6 +19,7 @@ import { Plus, Trash2, Building2, Truck, Box } from "lucide-react";
 import { toast } from "sonner";
 import { useFormActions } from "@/hooks/useFormActions";
 import { SearchableCombobox, ComboboxItemConfig } from "@/components/SearchableCombobox";
+import React, { useMemo } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,11 +84,11 @@ interface PurchaseOrderFormProps {
 // ─── Combobox config for ProductFull ─────────────────────────────────────────
 
 const productConfig: ComboboxItemConfig<ProductFull> = {
-  getKey:          (p: any) => p._id,
-  getLabel:        (p: any) => p.productName,
-  getSubLabel:     (p: any) => p.sku,
-  getRightSubLabel:(p: any) => `Stock: ${p.ui_totalStock}`,
-  getRightLabel:   (p: any) => `£${p.ui_price.toFixed(2)}`,
+  getKey: (p: any) => p._id,
+  getLabel: (p: any) => p.productName,
+  getSubLabel: (p: any) => p.sku,
+  getRightSubLabel: (p: any) => `Stock: ${p.ui_totalStock}`,
+  getRightLabel: (p: any) => `£${p.ui_price.toFixed(2)}`,
   getSearchFields: (p: any) => [p.productName, p.sku],
 };
 
@@ -116,11 +117,10 @@ const PricingSelector: React.FC<PricingSelectorProps> = ({
             key={p._id}
             type="button"
             onClick={() => onSelect(p)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${
-              selectedPricingId === p._id
-                ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
-                : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
-            }`}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium border-2 transition-all ${selectedPricingId === p._id
+              ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+              : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+              }`}
           >
             {p.marketplaceName}
             <span className="ml-1.5 font-bold">£{p.sellingPrice.toFixed(2)}</span>
@@ -151,10 +151,30 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   calculateTotals,
   orderNumber,
 }) => {
-  const [isSaving, setIsSaving]         = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [fetchProducts, setFetchProducts] = useState(false);
   const [availablePricing, setAvailablePricing] = useState<ProductPricing[]>([]);
   const [selectedPricingId, setSelectedPricingId] = useState<string>("");
+
+
+  const memoizedTotals = useMemo(() => {
+    const subtotal = orderItems.reduce((acc, item) => {
+      // Use totalPrice if your item has it, otherwise calculate from unitPrice * quantity
+      const price = item.unitPrice || 0;
+      const qty = Number(item.quantity) || 0;
+      return acc + (price * qty);
+    }, 0);
+
+    const taxRate = 0.20; // Static 20% VAT
+    const taxAmount = subtotal * taxRate;
+    const finalTotal = subtotal + taxAmount;
+
+    return {
+      subtotal,
+      tax: taxAmount,
+      total: finalTotal
+    };
+  }, [orderItems]);
 
   // Lazy fetch — only fires after onFirstOpen is called (user first clicks input)
   const { data: products, isLoading } = useFormActions<ProductFull>(
@@ -166,6 +186,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     fetchProducts,
   );
 
+  console.log("products", products)
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   // User types in the combobox → clear productId so validation catches it
@@ -190,15 +211,18 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
     onNewItemChange({
       ...newItem,
-      productId:   product._id,           // stored in DB
+      productId: product._id,           // stored in DB
       productName: product.productName,   // display only
-      sku:         attrSku,               // display only
-      quantity:    newItem.quantity || "1",
-      unitPrice:   firstPricing
+      sku: attrSku,               // display only
+      quantity: newItem.quantity || "1",
+      unitPrice: firstPricing
         ? String(firstPricing.sellingPrice)
         : String(product.ui_price),
     });
   };
+
+
+
 
   // User clears the product field
   const handleProductClear = () => {
@@ -479,15 +503,20 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-semibold">£{calculateTotals(orderItems).subtotal.toFixed(2)}</span>
+                    <span className="font-semibold"><span className="font-semibold">£{memoizedTotals.subtotal.toFixed(2)}</span></span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">VAT (20%):</span>
-                    <span className="font-semibold">£{calculateTotals(orderItems).tax.toFixed(2)}</span>
+                    <span className="font-semibold">
+                      £{memoizedTotals.tax.toFixed(2)}
+
+                      {/* ? £{calculateTotals(orderItems).tax.toFixed(2)} */}
+
+                    </span>
                   </div>
                   <div className="flex justify-between text-lg border-t-2 border-emerald-200 pt-2">
                     <span className="font-bold text-gray-900">Total:</span>
-                    <span className="font-bold text-emerald-600">£{calculateTotals(orderItems).total.toFixed(2)}</span>
+                    <span className="font-bold text-emerald-600">£{memoizedTotals.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
