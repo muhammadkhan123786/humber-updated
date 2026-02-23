@@ -65,12 +65,8 @@ const AvailableTickets = ({ onSelectTicket }: AvailableTicketsProps) => {
       const response = await fetchTechnicianTickets({ page: 1, limit: 1000 });
       console.log("All tickets from API:", response.tickets);
       console.log("Total tickets count:", response.tickets?.length);
-
-      // Log all unique ticket statuses
       const statuses = response.tickets?.map((t: Ticket) => t.ticketStatus);
       console.log("All ticket statuses:", [...new Set(statuses)]);
-
-      // Filter tickets available for quotation (exclude completed, cancelled, closed)
       const excludedStatuses = ["completed", "cancelled", "closed"];
       const availableTickets = response.tickets.filter((ticket: Ticket) => {
         const status = ticket.ticketStatus.toLowerCase();
@@ -187,7 +183,6 @@ const AvailableTickets = ({ onSelectTicket }: AvailableTicketsProps) => {
                   className="hover:bg-gray-50 transition-colors"
                 >
                   <td className="px-4 py-4">
-                    {/* Added 'w-max' to prevent shrinking and 'px-3 py-1' for horizontal padding */}
                     <div className="flex items-center justify-center rounded-full border border-gray-300 text-xs font-medium bg-blue-50 px-3 py-1 w-max">
                       <span className="text-gray-900">{ticket.ticketCode}</span>
                     </div>
