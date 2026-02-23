@@ -202,7 +202,8 @@ export class AdvancedGenericController<T extends Document> {
 
   getById = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+
+      const id = req.params.id as string;
       if (!Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid ID" });
       }
@@ -230,7 +231,7 @@ export class AdvancedGenericController<T extends Document> {
 
   update = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id  = req.params.id as string;
       if (!Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
 
@@ -256,8 +257,7 @@ export class AdvancedGenericController<T extends Document> {
 
   delete = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      console.log("id", id);
+      const id  = req.params.id as string;     
       if (!Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
 
