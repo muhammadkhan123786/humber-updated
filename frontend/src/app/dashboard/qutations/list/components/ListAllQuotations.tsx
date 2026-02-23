@@ -254,7 +254,6 @@ const ListAllQuotations = () => {
   };
 
   const handleEdit = (id: string) => {
-    // Find the quotation by ID
     const quotation = quotations.find(q => q._id === id);
     
     if (!quotation) {
@@ -262,19 +261,20 @@ const ListAllQuotations = () => {
       return;
     }
     
-    // Check if status is approved
+    // Only allow editing for "SENT TO ADMIN" and "DRAFTED" statuses
     const statusLower = quotation.quotationStatus?.toLowerCase() || "";
-    if (statusLower.includes("approve")) {
-      toast.error("Approved quotations cannot be edited");
+    const isSentToAdmin = statusLower.includes('admin');
+    const isDrafted = statusLower.includes('draft');
+    
+    if (!isSentToAdmin && !isDrafted) {
+      toast.error("Only quotations with 'Sent to Admin' or 'Drafted' status can be edited");
       return;
     }
     
-    // Navigate to edit page with quotation ID
     router.push(`/dashboard/qutations/create?mode=edit&id=${id}`);
   };
 
   const handleDelete = (id: string) => {
-    // Find the quotation by ID
     const quotation = quotations.find(q => q._id === id);
     
     if (!quotation) {
@@ -282,10 +282,13 @@ const ListAllQuotations = () => {
       return;
     }
     
-    // Check if status is approved
+    // Only allow deletion for "SENT TO ADMIN" and "DRAFTED" statuses
     const statusLower = quotation.quotationStatus?.toLowerCase() || "";
-    if (statusLower.includes("approve")) {
-      toast.error("Approved quotations cannot be deleted");
+    const isSentToAdmin = statusLower.includes('admin');
+    const isDrafted = statusLower.includes('draft');
+    
+    if (!isSentToAdmin && !isDrafted) {
+      toast.error("Only quotations with 'Sent to Admin' or 'Drafted' status can be deleted");
       return;
     }
     
