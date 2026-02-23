@@ -122,6 +122,11 @@ export const saveCustomer = async (
   next: NextFunction,
 ) => {
   try {
+     console.log("========= INCOMING REQUEST =========");
+  console.log("BODY:", req.body);
+  console.log("sourceId:", req.body.sourceId);
+  console.log("typeof sourceId:", typeof req.body.sourceId);
+  console.log("====================================");
     const id  = req.params.id as string;
     const { customerType } = req.body;
     let targetService: GenericService<CustomerBaseDoc>;
@@ -138,6 +143,11 @@ export const saveCustomer = async (
     }
 
     const parseResult = validationSchema.safeParse(req.body);
+    console.log("Validation result:", parseResult.success);
+
+if (parseResult.success) {
+  console.log("Validated data sourceId:", parseResult.data.sourceId);
+}
     if (!parseResult.success) {
       return res.status(400).json({
         message: "Validation failed",
