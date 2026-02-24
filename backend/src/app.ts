@@ -76,6 +76,7 @@ import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.ro
 import partsRouter from "./routes/master-data-routes/parts.routes";
 import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
 
+//  Muzamil Hassan start
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
 import grnRoutes from "./routes/grn.routes";
 import goodsReturnRoutes from "./routes/goodsReturn.routes";
@@ -83,6 +84,10 @@ import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace.routes";
+import marketplace from "./routes/marketplace-routes/marketplace.routes"
+
+
+// Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
@@ -585,6 +590,8 @@ app.use(
 app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
+app.use(`${process.env.API_PREFIX}/marketplace`, marketplace);
+// Muzamil Hassan end 
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });
