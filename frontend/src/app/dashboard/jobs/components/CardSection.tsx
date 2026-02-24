@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import JobDetailModal from "./JobsDetail";
-import TechnicianInspectionModal from "./TechnicianInspectionModal";
+import TechnicianInspection from "./TechnicianInspectionModal";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
@@ -51,7 +51,7 @@ const JobCardsSection = ({
 }: JobCardsProps) => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isInspectionModalOpen, setIsInspectionModalOpen] = useState(false);
+  const [showInspectionForm, setShowInspectionForm] = useState(false);
   const [inspectionJob, setInspectionJob] = useState<any>(null);
   const [localJobs, setLocalJobs] = useState<any[]>(jobs);
 
@@ -109,7 +109,15 @@ const JobCardsSection = ({
   // Handle inspection button click
   const handleAddInspection = (job: any) => {
     setInspectionJob(job);
-    setIsInspectionModalOpen(true);
+    setShowInspectionForm(true);
+  };
+
+  const handleBackFromInspection = () => {
+    setShowInspectionForm(false);
+    setInspectionJob(null);
+    if (onJobUpdate) {
+      onJobUpdate();
+    }
   };
 
   // Handle completion toggle (changes status to END)
@@ -203,7 +211,11 @@ const JobCardsSection = ({
 
   return (
     <div>
-      {viewMode === "grid" ? (
+      {showInspectionForm && inspectionJob ? (
+        <TechnicianInspection job={inspectionJob} onBack={handleBackFromInspection} />
+      ) : (
+        <>
+          {viewMode === "grid" ? (
         localJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
             {localJobs?.map((job, index) => {
@@ -591,11 +603,8 @@ const JobCardsSection = ({
         job={selectedJob}
         calculations={{ partsCost, labourCost, totalBill }}
       />
-      <TechnicianInspectionModal
-        isOpen={isInspectionModalOpen}
-        onClose={() => setIsInspectionModalOpen(false)}
-        job={inspectionJob}
-      />
+        </>
+      )}
     </div>
   );
 };
