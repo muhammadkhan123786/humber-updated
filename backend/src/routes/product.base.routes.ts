@@ -3,6 +3,7 @@ import { GenericService } from "../services/generic.crud.services";
 import { productDoc, ProductBasic } from "../models/product.basic.models";
 import { productBasicSchemaValidation } from "../schemas/product.basic.schema";
 import { AdvancedGenericController } from "../controllers/GenericController";
+import { Tax } from "../models/tax.models";
 
 const productBaseRoute = Router();
 
@@ -10,7 +11,13 @@ const productBaseService = new GenericService<productDoc>(ProductBasic);
 
 const productSourceController = new AdvancedGenericController({
     service: productBaseService,
-    populate: ["userId", 'taxId'],
+    populate: ["userId",
+        {
+            path: "attributes.pricing.taxId",
+            model: Tax,
+            select: "percentage taxName"
+        }
+    ],
     validationSchema: productBasicSchemaValidation,
     searchFields: ["productName"]
 });

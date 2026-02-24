@@ -13,9 +13,9 @@ export const createCategory = async (
   next: NextFunction
 ) => {
   try {
+
     // ✅ Validate request body
     const data = categorySchemaValidation.parse(req.body);
-
     // ✅ Convert string IDs to ObjectId
     const payLoad: Partial<categoryDoc> = {
       ...data,
@@ -93,7 +93,7 @@ export const getAllCategories = async (
 ) => {
   try {
     const { search, page, limit, ...rawFilters } = req.query;
-   
+
 
     // 1️⃣ Base filters
     const queryFilters: Record<string, any> = { isDeleted: false };
@@ -159,7 +159,7 @@ export const getCategoryChildren = async (
     const userId = req.query.userId as string;
 
     // Build query
-    const queryFilters: Record<string, any> = { 
+    const queryFilters: Record<string, any> = {
       isDeleted: false,
       userId: new Types.ObjectId(userId)
     };

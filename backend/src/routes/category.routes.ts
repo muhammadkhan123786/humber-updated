@@ -16,9 +16,9 @@ const categoryController = new AdvancedGenericController({
     searchFields: ["categoryName"]
 });
 
+categoryRouter.post("/", createCategory);
 categoryRouter.get("/", getAllCategories);
 categoryRouter.get("/:id", categoryController.getById);
-categoryRouter.post("/", createCategory);
 categoryRouter.put("/:id", updateCategory);
 categoryRouter.delete("/:id", categoryController.delete);
 

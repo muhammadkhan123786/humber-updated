@@ -50,7 +50,12 @@ const TechnicianDashboard = () => {
       const techResult = await techRes.json();
       const summaryResult = await summaryRes.json();
 
-      if (techResult.success) setTechnicians(techResult.data);
+      if (techResult.success) {
+        setTechnicians(techResult.data);
+        setTotalPages(techResult.pagination?.totalPages || 1);
+
+        setCurrentPage(page);
+      }
       if (summaryResult) setSummary(summaryResult);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -62,6 +67,10 @@ const TechnicianDashboard = () => {
   useEffect(() => {
     fetchData(1);
   }, []);
+
+  const handlePageChange = (page: number) => {
+    fetchData(page);
+  };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this technician?"))
@@ -80,7 +89,7 @@ const TechnicianDashboard = () => {
 
       const result = await response.json();
       if (result.success) {
-        setTechnicians((prev) => prev.filter((t) => t._id !== id));
+        fetchData(currentPage);
 
         const summaryRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians/summary`,
@@ -102,12 +111,11 @@ const TechnicianDashboard = () => {
     setSelectedTechnician(tech);
     setIsModalOpen(true);
   };
-  console.log("reponse data", setCurrentPage, setTotalPages);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTechnician(null);
-    fetchData();
+    fetchData(currentPage);
   };
 
   return (
@@ -206,7 +214,7 @@ const TechnicianDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-4  gap-4 mb-16 mt-4 ">
+      <div className="grid grid-cols-4 gap-4 mb-16 mt-4">
         <MetricCard
           title="Total Technicians"
           value={loading ? "..." : summary?.total?.current || 0}
@@ -260,11 +268,11 @@ const TechnicianDashboard = () => {
         />
       )}
       {!loading && technicians.length > 0 && totalPages > 1 && (
-        <div className=" flex justify-end border-t border-slate-200  pb-10">
+        <div className="flex justify-end border-t border-slate-200 pt-6 pb-10">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPageChange={(page) => fetchData(page)}
+            onPageChange={handlePageChange}
           />
         </div>
       )}
