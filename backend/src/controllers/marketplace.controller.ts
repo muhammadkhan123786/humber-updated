@@ -7,7 +7,7 @@ export class MarketplaceController {
   // Toggle Active Status
   toggleActive = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id  = req.params.id as string;
       
       if (!Types.ObjectId.isValid(id)) {
         return res.status(400).json({ 
@@ -53,7 +53,7 @@ export class MarketplaceController {
   // Set as Default
   setDefault = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       
       if (!Types.ObjectId.isValid(id)) {
         return res.status(400).json({ 

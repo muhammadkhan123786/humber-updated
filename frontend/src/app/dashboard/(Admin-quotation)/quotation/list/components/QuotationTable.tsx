@@ -53,9 +53,10 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
   getTicketNumber,
   onStatusChange,
 }) => {
-  const dropdownStatuses = QUOTATION_STATUS.filter(
+  const baseStatuses = QUOTATION_STATUS.filter(
     (status) => status !== "SENT TO ADMIN",
   );
+
   const formatStatusLabel = (status: string) => {
     const upper = status?.toUpperCase();
 
@@ -108,6 +109,13 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
       };
     }
     return { bgColor: "#F3F4F6", textColor: "#6B7280", borderColor: "#E5E7EB" };
+  };
+
+  const getAvailableStatuses = (decision: string | undefined) => {
+    if (decision?.toLowerCase() === "chargeable") {
+      return baseStatuses.filter((status) => status !== "SEND TO INSURANCE");
+    }
+    return baseStatuses;
   };
 
   return (
@@ -182,6 +190,9 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
               const currentStatus =
                 quotation.quotationStatus?.toUpperCase() || "";
               const colors = getStatusColors(currentStatus);
+              const ticketDecision = quotation.ticket?.decision;
+
+              const availableStatuses = getAvailableStatuses(ticketDecision);
 
               return (
                 <tr
@@ -219,7 +230,7 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                     {formatCurrency(quotation.netTotal)}
                   </td>
                   <td className="px-4 py-4 text-sm font-medium text-indigo-600 capitalize">
-                    {quotation?.ticket?.decision || "N/A"}
+                    {ticketDecision || "N/A"}
                   </td>
                   <td className="px-4 py-4">
                     <select
@@ -234,14 +245,14 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                         borderColor: colors.borderColor,
                       }}
                     >
-                      {!dropdownStatuses.includes(currentStatus as any) &&
+                      {!availableStatuses.includes(currentStatus as any) &&
                         currentStatus !== "" && (
                           <option value={currentStatus}>
                             {formatStatusLabel(currentStatus)}
                           </option>
                         )}
 
-                      {dropdownStatuses.map((status) => (
+                      {availableStatuses.map((status) => (
                         <option
                           key={status}
                           value={status}

@@ -91,7 +91,6 @@ const TechnicianActivityPage = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FF] p-4 md:p-8 pb-12">
-      {/* Hero Section (Static values for now to preserve design) */}
       <ActivityHero
         actualServicesCount={0}
         actualPartsCount={0}

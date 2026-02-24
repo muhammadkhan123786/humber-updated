@@ -119,10 +119,7 @@ export const technicianProtecter = (
     res: Response,
     next: NextFunction
 ) => {
-    console.log("Technician protector middleware invoked");
-
     let token: string | undefined;
-
     if (
         req.headers.authorization &&
         req.headers.authorization.startsWith("Bearer ")
@@ -135,19 +132,17 @@ export const technicianProtecter = (
             message: "Not authorized, token missing",
         });
     }
-
     try {
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET as string
         ) as JwtPayload;
-
+        console.log("Decoded JWT Payload in Technician Protector:", decoded); // Debug log to check decoded token
         if (decoded.role !== "Technician" && decoded.role !== "Admin") {
             return res.status(401).json({
                 message: "Not authorized, token invalid",
             });
         }
-
         // ✅ Role check FIRST
         if (decoded.role === "Technician" || decoded.role === 'Admin') {
             // ✅ Attach to request

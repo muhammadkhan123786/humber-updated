@@ -101,7 +101,7 @@ export class PurchaseOrderCustomController {
 
   updateStatus = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
+      const  id  = req.params.id as string;
       const { status } = req.body;
 
       if (!Types.ObjectId.isValid(id)) {
