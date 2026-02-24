@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request, Router,Response } from "express";
 import { GenericService } from "../../services/generic.crud.services";
 import {
   technicianJobsByAdminDoc,
@@ -10,6 +10,7 @@ import {
   adminProtecter,
   technicianProtecter,
 } from "../../middleware/auth.middleware";
+import { generateTechnicianJobCode } from "../../utils/generate.AutoCode.Counter";
 
 const techncianJobsByAdminRouter = Router();
 
@@ -72,6 +73,11 @@ techncianJobsByAdminRouter.get(
 techncianJobsByAdminRouter.post(
   "/",
   adminProtecter,
+  async (req:Request,res:Response,next:NextFunction)=>{
+            const jobId = await generateTechnicianJobCode();
+            req.body.jobId = jobId;
+            next();
+  },
   techncianJobsByAdminController.create,
 );
 techncianJobsByAdminRouter.put(
