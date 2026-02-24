@@ -4,7 +4,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IMarketplaceConnection extends Document {
     userId: string;
-    name: string; // User-defined name like "My Main eBay Store"
+    name: any;
     description?: string;
     type: 'ebay' | 'amazon' | 'shopify' | 'etsy' | 'walmart' | 'woocommerce' | 'tiktok';
     credentials: string; // Encrypted credentials (clientId, clientSecret, etc.)
@@ -43,9 +43,8 @@ const marketplaceConnectionSchema = new Schema<IMarketplaceConnection>(
             index: true
         },
         name: {
-            type: String,
-            required: true,
-            trim: true
+            type: Schema.Types.ObjectId,
+            ref: 'MarketplaceTemplate'
         },
         description: {
             type: String,

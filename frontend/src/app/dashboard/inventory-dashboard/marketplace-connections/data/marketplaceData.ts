@@ -33,8 +33,8 @@ export interface MarketplaceTemplate {
 export interface Marketplace {
   _id: string;
   id: string;
-  name: string;
-  type: {
+  type: string;
+  name: {
     _id: string;
     icon?: {
       _id: string;
@@ -47,11 +47,13 @@ export interface Marketplace {
   };
   status: 'connected' | 'disconnected' | 'error';
   lastSync?: Date;
-  totalSales?: number;
-  activeListings?: number;
-  pendingOrders?: number;
-  revenue24h?: number;
-  growth?: number;
+  stats?: {
+    totalSales?: number;
+    activeListings?: number;
+    pendingOrders?: number;
+    revenue24h?: number;
+    growth?: number;
+  },
   icon: any;
   color: any;
   description: string;

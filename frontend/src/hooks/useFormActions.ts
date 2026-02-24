@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAll, deleteItem, updateItem, createItem } from "@/helper/apiHelper";
+import { getAll, deleteItem, updateItem, createItem, marketplaceAPIHelper } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast"; // Naya Import
 
 
@@ -71,6 +71,35 @@ export const useFormActions = <T extends { _id: string }>(
     }
   });
 
+
+  // 5. Test Connection Mutation
+
+  const testConnectionMutation = useMutation({
+    mutationFn: (id: any) => marketplaceAPIHelper(endpoint, id, 'test'),
+    onSuccess: () => {
+      // Isse page reload nahi hoga, sirf data refresh hoga smoothly
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      toast.success(`${moduleName} connection successfully!`);
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || `Failed to Test Connection ${moduleName}.`);
+    }
+  });
+
+  // 6. Sync Marketplace
+  const syncData = useMutation({
+    mutationFn: (id: any) => marketplaceAPIHelper(endpoint, id, 'sync'),
+    onSuccess: () => {
+      // Isse page reload nahi hoga, sirf data refresh hoga smoothly
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      toast.success(`${moduleName} Sync successfully!`);
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.message || `Failed to Sync Data ${moduleName}.`);
+    }
+  });
+
+
   return {
     data: query.data?.data || [],
     total: query.data?.total || 0,
@@ -81,5 +110,7 @@ export const useFormActions = <T extends { _id: string }>(
     createItem: createMutation.mutate,
     isDeleting: deleteMutation.isPending,
     isSaving: createMutation.isPending || updateMutation.isPending,
+    ConnectionItem: testConnectionMutation.mutate,
+    SynData: syncData.mutate,
   };
 };

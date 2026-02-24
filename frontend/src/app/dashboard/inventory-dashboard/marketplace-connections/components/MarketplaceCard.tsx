@@ -27,7 +27,7 @@ import { Button } from '@/components/form/CustomButton';
 import { Marketplace } from '../data/marketplaceData';
 
 interface MarketplaceCardProps {
-  marketplace: Marketplace;
+  marketplace: any;
   index: number;
   testingConnection: string | null;
   syncingMarketplace: string | null;
@@ -47,7 +47,6 @@ export function MarketplaceCard({
   onEdit,
   onDelete
 }: MarketplaceCardProps) {
-
 
   const getStatusBadge = () => {
     switch (marketplace.status) {
@@ -87,10 +86,9 @@ export function MarketplaceCard({
 
 
 
-  const iconSrc = marketplace?.type?.icon?.icon;
-  console.log("icon", iconSrc)
+  const iconSrc = marketplace?.name?.icon?.icon;
   const colorCode =
-    marketplace.type?.color?.colorCode || "#6366f1";
+    marketplace.name?.color?.colorCode || "#6366f1";
   return (
     <motion.div
       key={marketplace._id}
@@ -139,7 +137,7 @@ export function MarketplaceCard({
 
             <img
               src={iconSrc}
-              alt={marketplace?.name}
+              alt={marketplace?.type}
               className="w-10 h-10 object-contain rounded-md bg-white p-1"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
@@ -151,7 +149,7 @@ export function MarketplaceCard({
 
           <div>
             <h3 className="text-2xl font-bold">
-              {marketplace.name}
+              {marketplace.type}
             </h3>
             <p className="text-white/90 text-sm">
               {/* {marketplace?.type?.toUpperCase()} */}
@@ -188,10 +186,16 @@ export function MarketplaceCard({
               <span className="text-sm text-gray-600">Last Sync</span>
             </div>
             <span className="text-sm font-bold text-gray-900">
-              {marketplace.lastSync.toLocaleString('en-GB', {
-                dateStyle: 'short',
-                timeStyle: 'short'
-              })}
+              <span className="text-sm font-bold text-gray-900">
+                {new Date(marketplace.lastSync).toLocaleString('en-GB', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: false,
+                })}
+              </span>
             </span>
           </motion.div>
         )}
@@ -213,7 +217,7 @@ export function MarketplaceCard({
                 <p className="text-xs text-green-700 font-semibold">Total Sales</p>
               </div>
               <p className="text-xl font-bold text-green-700">
-                £{(marketplace.totalSales || 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+                £{(marketplace?.stats?.totalSales || 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
               </p>
             </motion.div>
 
@@ -226,7 +230,7 @@ export function MarketplaceCard({
                 <p className="text-xs text-blue-700 font-semibold">Listings</p>
               </div>
               <p className="text-xl font-bold text-blue-700">
-                {marketplace.activeListings || 0}
+                {marketplace?.stats?.activeListings || 0}
               </p>
             </motion.div>
 
@@ -239,7 +243,7 @@ export function MarketplaceCard({
                 <p className="text-xs text-purple-700 font-semibold">24h Revenue</p>
               </div>
               <p className="text-xl font-bold text-purple-700">
-                £{(marketplace.revenue24h || 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
+                £{(marketplace?.stats?.revenue24h || 0).toLocaleString('en-GB', { minimumFractionDigits: 2 })}
               </p>
             </motion.div>
 
@@ -252,31 +256,31 @@ export function MarketplaceCard({
                 <p className="text-xs text-orange-700 font-semibold">Pending</p>
               </div>
               <p className="text-xl font-bold text-orange-700">
-                {marketplace.pendingOrders || 0}
+                {marketplace?.stats?.pendingOrders || 0}
               </p>
             </motion.div>
           </motion.div>
         )}
 
         {/* Growth Indicator */}
-        {marketplace.status === 'connected' && marketplace.growth !== undefined && (
+        {marketplace.status === 'connected' && marketplace?.stats?.growth !== undefined && (
           <motion.div
-            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 ${marketplace.growth >= 0
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
+            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 ${marketplace?.stats?.growth >= 0
+              ? 'bg-green-50 border-green-200'
+              : 'bg-red-50 border-red-200'
               }`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: index * 0.1 + 0.9, type: "spring" }}
             whileHover={{ scale: 1.05 }}
           >
-            {marketplace.growth >= 0 ? (
+            {marketplace?.stats?.growth >= 0 ? (
               <TrendingUp className="h-5 w-5 text-green-600" />
             ) : (
               <TrendingDown className="h-5 w-5 text-red-600" />
             )}
-            <span className={`font-bold ${marketplace.growth >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-              {marketplace.growth >= 0 ? '+' : ''}{marketplace.growth.toFixed(1)}%
+            <span className={`font-bold ${marketplace?.stats?.growth >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+              {marketplace?.stats?.growth >= 0 ? '+' : ''}{marketplace?.stats?.growth.toFixed(1)}%
             </span>
             <span className="text-sm text-gray-600">growth</span>
           </motion.div>
@@ -327,8 +331,8 @@ export function MarketplaceCard({
               onClick={() => onTestConnection(marketplace)}
               disabled={testingConnection === marketplace._id}
               className={`w-full gap-2 ${marketplace.status === 'connected'
-                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
-                  : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
+                ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
+                : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
                 } text-white border-0 shadow-lg`}
             >
               {testingConnection === marketplace._id ? (

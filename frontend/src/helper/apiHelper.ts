@@ -188,3 +188,39 @@ export const deleteItem = async (
     throw { message: "Unknown error occurred" };
   }
 };
+
+// Test Connection Api
+
+// Inside your useFormActions hook or marketplace helper
+
+const getUserId = () => {
+  if (typeof window === "undefined") return "";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  return user.id || user._id || "";
+};
+
+
+export const marketplaceAPIHelper = async (
+  endpoint: string,
+  id: string,
+  lastEndPoint: string,
+
+): Promise<{ success: boolean; message?: string }> => {
+  try {
+    console.log("user", getUserId())
+    const response = await api.post<{ success: boolean; message?: string }>(
+      `${endpoint}/${id}/${getUserId()}/${lastEndPoint}`,
+      {},
+      getAuthConfig(),
+
+    );
+    console.log("respse", response)
+    return response.data;
+  } catch (error: unknown) {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+      throw error.response?.data || { message: error.message };
+    }
+    throw { message: "Unknown error occurred" };
+  }
+};
+

@@ -17,6 +17,7 @@ import { useFormActions } from '@/hooks/useFormActions';
 import { DashboardHeader } from './DashboardHeader';
 import { StatsGrid } from './StatsGrid';
 import { AddEditDialog } from './AddEditDialog';
+import { DeleteDialog } from './DeleteDialog';
 
 export default function MarketplaceConnections() {
   const [showDialog, setShowDialog] = useState(false);
@@ -55,7 +56,9 @@ export default function MarketplaceConnections() {
     updateItem,
     createItem,
     isDeleting,
-    isSaving
+    isSaving,
+    ConnectionItem,
+    SynData,
 
   } = useFormActions<MarketplaceTemplate>(
     '/marketplace',
@@ -86,11 +89,11 @@ export default function MarketplaceConnections() {
 
       createItem({
         type: formData.name,
-        name: formData.name,
+        name: formData.type,
         environment: "production",
         userId: getUserId(),
         descripation: formData.description,
-        credentials: JSON.stringify(formData.credentials),
+        credentials: formData.credentials,
       })
       setShowDialog(false);
       setFormData(initialFormData);
@@ -102,44 +105,21 @@ export default function MarketplaceConnections() {
 
 
   const testConnection = async (marketplace: Marketplace) => {
-    setTestingConnection(marketplace.id);
+    // 1. Set the loading state in UI
+    setTestingConnection(marketplace._id);
 
-    // Simulate API connection test
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
 
-    // Randomly simulate success or failure for demo
-    const success = Math.random() > 0.3;
+      const result = await ConnectionItem(marketplace._id);
+      console.log('res', result);
 
-    if (success) {
-      setMarketplaces(marketplaces.map(m =>
-        m.id === marketplace._id
-          ? {
-            ...m,
-            status: 'connected',
-            lastSync: new Date(),
-            totalSales: Math.random() * 50000 + 10000,
-            activeListings: Math.floor(Math.random() * 150 + 50),
-            pendingOrders: Math.floor(Math.random() * 20),
-            revenue24h: Math.random() * 3000 + 500,
-            growth: Math.random() * 20 - 5
-          }
-          : m
-      ));
-      toast.success(`Successfully connected to ${marketplace.name}! 🎉`, {
-        description: 'API credentials verified and data synced.'
-      });
-    } else {
-      setMarketplaces(marketplaces.map(m =>
-        m.id === marketplace._id
-          ? { ...m, status: 'error' }
-          : m
-      ));
-      toast.error(`Failed to connect to ${marketplace.name}`, {
-        description: 'Please verify your API credentials and try again.'
-      });
+    } catch (error) {
+      // Error is handled by mutation onError, but we catch it here to prevent crash
+      console.error("Test failed", error);
+    } finally {
+      // 4. Stop the loading spinner regardless of success/fail
+      setTestingConnection(null);
     }
-
-    setTestingConnection(null);
   };
 
   const syncMarketplace = async (marketplace: Marketplace) => {
@@ -150,32 +130,35 @@ export default function MarketplaceConnections() {
       return;
     }
 
-    setSyncingMarketplace(marketplace._id);
+    try {
+      console.log("marketplace._id", marketplace._id)
+      SynData(marketplace._id);
+      toast.success(`${marketplace.name} synced successfully! ✨`, {
+        description: 'Latest data has been updated'
+      });
 
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    } catch (error) {
+      console.error("Error in sync data")
+    }
 
-    setMarketplaces(marketplaces.map(m =>
-      m._id === marketplace.id
-        ? {
-          ...m,
-          lastSync: new Date(),
-          totalSales: (m.totalSales || 0) + Math.random() * 1000,
-          pendingOrders: Math.floor(Math.random() * 20),
-          revenue24h: Math.random() * 3000 + 500,
-          growth: Math.random() * 20 - 5
-        }
-        : m
-    ));
-
-    toast.success(`${marketplace.name} synced successfully! ✨`, {
-      description: 'Latest data has been updated'
-    });
-
-    setSyncingMarketplace(null);
   }
   const handleDeleteMarketplace = (marketplace: Marketplace) => {
     setSelectedMarketplace(marketplace);
     setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteMarketplace = async () => {
+    if (!selectedMarketplace?._id) return;
+
+    try {
+      await deleteItem(selectedMarketplace._id);
+
+      setShowDeleteDialog(false);
+      setSelectedMarketplace(null);
+
+    } catch (error) {
+      console.error("Delete failed", error);
+    }
   };
 
   const handleEditMarketplace = (marketplace: Marketplace) => {
@@ -229,6 +212,16 @@ export default function MarketplaceConnections() {
         onClose={() => setShowDialog(false)}
         onSubmit={saveMarketplace}
         onFormChange={setFormData}
+      />
+
+      <DeleteDialog
+        isOpen={showDeleteDialog}
+        marketplace={selectedMarketplace}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setSelectedMarketplace(null);
+        }}
+        onConfirm={confirmDeleteMarketplace}
       />
     </div>
   );
