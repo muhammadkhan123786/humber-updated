@@ -13,12 +13,14 @@ import {
   Trash2,
   Inbox,
 } from "lucide-react";
+
 interface JobCardsProps {
   jobs: any[];
   loading: boolean;
   viewMode: string;
   onDelete?: (jobId: string) => void;
 }
+
 const statusConfig: Record<string, { bg: string; text: string }> = {
   open: { bg: "bg-indigo-500", text: "text-white" },
   Pending: { bg: "bg-gray-600", text: "text-white" },
@@ -34,6 +36,7 @@ const getStatusStyle = (status: string) =>
     bg: "bg-slate-500",
     text: "text-white",
   };
+
 const JobCardsSection = ({
   viewMode,
   jobs,
@@ -45,6 +48,12 @@ const JobCardsSection = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const [deletedJobIds, setDeletedJobIds] = useState<Set<string>>(new Set());
+  const [modalCalculations, setModalCalculations] = useState({
+    partsCost: 0,
+    labourCost: 0,
+    totalBill: 0,
+  });
+
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -55,12 +64,37 @@ const JobCardsSection = ({
     return new Date(dateString).toLocaleDateString("en-GB");
   };
   const handleView = (job: any) => {
+    const partsCost =
+      job.quotationId?.partTotalBill ||
+      job.quotationId?.partsTotalBill ||
+      job.quotationId?.partsList?.reduce(
+        (total: number, part: any) =>
+          total + (Number(part.totalCost) || Number(part.unitCost) || 0),
+        0,
+      ) ||
+      0;
+
+    const labourCost =
+      job.quotationId?.labourTotalBill ||
+      job.quotationId?.labourCost ||
+      job.quotationId?.labourRate * job.quotationId?.labourTime ||
+      0;
+
+    const totalBill =
+      job.quotationId?.netTotal ||
+      job.quotationId?.totalBill ||
+      partsCost + labourCost ||
+      0;
+
     setSelectedJob(job);
+    setModalCalculations({ partsCost, labourCost, totalBill });
     setIsModalOpen(true);
   };
+
   const handleEdit = (job: any) => {
     router.push(`/dashboard/record-activity?edit=${job._id || job.id}`);
   };
+
   const handleDelete = async (job: any) => {
     try {
       setDeletingJobId(job._id || job.id);
@@ -71,6 +105,7 @@ const JobCardsSection = ({
         toast.error("No authentication token found");
         return;
       }
+
       const response = await fetch(
         `${API_BASE_URL}/technician-job-by-admin/${job._id || job.id}`,
         {
@@ -121,22 +156,6 @@ const JobCardsSection = ({
       setDeletingJobId(null);
     }
   };
-
-  const partsCost =
-    selectedJob?.parts?.reduce(
-      (total: number, part: any) =>
-        total + Number(part.totalCost || part.unitCost || 0),
-      0,
-    ) || 0;
-
-  const labourCost =
-    selectedJob?.services?.reduce(
-      (total: number, service: any) =>
-        total + (parseFloat(service.labourCost) || 0),
-      0,
-    ) || 0;
-
-  const totalBill = partsCost + labourCost;
   const visibleJobs =
     jobs?.filter((job) => !deletedJobIds.has(job._id || job.id)) || [];
 
@@ -154,12 +173,11 @@ const JobCardsSection = ({
       </p>
     </div>
   );
-
   return (
     <div>
       {viewMode === "grid" ? (
         visibleJobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {visibleJobs?.map((job, index) => {
               const status = job.jobStatusId || "open";
               const statusStyle = getStatusStyle(status);
@@ -167,7 +185,7 @@ const JobCardsSection = ({
               return (
                 <div
                   key={job._id || index}
-                  className="w-full  bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-shadow duration-300"
+                  className="w-full bg-white rounded-2xl shadow-md overflow-hidden relative border border-gray-100 hover:shadow-xl transition-shadow duration-300"
                 >
                   <div
                     className="w-full h-1.5"
@@ -355,7 +373,7 @@ const JobCardsSection = ({
 
                       <td className="p-4">
                         <div
-                          className="px-2.5 py-1 bg-amber-100 text-amber-500  border border-amber-500 rounded-full text-[12px] font-semibold lowercase inline-block"
+                          className="px-2.5 py-1 bg-amber-100 text-amber-500 border border-amber-500 rounded-full text-[12px] font-semibold lowercase inline-block"
                           style={{
                             backgroundColor: `${job.ticketId?.priorityId?.backgroundColor}15`,
                             color: job.ticketId?.priorityId?.backgroundColor,
@@ -467,11 +485,12 @@ const JobCardsSection = ({
       ) : (
         <NoJobsMessage />
       )}
+
       <JobDetailModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         job={selectedJob}
-        calculations={{ partsCost, labourCost, totalBill }}
+        calculations={modalCalculations}
       />
     </div>
   );
