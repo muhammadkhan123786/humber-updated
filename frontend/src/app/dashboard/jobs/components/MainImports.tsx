@@ -36,7 +36,7 @@ const MainImports = () => {
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getAlls<TechnicianJobType>("/technician-job-by-admin", {
+      const res = await getAlls<TechnicianJobType>("/technician-dashboard-jobs", {
         page: currentPage,
         limit,
       });
