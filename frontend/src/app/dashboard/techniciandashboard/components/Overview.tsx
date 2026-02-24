@@ -10,22 +10,21 @@ interface JobData {
   ticketId: {
     issue_Details: string;
   };
-  services: {
-    activityId: {
-      technicianServiceType: string;
-    };
-    duration: string;
-    description?: string;
-  }[];
-  parts: {
-    partId: {
-      partName: string;
-    };
-  }[];
-  createdAt: string;
-  jobStatusId: {
-    technicianJobStatus: string;
+  // services: {
+  //   activityId: {
+  //     technicianServiceType: string;
+  //   };
+  //   duration: string;
+  //   description?: string;
+  // }[];
+  quotationId: {
+    partsList: any[];
   };
+  partId: {
+    partName: string;
+  };
+  createdAt: string;
+  jobStatusId: string;
   isJobCompleted: boolean;
 }
 
@@ -45,11 +44,12 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
     try {
       setLoading(true);
       const response: any = await getAlls("/technician-dashboard-jobs");
+      console.log("Fetched jobs:", response);
       
       if (response.success && response.data?.jobs) {
         // Filter only completed jobs
         const completedJobs = response.data.jobs.filter(
-          (job: JobData) => job.isJobCompleted === true
+          (job: JobData) => job.jobStatusId === "END"
         );
         
         // Sort by date in descending order (newest first)
@@ -107,10 +107,10 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
           </div>
         ) : (
           jobs.map((job) => {
-            const firstService = job.services[0];
-            const serviceType = firstService?.activityId?.technicianServiceType || "N/A";
+            // const firstService = job.services[0];
+            // const serviceType = firstService?.activityId?.technicianServiceType || "N/A";
             const issueDetails = job.ticketId?.issue_Details || "No issue details available";
-            const duration = firstService?.duration || "0";
+            // const duration = firstService?.duration || "0";
 
             return (
               <div
@@ -129,9 +129,9 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
                     </div>
                     
                     {/* Service Type */}
-                    <p className="text-indigo-600 font-semibold text-sm mb-1">
+                    {/* <p className="text-indigo-600 font-semibold text-sm mb-1">
                       {serviceType}
-                    </p>
+                    </p> */}
                     
                     {/* Issue Details */}
                     <p className="text-gray-700 text-sm leading-relaxed">
@@ -142,10 +142,10 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
 
                 {/* Job Details */}
                 <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={16} className="text-gray-400" />
-                    <span>{formatDuration(duration)}</span>
-                  </div>
+                  {/* <div className="flex items-center gap-1.5"> */}
+                    {/* <Clock size={16} className="text-gray-400" /> */}
+                    {/* <span>{formatDuration(duration)}</span> */}
+                  {/* </div> */}
                   <div className="flex items-center gap-1.5">
                     <Calendar size={16} className="text-gray-400" />
                     <span>{formatDate(job.createdAt)}</span>
@@ -153,7 +153,7 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
                 </div>
 
                 {/* Parts Used */}
-                {job.parts && job.parts.length > 0 && (
+                {job.quotationId.partsList && job.quotationId.partsList.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-200">
                     <div className="flex items-start gap-2">
                       <Package size={16} className="text-gray-400 mt-0.5" />
@@ -162,12 +162,12 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
                           Parts Used:
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {job.parts.map((part, index) => (
+                          {job.quotationId.partsList.map((part, index) => (
                             <span
                               key={index}
                               className="inline-block px-3 py-1 bg-white text-gray-700 text-xs font-medium rounded-lg border border-gray-200"
                             >
-                              {part.partId.partName}
+                              {part.partName}
                             </span>
                           ))}
                         </div>
