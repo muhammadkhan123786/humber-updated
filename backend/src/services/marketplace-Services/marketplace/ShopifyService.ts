@@ -7,7 +7,7 @@ export class ShopifyService extends BaseMarketplaceService {
 
     // ─── Get Base URL ──────────────────────────────────────────
     getShopBaseUrl(): string {
-        const shopName = this.credentials.shopName;
+        const shopName = this.credentials.shopUrl;
         console.log("shopName", shopName);
         if (!shopName) throw new Error('Shop name is required');
         return `https://${shopName}.myshopify.com/admin/api/2024-01`;
@@ -123,8 +123,8 @@ export class ShopifyService extends BaseMarketplaceService {
                 title: product.title,
                 status: product.status,
                 variantId: product.variants?.[0]?.id,
-                viewUrl: `https://${this.credentials.shopName}.myshopify.com/products/${product.handle}`,
-                adminUrl: `https://${this.credentials.shopName}.myshopify.com/admin/products/${product.id}`
+                viewUrl: `https://${this.credentials.shopUrl}.myshopify.com/products/${product.handle}`,
+                adminUrl: `https://${this.credentials.shopUrl}.myshopify.com/admin/products/${product.id}`
             };
 
         } catch (error: any) {
@@ -164,7 +164,7 @@ export class ShopifyService extends BaseMarketplaceService {
                     price: p.variants?.[0]?.price,
                     quantity: p.variants?.[0]?.inventory_quantity,
                     images: p.images?.map((img: any) => img.src) || [],
-                    viewUrl: `https://${this.credentials.shopName}.myshopify.com/products/${p.handle}`
+                    viewUrl: `https://${this.credentials.shopUrl}.myshopify.com/products/${p.handle}`
                 }))
             };
 

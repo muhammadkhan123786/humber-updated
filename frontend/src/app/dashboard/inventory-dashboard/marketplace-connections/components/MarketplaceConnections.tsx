@@ -22,7 +22,7 @@ export default function MarketplaceConnections() {
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
-    // const [marketplaces, setMarketplaces] = useState<Marketplace[]>(INITIAL_MARKETPLACES);
+  // const [marketplaces, setMarketplaces] = useState<Marketplace[]>(INITIAL_MARKETPLACES);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -32,88 +32,105 @@ export default function MarketplaceConnections() {
 
   const [marketplaces, setMarketplaces] = useState<Marketplace[]>([]);
 
- 
+  const getAuthConfig = () => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    return { headers: { Authorization: `Bearer ${token}` } };
+  };
+
+  const getUserId = () => {
+    if (typeof window === "undefined") return "";
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user.id || user._id;
+  };
 
   /* =========================
      TEMPLATES
   ========================= */
-  const { data: templates } = useFormActions<MarketplaceTemplate>(
+  const {
+    data: templates,
+    total,
+    isLoading,
+    deleteItem,
+    updateItem,
+    createItem,
+    isDeleting,
+    isSaving
+
+  } = useFormActions<MarketplaceTemplate>(
     '/marketplace',
     'marketplace',
-    'Marketplace'
+    'Marketplace Connection'
   );
 
   const marketplace = templates || [];
   console.log("data", marketplace);
-  const createMarketplaceMutation = useCreateMarketplace();
 
   /* =========================
      SAVE MARKETPLACE
   ========================= */
-const saveMarketplace = async () => {
+  const saveMarketplace = async () => {
 
 
-  
-   console.log("formData:", formData);
-  
 
-  const credentials: Record<string, string> = {};
-
-  if(!formData.type){
-    return toast.error("Select type")
-  }
+    console.log("formData:", formData);
 
 
-  try {
-    const res = await createMarketplaceMutation.mutateAsync({
-     type: formData.type,
-      name: formData.name,
-      description: formData.description,
-      credentials: JSON.stringify(credentials),     
-      
-    });
 
-    console.log("response", res);
+    if (!formData.type) {
+      return toast.error("Select type")
+    }
 
-    // setShowDialog(false);
-    setFormData(initialFormData);
 
-  } catch (error) {
-    console.log("error", error);
-  }
-};
+    try {
+
+      createItem({
+        type: formData.name,
+        name: formData.name,
+        environment: "production",
+        userId: getUserId(),
+        descripation: formData.description,
+        credentials: JSON.stringify(formData.credentials),
+      })
+      setShowDialog(false);
+      setFormData(initialFormData);
+
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
 
 
   const testConnection = async (marketplace: Marketplace) => {
     setTestingConnection(marketplace.id);
-    
+
     // Simulate API connection test
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     // Randomly simulate success or failure for demo
     const success = Math.random() > 0.3;
-    
+
     if (success) {
-      setMarketplaces(marketplaces.map(m => 
-        m.id === marketplace._id 
-          ? { 
-              ...m, 
-              status: 'connected', 
-              lastSync: new Date(),
-              totalSales: Math.random() * 50000 + 10000,
-              activeListings: Math.floor(Math.random() * 150 + 50),
-              pendingOrders: Math.floor(Math.random() * 20),
-              revenue24h: Math.random() * 3000 + 500,
-              growth: Math.random() * 20 - 5
-            }
+      setMarketplaces(marketplaces.map(m =>
+        m.id === marketplace._id
+          ? {
+            ...m,
+            status: 'connected',
+            lastSync: new Date(),
+            totalSales: Math.random() * 50000 + 10000,
+            activeListings: Math.floor(Math.random() * 150 + 50),
+            pendingOrders: Math.floor(Math.random() * 20),
+            revenue24h: Math.random() * 3000 + 500,
+            growth: Math.random() * 20 - 5
+          }
           : m
       ));
       toast.success(`Successfully connected to ${marketplace.name}! 🎉`, {
         description: 'API credentials verified and data synced.'
       });
     } else {
-      setMarketplaces(marketplaces.map(m => 
-        m.id === marketplace._id 
+      setMarketplaces(marketplaces.map(m =>
+        m.id === marketplace._id
           ? { ...m, status: 'error' }
           : m
       ));
@@ -121,7 +138,7 @@ const saveMarketplace = async () => {
         description: 'Please verify your API credentials and try again.'
       });
     }
-    
+
     setTestingConnection(null);
   };
 
@@ -134,26 +151,26 @@ const saveMarketplace = async () => {
     }
 
     setSyncingMarketplace(marketplace._id);
-    
+
     await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    setMarketplaces(marketplaces.map(m => 
-      m._id === marketplace.id 
-        ? { 
-            ...m, 
-            lastSync: new Date(),
-            totalSales: (m.totalSales || 0) + Math.random() * 1000,
-            pendingOrders: Math.floor(Math.random() * 20),
-            revenue24h: Math.random() * 3000 + 500,
-            growth: Math.random() * 20 - 5
-          }
+
+    setMarketplaces(marketplaces.map(m =>
+      m._id === marketplace.id
+        ? {
+          ...m,
+          lastSync: new Date(),
+          totalSales: (m.totalSales || 0) + Math.random() * 1000,
+          pendingOrders: Math.floor(Math.random() * 20),
+          revenue24h: Math.random() * 3000 + 500,
+          growth: Math.random() * 20 - 5
+        }
         : m
     ));
-    
+
     toast.success(`${marketplace.name} synced successfully! ✨`, {
       description: 'Latest data has been updated'
     });
-    
+
     setSyncingMarketplace(null);
   }
   const handleDeleteMarketplace = (marketplace: Marketplace) => {
@@ -187,12 +204,12 @@ const saveMarketplace = async () => {
         total24hRevenue={0}
       />
 
- {/* Marketplaces Grid */}
+      {/* Marketplaces Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <AnimatePresence mode="popLayout">
           {marketplace.map((marketplace, index) => (
             <MarketplaceCard
-             key={marketplace._id || marketplace.id || index}
+              key={marketplace._id || marketplace.id || index}
               marketplace={marketplace}
               index={index}
               testingConnection={testingConnection}

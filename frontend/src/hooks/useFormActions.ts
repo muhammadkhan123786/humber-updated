@@ -2,6 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAll, deleteItem, updateItem, createItem } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast"; // Naya Import
 
+
+const getUserId = () => {
+  if (typeof window === "undefined") return "";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  return user.id || user._id || "";
+};
+console.log(getUserId())
 // T generic type hai jo aapke interface (e.g., IBusinessTypes) ko represent karega
 export const useFormActions = <T extends { _id: string }>(
   endpoint: string, // API endpoint e.g., "/business-types"
@@ -16,13 +23,14 @@ export const useFormActions = <T extends { _id: string }>(
   // 1. DATA FETCHING (Read)
   const query = useQuery({
     queryKey: [queryKey, page, search],
-    queryFn: () => getAll<T>(endpoint, { 
-        page: String(page), 
-        limit: "12", 
-        search: search.trim() 
+    queryFn: () => getAll<T>(endpoint, {
+      userId: getUserId(),
+      page: String(page),
+      limit: "12",
+      search: search.trim()
     }),
     placeholderData: (previousData) => previousData, // Smooth transition between pages
-    enabled, 
+    enabled,
   });
 
   // 2. DELETE MUTATION (Delete)
@@ -40,8 +48,8 @@ export const useFormActions = <T extends { _id: string }>(
 
   // 3. STATUS UPDATE / EDIT MUTATION (Update)
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => 
-        updateItem(endpoint, id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: any }) =>
+      updateItem(endpoint, id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKey] });
       toast.success(`${moduleName} updated successfully!`);

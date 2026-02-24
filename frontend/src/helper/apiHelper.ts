@@ -31,11 +31,15 @@ const getAuthConfig = (): AxiosRequestConfig => {
   };
 };
 
+
+
+
 export const getAll = async <T>(
   endpoint: string,
   params?: Record<string, unknown>,
 ): Promise<PaginatedResponse<T>> => {
   try {
+    console.log("param", params)
     const response = await api.get<PaginatedResponse<T>>(endpoint, {
       ...getAuthConfig(),
       params,

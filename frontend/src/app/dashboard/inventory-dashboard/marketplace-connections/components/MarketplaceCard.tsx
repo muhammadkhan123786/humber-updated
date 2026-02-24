@@ -1,15 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  CheckCircle2, 
-  WifiOff, 
-  AlertCircle, 
-  Radio, 
-  Clock, 
-  DollarSign, 
-  Package, 
-  Activity, 
-  Target, 
-  TrendingUp, 
+import {
+  CheckCircle2,
+  WifiOff,
+  AlertCircle,
+  Radio,
+  Clock,
+  DollarSign,
+  Package,
+  Activity,
+  Target,
+  TrendingUp,
   TrendingDown,
   Shield,
   Key,
@@ -47,7 +47,7 @@ export function MarketplaceCard({
   onEdit,
   onDelete
 }: MarketplaceCardProps) {
-  
+
 
   const getStatusBadge = () => {
     switch (marketplace.status) {
@@ -87,9 +87,10 @@ export function MarketplaceCard({
 
 
 
-const iconSrc = marketplace?.type?.icon?.icon;
-const colorCode =
-  marketplace.type?.color?.colorCode || "#6366f1";
+  const iconSrc = marketplace?.type?.icon?.icon;
+  console.log("icon", iconSrc)
+  const colorCode =
+    marketplace.type?.color?.colorCode || "#6366f1";
   return (
     <motion.div
       key={marketplace._id}
@@ -97,7 +98,7 @@ const colorCode =
       initial={{ opacity: 0, scale: 0.8, rotateY: -90 }}
       animate={{ opacity: 1, scale: 1, rotateY: 0 }}
       exit={{ opacity: 0, scale: 0.8, rotateY: 90 }}
-      transition={{ 
+      transition={{
         delay: index * 0.1,
         type: "spring",
         stiffness: 100
@@ -124,46 +125,46 @@ const colorCode =
 
       {/* Card Header */}
       <div
-  className="relative p-6 text-white"
-  style={{
-    background: `linear-gradient(135deg, ${colorCode}, ${colorCode}cc)`
-  }}
->
-  <div className="flex items-center gap-3">
-    <motion.div
-      className="text-5xl"
-      whileHover={{ scale: 1.2, rotate: 10 }}
-      transition={{ type: "spring" }}
-    >
-      
-  <img
-  src={iconSrc}
-  alt={marketplace?.name}
-  className="w-10 h-10 object-contain rounded-md bg-white p-1"
-  onError={(e) => {
-    e.currentTarget.style.display = "none";
-  }}
-/>
+        className="relative p-6 text-white"
+        style={{
+          background: `linear-gradient(135deg, ${colorCode}, ${colorCode}cc)`
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="text-5xl"
+            whileHover={{ scale: 1.2, rotate: 10 }}
+            transition={{ type: "spring" }}
+          >
 
-     
-    </motion.div>
+            <img
+              src={iconSrc}
+              alt={marketplace?.name}
+              className="w-10 h-10 object-contain rounded-md bg-white p-1"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
 
-    <div>
-      <h3 className="text-2xl font-bold">
-        {marketplace.name}
-      </h3>
-      <p className="text-white/90 text-sm">
-        {/* {marketplace?.type?.toUpperCase()} */}
-      </p>
-    </div>
-  </div>
-</div>
+
+          </motion.div>
+
+          <div>
+            <h3 className="text-2xl font-bold">
+              {marketplace.name}
+            </h3>
+            <p className="text-white/90 text-sm">
+              {/* {marketplace?.type?.toUpperCase()} */}
+            </p>
+          </div>
+        </div>
+      </div>
 
 
       {/* Card Body */}
       <div className="relative p-6 space-y-4">
         {/* Status */}
-        <motion.div 
+        <motion.div
           className="flex items-center justify-between"
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -175,7 +176,7 @@ const colorCode =
 
         {/* Last Sync */}
         {marketplace.lastSync && (
-          <motion.div 
+          <motion.div
             className="flex items-center justify-between bg-gray-50 rounded-lg p-3 border border-gray-200"
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -187,9 +188,9 @@ const colorCode =
               <span className="text-sm text-gray-600">Last Sync</span>
             </div>
             <span className="text-sm font-bold text-gray-900">
-              {marketplace.lastSync.toLocaleString('en-GB', { 
-                dateStyle: 'short', 
-                timeStyle: 'short' 
+              {marketplace.lastSync.toLocaleString('en-GB', {
+                dateStyle: 'short',
+                timeStyle: 'short'
               })}
             </span>
           </motion.div>
@@ -197,13 +198,13 @@ const colorCode =
 
         {/* Stats Grid */}
         {marketplace.status === 'connected' && (
-          <motion.div 
+          <motion.div
             className="grid grid-cols-2 gap-3 pt-4 border-t-2 border-gray-100"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: index * 0.1 + 0.8 }}
           >
-            <motion.div 
+            <motion.div
               className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-3 border border-green-200"
               whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(34, 197, 94, 0.2)" }}
             >
@@ -216,7 +217,7 @@ const colorCode =
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-200"
               whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(59, 130, 246, 0.2)" }}
             >
@@ -229,7 +230,7 @@ const colorCode =
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-200"
               whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(168, 85, 247, 0.2)" }}
             >
@@ -242,7 +243,7 @@ const colorCode =
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-3 border border-orange-200"
               whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(249, 115, 22, 0.2)" }}
             >
@@ -259,12 +260,11 @@ const colorCode =
 
         {/* Growth Indicator */}
         {marketplace.status === 'connected' && marketplace.growth !== undefined && (
-          <motion.div 
-            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 ${
-              marketplace.growth >= 0 
-                ? 'bg-green-50 border-green-200' 
+          <motion.div
+            className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 ${marketplace.growth >= 0
+                ? 'bg-green-50 border-green-200'
                 : 'bg-red-50 border-red-200'
-            }`}
+              }`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: index * 0.1 + 0.9, type: "spring" }}
@@ -284,7 +284,7 @@ const colorCode =
 
         {/* API Credentials Preview */}
         {marketplace.apiKey && (
-          <motion.div 
+          <motion.div
             className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border-2 border-gray-200"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -315,7 +315,7 @@ const colorCode =
         )}
 
         {/* Actions */}
-        <motion.div 
+        <motion.div
           className="flex gap-2 pt-4 border-t-2 border-gray-100"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -326,11 +326,10 @@ const colorCode =
               size="sm"
               onClick={() => onTestConnection(marketplace)}
               disabled={testingConnection === marketplace._id}
-              className={`w-full gap-2 ${
-                marketplace.status === 'connected'
+              className={`w-full gap-2 ${marketplace.status === 'connected'
                   ? 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
                   : 'bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600'
-              } text-white border-0 shadow-lg`}
+                } text-white border-0 shadow-lg`}
             >
               {testingConnection === marketplace._id ? (
                 <>
@@ -345,7 +344,7 @@ const colorCode =
               )}
             </Button>
           </motion.div>
-          
+
           {marketplace.status === 'connected' && (
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Button
@@ -364,7 +363,7 @@ const colorCode =
           )}
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="flex gap-2"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -396,11 +395,11 @@ const colorCode =
       </div>
       {/* Bottom Accent */}
       <motion.div
-         className="h-2"
-  style={{
-    background: `linear-gradient(to right, ${colorCode}, white)`
-  }}
-      
+        className="h-2"
+        style={{
+          background: `linear-gradient(to right, ${colorCode}, white)`
+        }}
+
         initial={{ scaleX: 0 }}
         animate={{ scaleX: 1 }}
         transition={{ delay: index * 0.1 + 1.3 }}

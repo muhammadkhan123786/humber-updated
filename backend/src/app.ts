@@ -83,8 +83,7 @@ import goodsReturnRoutes from "./routes/goodsReturn.routes";
 import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
-import marketplaceRoute from "./routes/marketplace.routes";
-import marketplace from "./routes/marketplace-routes/marketplace.routes"
+import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes"
 
 
 // Muzamil Hassan End
@@ -587,10 +586,10 @@ app.use(
   marketplaceTemplateRoutes,
 );
 
-app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
+// app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
-app.use(`${process.env.API_PREFIX}/marketplace`, marketplace);
+app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
 // Muzamil Hassan end 
 // Health check route
 app.get("/health", (_req, res) => {

@@ -51,7 +51,7 @@ export class MarketplaceController {
                 userId
             } = req.body;
 
-
+            console.log(req.body)
             // Validate marketplace type
             const marketplaceConfig = MARKETPLACE_CONFIGS[type];
             if (!marketplaceConfig) {
@@ -62,14 +62,14 @@ export class MarketplaceController {
             }
 
             // Validate required credentials
-            for (const field of marketplaceConfig.credentialFields) {
-                if (field.required && !credentials[field.key]) {
-                    return res.status(400).json({
-                        success: false,
-                        message: `Missing required field: ${field.label}`
-                    });
-                }
-            }
+            // for (const field of marketplaceConfig.credentialFields) {
+            //     if (field.required && !credentials[field.key]) {
+            //         return res.status(400).json({
+            //             success: false,
+            //             message: `Missing required field: ${field.label}`
+            //         });
+            //     }
+            // }
 
             // Get environment config
             const env = environment || 'production';
@@ -133,7 +133,7 @@ export class MarketplaceController {
      */
     async getConnections(req: Request, res: Response) {
         try {
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { userId } = req.query;
 
             const connections = await MarketplaceConnection.find({
                 userId,
@@ -163,8 +163,8 @@ export class MarketplaceController {
      */
     async getConnection(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
+
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -199,8 +199,7 @@ export class MarketplaceController {
      */
     async connectMarketplace(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -273,9 +272,9 @@ export class MarketplaceController {
      */
     async exchangeAuthCode(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const { id, userId } = req.params;
             let { code } = req.body;
-            const userId = req.userId?.id || req.body.userId || "65b1234567890abcdef1234";
+
 
             if (!code) {
                 return res.status(400).json({
@@ -361,8 +360,7 @@ export class MarketplaceController {
      */
     async verifyEbayCredentials(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -503,8 +501,7 @@ export class MarketplaceController {
      */
     async testConnection(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -617,8 +614,7 @@ export class MarketplaceController {
         const startTime = Date.now();
 
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -679,8 +675,7 @@ export class MarketplaceController {
      */
     async updateConnection(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
             const { name, description, credentials } = req.body;
 
             const connection = await MarketplaceConnection.findOne({
@@ -734,8 +729,7 @@ export class MarketplaceController {
      */
     async deleteConnection(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -779,9 +773,8 @@ export class MarketplaceController {
      */
     async listProductSimple(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const { id, userId } = req.params;
             const productData = req.body;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -835,9 +828,8 @@ export class MarketplaceController {
 
     async getProducts(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const { id, userId } = req.params;
             const { limit = 100 } = req.query;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -884,8 +876,7 @@ export class MarketplaceController {
      */
     async getPolicies(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const userId = req.userId?.id || "65b1234567890abcdef1234";
+            const { id, userId } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
