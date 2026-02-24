@@ -77,7 +77,7 @@ ticketQuotationRouter.put(
     req.body.technicianId = req.technicianId;
 
     if (req.technicianId) {
-      const { id } = req.params;
+      const id  = req.params.id as string;
       if (!Types.ObjectId.isValid(id))
         return res.status(200).json({ status: false, message: "Invalid ID" });
 
@@ -101,7 +101,7 @@ ticketQuotationRouter.delete(
   async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
     try {
       if (req.technicianId) {
-        const { id } = req.params;
+        const id  = req.params.id as string;
         if (!Types.ObjectId.isValid(id))
           return res.status(200).json({ message: "Invalid ID" });
 

@@ -48,7 +48,7 @@ export const updateCategory = async (
 ) => {
   try {
     // ✅ Validate incoming body (can reuse same Zod schema)
-    const { id } = req.params;
+    const  id  = req.params.id as string;
 
     if (!Types.ObjectId.isValid(id)) return res.status(400).json({ message: "Invalid ID" });
 

@@ -91,7 +91,7 @@ export const useActivityRecordForm = () => {
           getAlls("/technicians?filter=all"),
           getAlls("/technician-ticket-quotation?filter=all"),
         ]);
-
+        console.log("Quotations Imran:", qRes);
         setTechnicians(techRes?.data || []);
         const approvedQuotations = (qRes?.data || []).filter(
           (q: any) => q.quotationStatus?.toUpperCase() === "APPROVED",

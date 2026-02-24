@@ -200,6 +200,15 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
               // Get colors based on current status name
               const statusColors = getStatusColors(currentStatus?.ticketQuationStatus || quotation.quotationStatus || '');
               
+              // Enable edit/delete ONLY for "SENT TO ADMIN" and "DRAFTED" statuses
+              const statusLower = quotation.quotationStatus?.toLowerCase() || '';
+              const isSentToAdmin = statusLower.includes('admin');
+              const isDrafted = statusLower.includes('draft');
+              const canEditOrDelete = isSentToAdmin || isDrafted;
+              
+              const isEditDisabled = !canEditOrDelete;
+              const isDeleteDisabled = !canEditOrDelete;
+              
               return (
                 <tr
                   key={quotation._id}
@@ -253,8 +262,8 @@ const QuotationTable: React.FC<QuotationTableProps> = ({
                       onView={() => onView(quotation._id)}
                       onEdit={() => onEdit(quotation._id)}
                       onDelete={() => onDelete(quotation._id)}
-                      isEditDisabled={quotation.quotationStatus?.toLowerCase().includes('approve') || false}
-                      isDeleteDisabled={quotation.quotationStatus?.toLowerCase().includes('approve') || false}
+                      isEditDisabled={isEditDisabled}
+                      isDeleteDisabled={isDeleteDisabled}
                     />
                   </td>
                 </tr>

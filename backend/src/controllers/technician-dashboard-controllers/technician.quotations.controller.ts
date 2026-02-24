@@ -76,6 +76,68 @@ export const technicianTicketsQuotationsController = async (
     // =====================================================
     const pipeline: any[] = [
       { $match: matchQuery },
+      {
+        $lookup: {
+          from: "technicians",
+          localField: "technicianId",
+          foreignField: "_id",
+          as: "technicianId",
+        },
+      },
+      {
+        $unwind: {
+          path: "$technicianId",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "people",
+          localField: "technicianId.personId",
+          foreignField: "_id",
+          as: "technicianPerson",
+        },
+      },
+      { $unwind: "$technicianPerson" },
+      {
+        $lookup: {
+          from: "contacts",
+          localField: "technicianId.contactId",
+          foreignField: "_id",
+          as: "technicianContact",
+        },
+      },
+      {
+        $unwind: {
+          path: "$technicianContact",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "servicetypemasters",
+          let: { specIds: "$technicianId.specializationIds" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $in: [
+                    "$_id",
+                    {
+                      $map: {
+                        input: "$$specIds",
+                        as: "id",
+                        in: { $toObjectId: "$$id" },
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+          as: "technicianSpecializations",
+        },
+      },
 
       {
         $lookup: {
@@ -262,7 +324,14 @@ export const technicianTicketsQuotationsController = async (
         netTotal: 1,
         createdAt: 1,
         quotationStatus: "$quotationStatusId",
-
+        technician: {
+          _id: "$technicianId._id",
+          technicianFirstName: "$technicianPerson.firstName",
+          technicianLastName: "$technicianPerson.lastName",
+          technicianPhoneNumber: "$technicianContact.phoneNumber",
+          technicianSpecializations:
+            "$technicianSpecializations.MasterServiceType",
+        },
         ticket: {
           _id: "$ticket._id",
           ticketCode: "$ticket.ticketCode",

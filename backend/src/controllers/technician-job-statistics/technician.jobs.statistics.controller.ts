@@ -96,7 +96,7 @@ export const assignTicketToTechnicianController = async (
   res: Response,
 ) => {
   try {
-    const { id } = req.params; // ✅ ticketId
+    const  id  = req.params.id as string; // ✅ ticketId
     const { technicianId } = req.body; // ✅ technicianId
 
     // Validate ObjectIds
@@ -574,7 +574,7 @@ export const updateTechnicianJobStatusController = async (
   res: Response,
 ) => {
   try {
-    const { techncianJobStatusId, techncianJobId, isJobCompleted } = req.body;
+    const { jobStatusId, techncianJobId } = req.body;
 
     // ✅ Role validation
     if (!req.role) {
@@ -584,7 +584,7 @@ export const updateTechnicianJobStatusController = async (
       });
     }
 
-    // ✅ Validate job id
+    // ✅ Validate technician job id
     if (!techncianJobId || !Types.ObjectId.isValid(techncianJobId)) {
       return res.status(400).json({
         success: false,
@@ -592,22 +592,15 @@ export const updateTechnicianJobStatusController = async (
       });
     }
 
-    // ✅ Validate status id (if provided)
-    if (techncianJobStatusId) {
-      if (!Types.ObjectId.isValid(techncianJobStatusId)) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid technician job status id.",
-        });
-      }
-    }
-    // ✅ Require at least one update field
-    if (!techncianJobStatusId && typeof isJobCompleted !== "boolean") {
+    // ✅ Validate jobStatusId
+    if (!jobStatusId || !JOB_STATUS.includes(jobStatusId)) {
       return res.status(400).json({
         success: false,
-        message: "Nothing to update.",
+        message: `Invalid job status. Allowed values: ${JOB_STATUS.join(", ")}`,
       });
     }
+
+    
 
     const filter: any = {
       _id: techncianJobId,
@@ -623,26 +616,16 @@ export const updateTechnicianJobStatusController = async (
         });
       }
 
-      filter.technicianId = req.technicianId;
+      filter.leadingTechnicianId = req.technicianId; // updated for new schema
     }
-
-    // ✅ Build update object safely
-    const updateData: any = {};
-
-    if (techncianJobStatusId) {
-      updateData.jobStatusId = techncianJobStatusId;
-    }
-
-    if (typeof isJobCompleted === "boolean") {
-      updateData.isJobCompleted = isJobCompleted;
-    }
-
-    const updatedJob = await TechniciansJobs.findOneAndUpdate(
+    console.log("Filter for updating job status:", filter);
+    // ✅ Update jobStatusId
+    const updatedJob = await TechnicianJobsByAdmin.findOneAndUpdate(
       filter,
-      { $set: updateData },
-      { new: true },
+      { $set: { jobStatusId } },
+      { new: true }
     ).lean();
-
+    
     if (!updatedJob) {
       return res.status(404).json({
         success: false,
@@ -655,11 +638,13 @@ export const updateTechnicianJobStatusController = async (
       message: "Technician Job Status Updated Successfully.",
       data: updatedJob,
     });
+
   } catch (error) {
     console.error("Update Technician Job Status Error:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to update technician Job status.",
+      error: error instanceof Error ? error.message : error,
     });
   }
 };

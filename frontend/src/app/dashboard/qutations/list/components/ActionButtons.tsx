@@ -40,7 +40,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             : "text-indigo-600 border-indigo-300 bg-[#f8f9ff] hover:bg-indigo-100"
         }`}
         aria-label="Edit"
-        title={isEditDisabled ? "Approved quotations cannot be edited" : "Edit"}
+        title={isEditDisabled ? "Only 'Sent to Admin' or 'Drafted' quotations can be edited" : "Edit"}
       >
         <Edit size={16} />
         <span>Edit</span>
@@ -56,7 +56,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
             : "text-red-600 border-red-300 bg-red-50 hover:bg-red-100"
         }`}
         aria-label="Delete"
-        title={isDeleteDisabled ? "Approved quotations cannot be deleted" : "Delete"}
+        title={isDeleteDisabled ? "Only 'Sent to Admin' or 'Drafted' quotations can be deleted" : "Delete"}
       >
         <Trash2 size={16} />
       </button>

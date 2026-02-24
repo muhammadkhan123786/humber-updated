@@ -27,7 +27,7 @@ export const saveOrUpdateVender = async (req: Request, res: Response) => {
 
     // 🔹 EDIT MODE
     if (req.params.id) {
-      result = await venderService.updateVender(req.params.id, venderData);
+      result = await venderService.updateVender(req.params.id as string, venderData);
 
       return res.status(200).json({
         success: true,
