@@ -337,7 +337,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/technician-inspection`,
-  adminProtecter,
+  technicianProtecter,
   technicianInspectionListRouter,
 );
 
