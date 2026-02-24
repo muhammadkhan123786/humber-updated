@@ -10,11 +10,11 @@ const controller = new MarketplaceController();
 router.get('/types', controller.getMarketplaceTypes.bind(controller));
 
 // CRUD operations
-router.post('/connections', controller.createConnection.bind(controller));
-router.get('/connections', controller.getConnections.bind(controller));
-router.get('/connections/:id', controller.getConnection.bind(controller));
-router.put('/connections/:id', controller.updateConnection.bind(controller));
-router.delete('/connections/:id', controller.deleteConnection.bind(controller));
+router.post('/', controller.createConnection.bind(controller));
+router.get('/', controller.getConnections.bind(controller));
+router.get('/:id', controller.getConnection.bind(controller));
+router.put('/:id', controller.updateConnection.bind(controller));
+router.delete('/:id', controller.deleteConnection.bind(controller));
 
 
 // Connection operations

@@ -41,11 +41,11 @@ export function AddEditDialog({
 }: AddEditDialogProps) {
   // 1. Fetching real marketplace templates from backend
   const { data: templates, isLoading } =
-  useFormActions<MarketplaceTemplate>(
-    "/marketplace-templates",
-    "marketplaceTemplates",
-    "MarketplaceTemplates"
-  );
+    useFormActions<MarketplaceTemplate>(
+      "/marketplace-templates",
+      "marketplaceTemplates",
+      "MarketplaceTemplates"
+    );
   const selectedTemplate = templates?.find((t: any) => t._id === formData.type);
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -55,8 +55,8 @@ export function AddEditDialog({
             {isEdit ? 'Edit Marketplace' : 'Add New Marketplace'}
           </DialogTitle>
           <DialogDescription>
-            {isEdit 
-              ? 'Update marketplace connection details' 
+            {isEdit
+              ? 'Update marketplace connection details'
               : 'Connect a new e-commerce marketplace to sync your inventory and orders'
             }
           </DialogDescription>
@@ -72,8 +72,8 @@ export function AddEditDialog({
             {/* Marketplace Selection */}
             <div>
               <Label className="text-base font-semibold">Select Marketplace Type</Label>
-              <Select 
-                value={formData.type} 
+              <Select
+                value={formData.type}
                 onValueChange={(value: string) => onFormChange({ ...formData, type: value })}
                 disabled={isEdit}
               >
@@ -82,30 +82,30 @@ export function AddEditDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {templates?.map((template: any) => {
-  const iconSrc = template?.icon?.icon; 
+                    const iconSrc = template?.icon?.icon;
 
-  return (
-    <SelectItem key={template._id} value={template._id}>
-      <div className="flex items-center gap-2">
-        {iconSrc ? (
-          <img 
-            src={iconSrc} 
-            alt={template.name} 
-            className="w-5 h-5 object-contain"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        ) : (
-          <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
-            {template.name?.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <span>{template.name}</span>
-      </div>
-    </SelectItem>
-  );
-})}
+                    return (
+                      <SelectItem key={template._id} value={template._id}>
+                        <div className="flex items-center gap-2">
+                          {iconSrc ? (
+                            <img
+                              src={iconSrc}
+                              alt={template.name}
+                              className="w-5 h-5 object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                              {template.name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span>{template.name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
 
                 </SelectContent>
               </Select>
@@ -121,27 +121,27 @@ export function AddEditDialog({
                 className="border-2 focus:border-indigo-500"
               />
             </div>
-{/* Description */}
+            {/* Description */}
 
-          <div>
+            <div>
 
-            <Label className="text-base font-semibold">Description</Label>
+              <Label className="text-base font-semibold">Description</Label>
 
-            <Textarea
+              <Textarea
 
-              placeholder="Brief description of this marketplace..."
+                placeholder="Brief description of this marketplace..."
 
-              value={formData.description}
+                value={formData.description}
 
-              onChange={(e) => onFormChange({ ...formData, description: e.target.value })}
+                onChange={(e) => onFormChange({ ...formData, description: e.target.value })}
 
-              rows={2}
+                rows={2}
 
-              className="border-2 focus:border-indigo-500"
+                className="border-2 focus:border-indigo-500"
 
-            />
+              />
 
-          </div>
+            </div>
             {/* Dynamic Fields Section */}
             {selectedTemplate && (
               <div className="border-t-2 pt-4 animate-in fade-in slide-in-from-top-2">
@@ -153,7 +153,7 @@ export function AddEditDialog({
                 </div>
 
                 <div className="grid gap-4">
-                  {selectedTemplate?.fields.map((fieldName: string) => (
+                  {selectedTemplate?.fields.map((fieldName: any) => (
                     <div key={fieldName}>
                       <Label className="text-sm font-semibold capitalize">
                         {fieldName.replace(/([A-Z])/g, ' $1')} {/* Formats shopUrl to Shop Url */}
@@ -161,8 +161,16 @@ export function AddEditDialog({
                       <Input
                         type="password" // As per your requirement
                         placeholder={`Enter ${fieldName}...`}
-                        value={(formData as any)[fieldName] || ''}
-                        onChange={(e) => onFormChange({ ...formData, [fieldName]: e.target.value })}
+                        value={formData.credentials?.[fieldName] || ''}
+                        onChange={(e) =>
+                          onFormChange({
+                            ...formData,
+                            credentials: {
+                              ...formData.credentials,
+                              [fieldName]: e.target.value,
+                            },
+                          })
+                        }
                         className="border-2 focus:border-purple-500"
                       />
                     </div>
@@ -172,7 +180,7 @@ export function AddEditDialog({
             )}
 
             {/* Help Text Contextual to Selection */}
-            <motion.div 
+            <motion.div
               className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4"
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -182,7 +190,7 @@ export function AddEditDialog({
                 <div className="text-sm text-blue-900">
                   <p className="font-bold mb-1 text-base">Security Note</p>
                   <p className="text-blue-800">
-                    Your {selectedTemplate?.name || 'marketplace'} credentials are encrypted before storage. 
+                    Your {selectedTemplate?.name || 'marketplace'} credentials are encrypted before storage.
                     Visit the developer portal to manage your keys.
                   </p>
                 </div>
@@ -195,7 +203,7 @@ export function AddEditDialog({
           <Button variant="outline" onClick={onClose} className="border-2">
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onSubmit}
             className="gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white"
             disabled={!formData.name}

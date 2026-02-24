@@ -215,15 +215,15 @@ export const MARKETPLACE_CONFIGS: Record<string, MarketplaceConfig> = {
         requiresOAuth: false,  // ← Direct token, no OAuth!
         credentialFields: [
             {
-                key: 'shopName',
-                label: 'Shop Name',
+                key: 'shopUrl',
+                label: 'Shop Url',
                 type: 'text',
                 required: true,
                 placeholder: 'your-store-name (without .myshopify.com)'
             },
             {
                 key: 'accessToken',
-                label: 'Admin API Access Token',
+                label: 'Access Token',
                 type: 'password',
                 required: true,
                 placeholder: 'shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
@@ -237,7 +237,7 @@ export const MARKETPLACE_CONFIGS: Record<string, MarketplaceConfig> = {
             },
             {
                 key: 'apiSecret',
-                label: 'API Secret Key',
+                label: 'API Secret',
                 type: 'password',
                 required: false,
                 placeholder: 'Your API Secret (optional)'
