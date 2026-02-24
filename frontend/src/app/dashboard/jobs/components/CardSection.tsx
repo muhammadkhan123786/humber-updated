@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import JobDetailModal from "./JobsDetail";
+import TechnicianInspection from "./TechnicianInspectionModal";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
@@ -12,6 +13,7 @@ import {
   Inbox,
   Play,
   Pause,
+  ClipboardList,
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -49,6 +51,8 @@ const JobCardsSection = ({
 }: JobCardsProps) => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showInspectionForm, setShowInspectionForm] = useState(false);
+  const [inspectionJob, setInspectionJob] = useState<any>(null);
   const [localJobs, setLocalJobs] = useState<any[]>(jobs);
 
   // Update local jobs when props change
@@ -99,6 +103,20 @@ const JobCardsSection = ({
       toast.error(error.response?.data?.message || "Failed to update job status");
       // Rollback on error
       setLocalJobs(jobs);
+    }
+  };
+
+  // Handle inspection button click
+  const handleAddInspection = (job: any) => {
+    setInspectionJob(job);
+    setShowInspectionForm(true);
+  };
+
+  const handleBackFromInspection = () => {
+    setShowInspectionForm(false);
+    setInspectionJob(null);
+    if (onJobUpdate) {
+      onJobUpdate();
     }
   };
 
@@ -193,7 +211,11 @@ const JobCardsSection = ({
 
   return (
     <div>
-      {viewMode === "grid" ? (
+      {showInspectionForm && inspectionJob ? (
+        <TechnicianInspection job={inspectionJob} onBack={handleBackFromInspection} />
+      ) : (
+        <>
+          {viewMode === "grid" ? (
         localJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
             {localJobs?.map((job, index) => {
@@ -334,6 +356,12 @@ const JobCardsSection = ({
                         className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
                       >
                         <Eye size={14} /> VIEW
+                      </button>
+                      <button
+                        onClick={() => handleAddInspection(job)}
+                        className="flex-1 bg-linear-to-r from-green-600 to-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+                      >
+                        <ClipboardList size={14} /> INSPECTION
                       </button>
                     </div>
                     </div>
@@ -542,12 +570,22 @@ const JobCardsSection = ({
                       </td>
 
                       <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleView(job)}
-                          className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
-                        >
-                          <Eye size={16} />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleView(job)}
+                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleAddInspection(job)}
+                            className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition-all shadow-sm"
+                            title="Add Inspection"
+                          >
+                            <ClipboardList size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -565,6 +603,8 @@ const JobCardsSection = ({
         job={selectedJob}
         calculations={{ partsCost, labourCost, totalBill }}
       />
+        </>
+      )}
     </div>
   );
 };

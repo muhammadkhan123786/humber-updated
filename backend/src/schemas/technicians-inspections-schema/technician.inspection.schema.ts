@@ -20,7 +20,7 @@ const InspectionItemSchema = {
 export const InspectionSchema = {
     jobId: {
         type: Types.ObjectId,
-        ref: "TechnicianJobByAdmin",
+        ref: "TechnicianJobsByAdmin",
         required: true,
     },
     tecnicianId: { type: Types.ObjectId, ref: "Technicians", required: true },
