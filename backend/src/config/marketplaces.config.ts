@@ -1,6 +1,7 @@
 export interface MarketplaceConfig {
-    name: string;
+    name?: string;
     type: string;
+    _id?: string;
     authType: 'oauth2' | 'oauth2_user' | 'api_key';
     requiresOAuth: boolean;
     credentialFields: Array<{
@@ -210,7 +211,7 @@ export const MARKETPLACE_CONFIGS: Record<string, MarketplaceConfig> = {
 
     shopify: {
         type: 'shopify',
-        name: 'Shopify',
+        // name: 'Shopify',
         authType: 'api_key',
         requiresOAuth: false,  // ← Direct token, no OAuth!
         credentialFields: [

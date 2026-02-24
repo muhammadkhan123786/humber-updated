@@ -7,7 +7,9 @@ export class ShopifyService extends BaseMarketplaceService {
 
     // ─── Get Base URL ──────────────────────────────────────────
     getShopBaseUrl(): string {
+        console.log("his.credentials", this.credentials)
         const shopName = this.credentials.shopUrl;
+        console.log("shopName", shopName)
         console.log("shopName", shopName);
         if (!shopName) throw new Error('Shop name is required');
         return `https://${shopName}.myshopify.com/admin/api/2024-01`;
@@ -16,6 +18,7 @@ export class ShopifyService extends BaseMarketplaceService {
     // ─── Get Auth Headers ──────────────────────────────────────
     protected getAuthHeaders(): Record<string, string> {
         const token = this.credentials.accessToken || this.tokens?.accessToken;
+        console.log("token", token)
         if (!token) throw new Error('No access token available');
 
         return {

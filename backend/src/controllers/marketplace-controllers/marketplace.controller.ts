@@ -1,37 +1,36 @@
 // controllers/MarketplaceController.ts
 
-import { Request, Response } from 'express';
-import MarketplaceConnection from '../../models/marketplace/marketlace-connection-models';
-import { encryptCredentials, decryptCredentials } from '../../utils/encryption';
-import { MARKETPLACE_CONFIGS } from '../../config/marketplaces.config';
-import { MarketplaceServiceFactory } from '../../services/marketplace-Services/MarketplaceServiceFactory';
-import axios from 'axios';
+import { Request, Response } from "express";
+import MarketplaceConnection from "../../models/marketplace/marketlace-connection-models";
+import { encryptCredentials, decryptCredentials } from "../../utils/encryption";
+import { MARKETPLACE_CONFIGS } from "../../config/marketplaces.config";
+import { MarketplaceServiceFactory } from "../../services/marketplace-Services/MarketplaceServiceFactory";
+import axios from "axios";
 // import { EbayService } from "../services/EbayService"
 
 export class MarketplaceController {
-
     /**
      * Get all available marketplace types
      * GET /api/marketplace/types
      */
     async getMarketplaceTypes(req: Request, res: Response) {
         try {
-            const types = Object.values(MARKETPLACE_CONFIGS).map(config => ({
+            const types = Object.values(MARKETPLACE_CONFIGS).map((config) => ({
                 type: config.type,
                 name: config.name,
                 authType: config.authType,
                 requiresOAuth: config.requiresOAuth,
-                credentialFields: config.credentialFields
+                credentialFields: config.credentialFields,
             }));
 
             res.json({
                 success: true,
-                data: types
+                data: types,
             });
         } catch (error: any) {
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -42,22 +41,16 @@ export class MarketplaceController {
      */
     async createConnection(req: Request, res: Response) {
         try {
-            const {
-                name,
-                description,
-                type,
-                environment,
-                credentials,
-                userId
-            } = req.body;
+            const { name, description, type, environment, credentials, userId } =
+                req.body;
 
-            console.log(req.body)
+            console.log(req.body);
             // Validate marketplace type
             const marketplaceConfig = MARKETPLACE_CONFIGS[type];
             if (!marketplaceConfig) {
                 return res.status(400).json({
                     success: false,
-                    message: `Invalid marketplace type: ${type}`
+                    message: `Invalid marketplace type: ${type}`,
                 });
             }
 
@@ -72,13 +65,13 @@ export class MarketplaceController {
             // }
 
             // Get environment config
-            const env = environment || 'production';
+            const env = environment || "production";
             const envConfig = marketplaceConfig.environments[env];
 
             if (!envConfig) {
                 return res.status(400).json({
                     success: false,
-                    message: `Invalid environment: ${env}`
+                    message: `Invalid environment: ${env}`,
                 });
             }
 
@@ -99,30 +92,29 @@ export class MarketplaceController {
                     tokenUrl: envConfig.tokenUrl,
                     authorizeUrl: envConfig.authorizeUrl,
                     scopes: envConfig.scopes,
-                    endpoints: marketplaceConfig.endpoints
+                    endpoints: marketplaceConfig.endpoints,
                 },
-                status: 'disconnected'
+                status: "disconnected",
             });
 
             console.log(`✅ Connection created: ${connection._id} (${type})`);
 
             res.status(201).json({
                 success: true,
-                message: 'Marketplace connection created',
+                message: "Marketplace connection created",
                 data: {
                     id: connection._id,
                     name: connection.name,
                     type: connection.type,
                     status: connection.status,
-                    requiresOAuth: marketplaceConfig.requiresOAuth
-                }
+                    requiresOAuth: marketplaceConfig.requiresOAuth,
+                },
             });
-
         } catch (error: any) {
-            console.error('Error creating connection:', error);
+            console.error("Error creating connection:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -137,22 +129,28 @@ export class MarketplaceController {
 
             const connections = await MarketplaceConnection.find({
                 userId,
-                isActive: true
+                isActive: true,
             })
-                .select('-credentials -tokens')
-                .sort({ createdAt: -1 });
+                .select("-credentials -tokens")
+                .sort({ createdAt: -1 }).populate({
+                    path: "name",
+                    select: "_id Icons Color",
+                    populate: [
+                        { path: 'icon', select: '_id  icon' },
+                        { path: 'color', select: '_id colorCode' }
+                    ]
+                });
 
             res.json({
                 success: true,
                 data: connections,
-                count: connections.length
+                count: connections.length,
             });
-
         } catch (error: any) {
-            console.error('Error fetching connections:', error);
+            console.error("Error fetching connections:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -165,30 +163,36 @@ export class MarketplaceController {
         try {
             const { id, userId } = req.params;
 
-
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
                 userId,
-                isActive: true
-            }).select('-credentials -tokens');
+                isActive: true,
+            }).select("-credentials -tokens")
+                .populate({
+                    path: "name",
+                    select: "_id Icons Color",
+                    populate: [
+                        { path: 'icon', select: '_id  icon' },
+                        { path: 'color', select: '_id colorCode' }
+                    ]
+                });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
             res.json({
                 success: true,
-                data: connection
+                data: connection,
             });
-
         } catch (error: any) {
-            console.error('Error fetching connection:', error);
+            console.error("Error fetching connection:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -203,13 +207,13 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
@@ -222,18 +226,18 @@ export class MarketplaceController {
                 const isConnected = await service.testConnection();
 
                 if (isConnected) {
-                    connection.status = 'connected';
+                    connection.status = "connected";
                     await connection.save();
 
                     return res.json({
                         success: true,
-                        message: 'Connected successfully',
-                        requiresOAuth: false
+                        message: "Connected successfully",
+                        requiresOAuth: false,
                     });
                 } else {
                     return res.status(400).json({
                         success: false,
-                        message: 'Connection test failed. Please check your credentials.'
+                        message: "Connection test failed. Please check your credentials.",
                     });
                 }
             }
@@ -241,10 +245,12 @@ export class MarketplaceController {
             // For OAuth marketplaces, generate authorization URL
             const service = MarketplaceServiceFactory.createService(connection);
 
-            const state = Buffer.from(JSON.stringify({
-                connectionId: connection._id.toString(),
-                userId: userId
-            })).toString('base64');
+            const state = Buffer.from(
+                JSON.stringify({
+                    connectionId: connection._id.toString(),
+                    userId: userId,
+                }),
+            ).toString("base64");
 
             const authUrl = service.getAuthorizationUrl(state);
 
@@ -252,14 +258,13 @@ export class MarketplaceController {
                 success: true,
                 requiresOAuth: true,
                 authUrl: authUrl,
-                message: 'Redirect user to authUrl to complete authorization'
+                message: "Redirect user to authUrl to complete authorization",
             });
-
         } catch (error: any) {
-            console.error('Error connecting marketplace:', error);
+            console.error("Error connecting marketplace:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -275,40 +280,39 @@ export class MarketplaceController {
             const { id, userId } = req.params;
             let { code } = req.body;
 
-
             if (!code) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Authorization code is required'
+                    message: "Authorization code is required",
                 });
             }
 
             // Clean the code
             // 1. Remove everything after & (like &expires_in=299)
-            if (code.includes('&')) {
-                code = code.split('&')[0];
-                console.log('🧹 Removed extra parameters from code');
+            if (code.includes("&")) {
+                code = code.split("&")[0];
+                console.log("🧹 Removed extra parameters from code");
             }
 
             // 2. URL-decode if needed
-            if (code.includes('%')) {
+            if (code.includes("%")) {
                 code = decodeURIComponent(code);
-                console.log('🔓 URL-decoded the code');
+                console.log("🔓 URL-decoded the code");
             }
 
             console.log(`📥 Exchanging code for connection ${id}`);
-            console.log('Code (first 50 chars):', code.substring(0, 50) + '...');
+            console.log("Code (first 50 chars):", code.substring(0, 50) + "...");
 
             // Get connection
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
@@ -317,37 +321,37 @@ export class MarketplaceController {
             await service.exchangeCodeForTokens(code);
 
             // Update connection status
-            connection.status = 'connected';
+            connection.status = "connected";
             await connection.save();
 
             console.log(`✅ Connection ${id} is now connected!`);
 
             res.json({
                 success: true,
-                message: 'Connection successful! Tokens saved.',
+                message: "Connection successful! Tokens saved.",
                 data: {
                     connectionId: connection._id,
                     status: connection.status,
-                    tokenExpiry: connection.tokenExpiry
-                }
+                    tokenExpiry: connection.tokenExpiry,
+                },
             });
-
         } catch (error: any) {
-            console.error('❌ Token exchange failed:', error.message);
-            console.error('Error details:', error.response?.data || {});
+            console.error("❌ Token exchange failed:", error.message);
+            console.error("Error details:", error.response?.data || {});
 
-            if (error.response?.data?.error === 'invalid_grant') {
+            if (error.response?.data?.error === "invalid_grant") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Authorization code expired or already used. Please reconnect and try again immediately (codes expire in 5 minutes).',
-                    details: error.response.data
+                    message:
+                        "Authorization code expired or already used. Please reconnect and try again immediately (codes expire in 5 minutes).",
+                    details: error.response.data,
                 });
             }
 
             res.status(500).json({
                 success: false,
                 message: error.message,
-                details: error.response?.data
+                details: error.response?.data,
             });
         }
     }
@@ -364,20 +368,20 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
-            if (connection.type !== 'ebay') {
+            if (connection.type !== "ebay") {
                 return res.status(400).json({
                     success: false,
-                    message: 'This endpoint is only for eBay connections'
+                    message: "This endpoint is only for eBay connections",
                 });
             }
 
@@ -388,37 +392,45 @@ export class MarketplaceController {
             const issues = [];
 
             if (!credentials.clientId) {
-                issues.push('Missing clientId');
-            } else if (!credentials.clientId.includes('-')) {
-                issues.push('ClientId format looks wrong (should contain dashes)');
+                issues.push("Missing clientId");
+            } else if (!credentials.clientId.includes("-")) {
+                issues.push("ClientId format looks wrong (should contain dashes)");
             }
 
             if (!credentials.clientSecret) {
-                issues.push('Missing clientSecret');
-            } else if (!credentials.clientSecret.startsWith('SBX-') && !credentials.clientSecret.startsWith('PRD-')) {
-                issues.push('ClientSecret format looks wrong (should start with SBX- or PRD-)');
+                issues.push("Missing clientSecret");
+            } else if (
+                !credentials.clientSecret.startsWith("SBX-") &&
+                !credentials.clientSecret.startsWith("PRD-")
+            ) {
+                issues.push(
+                    "ClientSecret format looks wrong (should start with SBX- or PRD-)",
+                );
             }
 
             if (!credentials.ruName) {
-                issues.push('Missing ruName');
-            } else if (!credentials.ruName.includes('-')) {
-                issues.push('RuName format looks wrong (should contain dashes)');
+                issues.push("Missing ruName");
+            } else if (!credentials.ruName.includes("-")) {
+                issues.push("RuName format looks wrong (should contain dashes)");
             }
 
             // Check environment match
-            const env = connection.apiConfiguration.environment || 'sandbox';
-            const isSandbox = env === 'sandbox';
+            const env = connection.apiConfiguration.environment || "sandbox";
+            const isSandbox = env === "sandbox";
             const secretMatchesEnv = isSandbox
-                ? credentials.clientSecret?.startsWith('SBX-')
-                : credentials.clientSecret?.startsWith('PRD-');
+                ? credentials.clientSecret?.startsWith("SBX-")
+                : credentials.clientSecret?.startsWith("PRD-");
 
             if (!secretMatchesEnv) {
-                issues.push(`Environment is ${env} but clientSecret starts with ${credentials.clientSecret?.substring(0, 4)}`);
+                issues.push(
+                    `Environment is ${env} but clientSecret starts with ${credentials.clientSecret?.substring(0, 4)}`,
+                );
             }
 
             res.json({
                 success: issues.length === 0,
-                message: issues.length === 0 ? 'Credentials look good!' : 'Issues found',
+                message:
+                    issues.length === 0 ? "Credentials look good!" : "Issues found",
                 issues: issues,
                 data: {
                     connectionId: connection._id,
@@ -429,20 +441,20 @@ export class MarketplaceController {
                         clientSecretPrefix: credentials.clientSecret?.substring(0, 4),
                         clientSecretLength: credentials.clientSecret?.length || 0,
                         ruName: credentials.ruName,
-                        ruNameLength: credentials.ruName?.length || 0
+                        ruNameLength: credentials.ruName?.length || 0,
                     },
                     expectedFormat: {
-                        clientId: 'YourApp-YourName-SBX-xxxxxxxxx-xxxxxxxx (for sandbox)',
-                        clientSecret: 'SBX-xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (for sandbox)',
-                        ruName: 'YourName-YourApp-SBX-xxxxxxx (for sandbox)'
-                    }
-                }
+                        clientId: "YourApp-YourName-SBX-xxxxxxxxx-xxxxxxxx (for sandbox)",
+                        clientSecret:
+                            "SBX-xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (for sandbox)",
+                        ruName: "YourName-YourApp-SBX-xxxxxxx (for sandbox)",
+                    },
+                },
             });
-
         } catch (error: any) {
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -460,12 +472,12 @@ export class MarketplaceController {
             }
 
             if (!code || !state) {
-                return res.redirect('/dashboard?oauth_error=no_code');
+                return res.redirect("/dashboard?oauth_error=no_code");
             }
 
             // Decode state
             const stateData = JSON.parse(
-                Buffer.from(state as string, 'base64').toString()
+                Buffer.from(state as string, "base64").toString(),
             );
 
             const { connectionId, userId } = stateData;
@@ -474,7 +486,7 @@ export class MarketplaceController {
             const connection = await MarketplaceConnection.findById(connectionId);
 
             if (!connection) {
-                return res.redirect('/dashboard?oauth_error=connection_not_found');
+                return res.redirect("/dashboard?oauth_error=connection_not_found");
             }
 
             // Exchange code for tokens
@@ -482,16 +494,19 @@ export class MarketplaceController {
             await service.exchangeCodeForTokens(code as string);
 
             // Update connection status
-            connection.status = 'connected';
+            connection.status = "connected";
             await connection.save();
 
             console.log(`✅ OAuth completed for ${type} connection ${connectionId}`);
 
-            res.redirect(`/dashboard?oauth_success=true&connection_id=${connectionId}`);
-
+            res.redirect(
+                `/dashboard?oauth_success=true&connection_id=${connectionId}`,
+            );
         } catch (error: any) {
-            console.error('OAuth callback error:', error);
-            res.redirect(`/dashboard?oauth_error=${encodeURIComponent(error.message)}`);
+            console.error("OAuth callback error:", error);
+            res.redirect(
+                `/dashboard?oauth_error=${encodeURIComponent(error.message)}`,
+            );
         }
     }
 
@@ -505,21 +520,64 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
-            if (connection.status !== 'connected') {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Connection is not active. Please connect first.'
-                });
+            if (connection.status !== "connected") {
+                try {
+                    const marketplaceConfig = MARKETPLACE_CONFIGS[connection.type];
+
+                    // If doesn't require OAuth (like WooCommerce with API keys)
+                    if (!marketplaceConfig.requiresOAuth) {
+                        // Test connection directly
+                        const service = MarketplaceServiceFactory.createService(connection);
+                        const isConnected = await service.testConnection();
+
+                        if (isConnected) {
+                            connection.status = "connected";
+                            await connection.save();
+
+                            return res.json({
+                                success: true,
+                                message: "Connected successfully",
+                                requiresOAuth: false,
+                            });
+                        } else {
+                            return res.status(400).json({
+                                success: false,
+                                message:
+                                    "Connection test failed. Please check your credentials.",
+                            });
+                        }
+                    }
+
+                    // For OAuth marketplaces, generate authorization URL
+                    const service = MarketplaceServiceFactory.createService(connection);
+
+                    const state = Buffer.from(
+                        JSON.stringify({
+                            connectionId: connection._id.toString(),
+                            userId: userId,
+                        }),
+                    ).toString("base64");
+
+                    const authUrl = service.getAuthorizationUrl(state);
+                    res.json({
+                        success: true,
+                        requiresOAuth: true,
+                        authUrl: authUrl,
+                        message: "Redirect user to authUrl to complete authorization",
+                    });
+                } catch (error) {
+                    console.error("Error is connection testing ", error);
+                }
             }
 
             const service = MarketplaceServiceFactory.createService(connection);
@@ -528,20 +586,19 @@ export class MarketplaceController {
             if (isConnected) {
                 res.json({
                     success: true,
-                    message: 'Connection test successful'
+                    message: "Connection test successful",
                 });
             } else {
                 res.status(400).json({
                     success: false,
-                    message: 'Connection test failed'
+                    message: "Connection test failed",
                 });
             }
-
         } catch (error: any) {
-            console.error('Connection test error:', error);
+            console.error("Connection test error:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -603,7 +660,6 @@ export class MarketplaceController {
     //   }
     // }
 
-
     // src/controllers/MarketplaceController.ts
 
     /**
@@ -615,23 +671,23 @@ export class MarketplaceController {
 
         try {
             const { id, userId } = req.params;
-
+            console.log("id", id, "userId", userId);
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
-            if (connection.status !== 'connected') {
+            if (connection.status !== "connected") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Connection is not active. Please connect first.'
+                    message: "Connection is not active. Please connect first.",
                 });
             }
 
@@ -645,29 +701,29 @@ export class MarketplaceController {
             // Also fetch products/listings
             const products = await service.fetchProducts({ limit: 100 });
 
-            console.log(`✅ Sync completed for ${connection.type} in ${Date.now() - startTime}ms`);
+            console.log(
+                `✅ Sync completed for ${connection.type} in ${Date.now() - startTime}ms`,
+            );
 
             res.json({
                 success: true,
-                message: 'Data synced successfully',
+                message: "Data synced successfully",
                 data: {
                     stats: connection.stats,
                     listings: products.listings || [],
                     totalListings: products.totalListings || 0,
                     lastSync: connection.lastSync,
-                    duration: Date.now() - startTime
-                }
+                    duration: Date.now() - startTime,
+                },
             });
-
         } catch (error: any) {
-            console.error('Sync error:', error);
+            console.error("Sync error:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
-
 
     /**
      * Update marketplace connection
@@ -675,18 +731,16 @@ export class MarketplaceController {
      */
     async updateConnection(req: Request, res: Response) {
         try {
-            const { id, userId } = req.params;
+            const { id } = req.params;
             const { name, description, credentials } = req.body;
-
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
@@ -697,7 +751,7 @@ export class MarketplaceController {
             // If credentials updated, re-encrypt and require reconnection
             if (credentials) {
                 connection.credentials = encryptCredentials(credentials);
-                connection.status = 'disconnected';
+                connection.status = "disconnected";
                 connection.tokens = undefined;
                 connection.tokenExpiry = undefined;
             }
@@ -706,19 +760,18 @@ export class MarketplaceController {
 
             res.json({
                 success: true,
-                message: 'Connection updated',
+                message: "Connection updated",
                 data: {
                     id: connection._id,
                     name: connection.name,
-                    status: connection.status
-                }
+                    status: connection.status,
+                },
             });
-
         } catch (error: any) {
-            console.error('Update error:', error);
+            console.error("Update error:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
@@ -729,41 +782,38 @@ export class MarketplaceController {
      */
     async deleteConnection(req: Request, res: Response) {
         try {
-            const { id, userId } = req.params;
+            const { id } = req.params;
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
             // Soft delete
             connection.isActive = false;
-            connection.status = 'disconnected';
+            connection.status = "disconnected";
             await connection.save();
 
             console.log(`✅ Connection deleted: ${id}`);
 
             res.json({
                 success: true,
-                message: 'Connection deleted successfully'
+                message: "Connection deleted successfully",
             });
-
         } catch (error: any) {
-            console.error('Delete error:', error);
+            console.error("Delete error:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
-
 
     // src/controllers/MarketplaceController.ts
 
@@ -778,20 +828,20 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
-            if (connection.status !== 'connected') {
+            if (connection.status !== "connected") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Connection not active. Please connect first.'
+                    message: "Connection not active. Please connect first.",
                 });
             }
 
@@ -799,10 +849,10 @@ export class MarketplaceController {
 
             const service = MarketplaceServiceFactory.createService(connection);
 
-            if (connection.type !== 'ebay') {
+            if (connection.type !== "ebay") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Trading API only available for eBay'
+                    message: "Trading API only available for eBay",
                 });
             }
 
@@ -812,16 +862,15 @@ export class MarketplaceController {
 
             res.json({
                 success: true,
-                message: 'Product listed successfully using Trading API',
-                data: result
+                message: "Product listed successfully using Trading API",
+                data: result,
             });
-
         } catch (error: any) {
-            console.error('List product error:', error);
+            console.error("List product error:", error);
             res.status(500).json({
                 success: false,
                 message: error.message,
-                ebayError: error.response?.data
+                ebayError: error.response?.data,
             });
         }
     }
@@ -833,20 +882,20 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
-            if (connection.status !== 'connected') {
+            if (connection.status !== "connected") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Connection is not active'
+                    message: "Connection is not active",
                 });
             }
 
@@ -855,18 +904,16 @@ export class MarketplaceController {
 
             res.json({
                 success: true,
-                data: products
+                data: products,
             });
-
         } catch (error: any) {
-            console.error('Get products error:', error);
+            console.error("Get products error:", error);
             res.status(500).json({
                 success: false,
-                message: error.message
+                message: error.message,
             });
         }
     }
-
 
     // src/controllers/MarketplaceController.ts
 
@@ -880,13 +927,13 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId
+                userId,
             });
 
             if (!connection) {
                 return res.status(404).json({
                     success: false,
-                    message: 'Connection not found'
+                    message: "Connection not found",
                 });
             }
 
@@ -919,7 +966,6 @@ export class MarketplaceController {
             //         }
             //     });
             // }
-
         } catch (error: any) {
             if (error.response) {
                 // This will tell you EXACTLY what is wrong (e.g., "Missing marketplace ID")
@@ -931,7 +977,6 @@ export class MarketplaceController {
         }
     }
 
-
     async createBusinessPolicies(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -940,97 +985,101 @@ export class MarketplaceController {
             if (!paypalEmail) {
                 return res.status(400).json({
                     success: false,
-                    message: 'PayPal email is required'
+                    message: "PayPal email is required",
                 });
             }
 
             const connection = await MarketplaceConnection.findById(id);
 
-            if (!connection || connection.status !== 'connected') {
+            if (!connection || connection.status !== "connected") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Connection not active'
+                    message: "Connection not active",
                 });
             }
 
-            const service = MarketplaceServiceFactory.createService(connection) as any;
+            const service = MarketplaceServiceFactory.createService(
+                connection,
+            ) as any;
             await service.ensureValidToken();
 
             const headers = {
-                'Authorization': `Bearer ${service.tokens.accessToken}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${service.tokens.accessToken}`,
+                "Content-Type": "application/json",
             };
 
             const baseUrl = connection.apiConfiguration.baseUrl;
 
-            console.log('\n📋 Creating Business Policies...');
+            console.log("\n📋 Creating Business Policies...");
 
             // 1. Create Fulfillment Policy
-            console.log('\n1️⃣ Creating Fulfillment Policy...');
+            console.log("\n1️⃣ Creating Fulfillment Policy...");
 
             let fulfillmentPolicyId;
             try {
                 const fulfillmentRes = await axios.post(
                     `${baseUrl}/sell/account/v1/fulfillment_policy`,
                     {
-                        name: 'Standard Shipping Policy',
-                        description: 'Standard shipping with tracking',
-                        marketplaceId: 'EBAY_US',
+                        name: "Standard Shipping Policy",
+                        description: "Standard shipping with tracking",
+                        marketplaceId: "EBAY_US",
                         categoryTypes: [
                             {
-                                name: 'ALL_EXCLUDING_MOTORS_VEHICLES',
-                                default: true
-                            }
+                                name: "ALL_EXCLUDING_MOTORS_VEHICLES",
+                                default: true,
+                            },
                         ],
                         handlingTime: {
                             value: 1,
-                            unit: 'DAY'
+                            unit: "DAY",
                         },
                         shipToLocations: {
                             regionIncluded: [
                                 {
-                                    regionName: 'United States',
-                                    regionType: 'COUNTRY'
-                                }
-                            ]
+                                    regionName: "United States",
+                                    regionType: "COUNTRY",
+                                },
+                            ],
                         },
                         shippingOptions: [
                             {
-                                costType: 'FLAT_RATE',
-                                optionType: 'DOMESTIC',
+                                costType: "FLAT_RATE",
+                                optionType: "DOMESTIC",
                                 shippingServices: [
                                     {
                                         buyerResponsibleForShipping: false,
                                         freeShipping: true,
-                                        shippingCarrierCode: 'USPS',
-                                        shippingServiceCode: 'USPSPriority',
-                                        sortOrder: 1
-                                    }
-                                ]
-                            }
+                                        shippingCarrierCode: "USPS",
+                                        shippingServiceCode: "USPSPriority",
+                                        sortOrder: 1,
+                                    },
+                                ],
+                            },
                         ],
-                        globalShipping: false
+                        globalShipping: false,
                     },
-                    { headers }
+                    { headers },
                 );
 
                 fulfillmentPolicyId = fulfillmentRes.data.fulfillmentPolicyId;
-                console.log('✅ Fulfillment Policy Created:', fulfillmentPolicyId);
-
+                console.log("✅ Fulfillment Policy Created:", fulfillmentPolicyId);
             } catch (error: any) {
                 if (error.response?.data?.errors?.[0]?.errorId === 20400) {
                     // Agar duplicate hai, toh error message se ID nikal lo
                     fulfillmentPolicyId = error.response.data.errors[0].parameters.find(
-                        (p: any) => p.name === 'DuplicateProfileId'
+                        (p: any) => p.name === "DuplicateProfileId",
                     )?.value;
-                    console.log('♻️ Using existing Fulfillment Policy:', fulfillmentPolicyId);
+                    console.log(
+                        "♻️ Using existing Fulfillment Policy:",
+                        fulfillmentPolicyId,
+                    );
                 } else {
                     throw error; // Asli error hai toh stop karein
                 }
             }
 
             // 2. Create Payment Policy
-            console.log('\n2️⃣ Creating Payment Policy...');
+            console.log("\n2️⃣ Creating Payment Policy...");
 
             let paymentPolicyId;
             try {
@@ -1058,91 +1107,93 @@ export class MarketplaceController {
                     //   immediatePay: true
                     // },
                     {
-                        name: 'Immediate Payment Required',
-                        description: 'Payment managed by eBay',
-                        marketplaceId: 'EBAY_US',
-                        categoryTypes: [{ name: 'ALL_EXCLUDING_MOTORS_VEHICLES', default: true }],
+                        name: "Immediate Payment Required",
+                        description: "Payment managed by eBay",
+                        marketplaceId: "EBAY_US",
+                        categoryTypes: [
+                            { name: "ALL_EXCLUDING_MOTORS_VEHICLES", default: true },
+                        ],
                         paymentMethods: [],
-                        immediatePay: true
+                        immediatePay: true,
                     },
-                    { headers }
+                    { headers },
                 );
 
                 paymentPolicyId = paymentRes.data.paymentPolicyId;
-                console.log('✅ Payment Policy Created:', paymentPolicyId);
-
+                console.log("✅ Payment Policy Created:", paymentPolicyId);
             } catch (error: any) {
-                console.error('❌ Payment Policy Error:', error.response?.data);
-                throw new Error(`Failed to create payment policy: ${JSON.stringify(error.response?.data)}`);
+                console.error("❌ Payment Policy Error:", error.response?.data);
+                throw new Error(
+                    `Failed to create payment policy: ${JSON.stringify(error.response?.data)}`,
+                );
             }
 
             // 3. Create Return Policy
-            console.log('\n3️⃣ Creating Return Policy...');
+            console.log("\n3️⃣ Creating Return Policy...");
 
             let returnPolicyId;
             try {
                 const returnRes = await axios.post(
                     `${baseUrl}/sell/account/v1/return_policy`,
                     {
-                        name: '30 Day Returns',
-                        description: '30 day return policy',
-                        marketplaceId: 'EBAY_US',
+                        name: "30 Day Returns",
+                        description: "30 day return policy",
+                        marketplaceId: "EBAY_US",
                         categoryTypes: [
                             {
-                                name: 'ALL_EXCLUDING_MOTORS_VEHICLES',
-                                default: true
-                            }
+                                name: "ALL_EXCLUDING_MOTORS_VEHICLES",
+                                default: true,
+                            },
                         ],
                         returnsAccepted: true,
                         returnPeriod: {
                             value: 30,
-                            unit: 'DAY'
+                            unit: "DAY",
                         },
-                        returnShippingCostPayer: 'BUYER',
-                        refundMethod: 'MONEY_BACK'
+                        returnShippingCostPayer: "BUYER",
+                        refundMethod: "MONEY_BACK",
                     },
-                    { headers }
+                    { headers },
                 );
 
                 returnPolicyId = returnRes.data.returnPolicyId;
-                console.log('✅ Return Policy Created:', returnPolicyId);
-
+                console.log("✅ Return Policy Created:", returnPolicyId);
             } catch (error: any) {
-                console.error('❌ Return Policy Error:', error.response?.data);
-                throw new Error(`Failed to create return policy: ${JSON.stringify(error.response?.data)}`);
+                console.error("❌ Return Policy Error:", error.response?.data);
+                throw new Error(
+                    `Failed to create return policy: ${JSON.stringify(error.response?.data)}`,
+                );
             }
 
-            console.log('\n✅ All policies created successfully!\n');
+            console.log("\n✅ All policies created successfully!\n");
 
             // Save policy IDs to connection metadata
-            connection.set('policyIds', {
+            connection.set("policyIds", {
                 fulfillmentPolicyId,
                 paymentPolicyId,
-                returnPolicyId
+                returnPolicyId,
             });
             await connection.save();
 
             res.json({
                 success: true,
-                message: 'Business policies created successfully',
+                message: "Business policies created successfully",
                 data: {
                     fulfillmentPolicyId,
                     paymentPolicyId,
-                    returnPolicyId
-                }
+                    returnPolicyId,
+                },
             });
-
         } catch (error: any) {
-            console.error('\n❌ Policy creation failed:', error.message);
+            console.error("\n❌ Policy creation failed:", error.message);
 
             res.status(500).json({
                 success: false,
                 message: error.message,
-                details: error.response?.data
+                details: error.response?.data,
             });
         }
     }
-
 
     // src/controllers/MarketplaceController.ts
 
@@ -1156,66 +1207,65 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findById(id);
 
-            if (!connection || connection.status !== 'connected') {
+            if (!connection || connection.status !== "connected") {
                 return res.status(400).json({
                     success: false,
-                    message: 'Connection not active'
+                    message: "Connection not active",
                 });
             }
 
-            const service = MarketplaceServiceFactory.createService(connection) as any;
+            const service = MarketplaceServiceFactory.createService(
+                connection,
+            ) as any;
             await service.ensureValidToken();
 
             const headers = {
-                'Authorization': `Bearer ${service.tokens.accessToken}`,
-                'Content-Type': 'application/json'
+                Authorization: `Bearer ${service.tokens.accessToken}`,
+                "Content-Type": "application/json",
             };
 
-            console.log('\n✅ Opting in to Business Policies...');
+            console.log("\n✅ Opting in to Business Policies...");
 
             // Opt-in to business policies
             try {
                 const response = await axios.post(
                     `${connection.apiConfiguration.baseUrl}/sell/account/v1/program/opt_in`,
                     {
-                        programType: 'SELLING_POLICY_MANAGEMENT'
+                        programType: "SELLING_POLICY_MANAGEMENT",
                     },
-                    { headers }
+                    { headers },
                 );
 
-                console.log('✅ Successfully opted in to Business Policies!');
-                console.log('Response:', response.data);
+                console.log("✅ Successfully opted in to Business Policies!");
+                console.log("Response:", response.data);
 
                 res.json({
                     success: true,
-                    message: 'Successfully opted in to Business Policies program',
-                    data: response.data
+                    message: "Successfully opted in to Business Policies program",
+                    data: response.data,
                 });
-
             } catch (error: any) {
-                console.error('❌ Opt-in failed:', error.response?.data);
+                console.error("❌ Opt-in failed:", error.response?.data);
 
                 // Check if already opted in
                 if (error.response?.data?.errors?.[0]?.errorId === 20407) {
                     return res.json({
                         success: true,
-                        message: 'Already opted in to Business Policies',
-                        alreadyOptedIn: true
+                        message: "Already opted in to Business Policies",
+                        alreadyOptedIn: true,
                     });
                 }
 
                 throw error;
             }
-
         } catch (error: any) {
-            console.error('❌ Error:', error.message);
+            console.error("❌ Error:", error.message);
 
             res.status(500).json({
                 success: false,
                 message: error.message,
-                details: error.response?.data
+                details: error.response?.data,
             });
         }
     }
-
 }

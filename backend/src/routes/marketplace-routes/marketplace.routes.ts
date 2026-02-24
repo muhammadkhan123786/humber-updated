@@ -18,11 +18,11 @@ router.delete('/:id', controller.deleteConnection.bind(controller));
 
 
 // Connection operations
-router.post('/connections/:id/connect', controller.connectMarketplace.bind(controller));
-router.post('/connections/:id/test', controller.testConnection.bind(controller));
-router.post('/connections/:id/sync', controller.syncData.bind(controller));
-router.post('/connections/:id/exchange-code', controller.exchangeAuthCode.bind(controller));
-router.get('/connections/:id/verify', controller.verifyEbayCredentials.bind(controller));
+router.post('/:id/connect', controller.connectMarketplace.bind(controller));
+router.post('/:id/:userId/test', controller.testConnection.bind(controller));
+router.post('/:id/:userId/sync', controller.syncData.bind(controller));
+router.post('/:id/exchange-code', controller.exchangeAuthCode.bind(controller));
+router.get('/:id/verify', controller.verifyEbayCredentials.bind(controller));
 // OAuth callback
 router.get('/callback/:type', controller.handleOAuthCallback.bind(controller));
 

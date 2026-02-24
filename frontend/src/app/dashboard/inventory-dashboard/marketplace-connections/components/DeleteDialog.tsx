@@ -10,6 +10,8 @@ import {
 } from '@/components/form/Dialog';
 import { Button } from '@/components/form/CustomButton';
 import { Marketplace } from '../data/marketplaceData';
+import Image from 'next/image';
+
 
 interface DeleteDialogProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ interface DeleteDialogProps {
 
 export function DeleteDialog({ isOpen, marketplace, onClose, onConfirm }: DeleteDialogProps) {
   if (!marketplace) return null;
+  const iconSrc = marketplace?.name?.icon?.icon;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -33,15 +36,25 @@ export function DeleteDialog({ isOpen, marketplace, onClose, onConfirm }: Delete
           </DialogDescription>
         </DialogHeader>
 
-        <motion.div 
+        <motion.div
           className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-300 rounded-xl p-4"
           initial={{ scale: 0.9 }}
           animate={{ scale: 1 }}
         >
           <div className="flex items-center gap-3">
-            <div className="text-4xl">{marketplace.icon}</div>
+            <div className="text-4xl">
+              <img
+                src={iconSrc}
+                alt={marketplace?.type}
+                className="w-10 h-10 object-contain rounded-md bg-white p-1"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+
+            </div>
             <div>
-              <p className="font-bold text-gray-900 text-lg">{marketplace.name}</p>
+              <p className="font-bold text-gray-900 text-lg">{marketplace.type}</p>
               {/* <p className="text-sm text-gray-600">{marketplace.type.toUpperCase()}</p> */}
             </div>
           </div>
@@ -57,14 +70,14 @@ export function DeleteDialog({ isOpen, marketplace, onClose, onConfirm }: Delete
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onClose}
             className="border-2"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={onConfirm}
             className="gap-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white shadow-lg shadow-red-500/50"
           >
