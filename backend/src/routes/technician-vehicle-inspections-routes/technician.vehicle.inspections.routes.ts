@@ -3,6 +3,7 @@ import { GenericService } from "../../services/generic.crud.services";
 import { vehicleInspectionsDoc, VehicleInspectionsByTechnicians } from "../../models/technician-vehicle-inspections-models/technician.vehicle.inspection.models";
 import { CreateInspectionZodSchemaValidation } from "../../schemas/technicians-inspections-schema/technician.inspections.validations";
 import { AdvancedGenericController } from "../../controllers/GenericController";
+import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
 
 const vehicleInspectionsRouter = Router();
 
@@ -17,8 +18,19 @@ const vehicleInspectionsController = new AdvancedGenericController({
 
 vehicleInspectionsRouter.get("/", vehicleInspectionsController.getAll);
 vehicleInspectionsRouter.get("/:id", vehicleInspectionsController.getById);
-vehicleInspectionsRouter.post("/", vehicleInspectionsController.create);
-vehicleInspectionsRouter.put("/:id", vehicleInspectionsController.update);
+vehicleInspectionsRouter.post("/",async(req:TechnicianAuthRequest,res,next)=> {
+    req.body.technicianId = req.technicianId; // Assuming you have userId from authentication middleware
+    req.body.userId = req.user.userId; // Assuming you have userId from authentication middleware
+    
+  next();
+},vehicleInspectionsController.create);
+vehicleInspectionsRouter.put("/:id",async(req:TechnicianAuthRequest,res,next)=> {
+    console.log("PUT request body:", req.body); // Debugging log
+    req.body.technicianId = req.technicianId; // Assuming you have userId from authentication middleware
+    req.body.userId = req.user.userId; // Assuming you have userId from authentication middleware
+    
+  next();
+}, vehicleInspectionsController.update);
 vehicleInspectionsRouter.delete("/:id", vehicleInspectionsController.delete);
 
 export default vehicleInspectionsRouter;
