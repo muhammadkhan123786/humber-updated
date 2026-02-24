@@ -110,6 +110,7 @@ import customerInvoiceRouter from "./routes/customer-job-invoices/customer.invoi
 import { customerInvoiceStatisticsController } from "./controllers/customer-invoice-statistics/customer.invoice.statistics.controller";
 import techncianJobsByAdminRouter from "./routes/technician-jobs-by-admin-routes/technician.jobs.by.admin.routes";
 import vehicleInspectionsRouter from "./routes/technician-vehicle-inspections-routes/technician.vehicle.inspections.routes";
+import jobAssignmentRouter from "./routes/technician-job-assignments/technician.jobs.assignment.routes";
 
 
 // Create express app
@@ -543,6 +544,13 @@ app.use(
   `${process.env.API_PREFIX}/technician-vehicle-inspections`,
   technicianProtecter,
   vehicleInspectionsRouter,
+);
+
+//24-02-2026
+app.use(
+  `${process.env.API_PREFIX}/technician-job-assignments`,
+  technicianProtecter,
+  jobAssignmentRouter
 );
 
 //Muhammad Imran code ended here.
