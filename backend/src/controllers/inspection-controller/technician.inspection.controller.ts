@@ -3,13 +3,13 @@ import { Types } from "mongoose";
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { VehicleInspectionsByTechnicians } from "../../models/technician-vehicle-inspections-models/technician.vehicle.inspection.models";
 
-
 export const getInspectionByJobId = async (
   req: TechnicianAuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const technicianId = req.technicianId;
+    const userId = req.user?.userId; // ✅ added
     const { jobId, inspectionTIME } = req.query;
 
     // ✅ Validate jobId
@@ -20,34 +20,42 @@ export const getInspectionByJobId = async (
       });
     }
 
-    // ✅ Validate technicianId
-    if (!technicianId || !Types.ObjectId.isValid(technicianId)) {
+    // ✅ Validate technicianId OR userId
+    if (
+      (!technicianId || !Types.ObjectId.isValid(technicianId)) &&
+      (!userId || !Types.ObjectId.isValid(userId))
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Invalid technicianId",
+        message: "Invalid technicianId or userId",
       });
     }
 
     const matchStage: any = {
       jobId: new Types.ObjectId(jobId as string),
-      tecnicianId: new Types.ObjectId(technicianId),
+      tecnicianId: technicianId ? new Types.ObjectId(technicianId) : undefined,
+      userId: !technicianId && userId ? new Types.ObjectId(userId) : undefined,
     };
+
+    // remove undefined fields
+    Object.keys(matchStage).forEach(
+      (key) => matchStage[key] === undefined && delete matchStage[key],
+    );
 
     // ✅ Optional filter by inspection time
     if (inspectionTIME) {
       matchStage.inspectionTIME = inspectionTIME;
     }
 
-    // ✅ Get only the latest inspection
-    const latestInspection = await VehicleInspectionsByTechnicians
-      .findOne(matchStage)
+    const latestInspection = await VehicleInspectionsByTechnicians.findOne(
+      matchStage,
+    )
       .populate({
         path: "inspections.inspectionTypeId",
         model: "technicianInspectionList",
       })
       .sort({ createdAt: -1 });
 
-    // ✅ If no inspection found, return empty data
     if (!latestInspection) {
       return res.status(200).json({
         success: true,
@@ -60,7 +68,6 @@ export const getInspectionByJobId = async (
       success: true,
       data: latestInspection,
     });
-
   } catch (error) {
     console.error("Error fetching inspections:", error);
     return res.status(500).json({

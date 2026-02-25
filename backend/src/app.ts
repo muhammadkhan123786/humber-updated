@@ -83,8 +83,7 @@ import goodsReturnRoutes from "./routes/goodsReturn.routes";
 import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
-import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes"
-
+import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
 
 // Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
@@ -112,7 +111,6 @@ import techncianJobsByAdminRouter from "./routes/technician-jobs-by-admin-routes
 import vehicleInspectionsRouter from "./routes/technician-vehicle-inspections-routes/technician.vehicle.inspections.routes";
 import jobAssignmentRouter from "./routes/technician-job-assignments/technician.jobs.assignment.routes";
 import techncianJobsActivityRouter from "./routes/technician-jobs-activities/technician.jobs.activities.routes";
-
 
 // Create express app
 const app: Application = express();
@@ -508,7 +506,7 @@ app.put(
   updateTechnicianJobStatusController,
 );
 
-//total technician completed jobs. 
+//total technician completed jobs.
 app.put(
   `${process.env.API_PREFIX}/technician-job-completed-count`,
   technicianProtecter,
@@ -528,7 +526,7 @@ app.put(
   UpdateTechnicianProfileController,
 );
 
-//18-02-2026 
+//18-02-2026
 app.get(
   `${process.env.API_PREFIX}/customer-invoices-statistics`,
   adminProtecter,
@@ -538,7 +536,7 @@ app.get(
 //20-02-2026
 app.use(
   `${process.env.API_PREFIX}/technician-job-by-admin`,
-  techncianJobsByAdminRouter
+  techncianJobsByAdminRouter,
 );
 
 app.use(
@@ -551,14 +549,14 @@ app.use(
 app.use(
   `${process.env.API_PREFIX}/technician-job-assignments`,
   technicianProtecter,
-  jobAssignmentRouter
+  jobAssignmentRouter,
 );
 
 //25-02-2026
 app.use(
   `${process.env.API_PREFIX}/technician-parts-installation`,
   technicianProtecter,
-  techncianJobsActivityRouter
+  techncianJobsActivityRouter,
 );
 
 //Muhammad Imran code ended here.
@@ -606,7 +604,7 @@ app.use(
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
 app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
-// Muzamil Hassan end 
+// Muzamil Hassan end
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });

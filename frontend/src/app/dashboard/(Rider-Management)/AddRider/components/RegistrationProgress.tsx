@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import { motion } from "framer-motion";
 
 interface RegistrationProgressProps {
   currentStep: number;
@@ -33,21 +35,27 @@ const RegistrationProgress: React.FC<RegistrationProgressProps> = ({
 
             return (
               <div key={index} className="flex-1 space-y-3">
-                <div
-                  className={`h-2 rounded-full transition-all duration-500 ${
-                    isStepActive
-                      ? "bg-linear-to-r from-[#0061FF] to-[#0061FF]"
-                      : "bg-gray-100"
-                  }`}
-                />
+                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: isStepActive ? "100%" : "0%" }}
+                    transition={{
+                      duration: 0.8,
+                      ease: [0.4, 0, 0.2, 1],
+                    }}
+                    className="h-full bg-linear-[#0061FF]"
+                  />
+                </div>
 
-                <p
-                  className={`text-center text-[11px] font-bold transition-colors ${
-                    isStepActive ? "text-blue-600" : "text-gray-400"
-                  }`}
+                <motion.p
+                  animate={{
+                    color: isStepActive ? "#2563eb" : "#9ca3af",
+                    scale: isStepActive ? 1.05 : 1,
+                  }}
+                  className="text-center text-[11px] font-bold transition-colors"
                 >
                   {step.name}
-                </p>
+                </motion.p>
               </div>
             );
           })}
