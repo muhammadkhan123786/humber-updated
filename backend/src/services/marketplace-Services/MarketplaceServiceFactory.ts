@@ -1,7 +1,7 @@
 // services/MarketplaceServiceFactory.ts
 
 import { BaseMarketplaceService } from './BaseMarketplaceService';
-// import { EbayService } from './EbayService';
+import { EbayService } from '../marketplace-Services/marketplace/EbayService';
 // import { AmazonService } from './AmazonService';
 import { ShopifyService } from '../marketplace-Services/marketplace/ShopifyService';
 // import { TikTokService } from './TikTokService';
@@ -12,8 +12,8 @@ export class MarketplaceServiceFactory {
     static createService(connection: any): BaseMarketplaceService {
 
         switch (connection.type) {
-            // case 'ebay':
-            //     return new EbayService(connection);
+            case 'ebay':
+                return new EbayService(connection);
 
             // case 'amazon':
             //     return new AmazonService(connection);

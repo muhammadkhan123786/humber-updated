@@ -38,20 +38,27 @@ export const getInspectionByJobId = async (
       matchStage.inspectionTIME = inspectionTIME;
     }
 
-    const inspections = await VehicleInspectionsByTechnicians
-      .find(matchStage)
-      .populate("jobId")
-      .populate("tecnicianId")
+    // ✅ Get only the latest inspection
+    const latestInspection = await VehicleInspectionsByTechnicians
+      .findOne(matchStage)
       .populate({
         path: "inspections.inspectionTypeId",
         model: "technicianInspectionList",
       })
       .sort({ createdAt: -1 });
 
+    // ✅ If no inspection found, return empty data
+    if (!latestInspection) {
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: "No inspection found",
+      });
+    }
+
     return res.status(200).json({
       success: true,
-      count: inspections.length,
-      data: inspections,
+      data: latestInspection,
     });
 
   } catch (error) {

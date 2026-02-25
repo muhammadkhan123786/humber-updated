@@ -18,6 +18,7 @@ import {
   MessageSquareCode,
 } from "lucide-react";
 import { jobsAnimations } from "./JobsAnimation";
+import ListInspections from "./ListInspections";
 
 interface ModalProps {
   isOpen: boolean;
@@ -485,38 +486,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
           )}
 
           {activeTab === "inspections" && (
-            <div className="space-y-4">
-              {job.inspections?.length > 0 ? (
-                job.inspections.map((ins: any, i: number) => (
-                  <div
-                    key={i}
-                    style={{ animationDelay: `${i * 0.1}s` }}
-                    className="p-5 rounded-2xl border border-gray-100 bg-white shadow-sm hover:border-indigo-200 transition-all animate-fadeInUp"
-                  >
-                    <div className="flex justify-between items-center mb-4">
-                      <span
-                        className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white ${ins.status === "PASS" ? "bg-emerald-500" : ins.status === "FAIL" ? "bg-red-500" : "bg-gray-500"}`}
-                      >
-                        {ins.status || "N/A"}
-                      </span>
-                      <span className="text-[10px] text-gray-400 font-bold">
-                        TYPE ID: {ins.inspectionTypeId?.slice(-6) || "N/A"}
-                      </span>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                      <p className="text-xs font-bold text-gray-400 uppercase mb-1">
-                        Inspector Notes
-                      </p>
-                      <p className="text-gray-600 text-sm italic">
-                        {ins.notes || "No notes provided"}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <EmptyState message="No inspections recorded" />
-              )}
-            </div>
+            <ListInspections jobId={job._id} />
           )}
 
           {activeTab === "notes" && (

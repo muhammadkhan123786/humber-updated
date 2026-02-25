@@ -24,14 +24,14 @@ export interface ColorOption {
   value: string;
   label: string;
   colorCode: string;
- 
+
 }
 
 export interface IconOption {
-   value: string;
+  value: string;
   label: string;
-  icon: string; 
-  iconName?:  string;
+  icon: string;
+  iconName?: string;
 }
 
 export const AVAILABLE_FIELDS: AvailableField[] = [
@@ -43,7 +43,9 @@ export const AVAILABLE_FIELDS: AvailableField[] = [
   { value: 'shopId', label: 'Shop ID' },
   { value: 'pageId', label: 'Page ID' },
   { value: 'clientId', label: 'Client ID' },
-  { value: 'clientSecret', label: 'Client Secret' }
+  { value: 'clientSecret', label: 'Client Secret' },
+  { value: 'ruName', label: "RuName" },
+
 ];
 
 export interface FormData {
@@ -86,7 +88,7 @@ export interface IconOption {
 }
 
 export const getInitialFormData = (
-  colors: ColorOption[], 
+  colors: ColorOption[],
   icons: IconOption[],
 ): FormData => {
   const defaultColor = colors?.length > 0 ? colors[0] : null;
@@ -99,9 +101,9 @@ export const getInitialFormData = (
     color: defaultColor ? defaultColor.value : '',
     colorCode: defaultColor ? defaultColor.colorCode : '#6366f1',
     // We store the Base64 string in 'icon' so the <img> tag can render it directly
-    icon: defaultIcon ? defaultIcon.icon : '', 
+    icon: defaultIcon ? defaultIcon.icon : '',
     label: defaultIcon ? defaultIcon.label : '',
-    selectedIconId: defaultIcon ? defaultIcon.value: '',
+    selectedIconId: defaultIcon ? defaultIcon.value : '',
     fields: [],
     isActive: true,
     isDefault: false

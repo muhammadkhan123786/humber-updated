@@ -29,7 +29,7 @@ vehicleInspectionsRouter.post("/",checkInspectionExists,async(req:TechnicianAuth
     
   next();
 },vehicleInspectionsController.create);
-vehicleInspectionsRouter.put("/:id",checkInspectionExists,async(req:TechnicianAuthRequest,res,next)=> {
+vehicleInspectionsRouter.put("/:id",async(req:TechnicianAuthRequest,res,next)=> {
     console.log("PUT request body:", req.body); // Debugging log
     req.body.technicianId = req.technicianId; // Assuming you have userId from authentication middleware
     req.body.userId = req.user.userId; // Assuming you have userId from authentication middleware

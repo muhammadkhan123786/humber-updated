@@ -514,10 +514,106 @@ export class MarketplaceController {
      * Test marketplace connection
      * POST /api/marketplace/connections/:id/test
      */
+    // async testConnection(req: Request, res: Response) {
+    //     try {
+    //         const { id, userId } = req.params;
+
+    //         const connection = await MarketplaceConnection.findOne({
+    //             _id: id,
+    //             userId,
+    //         });
+
+    //         if (!connection) {
+    //             return res.status(404).json({
+    //                 success: false,
+    //                 message: "Connection not found",
+    //             });
+    //         }
+
+    //         if (connection.status !== "connected") {
+    //             try {
+    //                 const marketplaceConfig = MARKETPLACE_CONFIGS[connection.type];
+
+    //                 // If doesn't require OAuth (like WooCommerce with API keys)
+    //                 if (!marketplaceConfig.requiresOAuth) {
+    //                     // Test connection directly
+    //                     const service = MarketplaceServiceFactory.createService(connection);
+    //                     const isConnected = await service.testConnection();
+
+    //                     if (isConnected) {
+    //                         connection.status = "connected";
+    //                         await connection.save();
+
+    //                         return res.json({
+    //                             success: true,
+    //                             message: "Connected successfully",
+    //                             requiresOAuth: false,
+    //                         });
+    //                     } else {
+    //                         return res.status(400).json({
+    //                             success: false,
+    //                             message:
+    //                                 "Connection test failed. Please check your credentials.",
+    //                         });
+    //                     }
+    //                 }
+
+    //                 // For OAuth marketplaces, generate authorization URL
+    //                 const service = MarketplaceServiceFactory.createService(connection);
+    //                 console.log(service)
+
+    //                 const state = Buffer.from(
+    //                     JSON.stringify({
+    //                         connectionId: connection._id.toString(),
+    //                         userId: userId,
+    //                     }),
+    //                 ).toString("base64");
+
+    //                 console.log("state", state)
+
+    //                 const authUrl = service.getAuthorizationUrl(state);
+    //                 console.log("authurl", authUrl)
+    //                 res.json({
+    //                     success: true,
+    //                     requiresOAuth: true,
+    //                     authUrl: authUrl,
+    //                     message: "Redirect user to authUrl to complete authorization",
+    //                 });
+    //             } catch (error) {
+    //                 console.error("Error is connection testing ", error);
+    //             }
+    //         }
+
+    //         const service = MarketplaceServiceFactory.createService(connection);
+    //         const isConnected = await service.testConnection();
+
+    //         if (isConnected) {
+    //             res.json({
+    //                 success: true,
+    //                 message: "Connection test successful",
+    //             });
+    //         } else {
+    //             res.status(400).json({
+    //                 success: false,
+    //                 message: "Connection test failed",
+    //             });
+    //         }
+    //     } catch (error: any) {
+    //         console.error("Connection test error:", error);
+    //         res.status(500).json({
+    //             success: false,
+    //             message: error.message,
+    //         });
+    //     }
+    // }
+
+    // src/controllers/marketplace-controllers/marketplace.controller.ts
+
     async testConnection(req: Request, res: Response) {
         try {
             const { id, userId } = req.params;
 
+            // ─── Find Connection ─────────────────────────────────
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
                 userId,
@@ -530,73 +626,105 @@ export class MarketplaceController {
                 });
             }
 
-            if (connection.status !== "connected") {
-                try {
-                    const marketplaceConfig = MARKETPLACE_CONFIGS[connection.type];
-
-                    // If doesn't require OAuth (like WooCommerce with API keys)
-                    if (!marketplaceConfig.requiresOAuth) {
-                        // Test connection directly
-                        const service = MarketplaceServiceFactory.createService(connection);
-                        const isConnected = await service.testConnection();
-
-                        if (isConnected) {
-                            connection.status = "connected";
-                            await connection.save();
-
-                            return res.json({
-                                success: true,
-                                message: "Connected successfully",
-                                requiresOAuth: false,
-                            });
-                        } else {
-                            return res.status(400).json({
-                                success: false,
-                                message:
-                                    "Connection test failed. Please check your credentials.",
-                            });
-                        }
-                    }
-
-                    // For OAuth marketplaces, generate authorization URL
-                    const service = MarketplaceServiceFactory.createService(connection);
-
-                    const state = Buffer.from(
-                        JSON.stringify({
-                            connectionId: connection._id.toString(),
-                            userId: userId,
-                        }),
-                    ).toString("base64");
-
-                    const authUrl = service.getAuthorizationUrl(state);
-                    res.json({
-                        success: true,
-                        requiresOAuth: true,
-                        authUrl: authUrl,
-                        message: "Redirect user to authUrl to complete authorization",
-                    });
-                } catch (error) {
-                    console.error("Error is connection testing ", error);
-                }
+            const marketplaceConfig = MARKETPLACE_CONFIGS[connection.type];
+            if (!marketplaceConfig) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid marketplace type: ${connection.type}`
+                });
             }
+
+            console.log(`\n🧪 Testing ${connection.type} connection: ${id}`);
+            console.log('Current status:', connection.status);
+            console.log('Has tokens:', !!connection.tokens);
+
+            // ─── CASE 1: Not Connected Yet ──────────────────────
+            if (connection.status !== "connected" || !connection.tokens) {
+
+                // Non-OAuth marketplaces (WooCommerce, Shopify with direct API)
+                if (!marketplaceConfig.requiresOAuth) {
+                    console.log('Testing non-OAuth connection...');
+
+                    const service = MarketplaceServiceFactory.createService(connection);
+                    const isConnected = await service.testConnection();
+
+                    if (isConnected) {
+                        connection.status = "connected";
+                        await connection.save();
+
+                        return res.json({  // ✅ RETURN!
+                            success: true,
+                            message: "Connected successfully",
+                            requiresOAuth: false,
+                            status: "connected"
+                        });
+                    } else {
+                        return res.status(400).json({  // ✅ RETURN!
+                            success: false,
+                            message: "Connection test failed. Please check your credentials.",
+                        });
+                    }
+                }
+
+                // OAuth marketplaces (eBay, Amazon, TikTok, etc.)
+                console.log('Generating OAuth URL...');
+
+                const service = MarketplaceServiceFactory.createService(connection);
+
+                const state = Buffer.from(
+                    JSON.stringify({
+                        connectionId: connection._id.toString(),
+                        userId: userId,
+                    }),
+                ).toString("base64");
+
+                const authUrl = service.getAuthorizationUrl(state);
+
+                console.log('✅ OAuth URL generated');
+
+                return res.json({  // ✅ RETURN!
+                    success: true,
+                    requiresOAuth: true,
+                    authUrl: authUrl,
+                    message: "Open authUrl in popup to complete authorization",
+                });
+            }
+
+            // ─── CASE 2: Already Connected - Test It ────────────
+            console.log('Connection already connected - testing...');
 
             const service = MarketplaceServiceFactory.createService(connection);
             const isConnected = await service.testConnection();
 
             if (isConnected) {
-                res.json({
+                return res.json({  // ✅ RETURN!
                     success: true,
                     message: "Connection test successful",
+                    status: "connected",
+                    type: connection.type
                 });
             } else {
-                res.status(400).json({
+                // Test failed - maybe token expired
+                connection.status = "error";
+                await connection.save();
+
+                return res.status(400).json({  // ✅ RETURN!
                     success: false,
-                    message: "Connection test failed",
+                    message: "Connection test failed. Token may be expired. Please reconnect.",
+                    status: "error"
                 });
             }
+
         } catch (error: any) {
-            console.error("Connection test error:", error);
-            res.status(500).json({
+            console.error("❌ Connection test error:", error.message);
+
+            // ✅ Check if response already sent
+            if (res.headersSent) {
+                console.error('⚠️ Response already sent, skipping error response');
+                return;
+            }
+
+            return res.status(500).json({  // ✅ RETURN!
                 success: false,
                 message: error.message,
             });

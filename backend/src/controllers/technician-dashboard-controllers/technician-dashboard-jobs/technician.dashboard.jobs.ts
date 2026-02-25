@@ -59,7 +59,7 @@ export const technicianDashboardJobsController = async (
     // =========================
     // Fetch Jobs
     // =========================
-    const jobs = await TechnicianJobsByAdmin.find(query)
+    const jobs = await TechnicianJobsByAdmin.find(query) // Exclude __v and isDeleted fields
       .populate([
         {
           path: "leadingTechnicianId",
@@ -105,7 +105,7 @@ export const technicianDashboardJobsController = async (
       .skip(skip)
       .limit(limit)
       .lean();
-
+      console.log("Fetched Jobs:", jobs); // Debug log to check number of jobs fetched
     // =========================
     // Status KPI Aggregation
     // =========================
