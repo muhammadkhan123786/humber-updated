@@ -1,0 +1,60 @@
+import React from "react";
+
+interface InputProps extends React.InputHTMLAttributes<
+  HTMLInputElement | HTMLTextAreaElement
+> {
+  label: string;
+  required?: boolean;
+  icon?: React.ReactNode;
+  multiline?: boolean;
+  rows?: number;
+}
+
+const FormInput: React.FC<InputProps> = ({
+  label,
+  required,
+  icon,
+  multiline = false,
+  rows = 3,
+  ...props
+}) => {
+  const baseStyles = `w-full bg-gray-50 border-2 border-gray-100 rounded-xl
+                     text-gray-800 text-sm outline-none transition-all
+                     placeholder:text-gray-400
+                     focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     ${icon ? "pl-11 pr-4" : "px-4"}`;
+
+  return (
+    <div className="w-full space-y-2">
+      <label className="block text-sm font-semibold text-gray-700">
+        {label} {required && <span>*</span>}
+      </label>
+
+      <div className="relative group">
+        {icon && (
+          <div
+            className={`absolute left-4 text-gray-400 group-focus-within:text-blue-500 transition-colors ${multiline ? "top-4" : "top-1/2 -translate-y-1/2"}`}
+          >
+            {icon}
+          </div>
+        )}
+
+        {multiline ? (
+          <textarea
+            {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
+            rows={rows}
+            className={`${baseStyles} py-3 resize-none`}
+          />
+        ) : (
+          <input
+            {...(props as React.InputHTMLAttributes<HTMLInputElement>)}
+            className={`${baseStyles} h-9.5 py-2`}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default FormInput;
