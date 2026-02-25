@@ -14,6 +14,7 @@ import {
   Play,
   Pause,
   ClipboardList,
+  Share2,
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -62,46 +63,26 @@ const JobCardsSection = ({
 
   // Handle START/PAUSE toggle (START <-> ON HOLD)
   const handleStartPauseToggle = async (jobId: string, currentStatus: string) => {
-    // Toggle between START and ON HOLD
     const newStatus = currentStatus === "START" ? "ON HOLD" : "START";
-
-    // Optimistic update: Update local state immediately
-    const updatedJobs = localJobs.map((job) => {
-      if (job._id === jobId) {
-        return {
-          ...job,
-          jobStatusId: newStatus,
-        };
-      }
-      return job;
-    });
+    const updatedJobs = localJobs.map((job) => 
+      job._id === jobId ? { ...job, jobStatusId: newStatus } : job
+    );
     setLocalJobs(updatedJobs);
 
     try {
-      const rawToken = localStorage.getItem("token");
-      const cleanToken = rawToken ? rawToken.replace(/"/g, "").trim() : "";
-      
+      const token = localStorage.getItem("token")?.replace(/"/g, "").trim() || "";
       const response = await axios.put(
         `${BASE_URL}/update-technician-job-status`,
-        {
-          jobStatusId: newStatus,
-          techncianJobId: jobId,
-        },
-        {
-          headers: { Authorization: `Bearer ${cleanToken}` },
-        }
+        { jobStatusId: newStatus, techncianJobId: jobId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       
       if (response.data?.success) {
         toast.success(`Job ${newStatus === "START" ? "started" : "paused"} successfully`);
-        if (onJobUpdate) {
-          onJobUpdate();
-        }
+        onJobUpdate?.();
       }
     } catch (error: any) {
-      console.error("Error updating job status:", error);
       toast.error(error.response?.data?.message || "Failed to update job status");
-      // Rollback on error
       setLocalJobs(jobs);
     }
   };
@@ -120,63 +101,56 @@ const JobCardsSection = ({
     }
   };
 
+  // Handle share with technician
+  const handleShareWithTechnician = (job: any) => {
+    const message = `Job Details:\nJob ID: ${job.jobId}\nTicket: ${job.ticketId?.ticketCode}\nCustomer: ${job.ticketId?.customerId?.personId?.firstName} ${job.ticketId?.customerId?.personId?.lastName}\nProduct: ${job.ticketId?.vehicleId?.productName || job.ticketId?.vehicleId?.vehicleType}\nAddress: ${job.ticketId?.customerId?.addressId?.address}, ${job.ticketId?.customerId?.addressId?.city}`;
+    
+    const phoneNumber = job.technicianId?.contactId?.phoneNumber?.replace(/[^0-9]/g, '');
+    
+    if (phoneNumber) {
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      toast.success('Opening WhatsApp...');
+    } else {
+      toast.error('Technician phone number not available');
+    }
+  };
+
   // Handle completion toggle (changes status to END)
   const handleCompletionToggle = async (jobId: string, currentStatus: boolean) => {
-    const newCompletionStatus = !currentStatus;
-    const newJobStatus = newCompletionStatus ? "END" : "PENDING";
-
-    // Optimistic update: Update local state immediately
-    const updatedJobs = localJobs.map((job) => {
-      if (job._id === jobId) {
-        return {
-          ...job,
-          jobStatusId: newJobStatus,
-        };
-      }
-      return job;
-    });
+    const newJobStatus = !currentStatus ? "END" : "PENDING";
+    const updatedJobs = localJobs.map((job) => 
+      job._id === jobId ? { ...job, jobStatusId: newJobStatus } : job
+    );
     setLocalJobs(updatedJobs);
 
     try {
-      const rawToken = localStorage.getItem("token");
-      const cleanToken = rawToken ? rawToken.replace(/"/g, "").trim() : "";
-      
+      const token = localStorage.getItem("token")?.replace(/"/g, "").trim() || "";
       const response = await axios.put(
         `${BASE_URL}/update-technician-job-status`,
-        {
-          jobStatusId: newJobStatus,
-          techncianJobId: jobId,
-        },
-        {
-          headers: { Authorization: `Bearer ${cleanToken}` },
-        }
+        { jobStatusId: newJobStatus, techncianJobId: jobId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       
       if (response.data?.success) {
-        toast.success(newCompletionStatus ? "Job completed" : "Job reopened");
-        if (onJobUpdate) {
-          onJobUpdate();
-        }
+        toast.success(!currentStatus ? "Job completed" : "Job reopened");
+        onJobUpdate?.();
       }
     } catch (error: any) {
-      console.error("Error updating job completion:", error);
       toast.error(error.response?.data?.message || "Failed to update job completion");
-      // Rollback on error
       setLocalJobs(jobs);
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading jobs...</div>;
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-GB");
-  };
+  const formatDate = (dateString: string) => 
+    dateString ? new Date(dateString).toLocaleDateString("en-GB") : "N/A";
 
   const handleView = (job: any) => {
     setSelectedJob(job);
     setIsModalOpen(true);
   };
+
+  if (loading) return <div className="p-10 text-center">Loading jobs...</div>;
 
   const partsCost =
     selectedJob?.parts?.reduce(
@@ -219,11 +193,8 @@ const JobCardsSection = ({
         localJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
             {localJobs?.map((job, index) => {
-              // Static status logic: PENDING (default) -> START -> ON HOLD -> END
               const currentStatus = job.jobStatusId || "PENDING";
-              // Determine completion from status - if status is "END", job is completed
               const isCompleted = currentStatus === "END";
-              const isOnHold = currentStatus === "ON HOLD";
               const isStart = currentStatus === "START";
 
               return (
@@ -353,15 +324,21 @@ const JobCardsSection = ({
                     <div className="mt-3 flex gap-2">
                       <button
                         onClick={() => handleView(job)}
-                        className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+                        className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition-all"
                       >
-                        <Eye size={14} /> VIEW
+                        <Eye size={13} /> VIEW
                       </button>
                       <button
                         onClick={() => handleAddInspection(job)}
-                        className="flex-1 bg-linear-to-r from-green-600 to-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+                        className="flex-1 bg-linear-to-r from-green-600 to-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition-all"
                       >
-                        <ClipboardList size={14} /> INSPECTION
+                        <ClipboardList size={13} /> INSPECTION
+                      </button>
+                      <button
+                        onClick={() => handleShareWithTechnician(job)}
+                        className="flex-1 bg-linear-to-r from-blue-600 to-cyan-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition-all"
+                      >
+                        <Share2 size={13} /> SHARE
                       </button>
                     </div>
                     </div>
@@ -430,11 +407,8 @@ const JobCardsSection = ({
 
               <tbody className="divide-y divide-gray-50">
                 {localJobs?.map((job, index) => {
-                  // Static status logic: PENDING (default) -> START -> ON HOLD -> END
                   const currentStatus = job.jobStatusId || "PENDING";
-                  // Determine completion from status - if status is "END", job is completed
                   const isCompleted = currentStatus === "END";
-                  const isOnHold = currentStatus === "ON HOLD";
                   const isStart = currentStatus === "START";
 
                   return (
@@ -584,6 +558,13 @@ const JobCardsSection = ({
                             title="Add Inspection"
                           >
                             <ClipboardList size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleShareWithTechnician(job)}
+                            className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                            title="Share with Technician"
+                          >
+                            <Share2 size={16} />
                           </button>
                         </div>
                       </td>
