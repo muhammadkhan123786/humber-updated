@@ -50,26 +50,6 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
   const selectedTechnicianId = watch("leadingTechnicianId");
   const [jobId, setJobId] = useState<string>("");
   const [isGeneratingJobId, setIsGeneratingJobId] = useState(false);
-  const getTechnicianName = (technician: any) => {
-    if (!technician?.personId) return "Unknown";
-    const person = technician.personId;
-    return `${person.firstName} ${person.middleName ? person.middleName + " " : ""}${person.lastName || ""}`.trim();
-  };
-
-  const getTechnicianSpecialization = (technician: any) => {
-    if (
-      !technician?.specializationIds ||
-      !Array.isArray(technician.specializationIds)
-    )
-      return "General";
-    if (technician.specializationIds.length > 0) {
-      const firstSpec = technician.specializationIds[0];
-      return typeof firstSpec === "object"
-        ? firstSpec.MasterServiceType || "General"
-        : "General";
-    }
-    return "General";
-  };
 
   React.useEffect(() => {
     const fetchJobId = async () => {
@@ -95,30 +75,6 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
   const selectedTicket = useMemo(() => {
     return selectedQuotation?.ticket || null;
   }, [selectedQuotation]);
-  const technicianFromQuotation = useMemo(() => {
-    if (!selectedQuotation) return null;
-
-    return technicians.find((tech: any) => {
-      const techName = getTechnicianName(tech).toLowerCase();
-      const quoteTechFirstName =
-        selectedQuotation.technicianFirstName?.toLowerCase() || "";
-      const quoteTechLastName =
-        selectedQuotation.technicianLastName?.toLowerCase() || "";
-
-      return (
-        techName.includes(quoteTechFirstName) &&
-        techName.includes(quoteTechLastName)
-      );
-    });
-  }, [selectedQuotation, technicians]);
-
-  React.useEffect(() => {
-    if (technicianFromQuotation) {
-      setValue("leadingTechnicianId", technicianFromQuotation._id);
-    } else if (selectedQuotation) {
-      setValue("leadingTechnicianId", "");
-    }
-  }, [technicianFromQuotation, selectedQuotation, setValue]);
 
   const selectedTechnician = useMemo(() => {
     return technicians.find((t: any) => t._id === selectedTechnicianId) || null;
@@ -142,6 +98,27 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
     return `${firstName} ${lastName}`.trim() || "Unknown Customer";
   };
 
+  const getTechnicianName = (technician: any) => {
+    if (!technician?.personId) return "Unknown";
+    const person = technician.personId;
+    return `${person.firstName} ${person.middleName ? person.middleName + " " : ""}${person.lastName || ""}`.trim();
+  };
+
+  const getTechnicianSpecialization = (technician: any) => {
+    if (
+      !technician?.specializationIds ||
+      !Array.isArray(technician.specializationIds)
+    )
+      return "General";
+    if (technician.specializationIds.length > 0) {
+      const firstSpec = technician.specializationIds[0];
+      return typeof firstSpec === "object"
+        ? firstSpec.MasterServiceType || "General"
+        : "General";
+    }
+    return "General";
+  };
+
   const getVehicleDetails = (vehicle: any) => {
     if (!vehicle) return "N/A";
     const brand = vehicle.brandName || "";
@@ -156,6 +133,11 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
       id: q._id,
       label: `${q.quotationAutoId || "N/A"} - ${q.ticket?.ticketCode || "No Ticket"} - ${q.customer?.firstName || "Unknown"}`,
     }));
+
+  const technicianOptions = technicians.map((tech: any) => ({
+    id: tech._id,
+    label: `${getTechnicianName(tech)} (${getTechnicianSpecialization(tech)})`,
+  }));
 
   const getPriorityInfo = () => {
     if (!selectedQuotation?.ticketPrioprity) return null;
@@ -302,13 +284,23 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
             value={selectedTicket?.ticketCode || "Select a quotation first"}
           />
 
+          <div className="space-y-2">
+            <label className="font-medium text-sm tracking-widest">
+              Technician Name <span className="text-red-500">*</span>
+            </label>
+            <CustomSelectNoBorder
+              options={technicianOptions}
+              value={selectedTechnicianId}
+              onChange={(id: any) => setValue("leadingTechnicianId", id)}
+              placeholder="Select Technician"
+              className="border-0 focus:border-0 focus:ring-0 ring-0 outline-none shadow-none"
+              error={!selectedTechnicianId}
+            />
+          </div>
+
           <FormDisplay
             label="Customer Name"
-            value={
-              selectedQuotation
-                ? getCustomerName(selectedQuotation)
-                : "Select a quotation first"
-            }
+            value={selectedQuotation ? getCustomerName(selectedQuotation) : "-"}
           />
         </div>
 
