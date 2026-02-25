@@ -45,6 +45,8 @@ import {
   ClipboardCheck,
   Gavel,
   Shield,
+  Bike,
+  Plus,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -351,6 +353,31 @@ export const navigation: INavBarLinkSharedInterface[] = [
         label: "Sizes",
         href: "/dashboard/inventory-masterdata/sizes",
         icon: Maximize,
+        roleId: [1],
+      },
+    ],
+  },
+
+  // rider management
+  {
+    _id: nanoid(),
+    label: "Rider Management",
+    href: "#",
+    icon: Bike,
+    roleId: [1],
+    subItems: [
+      {
+        _id: nanoid(),
+        label: "All Riders",
+        href: "/dashboard/riders",
+        icon: Users,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Add New Rider",
+        href: "/dashboard/AddRider",
+        icon: Plus,
         roleId: [1],
       },
     ],
