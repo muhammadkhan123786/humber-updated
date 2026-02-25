@@ -4,6 +4,8 @@ import { vehicleInspectionsDoc, VehicleInspectionsByTechnicians } from "../../mo
 import { CreateInspectionZodSchemaValidation } from "../../schemas/technicians-inspections-schema/technician.inspections.validations";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
+import { checkInspectionExists } from "../../middleware/create-inspection-middlware/create.update.inspection.middleware";
+import { getInspectionByJobId } from "../../controllers/inspection-controller/technician.inspection.controller";
 
 const vehicleInspectionsRouter = Router();
 
@@ -16,15 +18,18 @@ const vehicleInspectionsController = new AdvancedGenericController({
     searchFields: ["jobId.jobId"]
 });
 
+//inspections by job id 
+vehicleInspectionsRouter.get('/inspectionbyjobid',getInspectionByJobId);
+
 vehicleInspectionsRouter.get("/", vehicleInspectionsController.getAll);
 vehicleInspectionsRouter.get("/:id", vehicleInspectionsController.getById);
-vehicleInspectionsRouter.post("/",async(req:TechnicianAuthRequest,res,next)=> {
+vehicleInspectionsRouter.post("/",checkInspectionExists,async(req:TechnicianAuthRequest,res,next)=> {
     req.body.technicianId = req.technicianId; // Assuming you have userId from authentication middleware
     req.body.userId = req.user.userId; // Assuming you have userId from authentication middleware
     
   next();
 },vehicleInspectionsController.create);
-vehicleInspectionsRouter.put("/:id",async(req:TechnicianAuthRequest,res,next)=> {
+vehicleInspectionsRouter.put("/:id",checkInspectionExists,async(req:TechnicianAuthRequest,res,next)=> {
     console.log("PUT request body:", req.body); // Debugging log
     req.body.technicianId = req.technicianId; // Assuming you have userId from authentication middleware
     req.body.userId = req.user.userId; // Assuming you have userId from authentication middleware
