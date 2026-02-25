@@ -27,7 +27,7 @@ jobAssignmentRouter.post("/",async(req:TechnicianAuthRequest,res:Response,next:N
         }
      if(req.technicianId)
      {
-        req.body.technicianId=req.technicianId;
+        req.body.assignedBy=req.technicianId;
         
      }
      req.body.userId = req.user.userId;
@@ -44,7 +44,7 @@ jobAssignmentRouter.put("/:id",async(req:TechnicianAuthRequest,res:Response,next
         }
      if(req.technicianId)
      {
-        req.body.technicianId=req.technicianId;
+        req.body.assignedBy=req.technicianId;
         
      }
      req.body.userId = req.user.userId;
