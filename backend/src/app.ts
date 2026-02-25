@@ -111,6 +111,7 @@ import { customerInvoiceStatisticsController } from "./controllers/customer-invo
 import techncianJobsByAdminRouter from "./routes/technician-jobs-by-admin-routes/technician.jobs.by.admin.routes";
 import vehicleInspectionsRouter from "./routes/technician-vehicle-inspections-routes/technician.vehicle.inspections.routes";
 import jobAssignmentRouter from "./routes/technician-job-assignments/technician.jobs.assignment.routes";
+import techncianJobsActivityRouter from "./routes/technician-jobs-activities/technician.jobs.activities.routes";
 
 
 // Create express app
@@ -551,6 +552,13 @@ app.use(
   `${process.env.API_PREFIX}/technician-job-assignments`,
   technicianProtecter,
   jobAssignmentRouter
+);
+
+//25-02-2026
+app.use(
+  `${process.env.API_PREFIX}/technician-parts-installation`,
+  technicianProtecter,
+  techncianJobsActivityRouter
 );
 
 //Muhammad Imran code ended here.
