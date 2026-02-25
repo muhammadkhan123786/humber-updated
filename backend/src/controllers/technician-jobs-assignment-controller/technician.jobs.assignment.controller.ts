@@ -14,6 +14,7 @@ export const getAllTechnicianAssignments = async (
       limit = "10",
       status,
       search,
+      role
     } = req.query;
 
     const pageNumber = Math.max(Number(page), 1);
@@ -25,6 +26,10 @@ export const getAllTechnicianAssignments = async (
     // ✅ Filter by status
     if (status) {
       matchStage.jobStatus = status;
+    }
+    if(role)
+    {
+       matchStage.role = role;
     }
 
     // ✅ Role-based filtering
