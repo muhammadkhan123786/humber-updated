@@ -1,5 +1,6 @@
 import { IBaseEntity } from '../Base.Interface';
 export type QuotationStatuses = "SENT TO ADMIN" | "DRAFTED" | "SEND TO CUSTOMER" | "SEND TO INSURANCE" | "APPROVED" | "REJECTED";
+export type PartInstallationStatus="PENDING"|"PARTIAL"|"INSTALLED";
 export interface IQuotationPartItem {
     partId: string;
     partName: string;
@@ -7,6 +8,10 @@ export interface IQuotationPartItem {
     unitPrice: number;
     discount?: number;
     total: number;
+    installedQuantity?:number,
+    installedBy?:string,
+    installedAt?:Date,
+    installationStatus?:PartInstallationStatus
 }
 
 export interface ITicketQuotation<TUserId = string, TTICKETID = string, TPARTS = IQuotationPartItem[], TTTECHNICIANID = string, VALIDITYDATE = string> extends IBaseEntity<TUserId> {
@@ -23,5 +28,5 @@ export interface ITicketQuotation<TUserId = string, TTICKETID = string, TPARTS =
     subTotalBill?: number,
     taxAmount?: number,
     netTotal?: number,
-    quotationAutoId?: string
+    quotationAutoId?: string,    
 }

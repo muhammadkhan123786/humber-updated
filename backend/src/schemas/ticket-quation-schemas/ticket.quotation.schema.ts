@@ -20,8 +20,17 @@ const quotationPartItemSchema = new Schema(
     unitPrice: { type: Number, required: true },
     discount: { type: Number, default: 0 },
     total: { type: Number, required: true },
-  },
-  { _id: false },
+
+    // 🔥 Add tracking fields
+      installedQuantity: { type: Number, default: 0 },
+      installedBy: { type: Types.ObjectId, ref: "Technicians" },
+      installedAt: { type: Date },
+      installationStatus: {
+        type: String,
+        enum: ["PENDING", "PARTIAL", "INSTALLED"],
+        default: "PENDING",
+      },
+  }
 );
 
 export const ticketQuotationSchema = {
@@ -41,7 +50,7 @@ export const ticketQuotationSchema = {
     type: [quotationPartItemSchema],
     default: [],
   },
-
+  
   labourTime: { type: Number, default: 0 },
   labourRate: { type: Number, default: 0 },
 
