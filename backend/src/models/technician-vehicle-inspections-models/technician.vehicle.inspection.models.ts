@@ -24,3 +24,7 @@ export const VehicleInspectionsByTechnicians: Model<vehicleInspectionsDoc> =
         "VehicleInspectionsByTechnicians",
         vehicleInspectionsDbSchema,
     );
+vehicleInspectionsDbSchema.index(
+  { jobId: 1, tecnicianId: 1, inspectionTIME: 1 },
+  { unique: true }
+);
