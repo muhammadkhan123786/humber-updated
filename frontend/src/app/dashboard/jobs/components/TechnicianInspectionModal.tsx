@@ -31,22 +31,81 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
   const [inspectionSummary, setInspectionSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetchingTypes, setFetchingTypes] = useState(false);
+  const [existingInspectionId, setExistingInspectionId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
-    fetchInspectionTypes();
-  }, []);
+    loadInspectionData();
+  }, [inspectionTime]);
 
-  const fetchInspectionTypes = async () => {
+  const loadInspectionData = async () => {
     setFetchingTypes(true);
     try {
       const token = localStorage.getItem("token")?.replace(/"/g, "").trim();
-      const response = await axios.get(`${BASE_URL}/technician-inspection`, {
+      
+      // Fetch inspection types first
+      const typesResponse = await axios.get(`${BASE_URL}/technician-inspection`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.data?.success) {
-        const activeTypes = response.data.data.filter((type: InspectionType) => type.isActive);
-        setInspectionTypes(activeTypes);
+      if (!typesResponse.data?.success) {
+        toast.error("Failed to load inspection types");
+        return;
+      }
+
+      const activeTypes = typesResponse.data.data.filter((type: InspectionType) => type.isActive);
+      setInspectionTypes(activeTypes);
+
+      // Then try to fetch existing inspection
+      try {
+        const existingResponse = await axios.get(
+          `${BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${job._id}&inspectionTIME=${inspectionTime}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (existingResponse.data?.success && existingResponse.data.data) {
+          // Existing inspection found - prefill mode
+          const existingData = existingResponse.data.data;
+          setExistingInspectionId(existingData._id);
+          setInspectionSummary(existingData.inspectionSummary || "");
+          setIsEditMode(true);
+
+          // Create a map of existing inspections by inspectionTypeId
+          const existingMap = new Map<string, { status: "PASS" | "FAIL" | "N/A"; notes: string }>(
+            existingData.inspections.map((item: any) => [
+              item.inspectionTypeId._id || item.inspectionTypeId,
+              { status: item.status, notes: item.notes || "" }
+            ])
+          );
+
+          // Merge with current inspection types
+          const mergedInspections = activeTypes.map((type: InspectionType) => {
+            const existing = existingMap.get(type._id);
+            return existing
+              ? { inspectionTypeId: type._id, status: existing.status, notes: existing.notes }
+              : { inspectionTypeId: type._id, status: "PENDING" as const, notes: "" };
+          });
+
+          setInspections(mergedInspections);
+        } else {
+          // No existing inspection - create mode
+          setExistingInspectionId(null);
+          setIsEditMode(false);
+          setInspectionSummary("");
+          setInspections(
+            activeTypes.map((type: InspectionType) => ({
+              inspectionTypeId: type._id,
+              status: "PENDING" as const,
+              notes: "",
+            }))
+          );
+        }
+      } catch (error) {
+        // No existing inspection - create mode
+        console.log("No existing inspection found");
+        setExistingInspectionId(null);
+        setIsEditMode(false);
+        setInspectionSummary("");
         setInspections(
           activeTypes.map((type: InspectionType) => ({
             inspectionTypeId: type._id,
@@ -56,7 +115,7 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
         );
       }
     } catch (error) {
-      toast.error("Failed to load inspection types");
+      toast.error("Failed to load inspection data");
     } finally {
       setFetchingTypes(false);
     }
@@ -121,18 +180,25 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
         })),
       };
 
-      const response = await axios.post(
-        `${BASE_URL}/technician-vehicle-inspections`,
+      // Use PUT for update, POST for create
+      const url = isEditMode && existingInspectionId
+        ? `${BASE_URL}/technician-vehicle-inspections/${existingInspectionId}`
+        : `${BASE_URL}/technician-vehicle-inspections`;
+      
+      const method = isEditMode && existingInspectionId ? 'put' : 'post';
+
+      const response = await axios[method](
+        url,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data?.success) {
-        toast.success("Inspection saved successfully!");
+        toast.success(isEditMode ? "Inspection updated successfully!" : "Inspection saved successfully!");
         onBack();
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to save inspection");
+      toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'save'} inspection`);
     } finally {
       setLoading(false);
     }
@@ -154,7 +220,14 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
               <div className="flex items-center gap-3">
                 <ClipboardList size={32} className="text-green-600" />
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Inspection Checklist</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-bold text-gray-900">Inspection Checklist</h2>
+                    {isEditMode && (
+                      <span className="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
+                        EDITING
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">Job: {job?.jobId}</p>
                 </div>
               </div>
@@ -314,9 +387,9 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
               className="px-6 py-2.5 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold flex items-center gap-2 hover:brightness-110 transition-all disabled:opacity-50 shadow-lg"
             >
               {loading ? (
-                <><Loader2 size={18} className="animate-spin" /> Saving...</>
+                <><Loader2 size={18} className="animate-spin" /> {isEditMode ? 'Updating...' : 'Saving...'}</>
               ) : (
-                <><Save size={18} /> Save Inspection</>
+                <><Save size={18} /> {isEditMode ? 'Update Inspection' : 'Save Inspection'}</>
               )}
             </button>
             </div>
