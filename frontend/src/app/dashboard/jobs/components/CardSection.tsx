@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import JobDetailModal from "./JobsDetail";
 import TechnicianInspection from "./TechnicianInspectionModal";
+import ShareJobModal from "./Share";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import {
@@ -55,6 +56,8 @@ const JobCardsSection = ({
   const [showInspectionForm, setShowInspectionForm] = useState(false);
   const [inspectionJob, setInspectionJob] = useState<any>(null);
   const [localJobs, setLocalJobs] = useState<any[]>(jobs);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [jobToShare, setJobToShare] = useState<any>(null);
 
   // Update local jobs when props change
   useEffect(() => {
@@ -103,16 +106,13 @@ const JobCardsSection = ({
 
   // Handle share with technician
   const handleShareWithTechnician = (job: any) => {
-    const message = `Job Details:\nJob ID: ${job.jobId}\nTicket: ${job.ticketId?.ticketCode}\nCustomer: ${job.ticketId?.customerId?.personId?.firstName} ${job.ticketId?.customerId?.personId?.lastName}\nProduct: ${job.ticketId?.vehicleId?.productName || job.ticketId?.vehicleId?.vehicleType}\nAddress: ${job.ticketId?.customerId?.addressId?.address}, ${job.ticketId?.customerId?.addressId?.city}`;
-    
-    const phoneNumber = job.technicianId?.contactId?.phoneNumber?.replace(/[^0-9]/g, '');
-    
-    if (phoneNumber) {
-      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-      toast.success('Opening WhatsApp...');
-    } else {
-      toast.error('Technician phone number not available');
+    setJobToShare(job);
+    setIsShareModalOpen(true);
+  };
+
+  const handleShareSuccess = () => {
+    if (onJobUpdate) {
+      onJobUpdate();
     }
   };
 
@@ -583,6 +583,12 @@ const JobCardsSection = ({
         onClose={() => setIsModalOpen(false)}
         job={selectedJob}
         calculations={{ partsCost, labourCost, totalBill }}
+      />
+      <ShareJobModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        job={jobToShare}
+        onSuccess={handleShareSuccess}
       />
         </>
       )}
