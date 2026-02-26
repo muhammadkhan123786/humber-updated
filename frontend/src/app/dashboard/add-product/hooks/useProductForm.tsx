@@ -48,6 +48,7 @@ export interface ProductVariant {
   leadTimeDays?: number;
   warranty: string;
   warrantyPeriod: string;
+  supplierId: string;
 }
 
 export function useProductForm({
@@ -399,6 +400,7 @@ export function useProductForm({
             productStatusId: v.productStatusId,
             conditionId: v.conditionId,
             featured: v.featured,
+            supplierId: v.supplierId,
           },
 
           warranty: {
