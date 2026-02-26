@@ -33,7 +33,7 @@ const UserStatsHeader = () => {
     <div className="p-2 font-sans">
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+          <button className="flex hover:bg-green-500 px-3 py-2 rounded-lg hover:text-white items-center gap-2 text-gray-600  transition-colors">
             <ArrowLeft size={18} />
             <span className="text-sm font-medium">Back</span>
           </button>
