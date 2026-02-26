@@ -4,7 +4,7 @@ export default function RolesHeader() {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <div className="flex items-start gap-4">
-        <button className="mt-1 flex items-center gap-1.5 text-gray-500 hover:text-indigo-600 transition-colors group">
+        <button className="mt-4 flex items-center gap-1.5 text-gray-500 hover:text-white hover:bg-green-500 py-2 px-3 transition-colors group rounded-lg">
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
           <span className="text-sm font-medium font-['Arial']">Back</span>
         </button>

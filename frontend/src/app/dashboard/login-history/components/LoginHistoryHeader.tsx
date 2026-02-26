@@ -47,8 +47,13 @@ const LoginHistoryHeader: React.FC = () => {
     <div className="p-8 bg-[#fbfaff]  font-sans">
       <div className="flex justify-between items-start mb-8">
         <div className="flex gap-4">
-          <button className="mt-2 text-gray-400 hover:text-gray-800 transition-colors">
-            <ArrowLeft size={20} />
+          <button
+            className="flex items-center gap-2 px-3 py-2 rounded-lg
+text-gray-600
+transition-all duration-200"
+          >
+            <ArrowLeft size={18} />
+            <span className="text-sm font-medium">Back</span>
           </button>
           <div>
             <h1 className="text-3xl font-semibold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
