@@ -46,17 +46,23 @@ export class ShopifyService extends BaseMarketplaceService {
     async testConnection(): Promise<boolean> {
         try {
             await this.ensureTokensLoaded();
+            const url = `${this.getShopBaseUrl()}/shop.json`;
 
-            const response = await axios.get(
-                `${this.getShopBaseUrl()}/shop.json`,
-                { headers: this.getAuthHeaders() }
-            );
+            console.log(`🔗 Attempting Request to: ${url}`);
 
-            console.log('✅ Shopify connected:', response.data.shop?.name);
+            const response = await axios.get(url, {
+                headers: this.getAuthHeaders()
+            });
+
             return true;
-
         } catch (error: any) {
-            console.error('❌ Shopify test failed:', error.response?.data || error.message);
+            // THIS PART IS KEY: It tells you exactly what Shopify didn't like
+            if (error.response) {
+                console.error('❌ Shopify API Error Data:', error.response.data);
+                console.error('❌ Shopify API Status:', error.response.status);
+            } else {
+                console.error('❌ Network/Request Error:', error.message);
+            }
             return false;
         }
     }

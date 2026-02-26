@@ -79,7 +79,7 @@ export interface Attribute {
 export const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
-  export interface BasicInfoStepProps {
+export interface BasicInfoStepProps {
   formData: {
     productName: string;
     sku: string;
@@ -93,16 +93,16 @@ export const BASE_URL =
   };
   tags: string[];
   images: {
-  file: File;
-  preview: string;
-  name: string;
-}[];
+    file: File;
+    preview: string;
+    name: string;
+  }[];
   newTag: string;
   onInputChange: (field: string, value: string) => void;
   onAddTag: () => void;
   onRemoveTag: (tag: string) => void;
   onNewTagChange: (value: string) => void;
-onImageUpload: (files: File[]) => Promise<void> | void;
+  onImageUpload: (files: File[]) => Promise<void> | void;
   onRemoveImage: (index: number) => void;
   isUploading?: boolean;
   onBulkAddTags: (newTagsArray: string[]) => void;
@@ -135,6 +135,8 @@ export interface CategoryStepProps {
   selectedCategories: CategoryNode[];
   getCategoriesAtLevel: (level: number) => CategoryNode[];
   handleCategorySelect: (level: number, value: string) => void;
+  attributes?: Record<string, any>;
+
 }
 
 /* 🎨 Level-based styling (same as static UI) */

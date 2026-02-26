@@ -14,7 +14,7 @@ import { createProduct } from "@/helper/products";
 import { toast } from 'sonner';
 import { useRouter } from "next/navigation";
 
-// ─── Shared variant types ────
+// ─── Shared variant types ────────────────────────────────────────────────────
 export interface MarketplacePricing {
   id: string;
   marketplaceId: string;
@@ -59,15 +59,14 @@ export function useProductForm({
   const [selectedPath, setSelectedPath] = useState<string[]>([]);
   const [dynamicFields, setDynamicFields] = useState<Record<string, any>>({});
   const [tags, setTags] = useState<string[]>([]);
-  
-  // ✅ Image state with preview and base64
+
   const [images, setImages] = useState<{
     file: File;
     preview: string;
     name: string;
-    base64?: string; // ✅ Add base64 field
+    base64?: string;
   }[]>([]);
-  
+
   const [newTag, setNewTag] = useState("");
   const [fetchedCategories, setFetchedCategories] = useState<CategoryNode[]>(categories);
   const [formData, setFormData] = useState(initialData);
@@ -77,6 +76,14 @@ export function useProductForm({
   const [dropdownLoading, setDropdownLoading] = useState(false);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
 
+  // ─── NEW: Category attribute-filter state ────────────────────────────────
+  // undefined  = not yet fetched  → combobox shows spinner, list is empty
+  // new Set()  = fetched, none have attributes → combobox shows empty hint
+  // new Set([…]) = fetched with results → combobox shows only those categories
+  const [attributeCategoryIds, setAttributeCategoryIds] = useState<Set<string> | undefined>(undefined);
+  const [attributeIdsLoading, setAttributeIdsLoading] = useState(true);
+
+  // ─── Warranty options ────────────────────────────────────────────────────
   const getWarrantyOptions = () => [
     { value: "manufacturer", label: "Manufacturer Warranty" },
     { value: "seller", label: "Seller Warranty" },
@@ -85,6 +92,31 @@ export function useProductForm({
     { value: "lifetime", label: "Lifetime Warranty" },
   ];
 
+  // ─── Fetch all category IDs that have attributes (runs once on mount) ────
+  useEffect(() => {
+    const loadAttributeCategoryIds = async () => {
+      try {
+        setAttributeIdsLoading(true);
+        // Broad fetch — adjust page size to your dataset
+        const res = await fetchAttributes(1, 500, "", "");
+        const all: Attribute[] = res.data || [];
+
+        // Collect every unique categoryId that has at least one attribute
+        const ids = new Set(all.map((a: Attribute) => a.categoryId));
+        setAttributeCategoryIds(ids);
+      } catch (err) {
+        console.error("Failed to load attribute category ids", err);
+        // Empty Set on error → show nothing, not everything
+        setAttributeCategoryIds(new Set());
+      } finally {
+        setAttributeIdsLoading(false);
+      }
+    };
+
+    loadAttributeCategoryIds();
+  }, []);
+
+  // ─── Fetch dropdowns when step changes ───────────────────────────────────
   useEffect(() => {
     const loadDropdowns = async () => {
       if (dropdownLoading) return;
@@ -121,6 +153,7 @@ export function useProductForm({
     loadDropdowns();
   }, [currentStep]);
 
+  // ─── Fetch attributes for the selected category path ─────────────────────
   useEffect(() => {
     if (!selectedPath.length) {
       setAttributes([]);
@@ -151,6 +184,7 @@ export function useProductForm({
     loadAttributes();
   }, [currentStep, selectedPath]);
 
+  // ─── Fetch categories ─────────────────────────────────────────────────────
   useEffect(() => {
     const fetchCategoriesData = async () => {
       try {
@@ -163,12 +197,22 @@ export function useProductForm({
     fetchCategoriesData();
   }, []);
 
+  // ─── Category helpers ─────────────────────────────────────────────────────
   const handleCategorySelect = useCallback((level: number, value: string) => {
     setSelectedPath((prev) => {
       const next = prev.slice(0, level);
       if (value) next[level] = value;
       return next;
     });
+  }, []);
+
+  /**
+   * NEW: Set the entire selectedPath at once from a flat category selection.
+   * CategoryStep calls this with the full pathIds array so all levels
+   * auto-populate without cascading clicks.
+   */
+  const handleFullPathSelect = useCallback((pathIds: string[]) => {
+    setSelectedPath(pathIds);
   }, []);
 
   const selectedCategories = useMemo(() => {
@@ -180,8 +224,7 @@ export function useProductForm({
       if (!fetchedCategories || !Array.isArray(fetchedCategories)) {
         return [];
       }
-      const result = getCategoriesAtLevel(fetchedCategories, selectedPath, level);
-      return result;
+      return getCategoriesAtLevel(fetchedCategories, selectedPath, level);
     },
     [fetchedCategories, selectedPath],
   );
@@ -202,6 +245,7 @@ export function useProductForm({
     return fields;
   }, [selectedCategories]);
 
+  // ─── Step navigation ──────────────────────────────────────────────────────
   const nextStep = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -222,6 +266,7 @@ export function useProductForm({
     }
   }, [currentStep]);
 
+  // ─── Form field handlers ──────────────────────────────────────────────────
   const handleInputChange = useCallback((field: string, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
@@ -239,6 +284,7 @@ export function useProductForm({
     [],
   );
 
+  // ─── Tag handlers ─────────────────────────────────────────────────────────
   const addTag = useCallback(() => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setTags((prev) => [...prev, newTag.trim()]);
@@ -257,7 +303,7 @@ export function useProductForm({
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   }, []);
 
-  // ✅ UPDATED: Convert File to Base64
+  // ─── Image handlers ───────────────────────────────────────────────────────
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -267,27 +313,22 @@ export function useProductForm({
     });
   };
 
-  // ✅ UPDATED: Handle image upload with Base64 conversion
   const handleImageUpload = useCallback(
     async (files: FileList | File[]) => {
       const fileArray: File[] = Array.isArray(files) ? files : Array.from(files);
-
-      // Filter valid image files
       const validFiles = fileArray.filter((file) => file instanceof File);
 
-      // Convert each file to Base64
       const formattedImagesPromises = validFiles.map(async (file) => {
         const base64 = await fileToBase64(file);
         return {
           file,
           preview: URL.createObjectURL(file),
           name: file.name,
-          base64, // ✅ Store Base64 string
+          base64,
         };
       });
 
       const formattedImages = await Promise.all(formattedImagesPromises);
-
       setImages((prev) => [...prev, ...formattedImages]);
     },
     []
@@ -295,7 +336,6 @@ export function useProductForm({
 
   const removeImage = useCallback((index: number) => {
     setImages((prev) => {
-      // Revoke object URL to prevent memory leaks
       if (prev[index]?.preview) {
         URL.revokeObjectURL(prev[index].preview);
       }
@@ -303,14 +343,11 @@ export function useProductForm({
     });
   }, []);
 
-  console.log("Images in hook:", images);
-
-  // ✅ UPDATED: handleSubmit now sends Base64 images to database
+  // ─── Submit ───────────────────────────────────────────────────────────────
   const handleSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      // ✅ Extract Base64 strings instead of file names
       const base64Images = images.map((img) => img.base64 || '');
 
       const keywordsArray = (formData.keywords as string)
@@ -319,7 +356,6 @@ export function useProductForm({
         .filter(Boolean);
 
       const finalData = {
-        // ── Product Info ─────────────────────────
         productName: formData.productName,
         sku: formData.sku,
         barcode: formData.barcode,
@@ -330,11 +366,10 @@ export function useProductForm({
         shortDescription: formData.shortDescription,
         keywords: keywordsArray,
         tags,
-        images: base64Images, // ✅ Send Base64 strings to backend
+        images: base64Images,
         categoryId: selectedPath.at(-1),
         categoryPath: selectedPath,
 
-        // ── Variants → attributes (BACKEND NAME) ──
         attributes: variants.map((v) => ({
           sku: v.sku,
           attributes: v.attributes,
@@ -374,10 +409,9 @@ export function useProductForm({
       };
 
       console.log("📤 Final data being sent to API:", finalData);
-      console.log("📷 Images (Base64):", base64Images);
 
       try {
-        const res = await createProduct(finalData as any);
+        await createProduct(finalData as any);
         onSubmit(finalData);
         toast.success("Product created successfully!");
         router.push("/dashboard/inventory-dashboard/product");
@@ -390,37 +424,61 @@ export function useProductForm({
   );
 
   return {
+    // ── Step ──────────────────────────────────────────────────────────────
     currentStep,
+    nextStep,
+    prevStep,
+
+    // ── Form data ─────────────────────────────────────────────────────────
     formData,
+    handleInputChange,
+    handleSubmit,
+
+    // ── Categories ────────────────────────────────────────────────────────
     selectedPath,
     fetchedCategories: fetchedCategories || [],
     selectedCategories,
     getCategoriesAtLevel: getCategoriesAtLevelFromHook,
     handleCategorySelect,
-    getAllFields,
+    handleFullPathSelect,       // ← NEW: set entire path at once
     getSelectedCategory,
+    getAllFields,
+
+    // ── Attribute filter (for CategoryStep combobox) ───────────────────────
+    attributeCategoryIds,       // ← NEW: Set<string> | undefined
+    attributeIdsLoading,        // ← NEW: boolean
+
+    // ── Attributes ────────────────────────────────────────────────────────
+    attributes,
+
+    // ── Dynamic fields ────────────────────────────────────────────────────
     dynamicFields,
+    setDynamicFields,
+    handleDynamicFieldChange,
+
+    // ── Dropdowns ─────────────────────────────────────────────────────────
     dropdowns,
     dropdownLoading,
+
+    // ── Tags ──────────────────────────────────────────────────────────────
     tags,
-    images,
     newTag,
-    onBulkAddTags,
-    handleInputChange,
-    handleDynamicFieldChange,
+    setNewTag,
     addTag,
     removeTag,
+    onBulkAddTags,
+
+    // ── Images ────────────────────────────────────────────────────────────
+    images,
+    setImages,
     handleImageUpload,
     removeImage,
-    handleSubmit,
-    nextStep,
-    prevStep,
-    setNewTag,
-    setDynamicFields,
-    attributes,
-    getWarrantyOptions,
+
+    // ── Variants ──────────────────────────────────────────────────────────
     variants,
     setVariants,
-    setImages,
+
+    // ── Misc ──────────────────────────────────────────────────────────────
+    getWarrantyOptions,
   };
 }

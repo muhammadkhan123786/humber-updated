@@ -5,7 +5,7 @@ export interface MarketplaceTemplate {
   name: string; // The "ebey" field
   icon: {
     _id: string;
-    icon: string; 
+    icon: string;
     iconName: string;
   };
 }
@@ -97,7 +97,6 @@ export function AttributesAndPricingStep({
   const [addedMarketplacePricing, setAddedMarketplacePricing] = useState<MarketplacePricing[]>([]);
   const [showPricingForm, setShowPricingForm] = useState(false);
 
-  console.log("warehouseStatus", warehouseStatus);
   const [currentVariant, setCurrentVariant] = useState<Partial<ProductVariant>>({
     sku: '',
     attributes: {},
@@ -121,14 +120,14 @@ export function AttributesAndPricingStep({
 
   const hasDynamicFields = attributes && attributes.length > 0;
   const currencySymbol = '£';
-   const { data: templates, isLoading } =
+  const { data: templates, isLoading } =
     useFormActions<MarketplaceTemplate>(
       "/marketplace-templates",
       "marketplaceTemplates",
       "MarketplaceTemplates"
     );
 
-    console.log("templates", templates)
+  console.log("templates", templates)
   // ── attribute change ────────────────────────────────────────────────────
   const handleAttributeChange = (fieldId: string, value: any) => {
     setCurrentVariant(prev => ({
@@ -272,24 +271,24 @@ export function AttributesAndPricingStep({
       toast.warning('Please fill in maxStock Level');
       return;
     }
-     if (!currentVariant.reorderPoint) {
+    if (!currentVariant.reorderPoint) {
       toast.warning('Please fill in Reorder Point');
       return;
     }
-     if (!currentVariant.minStockLevel) {
+    if (!currentVariant.minStockLevel) {
       toast.warning('Please fill in Min StockLevel');
       return;
     }
 
-     if (!currentVariant.safetyStock) {
+    if (!currentVariant.safetyStock) {
       toast.warning('Please fill in Safety Stock');
       return;
     }
-     if (!currentVariant.leadTimeDays) {
+    if (!currentVariant.leadTimeDays) {
       toast.warning('Please fill in Lead TimeDays');
       return;
     }
-     if (!currentVariant.stockLocation) {
+    if (!currentVariant.stockLocation) {
       toast.warning('Please fill in Stock Location');
       return;
     }
@@ -297,16 +296,16 @@ export function AttributesAndPricingStep({
       toast.warning('Please fill in Condition');
       return;
     }
-     if (!currentVariant.productStatusId) {
+    if (!currentVariant.productStatusId) {
       toast.warning('Please fill in Product Status');
       return;
     }
-    
+
     //  if (!currentVariant.warehouseStatusId) {
     //   toast.warning('Please fill in warehouseStatus');
     //   return;
     // }
-      if (!currentVariant.warrantyPeriod) {
+    if (!currentVariant.warrantyPeriod) {
       toast.warning('Please fill in Warranty Period');
       return;
     }
@@ -333,7 +332,7 @@ export function AttributesAndPricingStep({
       warranty: currentVariant.warranty || '',
       warrantyPeriod: currentVariant.warrantyPeriod || '',
     };
-     
+
 
     // ✅ Writing to the LIFTED setter — hook's handleSubmit will see this
     if (editingVariantId) {
@@ -540,66 +539,66 @@ export function AttributesAndPricingStep({
                   )} */}
 
                   {/* Marketplace Selection */}
-{!showPricingForm && templates && templates.length > 0 && (
-  <div className="mb-4">
-    <label className="block text-sm font-semibold text-gray-700 mb-2">
-      Select Marketplace to Add Pricing
-    </label>
-    <Select
-      value={selectedMarketplace}
-      onValueChange={(value) => {
-        const template = templates.find((t) => t._id === value);
-        if (template) {
-          // Manually trigger your handleMarketplaceSelect logic
-          setSelectedMarketplace(value);
-          setShowPricingForm(true);
-          
-          const existingPricing = addedMarketplacePricing.find(p => p.marketplaceId === value);
-          
-          if (existingPricing) {
-            setCurrentMarketplacePricing(existingPricing);
-          } else {
-            setCurrentMarketplacePricing({
-              marketplaceId: value,
-              marketplaceName: template.name, // Set name from template
-              costPrice: 0,
-              sellingPrice: 0,
-              retailPrice: 0,
-              discountPercentage: 0,
-              taxId: '',
-              taxRate: 0,
-              vatExempt: false,
-            });
-          }
-        }
-      }}
-    >
-      <SelectTrigger className="border-2 border-green-200 focus:border-green-500 h-12">
-        <SelectValue placeholder="Choose a marketplace..." />
-      </SelectTrigger>
-      <SelectContent>
-        {templates
-          .filter(t => !addedMarketplacePricing.some(p => p.marketplaceId === t._id))
-          .map((template) => (
-            <SelectItem key={template._id} value={template._id}>
-              <div className="flex items-center gap-3 py-1">
-                {template.icon?.icon ? (
-                  <img 
-                    src={template.icon.icon} 
-                    alt={template.name} 
-                    className="h-6 w-6 object-contain rounded"
-                  />
-                ) : (
-                  <Store className="h-5 w-5 text-gray-400" />
-                )}
-                <span className="font-medium">{template.name}</span>
-              </div>
-            </SelectItem>
-          ))}
-      </SelectContent>
-    </Select>
-  </div>
-)}
+                  {!showPricingForm && templates && templates.length > 0 && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Select Marketplace to Add Pricing
+                      </label>
+                      <Select
+                        value={selectedMarketplace}
+                        onValueChange={(value) => {
+                          const template = templates.find((t) => t._id === value);
+                          if (template) {
+                            // Manually trigger your handleMarketplaceSelect logic
+                            setSelectedMarketplace(value);
+                            setShowPricingForm(true);
+
+                            const existingPricing = addedMarketplacePricing.find(p => p.marketplaceId === value);
+
+                            if (existingPricing) {
+                              setCurrentMarketplacePricing(existingPricing);
+                            } else {
+                              setCurrentMarketplacePricing({
+                                marketplaceId: value,
+                                marketplaceName: template.name, // Set name from template
+                                costPrice: 0,
+                                sellingPrice: 0,
+                                retailPrice: 0,
+                                discountPercentage: 0,
+                                taxId: '',
+                                taxRate: 0,
+                                vatExempt: false,
+                              });
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="border-2 border-green-200 focus:border-green-500 h-12">
+                          <SelectValue placeholder="Choose a marketplace..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {templates
+                            .filter(t => !addedMarketplacePricing.some(p => p.marketplaceId === t._id))
+                            .map((template) => (
+                              <SelectItem key={template._id} value={template._id}>
+                                <div className="flex items-center gap-3 py-1">
+                                  {template.icon?.icon ? (
+                                    <img
+                                      src={template.icon.icon}
+                                      alt={template.name}
+                                      className="h-6 w-6 object-contain rounded"
+                                    />
+                                  ) : (
+                                    <Store className="h-5 w-5 text-gray-400" />
+                                  )}
+                                  <span className="font-medium">{template.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   {/* Added Marketplace Pricing List */}
                   {addedMarketplacePricing.length > 0 && (
