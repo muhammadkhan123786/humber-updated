@@ -47,6 +47,8 @@ import {
   Shield,
   Bike,
   Plus,
+  UserRoundCog,
+  UnlockIcon,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -632,7 +634,51 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
     ],
   },
-
+  //system users
+  {
+    _id: nanoid(),
+    label: "System Users",
+    href: "#",
+    icon: Shield,
+    roleId: [1],
+    subItems: [
+      {
+        _id: nanoid(),
+        label: "All Users",
+        href: "/dashboard/allusers",
+        icon: Users,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Users Roles",
+        href: "/dashboard/User-roles",
+        icon: Shield,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "User Types",
+        href: "/dashboard/user-type",
+        icon: UserRoundCog,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Login History",
+        href: "/dashboard/login-history",
+        icon: Activity,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Permissions",
+        href: "/dashboard/Permissions",
+        icon: UnlockIcon,
+        roleId: [1],
+      },
+    ],
+  },
   /* ================= SYSTEM SETUP ================= */
   {
     _id: nanoid(),
