@@ -49,17 +49,21 @@ const PermissionsManager: React.FC = () => {
   return (
     <div className="font-sans">
       <div className="flex justify-between items-start mb-8">
-        <div>
-          <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-2 text-sm font-medium">
-            <ArrowLeft size={16} />
-            Back
-          </button>
-          <h1 className="text-3xl font-semibold bg-linear-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Permissions Manager
-          </h1>
-          <p className="text-gray-500">
-            Configure module and form-level permissions
-          </p>
+        <div className="flex gap-6">
+          <div className="mt-5">
+            <button className="flex items-center rounded-lg gap-2 hover:bg-green-500 hover:text-white text-gray-600 px-3 py-2 transition-colors mb-2 text-sm font-medium">
+              <ArrowLeft size={16} />
+              Back
+            </button>
+          </div>
+          <div>
+            <h1 className="text-3xl font-semibold bg-linear-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              Permissions Manager
+            </h1>
+            <p className="text-gray-500">
+              Configure module and form-level permissions
+            </p>
+          </div>
         </div>
         <div className="flex gap-3">
           <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 shadow-sm hover:bg-green-500 hover:text-white">
