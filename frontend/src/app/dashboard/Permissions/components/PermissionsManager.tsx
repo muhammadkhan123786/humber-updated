@@ -50,7 +50,7 @@ const PermissionsManager: React.FC = () => {
     <div className="font-sans">
       <div className="flex justify-between items-start mb-8">
         <div className="flex gap-6">
-          <div className="mt-5">
+          <div className="mt-4">
             <button className="flex items-center rounded-lg gap-2 hover:bg-green-500 hover:text-white text-gray-600 px-3 py-2 transition-colors mb-2 text-sm font-medium">
               <ArrowLeft size={16} />
               Back
