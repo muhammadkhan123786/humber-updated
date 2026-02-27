@@ -70,7 +70,7 @@ export const updateVehicleBrand = async (req: Request, res: Response) => {
         const { brandName, isDefault, isActive } = req.body;
         const userId = req.body.userId;
 
-        if (!Types.ObjectId.isValid(brandId)) {
+       if (typeof brandId !== "string" || !Types.ObjectId.isValid(brandId)) {
             return res.status(400).json({ message: "Invalid brand ID" });
         }
 
@@ -113,9 +113,9 @@ export const deleteVehicleBrand = async (req: Request, res: Response) => {
         const { brandId } = req.params;
         const userId = req.body.userId;
 
-        if (!Types.ObjectId.isValid(brandId)) {
-            return res.status(400).json({ message: "Invalid brand ID" });
-        }
+       if (typeof brandId !== "string" || !Types.ObjectId.isValid(brandId)) {
+              return res.status(400).json({ message: "Invalid brand ID" });
+         }
 
         const brand = await VechicleBrand.findOne({
             _id: brandId,
