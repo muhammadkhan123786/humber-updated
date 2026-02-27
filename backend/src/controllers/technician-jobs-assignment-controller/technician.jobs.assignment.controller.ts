@@ -14,7 +14,8 @@ export const getAllTechnicianAssignments = async (
       limit = "10",
       status,
       search,
-      role
+      role,
+      jobId
     } = req.query;
 
     const pageNumber = Math.max(Number(page), 1);
@@ -35,20 +36,24 @@ export const getAllTechnicianAssignments = async (
     // ✅ Role-based filtering
     if (req.role === "Technician") {
       const technicianId = req.technicianId;
-
       if (technicianId && Types.ObjectId.isValid(technicianId)) {
-        matchStage.technicianId = new Types.ObjectId(technicianId);
+        matchStage.assignedBy = new Types.ObjectId(technicianId);
       }
     }
 
     if (req.role === "Admin") {
       const userId = req.user?.userId;
-
       if (userId && Types.ObjectId.isValid(userId)) {
         matchStage.userId = new Types.ObjectId(userId);
       }
     }
 
+    if(jobId)
+    {
+       if (typeof jobId ==='string' && Types.ObjectId.isValid(jobId)) {
+        matchStage.jobId = new Types.ObjectId(jobId);
+      }
+    }
     const pipeline: any[] = [
       { $match: matchStage },
       // 🔹 Join Job
@@ -225,4 +230,6 @@ export const updatePartInstallation = async (
     });
   }
 };
+
+
 
