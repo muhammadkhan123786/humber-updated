@@ -8,29 +8,35 @@ import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
 import { FormToggle } from "@/app/common-form/FormToggle";
 import { FormButton } from "@/app/common-form/FormButton";
-import { IAvailability } from "../../../../../../common/IAvailibility.interface";
 import { useFormActions } from "@/hooks/useFormActions";
 
-const availabilitySchemaValidation = z.object({
-  availabilityName: z.string().min(1, "Availability name is required."),
-  fromTime: z.string().min(1, "Start time is required."),
-  toTime: z.string().min(1, "End time is required."),
-  isActive: z.boolean(),
-  isDefault: z.boolean(),
-});
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-type FormData = z.infer<typeof availabilitySchemaValidation>;
+const availabilitySchema = z
+  .object({
+    name: z.string().min(1, "Name is required."),
+    fromTime: z.string().regex(timeRegex, "Use HH:mm (24h) format"),
+    toTime: z.string().regex(timeRegex, "Use HH:mm (24h) format"),
+    isActive: z.boolean(),
+    isDefault: z.boolean(),
+  })
+  .refine((data) => data.fromTime < data.toTime, {
+    message: "Start time must be earlier than end time",
+    path: ["toTime"],
+  });
+
+type FormData = z.infer<typeof availabilitySchema>;
 
 interface Props {
-  editingData: (IAvailability & { _id?: string }) | null;
+  editingData: any | null;
   onClose: () => void;
   themeColor: string;
 }
 
-const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
+const AvailabilitieForm = ({ editingData, onClose, themeColor }: Props) => {
   const { createItem, updateItem, isSaving } = useFormActions(
-    "/availability",
-    "availability",
+    "/rider-availabilities",
+    "riderAvailabilities",
     "Availability",
   );
 
@@ -42,11 +48,11 @@ const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
     setValue,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(availabilitySchemaValidation),
+    resolver: zodResolver(availabilitySchema),
     defaultValues: {
-      availabilityName: "",
-      fromTime: "",
-      toTime: "",
+      name: "",
+      fromTime: "09:00",
+      toTime: "18:00",
       isActive: true,
       isDefault: false,
     },
@@ -57,9 +63,7 @@ const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
   useEffect(() => {
     if (editingData) {
       reset({
-        availabilityName: editingData.availabilityName,
-        fromTime: editingData.fromTime,
-        toTime: editingData.toTime,
+        ...editingData,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
       });
@@ -67,8 +71,7 @@ const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
   }, [editingData, reset]);
 
   const onSubmit = async (values: FormData) => {
-    const userStr = localStorage.getItem("user");
-    const user = userStr ? JSON.parse(userStr) : {};
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     const payload = { ...values, userId: user.id || user._id };
 
     if (editingData?._id) {
@@ -80,17 +83,17 @@ const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
 
   return (
     <FormModal
-      title={editingData ? "Edit Availability" : "Add Availability"}
+      title={editingData ? "Edit Shift" : "Add Shift"}
       icon={<Clock size={24} />}
       onClose={onClose}
       themeColor={themeColor}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
         <FormInput
-          label="Availability Name *"
+          label="Shift Name *"
           placeholder="e.g. Morning Shift"
-          {...register("availabilityName")}
-          error={errors.availabilityName?.message}
+          {...register("name")}
+          error={errors.name?.message}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -139,7 +142,7 @@ const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
 
         <FormButton
           type="submit"
-          label={editingData ? "Update Slot" : "Create Slot"}
+          label={editingData ? "Update Shift" : "Create"}
           icon={<Save size={20} />}
           loading={isSaving}
           themeColor={themeColor}
@@ -150,4 +153,4 @@ const AvailabilityForm = ({ editingData, onClose, themeColor }: Props) => {
   );
 };
 
-export default AvailabilityForm;
+export default AvailabilitieForm;
