@@ -7,6 +7,8 @@ const vehicleModelSchema = new Schema<VehicleModelDoc>({
     userId: { type: Types.ObjectId, ref: "User", required: true },
     brandId: { type: Types.ObjectId, ref: "VechicleBrand", required: true },
     modelName: { type: String, required: true },
+    isCompany:{type:Boolean,default:true},
+    isRider:{type:Boolean,default:false},
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },
     isDefault: { type: Boolean, required: true, default: false },
