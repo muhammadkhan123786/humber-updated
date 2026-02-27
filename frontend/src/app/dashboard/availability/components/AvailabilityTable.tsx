@@ -2,35 +2,50 @@
 import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
-import { Star, Clock } from "lucide-react";
-import { IAvailability } from "../../../../../../common/IAvailibility.interface";
+import { Clock, Star } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 interface Props {
-  data: (IAvailability & { _id: string })[];
+  data: any[];
   displayView: "table" | "card";
-  onEdit: (item: IAvailability & { _id: string }) => void;
+  onEdit: (item: any) => void;
   onDelete: (id: string) => void;
   onStatusChange?: (id: string, newStatus: boolean) => void;
   themeColor: string;
 }
 
+// Helper function to convert 24h (13:00) to 12h (1:00 PM)
+const format12Hour = (timeStr: string) => {
+  if (!timeStr) return "";
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const adjustedHours = hours % 12 || 12;
+  return `${adjustedHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+};
+
 const getIconGradient = (index: number) => {
   const gradients = [
     "bg-gradient-to-br from-blue-400 to-blue-600",
-    "bg-gradient-to-br from-purple-400 to-indigo-600",
-    "bg-gradient-to-br from-cyan-400 to-teal-600",
+    "bg-gradient-to-br from-purple-400 to-pink-600",
+    "bg-gradient-to-br from-orange-400 to-red-600",
   ];
   return gradients[index % gradients.length];
 };
 
-const AvailabilityTable = ({
+const AvailabilitieTable = ({
   data,
   displayView,
   onEdit,
   onDelete,
   onStatusChange,
 }: Props) => {
+  const handleDelete = (item: any) => {
+    if (item.isDefault) {
+      return toast.error("Default availability cannot be deleted.");
+    }
+    onDelete(item._id);
+  };
+
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -51,26 +66,25 @@ const AvailabilityTable = ({
                 editable={!item.isDefault}
               />
             </div>
-            <div className="px-4 pb-4 space-y-3">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                {item.availabilityName}{" "}
+            <div className="px-4 pb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                {item.name}{" "}
                 {item.isDefault && (
                   <Star size={16} className="text-yellow-500 fill-yellow-500" />
                 )}
               </h3>
-              <div className="bg-gray-50 p-2 rounded-lg text-sm text-gray-600 font-medium">
-                ⏱ {item.fromTime} - {item.toTime}
+              {/* Displaying formatted 12-hour time */}
+              <p className="text-blue-600 font-bold">
+                {format12Hour(item.fromTime)} — {format12Hour(item.toTime)}
+              </p>
+              <div className="pt-4">
+                <TableActionButton
+                  itemName="availability"
+                  fullWidth
+                  onEdit={() => onEdit(item)}
+                  onDelete={() => handleDelete(item)}
+                />
               </div>
-              <TableActionButton
-                itemName="availability"
-                fullWidth={true}
-                onEdit={() => onEdit(item)}
-                onDelete={() =>
-                  item.isDefault
-                    ? toast.error("Default cannot be deleted")
-                    : onDelete(item._id)
-                }
-              />
             </div>
           </div>
         ))}
@@ -83,32 +97,38 @@ const AvailabilityTable = ({
       <table className="w-full text-left min-w-max">
         <thead className="bg-[#ECFEFF] border-b-2 border-gray-200">
           <tr>
+            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
             <th className="px-6 py-4 font-bold text-gray-700">Name</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Time Range</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">
+            <th className="px-6 py-4 font-bold text-gray-700 text-center">
+              Time Slot
+            </th>
+            <th className="px-6 py-4 font-bold text-gray-700 text-center">
               Status
             </th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">
+            <th className="px-6 py-4 font-bold text-gray-700 text-center">
               Actions
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {data.map((item) => (
+          {data.map((item, index) => (
             <tr key={item._id} className="hover:bg-[#ECFEFF] transition-colors">
-              <td className="px-6 py-4 font-bold text-gray-900">
-                <div className="flex items-center gap-2">
-                  {item.availabilityName}{" "}
-                  {item.isDefault && (
-                    <Star
-                      size={16}
-                      className="text-yellow-500 fill-yellow-500"
-                    />
-                  )}
+              <td className="px-6 py-4">
+                <div
+                  className={`${getIconGradient(index)} p-3 rounded-lg text-white w-fit`}
+                >
+                  <Clock size={18} />
                 </div>
               </td>
-              <td className="px-6 py-4 text-gray-600 font-semibold">
-                {item.fromTime} - {item.toTime}
+              <td className="px-6 py-4 font-bold text-gray-900 flex items-center gap-2">
+                {item.name}{" "}
+                {item.isDefault && (
+                  <Star size={16} className="text-yellow-500 fill-yellow-500" />
+                )}
+              </td>
+              {/* Displaying formatted 12-hour time */}
+              <td className="px-6 py-4 text-center font-bold text-blue-600">
+                {format12Hour(item.fromTime)} - {format12Hour(item.toTime)}
               </td>
               <td className="px-6 py-4 text-center">
                 <StatusBadge
@@ -121,11 +141,7 @@ const AvailabilityTable = ({
                 <TableActionButton
                   itemName="availability"
                   onEdit={() => onEdit(item)}
-                  onDelete={() =>
-                    item.isDefault
-                      ? toast.error("Default cannot be deleted")
-                      : onDelete(item._id)
-                  }
+                  onDelete={() => handleDelete(item)}
                 />
               </td>
             </tr>
@@ -136,4 +152,4 @@ const AvailabilityTable = ({
   );
 };
 
-export default AvailabilityTable;
+export default AvailabilitieTable;

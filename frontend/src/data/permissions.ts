@@ -632,6 +632,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Wrench,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Rider Availability",
+        href: "/dashboard/availability",
+        icon: Wrench,
+        roleId: [1],
+      },
     ],
   },
   //system users

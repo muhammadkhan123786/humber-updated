@@ -2,18 +2,18 @@
 import { useState, useMemo, useEffect } from "react";
 import { Clock, Plus, Search, Loader2, LayoutGrid, Table2 } from "lucide-react";
 import StatsCards from "@/app/common-form/StatsCard";
-import AvailabilityTable from "./AvailabilityTable";
-import AvailabilityForm from "./AvailabilityForm";
+import AvailabilitieTable from "../components/AvailabilityTable";
+import AvailabilitieForm from "../components/AvailabilityForm";
 import Pagination from "@/components/ui/Pagination";
-import { IAvailability } from "../../../../../../common/IAvailibility.interface";
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 import { useFormActions } from "@/hooks/useFormActions";
 import { getAll } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
-type AvailabilityWithId = IAvailability & { _id: string };
+// Using any for the interface or you can import IRiderAvailabilities
+type AvailabilityWithId = any & { _id: string };
 
-export default function AvailabilityClient() {
+export default function AvailabilitieClient() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingData, setEditingData] = useState<AvailabilityWithId | null>(
@@ -30,9 +30,9 @@ export default function AvailabilityClient() {
 
   const { data, total, isLoading, deleteItem, updateItem } =
     useFormActions<AvailabilityWithId>(
-      "/availability",
-      "availability",
-      "Availability",
+      "/rider-availabilities",
+      "riderAvailabilities",
+      "Rider Availability",
       currentPage,
       searchTerm,
     );
@@ -40,15 +40,18 @@ export default function AvailabilityClient() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const allDataRes = await getAll<AvailabilityWithId>("/availability", {
-          limit: "1000",
-          search: searchTerm.trim(),
-        });
+        const allDataRes = await getAll<AvailabilityWithId>(
+          "/rider-availabilities",
+          {
+            limit: "1000",
+            search: searchTerm.trim(),
+          },
+        );
         setTotalActiveCount(
-          allDataRes.data?.filter((d) => d.isActive).length || 0,
+          allDataRes.data?.filter((d: any) => d.isActive).length || 0,
         );
         setTotalInactiveCount(
-          allDataRes.data?.filter((d) => !d.isActive).length || 0,
+          allDataRes.data?.filter((d: any) => !d.isActive).length || 0,
         );
       } catch (err) {
         console.error("Stats Fetch Error:", err);
@@ -59,12 +62,10 @@ export default function AvailabilityClient() {
 
   const filteredDataList = useMemo(() => {
     if (filterStatus === "all") return data;
-    return data.filter((d) =>
+    return data.filter((d: any) =>
       filterStatus === "active" ? d.isActive : !d.isActive,
     );
   }, [filterStatus, data]);
-
-  const handleDelete = (id: string) => deleteItem(id);
 
   const handleStatusChange = (id: string, newStatus: boolean) => {
     updateItem({ id, payload: { isActive: newStatus } });
@@ -76,13 +77,15 @@ export default function AvailabilityClient() {
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-6 md:p-7 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="bg-linear-to-r from-blue-600 via-cyan-500 to-teal-600 rounded-2xl p-6 md:p-7 text-white shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-slideInLeft">
           <div className="flex items-center gap-4 w-full md:w-auto">
             <AnimatedIcon icon={<Clock size={32} className="text-white" />} />
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold">Availability</h1>
+            <div className="flex-1 md:flex-none">
+              <h1 className="text-3xl md:text-4xl font-bold">
+                Rider Availabilities
+              </h1>
               <p className="text-blue-100 text-sm md:text-lg">
-                Manage time slots and shifts
+                Manage shift timings and slots
               </p>
             </div>
           </div>
@@ -91,7 +94,7 @@ export default function AvailabilityClient() {
               setEditingData(null);
               setShowForm(true);
             }}
-            className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg transition-all w-full md:w-auto"
+            className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
             <Plus size={22} /> Add Availability
           </button>
@@ -104,17 +107,17 @@ export default function AvailabilityClient() {
           onFilterChange={(filter) => setFilterStatus(filter)}
           labels={{
             total: "Total Slots",
-            active: "Active Slots",
-            inactive: "Inactive Slots",
+            active: "Active Shifts",
+            inactive: "Inactive Shifts",
           }}
           icons={{ total: <Clock size={24} /> }}
         />
 
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-blue-300 transition-all">
           <Search className="text-gray-400" size={20} />
           <input
             type="text"
-            placeholder="Search availability name..."
+            placeholder="Search by shift name..."
             className="w-full outline-none text-lg"
             value={searchTerm}
             onChange={(e) => {
@@ -125,26 +128,34 @@ export default function AvailabilityClient() {
         </div>
 
         <div className="bg-white p-5 pt-9 border-t-4! border-[#2B7FFF]! ">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 md:gap-4 mb-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Time Schedules
+                Time Slots
               </h2>
               <p className="text-sm text-gray-500">
-                Configure operational timings for services
+                Define working hours for your delivery team
               </p>
             </div>
 
             <div className="flex gap-2 bg-linear-to-r from-blue-50 to-cyan-50 p-1 rounded-lg border border-blue-200 w-full md:w-auto">
               <button
                 onClick={() => setDisplayView("card")}
-                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 ${displayView === "card" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"}`}
+                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  displayView === "card"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-blue-600 hover:bg-[#10b981]"
+                }`}
               >
                 <LayoutGrid size={16} /> <span className="text-sm">Grid</span>
               </button>
               <button
                 onClick={() => setDisplayView("table")}
-                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 ${displayView === "table" ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg" : "text-gray-600"}`}
+                className={`flex-1 md:flex-none px-3 h-8 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                  displayView === "table"
+                    ? "bg-linear-to-r from-blue-500 to-teal-600 text-white shadow-lg"
+                    : "text-gray-600 hover:text-blue-600 hover:bg-[#10b981]"
+                }`}
               >
                 <Table2 size={16} /> <span className="text-sm">Table</span>
               </button>
@@ -152,7 +163,7 @@ export default function AvailabilityClient() {
           </div>
 
           {showForm && (
-            <AvailabilityForm
+            <AvailabilitieForm
               editingData={editingData}
               onClose={() => setShowForm(false)}
               themeColor={THEME_COLOR}
@@ -162,18 +173,20 @@ export default function AvailabilityClient() {
           {isLoading ? (
             <div className="flex flex-col justify-center items-center py-20">
               <Loader2 className="animate-spin text-blue-600" size={48} />
-              <p className="mt-4 text-gray-400">Loading schedules...</p>
+              <p className="mt-4 text-gray-400 font-medium">
+                Loading shifts...
+              </p>
             </div>
           ) : (
             <>
-              <AvailabilityTable
+              <AvailabilitieTable
                 data={filteredDataList}
                 displayView={displayView}
-                onEdit={(item) => {
+                onEdit={(item: any) => {
                   setEditingData(item);
                   setShowForm(true);
                 }}
-                onDelete={handleDelete}
+                onDelete={deleteItem}
                 onStatusChange={handleStatusChange}
                 themeColor={THEME_COLOR}
               />
@@ -182,7 +195,7 @@ export default function AvailabilityClient() {
                   <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
-                    onPageChange={setCurrentPage}
+                    onPageChange={(page) => setCurrentPage(page)}
                   />
                 </div>
               )}
