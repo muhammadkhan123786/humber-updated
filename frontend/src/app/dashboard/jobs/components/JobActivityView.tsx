@@ -166,7 +166,7 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
         {/* Tab Navigation */}
         <div className="bg-linear-to-b from-gray-50 to-white border-b border-gray-200 sticky top-[73px] z-10">
           <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center gap-2   bg-linear-to-r from-blue-100 to-purple-100 rounded-xl shadow-sm p-1">
+            <div className="flex items-center justify-center gap-2 bg-linear-to-r from-blue-100 to-purple-100 rounded-xl shadow-sm p-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -176,8 +176,8 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      flex items-center gap-2  px-4 py-3 rounded-lg font-medium text-sm
-                      transition-all duration-200 flex-1 justify-center
+                      flex items-center  gap-2 px-4 py-3 rounded-lg font-medium text-sm
+                      transition-all duration-200
                       ${isActive 
                         ? 'bg-white text-black shadow-md' 
                         : 'hover:bg-gray-100 text-gray-600'
@@ -189,7 +189,7 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
                     {tab.badge && (
                       <span className={`
                         px-2 py-0.5 rounded-full text-xs font-bold
-                        ${isActive ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}
+                        ${isActive ? 'bg-green-100 text-green-700' : 'bg-green-100 text-green-700'}
                       `}>
                         {tab.badge}
                       </span>
