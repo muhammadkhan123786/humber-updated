@@ -4,7 +4,7 @@ import { technicianJobsAssignmentDoc, TechniciansJobsAssignment } from "../../mo
 import { technicianJobSchemaValidation } from "../../schemas/job-assignment/job.assignment.validation";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
-import { getAllTechnicianAssignments, getAvailableTechniciansForJob } from "../../controllers/technician-jobs-assignment-controller/technician.jobs.assignment.controller";
+import { getAllSharedJobsToAssignedByLeadingTechnicians, getAllTechnicianAssignments, getAvailableTechniciansForJob } from "../../controllers/technician-jobs-assignment-controller/technician.jobs.assignment.controller";
 
 const jobAssignmentRouter = Router();
 
@@ -17,7 +17,8 @@ const jobAssignmentController = new AdvancedGenericController({
 });
 
 jobAssignmentRouter.get("/", getAllTechnicianAssignments);
-jobAssignmentRouter.get('/getavailabletechniciansforjob',getAvailableTechniciansForJob)
+jobAssignmentRouter.get('/getavailabletechniciansforjob',getAvailableTechniciansForJob);
+jobAssignmentRouter.get('/getmysharedjobsassignedbyleadingtechnicians',getAllSharedJobsToAssignedByLeadingTechnicians);
 
 jobAssignmentRouter.get("/:id", jobAssignmentController.getById);
 jobAssignmentRouter.post("/",async(req:TechnicianAuthRequest,res:Response,next:NextFunction)=>{
@@ -33,6 +34,7 @@ jobAssignmentRouter.post("/",async(req:TechnicianAuthRequest,res:Response,next:N
         
      }
      req.body.userId = req.user.userId;
+     
      next();
     
 }, jobAssignmentController.create);
