@@ -60,20 +60,8 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
       }
     };
 
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isDropdownOpen) {
-        setIsDropdownOpen(false);
-        setSearchQuery("");
-      }
-    };
-
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isDropdownOpen]);
 
   const fetchTechnicians = async () => {

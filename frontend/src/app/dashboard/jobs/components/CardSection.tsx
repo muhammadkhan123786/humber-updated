@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import JobDetailModal from "./JobsDetail";
-import TechnicianInspection from "./TechnicianInspectionModal";
+import JobActivityView from "./JobActivityView";
 import ShareJobModal from "./Share";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -186,7 +186,7 @@ const JobCardsSection = ({
   return (
     <div>
       {showInspectionForm && inspectionJob ? (
-        <TechnicianInspection job={inspectionJob} onBack={handleBackFromInspection} />
+        <JobActivityView job={inspectionJob} onClose={handleBackFromInspection} />
       ) : (
         <>
           {viewMode === "grid" ? (
@@ -332,7 +332,7 @@ const JobCardsSection = ({
                         onClick={() => handleAddInspection(job)}
                         className="flex-1 bg-linear-to-r from-green-600 to-emerald-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition-all"
                       >
-                        <ClipboardList size={13} /> INSPECTION
+                        <ClipboardList size={13} /> Activity
                       </button>
                       <button
                         onClick={() => handleShareWithTechnician(job)}
