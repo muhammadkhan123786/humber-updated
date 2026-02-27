@@ -19,6 +19,7 @@ export const AttributeStockSchema = new Schema(
     binLocation: { type: String, default: "" },
     productStatusId: { type: Schema.Types.ObjectId, ref: "ProductStatus" },
     conditionId: { type: Schema.Types.ObjectId, ref: "Condition" },
+    supplierId: { type: Schema.Types.ObjectId, ref: "Supplier", required: true },
     stockStatus: { type: String, default: "in-stock" },
     featured: { type: Boolean, default: false },
   },
@@ -71,9 +72,11 @@ export const ProductAttributeSchema = new Schema(
     stock: AttributeStockSchema,
     warranty: AttributeWarrantySchema,
   },
-  { _id: true,
+  {
+    _id: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }, }
+    toObject: { virtuals: true },
+  }
 );
 
 // ─── 1. PRODUCT (top-level) ─────────────────────────────────────────────
@@ -115,6 +118,7 @@ export const attributeStockValidation = z.object({
   warehouseId: z.string().optional().nullable(),
   binLocation: z.string().default(""),
   productStatusId: z.string().optional().nullable(),
+  supplierId: z.string(),
   conditionId: z.string().optional().nullable(),
   stockStatus: z.string().default("in-stock"),
   featured: z.boolean().default(false),

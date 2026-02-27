@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import toast from 'react-hot-toast';
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -207,7 +208,6 @@ export const marketplaceAPIHelper = async (
 
 ): Promise<{ success: boolean; message?: string }> => {
   try {
-    console.log("user", getUserId())
     const response = await api.post<{ success: boolean; message?: string }>(
       `${endpoint}/${id}/${getUserId()}/${lastEndPoint}`,
       {},
@@ -218,6 +218,7 @@ export const marketplaceAPIHelper = async (
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
+      toast.error(error.response?.data?.message || "Server Error");
       throw error.response?.data || { message: error.message };
     }
     throw { message: "Unknown error occurred" };

@@ -55,7 +55,10 @@ export default function AddProductForm() {
     attributes,
     onBulkAddTags,
     getWarrantyOptions,
-    
+    handleFullPathSelect,
+    attributeCategoryIds,
+    attributeIdsLoading,
+
     // ✅ Destructure lifted variants state
     variants,
     setVariants,
@@ -72,14 +75,14 @@ export default function AddProductForm() {
       shortDescription: "",
       keywords: "",
       images: [],
-       variants: [],
+      variants: [],
     },
     onSubmit: async (data) => {
       try {
         const apiData = transformDataForAPI(data);
         // console.log("API Payload:", apiData);
         // const res = await createProduct(apiData);
-       
+
       } catch (error) {
         console.error("Error submitting product data:", error);
       }
@@ -87,7 +90,7 @@ export default function AddProductForm() {
     categories: [],
   });
 
-   // Transform data to match your database schema
+  // Transform data to match your database schema
   const transformDataForAPI = (data: any) => {
     return {
       productInfo: {
@@ -107,12 +110,12 @@ export default function AddProductForm() {
         dynamicFields: data.dynamicFields,
       },
       // ✅ Variants already structured by the hook
-      variants: data.variants ,
+      variants: data.variants,
     };
   };
 
- 
- 
+
+
 
   const renderStepContent = () => {
     const currentStepData = STEPS[currentStep - 1];
@@ -120,34 +123,39 @@ export default function AddProductForm() {
     switch (currentStep) {
       case 1:
         return (
-         
-            <CategoryStep
-              selectedPath={selectedPath || []}
-              categories={fetchedCategories || []}
-              selectedCategories={selectedCategories || []}
-              getCategoriesAtLevel={getCategoriesAtLevel}
-              handleCategorySelect={handleCategorySelect}
-            />
-         
+
+          <CategoryStep
+            selectedPath={selectedPath || []}
+            categories={fetchedCategories || []}
+            selectedCategories={selectedCategories || []}
+            getCategoriesAtLevel={getCategoriesAtLevel}
+            handleCategorySelect={handleCategorySelect}
+            attributes={attributes}
+            onFullPathSelect={handleFullPathSelect}
+            attributeCategoryIds={attributeCategoryIds}
+            attributeIdsLoading={attributeIdsLoading}
+          />
+
         );
 
       case 2:
-        return (          
-            <BasicInfoStep
-               formData={formData}
-          tags={tags}
-          images={images}
-          newTag={newTag}
-          onInputChange={handleInputChange}
-          onAddTag={addTag}
-          onRemoveTag={removeTag}
-          onNewTagChange={setNewTag}
-          onImageUpload={handleImageUpload}
-          onRemoveImage={removeImage}
-           setImage = { setImages}
-          onBulkAddTags = { onBulkAddTags}
-            />
-         
+        return (
+          <BasicInfoStep
+            formData={formData}
+            tags={tags}
+            images={images}
+            newTag={newTag}
+            onInputChange={handleInputChange}
+            onAddTag={addTag}
+            onRemoveTag={removeTag}
+            onNewTagChange={setNewTag}
+            onImageUpload={handleImageUpload}
+            onRemoveImage={removeImage}
+            setImage={setImages}
+            onBulkAddTags={onBulkAddTags}
+
+          />
+
         );
 
       case 3:
@@ -155,8 +163,8 @@ export default function AddProductForm() {
           <AttributesAndPricingStep
             formData={formData}
             attributes={attributes}
-            dynamicFields={dynamicFields}    
-           
+            dynamicFields={dynamicFields}
+
             getAllFields={getAllFields}
             onInputChange={handleInputChange}
             onDynamicFieldChange={handleDynamicFieldChange}
@@ -197,10 +205,10 @@ export default function AddProductForm() {
           currentStep={currentStep}
           totalSteps={STEPS.length}
           onPrev={prevStep}
-          onNext={nextStep}         
-          // nextLabel={
-          //   currentStep === STEPS.length ? "Create Product" : "Next Step"
-          // }
+          onNext={nextStep}
+        // nextLabel={
+        //   currentStep === STEPS.length ? "Create Product" : "Next Step"
+        // }
         />
       </form>
     </div>

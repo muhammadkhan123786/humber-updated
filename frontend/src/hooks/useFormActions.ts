@@ -82,7 +82,8 @@ export const useFormActions = <T extends { _id: string }>(
       toast.success(`${moduleName} connection successfully!`);
     },
     onError: (err: any) => {
-      alert(err.response?.data?.message || `Failed to Test Connection ${moduleName}.`);
+      toast.error(err.response?.data?.message || `Failed to Test Connection ${moduleName}.`);
+
     }
   });
 
