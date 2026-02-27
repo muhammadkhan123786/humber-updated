@@ -17,6 +17,8 @@ const modelSchema = z.object({
   modelName: z.string().min(1, "Model name is required"),
   isActive: z.boolean(),
   isDefault: z.boolean(),
+  isCompany: z.boolean(),
+  isRider: z.boolean(),
 });
 
 type FormData = z.infer<typeof modelSchema>;
@@ -53,6 +55,8 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
       isDefault: false,
       brandId: "",
       modelName: "",
+      isCompany: true,
+      isRider: false,
     },
   });
 
@@ -75,11 +79,16 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
       reset({
         brandId:
           typeof editingData.brandId === "object"
-            ? editingData.brandId._id
+            ? (editingData.brandId as any)._id
             : editingData.brandId,
         modelName: editingData.modelName,
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
+        // Yahan null check zaroori hai
+        isCompany:
+          editingData.isCompany !== undefined ? editingData.isCompany : true,
+        isRider:
+          editingData.isRider !== undefined ? editingData.isRider : false,
       });
     }
   }, [editingData, reset]);
@@ -87,10 +96,18 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
   const onSubmit = async (values: FormData) => {
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : {};
-    const payload = { ...values, userId: user.id || user._id };
+
+    // Ensure all values are sent
+    const payload = {
+      ...values,
+      userId: user.id || user._id,
+    };
 
     if (editingData?._id) {
-      updateItem({ id: editingData._id, payload }, { onSuccess: onClose });
+      updateItem(
+        { id: (editingData as any)._id, payload },
+        { onSuccess: onClose },
+      );
     } else {
       createItem(payload, { onSuccess: onClose });
     }
@@ -111,9 +128,7 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
           <select
             {...register("brandId")}
             className={`w-full border rounded-xl p-3 outline-none transition-all appearance-none bg-white ${
-              errors.brandId
-                ? "border-red-500 focus:ring-red-100"
-                : "border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50"
+              errors.brandId ? "border-red-500" : "border-gray-200"
             }`}
           >
             <option value="">Choose a Brand</option>
@@ -123,11 +138,6 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
               </option>
             ))}
           </select>
-          {errors.brandId && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.brandId.message}
-            </p>
-          )}
         </div>
 
         <FormInput
@@ -137,8 +147,33 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
           error={errors.modelName?.message}
         />
 
-        {/* Status Toggles */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+        {/* --- New Toggles Section --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+          <Controller
+            control={control}
+            name="isCompany"
+            render={({ field }) => (
+              <FormToggle
+                label="Is Company"
+                checked={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="isRider"
+            render={({ field }) => (
+              <FormToggle
+                label="Is Rider"
+                checked={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Controller
             control={control}
             name="isActive"
@@ -167,7 +202,6 @@ const ModalForm = ({ editingData, onClose, themeColor }: Props) => {
           />
         </div>
 
-        {/* Action Buttons */}
         <FormButton
           type="submit"
           label={editingData ? "Update Model" : "Create"}
