@@ -130,16 +130,25 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
             email: data.ticketId?.customerId?.contactId?.email || "",
             phone: data.ticketId?.customerId?.contactId?.phone || "",
           },
+
+          // ✅ FIXED PARTS MAPPING
           partsList: (data.partsList || []).map((part: any) => ({
             _id: part._id || part.partId?._id || "",
             partName: part.partName || part.partId?.partName || "Unknown Part",
             partNumber: part.partNumber || part.partId?.partNumber || "N/A",
             quantity: Number(part.quantity) || 1,
+
+            // 🔥 IMPORTANT FIX HERE
             unitCost:
-              Number(part.unitCost) || Number(part.partId?.unitCost) || 0,
-            stock: part.stock || part.partId?.stock,
+              Number(part.unitPrice) ||
+              Number(part.unitCost) ||
+              Number(part.partId?.unitPrice) ||
+              0,
+
+            stock: part.stock ?? part.partId?.stock ?? 0,
             description: part.description || part.partId?.description || "",
           })),
+
           labourTime: data.labourTime,
           labourRate: data.labourRate,
           partTotalBill: data.partTotalBill,
@@ -228,7 +237,7 @@ const View: React.FC<ViewProps> = ({ quotationId, onClose }) => {
     }
     return "bg-gray-100 text-gray-700 border-gray-300";
   };
-
+  console.log("quotation", quotation);
   const modalContent = (
     <>
       <style>{animations}</style>

@@ -20,6 +20,9 @@ export const getInspectionByJobId = async (
       });
     }
 
+    console.log(jobId, jobId.length);
+    console.log("Received jobId:", jobId);
+    console.log("Is Valid:", Types.ObjectId.isValid(jobId as string));
     // ✅ Validate technicianId OR userId
     if (
       (!technicianId || !Types.ObjectId.isValid(technicianId)) &&
