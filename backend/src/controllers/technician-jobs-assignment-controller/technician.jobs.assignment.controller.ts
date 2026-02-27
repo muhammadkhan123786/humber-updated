@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import { TechniciansJobsAssignment } from "../../models/technician-job-assignment/technician.jobs.assignment.models";
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { TicketQuations } from "../../models/ticket-quation-models/ticket.quotation.models";
+import { Technicians } from "../../models/technician-models/technician.models";
 
 export const getAllTechnicianAssignments = async (
   req: TechnicianAuthRequest,
@@ -232,4 +233,73 @@ export const updatePartInstallation = async (
 };
 
 
+//technician that are available for jobId 
+export const getAvailableTechniciansForJob = async (
+  req: TechnicianAuthRequest,
+  res: Response
+) => {
+  try {
+    const {
+      jobId,
+      page = "1",
+      limit = "10",
+      search,
+    } = req.query;
 
+    // ✅ Validate jobId
+    if (typeof jobId !== "string" || !Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid jobId",
+      });
+    }
+
+    const pageNumber = Math.max(parseInt(page as string, 10), 1);
+    const limitNumber = Math.max(parseInt(limit as string, 10), 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // 1️⃣ Get already assigned technicians
+    const assigned = await TechniciansJobsAssignment.find({
+      jobId: new Types.ObjectId(jobId),
+    }).select("technicianId");
+
+    const assignedIds = assigned.map(a => a.technicianId);
+
+    // 2️⃣ Build filter
+    const filter: any = {
+      _id: { $nin: assignedIds },
+      isActive: true, // optional if you have status
+    };
+
+    // ✅ Search functionality
+    if (typeof search === "string" && search.trim() !== "") {
+      filter.$or = [
+        { employeeId: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // 3️⃣ Get total count for pagination
+    const total = await Technicians.countDocuments(filter);
+
+    // 4️⃣ Fetch paginated technicians
+    const technicians = await Technicians.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
+
+    return res.status(200).json({
+      success: true,
+      total,
+      page: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+      data: technicians,
+    });
+
+  } catch (error) {
+    console.error("Error fetching available technicians:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch available technicians",
+    });
+  }
+};

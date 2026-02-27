@@ -25,6 +25,7 @@ technicianJobsAssignmentDbSchema.index({ jobStatus: 1 });
 technicianJobsAssignmentDbSchema.index({ createdAt: -1 });
 technicianJobsAssignmentDbSchema.index({ jobId: 1 });
 
+
 export const TechniciansJobsAssignment: Model<technicianJobsAssignmentDoc> = model<technicianJobsAssignmentDoc>(
     "TechniciansJobsAssignment",
     technicianJobsAssignmentDbSchema,
