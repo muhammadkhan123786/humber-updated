@@ -111,6 +111,7 @@ import techncianJobsByAdminRouter from "./routes/technician-jobs-by-admin-routes
 import vehicleInspectionsRouter from "./routes/technician-vehicle-inspections-routes/technician.vehicle.inspections.routes";
 import jobAssignmentRouter from "./routes/technician-job-assignments/technician.jobs.assignment.routes";
 import techncianJobsActivityRouter from "./routes/technician-jobs-activities/technician.jobs.activities.routes";
+import riderAvailabilitiesRouter from "./routes/master-data-routes/rider.availabilities.routes";
 
 // Create express app
 const app: Application = express();
@@ -557,6 +558,13 @@ app.use(
   `${process.env.API_PREFIX}/technician-parts-installation`,
   technicianProtecter,
   techncianJobsActivityRouter,
+);
+
+//27-02-2026
+app.use(
+  `${process.env.API_PREFIX}/rider-availabilities`,
+  adminProtecter,
+  riderAvailabilitiesRouter,
 );
 
 //Muhammad Imran code ended here.
