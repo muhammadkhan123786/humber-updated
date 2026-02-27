@@ -254,7 +254,8 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
                   technicians.map((tech) => (
                     <option key={tech._id} value={tech._id}>
                       {tech.personId?.firstName} {tech.personId?.lastName}
-                      {tech.roleId?.roleName && ` (${tech.roleId.roleName})`}
+                      {tech.employeeId && ` (${tech.employeeId})`}
+                      {tech.roleId?.roleName && ` - ${tech.roleId.roleName}`}
                     </option>
                   ))
                 )}
