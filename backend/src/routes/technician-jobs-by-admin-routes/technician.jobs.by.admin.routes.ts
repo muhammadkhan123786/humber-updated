@@ -11,6 +11,7 @@ import {
   technicianProtecter,
 } from "../../middleware/auth.middleware";
 import { generateTechnicianJobCode } from "../../utils/generate.AutoCode.Counter";
+import { TechniciansJobsAssignment } from "../../models/technician-job-assignment/technician.jobs.assignment.models";
 
 const techncianJobsByAdminRouter = Router();
 
