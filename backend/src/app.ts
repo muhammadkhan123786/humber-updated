@@ -112,6 +112,7 @@ import vehicleInspectionsRouter from "./routes/technician-vehicle-inspections-ro
 import jobAssignmentRouter from "./routes/technician-job-assignments/technician.jobs.assignment.routes";
 import techncianJobsActivityRouter from "./routes/technician-jobs-activities/technician.jobs.activities.routes";
 import riderAvailabilitiesRouter from "./routes/master-data-routes/rider.availabilities.routes";
+import technicianActivityMasterRouter from "./routes/technician-jobs-activities-master-routes/technician.jobs.activities.master.routes";
 
 // Create express app
 const app: Application = express();
@@ -565,6 +566,12 @@ app.use(
   `${process.env.API_PREFIX}/rider-availabilities`,
   adminProtecter,
   riderAvailabilitiesRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-job-activities`,
+  technicianProtecter,
+  technicianActivityMasterRouter,
 );
 
 //Muhammad Imran code ended here.
