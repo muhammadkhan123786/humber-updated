@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { X, Share2, Users, FileText, Loader2, Briefcase } from "lucide-react";
+import { X, Share2, Users, FileText, Loader2, Briefcase, Search } from "lucide-react";
 import { jobsAnimations } from "./JobsAnimation";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -16,6 +16,7 @@ interface ShareJobModalProps {
 
 interface Technician {
   _id: string;
+  employeeId?: string;
   personId?: {
     firstName: string;
     lastName: string;
@@ -36,27 +37,58 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
   const [loading, setLoading] = useState(false);
   const [fetchingTechnicians, setFetchingTechnicians] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchTechnicians();
+    if (isOpen && job?._id) {
+      const delayDebounce = setTimeout(() => {
+        fetchTechnicians();
+      }, 300);
+
+      return () => clearTimeout(delayDebounce);
     }
-  }, [isOpen]);
+  }, [searchQuery, isOpen, job?._id]);
 
   const fetchTechnicians = async () => {
+    if (!job?._id) {
+      console.warn("No job ID available");
+      return;
+    }
+    
     setFetchingTechnicians(true);
     try {
       const token = localStorage.getItem("token")?.replace(/"/g, "").trim() || "";
-      const response = await axios.get(`${BASE_URL}/technicians`, {
+      const params = new URLSearchParams({
+        jobId: job._id,
+        page: "1",
+        limit: "50",
+      });
+      
+      if (searchQuery.trim()) {
+        params.append("search", searchQuery.trim());
+      }
+
+      const url = `${BASE_URL}/technician-job-assignments/getavailabletechniciansforjob?${params.toString()}`;
+      console.log("Fetching technicians from:", url);
+
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
+      console.log("Response:", response.data);
+
       if (response.data?.data) {
         setTechnicians(response.data.data);
+      } else {
+        setTechnicians([]);
       }
     } catch (error: any) {
-      console.error("Error fetching technicians:", error);
-      toast.error("Failed to load technicians");
+      console.error("Error fetching available technicians:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      toast.error(error.response?.data?.message || "Failed to load technicians");
+      setTechnicians([]);
     } finally {
       setFetchingTechnicians(false);
     }
@@ -93,6 +125,7 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
         // Reset form
         setSelectedTechnician("");
         setGeneralNotes("");
+        setSearchQuery("");
       }
     } catch (error: any) {
       console.error("Error sharing job:", error);
@@ -108,6 +141,8 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
       setTimeout(() => {
         setSelectedTechnician("");
         setGeneralNotes("");
+        setSearchQuery("");
+        setIsDropdownOpen(false);
         setIsClosing(false);
         onClose();
       }, 200);
@@ -185,6 +220,20 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
               <Users size={16} className="text-orange-500" />
               Select Technician <span className="text-red-500">*</span>
             </label>
+            
+            {/* Search Bar */}
+            <div className="mb-2 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by Employee ID..."
+                disabled={loading}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+
             {fetchingTechnicians ? (
               <div className="flex items-center justify-center py-8 text-gray-500">
                 <Loader2 className="animate-spin mr-2" size={20} />
@@ -199,12 +248,16 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">-- Select Technician --</option>
-                {technicians.map((tech) => (
-                  <option key={tech._id} value={tech._id}>
-                    {tech.personId?.firstName} {tech.personId?.lastName}
-                    {tech.roleId?.roleName && ` (${tech.roleId.roleName})`}
-                  </option>
-                ))}
+                {technicians.length === 0 ? (
+                  <option disabled>No available technicians found</option>
+                ) : (
+                  technicians.map((tech) => (
+                    <option key={tech._id} value={tech._id}>
+                      {tech.personId?.firstName} {tech.personId?.lastName}
+                      {tech.roleId?.roleName && ` (${tech.roleId.roleName})`}
+                    </option>
+                  ))
+                )}
               </select>
             )}
           </div>
