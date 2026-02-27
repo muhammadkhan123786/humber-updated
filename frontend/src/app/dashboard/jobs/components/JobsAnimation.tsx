@@ -170,4 +170,47 @@ export const jobsAnimations = `
   .animate-delay-500 {
     animation-delay: 0.5s;
   }
+
+  @keyframes modalBackdropIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes modalSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(50px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes modalSlideDown {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(50px) scale(0.95);
+    }
+  }
+
+  .animate-modalBackdrop {
+    animation: modalBackdropIn 0.2s ease-out;
+  }
+
+  .animate-modalSlideUp {
+    animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-modalSlideDown {
+    animation: modalSlideDown 0.2s cubic-bezier(0.4, 0, 1, 1);
+  }
 `;
