@@ -17,6 +17,7 @@ const jobAssignmentController = new AdvancedGenericController({
 });
 
 jobAssignmentRouter.get("/", getAllTechnicianAssignments);
+
 jobAssignmentRouter.get("/:id", jobAssignmentController.getById);
 jobAssignmentRouter.post("/",async(req:TechnicianAuthRequest,res:Response,next:NextFunction)=>{
      if(req.body.jobStatus === "IN_PROGRESS") {
