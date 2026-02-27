@@ -113,7 +113,9 @@ const QuotationSummary = ({
       partsList: selectedParts.map(part => ({
         partId: part._id,
         partName: part.partName,
+        partNumber: part.partNumber,
         quantity: part.quantity,
+
         unitPrice: part.unitCost || 0,
         discount: 0,
         total: (part.unitCost || 0) * part.quantity
