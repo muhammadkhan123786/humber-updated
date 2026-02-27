@@ -3,6 +3,9 @@ import { useState, useEffect } from "react";
 import { Briefcase, Settings, Package, ClipboardList, FileText, ArrowLeft, X } from "lucide-react";
 import TechnicianInspection from "./TechnicianInspectionModal";
 import { jobsAnimations } from "./JobsAnimation";
+import JobInfo from "./JobInfo";
+import Services from "./Services";
+import Parts from "./Parts";
 
 export type ActivityTabType = 'jobinfo' | 'services' | 'parts' | 'inspection' | 'notes';
 
@@ -59,51 +62,13 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'jobinfo':
-        return (
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Job Information</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Job ID</label>
-                  <p className="text-gray-900">{job?.jobId || "N/A"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Status</label>
-                  <p className="text-gray-900">{job?.statusId?.technicianJobStatus || "N/A"}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Customer</label>
-                  <p className="text-gray-900">
-                    {job?.ticketId?.customerId?.personId?.firstName} {job?.ticketId?.customerId?.personId?.lastName || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-600">Vehicle</label>
-                  <p className="text-gray-900">
-                    {job?.ticketId?.vehicleId?.productName || job?.ticketId?.vehicleId?.vehicleType || "N/A"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <JobInfo job={job} />;
       
       case 'services':
-        return (
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Services</h3>
-            <p className="text-gray-500">Services management coming soon...</p>
-          </div>
-        );
+        return <Services job={job} />;
       
       case 'parts':
-        return (
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Parts</h3>
-            <p className="text-gray-500">Parts management coming soon...</p>
-          </div>
-        );
+        return <Parts job={job} />;
       
       case 'inspection':
         return <TechnicianInspection job={job} onBack={() => setActiveTab('jobinfo')} />;
