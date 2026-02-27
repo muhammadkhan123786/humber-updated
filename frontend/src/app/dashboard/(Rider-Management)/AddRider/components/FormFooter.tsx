@@ -48,7 +48,7 @@ const FormFooter: React.FC<FormFooterProps> = ({
         <button
           onClick={onPrevious}
           disabled={isFirstStep}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all border border-gray-100 shadow-sm
+          className={`flex items-center gap-2 px-2 py-1.5 rounded-xl font-bold transition-all border border-gray-100 shadow-sm
             ${
               isFirstStep
                 ? "opacity-0 cursor-default pointer-events-none"
