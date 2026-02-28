@@ -13,6 +13,7 @@ import {
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
 import aiRoutes from "./routes/ai.routes";
+import emailTestRoutes from './routes/emailTest.routes';
 
 import customerSourceRouter from "./routes/customer.source.routes";
 import repairStatusRouter from "./routes/repair.status.routes";
@@ -119,6 +120,8 @@ const app: Application = express();
 app.use(express.json()); // Parse JSON
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded
 app.use(cors());
+
+
 
 // Static files (for uploads/public folder)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -604,6 +607,7 @@ app.use(
 app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
 app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
 app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
+app.use(`${process.env.API_PREFIX}/test/email`, emailTestRoutes);
 // Muzamil Hassan end
 // Health check route
 app.get("/health", (_req, res) => {
