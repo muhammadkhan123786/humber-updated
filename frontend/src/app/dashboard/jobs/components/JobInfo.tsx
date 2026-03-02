@@ -10,6 +10,13 @@ const JobInfo = ({ job }: JobInfoProps) => {
   const vehicle = job?.ticketId?.vehicleId;
   const ticket = job?.ticketId;
   const leadingTechnician = job?.leadingTechnicianId;
+  
+  // Handle multiple technicians - check if it's an array or single object
+  const technicians = Array.isArray(job?.technicianId) 
+    ? job.technicianId 
+    : job?.technicianId 
+      ? [job.technicianId] 
+      : [];
 
   return (
     <div className="p-6 space-y-6">
@@ -164,40 +171,97 @@ const JobInfo = ({ job }: JobInfoProps) => {
         </div>
       </div>
 
-      {/* Leading Technician */}
-      {leadingTechnician && (
+      {/* Assigned Technicians */}
+      {(leadingTechnician || technicians.length > 0) && (
         <div className="bg-linear-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-orange-600 rounded-lg">
               <UserCheck size={20} className="text-white" />
             </div>
-            <h4 className="text-lg font-bold text-gray-900">Leading Technician</h4>
+            <h4 className="text-lg font-bold text-gray-900">
+              Assigned Technicians
+              <span className="ml-2 px-3 py-1 bg-orange-600 text-white rounded-full text-sm">
+                {(leadingTechnician ? 1 : 0) + technicians.length}
+              </span>
+            </h4>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Technician Name</label>
-              <p className="text-base font-semibold text-gray-900 mt-1">
-                {leadingTechnician?.personId?.firstName} {leadingTechnician?.personId?.lastName || "N/A"}
-              </p>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mobile Number</label>
-              <div className="flex items-center gap-2 mt-1">
-                <Phone size={16} className="text-orange-600" />
-                <p className="text-base font-semibold text-gray-900">
-                  {leadingTechnician?.contactId?.mobileNumber || "N/A"}
-                </p>
+
+          <div className="space-y-3">
+            {/* Leading Technician */}
+            {leadingTechnician && (
+              <div className="bg-white rounded-lg p-4 border-2 border-orange-300 shadow-sm relative">
+                <div className="absolute top-2 right-2">
+                  <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-xs font-bold">
+                    Leading
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Technician Name</label>
+                    <p className="text-base font-bold text-gray-900 mt-1">
+                      {leadingTechnician?.personId?.firstName} {leadingTechnician?.personId?.lastName || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mobile Number</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={16} className="text-orange-600" />
+                      <p className="text-base font-semibold text-gray-900">
+                        {leadingTechnician?.contactId?.mobileNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone Number</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={16} className="text-orange-600" />
+                      <p className="text-base font-semibold text-gray-900">
+                        {leadingTechnician?.contactId?.phoneNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone Number</label>
-              <div className="flex items-center gap-2 mt-1">
-                <Phone size={16} className="text-orange-600" />
-                <p className="text-base font-semibold text-gray-900">
-                  {leadingTechnician?.contactId?.phoneNumber || "N/A"}
-                </p>
+            )}
+
+            {/* Other Assigned Technicians */}
+            {technicians.length > 0 && (
+              <div className="space-y-3">
+                {technicians.map((tech: any, index: number) => (
+                  <div 
+                    key={tech?._id || index} 
+                    className="bg-white rounded-lg p-4 border border-orange-200 shadow-sm hover:shadow-md transition-all"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Technician Name</label>
+                        <p className="text-base font-semibold text-gray-900 mt-1">
+                          {tech?.personId?.firstName || "N/A"} {tech?.personId?.lastName || ""}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mobile Number</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Phone size={16} className="text-orange-600" />
+                          <p className="text-base font-semibold text-gray-900">
+                            {tech?.contactId?.mobileNumber || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone Number</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Phone size={16} className="text-orange-600" />
+                          <p className="text-base font-semibold text-gray-900">
+                            {tech?.contactId?.phoneNumber || "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
