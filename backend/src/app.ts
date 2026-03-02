@@ -115,6 +115,7 @@ import riderAvailabilitiesRouter from "./routes/master-data-routes/rider.availab
 import technicianActivityMasterRouter from "./routes/technician-jobs-activities-master-routes/technician.jobs.activities.master.routes";
 import vehicleTypesRouter from "./routes/master-data-routes/rider.vehicle.types.routes";
 import riderRouter from "./routes/rider/rider.routes";
+import technicianActionsrouter from "./routes/technician-activities-operations-routes/technicianActivity.routes";
 
 // Create express app
 const app: Application = express();
@@ -587,6 +588,12 @@ app.use(
   `${process.env.API_PREFIX}/riders`,
   adminProtecter,
   riderRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/technician-work`,
+  technicianProtecter,
+  technicianActionsrouter,
 );
 
 

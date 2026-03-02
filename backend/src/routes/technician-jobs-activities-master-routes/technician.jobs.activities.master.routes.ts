@@ -15,6 +15,8 @@ const techncianActivitymasterController = new AdvancedGenericController({
     validationSchema: technicianActivitiesValidation,
 });
 
+
+
 technicianActivityMasterRouter.post("/", techncianActivitymasterController.create);
 technicianActivityMasterRouter.get("/", techncianActivitymasterController.getAll);
 technicianActivityMasterRouter.get("/:id", techncianActivitymasterController.getById);
