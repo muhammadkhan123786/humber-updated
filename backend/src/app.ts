@@ -114,6 +114,7 @@ import techncianJobsActivityRouter from "./routes/technician-jobs-activities/tec
 import riderAvailabilitiesRouter from "./routes/master-data-routes/rider.availabilities.routes";
 import technicianActivityMasterRouter from "./routes/technician-jobs-activities-master-routes/technician.jobs.activities.master.routes";
 import vehicleTypesRouter from "./routes/master-data-routes/rider.vehicle.types.routes";
+import riderRouter from "./routes/rider/rider.routes";
 
 // Create express app
 const app: Application = express();
@@ -581,6 +582,14 @@ app.use(
   adminProtecter,
   vehicleTypesRouter,
 );
+
+app.use(
+  `${process.env.API_PREFIX}/riders`,
+  adminProtecter,
+  riderRouter,
+);
+
+
 
 
 //Muhammad Imran code ended here.
