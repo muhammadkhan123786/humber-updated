@@ -2,6 +2,7 @@ import { IBaseEntity } from '../Base.Interface';
 export type QuotationStatuses = "SENT TO ADMIN" | "DRAFTED" | "SEND TO CUSTOMER" | "SEND TO INSURANCE" | "APPROVED" | "REJECTED";
 export type PartInstallationStatus="PENDING"|"PARTIAL"|"INSTALLED";
 export interface IQuotationPartItem {
+    _id?: string;
     partId: string;
     partName: string;
     quantity: number;
