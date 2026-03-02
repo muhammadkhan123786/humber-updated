@@ -1,6 +1,6 @@
 
 "use client"
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { 
   IPurchaseOrder,
@@ -20,14 +20,13 @@ import {
   formDataToCreateDTO
 } from '../app/dashboard/inventory-dashboard/product-Orders/types/purchaseOrders';
 import * as PurchaseOrderAPI from '../helper/purchaseOrderApi';
+import { BulkOrderGroup } from '@/helper/purchaseOrderApi';
 
 export const usePurchaseOrders = () => {
   // ============================================================================
   // STATE
   // ============================================================================
-  interface INumber {
 
-  }
   const [orders, setOrders] = useState<IPurchaseOrder[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -353,6 +352,74 @@ const fetchOrdersData = async () => {
     }
   };
 
+// In your usePurchaseOrders hook
+
+const handleCreateBulkOrders = useCallback(async (groups: BulkOrderGroup[]) => {
+  console.log("🔍 RAW GROUPS RECEIVED:", JSON.stringify(groups, null, 2));
+  
+  try {
+    setLoading(true);
+    
+    // Log each product's quantity before filtering
+    groups.forEach((group, groupIndex) => {
+      console.log(`Group ${groupIndex} (${group.supplierName}):`);
+      group.products.forEach((product, productIndex) => {
+        console.log(`  Product ${productIndex}: ${product.productName}`, {
+          suggestedQty: product.suggestedQty,
+          costPrice: product.costPrice,
+          parsedQty: Number(product.suggestedQty)
+        });
+      });
+    });
+
+    // ✅ Filter products but KEEP the original format (suggestedQty/costPrice)
+    const filteredGroups = groups
+      .map(group => ({
+        ...group,
+        products: group.products.filter(product => {
+          const qty = Number(product.suggestedQty);
+          return qty > 0;
+        })
+      }))
+      .filter(group => group.products.length > 0);
+
+    console.log("📦 FILTERED GROUPS (modal format):", JSON.stringify(filteredGroups, null, 2));
+
+    if (filteredGroups.length === 0) {
+      toast.error('No products with valid quantity selected');
+      return;
+    }
+
+    // Get userId
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const userId = user.id || user._id || '';
+    const userEmail = user.email || '';
+
+    // ✅ Pass the filtered groups (modal format) to the API function
+    // The API function will handle transformation to API format
+    const result = await PurchaseOrderAPI.createBulkPurchaseOrders(
+      userId,
+      filteredGroups,  // This has suggestedQty/costPrice
+      "Humber Mobility Scooter",
+      userEmail
+    );
+    
+    console.log("✅ Bulk orders created:", result);
+    toast.success(result.message);
+    
+    // Refresh orders
+    await fetchOrdersData();
+    setPage(1);
+    
+    return result;
+  } catch (error: any) {
+    console.error("❌ Bulk order creation failed:", error);
+    toast.error(error.message || "Failed to create bulk orders");
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+}, [fetchOrdersData, setPage]);
   // ============================================================================
   // RETURN API
   // ============================================================================
@@ -403,6 +470,7 @@ const fetchOrdersData = async () => {
     calculateTotals: calculateOrderTotals,
     refreshOrders: fetchOrdersData,
     handleExportSingleOrder,
+    handleCreateBulkOrders,
   };
 };
 

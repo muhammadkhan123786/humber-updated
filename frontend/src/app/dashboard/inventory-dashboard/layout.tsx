@@ -1,5 +1,5 @@
+
 import { Outfit } from 'next/font/google';
-import ThemeProvider from '@/components/theme/ThemeProvider';
 
 
 const outfit = Outfit({
@@ -13,11 +13,13 @@ export default function Layout({
 }: {
   children: React.ReactNode;
 }) {
+   
   return (
    
      
       <div className={` ${outfit.variable} font-sans`} style={{ fontFamily: 'var(--font-outfit)' }}>
         {children}
+        
       </div>
     
   );

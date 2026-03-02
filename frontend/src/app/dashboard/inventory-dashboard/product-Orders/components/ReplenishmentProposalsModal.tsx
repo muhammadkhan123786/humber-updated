@@ -3,24 +3,24 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ReplenishmentProposalsModal.tsx
 //
-// Opens from the "View Replenishment Proposals" button inside PurchaseOrderForm.
-// Shows every product at or below its reorder point in a professional table.
-// Buyer can select all or individual rows → "Create Purchase Orders" submits
-// one PO per unique supplier (grouped), saves to DB, and triggers supplier emails.
+// Professional modal with modern gradient header, fixed close button,
+// and improved visual design.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
     Dialog, DialogContent, DialogHeader,
     DialogTitle, DialogDescription, DialogFooter,
+    DialogClose
 } from "@/components/form/Dialog";
 import { Button } from "@/components/form/CustomButton";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
     AlertTriangle, CheckSquare, Square, PackageX,
     TrendingDown, ShieldAlert, RefreshCw, Loader2,
     ArrowUpDown, ChevronUp, ChevronDown, Zap,
-    Building2, Send, CheckCircle2, Info,
+    Building2, Send, CheckCircle2, Info, X,
+    ShoppingCart, Clock, DollarSign, Package, Search
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,12 +34,12 @@ export interface ReorderProduct {
     reorderPoint: number;
     safetyStock: number;
     maxStockLevel: number;
-    suggestedQty: number;  // maxStockLevel - currentStock
+    suggestedQty: number;
     costPrice: number;
     supplierId: string;
     supplierName: string;
     supplierEmail: string;
-    daysUntilStockout?: number;   // currentStock / avgDailySales
+    daysUntilStockout?: number;
     severity: "critical" | "warning" | "low";
 }
 
@@ -51,89 +51,110 @@ interface ReplenishmentProposalsModalProps {
     isCreating?: boolean;
 }
 
-// ─── Severity config ──────────────────────────────────────────────────────────
+// ─── Severity config with professional colors ─────────────────────────────────
 
 const SEVERITY = {
     critical: {
         label: "Critical",
         icon: ShieldAlert,
-        row: "bg-red-50/60",
-        badge: "bg-red-100 text-red-700 border-red-300",
+        row: "bg-gradient-to-r from-red-50/80 to-rose-50/80",
+        badge: "bg-gradient-to-r from-red-500 to-rose-500 text-white border-0",
         dot: "bg-red-500",
+        lightBadge: "bg-red-100 text-red-700 border-red-200",
+        text: "text-red-600",
+        bg: "bg-red-50"
     },
     warning: {
-        label: "Reorder",
+        label: "Warning",
         icon: AlertTriangle,
-        row: "bg-orange-50/40",
-        badge: "bg-orange-100 text-orange-700 border-orange-300",
+        row: "bg-gradient-to-r from-orange-50/80 to-amber-50/80",
+        badge: "bg-gradient-to-r from-orange-500 to-amber-500 text-white border-0",
         dot: "bg-orange-500",
+        lightBadge: "bg-orange-100 text-orange-700 border-orange-200",
+        text: "text-orange-600",
+        bg: "bg-orange-50"
     },
     low: {
-        label: "Low",
+        label: "Low Stock",
         icon: TrendingDown,
-        row: "bg-amber-50/30",
-        badge: "bg-amber-100 text-amber-700 border-amber-300",
-        dot: "bg-amber-400",
+        row: "bg-gradient-to-r from-amber-50/80 to-yellow-50/80",
+        badge: "bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0",
+        dot: "bg-amber-500",
+        lightBadge: "bg-amber-100 text-amber-700 border-amber-200",
+        text: "text-amber-600",
+        bg: "bg-amber-50"
     },
 } as const;
 
-// ─── Stock bar ────────────────────────────────────────────────────────────────
+// ─── Stock bar with gradient ────────────────────────────────────────────────
 
-function StockBar({ current, max, reorder }: {
-    current: number; max: number; reorder: number;
+function StockBar({ current, max, reorder, severity }: {
+    current: number; max: number; reorder: number; severity: string;
 }) {
     if (max <= 0) return null;
     const currentPct = Math.min((current / max) * 100, 100);
     const reorderPct = Math.min((reorder / max) * 100, 100);
-    const color =
-        currentPct <= 10 ? "bg-red-500" :
-            currentPct <= 25 ? "bg-orange-500" :
-                currentPct <= 40 ? "bg-amber-400" : "bg-green-500";
+    
+    const gradientColor = 
+        severity === "critical" ? "from-red-500 to-rose-500" :
+        severity === "warning" ? "from-orange-500 to-amber-500" :
+        "from-amber-500 to-yellow-500";
 
     return (
         <div className="relative h-1.5 w-20 bg-gray-200 rounded-full overflow-hidden">
-            <div className={`absolute left-0 top-0 h-full rounded-full ${color}`} style={{ width: `${currentPct}%` }} />
+            <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${currentPct}%` }}
+                className={`absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${gradientColor}`}
+            />
             {/* Reorder marker */}
-            <div className="absolute top-0 h-full w-0.5 bg-red-400 opacity-70" style={{ left: `${reorderPct}%` }} />
+            <div className="absolute top-0 h-full w-0.5 bg-gray-700 opacity-50" style={{ left: `${reorderPct}%` }} />
         </div>
     );
 }
 
-// ─── Sort hook ────────────────────────────────────────────────────────────────
+// ─── Sort component ────────────────────────────────────────────────────────
 
 type SortKey = "productName" | "currentStock" | "suggestedQty" | "severity" | "supplierName";
 type SortDir = "asc" | "desc";
 
 const SEVERITY_ORDER = { critical: 0, warning: 1, low: 2 };
 
-// ─── Main Modal ───────────────────────────────────────────────────────────────
-
-// Th moved to module scope to avoid creating components during render
-function Th({ label, sortable, sk, sortKey, sortDir, onToggle }: {
+function Th({ label, sortable, sortKey, sortDir, onToggle }: {
     label: string;
     sortable?: SortKey;
-    sk?: boolean;
     sortKey?: SortKey;
     sortDir?: SortDir;
     onToggle?: (k: SortKey) => void;
 }) {
+    const active = sortable && sortKey === sortable;
+    
     return (
         <th
-            className={`px-3 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide ${sortable ? "cursor-pointer select-none hover:text-gray-900 group" : ""}`}
+            className={`px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider ${
+                sortable ? "cursor-pointer select-none hover:text-indigo-600 group" : "text-gray-500"
+            }`}
             onClick={() => sortable && onToggle && onToggle(sortable)}
         >
-            <div className="flex items-center gap-1">
-                {label}
+            <div className="flex items-center gap-1.5">
+                <span className={active ? "text-indigo-600" : "text-gray-500 group-hover:text-gray-700"}>
+                    {label}
+                </span>
                 {sortable && (
-                    sortKey === sortable
-                        ? (sortDir === "asc" ? <ChevronUp className="h-3 w-3 text-indigo-600" /> : <ChevronDown className="h-3 w-3 text-indigo-600" />)
-                        : <ArrowUpDown className="h-3 w-3 text-gray-300 group-hover:text-gray-500" />
+                    <div className={`transition-colors ${active ? "text-indigo-600" : "text-gray-300 group-hover:text-gray-500"}`}>
+                        {active ? (
+                            sortDir === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        ) : (
+                            <ArrowUpDown className="h-3 w-3" />
+                        )}
+                    </div>
                 )}
             </div>
         </th>
     );
 }
 
+// ─── Main Modal ───────────────────────────────────────────────────────────────
 
 export function ReplenishmentProposalsModal({
     open,
@@ -212,95 +233,170 @@ export function ReplenishmentProposalsModal({
         onOpenChange(false);
     };
 
-    // ── Th with sort ──────────────────────────────────────────────────────
-
-    // ─────────────────────────────────────────────────────────────────────
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+            <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
+                {/* Accessibility - visually hidden but available for screen readers */}
+                <DialogTitle className="sr-only">Replenishment Proposals</DialogTitle>
+                <DialogDescription className="sr-only">
+                    {products.length} product{products.length !== 1 ? "s" : ""} require stock replenishment.
+                    {criticalCount > 0 && ` ${criticalCount} critical item${criticalCount !== 1 ? "s" : ""}.`}
+                </DialogDescription>
 
-                {/* ── Header ── */}
-                <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 shrink-0">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                <RefreshCw className="h-5 w-5" />
-                                Replenishment Proposals
-                            </h2>
-                            <p className="text-orange-100 text-sm mt-1">
-                                {products.length} product{products.length !== 1 ? "s" : ""} require stock replenishment
-                                {criticalCount > 0 && (
-                                    <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
-                                        {criticalCount} critical
-                                    </span>
-                                )}
-                            </p>
+                {/* ✨ Professional Gradient Header with Close Button ✨ */}
+                <div className="relative bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-900 px-8 py-6 shrink-0">
+                    {/* Decorative elements */}
+                    <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:30px_30px]" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl -ml-20 -mb-20" />
+                    
+                    {/* Header Content */}
+                    <div className="relative flex items-start justify-between">
+                        <div className="space-y-2">
+                            {/* Title with icon */}
+                            <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                                    <RefreshCw className="h-6 w-6 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                                        Replenishment Proposals
+                                        {criticalCount > 0 && (
+                                            <span className="px-2.5 py-1 bg-red-500/90 text-white text-xs font-bold rounded-full">
+                                                {criticalCount} Critical
+                                            </span>
+                                        )}
+                                    </h2>
+                                    <p className="text-indigo-200 text-sm mt-1">
+                                        {products.length} product{products.length !== 1 ? "s" : ""} need restocking • Grouped by supplier
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Quick stats */}
+                            <div className="flex items-center gap-6 mt-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                        <Package className="h-4 w-4 text-indigo-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-indigo-200">Total Products</p>
+                                        <p className="text-lg font-bold text-white">{products.length}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                        <Building2 className="h-4 w-4 text-indigo-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-indigo-200">Suppliers</p>
+                                        <p className="text-lg font-bold text-white">
+                                            {new Set(products.map(p => p.supplierId)).size}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
+                                        <DollarSign className="h-4 w-4 text-indigo-200" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-indigo-200">Est. Total</p>
+                                        <p className="text-lg font-bold text-white">
+                                            £{products.reduce((s, p) => s + p.suggestedQty * p.costPrice, 0).toFixed(2)}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="text-right">
-                            <p className="text-orange-100 text-xs">Each supplier group = one PO</p>
-                            <p className="text-white text-xs font-semibold mt-0.5">PO numbers auto-generated</p>
-                        </div>
+
+                     
                     </div>
 
-                    {/* Search */}
-                    <div className="mt-4">
+                    {/* Search Bar */}
+                    <div className="relative mt-6">
                         <input
                             type="text"
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
-                            placeholder="Filter by product, SKU or supplier..."
-                            className="w-full h-9 px-3 rounded-lg border-0 text-sm focus:outline-none focus:ring-2 focus:ring-white/50 bg-white/20 text-white placeholder-orange-200"
+                            placeholder="Search by product, SKU or supplier..."
+                            className="w-full h-12 pl-4 pr-10 rounded-xl border-0 bg-white/10 backdrop-blur-sm text-white placeholder-indigo-200/70 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
                         />
+                        <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-200/70" />
                     </div>
                 </div>
 
-                {/* ── Stats bar ── */}
+                {/* Selection Stats Bar */}
                 {selected.size > 0 && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
-                        className="px-6 py-3 bg-indigo-50 border-b border-indigo-200 shrink-0"
+                        className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-200 shrink-0"
                     >
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-6 text-sm">
-                                <span className="font-bold text-indigo-700">{selected.size} selected</span>
-                                <span className="text-gray-600">
-                                    <span className="font-semibold text-indigo-600">{uniqueSuppliers}</span> supplier{uniqueSuppliers !== 1 ? "s" : ""} → {uniqueSuppliers} PO{uniqueSuppliers !== 1 ? "s" : ""} will be created
-                                </span>
-                                <span className="text-gray-600">
-                                    Est. order value: <span className="font-semibold text-emerald-700">£{totalOrderValue.toFixed(2)}</span>
-                                </span>
+                            <div className="flex items-center gap-8">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                                        <CheckCircle2 className="h-4 w-4 text-indigo-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Selected</p>
+                                        <p className="text-lg font-bold text-indigo-700">{selected.size}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                        <Building2 className="h-4 w-4 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Suppliers</p>
+                                        <p className="text-lg font-bold text-purple-700">{uniqueSuppliers}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                        <DollarSign className="h-4 w-4 text-emerald-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">Est. Value</p>
+                                        <p className="text-lg font-bold text-emerald-700">£{totalOrderValue.toFixed(2)}</p>
+                                    </div>
+                                </div>
                             </div>
                             <button
-                                type="button"
                                 onClick={() => setSelected(new Set())}
-                                className="text-xs text-gray-500 hover:text-gray-700 underline"
+                                className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
                             >
-                                Clear selection
+                                Clear Selection
                             </button>
                         </div>
                     </motion.div>
                 )}
 
-                {/* ── Table ── */}
-                <div className="flex-1 overflow-y-auto min-h-0">
+                {/* Table */}
+                <div className="flex-1 overflow-y-auto min-h-0 bg-gray-50/50">
                     {visible.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                            <PackageX className="h-12 w-12 mb-3 opacity-40" />
-                            <p className="font-semibold">No products match your filter</p>
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                <PackageX className="h-10 w-10 text-gray-400" />
+                            </div>
+                            <p className="text-lg font-semibold text-gray-700">No products found</p>
+                            <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filter</p>
                         </div>
                     ) : (
-                        <table className="w-full border-collapse">
-                            <thead className="sticky top-0 bg-gray-50 border-b-2 border-gray-200 z-10">
+                        <table className="w-full">
+                            <thead className="sticky top-0 bg-white border-b-2 border-gray-200 z-10 shadow-sm">
                                 <tr>
-                                    {/* Select all checkbox */}
-                                    <th className="px-4 py-3 w-10">
-                                        <button type="button" onClick={toggleAll} className="text-gray-400 hover:text-indigo-600 transition-colors">
-                                            {allSelected
-                                                ? <CheckSquare className="h-4.5 w-4.5 text-indigo-600" />
-                                                : someSelected
-                                                    ? <div className="h-4 w-4 rounded border-2 border-indigo-400 bg-indigo-100 flex items-center justify-center"><div className="h-1.5 w-2.5 bg-indigo-500 rounded-sm" /></div>
-                                                    : <Square className="h-4 w-4" />}
+                                    <th className="px-4 py-4 w-10">
+                                        <button onClick={toggleAll} className="text-gray-400 hover:text-indigo-600">
+                                            {allSelected ? (
+                                                <CheckSquare className="h-5 w-5 text-indigo-600" />
+                                            ) : someSelected ? (
+                                                <div className="h-5 w-5 rounded border-2 border-indigo-400 bg-indigo-100 flex items-center justify-center">
+                                                    <div className="h-2 w-2 bg-indigo-600 rounded-sm" />
+                                                </div>
+                                            ) : (
+                                                <Square className="h-5 w-5" />
+                                            )}
                                         </button>
                                     </th>
                                     <Th label="Status" sortable="severity" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} />
@@ -323,45 +419,37 @@ export function ReplenishmentProposalsModal({
                                     return (
                                         <motion.tr
                                             key={product.productId}
-                                            initial={{ opacity: 0, x: -8 }}
-                                            animate={{ opacity: 1, x: 0 }}
+                                            initial={{ opacity: 0, y: 4 }}
+                                            animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.02 }}
                                             onClick={() => toggleOne(product.productId)}
-                                            className={`border-b border-gray-100 cursor-pointer transition-colors ${isChecked
-                                                ? "bg-indigo-50 hover:bg-indigo-100"
-                                                : `${sev.row} hover:bg-indigo-50/50`
-                                                }`}
+                                            className={`border-b border-gray-100 cursor-pointer transition-all ${
+                                                isChecked 
+                                                    ? "bg-gradient-to-r from-indigo-50/80 to-purple-50/80 hover:from-indigo-100/80 hover:to-purple-100/80" 
+                                                    : "hover:bg-gray-50/80"
+                                            }`}
                                         >
-                                            {/* Checkbox */}
-                                            <td className="px-4 py-3">
-                                                <div className="text-gray-400">
-                                                    {isChecked
-                                                        ? <CheckSquare className="h-4 w-4 text-indigo-600" />
-                                                        : <Square className="h-4 w-4" />}
-                                                </div>
+                                            <td className="px-4 py-4">
+                                                {isChecked ? (
+                                                    <CheckSquare className="h-5 w-5 text-indigo-600" />
+                                                ) : (
+                                                    <Square className="h-5 w-5 text-gray-300" />
+                                                )}
                                             </td>
-
-                                            {/* Severity badge */}
-                                            <td className="px-3 py-3">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold ${sev.badge}`}>
-                                                    <SevIcon className="h-3 w-3" />
+                                            <td className="px-3 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${sev.lightBadge}`}>
+                                                    <SevIcon className="h-3.5 w-3.5" />
                                                     {sev.label}
                                                 </span>
                                             </td>
-
-                                            {/* Product */}
-                                            <td className="px-3 py-3">
-                                                <p className="text-sm font-semibold text-gray-900 truncate max-w-[160px]">{product.productName}</p>
-                                                <p className="text-xs text-gray-500 font-mono">{product.sku}</p>
+                                            <td className="px-3 py-4">
+                                                <p className="text-sm font-medium text-gray-900">{product.productName}</p>
+                                                <p className="text-xs text-gray-500 font-mono mt-0.5">{product.sku}</p>
                                             </td>
-
-                                            {/* Stock */}
-                                            <td className="px-3 py-3">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className={`text-sm font-bold ${product.severity === "critical" ? "text-red-600" :
-                                                            product.severity === "warning" ? "text-orange-600" : "text-amber-600"
-                                                            }`}>
+                                            <td className="px-3 py-4">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-sm font-bold ${sev.text}`}>
                                                             {product.currentStock}
                                                         </span>
                                                         <span className="text-xs text-gray-400">/ {product.maxStockLevel}</span>
@@ -370,53 +458,43 @@ export function ReplenishmentProposalsModal({
                                                         current={product.currentStock}
                                                         max={product.maxStockLevel}
                                                         reorder={product.reorderPoint}
+                                                        severity={product.severity}
                                                     />
-                                                    <p className="text-[10px] text-gray-400">reorder at {product.reorderPoint}</p>
                                                 </div>
                                             </td>
-
-                                            {/* Suggested qty */}
-                                            <td className="px-3 py-3">
-                                                <span className="text-sm font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                                            <td className="px-3 py-4">
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 font-semibold text-sm border border-indigo-100">
                                                     {product.suggestedQty}
                                                 </span>
-                                                <p className="text-[10px] text-gray-400 mt-0.5">Order-up-to-max</p>
                                             </td>
-
-                                            {/* Unit cost */}
-                                            <td className="px-3 py-3 text-sm text-gray-700">
+                                            <td className="px-3 py-4 text-sm text-gray-600">
                                                 £{product.costPrice.toFixed(2)}
                                             </td>
-
-                                            {/* Line total */}
-                                            <td className="px-3 py-3">
-                                                <span className="text-sm font-semibold text-gray-900">
+                                            <td className="px-3 py-4">
+                                                <span className="font-medium text-gray-900">
                                                     £{lineTotal.toFixed(2)}
                                                 </span>
                                             </td>
-
-                                            {/* Supplier */}
-                                            <td className="px-3 py-3">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className={`h-2 w-2 rounded-full shrink-0 ${product.supplierId ? "bg-green-500" : "bg-gray-300"}`} />
-                                                    <span className="text-xs text-gray-700 truncate max-w-[100px]">{product.supplierName || "—"}</span>
+                                            <td className="px-3 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`h-2 w-2 rounded-full ${product.supplierId ? "bg-green-500" : "bg-gray-300"}`} />
+                                                    <span className="text-sm text-gray-700">{product.supplierName || "—"}</span>
                                                 </div>
                                                 {product.supplierEmail && (
-                                                    <p className="text-[10px] text-gray-400 truncate max-w-[110px]">{product.supplierEmail}</p>
+                                                    <p className="text-xs text-gray-400 mt-0.5">{product.supplierEmail}</p>
                                                 )}
                                             </td>
-
-                                            {/* Days left */}
-                                            <td className="px-3 py-3 text-center">
+                                            <td className="px-3 py-4">
                                                 {product.daysUntilStockout != null ? (
-                                                    <span className={`text-sm font-bold ${product.daysUntilStockout <= 3 ? "text-red-600" :
+                                                    <span className={`text-sm font-semibold ${
+                                                        product.daysUntilStockout <= 3 ? "text-red-600" :
                                                         product.daysUntilStockout <= 7 ? "text-orange-600" :
-                                                            product.daysUntilStockout <= 14 ? "text-amber-600" : "text-gray-700"
-                                                        }`}>
+                                                        "text-amber-600"
+                                                    }`}>
                                                         {product.daysUntilStockout}d
                                                     </span>
                                                 ) : (
-                                                    <span className="text-xs text-gray-400">—</span>
+                                                    <span className="text-sm text-gray-400">—</span>
                                                 )}
                                             </td>
                                         </motion.tr>
@@ -427,14 +505,13 @@ export function ReplenishmentProposalsModal({
                     )}
                 </div>
 
-                {/* ── Footer ── */}
-                <div className="px-6 py-4 bg-gray-50 border-t-2 border-gray-200 shrink-0">
+                {/* Footer */}
+                <div className="px-6 py-4 bg-white border-t-2 border-gray-200 shrink-0">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <Info className="h-3.5 w-3.5" />
+                            <Info className="h-4 w-4 text-gray-400" />
                             <span>
-                                Products are grouped by supplier — each supplier generates one PO with a unique number.
-                                Supplier emails are sent automatically on confirm.
+                                Products are grouped by supplier — each supplier generates one PO with a unique number
                             </span>
                         </div>
                         <div className="flex gap-3">
@@ -442,29 +519,28 @@ export function ReplenishmentProposalsModal({
                                 variant="outline"
                                 onClick={() => onOpenChange(false)}
                                 disabled={isCreating}
-                                type="button"
+                                className="border-gray-300 hover:bg-gray-50"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleConfirm}
                                 disabled={selected.size === 0 || isCreating}
-                                type="button"
-                                className={`flex items-center gap-2 ${selected.size > 0
-                                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-                                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                    }`}
+                                className={`flex items-center gap-2 px-6 ${
+                                    selected.size > 0
+                                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg shadow-indigo-500/30"
+                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                                }`}
                             >
                                 {isCreating ? (
                                     <><Loader2 className="h-4 w-4 animate-spin" /> Creating {uniqueSuppliers} PO{uniqueSuppliers !== 1 ? "s" : ""}…</>
                                 ) : (
-                                    <><Send className="h-4 w-4" /> Create {uniqueSuppliers > 0 ? `${uniqueSuppliers} ` : ""}Purchase Order{uniqueSuppliers !== 1 ? "s" : ""} & Email Suppliers</>
+                                    <><Send className="h-4 w-4" /> Create {uniqueSuppliers} Purchase Order{uniqueSuppliers !== 1 ? "s" : ""}</>
                                 )}
                             </Button>
                         </div>
                     </div>
                 </div>
-
             </DialogContent>
         </Dialog>
     );

@@ -1,71 +1,71 @@
-import { NextFunction, Request, Router, Response } from "express";
-import { GenericService } from "../services/generic.crud.services";
-import { AdvancedGenericController } from "../controllers/GenericController";
-import { PurchaseDoc, PurchaseOrder } from "../models/purchaseOrder.model";
-import { purchaseOrderZodSchema } from "../schemas/purchaseOrder.schema";
+// routes/purchaseOrder.routes.ts
+import express from "express";
 import { purchaseOrderCustomController } from "../controllers/purchaseOrder.controller";
-import { generatePurchaseOrderCode } from "../utils/generate.AutoCode.Counter";
+import { AdvancedGenericController } from "../controllers/GenericController"
+import { GenericService } from "../services/generic.crud.services";
+import { PurchaseOrder } from "../models/purchaseOrder.model";
 
-const purchaseOrderRoutes = Router();
+const router = express.Router();
 
-// Generic CRUD service and controller
-const purchaseOrderBaseService = new GenericService<PurchaseDoc>(PurchaseOrder);
-
-const purchaseOrderController = new AdvancedGenericController({
-  service: purchaseOrderBaseService,
+// ── Generic CRUD service ─────────────────────────────────────────
+const poService = new GenericService(PurchaseOrder);
+const genericController = new AdvancedGenericController({
+  service: poService,
   populate: [
-    "userId",
-    {
-      path: "supplier",
-      select: "contactInformation",
-    },
-    
+    { path: "userId", select: "email role" },
+    { path: "supplier" },
+    { path: "items.productId", select: "productName sku" },
   ],
-  searchFields: ["orderNumber", "supplier", "supplierContact", "notes"],
-  validationSchema: purchaseOrderZodSchema,
+  searchFields: ["orderNumber", "orderContactEmail", "notes"],
 });
 
-// ==========================================
-// IMPORTANT: Specific routes MUST come BEFORE parameterized routes
-// Otherwise /:id will catch routes like /next-order-number
-// ==========================================
+// ═════════════════════════════════════════════════════════════════
+// ✅ SPECIFIC ROUTES FIRST - These must come BEFORE /:id
+// ═════════════════════════════════════════════════════════════════
 
-// Custom business logic routes (specific paths)
-purchaseOrderRoutes.get(
-  "/next-order-number",
-  purchaseOrderCustomController.generateNextOrderNumber,
-);
-purchaseOrderRoutes.get(
-  "/stats/dashboard",
-  purchaseOrderCustomController.getStats,
-);
-purchaseOrderRoutes.get("/export", purchaseOrderCustomController.exportToPDF);
-purchaseOrderRoutes.patch(
-  "/bulk-update",
-  purchaseOrderCustomController.bulkUpdate,
-);
-purchaseOrderRoutes.get("/", purchaseOrderCustomController.getAllWithSearch);
+// GET /api/purchase-orders                      → paginated list
+router.get("/", purchaseOrderCustomController.getAllWithSearch);
 
-// Standard CRUD operations (generic controller)
-// purchaseOrderRoutes.get("/", purchaseOrderController.getAll);
-purchaseOrderRoutes.post(
-  "/",
-  async (req: Request, res: Response, next: NextFunction) => {
-    const purchaseCode = await generatePurchaseOrderCode();
-    req.body.orderNumber = purchaseCode;
+// GET /api/purchase-orders/meta/next-number     → generate PO number
+router.get("/meta/next-number", purchaseOrderCustomController.generateNextOrderNumber);
 
-    next();
-  },
-  purchaseOrderController.create,
-);
-purchaseOrderRoutes.get("/:id", purchaseOrderController.getById);
-purchaseOrderRoutes.put("/:id", purchaseOrderController.update);
-purchaseOrderRoutes.delete("/:id", purchaseOrderController.delete);
+// GET /api/purchase-orders/meta/stats           → dashboard statistics
+router.get("/meta/stats", purchaseOrderCustomController.getStats);
 
-// Custom update operation (specific path with parameter)
-purchaseOrderRoutes.patch(
-  "/:id/status",
-  purchaseOrderCustomController.updateStatus,
-);
+// GET /api/purchase-orders/export/pdf           → export to PDF
+router.get("/export/pdf", purchaseOrderCustomController.exportToPDF);
 
-export default purchaseOrderRoutes;
+// GET /api/purchase-orders/reorder/suggestions  → reorder suggestions
+router.get("/reorder/suggestions", purchaseOrderCustomController.getReorderSuggestions);
+
+// POST /api/purchase-orders/reorder/bulk        → bulk order creation
+router.post("/reorder/bulk", purchaseOrderCustomController.createBulkReorderPOs);
+
+// ✅ STOCK ALERT ROUTES - Specific paths
+router.get("/alerts/count", purchaseOrderCustomController.getStockAlertCount);  // ← MUST come before /alerts
+router.get("/alerts", purchaseOrderCustomController.getStockAlerts);            // ← MUST come before /:id
+router.patch("/alerts/:id/dismiss", purchaseOrderCustomController.dismissStockAlert);
+
+// ═════════════════════════════════════════════════════════════════
+// ⚠️ PARAMETERIZED ROUTES LAST - These catch any unmatched paths
+// ═════════════════════════════════════════════════════════════════
+
+// GET /api/purchase-orders/:id                   → single PO by ID
+router.get("/:id", genericController.getById);
+
+// POST /api/purchase-orders                       → create single PO
+router.post("/", genericController.create);
+
+// PUT /api/purchase-orders/:id                    → update single PO
+router.put("/:id", genericController.update);
+
+// DELETE /api/purchase-orders/:id                  → soft delete
+router.delete("/:id", genericController.delete);
+
+// PATCH /api/purchase-orders/:id/status           → update PO status
+router.patch("/:id/status", purchaseOrderCustomController.updateStatus);
+
+// PATCH /api/purchase-orders/bulk-update          → bulk update
+router.patch("/bulk-update", purchaseOrderCustomController.bulkUpdate);
+
+export default router;

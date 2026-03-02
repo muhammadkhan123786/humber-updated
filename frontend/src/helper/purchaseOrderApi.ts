@@ -30,6 +30,108 @@ const getUserId = () => {
   return user.id || user._id;
 };
 
+// Add to your helper/purchaseOrderApi.ts
+
+// In purchaseOrderApi.ts - UPDATE THIS INTERFACE
+export interface BulkOrderGroup {
+  poNumber?: string;
+  supplierId: string;
+  supplierName: string;
+  supplierEmail: string;
+  expectedDelivery?: string;
+  products: Array<{
+    productId: string;
+    productName: string;
+    sku: string;
+    // ✅ These match what the modal sends
+    suggestedQty: number;      // From modal
+    costPrice: number;         // From modal
+    maxStockLevel: number;
+    // Optional fields that might come from modal
+    currentStock?: number;
+    reorderPoint?: number;
+    safetyStock?: number;
+    severity?: string;
+  }>;
+}
+
+// Keep this for the API call format
+export interface BulkOrderAPIRequest {
+  supplierId: string;
+  supplierName: string;
+  supplierEmail: string;
+  expectedDelivery?: string;
+  products: Array<{
+    productId: string;
+    productName: string;
+    sku: string;
+    suggestedOrderQty: number;  // API expects this
+    unitPrice: number;           // API expects this
+    maxStockLevel: number;
+  }>;
+}
+
+export interface BulkOrderResponse {
+  success: boolean;
+  created: number;
+  poNumbers: string[];
+  pos: Array<{
+    _id: string;
+    orderNumber: string;
+    supplier: string;
+    total: number;
+  }>;
+  emailErrors?: Array<{
+    supplier: string;
+    email: string;
+    error: string;
+  }>;
+  message: string;
+}
+
+export const createBulkPurchaseOrders = async (
+  userId: string,
+  groups: BulkOrderGroup[], // This now has suggestedQty/costPrice
+  buyerCompany: string = "Humber Mobility Scooter",
+  buyerEmail: string = ""
+): Promise<BulkOrderResponse> => {
+  try {
+    // Transform from modal format to API format
+    const apiGroups: BulkOrderAPIRequest[] = groups.map(group => ({
+      supplierId: group.supplierId,
+      supplierName: group.supplierName,
+      supplierEmail: group.supplierEmail,
+      expectedDelivery: group.expectedDelivery,
+      products: group.products.map(product => ({
+        productId: product.productId,
+        productName: product.productName,
+        sku: product.sku,
+        // ✅ Map suggestedQty → suggestedOrderQty
+        suggestedOrderQty: Number(product.suggestedQty) || 0,
+        // ✅ Map costPrice → unitPrice
+        unitPrice: Number(product.costPrice) || 0,
+        maxStockLevel: Number(product.maxStockLevel) || 0
+      }))
+    }));
+
+    const response = await axios.post(
+      `${API_URL}/reorder/bulk`,
+      {
+        userId,
+        buyerCompany,
+        buyerEmail,
+        groups: apiGroups, // Send the transformed data
+      },
+      getAuthConfig()
+    );
+    
+    return response.data;
+  } catch (error: any) {
+    console.error("Error creating bulk purchase orders:", error);
+    throw new Error(error.response?.data?.message || "Failed to create bulk orders");
+  }
+};
+
 export const fetchOrders = async (
   page = 1,
   limit = 10,
