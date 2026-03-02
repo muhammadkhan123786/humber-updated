@@ -639,6 +639,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Wrench,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Rider Vehicle Types",
+        href: "/dashboard/rider-vehicle-type",
+        icon: Bike,
+        roleId: [1],
+      }
     ],
   },
   //system users
