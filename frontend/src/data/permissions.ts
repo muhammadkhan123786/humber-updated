@@ -65,7 +65,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
 
   {
     _id: nanoid(),
-    label: "My Jobs",
+    label: "My Leading Jobs",
     href: "/dashboard/jobs",
     icon: LayoutDashboard,
     roleId: [2],
