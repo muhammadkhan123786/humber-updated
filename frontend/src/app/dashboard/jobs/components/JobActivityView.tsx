@@ -6,8 +6,12 @@ import { jobsAnimations } from "./JobsAnimation";
 import JobInfo from "./JobInfo";
 import Services from "./Services";
 import Parts from "./Parts";
+import axios from "axios";
+import TechniciansActivity from "./TechniciansActivity";
 
-export type ActivityTabType = 'jobinfo' | 'services' | 'parts' | 'inspection' | 'notes';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+export type ActivityTabType = 'jobinfo' | 'services' | 'parts' | 'inspection' | 'notes' | 'technician-activities';
 
 interface JobActivityViewProps {
   job: any;
@@ -17,18 +21,110 @@ interface JobActivityViewProps {
 const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
   const [activeTab, setActiveTab] = useState<ActivityTabType>('jobinfo');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [inspectionBadge, setInspectionBadge] = useState<string>('0/0');
+  const [currentInspectionTime, setCurrentInspectionTime] = useState<"BEFORE SERVICE" | "AFTER SERVICE">("BEFORE SERVICE");
 
   useEffect(() => {
     // Trigger animation on mount
     setIsAnimating(true);
+    // Load inspection counts
+    loadInspectionCounts(currentInspectionTime);
   }, []);
 
   useEffect(() => {
     // Reset animation when tab changes
     setIsAnimating(false);
     const timer = setTimeout(() => setIsAnimating(true), 50);
+    
+    // When leaving inspection tab, show combined count
+    if (activeTab !== 'inspection') {
+      loadInspectionCounts();
+    }
+    
     return () => clearTimeout(timer);
   }, [activeTab]);
+
+  const handleInspectionTimeChange = (time: "BEFORE SERVICE" | "AFTER SERVICE") => {
+    setCurrentInspectionTime(time);
+    loadInspectionCounts(time);
+  };
+
+  const loadInspectionCounts = async (inspectionTime?: "BEFORE SERVICE" | "AFTER SERVICE") => {
+    try {
+      const token = localStorage.getItem("token")?.replace(/"/g, "").trim();
+      
+      // Fetch total active inspection types
+      const typesResponse = await axios.get(`${BASE_URL}/technician-inspection`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!typesResponse.data?.success) {
+        return;
+      }
+
+      const totalTypes = typesResponse.data.data.filter((type: any) => type.isActive).length;
+
+      // If inspectionTime is provided, show only that time's count
+      if (inspectionTime) {
+        try {
+          const response = await axios.get(
+            `${BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${job._id}&inspectionTIME=${inspectionTime}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          if (response.data?.success && response.data.data) {
+            const completed = response.data.data.inspections.filter(
+              (item: any) => item.status !== "PENDING"
+            ).length;
+            setInspectionBadge(`${completed}/${totalTypes}`);
+          } else {
+            setInspectionBadge(`0/${totalTypes}`);
+          }
+        } catch (error) {
+          // No inspection yet for this time
+          setInspectionBadge(`0/${totalTypes}`);
+        }
+      } else {
+        // Default: show combined count from both before and after
+        let beforeCompleted = 0;
+        try {
+          const beforeResponse = await axios.get(
+            `${BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${job._id}&inspectionTIME=BEFORE SERVICE`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (beforeResponse.data?.success && beforeResponse.data.data) {
+            beforeCompleted = beforeResponse.data.data.inspections.filter(
+              (item: any) => item.status !== "PENDING"
+            ).length;
+          }
+        } catch (error) {
+          // No before service inspection yet
+        }
+
+        let afterCompleted = 0;
+        try {
+          const afterResponse = await axios.get(
+            `${BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${job._id}&inspectionTIME=AFTER SERVICE`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (afterResponse.data?.success && afterResponse.data.data) {
+            afterCompleted = afterResponse.data.data.inspections.filter(
+              (item: any) => item.status !== "PENDING"
+            ).length;
+          }
+        } catch (error) {
+          // No after service inspection yet
+        }
+
+        const totalCompleted = beforeCompleted + afterCompleted;
+        const totalPossible = totalTypes * 2;
+        setInspectionBadge(`${totalCompleted}/${totalPossible}`);
+      }
+    } catch (error) {
+      console.error("Failed to load inspection counts:", error);
+      setInspectionBadge('0/0');
+    }
+  };
 
   const tabs = [
     {
@@ -50,11 +146,16 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
       id: 'inspection' as ActivityTabType,
       label: 'Inspection',
       icon: ClipboardList,
-      badge: '0/8',
+      badge: inspectionBadge,
     },
     {
       id: 'notes' as ActivityTabType,
       label: 'Notes',
+      icon: FileText,
+    },
+       {
+      id: 'technician-activities' as ActivityTabType,
+      label: 'Technicians Activities',
       icon: FileText,
     },
   ];
@@ -71,7 +172,13 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
         return <Parts job={job} />;
       
       case 'inspection':
-        return <TechnicianInspection job={job} onBack={() => setActiveTab('jobinfo')} />;
+        return (
+          <TechnicianInspection 
+            job={job} 
+            onInspectionUpdate={() => loadInspectionCounts(currentInspectionTime)}
+            onInspectionTimeChange={handleInspectionTimeChange}
+          />
+        );
       
       case 'notes':
         return (
@@ -84,21 +191,13 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
             />
           </div>
         );
+         case 'technician-activities':
+        return <TechniciansActivity />;
       
       default:
         return null;
     }
   };
-
-  // If inspection tab is active, render it full screen with slide animation
-  if (activeTab === 'inspection') {
-    return (
-      <div className="animate-slideUp">
-        <style>{jobsAnimations}</style>
-        {renderContent()}
-      </div>
-    );
-  }
 
   return (
     <>
