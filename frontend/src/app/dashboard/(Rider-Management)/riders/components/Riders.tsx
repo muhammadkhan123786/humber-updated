@@ -1,16 +1,20 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import RiderBanner from "./RiderBanner";
 import StatsSection from "./StatCard";
 import FilterSection from "./FilterSection";
 import RiderTable from "./RiderTable";
 
 const Riders = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
-    <div>
+    <div className="space-y-4">
       <RiderBanner />
       <StatsSection />
-      <FilterSection />
-      <RiderTable />
+      <FilterSection onSearchChange={setSearchQuery} />
+
+      <RiderTable search={searchQuery} />
     </div>
   );
 };

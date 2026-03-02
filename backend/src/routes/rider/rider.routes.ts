@@ -1,10 +1,7 @@
 import { Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
 import { Request, Response, NextFunction } from "express";
-import {
-  riderDoc,
-  Riders,
-} from "../../models/rider/rider.models";
+import { riderDoc, Riders } from "../../models/rider/rider.models";
 import { riderZodSchema } from "../../schemas/rider-schemas/rider.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { genericProfileIdsMiddleware } from "../../middleware/generic.profile.middleware";
@@ -23,17 +20,17 @@ const riderUploads = createUploader([
     maxCount: 1,
     mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
   },
-   {
+  {
     name: "licenseBackPic",
     maxCount: 1,
     mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
   },
-   {
+  {
     name: "insuranceDocumentPic",
     maxCount: 1,
     mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
   },
-   {
+  {
     name: "motCertificatePic",
     maxCount: 1,
     mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
@@ -43,8 +40,6 @@ const riderUploads = createUploader([
     maxCount: 1,
     mimeTypes: ["image/jpeg", "image/png", "application/pdf"],
   },
-  
-  
 ]);
 
 const riderRouter = Router();
@@ -59,6 +54,8 @@ const riderController = new AdvancedGenericController({
     "addressId",
     "contactId",
     "accountId",
+    "vehicleTypeId",
+    "employeementTypeId",
     {
       path: "addressId",
       populate: [{ path: "cityId" }, { path: "countryId" }],
@@ -80,15 +77,43 @@ const riderProfileMiddleware = genericProfileIdsMiddleware<riderDoc>({
 });
 
 riderRouter.get("/:id", riderController.getById);
+riderRouter.get("/", riderController.getAll);
 
+// backend/src/routes/rider/rider.routes.ts
 riderRouter.post(
   "/",
   riderUploads,
-  mapUploadedFilesToBody("/uploads", {},["profilePic","licenseFrontPic","licenseBackPic","insuranceDocumentPic","motCertificatePic","utilityBillPic"]),
+  mapUploadedFilesToBody("/uploads", {}, [
+    "profilePic",
+    "licenseFrontPic",
+    "licenseBackPic",
+    "insuranceDocumentPic",
+    "motCertificatePic",
+    "utilityBillPic",
+  ]),
+  (req: Request, res: Response, next: NextFunction) => {
+    console.log(
+      "📥 [POST /riders] Request body after multer:",
+      JSON.stringify(req.body, null, 2),
+    );
+    console.log("📥 [POST /riders] Request files:", req.files);
+    next();
+  },
   riderProfileMiddleware,
   async (req: Request, res: Response, next: NextFunction) => {
     const riderCode = await generateRiderCode();
     req.body.riderAutoId = riderCode;
+    console.log(
+      "📥 [POST /riders] After adding riderAutoId:",
+      req.body.riderAutoId,
+    );
+    next();
+  },
+  (req: Request, res: Response, next: NextFunction) => {
+    console.log(
+      "📥 [POST /riders] Before controller - final body:",
+      JSON.stringify(req.body, null, 2),
+    );
     next();
   },
   riderController.create,
@@ -98,7 +123,14 @@ riderRouter.post(
 riderRouter.put(
   "/:id",
   riderUploads,
-  mapUploadedFilesToBody("/uploads", {},["profilePic","licenseFrontPic","licenseBackPic","insuranceDocumentPic","motCertificatePic","utilityBillPic"]),
+  mapUploadedFilesToBody("/uploads", {}, [
+    "profilePic",
+    "licenseFrontPic",
+    "licenseBackPic",
+    "insuranceDocumentPic",
+    "motCertificatePic",
+    "utilityBillPic",
+  ]),
   riderProfileMiddleware,
   riderController.update,
 );

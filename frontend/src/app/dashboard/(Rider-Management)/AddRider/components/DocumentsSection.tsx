@@ -1,49 +1,84 @@
 "use client";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
+import { useFormContext, Controller } from "react-hook-form";
 import { motion } from "framer-motion";
 import { FileText, Upload, Calendar, FileCheck, X } from "lucide-react";
 import FormInput from "../../components/FormInput";
+import { RiderFormData } from "@/schema/rider.schema";
 
-const FileUploadZone = ({
+interface FileUploadZoneProps {
+  label: string;
+  subtext?: string;
+  extraHeading?: string;
+  name: keyof RiderFormData;
+  required?: boolean;
+}
+
+const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   label,
   subtext,
   extraHeading,
   name,
-}: {
-  label: string;
-  subtext?: string;
-  extraHeading?: string;
-  name: string;
+  required = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const handleZoneClick = () => {
-    fileInputRef.current?.click();
-  };
+  const {
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<RiderFormData>();
+
+  const selectedFile = watch(name) as File | string | undefined;
+  const error = errors[name];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-      console.log(`File for ${name}:`, e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      setValue(name, file, { shouldValidate: true });
+
+      if (file.type.startsWith("image/")) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      }
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const clearFile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelectedFile(null);
+    setValue(name, undefined, { shouldValidate: true });
+    setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const getFileName = () => {
+    if (selectedFile instanceof File) {
+      return selectedFile.name;
+    } else if (typeof selectedFile === "string") {
+      return selectedFile.split("/").pop() || "Uploaded file";
+    }
+    return null;
+  };
+
+  const fileName = getFileName();
 
   return (
     <div className="flex flex-col gap-2">
       <label className="block text-sm font-semibold text-gray-700">
-        {label} *
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
 
       <input
         type="file"
-        name={name}
         ref={fileInputRef}
         className="hidden"
         accept=".jpg,.jpeg,.png,.pdf"
@@ -51,28 +86,31 @@ const FileUploadZone = ({
       />
 
       <div
-        onClick={handleZoneClick}
+        onClick={() => fileInputRef.current?.click()}
         className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer group
           ${
-            selectedFile
+            fileName
               ? "border-emerald-500 bg-emerald-50/30"
-              : "border-gray-200 bg-gray-50/30 hover:bg-blue-50/50 hover:border-blue-300"
+              : error
+                ? "border-red-500 bg-red-50/30"
+                : "border-gray-200 bg-gray-50/30 hover:bg-blue-50/50 hover:border-blue-300"
           }`}
       >
         <div
           className={`p-3 rounded-xl shadow-sm transition-transform group-hover:scale-110
-          ${selectedFile ? "bg-emerald-500 text-white" : "bg-white text-blue-600"}`}
+          ${fileName ? "bg-emerald-500 text-white" : "bg-white text-blue-600"}`}
         >
-          {selectedFile ? <FileCheck size={24} /> : <Upload size={24} />}
+          {fileName ? <FileCheck size={24} /> : <Upload size={24} />}
         </div>
 
         <div className="text-center w-full px-4">
-          {selectedFile ? (
+          {fileName ? (
             <div className="flex items-center justify-center gap-2">
               <p className="text-sm font-bold text-emerald-700 truncate max-w-[200px]">
-                {selectedFile.name}
+                {fileName}
               </p>
               <button
+                type="button"
                 onClick={clearFile}
                 className="p-1 hover:bg-emerald-100 rounded-full text-emerald-600 transition-colors"
               >
@@ -91,11 +129,20 @@ const FileUploadZone = ({
           )}
         </div>
       </div>
+      {error && (
+        <p className="text-sm text-red-500">{error.message as string}</p>
+      )}
     </div>
   );
 };
 
 const DocumentsSection: React.FC = () => {
+  const {
+    control,
+
+    formState: { errors },
+  } = useFormContext<RiderFormData>();
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -50 }}
@@ -120,26 +167,57 @@ const DocumentsSection: React.FC = () => {
       <div className="p-6 rounded-2xl border border-gray-100 bg-white space-y-6">
         <h3 className="font-semibold text-gray-900">Driving License</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormInput
-            label="License Number"
-            placeholder="SMITH901234AB5DE"
-            required
+          <Controller
+            name="licenseNumber"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="License Number"
+                placeholder="SMITH901234AB5DE"
+                required
+                value={field.value || ""}
+                onChange={field.onChange}
+              />
+            )}
           />
-          <FormInput
-            label="Expiry Date"
-            type="date"
-            icon={<Calendar size={18} />}
-            required
+          {errors.licenseNumber && (
+            <p className="text-sm text-red-500 -mt-4">
+              {errors.licenseNumber.message}
+            </p>
+          )}
+
+          <Controller
+            name="licenseExpiryDate"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Expiry Date"
+                type="date"
+                icon={<Calendar size={18} />}
+                required
+                value={field.value || ""}
+                onChange={field.onChange}
+              />
+            )}
           />
+          {errors.licenseExpiryDate && (
+            <p className="text-sm text-red-500 -mt-4">
+              {errors.licenseExpiryDate.message}
+            </p>
+          )}
+
           <FileUploadZone
             label="Licence Front"
             subtext="Upload Front"
-            name="license_front"
+            name="licenseFrontPic"
+            required
           />
+
           <FileUploadZone
             label="Licence Back"
             subtext="Upload Back"
-            name="license_back"
+            name="licenseBackPic"
+            required
           />
         </div>
       </div>
@@ -147,22 +225,50 @@ const DocumentsSection: React.FC = () => {
       <div className="p-6 rounded-2xl border border-gray-100 bg-white space-y-6">
         <h3 className="font-semibold text-gray-900">Vehicle Insurance</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormInput
-            label="Policy Number"
-            placeholder="POL123456789"
-            required
+          <Controller
+            name="policyNumber"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Policy Number"
+                placeholder="POL123456789"
+                required
+                value={field.value || ""}
+                onChange={field.onChange}
+              />
+            )}
           />
-          <FormInput
-            label="Expiry Date"
-            type="date"
-            icon={<Calendar size={18} />}
-            required
+          {errors.policyNumber && (
+            <p className="text-sm text-red-500 -mt-4">
+              {errors.policyNumber.message}
+            </p>
+          )}
+          <Controller
+            name="insuranceExpiryDate"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Expiry Date"
+                type="date"
+                icon={<Calendar size={18} />}
+                required
+                value={field.value || ""}
+                onChange={field.onChange}
+              />
+            )}
           />
+          {errors.insuranceExpiryDate && (
+            <p className="text-sm text-red-500 -mt-4">
+              {errors.insuranceExpiryDate.message}
+            </p>
+          )}
+
           <div className="md:col-span-2">
             <FileUploadZone
               label="Insurance Document"
               subtext="Upload Insurance Certificate"
-              name="insurance_doc"
+              name="insuranceDocumentPic"
+              required
             />
           </div>
         </div>
@@ -173,22 +279,42 @@ const DocumentsSection: React.FC = () => {
           MOT Certificate (if applicable)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <FormInput label="Certificate Number" placeholder="MOT123456789" />
-          <FormInput
-            label="Expiry Date"
-            type="date"
-            icon={<Calendar size={18} />}
+          <Controller
+            name="motCertificateNumber"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Certificate Number"
+                placeholder="MOT123456789"
+                value={field.value || ""}
+                onChange={field.onChange}
+              />
+            )}
           />
+
+          <Controller
+            name="motExpiryDate"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Expiry Date"
+                type="date"
+                icon={<Calendar size={18} />}
+                value={field.value || ""}
+                onChange={field.onChange}
+              />
+            )}
+          />
+
           <div className="md:col-span-2">
             <FileUploadZone
               label="MOT Certificate"
               subtext="Upload MOT Certificate"
-              name="mot_cert"
+              name="motCertificatePic"
             />
           </div>
         </div>
       </div>
-
       <div className="p-6 rounded-2xl border border-gray-100 bg-white space-y-6">
         <h3 className="font-semibold text-gray-900">Proof of Address</h3>
         <div className="md:col-span-2">
@@ -196,7 +322,7 @@ const DocumentsSection: React.FC = () => {
             label="Utility Bill or Bank Statement"
             subtext="Upload Utility Bill or Bank Statement"
             extraHeading="Must be dated within last 3 months"
-            name="proof_of_address"
+            name="utilityBillPic"
           />
         </div>
       </div>

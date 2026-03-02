@@ -4,47 +4,45 @@ import z from "zod";
 import { objectIdSchema } from "../../validators/objectId.schema";
 
 export const riderSchema = {
-  riderAutoId:{type:String},
-  profilePic:{type:String},
+  riderAutoId: { type: String },
+  profilePic: { type: String },
   addressId: { type: Types.ObjectId, ref: "Address" },
   personId: { type: Types.ObjectId, ref: "Person", required: true },
   contactId: { type: Types.ObjectId, ref: "Contact" },
-  DOB:{type:Date},
+  DOB: { type: Date },
   accountId: { type: Types.ObjectId, ref: "User", required: true },
-  nationalIssuranceNumber:{type:String},
-  emergencyContactNumber:{type:String},
-  phoneNumber:{type:String},
-  relationShip:{type:String},
-  bankName:{type:String},
-  accountHolderName:{type:String},
-  accountNumber:{type:String},
-  sortCode:{type:String},
-  licenseNumber:{type:String},
-  licenseExpiryDate:{type:Date},
-  yearsOfExperience:{type:Number},
-  vehicleTypeId:{type:Types.ObjectId,ref:"RiderVehicleTypes"},
-  modelId:{type:String},
-  vehicleYear:{type:String},
-  licensePlate:{type:String},
-  insuranceCompany:{type:String},
-  policyNumber:{type:String},
-  insuranceExpiryDate:{type:Date},
-  licenseFrontPic:{type:String},
-  licenseBackPic:{type:String},
-  insuranceDocumentPic:{type:String},
-  motCertificateNumber:{type:String},
-  motExpiryDate:{type:Date},
-  motCertificatePic:{type:String},
-  utilityBillPic:{type:String},
-  employeementTypeId:{type:Types.ObjectId,ref:"jobTypes"},
-  availbilitiesIds:[{type:Types.ObjectId,ref:"riderAvailabilities"}],
-  zones:[{type:Types.ObjectId,ref:"CityModel"}],
+  nationalIssuranceNumber: { type: String },
+  emergencyContactNumber: { type: String },
+  phoneNumber: { type: String },
+  relationShip: { type: String },
+  bankName: { type: String },
+  accountHolderName: { type: String },
+  accountNumber: { type: String },
+  sortCode: { type: String },
+  licenseNumber: { type: String },
+  licenseExpiryDate: { type: Date },
+  yearsOfExperience: { type: Number },
+  vehicleTypeId: { type: Types.ObjectId, ref: "RiderVehicleTypes" },
+  modelId: { type: String },
+  vehicleYear: { type: String },
+  licensePlate: { type: String },
+  insuranceCompany: { type: String },
+  policyNumber: { type: String },
+  insuranceExpiryDate: { type: Date },
+  licenseFrontPic: { type: String },
+  licenseBackPic: { type: String },
+  insuranceDocumentPic: { type: String },
+  motCertificateNumber: { type: String },
+  motExpiryDate: { type: Date },
+  motCertificatePic: { type: String },
+  utilityBillPic: { type: String },
+  employeementTypeId: { type: Types.ObjectId, ref: "jobTypes" },
+  availbilitiesIds: [{ type: Types.ObjectId, ref: "riderAvailabilities" }],
+  zones: [{ type: Types.ObjectId, ref: "CityModel" }],
   ...commonSchema,
 };
 
-
 export const riderZodSchema = z.object({
-
   riderAutoId: z.string().optional(),
 
   profilePic: z.string().optional(),
@@ -63,13 +61,10 @@ export const riderZodSchema = z.object({
 
   emergencyContactNumber: z
     .string()
-    .min(7, "Invalid emergency contact number")
+    .min(1, "Invalid emergency contact number")
     .optional(),
 
-  phoneNumber: z
-    .string()
-    .min(7, "Invalid phone number")
-    .optional(),
+  phoneNumber: z.string().min(7, "Invalid phone number").optional(),
 
   relationShip: z.string().optional(),
 
@@ -123,14 +118,9 @@ export const riderZodSchema = z.object({
 
   employeementTypeId: objectIdSchema.optional(),
 
-  availbilitiesIds: z
-    .array(objectIdSchema)
-    .optional(),
+  availbilitiesIds: z.array(objectIdSchema).optional(),
 
-  zones: z
-    .array(objectIdSchema)
-    .optional(),
+  zones: z.array(objectIdSchema).optional(),
 
-    ...commonSchemaValidation
-
+  ...commonSchemaValidation,
 });

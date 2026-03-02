@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
 
 interface FormFooterProps {
@@ -8,6 +7,8 @@ interface FormFooterProps {
   onNext?: () => void;
   isFirstStep?: boolean;
   isLastStep?: boolean;
+  isLoading?: boolean;
+  isValid?: boolean;
 }
 
 const FormFooter: React.FC<FormFooterProps> = ({
@@ -15,13 +16,11 @@ const FormFooter: React.FC<FormFooterProps> = ({
   onNext,
   isFirstStep = false,
   isLastStep = false,
+  isLoading = false,
+  isValid = true,
 }) => {
-  const router = useRouter();
-
   const handleAction = () => {
-    if (isLastStep) {
-      router.push("/dashboard/riders");
-    } else if (onNext) {
+    if (onNext) {
       onNext();
     }
   };
@@ -40,17 +39,19 @@ const FormFooter: React.FC<FormFooterProps> = ({
   const nextClasses = `
     flex items-center gap-2 text-white px-3 py-1.5 rounded-xl font-bold
     shadow-lg transition-all active:scale-95 hover:brightness-110
+    disabled:opacity-50 disabled:cursor-not-allowed
   `;
 
   return (
     <div className="w-full mt-8">
       <div className="flex items-center justify-between p-4 bg-transparent">
         <button
+          type="button"
           onClick={onPrevious}
-          disabled={isFirstStep}
+          disabled={isFirstStep || isLoading}
           className={`flex items-center gap-2 px-2 py-1.5 rounded-xl font-bold transition-all border border-gray-100 shadow-sm
             ${
-              isFirstStep
+              isFirstStep || isLoading
                 ? "opacity-0 cursor-default pointer-events-none"
                 : "bg-white/80 text-gray-500 hover:bg-white hover:text-gray-700 active:scale-95"
             }`}
@@ -59,29 +60,40 @@ const FormFooter: React.FC<FormFooterProps> = ({
           <span>Previous</span>
         </button>
 
-        <button
-          onClick={handleAction}
-          className={isLastStep ? submitClasses : nextClasses}
-          style={
-            !isLastStep
-              ? {
-                  background:
-                    "linear-gradient(90deg, #0061FF 0%, #009D85 100%)",
-                }
-              : undefined
-          }
-        >
-          {isLastStep && (
-            <FileText size={18} strokeWidth={2.5} className="mr-2" />
-          )}
-
-          <span className={isLastStep ? "capitalize" : ""}>
-            {isLastStep ? "Submit Registration" : "Next"}
-          </span>
-          {!isLastStep && (
+        {isLastStep ? (
+          <button
+            type="button"
+            onClick={handleAction}
+            disabled={isLoading || !isValid}
+            className={submitClasses}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <FileText size={18} strokeWidth={2.5} className="mr-2" />
+                <span>Submit Registration</span>
+              </>
+            )}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAction}
+            disabled={!isValid || isLoading}
+            className={nextClasses}
+            style={{
+              background: "linear-gradient(90deg, #0061FF 0%, #009D85 100%)",
+              opacity: !isValid || isLoading ? 0.5 : 1,
+            }}
+          >
+            <span>Next</span>
             <ChevronRight size={18} strokeWidth={3} className="ml-2" />
-          )}
-        </button>
+          </button>
+        )}
       </div>
     </div>
   );
