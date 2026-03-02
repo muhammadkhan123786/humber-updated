@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { X, Share2, Users, FileText, Loader2, Briefcase } from "lucide-react";
+import { X, Share2, Users, FileText, Loader2, Briefcase, Search } from "lucide-react";
 import { jobsAnimations } from "./JobsAnimation";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -16,6 +16,7 @@ interface ShareJobModalProps {
 
 interface Technician {
   _id: string;
+  employeeId?: string;
   personId?: {
     firstName: string;
     lastName: string;
@@ -36,27 +37,72 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
   const [loading, setLoading] = useState(false);
   const [fetchingTechnicians, setFetchingTechnicians] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchTechnicians();
+    if (isOpen && job?._id) {
+      const delayDebounce = setTimeout(() => {
+        fetchTechnicians();
+      }, 300);
+
+      return () => clearTimeout(delayDebounce);
     }
-  }, [isOpen]);
+  }, [searchQuery, isOpen, job?._id]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isDropdownOpen && !target.closest('.custom-dropdown')) {
+        setIsDropdownOpen(false);
+        setSearchQuery("");
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
 
   const fetchTechnicians = async () => {
+    if (!job?._id) {
+      console.warn("No job ID available");
+      return;
+    }
+    
     setFetchingTechnicians(true);
     try {
       const token = localStorage.getItem("token")?.replace(/"/g, "").trim() || "";
-      const response = await axios.get(`${BASE_URL}/technicians`, {
+      const params = new URLSearchParams({
+        jobId: job._id,
+        page: "1",
+        limit: "50",
+      });
+      
+      if (searchQuery.trim()) {
+        params.append("search", searchQuery.trim());
+      }
+
+      const url = `${BASE_URL}/technician-job-assignments/getavailabletechniciansforjob?${params.toString()}`;
+      console.log("Fetching technicians from:", url);
+
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
+      console.log("Response:", response.data);
+
       if (response.data?.data) {
         setTechnicians(response.data.data);
+      } else {
+        setTechnicians([]);
       }
     } catch (error: any) {
-      console.error("Error fetching technicians:", error);
-      toast.error("Failed to load technicians");
+      console.error("Error fetching available technicians:", error);
+      console.error("Error response:", error.response?.data);
+      console.error("Error status:", error.response?.status);
+      toast.error(error.response?.data?.message || "Failed to load technicians");
+      setTechnicians([]);
     } finally {
       setFetchingTechnicians(false);
     }
@@ -93,6 +139,7 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
         // Reset form
         setSelectedTechnician("");
         setGeneralNotes("");
+        setSearchQuery("");
       }
     } catch (error: any) {
       console.error("Error sharing job:", error);
@@ -108,6 +155,8 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
       setTimeout(() => {
         setSelectedTechnician("");
         setGeneralNotes("");
+        setSearchQuery("");
+        setIsDropdownOpen(false);
         setIsClosing(false);
         onClose();
       }, 200);
@@ -180,33 +229,109 @@ const ShareJobModal = ({ isOpen, onClose, job, onSuccess }: ShareJobModalProps) 
           </div>
 
           {/* Technician Selection */}
-          <div className="mb-4">
+          <div className="mb-4 relative">
             <label className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
               <Users size={16} className="text-orange-500" />
               Select Technician <span className="text-red-500">*</span>
             </label>
-            {fetchingTechnicians ? (
-              <div className="flex items-center justify-center py-8 text-gray-500">
-                <Loader2 className="animate-spin mr-2" size={20} />
-                Loading technicians...
-              </div>
-            ) : (
-              <select
-                value={selectedTechnician}
-                onChange={(e) => setSelectedTechnician(e.target.value)}
-                required
+            
+            {/* Hidden input for form validation */}
+            <input
+              type="hidden"
+              name="technicianId"
+              value={selectedTechnician}
+              required
+            />
+            
+            {/* Custom Searchable Dropdown */}
+            <div className="relative custom-dropdown">
+              {/* Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 disabled={loading}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed text-left flex items-center justify-between"
               >
-                <option value="">-- Select Technician --</option>
-                {technicians.map((tech) => (
-                  <option key={tech._id} value={tech._id}>
-                    {tech.personId?.firstName} {tech.personId?.lastName}
-                    {tech.roleId?.roleName && ` (${tech.roleId.roleName})`}
-                  </option>
-                ))}
-              </select>
-            )}
+                <span className={selectedTechnician ? "text-gray-900" : "text-gray-500"}>
+                  {selectedTechnician
+                    ? (() => {
+                        const tech = technicians.find(t => t._id === selectedTechnician);
+                        return tech
+                          ? `${tech.personId?.firstName} ${tech.personId?.lastName}${tech.employeeId ? ` (${tech.employeeId})` : ''}${tech.roleId?.roleName ? ` - ${tech.roleId.roleName}` : ''}`
+                          : "-- Select Technician --";
+                      })()
+                    : "-- Select Technician --"}
+                </span>
+                <Users size={18} className="text-gray-400" />
+              </button>
+
+              {/* Dropdown Panel */}
+              {isDropdownOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-96 overflow-hidden">
+                  {/* Search Bar Inside Dropdown */}
+                  <div className="p-3 border-b border-gray-200 bg-gray-50">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by Employee ID or Name..."
+                        disabled={loading}
+                        autoFocus
+                        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Technician List */}
+                  <div className="max-h-64 overflow-y-auto">
+                    {fetchingTechnicians ? (
+                      <div className="flex items-center justify-center py-8 text-gray-500">
+                        <Loader2 className="animate-spin mr-2" size={20} />
+                        Loading technicians...
+                      </div>
+                    ) : technicians.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-500">
+                        No available technicians found
+                      </div>
+                    ) : (
+                      technicians.map((tech) => (
+                        <button
+                          key={tech._id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTechnician(tech._id);
+                            setIsDropdownOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className={`w-full px-4 py-3 text-left hover:bg-orange-50 transition-colors border-b border-gray-100 last:border-b-0 ${
+                            selectedTechnician === tech._id
+                              ? "bg-orange-100 text-orange-700"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="font-medium">
+                                {tech.personId?.firstName} {tech.personId?.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {tech.employeeId && `ID: ${tech.employeeId}`}
+                                {tech.roleId?.roleName && ` • ${tech.roleId.roleName}`}
+                              </div>
+                            </div>
+                            {selectedTechnician === tech._id && (
+                              <div className="text-orange-500">✓</div>
+                            )}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Notes */}

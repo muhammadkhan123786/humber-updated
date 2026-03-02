@@ -275,6 +275,8 @@ export const getAvailableTechniciansForJob = async (
     if (typeof search === "string" && search.trim() !== "") {
       filter.$or = [
         { employeeId: { $regex: search, $options: "i" } },
+        { "personId.firstName": { $regex: search, $options: "i" } },
+        { "personId.lastName": { $regex: search, $options: "i" } },
       ];
     }
 
@@ -282,7 +284,7 @@ export const getAvailableTechniciansForJob = async (
     const total = await Technicians.countDocuments(filter);
 
     // 4️⃣ Fetch paginated technicians
-    const technicians = await Technicians.find(filter)
+    const technicians = await Technicians.find(filter).select('employeeId personId').populate("personId", "firstName lastName")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNumber);

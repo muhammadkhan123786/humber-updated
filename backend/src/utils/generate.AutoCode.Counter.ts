@@ -5,6 +5,7 @@ import { SuplierSequenceCounter } from "../models/auto-generate-code-models/supp
 import { CustomerInvoiceSequenceCounter } from "../models/auto-generate-code-models/invoice.code.models";
 import { QuotationSequenceCounter } from "../models/auto-generate-code-models/quotation.code.model";
 import { PurchaseOrderCounter } from "../models/auto-generate-code-models/purchase.order.code.models";
+import { RiderSequenceCounter } from "../models/auto-generate-code-models/rider.code.models";
 
 //generate for db
 export const generateTicketCode = async (): Promise<string> => {
@@ -85,6 +86,23 @@ export const generateCustomerInvoiceCode = async (): Promise<string> => {
   }
 
   return `INV-${year}-${String(counter.seq).padStart(3, "0")}`;
+};
+
+//real code to save rider id into db 
+export const generateRiderCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  const counter = await RiderSequenceCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to Rider Code sequence");
+  }
+
+  return `R-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 //real code to save in db update
