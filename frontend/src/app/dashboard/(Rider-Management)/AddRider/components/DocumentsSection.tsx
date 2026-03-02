@@ -8,7 +8,7 @@ const FileUploadZone = ({
   label,
   subtext,
   extraHeading,
-  name, // Added name prop for API identification
+  name,
 }: {
   label: string;
   subtext?: string;
@@ -25,13 +25,12 @@ const FileUploadZone = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
-      // Logic to pass this file to a parent state/formik/react-hook-form would go here
       console.log(`File for ${name}:`, e.target.files[0]);
     }
   };
 
   const clearFile = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent re-opening file browser
+    e.stopPropagation();
     setSelectedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
