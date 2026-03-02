@@ -37,7 +37,7 @@ export const riderSchema = {
   motCertificatePic:{type:String},
   utilityBillPic:{type:String},
   employeementTypeId:{type:Types.ObjectId,ref:"jobTypes"},
-  availbilitiesIds:[{Types:Types.ObjectId,ref:"riderAvailabilities"}],
+  availbilitiesIds:[{type:Types.ObjectId,ref:"riderAvailabilities"}],
   zones:[{type:Types.ObjectId,ref:"CityModel"}],
   ...commonSchema,
 };
