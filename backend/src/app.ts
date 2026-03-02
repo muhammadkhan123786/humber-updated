@@ -113,6 +113,7 @@ import jobAssignmentRouter from "./routes/technician-job-assignments/technician.
 import techncianJobsActivityRouter from "./routes/technician-jobs-activities/technician.jobs.activities.routes";
 import riderAvailabilitiesRouter from "./routes/master-data-routes/rider.availabilities.routes";
 import technicianActivityMasterRouter from "./routes/technician-jobs-activities-master-routes/technician.jobs.activities.master.routes";
+import vehicleTypesRouter from "./routes/master-data-routes/rider.vehicle.types.routes";
 
 // Create express app
 const app: Application = express();
@@ -573,6 +574,14 @@ app.use(
   technicianProtecter,
   technicianActivityMasterRouter,
 );
+
+//02-03-2026
+app.use(
+  `${process.env.API_PREFIX}/rider-vehicle-types`,
+  adminProtecter,
+  vehicleTypesRouter,
+);
+
 
 //Muhammad Imran code ended here.
 
