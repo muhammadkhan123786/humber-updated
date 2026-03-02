@@ -10,7 +10,11 @@ import {
   Funnel,
 } from "lucide-react";
 
-const FilterSection: React.FC = () => {
+interface FilterSectionProps {
+  onSearchChange: (value: string) => void;
+}
+
+const FilterSection: React.FC<FilterSectionProps> = ({ onSearchChange }) => {
   const [activeTab, setActiveTab] = useState("All");
 
   const statusFilters = [
@@ -62,13 +66,13 @@ const FilterSection: React.FC = () => {
             />
             <input
               type="text"
+              onChange={(e) => onSearchChange(e.target.value)}
               placeholder="Search riders by name, email, or ID..."
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
             />
           </div>
-          <button className="flex hover:bg-green-600 hover:text-white items-center gap-2 px-6 py-3   rounded-xl font-medium border border-indigo-100  transition-colors">
-            <Funnel size={20} />
-            Filter
+          <button className="flex hover:bg-green-600 hover:text-white items-center gap-2 px-6 py-3 rounded-xl font-medium border border-indigo-100 transition-colors">
+            <Funnel size={20} /> Filter
           </button>
         </div>
 
@@ -85,8 +89,7 @@ const FilterSection: React.FC = () => {
                   activeTab === tab.id ? tab.activeClass : tab.inactiveClass
                 }`}
               >
-                {tab.icon}
-                {tab.label}
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>

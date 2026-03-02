@@ -11,9 +11,11 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useFormContext, Controller } from "react-hook-form";
 import FormInput from "../../components/FormInput";
 import Image from "next/image";
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
+import { RiderFormData } from "@/schema/rider.schema";
 
 interface GoogleAddressComponent {
   long_name: string;
@@ -38,22 +40,32 @@ const PersonalInfoForm: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const googleMapLoader = useGoogleMapLoad();
 
-  const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [postcode, setPostcode] = useState("");
+  const {
+    register,
+    control,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<RiderFormData>();
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
+  const profilePic = watch("profilePic");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setValue("profilePic", file, { shouldValidate: true });
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   useEffect(() => {
     if (!googleMapLoader || typeof window === "undefined" || !window.google)
@@ -69,7 +81,6 @@ const PersonalInfoForm: React.FC = () => {
 
     const listener = autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace() as GooglePlaceResult;
-
       if (!place?.place_id) return;
 
       const service = new window.google.maps.places.PlacesService(
@@ -87,7 +98,6 @@ const PersonalInfoForm: React.FC = () => {
             result
           ) {
             const addressComponents = result.address_components || [];
-
             const getComponent = (types: string[]): string => {
               const component = addressComponents.find((comp) =>
                 types.some((type) => comp.types.includes(type)),
@@ -109,9 +119,11 @@ const PersonalInfoForm: React.FC = () => {
 
             const zipCode = getComponent(["postal_code"]);
 
-            setAddress(formattedAddress);
-            setCity(cityValue);
-            setPostcode(zipCode);
+            setValue("addressLine1", formattedAddress, {
+              shouldValidate: true,
+            });
+            setValue("city", cityValue, { shouldValidate: true });
+            setValue("postalCode", zipCode, { shouldValidate: true });
           }
         },
       );
@@ -122,21 +134,14 @@ const PersonalInfoForm: React.FC = () => {
         window.google.maps.event.removeListener(listener);
       }
     };
-  }, [googleMapLoader]);
+  }, [googleMapLoader, setValue]);
 
   if (!googleMapLoader) {
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-8"
-      >
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-3 text-gray-600">Loading Google Maps...</span>
-        </div>
-      </motion.div>
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Loading Google Maps...</span>
+      </div>
     );
   }
 
@@ -161,13 +166,16 @@ const PersonalInfoForm: React.FC = () => {
 
       <div className="space-y-3">
         <label className="block text-sm font-semibold text-gray-700">
-          Profile Photo *
+          Profile Photo <span className="text-red-500">*</span>
         </label>
         <div className="flex items-center gap-6">
           <div className="w-28 h-28 rounded-full bg-gray-100 border-4 border-white shadow-inner flex items-center justify-center text-gray-400 overflow-hidden relative group">
-            {previewUrl ? (
+            {previewUrl || (profilePic && typeof profilePic === "string") ? (
               <Image
-                src={previewUrl}
+                src={
+                  previewUrl ||
+                  (typeof profilePic === "string" ? profilePic : "")
+                }
                 alt="Profile Preview"
                 fill
                 className="object-cover transition-transform group-hover:scale-110"
@@ -187,10 +195,9 @@ const PersonalInfoForm: React.FC = () => {
               accept="image/*"
               className="hidden"
             />
-
             <button
               type="button"
-              onClick={handleUploadClick}
+              onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-100 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all shadow-sm w-fit active:scale-95"
             >
               <UploadCloud size={18} className="text-blue-600" />
@@ -199,82 +206,210 @@ const PersonalInfoForm: React.FC = () => {
             <p className="text-[10px] text-gray-400 pl-1">
               JPG, PNG or GIF (max. 5MB)
             </p>
+            {errors.profilePic && (
+              <p className="text-xs text-red-500">
+                {errors.profilePic.message as string}
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInput label="First Name" placeholder="John" required />
-        <FormInput label="Last Name" placeholder="Smith" required />
-
-        <FormInput
-          label="Email Address"
-          placeholder="john.smith@example.com"
-          icon={<Mail size={18} />}
-          required
-        />
-        <FormInput
-          label="Phone Number"
-          placeholder="+44 7700 900123"
-          icon={<Phone size={18} />}
-          required
-        />
-
-        <FormInput
-          label="Date of Birth"
-          type="date"
-          icon={<Calendar size={18} />}
-          required
-        />
-        <FormInput
-          label="National Insurance Number"
-          placeholder="AB123456C"
-          icon={<ShieldCheck size={18} />}
-          required
-        />
-
-        <div className="md:col-span-2">
-          <div className="w-full space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">
-              Address <span>*</span>
-            </label>
-            <div className="relative group">
-              <div className="absolute left-4 text-gray-400 group-focus-within:text-blue-500 transition-colors top-4">
-                <MapPin size={18} />
-              </div>
-              <input
-                id="address-input"
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 High Street, Apartment 4B..."
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl
-                         text-gray-800 text-sm outline-none transition-all py-3 pl-11 pr-4
-                         placeholder:text-gray-400
-                         focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        <div className="space-y-1">
+          <Controller
+            name="firstName"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="First Name"
+                placeholder="John"
+                required
+                {...field}
+                error={!!errors.firstName}
+                icon={<User size={18} />}
               />
-            </div>
-            <p className="text-xs text-gray-500 pl-1">
-              Start typing your UK address and select from suggestions
+            )}
+          />
+          {errors.firstName && (
+            <p className="text-xs text-red-500 pl-1">
+              {errors.firstName.message}
             </p>
-          </div>
+          )}
+        </div>
+        <div className="space-y-1">
+          <Controller
+            name="lastName"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Last Name"
+                placeholder="Smith"
+                required
+                {...field}
+                error={!!errors.lastName}
+                icon={<User size={18} />}
+              />
+            )}
+          />
+          {errors.lastName && (
+            <p className="text-xs text-red-500 pl-1">
+              {errors.lastName.message}
+            </p>
+          )}
+        </div>
+        <div className="space-y-1">
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Email Address"
+                placeholder="john.smith@example.com"
+                required
+                {...field}
+                error={!!errors.email}
+                icon={<Mail size={18} />}
+              />
+            )}
+          />
+          {errors.email && (
+            <p className="text-xs text-red-500 pl-1">{errors.email.message}</p>
+          )}
         </div>
 
-        <FormInput
-          label="City"
-          placeholder="London"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          required
-        />
+        <div className="space-y-1">
+          <Controller
+            name="mobileNumber"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Phone Number"
+                placeholder="+44 7700 900123"
+                required
+                {...field}
+                error={!!errors.mobileNumber}
+                icon={<Phone size={18} />}
+              />
+            )}
+          />
+          {errors.mobileNumber && (
+            <p className="text-xs text-red-500 pl-1">
+              {errors.mobileNumber.message}
+            </p>
+          )}
+        </div>
 
-        <FormInput
-          label="Postcode"
-          placeholder="SW1A 1AA"
-          value={postcode}
-          onChange={(e) => setPostcode(e.target.value)}
-          required
-        />
+        <div className="space-y-1">
+          <Controller
+            name="DOB"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Date of Birth"
+                type="date"
+                required
+                {...field}
+                error={!!errors.DOB}
+                icon={<Calendar size={18} />}
+              />
+            )}
+          />
+          {errors.DOB && (
+            <p className="text-xs text-red-500 pl-1">{errors.DOB.message}</p>
+          )}
+        </div>
+        <div className="space-y-1">
+          <Controller
+            name="nationalIssuranceNumber"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="National Insurance Number"
+                placeholder="AB123456C"
+                required
+                {...field}
+                error={!!errors.nationalIssuranceNumber}
+                icon={<ShieldCheck size={18} />}
+              />
+            )}
+          />
+          {errors.nationalIssuranceNumber && (
+            <p className="text-xs text-red-500 pl-1">
+              {errors.nationalIssuranceNumber.message}
+            </p>
+          )}
+        </div>
+
+        <div className="md:col-span-2 space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Address <span className="text-red-500">*</span>
+          </label>
+          <div className="relative group">
+            <div
+              className={`absolute left-4 transition-colors top-1/2 -translate-y-1/2 ${errors.addressLine1 ? "text-red-500" : "text-gray-400 group-focus-within:text-blue-500"}`}
+            >
+              <MapPin size={18} />
+            </div>
+            <input
+              id="address-input"
+              type="text"
+              {...register("addressLine1")}
+              placeholder="123 High Street, Apartment 4B..."
+              className={`w-full bg-gray-50 border-2 rounded-xl pl-11 pr-4 text-gray-800 text-sm outline-none transition-all py-2 h-9.5 placeholder:text-gray-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 ${errors.addressLine1 ? "border-red-500 focus:border-red-500" : "border-gray-100 focus:border-blue-500"}`}
+            />
+          </div>
+          <p className="text-[10px] text-gray-500 pl-1">
+            Start typing your UK address and select from suggestions
+          </p>
+          {errors.addressLine1 && (
+            <p className="text-xs text-red-500 pl-1">
+              {errors.addressLine1.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Controller
+            name="city"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="City"
+                placeholder="London"
+                required
+                {...field}
+                error={!!errors.city}
+                icon={<MapPin size={18} />}
+              />
+            )}
+          />
+          {errors.city && (
+            <p className="text-xs text-red-500 pl-1">{errors.city.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Controller
+            name="postalCode"
+            control={control}
+            render={({ field }) => (
+              <FormInput
+                label="Postcode"
+                placeholder="SW1A 1AA"
+                required
+                {...field}
+                error={!!errors.postalCode}
+                icon={<MapPin size={18} />}
+              />
+            )}
+          />
+          {errors.postalCode && (
+            <p className="text-xs text-red-500 pl-1">
+              {errors.postalCode.message}
+            </p>
+          )}
+        </div>
       </div>
     </motion.div>
   );

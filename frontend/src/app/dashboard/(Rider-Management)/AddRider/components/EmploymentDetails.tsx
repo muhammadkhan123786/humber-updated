@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+
+import { useFormContext, Controller } from "react-hook-form";
 import { motion } from "framer-motion";
 import {
   Briefcase,
@@ -8,44 +9,48 @@ import {
   CheckCircle,
   CircleCheckBig,
 } from "lucide-react";
-
-type EmploymentType =
-  | "Full-Time"
-  | "Part-Time"
-  | "Self-Employed"
-  | "Contractor";
+import { useRider } from "@/hooks/useRider";
+import { RiderFormData } from "@/schema/rider.schema";
 
 const EmploymentDetails: React.FC = () => {
-  const [empType, setEmpType] = useState<EmploymentType>("Full-Time");
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
-    [],
-  );
-  const [selectedZones, setSelectedZones] = useState<string[]>([]);
+  const { jobTypes, availabilities, cities, loadingDropdowns } = useRider();
 
-  const toggleSelection = (item: string, state: string[], setState: any) => {
-    setState(
-      state.includes(item) ? state.filter((i) => i !== item) : [...state, item],
-    );
+  const {
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<RiderFormData>();
+
+  const selectedAvailabilities = watch("availbilitiesIds") || [];
+  const selectedZones = watch("zones") || [];
+
+  const toggleSelection = (
+    id: string,
+    currentArray: string[],
+    fieldName: "availbilitiesIds" | "zones",
+  ) => {
+    const newArray = currentArray.includes(id)
+      ? currentArray.filter((item) => item !== id)
+      : [...currentArray, id];
+    setValue(fieldName, newArray, { shouldValidate: true });
   };
 
-  const availabilityOptions = [
-    { label: "Morning (6am-12pm)", icon: <Clock size={18} /> },
-    { label: "Afternoon (12pm-6pm)", icon: <Clock size={18} /> },
-    { label: "Evening (6pm-12am)", icon: <Clock size={18} /> },
-    { label: "Night (12am-6am)", icon: <Clock size={18} /> },
-    { label: "Weekends", icon: <Clock size={18} /> },
-    { label: "Holidays", icon: <Clock size={18} /> },
-  ];
-
-  const deliveryZones = [
-    "North London",
-    "South London",
-    "East London",
-    "West London",
-    "Central London",
-    "Greater Manchester",
-    "Birmingham City Centre",
-  ];
+  if (loadingDropdowns) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-8"
+      >
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <span className="ml-3 text-gray-600">Loading employment data...</span>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -70,50 +75,56 @@ const EmploymentDetails: React.FC = () => {
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-gray-700">
-          Employment Type *
+          Employment Type <span className="text-red-500">*</span>
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {(
-            [
-              "Full-Time",
-              "Part-Time",
-              "Self-Employed",
-              "Contractor",
-            ] as EmploymentType[]
-          ).map((type) => (
-            <button
-              key={type}
-              onClick={() => setEmpType(type)}
-              className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${
-                empType === type
-                  ? "border-indigo-600 bg-indigo-50/50 text-indigo-700 shadow-sm"
-                  : "border-gray-100 bg-gray-50/30 text-gray-500 hover:border-gray-200"
-              }`}
-            >
-              <Briefcase size={20} />
-              <span className="text-xs font-bold uppercase tracking-wider">
-                {type}
-              </span>
-            </button>
-          ))}
-        </div>
+        <Controller
+          name="employeementTypeId"
+          control={control}
+          render={({ field }) => (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {jobTypes?.map((type: any) => (
+                <button
+                  key={type._id}
+                  type="button"
+                  onClick={() => field.onChange(type._id)}
+                  className={`p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${
+                    field.value === type._id
+                      ? "border-indigo-600 bg-indigo-50/50 text-indigo-700 shadow-sm"
+                      : "border-gray-100 bg-gray-50/30 text-gray-500 hover:border-gray-200"
+                  }`}
+                >
+                  <Briefcase size={20} />
+                  <span className="text-xs font-bold uppercase tracking-wider">
+                    {type.jobTypeName}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        />
+        {errors.employeementTypeId && (
+          <p className="text-sm text-red-500">
+            {errors.employeementTypeId.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-gray-700">
-          Availability *
+          Availability <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {availabilityOptions.map((opt) => {
-            const isSelected = selectedAvailability.includes(opt.label);
+          {availabilities?.map((avail: any) => {
+            const isSelected = selectedAvailabilities.includes(avail._id);
             return (
               <button
-                key={opt.label}
+                key={avail._id}
+                type="button"
                 onClick={() =>
                   toggleSelection(
-                    opt.label,
-                    selectedAvailability,
-                    setSelectedAvailability,
+                    avail._id,
+                    selectedAvailabilities,
+                    "availbilitiesIds",
                   )
                 }
                 className={`p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all ${
@@ -123,8 +134,17 @@ const EmploymentDetails: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {opt.icon}
-                  <span className="text-sm font-medium">{opt.label}</span>
+                  <Clock size={18} />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {avail.name || "Day"}
+                    </span>
+                    {avail.fromTime && avail.toTime && (
+                      <span className="text-xs text-gray-500">
+                        {avail.fromTime} - {avail.toTime}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {isSelected && (
                   <CheckCircle size={18} className="text-indigo-600" />
@@ -133,20 +153,26 @@ const EmploymentDetails: React.FC = () => {
             );
           })}
         </div>
+        {errors.availbilitiesIds && (
+          <p className="text-sm text-red-500">
+            {errors.availbilitiesIds.message}
+          </p>
+        )}
       </div>
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-gray-700">
-          Preferred Delivery Zones *
+          Preferred Delivery Zones <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {deliveryZones.map((zone) => {
-            const isSelected = selectedZones.includes(zone);
+          {cities?.map((city: any) => {
+            const isSelected = selectedZones.includes(city._id);
             return (
               <button
-                key={zone}
+                key={city._id}
+                type="button"
                 onClick={() =>
-                  toggleSelection(zone, selectedZones, setSelectedZones)
+                  toggleSelection(city._id, selectedZones, "zones")
                 }
                 className={`p-4 rounded-xl border-2 text-left flex items-center justify-between transition-all ${
                   isSelected
@@ -156,7 +182,9 @@ const EmploymentDetails: React.FC = () => {
               >
                 <div className="flex items-center gap-3">
                   <MapPin size={18} />
-                  <span className="text-sm font-medium">{zone}</span>
+                  <span className="text-sm font-medium">
+                    {city.cityName || city.name}
+                  </span>
                 </div>
                 {isSelected && (
                   <CheckCircle size={18} className="text-indigo-600" />
@@ -165,6 +193,9 @@ const EmploymentDetails: React.FC = () => {
             );
           })}
         </div>
+        {errors.zones && (
+          <p className="text-sm text-red-500">{errors.zones.message}</p>
+        )}
       </div>
 
       <div className="p-6 bg-emerald-50/50 rounded-2xl border-2 border-emerald-100 flex items-start gap-4">
