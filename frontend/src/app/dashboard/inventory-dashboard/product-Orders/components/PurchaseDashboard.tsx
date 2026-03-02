@@ -46,8 +46,15 @@ const [nextNumber, setNextNumber] = useState();
     calculateTotals,
     orderNumber,
     handleExportSingleOrder,
+    handleCreateBulkOrders,
   } = usePurchaseOrders();
 
+
+  const getUserId = () => {
+    if (typeof window === "undefined") return "";
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return user.id || user._id;
+  };
   const handleOpenCreateOrder = () => {
     resetForm();
     setIsOrderDialogOpen(true);
@@ -167,6 +174,8 @@ const handleConfirmDelete = async () => {
         onCancel={handleCloseOrderDialog}
         calculateTotals={calculateTotals}
        orderNumber = {orderNumber}
+       userId={ getUserId() }
+       onCreateBulkOrders = {handleCreateBulkOrders}
       />
 
       <ViewOrderDialog

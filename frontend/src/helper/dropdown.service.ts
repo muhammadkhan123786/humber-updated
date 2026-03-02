@@ -1,4 +1,3 @@
-import { col } from 'framer-motion/client';
 import { getAll } from "./apiHelper";
 
 interface DropdownOption {

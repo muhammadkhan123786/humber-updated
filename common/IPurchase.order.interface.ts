@@ -10,6 +10,7 @@ export interface IPurchaseOrderItem {
 }
 
 export interface IPurchaseOrder<TUserId = string> extends IBaseEntity<TUserId> {
+  userId: TUserId;
   orderNumber: string;
   supplier: string;
   orderDate: Date;
@@ -21,12 +22,13 @@ export interface IPurchaseOrder<TUserId = string> extends IBaseEntity<TUserId> {
   tax: number;
   total: number;
   notes?: string;
+   isReorderPO?: boolean;
 }
 
 // DTO for creating purchase order
 export interface CreatePurchaseOrderDTO {
   supplier: string;
-  
+
   expectedDelivery: Date | string;
   items: IPurchaseOrderItem[];
   notes?: string;
