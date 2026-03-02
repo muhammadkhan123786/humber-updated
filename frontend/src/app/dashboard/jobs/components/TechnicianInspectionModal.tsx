@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { ClipboardList, CheckCircle, XCircle, MinusCircle, Save, Loader2, ArrowLeft } from "lucide-react";
+import { ClipboardList, CheckCircle, XCircle, MinusCircle, Save, Loader2 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -21,10 +21,9 @@ interface InspectionItem {
 
 interface TechnicianInspectionProps {
   job: any;
-  onBack: () => void;
 }
 
-const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
+const TechnicianInspection = ({ job }: TechnicianInspectionProps) => {
   const [inspectionTypes, setInspectionTypes] = useState<InspectionType[]>([]);
   const [inspections, setInspections] = useState<InspectionItem[]>([]);
   const [inspectionTime, setInspectionTime] = useState<"BEFORE SERVICE" | "AFTER SERVICE">("BEFORE SERVICE");
@@ -195,7 +194,8 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
 
       if (response.data?.success) {
         toast.success(isEditMode ? "Inspection updated successfully!" : "Inspection saved successfully!");
-        onBack();
+        // Reload inspection data to reflect changes
+        loadInspectionData();
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'save'} inspection`);
@@ -205,39 +205,26 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={onBack}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-all"
-              >
-                <ArrowLeft size={24} className="text-gray-600" />
-              </button>
-              <div className="flex items-center gap-3">
-                <ClipboardList size={32} className="text-green-600" />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold text-gray-900">Inspection Checklist</h2>
-                    {isEditMode && (
-                      <span className="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
-                        EDITING
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-500">Job: {job?.jobId}</p>
-                </div>
-              </div>
+    <div className="p-6">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header - Simplified without back button */}
+        <div className="flex items-center gap-3 mb-6">
+          <ClipboardList size={32} className="text-green-600" />
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-gray-900">Inspection Checklist</h2>
+              {isEditMode && (
+                <span className="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">
+                  EDITING
+                </span>
+              )}
             </div>
-          
+            <p className="text-sm text-gray-500">Job: {job?.jobId}</p>
           </div>
         </div>
 
         {/* Inspection Time & Summary */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-gray-50 rounded-xl border border-gray-200 p-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -283,12 +270,12 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
 
         {/* Inspections List */}
         {fetchingTypes ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-20 flex flex-col items-center justify-center">
+          <div className="bg-gray-50 rounded-xl border border-gray-200 p-20 flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-green-600 mb-4" size={48} />
             <p className="text-gray-400 font-medium">Loading inspections...</p>
           </div>
         ) : inspectionTypes.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-20 text-center text-gray-500">
+          <div className="bg-gray-50 rounded-xl border border-gray-200 p-20 text-center text-gray-500">
             No active inspection types found
           </div>
         ) : (
@@ -298,7 +285,7 @@ const TechnicianInspection = ({ job, onBack }: TechnicianInspectionProps) => {
               return (
                 <div
                   key={type._id}
-                  className="bg-white rounded-2xl shadow-sm border-2 border-gray-200 hover:border-green-500 transition-all duration-200 p-5"
+                  className="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-green-400 hover:shadow-md transition-all duration-200 p-5"
                 >
                   {/* Header */}
                   <div className="flex justify-between items-start mb-3">

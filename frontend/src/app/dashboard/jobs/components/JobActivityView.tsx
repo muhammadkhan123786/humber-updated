@@ -71,7 +71,7 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
         return <Parts job={job} />;
       
       case 'inspection':
-        return <TechnicianInspection job={job} onBack={() => setActiveTab('jobinfo')} />;
+        return <TechnicianInspection job={job} />;
       
       case 'notes':
         return (
@@ -89,16 +89,6 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
         return null;
     }
   };
-
-  // If inspection tab is active, render it full screen with slide animation
-  if (activeTab === 'inspection') {
-    return (
-      <div className="animate-slideUp">
-        <style>{jobsAnimations}</style>
-        {renderContent()}
-      </div>
-    );
-  }
 
   return (
     <>
