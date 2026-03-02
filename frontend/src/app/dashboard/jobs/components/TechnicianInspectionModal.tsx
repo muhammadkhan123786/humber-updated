@@ -21,9 +21,11 @@ interface InspectionItem {
 
 interface TechnicianInspectionProps {
   job: any;
+  onInspectionUpdate?: () => void;
+  onInspectionTimeChange?: (time: "BEFORE SERVICE" | "AFTER SERVICE") => void;
 }
 
-const TechnicianInspection = ({ job }: TechnicianInspectionProps) => {
+const TechnicianInspection = ({ job, onInspectionUpdate, onInspectionTimeChange }: TechnicianInspectionProps) => {
   const [inspectionTypes, setInspectionTypes] = useState<InspectionType[]>([]);
   const [inspections, setInspections] = useState<InspectionItem[]>([]);
   const [inspectionTime, setInspectionTime] = useState<"BEFORE SERVICE" | "AFTER SERVICE">("BEFORE SERVICE");
@@ -35,6 +37,10 @@ const TechnicianInspection = ({ job }: TechnicianInspectionProps) => {
 
   useEffect(() => {
     loadInspectionData();
+    // Notify parent about the current inspection time
+    if (onInspectionTimeChange) {
+      onInspectionTimeChange(inspectionTime);
+    }
   }, [inspectionTime]);
 
   const loadInspectionData = async () => {
@@ -196,6 +202,10 @@ const TechnicianInspection = ({ job }: TechnicianInspectionProps) => {
         toast.success(isEditMode ? "Inspection updated successfully!" : "Inspection saved successfully!");
         // Reload inspection data to reflect changes
         loadInspectionData();
+        // Update badge count in parent component
+        if (onInspectionUpdate) {
+          onInspectionUpdate();
+        }
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'save'} inspection`);
