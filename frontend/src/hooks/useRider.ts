@@ -9,6 +9,8 @@ import {
   deleteItem,
 } from "../helper/apiHelper";
 import { RiderFormData } from "../schema/rider.schema";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 export interface Rider {
   _id?: string;
@@ -180,6 +182,46 @@ export const useRider = (initialParams?: Record<string, unknown>) => {
     setSelectedRider(response.data as Rider);
     return response.data;
   }, []);
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({
+      riderId,
+      status,
+    }: {
+      riderId: string;
+      status: string;
+    }) => {
+      try {
+        const rawToken = localStorage.getItem("token");
+        const headers: Record<string, string> = {
+          Authorization: rawToken ? `Bearer ${rawToken}` : "",
+          "Content-Type": "application/json",
+        };
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+
+        const response = await axios.put(
+          `${baseUrl}/riders/update-status`,
+          { riderId, status },
+          { headers },
+        );
+
+        return response.data;
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+          throw error.response?.data || { message: error.message };
+        }
+        throw { message: "Unknown error occurred" };
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["riders"] });
+      toast.success("Status updated successfully!");
+    },
+    onError: (err: any) => {
+      const errorMsg = err.message || "Failed to update status";
+      toast.error(errorMsg);
+    },
+  });
 
   return {
     loading: loading || saveMutation.isPending || deleteMutation.isPending,
@@ -199,5 +241,7 @@ export const useRider = (initialParams?: Record<string, unknown>) => {
     deleteRider: (id: string) => deleteMutation.mutateAsync(id),
     clearSelectedRider: () => setSelectedRider(null),
     clearError: () => setError(null),
+    updateRiderStatus: (riderId: string, status: string) =>
+      updateStatusMutation.mutateAsync({ riderId, status }),
   };
 };
