@@ -16,6 +16,7 @@ import {
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
 import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 interface RiderTableProps {
   search?: string;
@@ -41,7 +42,7 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
   const { riders, loading, totalRiders, fetchRiders, deleteRider } = useRider();
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
-
+  const router = useRouter();
   useEffect(() => {
     fetchRiders({ page: currentPage, limit });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,7 +181,12 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <button className="p-1.5 text-blue-500 bg-blue-50 rounded-md border border-blue-100 hover:bg-blue-100 transition-all">
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/AddRider?id=${rider._id}`)
+                        }
+                        className="p-1.5 text-blue-500 bg-blue-50 rounded-md border border-blue-100 hover:bg-blue-100 transition-all"
+                      >
                         <Edit2 size={14} />
                       </button>
                       <button
