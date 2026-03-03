@@ -114,6 +114,102 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     },
   });
 
+  // Start activity mutation
+  const startMutation = useMutation({
+    mutationFn: (activityId: string) => {
+      const token = localStorage.getItem("token");
+      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/start`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to start activity");
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity started successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to start activity");
+    },
+  });
+
+  // Pause activity mutation
+  const pauseMutation = useMutation({
+    mutationFn: (activityId: string) => {
+      const token = localStorage.getItem("token");
+      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/pause`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to pause activity");
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity paused!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to pause activity");
+    },
+  });
+
+  // Resume activity mutation
+  const resumeMutation = useMutation({
+    mutationFn: (activityId: string) => {
+      const token = localStorage.getItem("token");
+      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/resume`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to resume activity");
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity resumed!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to resume activity");
+    },
+  });
+
+  // Complete activity mutation
+  const completeMutation = useMutation({
+    mutationFn: (activityId: string) => {
+      const token = localStorage.getItem("token");
+      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/complete`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to complete activity");
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity completed successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to complete activity");
+    },
+  });
+
   console.log("Activities loaded:", activities, "Total:", total);
 
   const {
@@ -253,6 +349,24 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     }
   };
 
+  const handleStart = (activityId: string) => {
+    startMutation.mutate(activityId);
+  };
+
+  const handlePause = (activityId: string) => {
+    pauseMutation.mutate(activityId);
+  };
+
+  const handleResume = (activityId: string) => {
+    resumeMutation.mutate(activityId);
+  };
+
+  const handleComplete = (activityId: string) => {
+    if (window.confirm("Are you sure you want to mark this activity as completed?")) {
+      completeMutation.mutate(activityId);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -289,6 +403,10 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
           }}
           onEditClick={handleEdit}
           onDeleteClick={handleDelete}
+          onStartActivity={handleStart}
+          onPauseActivity={handlePause}
+          onResumeActivity={handleResume}
+          onCompleteActivity={handleComplete}
         />
       </div>
 
