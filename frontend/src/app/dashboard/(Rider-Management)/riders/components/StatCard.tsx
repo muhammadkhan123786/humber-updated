@@ -18,7 +18,7 @@ interface StatsSectionProps {
     TERMINATED: number;
     "IN-ACTIVE": number;
     ACTIVE: number;
-    total: number; // ✅ ADD TOTAL
+    total: number;
   };
 }
 
@@ -52,7 +52,6 @@ const StatCard: React.FC<StatCardProps> = ({
 
 const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
   const stats = [
-    // ✅ TOTAL CARD (First)
     {
       label: "Total Riders",
       value: statistics?.total || 0,

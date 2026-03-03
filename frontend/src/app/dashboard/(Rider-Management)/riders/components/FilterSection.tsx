@@ -9,6 +9,7 @@ import {
   UserMinus,
   Clock,
   Funnel,
+  Zap, // Active ke liye icon
 } from "lucide-react";
 
 interface FilterSectionProps {
@@ -33,11 +34,18 @@ const FilterSection: React.FC<FilterSectionProps> = ({
       inactiveClass: "text-blue-600 border-blue-200 bg-blue-50",
     },
     {
+      id: "Active",
+      label: `Active (${statistics?.ACTIVE || 0})`,
+      icon: <Zap size={16} />,
+      activeClass: "bg-emerald-600 text-white border-emerald-600",
+      inactiveClass: "text-emerald-600 border-emerald-200 bg-emerald-50",
+    },
+    {
       id: "Approved",
       label: `Approved (${statistics?.APPROVED || 0})`,
       icon: <CheckCircle2 size={16} />,
-      activeClass: "bg-emerald-500 text-white border-emerald-500",
-      inactiveClass: "text-emerald-600 border-emerald-200 bg-emerald-50",
+      activeClass: "bg-blue-500 text-white border-blue-500",
+      inactiveClass: "text-blue-600 border-blue-200 bg-blue-50",
     },
     {
       id: "Pending",
@@ -85,7 +93,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
             />
           </div>
-          <button className="flex hover:bg-gray-100 items-center gap-2 px-6 py-3 rounded-xl font-medium border border-gray-200 transition-colors">
+          <button className="flex hover:bg-green-500 items-center gap-2 px-6 py-3 rounded-xl font-medium border border-gray-200 hover:text-white transition-colors">
             <Funnel size={20} /> Filter
           </button>
         </div>
