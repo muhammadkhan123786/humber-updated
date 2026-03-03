@@ -1,5 +1,6 @@
 "use client";
-import { Activity, Loader2, Edit, Trash2, Play, Pause, RotateCcw, CheckCircle } from "lucide-react";
+import { Activity, Loader2, Edit, Trash2 } from "lucide-react";
+import TechnicianActivityButtons from "./TechnicianActivityButtons";
 
 export interface TechnicianActivity {
   _id: string;
@@ -199,57 +200,14 @@ const TechnicianActivityGet = ({
               )}
 
               {/* Activity Control Buttons */}
-              {activity.status !== "completed" && (
-                <div className="md:col-span-3 pt-3 border-t">
-                  <div className="flex flex-wrap gap-2">
-                    {/* Start Button - Only show when pending */}
-                    {activity.status === "pending" && (
-                      <button
-                        onClick={() => onStartActivity(activity._id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"
-                      >
-                        <Play size={16} />
-                        Start
-                      </button>
-                    )}
-
-                    {/* Pause Button - Show when in_progress */}
-                    {activity.status === "in_progress" && (
-                      <button
-                        onClick={() => onPauseActivity(activity._id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-sm"
-                      >
-                        <Pause size={16} />
-                        Pause
-                      </button>
-                    )}
-
-                    {/* Resume Button - Show when paused */}
-                    {activity.status === "paused" && (
-                      <button
-                        onClick={() => onResumeActivity(activity._id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-                      >
-                        <RotateCcw size={16} />
-                        Resume
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Complete Button - Show when not pending */}
-                  {activity.status !== "pending" && (
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        onClick={() => onCompleteActivity(activity._id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors shadow-sm"
-                      >
-                        <CheckCircle size={16} />
-                        Complete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+              <TechnicianActivityButtons
+                activityId={activity._id}
+                status={activity.status}
+                onStart={onStartActivity}
+                onPause={onPauseActivity}
+                onResume={onResumeActivity}
+                onComplete={onCompleteActivity}
+              />
 
               {/* Edit/Delete Buttons */}
               <div className="md:col-span-3 flex gap-2 justify-end pt-2 border-t">
