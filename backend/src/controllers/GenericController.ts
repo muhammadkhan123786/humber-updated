@@ -75,9 +75,9 @@ export class AdvancedGenericController<T extends Document> {
       else if(req.user && req.user.userId) {
              queryFilters.userId = new Types.ObjectId(req.user.userId);
          }
-       if (req.technicianId) {
-             queryFilters.technicianId = new Types.ObjectId(req.technicianId);
-         }
+      //  if (req.technicianId) {
+      //        queryFilters.technicianId = new Types.ObjectId(req.technicianId);
+      //    }
       // ✅ GENERIC SEARCH across searchFields
       if (search && this.options.searchFields?.length) {
         queryFilters.$or = this.options.searchFields.map((field) => ({

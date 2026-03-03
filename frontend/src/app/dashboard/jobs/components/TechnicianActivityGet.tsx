@@ -1,5 +1,5 @@
 "use client";
-import { Activity, Loader2 } from "lucide-react";
+import { Activity, Loader2, Edit, Trash2 } from "lucide-react";
 
 export interface TechnicianActivity {
   _id: string;
@@ -28,6 +28,8 @@ interface TechnicianActivityGetProps {
   activities: TechnicianActivity[];
   isLoading: boolean;
   onCreateClick: () => void;
+  onEditClick: (activity: TechnicianActivity) => void;
+  onDeleteClick: (activityId: string) => void;
 }
 
 // Helper functions for cleaner code
@@ -85,7 +87,7 @@ const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString();
 };
 
-const TechnicianActivityGet = ({ activities, isLoading, onCreateClick }: TechnicianActivityGetProps) => {
+const TechnicianActivityGet = ({ activities, isLoading, onCreateClick, onEditClick, onDeleteClick }: TechnicianActivityGetProps) => {
   if (isLoading) {
     return (
       <div className="bg-white p-5 pt-9 border-t-4 border-[#2B7FFF] rounded-lg shadow-sm">
@@ -181,6 +183,24 @@ const TechnicianActivityGet = ({ activities, isLoading, onCreateClick }: Technic
                   <p className="text-gray-700">{activity.additionalNotes}</p>
                 </div>
               )}
+
+              {/* Action Buttons */}
+              <div className="md:col-span-3 flex gap-2 justify-end pt-2 border-t">
+                <button
+                  onClick={() => onEditClick(activity)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  <Edit size={16} />
+                  Edit
+                </button>
+                <button
+                  onClick={() => onDeleteClick(activity._id)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         ))}
