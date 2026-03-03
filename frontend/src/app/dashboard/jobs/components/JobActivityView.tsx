@@ -192,7 +192,12 @@ const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
           </div>
         );
          case 'technician-activities':
-        return <TechniciansActivity />;
+        return <TechniciansActivity 
+          jobId={job._id} 
+          quotationId={typeof job.quotationId === 'object' && job.quotationId?._id 
+            ? job.quotationId._id 
+            : job.quotationId || job.ticketId} 
+        />;
       
       default:
         return null;
