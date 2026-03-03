@@ -5,13 +5,14 @@ import {
   Phone,
   MapPin,
   Bike,
-  Truck,
   Edit2,
   PauseCircle,
   Trash2,
   CheckCircle2,
   Calendar,
   Loader2,
+  Star,
+  Award,
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
@@ -108,8 +109,8 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
               </th>
               <th className="p-4 text-xs font-bold text-gray-500">CONTACT</th>
               <th className="p-4 text-xs font-bold text-gray-500">VEHICLE</th>
-              <th className="p-4 text-xs font-bold text-gray-500">
-                EMPLOYMENT
+              <th className="p-4 text-xs font-bold text-gray-500 uppercase">
+                Performance
               </th>
               <th className="p-4 text-xs font-bold text-gray-500">STATUS</th>
               <th className="p-4 text-xs font-bold text-gray-500">ACTIONS</th>
@@ -143,9 +144,12 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
                         <div className="text-sm font-bold text-gray-900 uppercase">
                           {rider.personId?.firstName} {rider.personId?.lastName}
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] text-gray-400">
+                        <div className="flex items-center gap-1 text-[12px] text-gray-400">
                           <MapPin size={10} />{" "}
                           {rider.addressId?.city || "No City"}
+                        </div>
+                        <div className="flex items-center gap-1 text-[12px] text-gray-400">
+                          {rider.employeementTypeId?.jobTypeName || "Standard"}
                         </div>
                       </div>
                     </div>
@@ -161,25 +165,40 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
-                      {rider.vehicleTypeId?.vehicleType
-                        ?.toLowerCase()
-                        .includes("motar") ? (
-                        <Bike size={14} />
-                      ) : (
-                        <Truck size={14} />
-                      )}
-                      <span className="capitalize">
-                        {rider.vehicleTypeId?.vehicleType || "N/A"}
-                      </span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
+                        <span>
+                          <Bike size={14} />
+                        </span>
+                        <span className="capitalize">
+                          {rider.vehicleTypeId?.vehicleType || "N/A"}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-gray-500 font-medium ">
+                        <span className="text-gray-400"></span>{" "}
+                        {rider.licensePlate || "N/A"}
+                      </div>
                     </div>
                   </td>
                   <td className="p-4">
-                    <div className="text-xs font-semibold text-gray-700 capitalize">
-                      {rider.employeementTypeId?.jobTypeName || "Standard"}
-                    </div>
-                    <div className="text-[10px] text-gray-400">
-                      Exp: {rider.yearsOfExperience || 0} years
+                    <div className="flex flex-col gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <Star
+                            size={14}
+                            className="text-amber-500 fill-amber-500"
+                          />
+                          <span className="text-xs font-bold text-gray-900">
+                            4.8
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Award size={14} className="text-emerald-500" />
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            145 deliveries
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td className="p-4">

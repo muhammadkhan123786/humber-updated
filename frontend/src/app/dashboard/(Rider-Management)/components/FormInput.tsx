@@ -41,7 +41,7 @@ const FormInput: React.FC<InputProps> = ({
   return (
     <div className="w-full space-y-2">
       <label className="block text-sm font-semibold text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span>*</span>}
       </label>
 
       <div className="relative group">

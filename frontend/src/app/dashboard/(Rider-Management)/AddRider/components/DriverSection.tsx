@@ -18,8 +18,21 @@ const DriverSection: React.FC = () => {
   const { vehicleTypes, loadingDropdowns } = useRider();
   const {
     control,
+    watch,
     formState: { errors },
   } = useFormContext<RiderFormData>();
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const dobValue = watch("DOB");
+  const getMaxExperience = () => {
+    if (!dobValue) return 100;
+    const birthYear = new Date(dobValue).getFullYear();
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - birthYear;
+    return age > 0 ? age : 0;
+  };
+  const maxExperience = getMaxExperience();
 
   return (
     <motion.div
@@ -28,7 +41,6 @@ const DriverSection: React.FC = () => {
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 space-y-8"
     >
-      {/* Header */}
       <div className="flex items-center gap-4">
         <div className="p-3 bg-purple-600 rounded-xl text-white shadow-lg shadow-purple-100">
           <Bike size={24} strokeWidth={2.5} />
@@ -42,15 +54,12 @@ const DriverSection: React.FC = () => {
           </p>
         </div>
       </div>
-
-      {/* Driver Details Section */}
       <div className="p-6 rounded-xl border border-purple-100 bg-linear-to-r from-indigo-50 to-purple-50 space-y-6">
         <div className="flex items-center gap-2 font-semibold text-lg text-purple-900">
           <Shield size={18} className="text-purple-700" />
           <span>Driver Details</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          {/* License Number */}
           <div className="space-y-1">
             <Controller
               name="licenseNumber"
@@ -72,7 +81,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Expiry Date */}
           <div className="space-y-1">
             <Controller
               name="licenseExpiryDate"
@@ -84,6 +92,7 @@ const DriverSection: React.FC = () => {
                   icon={<Calendar size={18} />}
                   required
                   {...field}
+                  min={today}
                   error={!!errors.licenseExpiryDate}
                 />
               )}
@@ -94,8 +103,6 @@ const DriverSection: React.FC = () => {
               </p>
             )}
           </div>
-
-          {/* Years of Experience */}
           <div className="space-y-1">
             <Controller
               name="yearsOfExperience"
@@ -106,10 +113,14 @@ const DriverSection: React.FC = () => {
                   placeholder="5"
                   type="number"
                   required
+                  min={0}
+                  max={maxExperience}
                   value={field.value?.toString() || ""}
-                  onChange={(e) =>
-                    field.onChange(parseInt(e.target.value) || 0)
-                  }
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+
+                    field.onChange(val > maxExperience ? maxExperience : val);
+                  }}
                   error={!!errors.yearsOfExperience}
                 />
               )}
@@ -122,15 +133,12 @@ const DriverSection: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Vehicle Details Section */}
       <div className="p-6 bg-linear-to-r from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200 space-y-6">
         <div className="flex items-center gap-2 font-semibold text-lg text-blue-900">
           <Scooter size={18} className="text-blue-700" />
           <span>Vehicle Details</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          {/* Vehicle Type */}
           <div className="md:col-span-2 space-y-1">
             <label className="block text-sm font-semibold text-gray-700">
               Vehicle Type <span className="text-red-500">*</span>
@@ -167,7 +175,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Model */}
           <div className="space-y-1">
             <Controller
               name="modelId"
@@ -189,7 +196,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Year */}
           <div className="space-y-1">
             <Controller
               name="vehicleYear"
@@ -216,7 +222,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* License Plate */}
           <div className="space-y-1">
             <Controller
               name="licensePlate"
@@ -238,7 +243,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Insurance Company */}
           <div className="space-y-1">
             <Controller
               name="insuranceCompany"
@@ -260,7 +264,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Policy Number */}
           <div className="space-y-1">
             <Controller
               name="policyNumber"
@@ -282,7 +285,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Insurance Expiry */}
           <div className="md:col-span-2 space-y-1">
             <Controller
               name="insuranceExpiryDate"
@@ -294,6 +296,7 @@ const DriverSection: React.FC = () => {
                   icon={<Calendar size={18} />}
                   required
                   {...field}
+                  min={today}
                   error={!!errors.insuranceExpiryDate}
                 />
               )}
@@ -307,14 +310,12 @@ const DriverSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Emergency Contact Section */}
       <div className="p-6 bg-linear-to-r from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200 space-y-6">
         <div className="flex items-center gap-2 text-amber-700 font-bold text-lg">
           <CircleAlert size={18} />
           <span>Emergency Contact</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          {/* Emergency Name */}
           <div className="space-y-1">
             <Controller
               name="emergencyContactNumber"
@@ -336,7 +337,6 @@ const DriverSection: React.FC = () => {
             )}
           </div>
 
-          {/* Emergency Phone (The one you mentioned) */}
           <div className="space-y-1">
             <Controller
               name="phoneNumber"

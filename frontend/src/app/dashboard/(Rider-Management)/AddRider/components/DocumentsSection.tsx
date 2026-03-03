@@ -176,6 +176,8 @@ const DocumentsSection: React.FC = () => {
     formState: { errors },
   } = useFormContext<RiderFormData>();
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -50 }}
@@ -228,6 +230,7 @@ const DocumentsSection: React.FC = () => {
                 type="date"
                 icon={<Calendar size={18} />}
                 required
+                min={today}
                 value={field.value || ""}
                 onChange={field.onChange}
               />
@@ -285,6 +288,7 @@ const DocumentsSection: React.FC = () => {
                 type="date"
                 icon={<Calendar size={18} />}
                 required
+                min={today}
                 value={field.value || ""}
                 onChange={field.onChange}
               />
@@ -332,6 +336,7 @@ const DocumentsSection: React.FC = () => {
               <FormInput
                 label="Expiry Date"
                 type="date"
+                min={today}
                 icon={<Calendar size={18} />}
                 value={field.value || ""}
                 onChange={field.onChange}
