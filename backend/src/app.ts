@@ -118,6 +118,7 @@ import vehicleTypesRouter from "./routes/master-data-routes/rider.vehicle.types.
 import riderRouter from "./routes/rider/rider.routes";
 import technicianActionsrouter from "./routes/technician-activities-operations-routes/technicianActivity.routes";
 import mobilecustomerSourceRouter from "./routes/mobile-development/customer-source-routes/customer.source.routes";
+import MobileCustomerBaseRouter from "./routes/mobile-development/customer-routes/customre.register.mobile.routes";
 
 // Create express app
 const app: Application = express();
@@ -604,6 +605,11 @@ app.use(
 app.use(
   `${process.env.API_PREFIX}/mobile-customer-sources`,
   mobilecustomerSourceRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/mobile-customer-register`,
+  MobileCustomerBaseRouter,
 );
 
 
