@@ -158,7 +158,7 @@ const PersonalInfoForm: React.FC = () => {
       </div>
     );
   }
-
+  const today = new Date().toISOString().split("T")[0];
   return (
     <motion.div
       initial={{ opacity: 0, x: -50 }}
@@ -321,6 +321,7 @@ const PersonalInfoForm: React.FC = () => {
                 label="Date of Birth"
                 type="date"
                 required
+                max={today}
                 {...field}
                 error={!!errors.DOB}
                 icon={<Calendar size={18} />}
