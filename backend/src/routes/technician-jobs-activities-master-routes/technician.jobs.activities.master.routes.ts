@@ -12,8 +12,20 @@ const technicianActivityMasterServices = new GenericService<technicianActivityMa
 
 const techncianActivitymasterController = new AdvancedGenericController({
     service: technicianActivityMasterServices,
-    populate: ["userId", "JobAssignedId","quotationId","activityType","technicianId"],
-    validationSchema: technicianActivitiesValidation,
+    populate: [
+      "userId", 
+      "JobAssignedId",
+      "quotationId",
+      "activityType",
+      "technicianId",
+      {
+        path:"technicianId",
+        populate:[{path:"personId"}]
+        
+      }
+
+    ],
+    validationSchema:  technicianActivitiesValidation,
 });
 
 

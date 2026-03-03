@@ -3,6 +3,16 @@ import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 import z from "zod";
 import { objectIdSchema } from "../../validators/objectId.schema";
 
+export const RIDER_STATUS = [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "TERMINATED",
+  "IN-ACTIVE",
+  "ACTIVE"
+] as const;
+export type ActivityStatus = typeof RIDER_STATUS[number];
+
 export const riderSchema = {
   riderAutoId: { type: String },
   profilePic: { type: String },
@@ -39,6 +49,11 @@ export const riderSchema = {
   employeementTypeId: { type: Types.ObjectId, ref: "jobTypes" },
   availbilitiesIds: [{ type: Types.ObjectId, ref: "riderAvailabilities" }],
   zones: [{ type: Types.ObjectId, ref: "CityModel" }],
+  riderStatus: {
+      type: String,
+      enum: RIDER_STATUS,
+      default: RIDER_STATUS[0],
+    },
   ...commonSchema,
 };
 
