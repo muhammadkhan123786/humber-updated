@@ -15,7 +15,8 @@ import {
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 interface RiderTableProps {
   search?: string;
@@ -41,7 +42,7 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
   const { riders, loading, totalRiders, fetchRiders, deleteRider } = useRider();
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
-
+  const router = useRouter();
   useEffect(() => {
     fetchRiders({ page: currentPage, limit });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,14 +69,21 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
   const totalPages = Math.ceil(totalRiders / limit);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this rider?")) {
-      try {
-        await deleteRider(id);
-        toast.success("Rider deleted successfully!");
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to delete rider.");
-      }
+    toast.dismiss();
+    const loadingToast = toast.loading("Deleting rider...");
+
+    try {
+      await deleteRider(id);
+      toast.success("Rider deleted successfully!", {
+        id: loadingToast,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete rider.", {
+        id: loadingToast,
+        duration: 4000,
+      });
     }
   };
 
@@ -90,7 +98,6 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
 
   return (
     <div className="w-full py-2">
-      <Toaster position="top-right" />
       <div className="overflow-x-auto shadow-sm rounded-3xl border border-gray-100">
         <table className="w-full bg-white border-collapse">
           <thead>
@@ -180,7 +187,12 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <button className="p-1.5 text-blue-500 bg-blue-50 rounded-md border border-blue-100 hover:bg-blue-100 transition-all">
+                      <button
+                        onClick={() =>
+                          router.push(`/dashboard/AddRider?id=${rider._id}`)
+                        }
+                        className="p-1.5 text-blue-500 bg-blue-50 rounded-md border border-blue-100 hover:bg-blue-100 transition-all"
+                      >
                         <Edit2 size={14} />
                       </button>
                       <button

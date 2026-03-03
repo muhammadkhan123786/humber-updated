@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect, useCallback } from "react";
 import {
   getAll,
@@ -13,7 +14,9 @@ export interface Rider {
   riderAutoId?: string;
   createdAt?: string;
   updatedAt?: string;
+  [key: string]: any;
 }
+
 export const useRider = () => {
   const [loading, setLoading] = useState(false);
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
@@ -27,26 +30,39 @@ export const useRider = () => {
   const [availabilities, setAvailabilities] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
 
-  const fetchVehicleTypes = async (params?: Record<string, unknown>) => {
-    const response = await getAll("/rider-vehicle-types?filter=all", params);
-    setVehicleTypes(response.data);
-    return response;
-  };
-  const fetchJobTypes = async (params?: Record<string, unknown>) => {
-    const response = await getAll("/job-types?filter=all", params);
-    setJobTypes(response.data);
-    return response;
-  };
-  const fetchAvailabilities = async (params?: Record<string, unknown>) => {
-    const response = await getAll("/rider-availabilities?filter=all", params);
-    setAvailabilities(response.data);
-    return response;
-  };
-  const fetchCities = async (params?: Record<string, unknown>) => {
+  const fetchVehicleTypes = useCallback(
+    async (params?: Record<string, unknown>) => {
+      const response = await getAll("/rider-vehicle-types?filter=all", params);
+      setVehicleTypes(response.data);
+      return response;
+    },
+    [],
+  );
+
+  const fetchJobTypes = useCallback(
+    async (params?: Record<string, unknown>) => {
+      const response = await getAll("/job-types?filter=all", params);
+      setJobTypes(response.data);
+      return response;
+    },
+    [],
+  );
+
+  const fetchAvailabilities = useCallback(
+    async (params?: Record<string, unknown>) => {
+      const response = await getAll("/rider-availabilities?filter=all", params);
+      setAvailabilities(response.data);
+      return response;
+    },
+    [],
+  );
+
+  const fetchCities = useCallback(async (params?: Record<string, unknown>) => {
     const response = await getAll("/city?filter=all", params);
     setCities(response.data);
     return response;
-  };
+  }, []);
+
   const fetchAllDropdownData = useCallback(async () => {
     try {
       setLoadingDropdowns(true);
@@ -57,12 +73,12 @@ export const useRider = () => {
         fetchCities(),
       ]);
     } catch (err: any) {
-      setError("Failed to load dropdown data");
       console.log(err);
+      setError("Failed to load dropdown data");
     } finally {
       setLoadingDropdowns(false);
     }
-  }, []);
+  }, [fetchVehicleTypes, fetchJobTypes, fetchAvailabilities, fetchCities]);
 
   const fetchRiders = useCallback(async (params?: Record<string, unknown>) => {
     try {
@@ -78,7 +94,8 @@ export const useRider = () => {
       setLoading(false);
     }
   }, []);
-  const fetchRiderById = async (id: string) => {
+
+  const fetchRiderById = useCallback(async (id: string) => {
     try {
       setLoading(true);
       const response = await getById<Rider>("/riders", id);
@@ -90,7 +107,7 @@ export const useRider = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const saveRider = async (data: RiderFormData, id?: string) => {
     try {
@@ -101,40 +118,29 @@ export const useRider = () => {
         localStorage.getItem("userId")?.replace(/^"|"$/g, "") || "";
 
       formData.append("userId", userId);
-
-      if (data.firstName) {
-        formData.append("person[firstName]", data.firstName);
-      }
-      if (data.lastName) {
-        formData.append("person[lastName]", data.lastName);
-      }
-      if (data.email) {
-        formData.append("contact[emailId]", data.email);
-      }
-      if (data.mobileNumber) {
+      if (data.firstName) formData.append("person[firstName]", data.firstName);
+      if (data.lastName) formData.append("person[lastName]", data.lastName);
+      if (data.email) formData.append("contact[emailId]", data.email);
+      if (data.mobileNumber)
         formData.append("contact[mobileNumber]", data.mobileNumber);
-      }
-      if (data.addressLine1) {
+      if (data.addressLine1)
         formData.append("address[address]", data.addressLine1);
-      }
-      if (data.city) {
-        formData.append("address[city]", data.city);
-      }
-      if (data.postalCode) {
-        formData.append("address[zipCode]", data.postalCode);
-      }
+      if (data.city) formData.append("address[city]", data.city);
+      if (data.postalCode) formData.append("address[zipCode]", data.postalCode);
+
       formData.append("address[userId]", userId);
       formData.append("address[isActive]", "true");
       formData.append("address[isDeleted]", "false");
       formData.append("address[isDefault]", "false");
       formData.append("address[latitude]", "0.0");
       formData.append("address[longitude]", "0.0");
+
       if (data.vehicleYear) {
         const yearMatch = data.vehicleYear.toString().match(/\d{4}/);
-        const validYear = yearMatch
-          ? yearMatch[0]
-          : new Date().getFullYear().toString();
-        formData.append("vehicleYear", validYear);
+        formData.append(
+          "vehicleYear",
+          yearMatch ? yearMatch[0] : new Date().getFullYear().toString(),
+        );
       }
 
       if (data.DOB) formData.append("DOB", data.DOB);
@@ -147,7 +153,6 @@ export const useRider = () => {
         formData.append("emergencyContactNumber", data.emergencyContactNumber);
       if (data.phoneNumber) formData.append("phoneNumber", data.phoneNumber);
       if (data.relationShip) formData.append("relationShip", data.relationShip);
-
       if (data.bankName) formData.append("bankName", data.bankName);
       if (data.accountHolderName)
         formData.append("accountHolderName", data.accountHolderName);
@@ -175,52 +180,40 @@ export const useRider = () => {
         formData.append("motExpiryDate", data.motExpiryDate);
       if (data.employeementTypeId)
         formData.append("employeementTypeId", data.employeementTypeId);
+
       if (data.availbilitiesIds?.length) {
-        data.availbilitiesIds.forEach((id, index) => {
-          formData.append(`availbilitiesIds[${index}]`, id);
-        });
+        data.availbilitiesIds.forEach((id, index) =>
+          formData.append(`availbilitiesIds[${index}]`, id),
+        );
       }
       if (data.zones?.length) {
-        data.zones.forEach((id, index) => {
-          formData.append(`zones[${index}]`, id);
-        });
-      }
-      if (data.profilePic instanceof File) {
-        formData.append("profilePic", data.profilePic);
+        data.zones.forEach((id, index) =>
+          formData.append(`zones[${index}]`, id),
+        );
       }
 
-      if (data.licenseFrontPic instanceof File) {
-        formData.append("licenseFrontPic", data.licenseFrontPic);
-      }
+      const fileFields = [
+        "profilePic",
+        "licenseFrontPic",
+        "licenseBackPic",
+        "insuranceDocumentPic",
+        "motCertificatePic",
+        "utilityBillPic",
+      ];
 
-      if (data.licenseBackPic instanceof File) {
-        formData.append("licenseBackPic", data.licenseBackPic);
-      }
+      fileFields.forEach((field) => {
+        const value = (data as any)[field];
 
-      if (data.insuranceDocumentPic instanceof File) {
-        formData.append("insuranceDocumentPic", data.insuranceDocumentPic);
-      }
-
-      if (data.motCertificatePic instanceof File) {
-        formData.append("motCertificatePic", data.motCertificatePic);
-      }
-
-      if (data.utilityBillPic instanceof File) {
-        formData.append("utilityBillPic", data.utilityBillPic);
-      }
+        if (value instanceof File) {
+          formData.append(field, value);
+        } else if (value === "") {
+          formData.append(field, "");
+        }
+      });
 
       formData.append("accountId", userId);
 
-      console.log("📦 Final FormData entries:");
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(`  ${key}: [File]`);
-        } else {
-          console.log(`  ${key}: ${value}`);
-        }
-      }
       let response;
-
       if (id) {
         response = await updateItem("/riders", id, formData);
       } else {
@@ -229,13 +222,13 @@ export const useRider = () => {
       await fetchRiders();
       return response;
     } catch (err: any) {
-      console.error("❌ Save rider error:", err);
       setError(err.message || "Failed to save rider");
       throw err;
     } finally {
       setLoading(false);
     }
   };
+
   const deleteRider = async (id: string) => {
     try {
       setLoading(true);
@@ -249,8 +242,9 @@ export const useRider = () => {
       setLoading(false);
     }
   };
-  const clearSelectedRider = () => setSelectedRider(null);
-  const clearError = () => setError(null);
+
+  const clearSelectedRider = useCallback(() => setSelectedRider(null), []);
+  const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
     fetchAllDropdownData();
@@ -263,12 +257,10 @@ export const useRider = () => {
     riders,
     selectedRider,
     totalRiders,
-
     vehicleTypes,
     jobTypes,
     availabilities,
     cities,
-
     fetchRiders,
     fetchRiderById,
     saveRider,

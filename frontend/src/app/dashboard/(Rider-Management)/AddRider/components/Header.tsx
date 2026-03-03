@@ -1,10 +1,14 @@
 "use client";
 import React from "react";
 import { Bike, ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const Header: React.FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const riderId = searchParams.get("id");
+  const isEditMode = !!riderId;
 
   const handleBack = () => {
     router.push("/dashboard/riders");
@@ -28,10 +32,12 @@ const Header: React.FC = () => {
 
           <div>
             <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-              Add New Rider
+              {isEditMode ? "Update Rider" : "Add New Rider"}
             </h1>
             <p className="text-white/90 mt-1 text-lg">
-              Register a new delivery rider
+              {isEditMode
+                ? "Modify rider information"
+                : "Register a new delivery rider"}
             </p>
           </div>
         </div>

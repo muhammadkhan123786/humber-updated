@@ -1,10 +1,11 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useFormContext, Controller } from "react-hook-form";
 import { motion } from "framer-motion";
 import { FileText, Upload, Calendar, FileCheck, X } from "lucide-react";
 import FormInput from "../../components/FormInput";
 import { RiderFormData } from "@/schema/rider.schema";
+import Image from "next/image";
 
 interface FileUploadZoneProps {
   label: string;
@@ -22,50 +23,61 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   required = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
   const {
     setValue,
     watch,
     formState: { errors },
   } = useFormContext<RiderFormData>();
 
-  const selectedFile = watch(name) as File | string | undefined;
+  const selectedFile = watch(name);
   const error = errors[name];
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setValue(name, file, { shouldValidate: true });
-
-      if (file.type.startsWith("image/")) {
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-      }
+  const IMAGE_BASE_URL =
+    process.env.NEXT_PUBLIC_IMAGE_URL || "http://localhost:4000";
+  const getPreviewUrl = () => {
+    if (!selectedFile) return null;
+    if (selectedFile instanceof File) {
+      return URL.createObjectURL(selectedFile);
     }
+    if (typeof selectedFile === "string" && selectedFile.trim() !== "") {
+      return selectedFile.startsWith("http")
+        ? selectedFile
+        : `${IMAGE_BASE_URL}${selectedFile}`;
+    }
+
+    return null;
   };
 
+  const previewUrl = getPreviewUrl();
   useEffect(() => {
     return () => {
-      if (previewUrl) {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrl);
       }
     };
   }, [previewUrl]);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setValue(name, file, { shouldValidate: true });
+    }
+  };
+
   const clearFile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setValue(name, undefined, { shouldValidate: true });
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setValue(name, "" as any, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const getFileName = () => {
-    if (selectedFile instanceof File) {
-      return selectedFile.name;
-    } else if (typeof selectedFile === "string") {
-      return selectedFile.split("/").pop() || "Uploaded file";
-    }
+    if (selectedFile instanceof File) return selectedFile.name;
+    if (typeof selectedFile === "string") return selectedFile.split("/").pop();
     return null;
   };
 
@@ -96,12 +108,34 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                 : "border-gray-200 bg-gray-50/30 hover:bg-blue-50/50 hover:border-blue-300"
           }`}
       >
-        <div
-          className={`p-3 rounded-xl shadow-sm transition-transform group-hover:scale-110
-          ${fileName ? "bg-emerald-500 text-white" : "bg-white text-blue-600"}`}
-        >
-          {fileName ? <FileCheck size={24} /> : <Upload size={24} />}
-        </div>
+        {previewUrl &&
+        (typeof selectedFile === "string" ||
+          (selectedFile instanceof File &&
+            selectedFile.type.startsWith("image/"))) ? (
+          <div className="relative w-full h-32 mb-2 flex justify-center">
+            <Image
+              src={previewUrl}
+              alt="Preview"
+              fill
+              className="object-contain rounded-lg shadow-sm"
+              unoptimized
+            />
+            <button
+              type="button"
+              onClick={clearFile}
+              className="absolute -top-2 right-[35%] z-10 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <div
+            className={`p-3 rounded-xl shadow-sm transition-transform group-hover:scale-110
+    ${fileName ? "bg-emerald-500 text-white" : "bg-white text-blue-600"}`}
+          >
+            {fileName ? <FileCheck size={24} /> : <Upload size={24} />}
+          </div>
+        )}
 
         <div className="text-center w-full px-4">
           {fileName ? (
@@ -139,7 +173,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 const DocumentsSection: React.FC = () => {
   const {
     control,
-
     formState: { errors },
   } = useFormContext<RiderFormData>();
 
