@@ -1,4 +1,3 @@
-// src/controllers/purchaseOrderCustom.controller.ts
 // ─────────────────────────────────────────────────────────────────────────────
 // FIXES IN THIS VERSION:
 //
@@ -97,8 +96,10 @@ export class PurchaseOrderCustomController {
 
   updateStatus = async (req: Request, res: Response) => {
     try {
+      console.log("status is updated here")
       const id = req.params.id as string;
       const { status } = req.body;
+      console.log("id", id, "status", status);
 
       if (!Types.ObjectId.isValid(id))
         return res.status(400).json({ success: false, message: "Invalid ID" });
@@ -144,9 +145,10 @@ export class PurchaseOrderCustomController {
           .filter(item => item.productId && item.quantity > 0)
           .map(async item => {
             try {
+             
               const result = await ProductModal.updateOne(
                 {
-                  // _id:              item.productId,
+                  _id:              item.productId as any,
                   "attributes.sku": item.sku,        // match the right attribute by SKU
                 },
                 {
@@ -173,11 +175,36 @@ export class PurchaseOrderCustomController {
         await Promise.allSettled(stockUpdates);
 
         // Clear stock alerts for the received SKUs
-        if (updated.userId) {
-          const skus = items.map(item => item.sku).filter(Boolean);
-          await resolveAlertsForSkus(skus, String(updated.userId));
-          console.log(`[PO received] Alerts resolved for: ${skus.join(", ")}`);
-        }
+       if (updated.userId) {
+  console.log("updated.userId:", updated.userId);
+  
+  // ✅ Multiple ways to safely extract ID
+  
+  // Method 1: Type assertion
+  const userIdObj = updated.userId as any;
+  const userIdStr = userIdObj._id ? userIdObj._id.toString() : updated.userId.toString();
+  
+  // Method 2: Type guard function
+  function isPopulatedUser(obj: any): obj is { _id: Types.ObjectId } {
+    return obj && typeof obj === 'object' && '_id' in obj;
+  }
+  
+  if (isPopulatedUser(updated.userId)) {
+    // ✅ TypeScript ab janta hai ke yeh object hai with _id
+    const userIdStr = updated.userId._id.toString();
+    console.log("Populated user ID:", userIdStr);
+    
+    const skus = items.map(item => item.sku).filter(Boolean);
+    await resolveAlertsForSkus(skus, userIdStr);
+  } else {
+    // ✅ Direct string ID
+    const userIdStr = updated.userId.toString();
+    console.log("Direct string ID:", userIdStr);
+    
+    const skus = items.map(item => item.sku).filter(Boolean);
+    await resolveAlertsForSkus(skus, userIdStr);
+  }
+}
       }
       // ─────────────────────────────────────────────────────────────────────
 
