@@ -200,9 +200,14 @@ export const useRider = () => {
         "motCertificatePic",
         "utilityBillPic",
       ];
+
       fileFields.forEach((field) => {
-        if ((data as any)[field] instanceof File) {
-          formData.append(field, (data as any)[field]);
+        const value = (data as any)[field];
+
+        if (value instanceof File) {
+          formData.append(field, value);
+        } else if (value === "") {
+          formData.append(field, "");
         }
       });
 

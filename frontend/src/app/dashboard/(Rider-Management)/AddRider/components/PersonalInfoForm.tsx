@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   User,
   Mail,
@@ -37,8 +37,9 @@ interface GooglePlaceResult {
 
 const PersonalInfoForm: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const googleMapLoader = useGoogleMapLoad();
+  const IMAGE_BASE_URL =
+    process.env.NEXT_PUBLIC_IMAGE_URL || "http://localhost:4000";
 
   const {
     register,
@@ -47,25 +48,38 @@ const PersonalInfoForm: React.FC = () => {
     watch,
     formState: { errors },
   } = useFormContext<RiderFormData>();
-
   const profilePic = watch("profilePic");
+  const getPreviewUrl = () => {
+    if (!profilePic) return null;
+    if (profilePic instanceof File) {
+      return URL.createObjectURL(profilePic);
+    }
+
+    if (typeof profilePic === "string" && profilePic.trim() !== "") {
+      return profilePic.startsWith("http")
+        ? profilePic
+        : `${IMAGE_BASE_URL}${profilePic}`;
+    }
+
+    return null;
+  };
+
+  const previewUrl = getPreviewUrl();
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setValue("profilePic", file, { shouldValidate: true });
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
 
   useEffect(() => {
     if (!googleMapLoader || typeof window === "undefined" || !window.google)
@@ -170,12 +184,9 @@ const PersonalInfoForm: React.FC = () => {
         </label>
         <div className="flex items-center gap-6">
           <div className="w-28 h-28 rounded-full bg-gray-100 border-4 border-white shadow-inner flex items-center justify-center text-gray-400 overflow-hidden relative group">
-            {previewUrl || (profilePic && typeof profilePic === "string") ? (
+            {previewUrl ? (
               <Image
-                src={
-                  previewUrl ||
-                  (typeof profilePic === "string" ? profilePic : "")
-                }
+                src={previewUrl}
                 alt="Profile Preview"
                 fill
                 className="object-cover transition-transform group-hover:scale-110"
@@ -237,6 +248,7 @@ const PersonalInfoForm: React.FC = () => {
             </p>
           )}
         </div>
+
         <div className="space-y-1">
           <Controller
             name="lastName"

@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
 interface RiderTableProps {
@@ -69,14 +69,21 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
   const totalPages = Math.ceil(totalRiders / limit);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this rider?")) {
-      try {
-        await deleteRider(id);
-        toast.success("Rider deleted successfully!");
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to delete rider.");
-      }
+    toast.dismiss();
+    const loadingToast = toast.loading("Deleting rider...");
+
+    try {
+      await deleteRider(id);
+      toast.success("Rider deleted successfully!", {
+        id: loadingToast,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete rider.", {
+        id: loadingToast,
+        duration: 4000,
+      });
     }
   };
 
@@ -91,7 +98,6 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
 
   return (
     <div className="w-full py-2">
-      <Toaster position="top-right" />
       <div className="overflow-x-auto shadow-sm rounded-3xl border border-gray-100">
         <table className="w-full bg-white border-collapse">
           <thead>

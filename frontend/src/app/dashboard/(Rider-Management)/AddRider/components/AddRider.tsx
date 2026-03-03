@@ -29,6 +29,7 @@ const AddRider = () => {
     error,
     clearError,
   } = useRider();
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const riderId = searchParams.get("id");
@@ -127,6 +128,12 @@ const AddRider = () => {
         availbilitiesIds:
           selectedRider.availbilitiesIds?.map((a: any) => a._id || a) || [],
         zones: selectedRider.zones || [],
+        profilePic: selectedRider.profilePic || "",
+        licenseFrontPic: selectedRider.licenseFrontPic || "",
+        licenseBackPic: selectedRider.licenseBackPic || "",
+        insuranceDocumentPic: selectedRider.insuranceDocumentPic || "",
+        motCertificatePic: selectedRider.motCertificatePic || "",
+        utilityBillPic: selectedRider.utilityBillPic || "",
       });
     }
   }, [selectedRider, reset, riderId]);
@@ -194,11 +201,8 @@ const AddRider = () => {
       toast.error("Please fill all required fields");
       return;
     }
-    if (currentStep < totalSteps) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      handleSubmit(onSubmit)();
-    }
+    if (currentStep < totalSteps) setCurrentStep((prev) => prev + 1);
+    else handleSubmit(onSubmit)();
   };
 
   const handlePrevious = () => {
@@ -207,18 +211,13 @@ const AddRider = () => {
 
   const onSubmit = async (data: RiderFormData) => {
     if (isSubmitting) return;
-
     setIsSubmitting(true);
-
     try {
       await saveRider(data, riderId || undefined);
-
       toast.success(
         riderId ? "Rider updated successfully!" : "Rider added successfully!",
       );
-      setTimeout(() => {
-        router.push("/dashboard/riders");
-      }, 800);
+      setTimeout(() => router.push("/dashboard/riders"), 800);
     } catch (err: any) {
       setIsSubmitting(false);
       toast.error(err.message || "Failed to save rider");
