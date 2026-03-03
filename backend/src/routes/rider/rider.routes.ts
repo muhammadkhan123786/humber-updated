@@ -2,13 +2,15 @@ import { Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
 import { Request, Response, NextFunction } from "express";
 import { riderDoc, Riders } from "../../models/rider/rider.models";
-import { riderZodSchema } from "../../schemas/rider-schemas/rider.schema";
+import { RIDER_STATUS, riderZodSchema } from "../../schemas/rider-schemas/rider.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { genericProfileIdsMiddleware } from "../../middleware/generic.profile.middleware";
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateRiderCode } from "../../utils/generate.AutoCode.Counter";
 import { getAllRiders } from "../../controllers/rider/rider.statistics.controller";
+import { Types } from "mongoose";
+import { ActivityStatus } from "../../schemas/technician-activities-records/technician.activities.records.schema";
 
 const riderUploads = createUploader([
   {
@@ -75,6 +77,41 @@ const riderController = new AdvancedGenericController({
 
 const riderProfileMiddleware = genericProfileIdsMiddleware<riderDoc>({
   targetModel: Riders,
+});
+
+riderRouter.put('/update-status',async (req: Request, res: Response) => {
+  try {
+    const { riderId, status } = req.body;
+
+    // ✅ Validate riderId
+    if (!riderId || !Types.ObjectId.isValid(riderId)) {
+      return res.status(400).json({ success: false, message: "Invalid riderId" });
+    }
+
+    // ✅ Validate status
+    if (!status || !RIDER_STATUS.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status" });
+    }
+
+    // ✅ Update rider status
+    const updatedRider = await Riders.findByIdAndUpdate(
+      riderId,
+      { riderStatus: status as ActivityStatus },
+      { new: true }
+    );
+
+    if (!updatedRider) {
+      return res.status(404).json({ success: false, message: "Rider not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Rider status updated to ${status}`,
+      data: updatedRider,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message || "Server Error" });
+  }
 });
 
 riderRouter.get("/:id", riderController.getById);
