@@ -50,7 +50,9 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
 
   const riderOptions = drivers.map((d) => ({
     id: d._id,
-    label: `${d.personalInfo.firstName} ${d.personalInfo.lastName}`,
+    label: d.personId
+      ? `${d.personId.firstName} ${d.personId.lastName}`
+      : "Unknown Rider",
   }));
 
   const deliveryMethods: DeliveryMethod[] = [

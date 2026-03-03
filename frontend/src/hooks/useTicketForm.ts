@@ -200,7 +200,7 @@ export const useTicketForm = () => {
           getAlls("/vechilemodel?filter=all"),
           getAlls("/colors?filter=all"),
           getAlls("/insurance-companies?filter=all"),
-          getAlls("/register-driver?filter=all"),
+          getAlls("/riders?filter=all"),
         ])) as any[];
 
         if (results[0].status === "fulfilled")
@@ -222,10 +222,11 @@ export const useTicketForm = () => {
           setMobilityParts(
             (results[6].value?.data ?? []).filter((i: any) => i.isActive),
           );
-        if (results[4].status === "fulfilled") {
-          setDrivers(
-            (results[4].value?.data ?? []).filter((d: any) => d.isActive),
+        if (results[11].status === "fulfilled") {
+          const riderData = (results[11].value?.data ?? []).filter(
+            (d: any) => d.isActive,
           );
+          setDrivers(riderData);
         }
         if (results[7].status === "fulfilled")
           setBrands(

@@ -112,6 +112,7 @@ const CreateTicket = ({
       setIsGeneratingCode(false);
     }
   };
+  console.log("drivers", drivers);
 
   useEffect(() => {
     const loadTicket = async () => {
