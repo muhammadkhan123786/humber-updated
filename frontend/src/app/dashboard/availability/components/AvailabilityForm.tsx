@@ -12,18 +12,14 @@ import { useFormActions } from "@/hooks/useFormActions";
 
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-const availabilitySchema = z
-  .object({
-    name: z.string().min(1, "Name is required."),
-    fromTime: z.string().regex(timeRegex, "Use HH:mm (24h) format"),
-    toTime: z.string().regex(timeRegex, "Use HH:mm (24h) format"),
-    isActive: z.boolean(),
-    isDefault: z.boolean(),
-  })
-  .refine((data) => data.fromTime < data.toTime, {
-    message: "Start time must be earlier than end time",
-    path: ["toTime"],
-  });
+// Refine block ko remove kar diya gaya hai taake end time start time se pehle bhi ho sake (e.g. Night shifts)
+const availabilitySchema = z.object({
+  name: z.string().min(1, "Name is required."),
+  fromTime: z.string().regex(timeRegex, "Use HH:mm (24h) format"),
+  toTime: z.string().regex(timeRegex, "Use HH:mm (24h) format"),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+});
 
 type FormData = z.infer<typeof availabilitySchema>;
 

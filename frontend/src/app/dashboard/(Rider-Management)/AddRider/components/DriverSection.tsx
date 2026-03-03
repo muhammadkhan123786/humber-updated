@@ -68,7 +68,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="License Number"
                   placeholder="SMITH901234AB5DE"
-                  required
                   {...field}
                   error={!!errors.licenseNumber}
                 />
@@ -90,7 +89,6 @@ const DriverSection: React.FC = () => {
                   label="Expiry Date"
                   type="date"
                   icon={<Calendar size={18} />}
-                  required
                   {...field}
                   min={today}
                   error={!!errors.licenseExpiryDate}
@@ -112,7 +110,6 @@ const DriverSection: React.FC = () => {
                   label="Years of Experience"
                   placeholder="5"
                   type="number"
-                  required
                   min={0}
                   max={maxExperience}
                   value={field.value?.toString() || ""}
@@ -141,7 +138,7 @@ const DriverSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
           <div className="md:col-span-2 space-y-1">
             <label className="block text-sm font-semibold text-gray-700">
-              Vehicle Type <span className="text-red-500">*</span>
+              Vehicle Type
             </label>
             <Controller
               name="vehicleTypeId"
@@ -183,7 +180,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="Model"
                   placeholder="CBR500R"
-                  required
                   {...field}
                   error={!!errors.modelId}
                 />
@@ -204,7 +200,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="Year"
                   placeholder="2024"
-                  required
                   value={field.value || ""}
                   onChange={(e) =>
                     field.onChange(
@@ -230,7 +225,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="License Plate"
                   placeholder="AB12 CDE"
-                  required
                   {...field}
                   error={!!errors.licensePlate}
                 />
@@ -251,7 +245,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="Insurance Company"
                   placeholder="Allianz Insurance"
-                  required
                   {...field}
                   error={!!errors.insuranceCompany}
                 />
@@ -272,7 +265,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="Policy Number"
                   placeholder="POL123456"
-                  required
                   {...field}
                   error={!!errors.policyNumber}
                 />
@@ -294,7 +286,6 @@ const DriverSection: React.FC = () => {
                   label="Insurance Expiry Date"
                   type="date"
                   icon={<Calendar size={18} />}
-                  required
                   {...field}
                   min={today}
                   error={!!errors.insuranceExpiryDate}
@@ -324,7 +315,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="Emergency Contact Name"
                   placeholder="Jane Smith"
-                  required
                   {...field}
                   error={!!errors.emergencyContactNumber}
                 />
@@ -346,7 +336,6 @@ const DriverSection: React.FC = () => {
                   label="Phone Number"
                   placeholder="+44 7700 900456"
                   icon={<Phone size={18} />}
-                  required
                   type="Number"
                   {...field}
                   error={!!errors.phoneNumber}
@@ -368,7 +357,6 @@ const DriverSection: React.FC = () => {
                 <FormInput
                   label="Relationship"
                   placeholder="Mother"
-                  required
                   {...field}
                   error={!!errors.relationShip}
                 />
