@@ -5,7 +5,6 @@ import {
   Phone,
   MapPin,
   Bike,
-  Edit2,
   PauseCircle,
   Trash2,
   CheckCircle2,
@@ -16,6 +15,7 @@ import {
   XCircle,
   AlertCircle,
   Clock,
+  SquarePen,
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
@@ -244,7 +244,7 @@ const RiderTable: React.FC<RiderTableProps> = ({
                         }
                         className="p-1.5 text-blue-500 bg-blue-50 rounded-md border border-blue-100 hover:bg-blue-100 transition-all"
                       >
-                        <Edit2 size={14} />
+                        <SquarePen size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(rider._id)}

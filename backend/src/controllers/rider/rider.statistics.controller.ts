@@ -72,25 +72,28 @@ export const getAllRiders = async (req: AuthRequest, res: Response) => {
     ]);
 
     const statistics: Record<string, number> = {};
-
-    // Initialize all statuses to 0
     RIDER_STATUS.forEach((status) => {
       statistics[status] = 0;
     });
-
-    // Fill actual counts
     statsAgg.forEach((item) => {
       statistics[item._id] = item.count;
     });
-
-    // ✅ ADD TOTAL INTO STATISTICS
     statistics["total"] = total;
 
-    // ✅ Main Query
+    // ✅ Main Query with full population
     let query = Riders.find(queryFilters)
       .sort(sortOption)
+      .populate("userId")
       .populate("personId")
-      .populate("contactId");
+      .populate("addressId")
+      .populate("contactId")
+      .populate("accountId")
+      .populate("vehicleTypeId")
+      .populate("employeementTypeId")
+      .populate({
+        path: "addressId",
+        populate: [{ path: "cityId" }, { path: "countryId" }],
+      });
 
     // Pagination only if filter !== all
     if (filter !== "all") {
@@ -105,7 +108,7 @@ export const getAllRiders = async (req: AuthRequest, res: Response) => {
       page: filter === "all" ? 1 : pageNumber,
       limit: filter === "all" ? total : pageSize,
       data,
-      statistics, // now includes total
+      statistics,
     });
   } catch (error: any) {
     return res.status(500).json({
