@@ -1,5 +1,6 @@
 import { IBaseEntity } from "../../Base.Interface";
 
+export type RiderSTATUS = "PENDING"|"APPROVED"|"REJECTED"|"TERMINATED"|"IN-ACTIVE"|"ACTIVE";
 export interface IRiderBasicInformation<
 TUSERID=string,
 ADDRESSID=string,
@@ -46,4 +47,5 @@ CITIESIDS=string[]
     employeementTypeId:EMPLOYEEMENTTYPEID;
     availbilitiesIds:AVAILBILITIESIDS;
     zones:CITIESIDS;
+    riderStatus?:RiderSTATUS
 }

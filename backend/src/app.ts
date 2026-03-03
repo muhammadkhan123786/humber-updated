@@ -624,42 +624,43 @@ app.use(
   productAttributesRoutes,
 );
 
-app.use(`${process.env.API_PREFIX}/products`, productRoutes);
+app.use(`${process.env.API_PREFIX}/products`,adminProtecter, productRoutes);
 
 app.use(
   `${process.env.API_PREFIX}/ai`,
-
+adminProtecter,
   aiRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/purchase-orders`,
-
+adminProtecter,
   purchaseOrderRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/grn`,
-
+adminProtecter,
   grnRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/goods-return-notice`,
-
+adminProtecter,
   goodsReturnRoutes,
 );
 
 app.use(
   `${process.env.API_PREFIX}/marketplace-templates`,
+  adminProtecter,
   marketplaceTemplateRoutes,
 );
 
 // app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
-app.use(`${process.env.API_PREFIX}/document-numbers`, documentNumberRoutes);
-app.use(`${process.env.API_PREFIX}/upload`, uploadRoutes);
-app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
-app.use(`${process.env.API_PREFIX}/test/email`, emailTestRoutes);
+app.use(`${process.env.API_PREFIX}/document-numbers`,adminProtecter, documentNumberRoutes);
+app.use(`${process.env.API_PREFIX}/upload`,adminProtecter, uploadRoutes);
+app.use(`${process.env.API_PREFIX}/marketplace`,adminProtecter, marketplaceRoute);
+app.use(`${process.env.API_PREFIX}/test/email`,adminProtecter, emailTestRoutes);
 // Muzamil Hassan end
 // Health check route
 app.get("/health", (_req, res) => {

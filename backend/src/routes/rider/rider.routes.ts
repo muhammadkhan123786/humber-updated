@@ -8,6 +8,7 @@ import { genericProfileIdsMiddleware } from "../../middleware/generic.profile.mi
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateRiderCode } from "../../utils/generate.AutoCode.Counter";
+import { getAllRiders } from "../../controllers/rider/rider.statistics.controller";
 
 const riderUploads = createUploader([
   {
@@ -77,7 +78,7 @@ const riderProfileMiddleware = genericProfileIdsMiddleware<riderDoc>({
 });
 
 riderRouter.get("/:id", riderController.getById);
-riderRouter.get("/", riderController.getAll);
+riderRouter.get("/", getAllRiders);
 
 // backend/src/routes/rider/rider.routes.ts
 riderRouter.post(
