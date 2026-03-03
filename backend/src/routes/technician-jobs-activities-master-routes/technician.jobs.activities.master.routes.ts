@@ -22,6 +22,7 @@ technicianActivityMasterRouter.post(
   "/",  // ✅ MUST be here
   async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
     req.body.technicianId = req.technicianId;
+    req.body.userId = req.user.userId;
 
     next();
   },
@@ -31,6 +32,7 @@ technicianActivityMasterRouter.get("/", techncianActivitymasterController.getAll
 technicianActivityMasterRouter.get("/:id", techncianActivitymasterController.getById);
 technicianActivityMasterRouter.put("/:id",async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
     req.body.technicianId = req.technicianId;
+    req.body.userId = req.user.userId;
 
     next();
   }, techncianActivitymasterController.update);

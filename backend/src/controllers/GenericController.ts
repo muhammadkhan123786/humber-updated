@@ -4,6 +4,7 @@ import { GenericService } from "../services/generic.crud.services";
 import { Document, PopulateOptions, Types } from "mongoose";
 import { ZodObject, ZodRawShape } from "zod";
 import { normalizeToStringArray } from "../utils/query.utils";
+import { TechnicianAuthRequest } from "../middleware/auth.middleware";
 interface ControllerOptions<T extends Document> {
   service: GenericService<T>;
   populate?: (string | PopulateOptions)[];
@@ -36,7 +37,7 @@ export class AdvancedGenericController<T extends Document> {
       });
     }
   };
-  getAll = async (req: Request, res: Response) => {
+  getAll = async (req: TechnicianAuthRequest, res: Response) => {
     try {
       const {
         page = 1,
@@ -61,17 +62,28 @@ export class AdvancedGenericController<T extends Document> {
       const pageNumber = Number(page);
       const pageSize = Number(limit);
       const queryFilters: Record<string, any> = { isDeleted: false };
-
-
+      
+      if(!req.user)
+      {
+          if(!req.body.userId)
+          {
+              return res.json({status:false,message:"Please provide userId."});
+          }
+          queryFilters.userId = new Types.ObjectId(req.body.userId);
+          
+      }
+      else if(req.user && req.user.userId) {
+             queryFilters.userId = new Types.ObjectId(req.user.userId);
+         }
+       if (req.technicianId) {
+             queryFilters.technicianId = new Types.ObjectId(req.technicianId);
+         }
       // ✅ GENERIC SEARCH across searchFields
       if (search && this.options.searchFields?.length) {
         queryFilters.$or = this.options.searchFields.map((field) => ({
           [field]: { $regex: search, $options: "i" },
         }));
       }
-
-
-
       // ✅ CATEGORY FILTERS
       // Direct category filter
       if (categoryId && Types.ObjectId.isValid(categoryId as string)) {

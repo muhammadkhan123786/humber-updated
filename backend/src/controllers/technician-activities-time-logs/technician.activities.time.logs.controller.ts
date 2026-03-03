@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { TechniciansActivitiesMaster } from "../../models/technician-activities-master-models/technician.activities.master.models";
 import { TimeLog } from "../../schemas/technician-activities-records/technician.activities.records.schema";
 import { TicketQuations } from "../../models/ticket-quation-models/ticket.quotation.models";
+import { TechnicianJobsByAdmin } from "../../models/techncian-jobs-by-admin-models/technician.jobs.by.admin.models";
 
 
 
@@ -168,3 +169,155 @@ export const installPartsDuringActivity = async (
 
   return activity;
 };
+
+//technician job performance list 
+export const getTechnicianDashboard = async ({
+  technicianId,
+  page = 1,
+  limit = 10,
+  search,
+  jobStatus,
+  sortBy = "createdAt",
+  sortOrder = -1,
+}: {
+  technicianId: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  jobStatus?: string;
+  sortBy?: string;
+  sortOrder?: 1 | -1;
+}) => {
+  const techId = new Types.ObjectId(technicianId);
+  const skip = (page - 1) * limit;
+
+  const matchStage: any = { technicianId: techId };
+  if (jobStatus) matchStage.jobStatus = jobStatus;
+  const aggregation: any[] = [
+    { $match: matchStage },
+    // 🔹 Join Admin Job
+    {
+      $lookup: {
+        from: "technicianjobsbyadmins",
+        localField: "jobId",
+        foreignField: "_id",
+        as: "adminJob",
+      },
+    },
+    { $unwind: "$adminJob" },
+
+    // 🔹 Search by jobId
+    ...(search
+      ? [
+          {
+            $match: {
+              "adminJob.jobId": { $regex: search, $options: "i" },
+            },
+          },
+        ]
+      : []),
+
+    // 🔹 Join Ticket
+    {
+      $lookup: {
+        from: "customerticketbases",
+        localField: "adminJob.ticketId",
+        foreignField: "_id",
+        as: "ticket",
+      },
+    },
+    { $unwind: "$ticket" },
+
+    // 🔹 Join Quotation
+    {
+      $lookup: {
+        from: "ticketquations",
+        localField: "adminJob.quotationId",
+        foreignField: "_id",
+        as: "quotation",
+      },
+    },
+    { $unwind: "$quotation" },
+
+    // 🔹 Join Activities
+    {
+      $lookup: {
+        from: "technicianactivitiesmasters",
+        localField: "jobId",
+        foreignField: "JobAssignedId",
+        as: "activities",
+      },
+    },
+
+    // 🔹 Calculations
+    {
+      $addFields: {
+        totalActivities: { $size: "$activities" },
+
+        totalWorkedSeconds: {
+          $sum: "$activities.totalTimeInSeconds",
+        },
+
+        // Parts Cost
+        partsCost: {
+          $sum: "$quotation.partsList.total",
+        },
+
+        // Labour Cost (based on worked time)
+        labourCost: {
+          $multiply: [
+            { $divide: [{ $sum: "$activities.totalTimeInSeconds" }, 3600] },
+            "$quotation.labourRate",
+          ],
+        },
+      },
+    },
+
+    // 🔹 Format Output
+    {
+      $project: {
+        jobAssignmentId: "$_id",
+        role: 1,
+        jobStatus: 1,
+        createdAt: 1,
+
+        jobId: "$adminJob.jobId",
+        ticketCode: "$ticket.ticketCode",
+        customerName: "$ticket.customerName",
+
+        totalActivities: 1,
+        totalWorkedSeconds: 1,
+        partsCost: 1,
+        labourCost: 1,
+      },
+    },
+
+    // 🔹 Pagination
+    {
+      $facet: {
+        data: [
+          { $sort: { [sortBy]: sortOrder } },
+          { $skip: skip },
+          { $limit: limit },
+        ],
+        totalCount: [{ $count: "count" }],
+      },
+    },
+  ];
+
+  const result = await TechnicianJobsByAdmin.aggregate(aggregation);
+
+  const data = result[0]?.data || [];
+  const total = result[0]?.totalCount[0]?.count || 0;
+
+  return {
+    data,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
