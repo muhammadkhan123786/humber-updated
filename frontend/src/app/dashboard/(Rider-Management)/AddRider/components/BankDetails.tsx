@@ -53,7 +53,6 @@ const BankDetails: React.FC = () => {
             <FormInput
               label="Bank Name"
               placeholder="Barclays Bank"
-              required
               value={field.value || ""}
               onChange={field.onChange}
             />
@@ -73,7 +72,6 @@ const BankDetails: React.FC = () => {
             <FormInput
               label="Account Holder Name"
               placeholder="John Smith"
-              required
               value={field.value || ""}
               onChange={field.onChange}
             />
@@ -94,7 +92,6 @@ const BankDetails: React.FC = () => {
                 <FormInput
                   label="Account Number"
                   placeholder="12345678"
-                  required
                   value={field.value || ""}
                   onChange={field.onChange}
                 />
@@ -115,7 +112,6 @@ const BankDetails: React.FC = () => {
                 <FormInput
                   label="Sort Code"
                   placeholder="12-34-56"
-                  required
                   value={field.value || ""}
                   onChange={field.onChange}
                 />

@@ -75,7 +75,7 @@ const EmploymentDetails: React.FC = () => {
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-gray-700">
-          Employment Type <span className="text-red-500">*</span>
+          Employment Type
         </label>
         <Controller
           name="employeementTypeId"
@@ -111,7 +111,7 @@ const EmploymentDetails: React.FC = () => {
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-gray-700">
-          Availability <span className="text-red-500">*</span>
+          Availability
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {availabilities?.map((avail: any) => {
@@ -162,7 +162,7 @@ const EmploymentDetails: React.FC = () => {
 
       <div className="space-y-4">
         <label className="text-sm font-semibold text-gray-700">
-          Preferred Delivery Zones <span className="text-red-500">*</span>
+          Preferred Delivery Zones
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {cities?.map((city: any) => {

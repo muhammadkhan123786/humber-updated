@@ -320,7 +320,6 @@ const PersonalInfoForm: React.FC = () => {
               <FormInput
                 label="Date of Birth"
                 type="date"
-                required
                 max={today}
                 {...field}
                 error={!!errors.DOB}
@@ -340,7 +339,6 @@ const PersonalInfoForm: React.FC = () => {
               <FormInput
                 label="National Insurance Number"
                 placeholder="AB123456C"
-                required
                 {...field}
                 error={!!errors.nationalIssuranceNumber}
                 icon={<ShieldCheck size={18} />}
@@ -356,7 +354,7 @@ const PersonalInfoForm: React.FC = () => {
 
         <div className="md:col-span-2 space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
-            Address <span className="text-red-500">*</span>
+            Address
           </label>
           <div className="relative group">
             <div
@@ -390,7 +388,6 @@ const PersonalInfoForm: React.FC = () => {
               <FormInput
                 label="City"
                 placeholder="London"
-                required
                 {...field}
                 error={!!errors.city}
                 icon={<MapPin size={18} />}
@@ -410,7 +407,6 @@ const PersonalInfoForm: React.FC = () => {
               <FormInput
                 label="Postcode"
                 placeholder="SW1A 1AA"
-                required
                 {...field}
                 error={!!errors.postalCode}
                 icon={<MapPin size={18} />}

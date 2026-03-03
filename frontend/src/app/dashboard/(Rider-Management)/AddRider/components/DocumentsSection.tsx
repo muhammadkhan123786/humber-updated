@@ -209,7 +209,6 @@ const DocumentsSection: React.FC = () => {
               <FormInput
                 label="License Number"
                 placeholder="SMITH901234AB5DE"
-                required
                 value={field.value || ""}
                 onChange={field.onChange}
               />
@@ -229,7 +228,6 @@ const DocumentsSection: React.FC = () => {
                 label="Expiry Date"
                 type="date"
                 icon={<Calendar size={18} />}
-                required
                 min={today}
                 value={field.value || ""}
                 onChange={field.onChange}
@@ -246,14 +244,12 @@ const DocumentsSection: React.FC = () => {
             label="Licence Front"
             subtext="Upload Front"
             name="licenseFrontPic"
-            required
           />
 
           <FileUploadZone
             label="Licence Back"
             subtext="Upload Back"
             name="licenseBackPic"
-            required
           />
         </div>
       </div>
@@ -287,7 +283,6 @@ const DocumentsSection: React.FC = () => {
                 label="Expiry Date"
                 type="date"
                 icon={<Calendar size={18} />}
-                required
                 min={today}
                 value={field.value || ""}
                 onChange={field.onChange}
@@ -305,7 +300,6 @@ const DocumentsSection: React.FC = () => {
               label="Insurance Document"
               subtext="Upload Insurance Certificate"
               name="insuranceDocumentPic"
-              required
             />
           </div>
         </div>
