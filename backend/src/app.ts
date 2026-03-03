@@ -117,6 +117,7 @@ import technicianActivityMasterRouter from "./routes/technician-jobs-activities-
 import vehicleTypesRouter from "./routes/master-data-routes/rider.vehicle.types.routes";
 import riderRouter from "./routes/rider/rider.routes";
 import technicianActionsrouter from "./routes/technician-activities-operations-routes/technicianActivity.routes";
+import mobilecustomerSourceRouter from "./routes/mobile-development/customer-source-routes/customer.source.routes";
 
 // Create express app
 const app: Application = express();
@@ -182,7 +183,7 @@ app.use(
   adminProtecter,
   serviceRequestTypeRouter,
 );
-app.use(`${process.env.API_PREFIX}/customers`, CustomerBaseRouter);
+app.use(`${process.env.API_PREFIX}/customers`,adminProtecter, CustomerBaseRouter);
 app.use(
   `${process.env.API_PREFIX}/technicians`,
   technicianProtecter,
@@ -343,7 +344,7 @@ app.use(
 //23-01-2026
 app.use(
   `${process.env.API_PREFIX}/technician-service-types`,
-  adminProtecter,
+  technicianProtecter,
   technicianServiceTypeRouter,
 );
 
@@ -599,6 +600,11 @@ app.use(
   technicianActionsrouter,
 );
 
+//03-03-2026
+app.use(
+  `${process.env.API_PREFIX}/mobile-customer-sources`,
+  mobilecustomerSourceRouter,
+);
 
 
 
