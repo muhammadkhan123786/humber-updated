@@ -29,6 +29,7 @@ export const useRider = () => {
   const [jobTypes, setJobTypes] = useState<any[]>([]);
   const [availabilities, setAvailabilities] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
+  const [statistics, setStatistics] = useState<any>(null);
 
   const fetchVehicleTypes = useCallback(
     async (params?: Record<string, unknown>) => {
@@ -84,8 +85,16 @@ export const useRider = () => {
     try {
       setLoading(true);
       const response = await getAll<Rider>("/riders", params);
+
       setRiders(response.data as Rider[]);
       setTotalRiders(response.total);
+      if ((response as any).statistics) {
+        const newStats = (response as any).statistics;
+        if (!params?.riderStatus || params?.riderStatus === "") {
+          setStatistics(newStats);
+        }
+      }
+
       return response;
     } catch (err: any) {
       setError(err.message || "Failed");
@@ -264,6 +273,7 @@ export const useRider = () => {
     fetchRiders,
     fetchRiderById,
     saveRider,
+    statistics,
     deleteRider,
     clearSelectedRider,
     clearError,

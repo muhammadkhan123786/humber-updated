@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import {
   Search,
   Users,
@@ -7,50 +7,64 @@ import {
   XCircle,
   PauseCircle,
   UserMinus,
+  Clock,
   Funnel,
 } from "lucide-react";
 
 interface FilterSectionProps {
   onSearchChange: (value: string) => void;
+  activeTab: string;
+  onTabChange: (status: string) => void;
+  statistics?: any;
 }
 
-const FilterSection: React.FC<FilterSectionProps> = ({ onSearchChange }) => {
-  const [activeTab, setActiveTab] = useState("All");
-
+const FilterSection: React.FC<FilterSectionProps> = ({
+  onSearchChange,
+  activeTab,
+  onTabChange,
+  statistics,
+}) => {
   const statusFilters = [
     {
       id: "All",
-      label: "All (6)",
+      label: `All (${statistics?.total || 0})`,
       icon: <Users size={16} />,
-      activeClass: "bg-blue-600 text-white",
+      activeClass: "bg-blue-600 text-white border-blue-600",
       inactiveClass: "text-blue-600 border-blue-200 bg-blue-50",
     },
     {
       id: "Approved",
-      label: "Approved (2)",
+      label: `Approved (${statistics?.APPROVED || 0})`,
       icon: <CheckCircle2 size={16} />,
-      activeClass: "bg-emerald-500 text-white",
+      activeClass: "bg-emerald-500 text-white border-emerald-500",
       inactiveClass: "text-emerald-600 border-emerald-200 bg-emerald-50",
     },
     {
+      id: "Pending",
+      label: `Pending (${statistics?.PENDING || 0})`,
+      icon: <Clock size={16} />,
+      activeClass: "bg-amber-500 text-white border-amber-500",
+      inactiveClass: "text-amber-600 border-amber-200 bg-amber-50",
+    },
+    {
       id: "Rejected",
-      label: "Rejected (1)",
+      label: `Rejected (${statistics?.REJECTED || 0})`,
       icon: <XCircle size={16} />,
-      activeClass: "bg-red-500 text-white",
+      activeClass: "bg-red-500 text-white border-red-500",
       inactiveClass: "text-red-600 border-red-200 bg-red-50",
     },
     {
-      id: "Inactive",
-      label: "Inactive (1)",
+      id: "In-Active",
+      label: `Inactive (${statistics?.["IN-ACTIVE"] || 0})`,
       icon: <PauseCircle size={16} />,
-      activeClass: "bg-slate-500 text-white",
+      activeClass: "bg-slate-500 text-white border-slate-500",
       inactiveClass: "text-slate-600 border-slate-200 bg-slate-50",
     },
     {
       id: "Terminated",
-      label: "Terminated (1)",
+      label: `Terminated (${statistics?.TERMINATED || 0})`,
       icon: <UserMinus size={16} />,
-      activeClass: "bg-orange-600 text-white",
+      activeClass: "bg-orange-600 text-white border-orange-600",
       inactiveClass: "text-orange-700 border-orange-200 bg-orange-50",
     },
   ];
@@ -71,7 +85,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onSearchChange }) => {
               className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
             />
           </div>
-          <button className="flex hover:bg-green-600 hover:text-white items-center gap-2 px-6 py-3 rounded-xl font-medium border border-indigo-100 transition-colors">
+          <button className="flex hover:bg-gray-100 items-center gap-2 px-6 py-3 rounded-xl font-medium border border-gray-200 transition-colors">
             <Funnel size={20} /> Filter
           </button>
         </div>
@@ -84,8 +98,8 @@ const FilterSection: React.FC<FilterSectionProps> = ({ onSearchChange }) => {
             {statusFilters.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border text-sm font-medium transition-all active:scale-95 ${
+                onClick={() => onTabChange(tab.id)}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm font-medium transition-all active:scale-95 ${
                   activeTab === tab.id ? tab.activeClass : tab.inactiveClass
                 }`}
               >

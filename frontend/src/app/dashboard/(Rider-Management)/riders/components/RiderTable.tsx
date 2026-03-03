@@ -13,6 +13,9 @@ import {
   Loader2,
   Star,
   Award,
+  XCircle,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
@@ -23,18 +26,44 @@ interface RiderTableProps {
   search?: string;
 }
 
-const StatusBadge = ({ isActive }: { isActive: boolean }) => {
-  const status = isActive ? "ACTIVE" : "INACTIVE";
-  const styles = {
-    ACTIVE: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    INACTIVE: "bg-gray-100 text-gray-500 border-gray-200",
+const StatusBadge = ({ status }: { status: string }) => {
+  const s = status?.toUpperCase() || "PENDING";
+
+  const styles: Record<string, { class: string; icon: React.ReactNode }> = {
+    ACTIVE: {
+      class: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      icon: <CheckCircle2 size={14} />,
+    },
+    APPROVED: {
+      class: "bg-blue-50 text-blue-600 border-blue-100",
+      icon: <CheckCircle2 size={14} />,
+    },
+    PENDING: {
+      class: "bg-amber-50 text-amber-600 border-amber-100",
+      icon: <Clock size={14} />,
+    },
+    REJECTED: {
+      class: "bg-red-50 text-red-600 border-red-100",
+      icon: <XCircle size={14} />,
+    },
+    TERMINATED: {
+      class: "bg-slate-100 text-slate-600 border-slate-200",
+      icon: <AlertCircle size={14} />,
+    },
+    "IN-ACTIVE": {
+      class: "bg-gray-100 text-gray-500 border-gray-200",
+      icon: <PauseCircle size={14} />,
+    },
   };
+
+  const currentStyle = styles[s] || styles["PENDING"];
+
   return (
     <span
-      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border ${styles[status]}`}
+      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border w-fit ${currentStyle.class}`}
     >
-      {isActive ? <CheckCircle2 size={14} /> : <PauseCircle size={14} />}
-      {status}
+      {currentStyle.icon}
+      {s}
     </span>
   );
 };
@@ -44,10 +73,12 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const router = useRouter();
+
   useEffect(() => {
     fetchRiders({ page: currentPage, limit });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
+
   const filteredRiders = useMemo(() => {
     if (!search.trim()) return riders;
 
@@ -202,7 +233,7 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
                     </div>
                   </td>
                   <td className="p-4">
-                    <StatusBadge isActive={rider.isActive} />
+                    <StatusBadge status={rider.riderStatus} />
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
