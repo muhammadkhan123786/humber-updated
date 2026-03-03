@@ -15,17 +15,22 @@ const techncianActivitymasterController = new AdvancedGenericController({
     populate: [
       "userId", 
       "JobAssignedId",
-      "quotationId",
+      {
+        path: "quotationId", 
+        populate: [
+          {
+            path: "technicianId", 
+            populate: [
+              {path: "personId", select: "firstName lastName"}
+            ]
+          }
+        ]
+      },
       "activityType",
       "technicianId",
-      {
-        path:"technicianId",
-        populate:[{path:"personId"}]
-        
-      }
-
+      {path:"technicianId", populate:[{path:"personId", select:"firstName lastName"}]}
     ],
-    validationSchema:  technicianActivitiesValidation,
+    validationSchema: technicianActivitiesValidation,
 });
 
 
@@ -34,8 +39,7 @@ technicianActivityMasterRouter.post(
   "/",  // ✅ MUST be here
   async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
     req.body.technicianId = req.technicianId;
-    req.body.userId = req.user.userId;
-
+    req.body.userId = req.user.userId; // Assuming the technician is also the user creating the record
     next();
   },
   techncianActivitymasterController.create
@@ -45,10 +49,8 @@ technicianActivityMasterRouter.get("/:id", techncianActivitymasterController.get
 technicianActivityMasterRouter.put("/:id",async (req: TechnicianAuthRequest, res: Response, next: NextFunction) => {
     req.body.technicianId = req.technicianId;
     req.body.userId = req.user.userId;
-
     next();
   }, techncianActivitymasterController.update);
 technicianActivityMasterRouter.delete("/:id", techncianActivitymasterController.delete);
 
 export default technicianActivityMasterRouter;
-
