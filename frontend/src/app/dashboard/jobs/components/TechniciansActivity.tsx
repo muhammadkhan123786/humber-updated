@@ -14,6 +14,23 @@ import { ITechnicianServiceType } from "../../../../../../common/master-interfac
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 import TechnicianActivityGet, { TechnicianActivity } from "./TechnicianActivityGet";
 
+// API Base URL from environment variable
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+// Helper function to get auth token
+const getAuthToken = () => localStorage.getItem("token");
+
+// Helper function to create auth headers
+const getAuthHeaders = (includeContentType = false) => {
+  const headers: Record<string, string> = {
+    "Authorization": `Bearer ${getAuthToken()}`
+  };
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  return headers;
+};
+
 type ServiceTypeWithId = ITechnicianServiceType & { _id: string };
 
 const activitySchema = z.object({
@@ -68,20 +85,15 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
   // Update activity mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: any }) => {
-      const token = localStorage.getItem("token");
-      return fetch(`http://127.0.0.1:4000/api/technician-job-activities/${id}`, {
+    mutationFn: ({ id, payload }: { id: string; payload: any }) =>
+      fetch(`${BASE_URL}/technician-job-activities/${id}`, {
         method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
+        headers: getAuthHeaders(true),
         body: JSON.stringify(payload),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to update activity");
         return res.json();
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
       toast.success("Technician activity updated successfully!");
@@ -93,18 +105,14 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
   // Delete activity mutation
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      const token = localStorage.getItem("token");
-      return fetch(`http://127.0.0.1:4000/api/technician-job-activities/${id}`, {
+    mutationFn: (id: string) =>
+      fetch(`${BASE_URL}/technician-job-activities/${id}`, {
         method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        },
+        headers: getAuthHeaders(),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to delete activity");
         return res.json();
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
       toast.success("Technician activity deleted successfully!");
@@ -116,19 +124,14 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
   // Start activity mutation
   const startMutation = useMutation({
-    mutationFn: (activityId: string) => {
-      const token = localStorage.getItem("token");
-      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/start`, {
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/start`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(true),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to start activity");
         return res.json();
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
       toast.success("Activity started successfully!");
@@ -140,19 +143,14 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
   // Pause activity mutation
   const pauseMutation = useMutation({
-    mutationFn: (activityId: string) => {
-      const token = localStorage.getItem("token");
-      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/pause`, {
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/pause`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(true),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to pause activity");
         return res.json();
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
       toast.success("Activity paused!");
@@ -164,19 +162,14 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
   // Resume activity mutation
   const resumeMutation = useMutation({
-    mutationFn: (activityId: string) => {
-      const token = localStorage.getItem("token");
-      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/resume`, {
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/resume`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(true),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to resume activity");
         return res.json();
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
       toast.success("Activity resumed!");
@@ -188,19 +181,14 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
   // Complete activity mutation
   const completeMutation = useMutation({
-    mutationFn: (activityId: string) => {
-      const token = localStorage.getItem("token");
-      return fetch(`http://127.0.0.1:4000/api/technician-work/${activityId}/complete`, {
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/complete`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
+        headers: getAuthHeaders(true),
       }).then((res) => {
         if (!res.ok) throw new Error("Failed to complete activity");
         return res.json();
-      });
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
       toast.success("Activity completed successfully!");
@@ -313,17 +301,10 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
       setLoadingActivityDetails(true);
       console.log("Fetching activity details for ID:", activity._id);
       
-      // Get token from localStorage
-      const token = localStorage.getItem("token");
-      
       // Fetch full activity details from API
       const response = await fetch(
-        `http://127.0.0.1:4000/api/technician-job-activities/${activity._id}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }
+        `${BASE_URL}/technician-job-activities/${activity._id}`,
+        { headers: getAuthHeaders() }
       );
       
       if (!response.ok) {
@@ -349,17 +330,11 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     }
   };
 
-  const handleStart = (activityId: string) => {
-    startMutation.mutate(activityId);
-  };
+  const handleStart = (activityId: string) => startMutation.mutate(activityId);
 
-  const handlePause = (activityId: string) => {
-    pauseMutation.mutate(activityId);
-  };
+  const handlePause = (activityId: string) => pauseMutation.mutate(activityId);
 
-  const handleResume = (activityId: string) => {
-    resumeMutation.mutate(activityId);
-  };
+  const handleResume = (activityId: string) => resumeMutation.mutate(activityId);
 
   const handleComplete = (activityId: string) => {
     if (window.confirm("Are you sure you want to mark this activity as completed?")) {

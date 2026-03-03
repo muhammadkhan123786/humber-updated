@@ -24,17 +24,17 @@ const TechnicianActivityButtons = ({
   }
 
   return (
-    <div className="md:col-span-3 pt-3 border-t">
+    <div className="space-y-3 pt-5 border-t border-gray-200">
       {/* Start/Pause/Resume Buttons */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {/* Start Button - Only show when pending */}
         {status === "pending" && (
           <button
             onClick={() => onStart(activityId)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105"
           >
-            <Play size={16} />
-            Start
+            <Play size={18} />
+            Start Activity
           </button>
         )}
 
@@ -42,10 +42,10 @@ const TechnicianActivityButtons = ({
         {status === "in_progress" && (
           <button
             onClick={() => onPause(activityId)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-linear-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105"
           >
-            <Pause size={16} />
-            Pause
+            <Pause size={18} />
+            Pause Activity
           </button>
         )}
 
@@ -53,23 +53,23 @@ const TechnicianActivityButtons = ({
         {status === "paused" && (
           <button
             onClick={() => onResume(activityId)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-linear-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105 animate-pulse"
           >
-            <RotateCcw size={16} />
-            Resume
+            <RotateCcw size={18} />
+            Resume Activity
           </button>
         )}
       </div>
 
       {/* Complete Button - Show when not pending */}
       {status !== "pending" && (
-        <div className="flex gap-2 mt-2">
+        <div className="flex gap-3">
           <button
             onClick={() => onComplete(activityId)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-linear-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105"
           >
-            <CheckCircle size={16} />
-            Complete
+            <CheckCircle size={18} />
+            Mark as Complete
           </button>
         </div>
       )}
