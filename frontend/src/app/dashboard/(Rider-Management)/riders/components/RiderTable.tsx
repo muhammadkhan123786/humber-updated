@@ -13,6 +13,9 @@ import {
   Loader2,
   Star,
   Award,
+  XCircle,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
@@ -21,44 +24,73 @@ import { useRouter } from "next/navigation";
 
 interface RiderTableProps {
   search?: string;
+  activeStatus: string; // New Prop added
 }
 
-const StatusBadge = ({ isActive }: { isActive: boolean }) => {
-  const status = isActive ? "ACTIVE" : "INACTIVE";
-  const styles = {
-    ACTIVE: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    INACTIVE: "bg-gray-100 text-gray-500 border-gray-200",
+const StatusBadge = ({ status }: { status: string }) => {
+  const s = status?.toUpperCase() || "PENDING";
+  const styles: Record<string, { class: string; icon: React.ReactNode }> = {
+    ACTIVE: {
+      class: "bg-emerald-50 text-emerald-600 border-emerald-100",
+      icon: <CheckCircle2 size={14} />,
+    },
+    APPROVED: {
+      class: "bg-blue-50 text-blue-600 border-blue-100",
+      icon: <CheckCircle2 size={14} />,
+    },
+    PENDING: {
+      class: "bg-amber-50 text-amber-600 border-amber-100",
+      icon: <Clock size={14} />,
+    },
+    REJECTED: {
+      class: "bg-red-50 text-red-600 border-red-100",
+      icon: <XCircle size={14} />,
+    },
+    TERMINATED: {
+      class: "bg-slate-100 text-slate-600 border-slate-200",
+      icon: <AlertCircle size={14} />,
+    },
+    "IN-ACTIVE": {
+      class: "bg-gray-100 text-gray-500 border-gray-200",
+      icon: <PauseCircle size={14} />,
+    },
   };
+  const currentStyle = styles[s] || styles["PENDING"];
   return (
     <span
-      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border ${styles[status]}`}
+      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold border w-fit ${currentStyle.class}`}
     >
-      {isActive ? <CheckCircle2 size={14} /> : <PauseCircle size={14} />}
-      {status}
+      {currentStyle.icon} {s}
     </span>
   );
 };
 
-const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
+const RiderTable: React.FC<RiderTableProps> = ({
+  search = "",
+  activeStatus,
+}) => {
   const { riders, loading, totalRiders, fetchRiders, deleteRider } = useRider();
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const router = useRouter();
+
+  // FIX: Dependency array mein activeStatus add kiya aur params set kiye
   useEffect(() => {
-    fetchRiders({ page: currentPage, limit });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
+    const params: any = { page: currentPage, limit };
+    if (activeStatus !== "All") {
+      params.riderStatus = activeStatus.toUpperCase();
+    }
+    fetchRiders(params);
+  }, [currentPage, activeStatus, fetchRiders]); // Ye activeStatus ke change hone par ab chalega
+
   const filteredRiders = useMemo(() => {
     if (!search.trim()) return riders;
-
     const query = search.toLowerCase();
     return riders.filter((rider: any) => {
-      const firstName = rider.personId?.firstName || "";
-      const lastName = rider.personId?.lastName || "";
-      const fullName = `${firstName} ${lastName}`.toLowerCase();
+      const fullName =
+        `${rider.personId?.firstName || ""} ${rider.personId?.lastName || ""}`.toLowerCase();
       const email = (rider.contactId?.emailId || "").toLowerCase();
       const riderId = (rider.riderAutoId || "").toLowerCase();
-
       return (
         fullName.includes(query) ||
         email.includes(query) ||
@@ -72,9 +104,14 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
   const handleDelete = async (id: string) => {
     toast.dismiss();
     const loadingToast = toast.loading("Deleting rider...");
-
     try {
       await deleteRider(id);
+      await fetchRiders({
+        page: currentPage,
+        limit: 10,
+        riderStatus: activeStatus === "All" ? "" : activeStatus,
+      });
+
       toast.success("Rider deleted successfully!", {
         id: loadingToast,
         duration: 3000,
@@ -167,42 +204,37 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
                   <td className="p-4">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
-                        <span>
-                          <Bike size={14} />
-                        </span>
+                        <Bike size={14} />{" "}
                         <span className="capitalize">
                           {rider.vehicleTypeId?.vehicleType || "N/A"}
                         </span>
                       </div>
-                      <div className="text-[10px] text-gray-500 font-medium ">
-                        <span className="text-gray-400"></span>{" "}
+                      <div className="text-[10px] text-gray-500 font-medium">
                         {rider.licensePlate || "N/A"}
                       </div>
                     </div>
                   </td>
                   <td className="p-4">
                     <div className="flex flex-col gap-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1.5">
-                          <Star
-                            size={14}
-                            className="text-amber-500 fill-amber-500"
-                          />
-                          <span className="text-xs font-bold text-gray-900">
-                            4.8
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Award size={14} className="text-emerald-500" />
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            145 deliveries
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <Star
+                          size={14}
+                          className="text-amber-500 fill-amber-500"
+                        />{" "}
+                        <span className="text-xs font-bold text-gray-900">
+                          4.8
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Award size={14} className="text-emerald-500" />{" "}
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          145 deliveries
+                        </span>
                       </div>
                     </div>
                   </td>
                   <td className="p-4">
-                    <StatusBadge isActive={rider.isActive} />
+                    <StatusBadge status={rider.riderStatus} />
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
@@ -227,7 +259,7 @@ const RiderTable: React.FC<RiderTableProps> = ({ search = "" }) => {
             ) : (
               <tr>
                 <td colSpan={7} className="p-10 text-center text-gray-400">
-                  No riders match your search.
+                  No riders match your selection.
                 </td>
               </tr>
             )}

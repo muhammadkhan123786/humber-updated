@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAll,
   getById,
@@ -17,124 +18,67 @@ export interface Rider {
   [key: string]: any;
 }
 
-export const useRider = () => {
-  const [loading, setLoading] = useState(false);
-  const [loadingDropdowns, setLoadingDropdowns] = useState(false);
+export const useRider = (initialParams?: Record<string, unknown>) => {
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-
-  const [riders, setRiders] = useState<Rider[]>([]);
   const [selectedRider, setSelectedRider] = useState<Rider | null>(null);
-  const [totalRiders, setTotalRiders] = useState<number>(0);
-  const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
-  const [jobTypes, setJobTypes] = useState<any[]>([]);
-  const [availabilities, setAvailabilities] = useState<any[]>([]);
-  const [cities, setCities] = useState<any[]>([]);
+  const [queryParams, setQueryParams] = useState(initialParams || {});
 
-  const fetchVehicleTypes = useCallback(
-    async (params?: Record<string, unknown>) => {
-      const response = await getAll("/rider-vehicle-types?filter=all", params);
-      setVehicleTypes(response.data);
-      return response;
-    },
-    [],
-  );
+  const {
+    data: riderResponse,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: ["riders", queryParams],
+    queryFn: () => getAll<Rider>("/riders", queryParams),
+    staleTime: 0,
+  });
 
-  const fetchJobTypes = useCallback(
-    async (params?: Record<string, unknown>) => {
-      const response = await getAll("/job-types?filter=all", params);
-      setJobTypes(response.data);
-      return response;
-    },
-    [],
-  );
+  const { data: vehicleTypes = [] } = useQuery({
+    queryKey: ["vehicleTypes"],
+    queryFn: () =>
+      getAll("/rider-vehicle-types?filter=all").then((res) => res.data),
+  });
+  const { data: jobTypes = [] } = useQuery({
+    queryKey: ["jobTypes"],
+    queryFn: () => getAll("/job-types?filter=all").then((res) => res.data),
+  });
+  const { data: availabilities = [] } = useQuery({
+    queryKey: ["availabilities"],
+    queryFn: () =>
+      getAll("/rider-availabilities?filter=all").then((res) => res.data),
+  });
+  const { data: cities = [] } = useQuery({
+    queryKey: ["cities"],
+    queryFn: () => getAll("/city?filter=all").then((res) => res.data),
+  });
 
-  const fetchAvailabilities = useCallback(
-    async (params?: Record<string, unknown>) => {
-      const response = await getAll("/rider-availabilities?filter=all", params);
-      setAvailabilities(response.data);
-      return response;
-    },
-    [],
-  );
-
-  const fetchCities = useCallback(async (params?: Record<string, unknown>) => {
-    const response = await getAll("/city?filter=all", params);
-    setCities(response.data);
-    return response;
-  }, []);
-
-  const fetchAllDropdownData = useCallback(async () => {
-    try {
-      setLoadingDropdowns(true);
-      await Promise.all([
-        fetchVehicleTypes(),
-        fetchJobTypes(),
-        fetchAvailabilities(),
-        fetchCities(),
-      ]);
-    } catch (err: any) {
-      console.log(err);
-      setError("Failed to load dropdown data");
-    } finally {
-      setLoadingDropdowns(false);
-    }
-  }, [fetchVehicleTypes, fetchJobTypes, fetchAvailabilities, fetchCities]);
-
-  const fetchRiders = useCallback(async (params?: Record<string, unknown>) => {
-    try {
-      setLoading(true);
-      const response = await getAll<Rider>("/riders", params);
-      setRiders(response.data as Rider[]);
-      setTotalRiders(response.total);
-      return response;
-    } catch (err: any) {
-      setError(err.message || "Failed");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchRiderById = useCallback(async (id: string) => {
-    try {
-      setLoading(true);
-      const response = await getById<Rider>("/riders", id);
-      setSelectedRider(response.data as Rider);
-      return response.data;
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch rider");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const saveRider = async (data: RiderFormData, id?: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const saveMutation = useMutation({
+    mutationFn: async ({ data, id }: { data: RiderFormData; id?: string }) => {
       const formData = new FormData();
       const userId =
         localStorage.getItem("userId")?.replace(/^"|"$/g, "") || "";
 
       formData.append("userId", userId);
+      formData.append("accountId", userId);
+
       if (data.firstName) formData.append("person[firstName]", data.firstName);
       if (data.lastName) formData.append("person[lastName]", data.lastName);
+
       if (data.email) formData.append("contact[emailId]", data.email);
       if (data.mobileNumber)
         formData.append("contact[mobileNumber]", data.mobileNumber);
+
       if (data.addressLine1)
         formData.append("address[address]", data.addressLine1);
       if (data.city) formData.append("address[city]", data.city);
       if (data.postalCode) formData.append("address[zipCode]", data.postalCode);
-
       formData.append("address[userId]", userId);
       formData.append("address[isActive]", "true");
       formData.append("address[isDeleted]", "false");
       formData.append("address[isDefault]", "false");
       formData.append("address[latitude]", "0.0");
       formData.append("address[longitude]", "0.0");
-
       if (data.vehicleYear) {
         const yearMatch = data.vehicleYear.toString().match(/\d{4}/);
         formData.append(
@@ -142,7 +86,6 @@ export const useRider = () => {
           yearMatch ? yearMatch[0] : new Date().getFullYear().toString(),
         );
       }
-
       if (data.DOB) formData.append("DOB", data.DOB);
       if (data.nationalIssuranceNumber)
         formData.append(
@@ -180,7 +123,6 @@ export const useRider = () => {
         formData.append("motExpiryDate", data.motExpiryDate);
       if (data.employeementTypeId)
         formData.append("employeementTypeId", data.employeementTypeId);
-
       if (data.availbilitiesIds?.length) {
         data.availbilitiesIds.forEach((id, index) =>
           formData.append(`availbilitiesIds[${index}]`, id),
@@ -191,7 +133,6 @@ export const useRider = () => {
           formData.append(`zones[${index}]`, id),
         );
       }
-
       const fileFields = [
         "profilePic",
         "licenseFrontPic",
@@ -200,10 +141,8 @@ export const useRider = () => {
         "motCertificatePic",
         "utilityBillPic",
       ];
-
       fileFields.forEach((field) => {
         const value = (data as any)[field];
-
         if (value instanceof File) {
           formData.append(field, value);
         } else if (value === "") {
@@ -211,61 +150,54 @@ export const useRider = () => {
         }
       });
 
-      formData.append("accountId", userId);
+      return id
+        ? updateItem("/riders", id, formData)
+        : createItem("/riders", formData);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["riders"] });
+    },
+    onError: (err: any) => setError(err.message || "Failed to save rider"),
+  });
 
-      let response;
-      if (id) {
-        response = await updateItem("/riders", id, formData);
-      } else {
-        response = await createItem("/riders", formData);
-      }
-      await fetchRiders();
-      return response;
-    } catch (err: any) {
-      setError(err.message || "Failed to save rider");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteItem("/riders", id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["riders"] });
+    },
+    onError: (err: any) => setError(err.message || "Failed to delete rider"),
+  });
+  const fetchRiders = useCallback(
+    async (params?: Record<string, unknown>) => {
+      if (params) setQueryParams(params);
+      else await refetch();
+    },
+    [refetch],
+  );
 
-  const deleteRider = async (id: string) => {
-    try {
-      setLoading(true);
-      const response = await deleteItem("/riders", id);
-      await fetchRiders();
-      return response;
-    } catch (err: any) {
-      setError(err.message || "Failed to delete rider");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const clearSelectedRider = useCallback(() => setSelectedRider(null), []);
-  const clearError = useCallback(() => setError(null), []);
-
-  useEffect(() => {
-    fetchAllDropdownData();
-  }, [fetchAllDropdownData]);
+  const fetchRiderById = useCallback(async (id: string) => {
+    const response = await getById<Rider>("/riders", id);
+    setSelectedRider(response.data as Rider);
+    return response.data;
+  }, []);
 
   return {
-    loading,
-    loadingDropdowns,
+    loading: loading || saveMutation.isPending || deleteMutation.isPending,
     error,
-    riders,
+    riders: riderResponse?.data || [],
     selectedRider,
-    totalRiders,
+    totalRiders: riderResponse?.total || 0,
+    statistics: (riderResponse as any)?.statistics || null,
     vehicleTypes,
     jobTypes,
     availabilities,
     cities,
     fetchRiders,
     fetchRiderById,
-    saveRider,
-    deleteRider,
-    clearSelectedRider,
-    clearError,
+    saveRider: (data: RiderFormData, id?: string) =>
+      saveMutation.mutateAsync({ data, id }),
+    deleteRider: (id: string) => deleteMutation.mutateAsync(id),
+    clearSelectedRider: () => setSelectedRider(null),
+    clearError: () => setError(null),
   };
 };
