@@ -106,6 +106,12 @@ const RiderTable: React.FC<RiderTableProps> = ({
     const loadingToast = toast.loading("Deleting rider...");
     try {
       await deleteRider(id);
+      await fetchRiders({
+        page: currentPage,
+        limit: 10,
+        riderStatus: activeStatus === "All" ? "" : activeStatus,
+      });
+
       toast.success("Rider deleted successfully!", {
         id: loadingToast,
         duration: 3000,
