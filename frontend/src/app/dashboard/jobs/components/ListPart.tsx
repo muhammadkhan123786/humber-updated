@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Package, Loader2, CheckCircle, Clock, Wrench } from "lucide-react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 import InstallParts from "./InstallParts";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -31,13 +32,24 @@ const ListPart = ({ quotationId, activityId }: ListPartProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchParts = async () => {
-      if (!quotationId) return;
+      if (!quotationId) {
+        setError("Quotation ID is required");
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
         setError(null);
         
         const token = localStorage.getItem("token");
+        
+        if (!token) {
+          setError("Authentication required");
+          toast.error("Please login to view parts");
+          return;
+        }
+
         const response = await axios.get(
           `${BASE_URL}/technician-work/get-parts-to-change/${quotationId}`,
           {
@@ -49,10 +61,42 @@ const ListPart = ({ quotationId, activityId }: ListPartProps) => {
 
         if (response.data.success) {
           setParts(response.data.partsAvailableToChange);
+        } else {
+          const errorMsg = response.data.message || "Failed to fetch parts";
+          setError(errorMsg);
+          toast.error(errorMsg);
         }
       } catch (err: any) {
         console.error("Error fetching parts:", err);
-        setError(err.response?.data?.message || "Failed to fetch parts");
+        
+        let errorMessage = "Failed to fetch parts";
+        
+        // Handle different error scenarios
+        if (err.response) {
+          const status = err.response.status;
+          const message = err.response.data?.message;
+          
+          if (status === 401) {
+            errorMessage = "Session expired. Please login again.";
+          } else if (status === 403) {
+            errorMessage = "You don't have permission to view parts.";
+          } else if (status === 404) {
+            errorMessage = "Quotation not found.";
+          } else if (status === 400) {
+            errorMessage = message || "Invalid quotation ID.";
+          } else if (status >= 500) {
+            errorMessage = "Server error. Please try again later.";
+          } else {
+            errorMessage = message || "Failed to load parts.";
+          }
+        } else if (err.request) {
+          errorMessage = "Network error. Please check your connection.";
+        } else {
+          errorMessage = "An unexpected error occurred.";
+        }
+        
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setIsLoading(false);
       }

@@ -60,6 +60,11 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
       setIsInstalling(true);
       const token = localStorage.getItem("token");
 
+      if (!token) {
+        toast.error("Authentication required. Please login again.");
+        return;
+      }
+
       const partsUsed = Object.entries(selectedParts).map(([partId, quantity]) => ({
         partId,
         quantity,
@@ -83,10 +88,43 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
         toast.success("Parts installed successfully!");
         setSelectedParts({});
         onInstallSuccess();
+      } else {
+        toast.error(response.data.message || "Failed to install parts");
       }
     } catch (err: any) {
       console.error("Error installing parts:", err);
-      toast.error(err.response?.data?.message || "Failed to install parts");
+      
+      // Handle different error scenarios
+      if (err.response) {
+        // Server responded with error
+        const status = err.response.status;
+        const message = err.response.data?.message;
+        
+        // Check for specific error messages first
+        if (message && message.toLowerCase().includes("activity is not active")) {
+          toast.error("Please start the activity first before installing parts.");
+        } else if (message && message.toLowerCase().includes("not authorized")) {
+          toast.error("You are not authorized to install parts for this activity.");
+        } else if (status === 401) {
+          toast.error("Session expired. Please login again.");
+        } else if (status === 403) {
+          toast.error("You don't have permission to install parts.");
+        } else if (status === 404) {
+          toast.error("Activity or parts not found.");
+        } else if (status === 400) {
+          toast.error(message || "Invalid request. Please check your selection.");
+        } else if (status >= 500) {
+          toast.error(message || "Server error. Please try again later.");
+        } else {
+          toast.error(message || "Failed to install parts. Please try again.");
+        }
+      } else if (err.request) {
+        // Request made but no response
+        toast.error("Network error. Please check your connection.");
+      } else {
+        // Something else happened
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsInstalling(false);
     }
@@ -94,7 +132,7 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
 
   if (installableParts.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-md">
+      <div className="bg-linear-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200 shadow-md">
         <div className="text-center">
           <Package className="mx-auto text-gray-300 mb-3" size={48} />
           <p className="text-gray-500 font-semibold">All parts are already installed</p>
@@ -104,7 +142,7 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
   }
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50 via-white to-teal-50 rounded-xl p-5 border border-emerald-200 shadow-lg">
+    <div className="bg-linear-to-br from-emerald-50 via-white to-teal-50 rounded-xl p-5 border border-emerald-200 shadow-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Wrench className="text-emerald-600" size={24} />
