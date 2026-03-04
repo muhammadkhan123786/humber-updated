@@ -81,8 +81,7 @@ export function useReorderSuggestions({
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
   const fetchReorderSuggestions = useCallback(async (forceRefresh = false) => {
-      console.log("userIduserIduserId", userId)
-
+const token = localStorage.getItem('token');
     if (!userId) {
           console.log("if", userId)
 
@@ -105,11 +104,15 @@ export function useReorderSuggestions({
         createAlerts: String(createAlerts),
         sendEmails: String(sendEmails),
       });
-console.log("req is coming here")
-      const res = await fetch(`${BASE_URL}/purchase-orders/reorder/suggestions?${params}`);
-      console.log("res", res)
+    const res = await fetch(`${BASE_URL}/purchase-orders/reorder/suggestions?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // 2. Authorization header shamil karein
+          'Authorization': `Bearer ${token}` 
+        }
+      });
       const data = await res.json();
-console.log("data", data)
       if (!res.ok) throw new Error(data.message ?? "Failed to load suggestions");
 
       const mapped: ReorderProduct[] = (data.suggestions ?? []).map(toReorderProduct);
