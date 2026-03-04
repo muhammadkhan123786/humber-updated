@@ -139,7 +139,6 @@ export class PurchaseOrderCustomController {
           quantity:  number;
         }>;
 
-        console.log(`[PO received] ${(updated as any).orderNumber} — incrementing stock for ${items.length} item(s)`);
 
         const stockUpdates = items
           .filter(item => item.productId && item.quantity > 0)
@@ -149,7 +148,7 @@ export class PurchaseOrderCustomController {
               const result = await ProductModal.updateOne(
                 {
                   _id:              item.productId as any,
-                  "attributes.sku": item.sku,        // match the right attribute by SKU
+                  "attributes.sku": item.sku,       
                 },
                 {
                   $inc: {
@@ -192,14 +191,12 @@ export class PurchaseOrderCustomController {
   if (isPopulatedUser(updated.userId)) {
     // ✅ TypeScript ab janta hai ke yeh object hai with _id
     const userIdStr = updated.userId._id.toString();
-    console.log("Populated user ID:", userIdStr);
     
     const skus = items.map(item => item.sku).filter(Boolean);
     await resolveAlertsForSkus(skus, userIdStr);
   } else {
     // ✅ Direct string ID
     const userIdStr = updated.userId.toString();
-    console.log("Direct string ID:", userIdStr);
     
     const skus = items.map(item => item.sku).filter(Boolean);
     await resolveAlertsForSkus(skus, userIdStr);

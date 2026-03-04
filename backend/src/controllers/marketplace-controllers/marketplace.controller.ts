@@ -1,4 +1,53 @@
 // controllers/MarketplaceController.ts
+interface SingleDistribution {
+  connectionId: string;   // MarketplaceConnection._id
+  quantity: number;
+}
+
+interface DistributeRequestBody {
+  productId: string;
+  userId: string;
+  distributions: SingleDistribution[];  // only marketplaces with qty > 0
+  productData: ProductPayload;           // full product info from frontend
+}
+
+interface ProductPayload {
+  name: string;
+  sku: string;
+  description?: string;
+  price: number;
+  costPrice?: number;
+  imageUrl?: string;
+  images?: string[];
+  stockQuantity?: number;
+  // marketplace-specific pricing comes from product.attributes[].pricing[]
+  attributes?: Array<{
+    pricing?: Array<{
+      marketplaceName: string;
+      marketplaceId: string;
+      sellingPrice: number;
+      retailPrice?: number;
+      costPrice?: number;
+    }>;
+    stock?: {
+      stockQuantity: number;
+    };
+  }>;
+}
+
+// ── Result shape returned per marketplace ─────────────────────────────────────
+
+interface DistributionResult {
+  connectionId: string;
+  marketplaceName: string;
+  quantity: number;
+  success: boolean;
+  listingId?: string;
+  viewUrl?: string;
+  error?: string;
+}
+
+
 
 import { Request, Response } from "express";
 import MarketplaceConnection from "../../models/marketplace/marketlace-connection-models";
@@ -277,9 +326,8 @@ export class MarketplaceController {
      */
     async exchangeAuthCode(req: Request, res: Response) {
         try {
-            const { id, userId } = req.params;
-            let { code } = req.body;
-
+            const { id } = req.params;
+            let { code , userId} = req.body;
             if (!code) {
                 return res.status(400).json({
                     success: false,
@@ -612,7 +660,8 @@ export class MarketplaceController {
     async testConnection(req: Request, res: Response) {
         try {
             const { id, userId } = req.params;
-
+console.log("request is coming here")
+console.log("id",id, "userId", userId)
             // ─── Find Connection ─────────────────────────────────
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
@@ -956,7 +1005,7 @@ export class MarketplaceController {
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,
-                userId,
+                
             });
 
             if (!connection) {
@@ -977,12 +1026,12 @@ export class MarketplaceController {
 
             const service = MarketplaceServiceFactory.createService(connection);
 
-            if (connection.type !== "ebay") {
-                return res.status(400).json({
-                    success: false,
-                    message: "Trading API only available for eBay",
-                });
-            }
+            // if (connection.type !== "ebay") {
+            //     return res.status(400).json({
+            //         success: false,
+            //         message: "Trading API only available for eBay",
+            //     });
+            // }
 
             const result = await (service as any).listProduct(productData);
 
@@ -1396,4 +1445,205 @@ export class MarketplaceController {
             });
         }
     }
+
+
+
+
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Controller Method
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Distribute a product across one or more marketplaces
+ * POST /api/marketplace/distribute
+ *
+ * Body: {
+ *   productId,
+ *   userId,
+ *   distributions: [{ connectionId, quantity }],
+ *   productData: { name, sku, price, ... }
+ * }
+ */
+async distributeProducts(req: Request, res: Response) {
+  try {
+    const { productId, userId, distributions, productData }: DistributeRequestBody = req.body;
+
+    // ── Validate input ────────────────────────────────────────────────────────
+
+    if (!productId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "productId and userId are required",
+      });
+    }
+
+    if (!distributions?.length) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one distribution entry is required",
+      });
+    }
+
+    const validDistributions = distributions.filter((d) => d.quantity > 0);
+
+    if (!validDistributions.length) {
+      return res.status(400).json({
+        success: false,
+        message: "All quantities are zero — nothing to distribute",
+      });
+    }
+
+    console.log(
+      `\n🚀 Distributing product [${productData.name}] to ${validDistributions.length} marketplace(s)`
+    );
+
+    // ── Process each marketplace in parallel ─────────────────────────────────
+
+    const results: DistributionResult[] = await Promise.allSettled(
+      validDistributions.map(async ({ connectionId, quantity }) => {
+        // 1. Find the connection
+        const connection = await MarketplaceConnection.findOne({
+          _id: connectionId,
+          userId,
+          isActive: true,
+        });
+
+        if (!connection) {
+          throw new Error(`Connection [${connectionId}] not found or inactive`);
+        }
+
+        if (connection.status !== "connected") {
+          throw new Error(
+            `Connection [${connection.type}] is not connected. Please connect first.`
+          );
+        }
+
+        // 2. Find marketplace-specific pricing from product attributes
+        //    Product stores pricing per marketplace inside attributes[].pricing[]
+        const marketplacePricing = productData.attributes
+          ?.flatMap((attr) => attr.pricing ?? [])
+          .find(
+            (p) =>
+              p.marketplaceName?.toLowerCase() === connection.type.toLowerCase() ||
+              p.marketplaceId === connectionId
+          );
+
+        const sellingPrice =
+          marketplacePricing?.sellingPrice ?? productData.price;
+
+        // 3. Build the listing payload
+        const listingPayload = {
+          // Core product info
+          title: productData.name,
+          description: productData.description ?? productData.name,
+          sku: productData.sku,
+
+          // Pricing — use marketplace-specific price if available
+          price: sellingPrice,
+          comparePrice: marketplacePricing?.retailPrice,
+          costPrice: marketplacePricing?.costPrice ?? productData.costPrice,
+
+          // Stock — list exactly the quantity the user assigned
+          quantity,
+
+          // Media
+          images: productData.images?.filter((img) => img && !img.startsWith("data:")) ?? [],
+          imageUrl: productData.imageUrl?.startsWith("data:")
+            ? undefined
+            : productData.imageUrl,
+
+          // Meta — services may use these
+          marketplace: connection.type,
+          connectionId,
+        };
+
+        console.log(
+          `  📦 Listing on [${connection.type}] — qty: ${quantity}, price: £${sellingPrice}`
+        );
+
+        // 4. Call the marketplace service
+        const service = MarketplaceServiceFactory.createService(connection);
+        const result = await (service as any).listProduct(listingPayload);
+
+        return {
+          connectionId,
+          marketplaceName: connection.type,
+          quantity,
+          success: true,
+          listingId: result?.productId ?? result?.listingId,
+          viewUrl: result?.viewUrl,
+        } as DistributionResult;
+      })
+    ).then((settled) =>
+      settled.map((outcome, i) => {
+        if (outcome.status === "fulfilled") {
+          return outcome.value;
+        }
+        // Rejected — return a structured failure instead of throwing
+        console.error(
+          `  ❌ Failed for connection [${validDistributions[i].connectionId}]:`,
+          outcome.reason?.message
+        );
+        return {
+          connectionId: validDistributions[i].connectionId,
+          marketplaceName: "unknown",
+          quantity: validDistributions[i].quantity,
+          success: false,
+          error: outcome.reason?.message ?? "Unknown error",
+        } as DistributionResult;
+      })
+    );
+
+    // ── Build summary ─────────────────────────────────────────────────────────
+
+    const succeeded = results.filter((r) => r.success);
+    const failed    = results.filter((r) => !r.success);
+
+    console.log(
+      `\n✅ Distribution complete — ${succeeded.length} succeeded, ${failed.length} failed\n`
+    );
+
+    // Return 207 Multi-Status when there's a mix of success and failure
+    const statusCode = failed.length === 0 ? 200 : succeeded.length === 0 ? 500 : 207;
+
+    return res.status(statusCode).json({
+      success: failed.length === 0,
+      message:
+        failed.length === 0
+          ? `Product listed on ${succeeded.length} marketplace(s) successfully`
+          : `${succeeded.length} succeeded, ${failed.length} failed`,
+      data: {
+        productId,
+        results,
+        summary: {
+          total:     results.length,
+          succeeded: succeeded.length,
+          failed:    failed.length,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ Distribute error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADD TO YOUR ROUTER (marketplace.routes.ts or wherever you register routes)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+//   import { MarketplaceController } from './controllers/MarketplaceController';
+//   const ctrl = new MarketplaceController();
+//
+//   router.post('/distribute', ctrl.distributeProducts.bind(ctrl));
+//
+// ─────────────────────────────────────────────────────────────────────────────
 }

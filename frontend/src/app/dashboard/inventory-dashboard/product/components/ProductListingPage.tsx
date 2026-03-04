@@ -33,6 +33,7 @@ const LoadingState = () => (
 // =============== Main Component ===============
 
 export default function ProductListingPage() {
+  
   // State
   const [activeTab, setActiveTab] = useState<"products" | "distribution">(
     "products",
@@ -80,14 +81,11 @@ export default function ProductListingPage() {
   });
 
 
-  const data = useCategories();
-
   const {
     products,
     loading: productsLoading,
     error: productsError,
-    statistics,
-    pagination,
+     pagination,
     createProduct,
     updateProduct,
     deleteProduct,
@@ -187,9 +185,6 @@ const handleViewProduct = async (product: Product) => {
   };
 
   const handleSaveEdit = async (updatedProduct: ProductListItem) => {
-    console.log("updateId", updatedProduct.id);
-        console.log("update", updatedProduct);
-
     const result = await updateProduct(updatedProduct.id, updatedProduct);
 
     if (result.success) {
@@ -322,7 +317,12 @@ const handleViewProduct = async (product: Product) => {
       {activeTab === "products" ? (
         <div className="space-y-6">{renderProductsContent()}</div>
       ) : (
-        <MarketplaceDistributionTab products={products} />
+        <MarketplaceDistributionTab 
+          products={products.map(p => ({
+            ...p,
+            attributes: p.attributes || []
+          }))} 
+        />
       )}
 
       {/* Modals */}
