@@ -18,17 +18,12 @@ const TechnicianActivityButtons = ({
   onResume,
   onComplete,
 }: TechnicianActivityButtonsProps) => {
-  // Don't show anything if activity is completed
-  if (status === "completed") {
-    return null;
-  }
-
   return (
     <div className="space-y-3 pt-5 border-t border-gray-200">
       {/* Start/Pause/Resume Buttons */}
       <div className="flex flex-wrap gap-3">
-        {/* Start Button - Only show when pending */}
-        {status === "pending" && (
+        {/* Start Button - Show when pending or completed */}
+        {(status === "pending" || status === "completed") && (
           <button
             onClick={() => onStart(activityId)}
             className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 hover:scale-105"
@@ -61,8 +56,8 @@ const TechnicianActivityButtons = ({
         )}
       </div>
 
-      {/* Complete Button - Show when not pending */}
-      {status !== "pending" && (
+      {/* Complete Button - Show when in_progress or paused */}
+      {(status === "in_progress" || status === "paused") && (
         <div className="flex gap-3">
           <button
             onClick={() => onComplete(activityId)}
