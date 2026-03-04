@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getAll } from "../../../../../helper/apiHelper";
 import {
   X,
   FileText,
@@ -9,15 +11,14 @@ import {
   Calendar,
   TrendingUp,
   ClipboardCheck,
-  Briefcase,
-  Wrench,
-  ListTodo,
-  Search,
   ImageIcon,
   MessageSquare,
   MessageSquareCode,
 } from "lucide-react";
 import ListInspectionJob from "./ListInspectionJob";
+import TechnicianActivityViewOnly, {
+  TechnicianActivity,
+} from "./TechnicianActivityViewOnly";
 
 interface ModalProps {
   isOpen: boolean;
@@ -32,7 +33,17 @@ interface ModalProps {
 
 const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
   const [activeTab, setActiveTab] = useState("overview");
+  const { data: activitiesData, isLoading: isActivitiesLoading } = useQuery({
+    queryKey: ["technicianActivities", job?._id],
+    queryFn: () =>
+      getAll<TechnicianActivity>("/technician-job-activities", {
+        JobAssignedId: job?._id,
+        limit: "100",
+      }),
+    enabled: !!job?._id && isOpen,
+  });
 
+  const activities = activitiesData?.data || [];
   if (!isOpen) return null;
 
   const formatDate = (date?: string) =>
@@ -246,125 +257,19 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
             </div>
           )}
           {activeTab === "services" && (
-            <div className="grid grid-cols-1 gap-4">
-              {job.services?.length > 0 ? (
-                job.services.map((s: any, i: number) => {
-                  const isDiagnostic =
-                    s.description?.toLowerCase().includes("diagnostic") ||
-                    s.description?.toLowerCase().includes("fault");
-
-                  const isRepair =
-                    s.description?.toLowerCase().includes("repair") ||
-                    (i % 3 === 0 && !isDiagnostic);
-                  const isJob =
-                    s.description?.toLowerCase().includes("job") ||
-                    (i % 3 === 1 && !isDiagnostic);
-
-                  return (
-                    <div
-                      key={i}
-                      className="p-5 rounded-2xl border border-gray-100 bg-white shadow-sm hover:border-purple-200 transition-all flex flex-col justify-between"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-xl ${
-                              isDiagnostic
-                                ? "bg-purple-100 text-purple-600"
-                                : isRepair
-                                  ? "bg-orange-100 text-orange-600"
-                                  : isJob
-                                    ? "bg-blue-100 text-blue-600"
-                                    : "bg-emerald-100 text-emerald-600"
-                            }`}
-                          >
-                            {isDiagnostic ? (
-                              <Search size={20} />
-                            ) : isRepair ? (
-                              <Wrench size={20} />
-                            ) : isJob ? (
-                              <Briefcase size={20} />
-                            ) : (
-                              <ListTodo size={20} />
-                            )}
-                          </div>
-
-                          <div className="flex flex-col">
-                            <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider text-white w-fit ${
-                                isDiagnostic
-                                  ? "bg-purple-500"
-                                  : isRepair
-                                    ? "bg-orange-500"
-                                    : isJob
-                                      ? "bg-blue-500"
-                                      : "bg-emerald-500"
-                              }`}
-                            >
-                              {isDiagnostic
-                                ? "DIAGNOSTIC"
-                                : isRepair
-                                  ? "REPAIR"
-                                  : isJob
-                                    ? "JOB"
-                                    : "SERVICE"}
-                            </span>
-
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-gray-800 text-xs font-semibold">
-                                {s.date || "15/01/2024"}
-                              </span>
-                              <span className="text-gray-400 text-xs">•</span>
-                              <span className="text-gray-800 text-xs font-semibold">
-                                {s.time || "09:30:00"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
-                            Duration
-                          </p>
-                          <p
-                            className={`font-black text-lg leading-tight ${
-                              isDiagnostic
-                                ? "text-purple-600"
-                                : isRepair
-                                  ? "text-orange-600"
-                                  : isJob
-                                    ? "text-blue-600"
-                                    : "text-emerald-600"
-                            }`}
-                          >
-                            {s.duration || "45"}m
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <h4 className="text-gray-800 font-bold text-base">
-                          {s.description ||
-                            "Initial system diagnostic and fault identification"}
-                        </h4>
-
-                        {s.additionalNotes && (
-                          <div className="pt-2 border-t border-gray-100">
-                            <p className="text-gray-600 text-sm leading-relaxed">
-                              {s.additionalNotes ||
-                                "Found battery connection issue and motor fault"}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="col-span-full">
-                  <EmptyState message="No services recorded" />
-                </div>
-              )}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Technician Activities
+                </h3>
+                <span className="text-sm text-gray-500">
+                  Total: {activities.length} activities
+                </span>
+              </div>
+              <TechnicianActivityViewOnly
+                activities={activities}
+                isLoading={isActivitiesLoading}
+              />
             </div>
           )}
 

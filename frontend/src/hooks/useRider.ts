@@ -197,7 +197,7 @@ export const useRider = (initialParams?: Record<string, unknown>) => {
           "Content-Type": "application/json",
         };
         const baseUrl =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
         const response = await axios.put(
           `${baseUrl}/riders/update-status`,
