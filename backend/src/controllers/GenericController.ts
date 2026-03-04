@@ -13,7 +13,7 @@ interface ControllerOptions<T extends Document> {
 }
 
 export class AdvancedGenericController<T extends Document> {
-  constructor(private options: ControllerOptions<T>) { }
+  constructor(private options: ControllerOptions<T>) {}
 
   create = async (req: Request, res: Response) => {
     try {
@@ -62,19 +62,15 @@ export class AdvancedGenericController<T extends Document> {
       const pageNumber = Number(page);
       const pageSize = Number(limit);
       const queryFilters: Record<string, any> = { isDeleted: false };
-      
-      if(!req.user)
-      {
-          if(!req.body.userId)
-          {
-              return res.json({status:false,message:"Please provide userId."});
-          }
-          queryFilters.userId = new Types.ObjectId(req.body.userId);
-          
+
+      if (!req.user) {
+        if (!req.body.userId) {
+          return res.json({ status: false, message: "Please provide userId." });
+        }
+        queryFilters.userId = new Types.ObjectId(req.body.userId);
+      } else if (req.user && req.user.userId) {
+        queryFilters.userId = new Types.ObjectId(req.user.userId);
       }
-      else if(req.user && req.user.userId) {
-             queryFilters.userId = new Types.ObjectId(req.user.userId);
-         }
       //  if (req.technicianId) {
       //        queryFilters.technicianId = new Types.ObjectId(req.technicianId);
       //    }
@@ -91,32 +87,45 @@ export class AdvancedGenericController<T extends Document> {
       }
 
       // Level 1 category filter
-      if (level1CategoryId && Types.ObjectId.isValid(level1CategoryId as string)) {
-        queryFilters.categoryId = new Types.ObjectId(level1CategoryId as string);
+      if (
+        level1CategoryId &&
+        Types.ObjectId.isValid(level1CategoryId as string)
+      ) {
+        queryFilters.categoryId = new Types.ObjectId(
+          level1CategoryId as string,
+        );
       }
 
       // Level 2 category filter (check categoryPath array)
-      if (level2CategoryId && Types.ObjectId.isValid(level2CategoryId as string)) {
-        queryFilters.categoryPath = new Types.ObjectId(level2CategoryId as string);
+      if (
+        level2CategoryId &&
+        Types.ObjectId.isValid(level2CategoryId as string)
+      ) {
+        queryFilters.categoryPath = new Types.ObjectId(
+          level2CategoryId as string,
+        );
       }
 
       // Level 3 category filter (check categoryPath array)
-      if (level3CategoryId && Types.ObjectId.isValid(level3CategoryId as string)) {
-        queryFilters.categoryPath = new Types.ObjectId(level3CategoryId as string);
+      if (
+        level3CategoryId &&
+        Types.ObjectId.isValid(level3CategoryId as string)
+      ) {
+        queryFilters.categoryPath = new Types.ObjectId(
+          level3CategoryId as string,
+        );
       }
-
-
 
       // ✅ STOCK STATUS FILTER
       if (stockStatus) {
         // This assumes you have stock status in the main product document
         // If it's in attributes, you'll need to adjust this
-        queryFilters['attributes.stock.stockStatus'] = stockStatus;
+        queryFilters["attributes.stock.stockStatus"] = stockStatus;
       }
 
       // ✅ FEATURED FILTER
-      if (featured === 'true') {
-        queryFilters['attributes.stock.featured'] = true;
+      if (featured === "true") {
+        queryFilters["attributes.stock.featured"] = true;
       }
 
       // ✅ Dynamic filters from rawFilters
@@ -214,7 +223,6 @@ export class AdvancedGenericController<T extends Document> {
 
   getById = async (req: Request, res: Response) => {
     try {
-
       const id = req.params.id as string;
       if (!Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid ID" });
@@ -243,7 +251,7 @@ export class AdvancedGenericController<T extends Document> {
 
   update = async (req: Request, res: Response) => {
     try {
-      const id  = req.params.id as string;
+      const id = req.params.id as string;
       if (!Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
 
@@ -269,7 +277,7 @@ export class AdvancedGenericController<T extends Document> {
 
   delete = async (req: Request, res: Response) => {
     try {
-      const id  = req.params.id as string;     
+      const id = req.params.id as string;
       if (!Types.ObjectId.isValid(id))
         return res.status(400).json({ message: "Invalid ID" });
 
@@ -289,4 +297,3 @@ export class AdvancedGenericController<T extends Document> {
     }
   };
 }
-

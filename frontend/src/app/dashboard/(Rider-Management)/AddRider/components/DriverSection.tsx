@@ -15,7 +15,8 @@ import { useRider } from "@/hooks/useRider";
 import { RiderFormData } from "@/schema/rider.schema";
 
 const DriverSection: React.FC = () => {
-  const { vehicleTypes, loadingDropdowns } = useRider();
+  const { vehicleTypes, loading } = useRider();
+
   const {
     control,
     watch,
@@ -54,6 +55,7 @@ const DriverSection: React.FC = () => {
           </p>
         </div>
       </div>
+
       <div className="p-6 rounded-xl border border-purple-100 bg-linear-to-r from-indigo-50 to-purple-50 space-y-6">
         <div className="flex items-center gap-2 font-semibold text-lg text-purple-900">
           <Shield size={18} className="text-purple-700" />
@@ -115,7 +117,6 @@ const DriverSection: React.FC = () => {
                   value={field.value?.toString() || ""}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0;
-
                     field.onChange(val > maxExperience ? maxExperience : val);
                   }}
                   error={!!errors.yearsOfExperience}
@@ -130,6 +131,7 @@ const DriverSection: React.FC = () => {
           </div>
         </div>
       </div>
+
       <div className="p-6 bg-linear-to-r from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200 space-y-6">
         <div className="flex items-center gap-2 font-semibold text-lg text-blue-900">
           <Scooter size={18} className="text-blue-700" />
@@ -152,12 +154,12 @@ const DriverSection: React.FC = () => {
                       ? "border-red-500 focus:border-red-500"
                       : "border-gray-100 focus:border-blue-500"
                   } bg-gray-50`}
-                  disabled={loadingDropdowns}
+                  disabled={loading} // Changed from loadingDropdowns
                 >
                   <option value="">
-                    {loadingDropdowns ? "Loading..." : "Select Vehicle Type"}
+                    {loading ? "Loading..." : "Select Vehicle Type"}
                   </option>
-                  {vehicleTypes?.map((type: any) => (
+                  {(vehicleTypes as any[])?.map((type: any) => (
                     <option key={type._id} value={type._id}>
                       {type.vehicleType}
                     </option>

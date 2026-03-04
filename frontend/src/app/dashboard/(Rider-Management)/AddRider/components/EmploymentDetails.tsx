@@ -13,7 +13,8 @@ import { useRider } from "@/hooks/useRider";
 import { RiderFormData } from "@/schema/rider.schema";
 
 const EmploymentDetails: React.FC = () => {
-  const { jobTypes, availabilities, cities, loadingDropdowns } = useRider();
+  // Yahan 'loadingDropdowns' ko badal kar 'loading' kar diya gaya hai
+  const { jobTypes, availabilities, cities, loading } = useRider();
 
   const {
     control,
@@ -36,7 +37,8 @@ const EmploymentDetails: React.FC = () => {
     setValue(fieldName, newArray, { shouldValidate: true });
   };
 
-  if (loadingDropdowns) {
+  // Check for 'loading' instead of 'loadingDropdowns'
+  if (loading) {
     return (
       <motion.div
         initial={{ opacity: 0, x: -50 }}
@@ -82,7 +84,7 @@ const EmploymentDetails: React.FC = () => {
           control={control}
           render={({ field }) => (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {jobTypes?.map((type: any) => (
+              {(jobTypes as any[])?.map((type: any) => (
                 <button
                   key={type._id}
                   type="button"
@@ -114,7 +116,7 @@ const EmploymentDetails: React.FC = () => {
           Availability
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {availabilities?.map((avail: any) => {
+          {(availabilities as any[])?.map((avail: any) => {
             const isSelected = selectedAvailabilities.includes(avail._id);
             return (
               <button
@@ -165,7 +167,7 @@ const EmploymentDetails: React.FC = () => {
           Preferred Delivery Zones
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {cities?.map((city: any) => {
+          {(cities as any[])?.map((city: any) => {
             const isSelected = selectedZones.includes(city._id);
             return (
               <button
