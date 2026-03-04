@@ -14,6 +14,23 @@ import { ITechnicianServiceType } from "../../../../../../common/master-interfac
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 import TechnicianActivityGet, { TechnicianActivity } from "./TechnicianActivityGet";
 
+// API Base URL from environment variable
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+// Helper function to get auth token
+const getAuthToken = () => localStorage.getItem("token");
+
+// Helper function to create auth headers
+const getAuthHeaders = (includeContentType = false) => {
+  const headers: Record<string, string> = {
+    "Authorization": `Bearer ${getAuthToken()}`
+  };
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+  return headers;
+};
+
 type ServiceTypeWithId = ITechnicianServiceType & { _id: string };
 
 const activitySchema = z.object({
@@ -34,6 +51,8 @@ interface TechniciansActivityProps {
 
 const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) => {
   const [showForm, setShowForm] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<TechnicianActivity | null>(null);
+  const [loadingActivityDetails, setLoadingActivityDetails] = useState(false);
   const [serviceTypes, setServiceTypes] = useState<ServiceTypeWithId[]>([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(false);
   const queryClient = useQueryClient();
@@ -64,6 +83,121 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     },
   });
 
+  // Update activity mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) =>
+      fetch(`${BASE_URL}/technician-job-activities/${id}`, {
+        method: "PUT",
+        headers: getAuthHeaders(true),
+        body: JSON.stringify(payload),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to update activity");
+        return res.json();
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Technician activity updated successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update activity");
+    },
+  });
+
+  // Delete activity mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      fetch(`${BASE_URL}/technician-job-activities/${id}`, {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to delete activity");
+        return res.json();
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Technician activity deleted successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to delete activity");
+    },
+  });
+
+  // Start activity mutation
+  const startMutation = useMutation({
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/start`, {
+        method: "POST",
+        headers: getAuthHeaders(true),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to start activity");
+        return res.json();
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity started successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to start activity");
+    },
+  });
+
+  // Pause activity mutation
+  const pauseMutation = useMutation({
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/pause`, {
+        method: "POST",
+        headers: getAuthHeaders(true),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to pause activity");
+        return res.json();
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity paused!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to pause activity");
+    },
+  });
+
+  // Resume activity mutation
+  const resumeMutation = useMutation({
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/resume`, {
+        method: "POST",
+        headers: getAuthHeaders(true),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to resume activity");
+        return res.json();
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity resumed!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to resume activity");
+    },
+  });
+
+  // Complete activity mutation
+  const completeMutation = useMutation({
+    mutationFn: (activityId: string) =>
+      fetch(`${BASE_URL}/technician-work/${activityId}/complete`, {
+        method: "POST",
+        headers: getAuthHeaders(true),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to complete activity");
+        return res.json();
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
+      toast.success("Activity completed successfully!");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to complete activity");
+    },
+  });
+
   console.log("Activities loaded:", activities, "Total:", total);
 
   const {
@@ -71,6 +205,7 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
@@ -81,6 +216,18 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
       additionalNotes: "",
     },
   });
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editingActivity && showForm) {
+      const activityTypeValue = 
+        editingActivity.activityType && typeof editingActivity.activityType === "object" 
+          ? editingActivity.activityType._id 
+          : editingActivity.activityType || "";
+      setValue("activityType", activityTypeValue);
+      setValue("additionalNotes", editingActivity.additionalNotes || "");
+    }
+  }, [editingActivity, showForm, setValue]);
 
   // Fetch dropdown data
   useEffect(() => {
@@ -120,15 +267,79 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
     console.log("Submitting payload:", payload);
 
-    createMutation.mutate(payload, {
-      onSuccess: () => {
-        reset();
-        setShowForm(false);
-      },
-      onError: (error: any) => {
-        console.error("Error creating activity:", error);
-      },
-    });
+    if (editingActivity) {
+      // Update existing activity
+      updateMutation.mutate(
+        { id: editingActivity._id, payload },
+        {
+          onSuccess: () => {
+            reset();
+            setShowForm(false);
+            setEditingActivity(null);
+          },
+          onError: (error: any) => {
+            console.error("Error updating activity:", error);
+          },
+        }
+      );
+    } else {
+      // Create new activity
+      createMutation.mutate(payload, {
+        onSuccess: () => {
+          reset();
+          setShowForm(false);
+        },
+        onError: (error: any) => {
+          console.error("Error creating activity:", error);
+        },
+      });
+    }
+  };
+
+  const handleEdit = async (activity: TechnicianActivity) => {
+    try {
+      setLoadingActivityDetails(true);
+      console.log("Fetching activity details for ID:", activity._id);
+      
+      // Fetch full activity details from API
+      const response = await fetch(
+        `${BASE_URL}/technician-job-activities/${activity._id}`,
+        { headers: getAuthHeaders() }
+      );
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch activity details");
+      }
+      
+      const result = await response.json();
+      console.log("Activity details fetched:", result.data);
+      
+      setEditingActivity(result.data);
+      setShowForm(true);
+    } catch (error: any) {
+      console.error("Error fetching activity details:", error);
+      toast.error(error.message || "Failed to load activity details");
+    } finally {
+      setLoadingActivityDetails(false);
+    }
+  };
+
+  const handleDelete = (activityId: string) => {
+    if (window.confirm("Are you sure you want to delete this activity?")) {
+      deleteMutation.mutate(activityId);
+    }
+  };
+
+  const handleStart = (activityId: string) => startMutation.mutate(activityId);
+
+  const handlePause = (activityId: string) => pauseMutation.mutate(activityId);
+
+  const handleResume = (activityId: string) => resumeMutation.mutate(activityId);
+
+  const handleComplete = (activityId: string) => {
+    if (window.confirm("Are you sure you want to mark this activity as completed?")) {
+      completeMutation.mutate(activityId);
+    }
   };
 
   return (
@@ -161,25 +372,38 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
         <TechnicianActivityGet
           activities={activities}
           isLoading={isLoading}
-          onCreateClick={() => setShowForm(true)}
+          onCreateClick={() => {
+            setEditingActivity(null);
+            setShowForm(true);
+          }}
+          onEditClick={handleEdit}
+          onDeleteClick={handleDelete}
+          onStartActivity={handleStart}
+          onPauseActivity={handlePause}
+          onResumeActivity={handleResume}
+          onCompleteActivity={handleComplete}
         />
       </div>
 
       {/* Form Modal */}
       {showForm && (
         <FormModal
-          title="Add Technician Activity"
+          title={editingActivity ? "Edit Technician Activity" : "Add Technician Activity"}
           icon={<Activity size={24} />}
           onClose={() => {
             setShowForm(false);
+            setEditingActivity(null);
             reset();
           }}
           themeColor={THEME_COLOR}
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4">
-            {loadingDropdowns ? (
+            {loadingDropdowns || loadingActivityDetails ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="animate-spin text-blue-600" size={32} />
+                <p className="ml-3 text-gray-600">
+                  {loadingActivityDetails ? "Loading activity details..." : "Loading form..."}
+                </p>
               </div>
             ) : (
               <>
@@ -218,12 +442,13 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
 
             <FormButton
               type="submit"
-              label="Create Activity"
+              label={editingActivity ? "Update Activity" : "Create Activity"}
               icon={<Save size={20} />}
-              loading={createMutation.isPending || loadingDropdowns}
+              loading={createMutation.isPending || updateMutation.isPending || loadingDropdowns || loadingActivityDetails}
               themeColor={THEME_COLOR}
               onCancel={() => {
                 setShowForm(false);
+                setEditingActivity(null);
                 reset();
               }}
             />
