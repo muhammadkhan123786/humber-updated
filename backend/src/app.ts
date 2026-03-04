@@ -330,10 +330,10 @@ app.use(
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
-app.use(`${process.env.API_PREFIX}/icons`, iconsRouter);
+app.use(`${process.env.API_PREFIX}/icons`,adminProtecter, iconsRouter);
 
 //16-02-2026
-app.use(`${process.env.API_PREFIX}/suppliers`, SupplierRouters);
+app.use(`${process.env.API_PREFIX}/suppliers`,adminProtecter, SupplierRouters);
 
 //20-01-2026
 app.use(
