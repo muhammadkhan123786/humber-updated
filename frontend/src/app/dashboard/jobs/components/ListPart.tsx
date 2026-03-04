@@ -24,9 +24,11 @@ interface Part {
 interface ListPartProps {
   quotationId: string;
   activityId: string;
+  refreshKey?: number;
+  onPartsUpdate?: () => void;
 }
 
-const ListPart = ({ quotationId, activityId }: ListPartProps) => {
+const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPartProps) => {
   const [parts, setParts] = useState<Part[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +106,7 @@ const ListPart = ({ quotationId, activityId }: ListPartProps) => {
 
   useEffect(() => {
     fetchParts();
-  }, [quotationId]);
+  }, [quotationId, refreshKey]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -244,7 +246,12 @@ const ListPart = ({ quotationId, activityId }: ListPartProps) => {
       <InstallParts 
         activityId={activityId} 
         parts={parts} 
-        onInstallSuccess={fetchParts}
+        onInstallSuccess={() => {
+          fetchParts();
+          if (onPartsUpdate) {
+            onPartsUpdate();
+          }
+        }}
       />
     </div>
   );

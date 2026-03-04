@@ -1,5 +1,6 @@
 "use client";
 import { Activity, Loader2, Edit, Trash2, Briefcase, FileText, User, Clock, Calendar, MessageSquare } from "lucide-react";
+import { useState } from "react";
 import TechnicianActivityButtons from "./TechnicianActivityButtons";
 import Timer from "./Timer";
 import ListPart from "./ListPart";
@@ -120,6 +121,14 @@ const TechnicianActivityGet = ({
   onResumeActivity,
   onCompleteActivity
 }: TechnicianActivityGetProps) => {
+  // State to trigger refresh of all parts lists across all activities
+  const [partsRefreshKey, setPartsRefreshKey] = useState(0);
+
+  // Function to refresh all parts lists
+  const refreshAllParts = () => {
+    setPartsRefreshKey(prev => prev + 1);
+  };
+
   if (isLoading) {
     return (
       <div className="bg-linear-to-br from-blue-50 via-white to-purple-50 p-8 rounded-2xl shadow-lg">
@@ -274,6 +283,8 @@ const TechnicianActivityGet = ({
                 <ListPart 
                   quotationId={activity.quotationId._id} 
                   activityId={activity._id}
+                  refreshKey={partsRefreshKey}
+                  onPartsUpdate={refreshAllParts}
                 />
               </div>
             )}
