@@ -52,6 +52,7 @@ export const AttributeWarrantySchema = new Schema(
 export const AttributePricingSchema = new Schema(
   {
     marketplaceName: { type: String, required: true },
+    marketplaceId: { type: Schema.Types.ObjectId, ref: "MarketplaceConnection" },
     costPrice: { type: Number, required: true, min: 0 },
     sellingPrice: { type: Number, required: true, min: 0 },
     retailPrice: { type: Number, default: 0, min: 0 },
@@ -126,6 +127,7 @@ export const attributeStockValidation = z.object({
 export const attributePricingValidation = z
   .object({
     marketplaceName: z.string().min(1),
+    marketplaceId: z.string().min(1),
     costPrice: z.coerce.number().min(0),
     sellingPrice: z.coerce.number().min(0),
     retailPrice: z.coerce.number().min(0).default(0),

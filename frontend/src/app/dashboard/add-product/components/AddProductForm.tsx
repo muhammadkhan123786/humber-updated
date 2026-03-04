@@ -118,7 +118,6 @@ export default function AddProductForm() {
 
 
   const renderStepContent = () => {
-    const currentStepData = STEPS[currentStep - 1];
 
     switch (currentStep) {
       case 1:

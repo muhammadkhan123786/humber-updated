@@ -3,8 +3,7 @@ export default function CreateProductPage() {
 
   return (
    
-    <div>
-      
+    <div>      
         <ProductListingPage  />
     </div>
   );
