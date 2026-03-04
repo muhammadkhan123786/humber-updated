@@ -2,6 +2,7 @@
 import { Activity, Loader2, Edit, Trash2, Briefcase, FileText, User, Clock, Calendar, MessageSquare } from "lucide-react";
 import TechnicianActivityButtons from "./TechnicianActivityButtons";
 import Timer from "./Timer";
+import ListPart from "./ListPart";
 import { Pause } from "lucide-react";
 export interface TechnicianActivity {
   _id: string;
@@ -266,6 +267,13 @@ const TechnicianActivityGet = ({
                 totalTimeInSeconds={activity.totalTimeInSeconds}
               />
             </div>
+
+            {/* Parts List Component */}
+            {typeof activity.quotationId === "object" && activity.quotationId?._id && (
+              <div className="mb-5">
+                <ListPart quotationId={activity.quotationId._id} />
+              </div>
+            )}
 
             {/* Activity Control Buttons */}
             <TechnicianActivityButtons
