@@ -185,7 +185,7 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
                     <Minus size={16} />
                   </button>
 
-                  <span className="text-xl font-black text-gray-800 min-w-[40px] text-center">
+                  <span className="text-xl font-black text-gray-800 min-w-10 text-center">
                     {selectedQuantity}
                   </span>
 
@@ -207,7 +207,7 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
       <button
         onClick={handleInstallParts}
         disabled={isInstalling || getTotalSelectedQuantity() === 0}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
       >
         {isInstalling ? (
           <>
