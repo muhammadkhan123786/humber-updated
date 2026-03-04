@@ -5,7 +5,6 @@ import {
   Phone,
   MapPin,
   Bike,
-  PauseCircle,
   Trash2,
   CheckCircle2,
   Calendar,
@@ -16,6 +15,12 @@ import {
   AlertCircle,
   Clock,
   SquarePen,
+  Pause,
+  Play,
+  CheckCheck,
+  X,
+  UserMinus,
+  PauseCircle,
 } from "lucide-react";
 import { useRider } from "../../../../../hooks/useRider";
 import Pagination from "../../../../../components/ui/Pagination";
@@ -24,7 +29,7 @@ import { useRouter } from "next/navigation";
 
 interface RiderTableProps {
   search?: string;
-  activeStatus: string; // New Prop added
+  activeStatus: string;
 }
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -69,19 +74,25 @@ const RiderTable: React.FC<RiderTableProps> = ({
   search = "",
   activeStatus,
 }) => {
-  const { riders, loading, totalRiders, fetchRiders, deleteRider } = useRider();
+  const {
+    riders,
+    loading,
+    totalRiders,
+    fetchRiders,
+    deleteRider,
+    updateRiderStatus,
+  } = useRider();
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const router = useRouter();
 
-  // FIX: Dependency array mein activeStatus add kiya aur params set kiye
   useEffect(() => {
     const params: any = { page: currentPage, limit };
     if (activeStatus !== "All") {
       params.riderStatus = activeStatus.toUpperCase();
     }
     fetchRiders(params);
-  }, [currentPage, activeStatus, fetchRiders]); // Ye activeStatus ke change hone par ab chalega
+  }, [currentPage, activeStatus, fetchRiders]);
 
   const filteredRiders = useMemo(() => {
     if (!search.trim()) return riders;
@@ -101,6 +112,14 @@ const RiderTable: React.FC<RiderTableProps> = ({
 
   const totalPages = Math.ceil(totalRiders / limit);
 
+  const handleStatusUpdate = async (riderId: string, status: string) => {
+    try {
+      await updateRiderStatus(riderId, status);
+    } catch (error) {
+      console.error("Status update failed:", error);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     toast.dismiss();
     const loadingToast = toast.loading("Deleting rider...");
@@ -111,7 +130,6 @@ const RiderTable: React.FC<RiderTableProps> = ({
         limit: 10,
         riderStatus: activeStatus === "All" ? "" : activeStatus,
       });
-
       toast.success("Rider deleted successfully!", {
         id: loadingToast,
         duration: 3000,
@@ -150,7 +168,9 @@ const RiderTable: React.FC<RiderTableProps> = ({
                 Performance
               </th>
               <th className="p-4 text-xs font-bold text-gray-500">STATUS</th>
-              <th className="p-4 text-xs font-bold text-gray-500">ACTIONS</th>
+              <th className="p-4 text-xs font-bold text-gray-500 text-center">
+                ACTIONS
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -201,6 +221,7 @@ const RiderTable: React.FC<RiderTableProps> = ({
                       {rider.contactId?.mobileNumber || "N/A"}
                     </div>
                   </td>
+
                   <td className="p-4">
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-blue-600 text-xs font-bold">
@@ -236,21 +257,76 @@ const RiderTable: React.FC<RiderTableProps> = ({
                   <td className="p-4">
                     <StatusBadge status={rider.riderStatus} />
                   </td>
+
                   <td className="p-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-center gap-2 max-w-40 mx-auto">
                       <button
                         onClick={() =>
                           router.push(`/dashboard/AddRider?id=${rider._id}`)
                         }
-                        className="p-1.5 text-blue-500 bg-blue-50 rounded-md border border-blue-100 hover:bg-blue-100 transition-all"
+                        className="p-2 text-blue-500 bg-white border border-blue-200 rounded-xl hover:bg-blue-50 transition-all shadow-sm"
+                        title="Edit"
                       >
-                        <SquarePen size={14} />
+                        <SquarePen size={16} />
                       </button>
+
+                      <button
+                        onClick={() =>
+                          handleStatusUpdate(
+                            rider._id,
+                            rider.riderStatus === "ACTIVE"
+                              ? "IN-ACTIVE"
+                              : "ACTIVE",
+                          )
+                        }
+                        className="p-2 text-slate-500 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-all shadow-sm"
+                        title={
+                          rider.riderStatus === "ACTIVE" ? "Pause" : "Play"
+                        }
+                      >
+                        {rider.riderStatus === "ACTIVE" ? (
+                          <Pause size={16} />
+                        ) : (
+                          <Play size={16} />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          handleStatusUpdate(rider._id, "APPROVED")
+                        }
+                        className="p-2 text-white bg-emerald-500 border border-emerald-600 rounded-xl hover:bg-emerald-600 transition-all shadow-sm"
+                        title="Approve"
+                      >
+                        <CheckCheck size={16} />
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          handleStatusUpdate(rider._id, "REJECTED")
+                        }
+                        className="p-2 text-red-500 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all shadow-sm"
+                        title="Reject"
+                      >
+                        <X size={16} />
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          handleStatusUpdate(rider._id, "TERMINATED")
+                        }
+                        className="p-2 text-orange-500 bg-white border border-orange-200 rounded-xl hover:bg-orange-50 transition-all shadow-sm"
+                        title="Terminate"
+                      >
+                        <UserMinus size={16} />
+                      </button>
+
                       <button
                         onClick={() => handleDelete(rider._id)}
-                        className="p-1.5 text-red-500 bg-red-50 rounded-md border border-red-100 hover:bg-red-100 transition-all"
+                        className="p-2 text-red-600 bg-white border border-red-100 rounded-xl hover:bg-red-50 transition-all shadow-sm"
+                        title="Delete"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </td>
