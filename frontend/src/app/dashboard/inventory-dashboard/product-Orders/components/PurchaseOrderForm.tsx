@@ -28,7 +28,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast }    from "sonner";
 import { useFormActions } from "@/hooks/useFormActions";
 import { SearchableCombobox, ComboboxItemConfig } from "@/components/SearchableCombobox";
-import { ReplenishmentProposalsModal, ReorderProduct } from "./ReplenishmentProposalsModal";
+import { ReplenishmentProposalsModal } from "./ReplenishmentProposalsModal";
+import { ReorderProduct } from "../components/replenishment/types"
 import React from "react";
 import { useReorderSuggestions } from '@/hooks/useReorderSuggestions';
 
