@@ -77,8 +77,9 @@ technicianActionsrouter.get(
 technicianActionsrouter.post(
   "/:activityId/start",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
+    console.log("Starting activity with params:", req.params, "and technicianId:", req.technicianId);
     const { activityId } = activityIdSchema.parse(req.params);
-    const { technicianId } = technicianIdSchema.parse(req.technicianId);
+    const technicianId = req.technicianId; // Already a string from JWT middleware
 
     const activity = await startActivity(activityId, technicianId);
     res.json({ success: true, activity });
@@ -90,7 +91,7 @@ technicianActionsrouter.post(
   "/:activityId/pause",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
     const { activityId } = activityIdSchema.parse(req.params);
-    const { technicianId } = technicianIdSchema.parse(req.technicianId);
+    const technicianId = req.technicianId; // Already a string from JWT middleware
 
     const activity = await pauseActivity(activityId, technicianId);
     res.json({ success: true, activity });
@@ -102,7 +103,7 @@ technicianActionsrouter.post(
   "/:activityId/resume",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
     const { activityId } = activityIdSchema.parse(req.params);
-    const { technicianId } = technicianIdSchema.parse(req.technicianId);
+    const technicianId = req.technicianId; // Already a string from JWT middleware
 
     const activity = await resumeActivity(activityId, technicianId);
     res.json({ success: true, activity });
@@ -114,7 +115,7 @@ technicianActionsrouter.post(
   "/:activityId/complete",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
     const { activityId } = activityIdSchema.parse(req.params);
-    const { technicianId } = technicianIdSchema.parse(req.technicianId);
+    const technicianId = req.technicianId; // Already a string from JWT middleware
 
     const activity = await completeActivity(activityId, technicianId);
     res.json({ success: true, activity });

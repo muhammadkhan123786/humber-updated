@@ -90,13 +90,13 @@ export default function MarketplaceConnections() {
       createItem({
         type: formData.name,
         name: formData.type,
-        environment: "production",
+        environment: "sandbox",
         userId: getUserId(),
         descripation: formData.description,
         credentials: formData.credentials,
       })
-      setShowDialog(false);
-      setFormData(initialFormData);
+      // setShowDialog(false);
+      // setFormData(initialFormData);
 
     } catch (error) {
       console.log("error", error);

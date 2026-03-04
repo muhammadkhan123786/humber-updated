@@ -17,7 +17,7 @@ const calculateTotalTime = (timeLogs: TimeLog[]) => {
 };
 
 //functions to manage start/ in progress/ end activity 
-//from pending to start
+//from pending to start (or restart from completed)
 export const startActivity = async (activityId: string|Types.ObjectId, technicianId: string|Types.ObjectId) => {
   const activity = await TechniciansActivitiesMaster.findById(activityId);
   if (!activity) throw new Error("Activity not found");
@@ -25,7 +25,7 @@ export const startActivity = async (activityId: string|Types.ObjectId, technicia
   if (activity.technicianId.toString() !== technicianId) 
       throw new Error("Not authorized");
 
-  if (activity.status !== "pending") 
+  if (!["pending", "completed"].includes(activity.status)) 
       throw new Error(`Cannot start activity in status ${activity.status}`);
 
   activity.status = "in_progress";

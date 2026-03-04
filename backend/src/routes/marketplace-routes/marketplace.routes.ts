@@ -23,7 +23,10 @@ router.post('/:id/:userId/test', controller.testConnection.bind(controller));
 router.post('/:id/:userId/sync', controller.syncData.bind(controller));
 router.post('/:id/exchange-code', controller.exchangeAuthCode.bind(controller));
 router.get('/:id/verify', controller.verifyEbayCredentials.bind(controller));
+router.post('/:id/list-products', controller.listProductSimple.bind(controller));
 // OAuth callback
 router.get('/callback/:type', controller.handleOAuthCallback.bind(controller));
+
+ router.post('/distribute', controller.distributeProducts.bind(controller));
 
 export default router;

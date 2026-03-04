@@ -245,6 +245,8 @@ export function AttributesAndPricingStep({
     retailPrice: 0, discountPercentage: 0, taxId: '', taxRate: 0, vatExempt: false,
   });
 
+  const [variantId, setVariantId] = useState<string>('');
+
   const [currentVariant, setCurrentVariant] = useState<Partial<ProductVariant>>({
     sku: '', attributes: {}, marketplacePricing: [],
     stockQuantity: 0, minStockLevel: 0, maxStockLevel: 0, reorderPoint: 0,
@@ -396,7 +398,7 @@ export function AttributesAndPricingStep({
 
     // ── All clear — build and save variant ────────────────────────────
     const newVariant: ProductVariant = {
-      id: editingVariantId || `variant-${Date.now()}`,
+      id: editingVariantId || variantId,
       sku: currentVariant.sku || '',
       attributes: currentVariant.attributes || {},
       marketplacePricing: addedMarketplacePricing,
@@ -434,6 +436,7 @@ export function AttributesAndPricingStep({
   };
 
   const resetForm = () => {
+    setVariantId(`variant-${Date.now()}`);
     setCurrentVariant({
       sku: '', attributes: {}, marketplacePricing: [],
       stockQuantity: 0, minStockLevel: 0, maxStockLevel: 0, reorderPoint: 0,
@@ -464,7 +467,11 @@ export function AttributesAndPricingStep({
     }
   };
 
-  const cancelEdit = () => { resetForm(); setEditingVariantId(null); };
+  const cancelEdit = () => { 
+    setVariantId(`variant-${Date.now()}`);
+    resetForm(); 
+    setEditingVariantId(null); 
+  };
 
   const availableMarketplaces = marketplaces.filter(
     (m: any) => !addedMarketplacePricing.find(p => p.marketplaceId === m.value)
