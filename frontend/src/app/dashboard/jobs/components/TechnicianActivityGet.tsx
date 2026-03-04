@@ -271,7 +271,10 @@ const TechnicianActivityGet = ({
             {/* Parts List Component */}
             {typeof activity.quotationId === "object" && activity.quotationId?._id && (
               <div className="mb-5">
-                <ListPart quotationId={activity.quotationId._id} />
+                <ListPart 
+                  quotationId={activity.quotationId._id} 
+                  activityId={activity._id}
+                />
               </div>
             )}
 
