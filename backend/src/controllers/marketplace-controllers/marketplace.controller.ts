@@ -1000,8 +1000,9 @@ console.log("id",id, "userId", userId)
      */
     async listProductSimple(req: Request, res: Response) {
         try {
-            const { id, userId } = req.params;
+            const { id } = req.params;
             const productData = req.body;
+            console.log("Product", productData)
 
             const connection = await MarketplaceConnection.findOne({
                 _id: id,

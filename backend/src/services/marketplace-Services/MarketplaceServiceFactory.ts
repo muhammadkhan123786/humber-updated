@@ -1,32 +1,32 @@
-    // services/MarketplaceServiceFactory.ts
+// services/MarketplaceServiceFactory.ts
 
-    import { BaseMarketplaceService } from './BaseMarketplaceService';
-    import { EbayService } from '../marketplace-Services/marketplace/EbayService';
-    // import { AmazonService } from './AmazonService';
-    import { ShopifyService } from '../marketplace-Services/marketplace/ShopifyService';
-    // import { TikTokService } from './TikTokService';
-    // Import other services...
+import { BaseMarketplaceService } from "./BaseMarketplaceService";
+import { EbayService } from "../marketplace-Services/marketplace/EbayService";
+// import { AmazonService } from './AmazonService';
+import { ShopifyService } from "../marketplace-Services/marketplace/ShopifyService";
+import { WooCommerceService } from "./marketplace/WooCommerceService";
+// import { TikTokService } from './TikTokService';
+// Import other services...
 
-    export class MarketplaceServiceFactory {
+export class MarketplaceServiceFactory {
+  static createService(connection: any): BaseMarketplaceService {
+    switch (connection.type) {
+      case "ebay":
+        return new EbayService(connection);
 
-        static createService(connection: any): BaseMarketplaceService {
+      // case 'amazon':
+      //     return new AmazonService(connection);
 
-            switch (connection.type) {
-                case 'ebay':
-                    return new EbayService(connection);
+      case "shopify":
+        return new ShopifyService(connection);
+      case "woocommerce":
+        return new WooCommerceService(connection);
+      // case 'tiktok': return new TikTokService(connection);
 
-                // case 'amazon':
-                //     return new AmazonService(connection);
+      // Add other marketplaces...
 
-                case 'shopify':
-                    return new ShopifyService(connection);
-
-                // case 'tiktok': return new TikTokService(connection);
-
-                // Add other marketplaces...
-
-                default:
-                    throw new Error(`Unsupported marketplace type: ${connection.type}`);
-            }
-        }
+      default:
+        throw new Error(`Unsupported marketplace type: ${connection.type}`);
     }
+  }
+}
