@@ -1,6 +1,7 @@
 "use client";
 import { Activity, Loader2, Edit, Trash2, Briefcase, FileText, User, Clock, Calendar, MessageSquare } from "lucide-react";
 import TechnicianActivityButtons from "./TechnicianActivityButtons";
+import Timer from "./Timer";
 import { Pause } from "lucide-react";
 export interface TechnicianActivity {
   _id: string;
@@ -256,6 +257,15 @@ const TechnicianActivityGet = ({
                 <p className="text-gray-700 leading-relaxed">{activity.additionalNotes}</p>
               </div>
             )}
+
+            {/* Timer Component */}
+            <div className="mb-5">
+              <Timer
+                activityId={activity._id}
+                status={activity.status}
+                totalTimeInSeconds={activity.totalTimeInSeconds}
+              />
+            </div>
 
             {/* Activity Control Buttons */}
             <TechnicianActivityButtons
