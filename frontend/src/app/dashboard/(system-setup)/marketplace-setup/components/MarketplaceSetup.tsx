@@ -7,8 +7,7 @@ import {
   getInitialFormData,
   MarketplaceTemplate,
   FormData,
-  ColorOption,
-  IconOption
+    
 } from '../data/marketplaceTemplates';
 
 // Hooks
