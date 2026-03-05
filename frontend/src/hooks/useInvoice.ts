@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   invoiceSchema,
   InvoiceFormData,
-  InvoiceServiceFormData,
   InvoicePartFormData,
 } from "../schema/invoice.schema";
 import { getAlls } from "../helper/apiHelper";
@@ -212,17 +211,21 @@ export const useInvoice = () => {
     }, 0);
 
     const labourTotal = (services || []).reduce((sum, service) => {
-      let hours = 1;
+      let hours = 0;
       if (service?.duration) {
         if (
           typeof service.duration === "string" &&
           service.duration.includes(":")
         ) {
           const [h, m] = service.duration.split(":").map(Number);
-          hours = h + (m || 0) / 60;
+          hours = (h || 0) + (m || 0) / 60;
         } else {
-          hours = parseFloat(String(service.duration)) || 1;
+          hours = parseFloat(String(service.duration)) || 0;
         }
+      }
+      // Ensure minimum 0.0167 hours (1 minute) if there's any time
+      if (hours > 0 && hours < 0.0167) {
+        hours = 0.0167;
       }
       const rate = service?.rate || 50;
       return sum + hours * rate;
@@ -310,7 +313,9 @@ export const useInvoice = () => {
   const fetchJobs = useCallback(async () => {
     setIsFetchingJobs(true);
     try {
-      const response = await getAlls<any>("/technician-jobs?filter=all");
+      const response = await getAlls<any>(
+        "/technician-job-by-admin?filter=all",
+      );
       const data = response?.data || [];
       setJobs(
         Array.isArray(data) ? data.filter((j) => j.isActive !== false) : [],
@@ -363,15 +368,32 @@ export const useInvoice = () => {
       try {
         const baseUrl =
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-        const response = await axios.get(
-          `${baseUrl}/technician-jobs/${jobId}`,
+
+        // Fetch job details
+        const jobResponse = await axios.get(
+          `${baseUrl}/technician-job-by-admin/${jobId}`,
           {
             headers: getAuthHeader(),
           },
         );
 
-        const jobData = response.data?.data || response.data;
+        const jobData = jobResponse.data?.data || jobResponse.data;
         setSelectedJob(jobData);
+
+        // Fetch technician activities for this job
+        const activitiesResponse = await axios.get(
+          `${baseUrl}/technician-job-activities`,
+          {
+            headers: getAuthHeader(),
+            params: {
+              JobAssignedId: jobId,
+              limit: "100",
+            },
+          },
+        );
+
+        const activitiesData = activitiesResponse.data?.data || [];
+
         if (jobData && shouldOverrideForm && !editingId) {
           if (jobData.ticketId?.customerId) {
             const customerId =
@@ -380,22 +402,88 @@ export const useInvoice = () => {
                 : jobData.ticketId.customerId;
             form.setValue("customerId", customerId);
           }
-          if (jobData.services && jobData.services.length > 0) {
-            const servicesFromJob: InvoiceServiceFormData[] =
-              jobData.services.map((service: any) => ({
-                activityId: service.activityId?._id || service.activityId || "",
-                duration: service.duration || "1:00",
-                description: service.description || "",
-                additionalNotes: service.additionalNotes || "",
-                source: "JOB",
-                rate: service.rate || 50,
-              }));
-            form.setValue("services", servicesFromJob);
+
+          // Convert activities to services
+          if (activitiesData && activitiesData.length > 0) {
+            console.log("Activities data:", activitiesData);
+
+            const servicesFromActivities = activitiesData.map(
+              (activity: any) => {
+                // Convert totalTimeInSeconds to decimal hours for calculation
+                const totalSeconds = activity.totalTimeInSeconds || 0;
+
+                // Calculate hours and minutes for display
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+                // For very small durations (< 1 minute), show as 00:01 to indicate time was spent
+                const displayMinutes =
+                  minutes === 0 && hours === 0 ? 1 : minutes;
+                const displayHours = hours;
+
+                // Format as HH:MM for display
+                const displayDuration = `${displayHours.toString().padStart(2, "0")}:${displayMinutes.toString().padStart(2, "0")}`;
+
+                // Calculate decimal hours for actual cost calculation
+                const decimalHours = totalSeconds / 3600;
+
+                // Ensure minimum 0.0167 hours (1 minute) if there's any time
+                const billableHours =
+                  decimalHours > 0 && decimalHours < 0.0167
+                    ? 0.0167
+                    : decimalHours;
+
+                // Get rate from activityType or use default
+                const rate = activity.activityType?.rate || 50;
+
+                // Calculate line total
+                const lineTotal = billableHours * rate;
+
+                console.log("Activity time conversion:", {
+                  totalSeconds,
+                  displayDuration,
+                  decimalHours,
+                  billableHours,
+                  rate,
+                  lineTotal,
+                  activityId: activity.activityType?._id,
+                  serviceType: activity.activityType?.technicianServiceType,
+                  notes: activity.additionalNotes,
+                });
+
+                return {
+                  activityId: activity.activityType?._id || "",
+                  duration: displayDuration, // This is for display in HH:MM format
+                  description:
+                    activity.additionalNotes ||
+                    `Service activity - ${activity.activityType?.technicianServiceType || ""}`,
+                  additionalNotes: activity.additionalNotes || "",
+                  source: "JOB",
+                  rate: rate,
+                };
+              },
+            );
+
+            console.log("Services from activities:", servicesFromActivities);
+            form.setValue("services", servicesFromActivities);
+
+            // Force recalculation of totals
+            setTimeout(() => {
+              form.trigger();
+            }, 100);
+          } else {
+            console.log("No activities found for job");
+            form.setValue("services", []);
           }
-          if (jobData.parts && jobData.parts.length > 0) {
-            const partsFromJob: InvoicePartFormData[] = jobData.parts.map(
-              (part: any) => {
-                const partId = part.partId?._id || part.partId || "";
+
+          // Set parts from quotationId.partsList
+          if (
+            jobData.quotationId?.partsList &&
+            jobData.quotationId.partsList.length > 0
+          ) {
+            const partsFromJob: InvoicePartFormData[] =
+              jobData.quotationId.partsList.map((part: any) => {
+                const partId = part.partId || "";
                 const partDetails = partsInventory.find(
                   (p) => p._id === partId,
                 );
@@ -408,18 +496,40 @@ export const useInvoice = () => {
                   quantity: part.quantity || 1,
                   unitCost: part.unitCost || partDetails?.unitCost || 0,
                   totalCost:
-                    part.totalCost ||
+                    part.total ||
                     (part.quantity || 1) *
                       (part.unitCost || partDetails?.unitCost || 0),
                   reasonForChange: part.reasonForChange || "",
                   source: "JOB",
                 };
-              },
-            );
+              });
             form.setValue("parts", partsFromJob);
+          } else {
+            form.setValue("parts", []);
           }
-          if (jobData.completionSummary) {
-            form.setValue("completionSummary", jobData.completionSummary);
+
+          // Set labour total from quotationId (as fallback)
+          if (jobData.quotationId?.labourTotalBill) {
+            form.setValue(
+              "labourTotal",
+              jobData.quotationId.labourTotalBill || 0,
+            );
+          }
+
+          // Set parts total from quotationId
+          if (jobData.quotationId?.partTotalBill) {
+            form.setValue("partsTotal", jobData.quotationId.partTotalBill || 0);
+          }
+
+          // Set subTotal and other totals
+          if (jobData.quotationId?.subTotalBill) {
+            form.setValue("subTotal", jobData.quotationId.subTotalBill || 0);
+          }
+          if (jobData.quotationId?.taxAmount) {
+            form.setValue("taxAmount", jobData.quotationId.taxAmount || 0);
+          }
+          if (jobData.quotationId?.netTotal) {
+            form.setValue("netTotal", jobData.quotationId.netTotal || 0);
           }
         }
 
@@ -439,7 +549,177 @@ export const useInvoice = () => {
     if (!jobId) return;
     form.setValue("jobId", jobId);
 
-    await fetchJobById(jobId, !editingId);
+    setIsLoading(true);
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+
+      // Fetch job details
+      const jobResponse = await axios.get(
+        `${baseUrl}/technician-job-by-admin/${jobId}`,
+        {
+          headers: getAuthHeader(),
+        },
+      );
+
+      const jobData = jobResponse.data?.data || jobResponse.data;
+      setSelectedJob(jobData);
+
+      // Fetch technician activities for this job
+      const activitiesResponse = await axios.get(
+        `${baseUrl}/technician-job-activities`,
+        {
+          headers: getAuthHeader(),
+          params: {
+            JobAssignedId: jobId,
+            limit: "100",
+          },
+        },
+      );
+
+      const activitiesData = activitiesResponse.data?.data || [];
+
+      if (jobData && !editingId) {
+        // Set customer ID from ticketId.customerId
+        if (jobData.ticketId?.customerId) {
+          const customerId =
+            typeof jobData.ticketId.customerId === "object"
+              ? jobData.ticketId.customerId._id
+              : jobData.ticketId.customerId;
+          form.setValue("customerId", customerId);
+        }
+
+        // Convert activities to services
+        if (activitiesData && activitiesData.length > 0) {
+          console.log("Activities data:", activitiesData);
+
+          const servicesFromActivities = activitiesData.map((activity: any) => {
+            // Convert totalTimeInSeconds to decimal hours for calculation
+            const totalSeconds = activity.totalTimeInSeconds || 0;
+
+            // Calculate hours and minutes for display
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+            // For very small durations (< 1 minute), show as 00:01 to indicate time was spent
+            const displayMinutes = minutes === 0 && hours === 0 ? 1 : minutes;
+            const displayHours = hours;
+
+            // Format as HH:MM for display
+            const displayDuration = `${displayHours.toString().padStart(2, "0")}:${displayMinutes.toString().padStart(2, "0")}`;
+
+            // Calculate decimal hours for actual cost calculation
+            const decimalHours = totalSeconds / 3600;
+
+            // Ensure minimum 0.0167 hours (1 minute) if there's any time
+            const billableHours =
+              decimalHours > 0 && decimalHours < 0.0167 ? 0.0167 : decimalHours;
+
+            // Get rate from activityType or use default
+            const rate = activity.activityType?.rate || 50;
+
+            // Calculate line total
+            const lineTotal = billableHours * rate;
+
+            console.log("Activity time conversion:", {
+              totalSeconds,
+              displayDuration,
+              decimalHours,
+              billableHours,
+              rate,
+              lineTotal,
+              activityId: activity.activityType?._id,
+              serviceType: activity.activityType?.technicianServiceType,
+              notes: activity.additionalNotes,
+            });
+
+            return {
+              activityId: activity.activityType?._id || "",
+              duration: displayDuration, // This is for display in HH:MM format
+              description:
+                activity.additionalNotes ||
+                `Service activity - ${activity.activityType?.technicianServiceType || ""}`,
+              additionalNotes: activity.additionalNotes || "",
+              source: "JOB",
+              rate: rate,
+            };
+          });
+
+          console.log("Services from activities:", servicesFromActivities);
+          form.setValue("services", servicesFromActivities);
+
+          // Force recalculation of totals
+          setTimeout(() => {
+            form.trigger();
+          }, 100);
+        } else {
+          console.log("No activities found for job");
+          form.setValue("services", []);
+        }
+
+        // Set parts from quotationId.partsList
+        if (
+          jobData.quotationId?.partsList &&
+          jobData.quotationId.partsList.length > 0
+        ) {
+          const partsFromJob: InvoicePartFormData[] =
+            jobData.quotationId.partsList.map((part: any) => {
+              const partId = part.partId || "";
+              const partDetails = partsInventory.find((p) => p._id === partId);
+
+              return {
+                partId: partId,
+                oldPartConditionDescription:
+                  part.oldPartConditionDescription || "",
+                newSerialNumber: part.newSerialNumber || "",
+                quantity: part.quantity || 1,
+                unitCost: part.unitCost || partDetails?.unitCost || 0,
+                totalCost:
+                  part.total ||
+                  (part.quantity || 1) *
+                    (part.unitCost || partDetails?.unitCost || 0),
+                reasonForChange: part.reasonForChange || "",
+                source: "JOB",
+              };
+            });
+          form.setValue("parts", partsFromJob);
+        } else {
+          form.setValue("parts", []);
+        }
+
+        // Set labour total from quotationId if available (as fallback)
+        if (jobData.quotationId?.labourTotalBill) {
+          form.setValue(
+            "labourTotal",
+            jobData.quotationId.labourTotalBill || 0,
+          );
+        }
+
+        // Set parts total from quotationId if available
+        if (jobData.quotationId?.partTotalBill) {
+          form.setValue("partsTotal", jobData.quotationId.partTotalBill || 0);
+        }
+
+        // Set subTotal and other totals if needed
+        if (jobData.quotationId?.subTotalBill) {
+          form.setValue("subTotal", jobData.quotationId.subTotalBill || 0);
+        }
+        if (jobData.quotationId?.taxAmount) {
+          form.setValue("taxAmount", jobData.quotationId.taxAmount || 0);
+        }
+        if (jobData.quotationId?.netTotal) {
+          form.setValue("netTotal", jobData.quotationId.netTotal || 0);
+        }
+      }
+
+      return jobData;
+    } catch (error) {
+      console.error("Error fetching job details:", error);
+      toast.error("Failed to fetch job details");
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const setEditData = useCallback(
@@ -554,10 +834,10 @@ export const useInvoice = () => {
     },
     [form, fetchJobById, partsInventory],
   );
+
   const clearEdit = () => {
     setEditingId(null);
     setSelectedJob(null);
-
     router.push("/dashboard/customer-invoice");
     form.reset();
   };
@@ -616,7 +896,7 @@ export const useInvoice = () => {
       }, 0);
 
       const labourTotal = (data.services || []).reduce((sum, service) => {
-        let hours = 1;
+        let hours = 0;
         if (service?.duration) {
           if (
             typeof service.duration === "string" &&
@@ -625,8 +905,12 @@ export const useInvoice = () => {
             const [h, m] = service.duration.split(":").map(Number);
             hours = (h || 0) + (m || 0) / 60;
           } else {
-            hours = parseFloat(String(service.duration)) || 1;
+            hours = parseFloat(String(service.duration)) || 0;
           }
+        }
+        // Ensure minimum 0.0167 hours (1 minute) if there's any time
+        if (hours > 0 && hours < 0.0167) {
+          hours = 0.0167;
         }
         const rate = service?.rate || 50;
         return sum + hours * rate;

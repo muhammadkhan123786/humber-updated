@@ -32,11 +32,23 @@ const LabourSection: React.FC<LabourSectionProps> = ({
     addService();
   };
 
-  const subtotal = watchedServices.reduce(
-    (acc: number, item: any) =>
-      acc + Number(item.duration || 0) * Number(item.rate || 50),
-    0,
-  );
+  // Helper function to convert HH:MM to decimal hours
+  const convertDurationToHours = (duration: string): number => {
+    if (!duration) return 0;
+    if (typeof duration === "number") return duration;
+
+    if (duration.includes(":")) {
+      const [h, m] = duration.split(":").map(Number);
+      return (h || 0) + (m || 0) / 60;
+    }
+    return parseFloat(duration) || 0;
+  };
+
+  const subtotal = watchedServices.reduce((acc: number, item: any) => {
+    const hours = convertDurationToHours(item.duration || "0:00");
+    const rate = Number(item.rate) || 50;
+    return acc + hours * rate;
+  }, 0);
 
   const getServiceTypeName = (activityId: string) => {
     if (!activityId) return "";
@@ -84,8 +96,17 @@ const LabourSection: React.FC<LabourSectionProps> = ({
 
               const isFromJob = currentItem.source === "JOB";
 
+              // Parse duration for display
+              const durationValue = currentItem.duration || "0:00";
+              const hoursForDisplay =
+                typeof durationValue === "string" && durationValue.includes(":")
+                  ? durationValue
+                  : "00:00";
+
+              // Calculate line total using decimal hours
+              const hours = convertDurationToHours(durationValue);
               const rate = Number(currentItem.rate) || 50;
-              const lineTotal = (Number(currentItem.duration) || 0) * rate;
+              const lineTotal = hours * rate;
 
               const serviceTypeName = getServiceTypeName(
                 currentItem.activityId,
@@ -166,18 +187,21 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                       <label className="text-indigo-950 text-xs font-semibold">
                         Hours
                       </label>
-                      <input
-                        type="number"
-                        step="0.5"
-                        min="0.5"
-                        {...register(`services.${index}.duration` as any, {
-                          valueAsNumber: true,
-                        })}
-                        readOnly={isFromJob}
-                        className={`w-full h-10 px-3 bg-white rounded-xl border border-purple-100 text-sm focus:ring-2 ring-purple-300 outline-none ${
-                          isFromJob ? "bg-gray-50 read-only:bg-gray-50" : ""
-                        }`}
-                      />
+                      {isFromJob ? (
+                        <input
+                          type="text"
+                          value={hoursForDisplay}
+                          readOnly
+                          className="w-full h-10 px-3 bg-gray-50 rounded-xl border border-purple-100 text-sm text-gray-700"
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="HH:MM"
+                          {...register(`services.${index}.duration` as any)}
+                          className="w-full h-10 px-3 bg-white rounded-xl border border-purple-100 text-sm focus:ring-2 ring-purple-300 outline-none"
+                        />
+                      )}
                     </div>
 
                     <div className="col-span-6 md:col-span-2 flex flex-col gap-1">
@@ -188,7 +212,6 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                         type="number"
                         step="0.01"
                         min="0"
-                        defaultValue={50}
                         {...register(`services.${index}.rate` as any, {
                           valueAsNumber: true,
                         })}
@@ -214,7 +237,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                 <span className="text-purple-100 text-xs uppercase tracking-wider font-bold">
                   Total Estimate
                 </span>
-                <span className="text-xl font-bold">Labour Subtotal</span>
+                <span className="text-xl font-bold">Labour Charges</span>
               </div>
               <span className="text-4xl font-black">
                 £{subtotal.toFixed(2)}

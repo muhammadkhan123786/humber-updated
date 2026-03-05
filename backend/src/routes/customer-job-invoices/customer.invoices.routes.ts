@@ -17,8 +17,9 @@ const customerInvoiceController = new AdvancedGenericController({
   service: customerInvoiceServices,
   populate: [
     "userId",
+    "jobId",
 
-    // ✅ JOB LEVEL
+    // // ✅ JOB LEVEL
     {
       path: "jobId",
       populate: [
@@ -29,21 +30,11 @@ const customerInvoiceController = new AdvancedGenericController({
             populate: { path: "vehicleModelId" },
           },
         },
-        { path: "technicianId" },
-
-        // 👇 Job Services
-        {
-          path: "services.activityId",
-        },
-
-        // 👇 Job Parts
-        {
-          path: "parts.partId",
-        },
+        { path: "leadingTechnicianId" },
       ],
     },
 
-    // ✅ CUSTOMER LEVEL
+    // // ✅ CUSTOMER LEVEL
     {
       path: "customerId",
       populate: [
@@ -55,12 +46,12 @@ const customerInvoiceController = new AdvancedGenericController({
       ],
     },
 
-    // ✅ INVOICE SERVICES
-    {
-      path: "services.activityId",
-    },
+    // // ✅ INVOICE SERVICES
+    // {
+    //   path: "services.activityId",
+    // },
 
-    // ✅ INVOICE PARTS
+    // // ✅ INVOICE PARTS
     {
       path: "parts.partId",
     },
@@ -79,6 +70,13 @@ customerInvoiceRouter.post(
     if (req.body.dueDate) req.body.dueDate = new Date(req.body.dueDate);
     const invoiceCode = await generateCustomerInvoiceCode();
     req.body.invoiceId = invoiceCode;
+    if (req.body.dueDate && req.body.invoiceDate) {
+      if (new Date(req.body.dueDate) <= new Date(req.body.invoiceDate)) {
+        return _res.status(400).json({
+          error: "Due date must be after invoice date",
+        });
+      }
+    }
     next(); // ✅ Important
   },
   customerInvoiceController.create,
@@ -90,6 +88,13 @@ customerInvoiceRouter.put(
     if (req.body.invoiceDate)
       req.body.invoiceDate = new Date(req.body.invoiceDate);
     if (req.body.dueDate) req.body.dueDate = new Date(req.body.dueDate);
+    if (req.body.dueDate && req.body.invoiceDate) {
+      if (new Date(req.body.dueDate) <= new Date(req.body.invoiceDate)) {
+        return _res.status(400).json({
+          error: "Due date must be after invoice date",
+        });
+      }
+    }
     next(); // ✅ Important
   },
   customerInvoiceController.update,

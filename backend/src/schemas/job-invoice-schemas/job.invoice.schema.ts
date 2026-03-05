@@ -48,7 +48,7 @@ export const CutomerInvoiceSchema = {
   },
   jobId: {
     type: Types.ObjectId,
-    ref: "TechniciansJobs",
+    ref: "TechnicianJobsByAdmin",
     required: true,
   },
   customerId: {
