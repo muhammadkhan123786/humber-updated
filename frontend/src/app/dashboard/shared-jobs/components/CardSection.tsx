@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import SharedJobActivityView from "./SharedJobActivityView";
+import SharedJobDetailModal from "./SharedJobDetail";
 import {
   Briefcase,
   MapPin,
@@ -40,11 +42,35 @@ const SharedJobsCardSection = ({
   onJobUpdate,
 }: SharedJobsCardSectionProps) => {
   const [localJobs, setLocalJobs] = useState<any[]>(jobs);
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showActivityView, setShowActivityView] = useState(false);
 
   // Update local jobs when props change
   useEffect(() => {
     setLocalJobs(jobs);
   }, [jobs]);
+
+  // Handle VIEW button click
+  const handleView = (assignment: any) => {
+    setSelectedAssignment(assignment);
+    setIsModalOpen(true);
+  };
+
+  // Handle Activity button click
+  const handleActivity = (assignment: any) => {
+    setSelectedAssignment(assignment);
+    setShowActivityView(true);
+  };
+
+  // Handle close activity view
+  const handleCloseActivityView = () => {
+    setShowActivityView(false);
+    setSelectedAssignment(null);
+    if (onJobUpdate) {
+      onJobUpdate();
+    }
+  };
 
   // Handle status update
   const handleStatusUpdate = async (assignmentId: string, newStatus: string) => {
@@ -76,6 +102,23 @@ const SharedJobsCardSection = ({
 
   if (loading) return <div className="p-10 text-center">Loading shared jobs...</div>;
 
+  // Calculate costs for the selected assignment
+  const partsCost =
+    selectedAssignment?.job?.parts?.reduce(
+      (total: number, part: any) =>
+        total + Number(part.totalCost || part.unitCost || 0),
+      0,
+    ) || 0;
+
+  const labourCost =
+    selectedAssignment?.job?.services?.reduce(
+      (total: number, service: any) =>
+        total + (parseFloat(service.labourCost) || 0),
+      0,
+    ) || 0;
+
+  const totalBill = partsCost + labourCost;
+
   const NoJobsMessage = () => (
     <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
       <div className="p-4 bg-gray-50 rounded-full mb-4">
@@ -92,7 +135,11 @@ const SharedJobsCardSection = ({
 
   return (
     <div>
-      {viewMode === "grid" ? (
+      {showActivityView && selectedAssignment ? (
+        <SharedJobActivityView assignment={selectedAssignment} onClose={handleCloseActivityView} />
+      ) : (
+        <>
+          {viewMode === "grid" ? (
         localJobs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {localJobs?.map((assignment, index) => {
@@ -233,6 +280,21 @@ const SharedJobsCardSection = ({
                         </div>
                       </div>
                     </div>
+
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => handleView(assignment)}
+                        className="flex-1 bg-linear-to-r from-indigo-600 to-purple-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition-all"
+                      >
+                        <Eye size={13} /> VIEW
+                      </button>
+                      <button
+                        onClick={() => handleActivity(assignment)}
+                        className="flex-1 bg-linear-to-r from-teal-600 to-cyan-600 text-white py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 transition-all"
+                      >
+                        <ClipboardList size={13} /> Activity
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -340,7 +402,22 @@ const SharedJobsCardSection = ({
                       </td>
 
                       <td className="p-4">
-                        <div className="flex gap-1 justify-center">
+                        <div className="flex gap-2 justify-center items-center">
+                          <button
+                            onClick={() => handleView(assignment)}
+                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleActivity(assignment)}
+                            className="p-2 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-600 hover:text-white transition-all shadow-sm"
+                            title="Activity"
+                          >
+                            <ClipboardList size={16} />
+                          </button>
+                          
                           {!isCompleted && (
                             <>
                               {currentStatus === "PENDING" && (
@@ -388,6 +465,16 @@ const SharedJobsCardSection = ({
         </div>
       ) : (
         <NoJobsMessage />
+      )}
+      
+      {/* Modals */}
+      <SharedJobDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        assignment={selectedAssignment}
+        calculations={{ partsCost, labourCost, totalBill }}
+      />
+      </>
       )}
     </div>
   );
