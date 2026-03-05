@@ -84,6 +84,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: FileText,
     roleId: [2],
   },
+  {
+    _id: nanoid(),
+    label: "My Shared Jobs",
+    href: "/dashboard/shared-jobs",
+    icon: Users,
+    roleId: [2],
+  },
   /* ================= SERVICE TICKETS ================= */
   {
     _id: nanoid(),

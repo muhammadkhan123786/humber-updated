@@ -234,7 +234,10 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     const fetchServiceTypes = async () => {
       setLoadingDropdowns(true);
       try {
-        const serviceTypesRes = await getAll<ServiceTypeWithId>("/technician-service-types", { limit: "100" });
+        const serviceTypesRes = await getAll<ServiceTypeWithId>("/technician-service-types", { 
+          limit: "100",
+          isActive: "true"
+        });
         setServiceTypes(serviceTypesRes.data || []);
       } catch (err: any) {
         console.error("Error fetching service types:", err?.response?.data || err?.message || err);
