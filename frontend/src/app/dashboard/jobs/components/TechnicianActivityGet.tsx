@@ -184,8 +184,8 @@ const TechnicianActivityGet = ({
             key={activity._id}
             className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-blue-200 transform hover:-translate-y-1"
           >
-            {/* Header with Status Badge */}
-            <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-100">
+            {/* Header with Timer and Status Badge */}
+            <div className="flex justify-between items-center mb-5 pb-4 border-b border-gray-100 flex-wrap gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
                   <Activity className="text-white" size={24} />
@@ -195,10 +195,27 @@ const TechnicianActivityGet = ({
                   <p className="text-xs text-gray-500">Created {formatDate(activity.createdAt)}</p>
                 </div>
               </div>
-              <span className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${getStatusColor(activity.status)}`}>
-                <span>{getStatusIcon(activity.status)}</span>
-                {activity.status.replace("_", " ").toUpperCase()}
-              </span>
+              
+              <div className="flex items-center gap-3">
+                {/* Compact Timer */}
+                <div className="bg-linear-to-br from-slate-50 to-gray-100 rounded-xl px-4 py-2 border border-gray-200 shadow-md">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-gray-600" />
+                    <Timer
+                      activityId={activity._id}
+                      status={activity.status}
+                      totalTimeInSeconds={activity.totalTimeInSeconds}
+                      compact={true}
+                    />
+                  </div>
+                </div>
+                
+                {/* Status Badge */}
+                <span className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 ${getStatusColor(activity.status)}`}>
+                  <span>{getStatusIcon(activity.status)}</span>
+                  {activity.status.replace("_", " ").toUpperCase()}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
@@ -267,15 +284,6 @@ const TechnicianActivityGet = ({
                 <p className="text-gray-700 leading-relaxed">{activity.additionalNotes}</p>
               </div>
             )}
-
-            {/* Timer Component */}
-            <div className="mb-5">
-              <Timer
-                activityId={activity._id}
-                status={activity.status}
-                totalTimeInSeconds={activity.totalTimeInSeconds}
-              />
-            </div>
 
             {/* Parts List Component */}
             {typeof activity.quotationId === "object" && activity.quotationId?._id && (

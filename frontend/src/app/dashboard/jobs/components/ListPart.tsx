@@ -1,9 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Package, Loader2, CheckCircle, Clock, Wrench } from "lucide-react";
+import { Package, Loader2, CheckCircle, Clock, Wrench, Plus, Minus } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import InstallParts from "./InstallParts";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -32,6 +31,8 @@ const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPa
   const [parts, setParts] = useState<Part[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedParts, setSelectedParts] = useState<{ [key: string]: number }>({});
+  const [installingParts, setInstallingParts] = useState<{ [key: string]: boolean }>({});
 
   const fetchParts = async () => {
       if (!quotationId) {
@@ -108,6 +109,117 @@ const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPa
     fetchParts();
   }, [quotationId, refreshKey]);
 
+  const handleQuantityChange = (partId: string, part: Part, change: number) => {
+    const currentQuantity = selectedParts[partId] || 0;
+    const maxAvailable = part.quantity - part.installedQuantity;
+    const newQuantity = Math.max(0, Math.min(maxAvailable, currentQuantity + change));
+
+    if (newQuantity === 0) {
+      const { [partId]: _, ...rest } = selectedParts;
+      setSelectedParts(rest);
+    } else {
+      setSelectedParts({ ...selectedParts, [partId]: newQuantity });
+    }
+  };
+
+  const handleInstallPart = async (partId: string) => {
+    const quantity = selectedParts[partId];
+    
+    if (!quantity || quantity === 0) {
+      toast.error("Please select quantity to install");
+      return;
+    }
+
+    try {
+      setInstallingParts({ ...installingParts, [partId]: true });
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        toast.error("Authentication required. Please login again.");
+        return;
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/technician-work/install-parts`,
+        {
+          activityId,
+          partsUsed: [{ partId, quantity }],
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Part installed successfully!");
+        
+        // Update the part locally instead of refetching
+        setParts(prevParts => 
+          prevParts.map(p => {
+            if (p.partId === partId) {
+              const newInstalledQuantity = p.installedQuantity + quantity;
+              const newStatus = newInstalledQuantity >= p.quantity ? 'COMPLETED' : 
+                               newInstalledQuantity > 0 ? 'PARTIAL' : 'PENDING';
+              
+              return {
+                ...p,
+                installedQuantity: newInstalledQuantity,
+                installationStatus: newStatus,
+                installedAt: new Date().toISOString()
+              };
+            }
+            return p;
+          })
+        );
+        
+        // Clear selection for this part
+        const { [partId]: _, ...rest } = selectedParts;
+        setSelectedParts(rest);
+        
+        // Notify parent component if needed
+        if (onPartsUpdate) {
+          onPartsUpdate();
+        }
+      } else {
+        toast.error(response.data.message || "Failed to install part");
+      }
+    } catch (err: any) {
+      console.error("Error installing part:", err);
+      
+      if (err.response) {
+        const status = err.response.status;
+        const message = err.response.data?.message;
+        
+        if (message && message.toLowerCase().includes("activity is not active")) {
+          toast.error("Please start the activity first before installing parts.");
+        } else if (message && message.toLowerCase().includes("not authorized")) {
+          toast.error("You are not authorized to install parts for this activity.");
+        } else if (status === 401) {
+          toast.error("Session expired. Please login again.");
+        } else if (status === 403) {
+          toast.error("You don't have permission to install parts.");
+        } else if (status === 404) {
+          toast.error("Activity or parts not found.");
+        } else if (status === 400) {
+          toast.error(message || "Invalid request. Please check your selection.");
+        } else if (status >= 500) {
+          toast.error(message || "Server error. Please try again later.");
+        } else {
+          toast.error(message || "Failed to install part. Please try again.");
+        }
+      } else if (err.request) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setInstallingParts({ ...installingParts, [partId]: false });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "COMPLETED":
@@ -165,19 +277,22 @@ const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPa
   }
 
   return (
-    <div className="space-y-5">
-      {/* Parts List */}
-      <div className="bg-linear-to-br from-indigo-50 via-white to-purple-50 rounded-xl p-5 border border-indigo-200 shadow-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <Package className="text-indigo-600" size={24} />
-          <h3 className="text-lg font-bold text-gray-800">Parts for Installation</h3>
-          <span className="ml-auto bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-            {parts.length} {parts.length === 1 ? "Part" : "Parts"}
-          </span>
-        </div>
+    <div className="bg-linear-to-br from-indigo-50 via-white to-purple-50 rounded-xl p-5 border border-indigo-200 shadow-lg">
+      <div className="flex items-center gap-2 mb-4">
+        <Package className="text-indigo-600" size={24} />
+        <h3 className="text-lg font-bold text-gray-800">Parts for Installation</h3>
+        <span className="ml-auto bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+          {parts.length} {parts.length === 1 ? "Part" : "Parts"}
+        </span>
+      </div>
 
-        <div className="space-y-3">
-          {parts.map((part) => (
+        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-indigo-300 scrollbar-track-indigo-100">
+          {parts.map((part) => {
+            const availableQuantity = part.quantity - part.installedQuantity;
+            const selectedQuantity = selectedParts[part.partId] || 0;
+            const isInstalling = installingParts[part.partId] || false;
+            
+            return (
             <div
               key={part._id}
               className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 hover:border-indigo-300"
@@ -222,7 +337,7 @@ const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPa
               </div>
 
               {part.discount > 0 && (
-                <div className="bg-amber-50 rounded-lg p-2 border border-amber-200">
+                <div className="bg-amber-50 rounded-lg p-2 border border-amber-200 mb-3">
                   <p className="text-xs text-amber-700">
                     <span className="font-semibold">Discount:</span> {part.discount}%
                   </p>
@@ -230,29 +345,62 @@ const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPa
               )}
 
               {part.installedAt && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
+                <div className="mb-3 pt-3 border-t border-gray-200">
                   <p className="text-xs text-gray-600">
                     <span className="font-semibold">Installed on:</span>{" "}
                     {new Date(part.installedAt).toLocaleString()}
                   </p>
                 </div>
               )}
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Install Parts Component */}
-      <InstallParts 
-        activityId={activityId} 
-        parts={parts} 
-        onInstallSuccess={() => {
-          fetchParts();
-          if (onPartsUpdate) {
-            onPartsUpdate();
-          }
-        }}
-      />
+              {/* Quantity Selection and Install Button - Only show if not fully installed */}
+              {availableQuantity > 0 && (
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-200">
+                  <span className="text-sm text-gray-600 font-semibold">Install:</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleQuantityChange(part.partId, part, -1)}
+                      disabled={selectedQuantity === 0 || isInstalling}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110"
+                    >
+                      <Minus size={16} />
+                    </button>
+
+                    <span className="text-lg font-black text-gray-800 min-w-8 text-center">
+                      {selectedQuantity}
+                    </span>
+
+                    <button
+                      onClick={() => handleQuantityChange(part.partId, part, 1)}
+                      disabled={selectedQuantity >= availableQuantity || isInstalling}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-100 text-green-600 hover:bg-green-200 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-300 hover:scale-110"
+                    >
+                      <Plus size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleInstallPart(part.partId)}
+                      disabled={selectedQuantity === 0 || isInstalling}
+                      className="ml-2 flex items-center gap-1.5 px-4 py-2 bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isInstalling ? (
+                        <>
+                          <Loader2 className="animate-spin" size={14} />
+                          Installing...
+                        </>
+                      ) : (
+                        <>
+                          <Wrench size={14} />
+                          Install
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )})}
+        </div>
     </div>
   );
 };

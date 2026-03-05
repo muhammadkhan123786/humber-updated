@@ -6,9 +6,10 @@ interface TimerProps {
   status: string;
   totalTimeInSeconds: number;
   activityId: string;
+  compact?: boolean;
 }
 
-const Timer = ({ status, totalTimeInSeconds, activityId }: TimerProps) => {
+const Timer = ({ status, totalTimeInSeconds, activityId, compact = false }: TimerProps) => {
   const [currentTime, setCurrentTime] = useState(totalTimeInSeconds);
 
   useEffect(() => {
@@ -40,6 +41,18 @@ const Timer = ({ status, totalTimeInSeconds, activityId }: TimerProps) => {
       seconds: secs.toString().padStart(2, "0"),
     };
   };
+
+  // Compact inline version
+  if (compact) {
+    const { hours, minutes, seconds } = formatTime(currentTime);
+    return (
+      <div className="flex items-center gap-1">
+        <span className={`font-mono font-bold text-sm ${status === 'in_progress' ? 'text-blue-600' : 'text-gray-700'}`}>
+          {hours}:{minutes}:{seconds}
+        </span>
+      </div>
+    );
+  }
 
   const { hours, minutes, seconds } = formatTime(currentTime);
 

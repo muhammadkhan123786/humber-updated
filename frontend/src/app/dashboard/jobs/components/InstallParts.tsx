@@ -155,7 +155,7 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
         )}
       </div>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-emerald-300 scrollbar-track-emerald-100">
         {installableParts.map((part) => {
           const availableQuantity = part.quantity - part.installedQuantity;
           const selectedQuantity = selectedParts[part.partId] || 0;
