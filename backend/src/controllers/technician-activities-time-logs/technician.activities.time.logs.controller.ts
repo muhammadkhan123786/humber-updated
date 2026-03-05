@@ -140,7 +140,7 @@ export const installPartsDuringActivity = async (
     if (part.quantity <= 0) throw new Error("Quantity must be greater than 0");
 
     const quotationPart = quotation.partsList.find(
-      (p) => p._id?.toString() === part.partId
+      (p) => p.partId?.toString() === part.partId
     );
     if (!quotationPart) throw new Error(`Part ${part.partId} not found`);
 
@@ -158,7 +158,7 @@ export const installPartsDuringActivity = async (
         : "PARTIAL";
 
     lastLog.partsUsed.push({
-      partId: quotationPart._id.toString(),
+      partId: quotationPart.partId?.toString(),
       quotationPartId: quotationPart._id.toString(),
       quantityUsed: part.quantity,
     });

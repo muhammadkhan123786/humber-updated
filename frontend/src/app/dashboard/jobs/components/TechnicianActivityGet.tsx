@@ -1,6 +1,9 @@
 "use client";
 import { Activity, Loader2, Edit, Trash2, Briefcase, FileText, User, Clock, Calendar, MessageSquare } from "lucide-react";
+import { useState } from "react";
 import TechnicianActivityButtons from "./TechnicianActivityButtons";
+import Timer from "./Timer";
+import ListPart from "./ListPart";
 import { Pause } from "lucide-react";
 export interface TechnicianActivity {
   _id: string;
@@ -118,6 +121,14 @@ const TechnicianActivityGet = ({
   onResumeActivity,
   onCompleteActivity
 }: TechnicianActivityGetProps) => {
+  // State to trigger refresh of all parts lists across all activities
+  const [partsRefreshKey, setPartsRefreshKey] = useState(0);
+
+  // Function to refresh all parts lists
+  const refreshAllParts = () => {
+    setPartsRefreshKey(prev => prev + 1);
+  };
+
   if (isLoading) {
     return (
       <div className="bg-linear-to-br from-blue-50 via-white to-purple-50 p-8 rounded-2xl shadow-lg">
@@ -254,6 +265,27 @@ const TechnicianActivityGet = ({
                   <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Notes</p>
                 </div>
                 <p className="text-gray-700 leading-relaxed">{activity.additionalNotes}</p>
+              </div>
+            )}
+
+            {/* Timer Component */}
+            <div className="mb-5">
+              <Timer
+                activityId={activity._id}
+                status={activity.status}
+                totalTimeInSeconds={activity.totalTimeInSeconds}
+              />
+            </div>
+
+            {/* Parts List Component */}
+            {typeof activity.quotationId === "object" && activity.quotationId?._id && (
+              <div className="mb-5">
+                <ListPart 
+                  quotationId={activity.quotationId._id} 
+                  activityId={activity._id}
+                  refreshKey={partsRefreshKey}
+                  onPartsUpdate={refreshAllParts}
+                />
               </div>
             )}
 

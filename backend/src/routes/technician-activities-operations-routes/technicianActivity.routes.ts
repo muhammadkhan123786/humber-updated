@@ -47,13 +47,13 @@ const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextF
 
 
 //install parts during activity 
-technicianActionsrouter.get(
+technicianActionsrouter.post(
   "/install-parts",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
-    const { activityId } = activityIdSchema.parse(req.body);
-    const { technicianId } = technicianIdSchema.parse(req.technicianId);
-    const {partsUsed} = partsIdSchema.parse(req.body);
-
+    const { activityId } = req.body;
+    const technicianId  = req.technicianId;
+    const {partsUsed} = req.body;
+    console.log("Installing parts with activityId:", activityId, "technicianId:", technicianId, "partsUsed:", partsUsed);
     const activity = await installPartsDuringActivity(activityId.toString(),technicianId.toString(),partsUsed);
     res.json({ success: true,updatedActivity: activity });
   })
