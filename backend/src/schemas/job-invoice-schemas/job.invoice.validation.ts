@@ -38,57 +38,52 @@ const invoicePartSchema = z.object({
 // ----------------------------
 // Main Invoice Schema
 // ----------------------------
-export const createInvoiceSchemaValidation = z
-  .object({
-    ...commonSchemaValidation,
-    invoiceId: z.string().min(1, "Invoice ID is required"),
-    jobId: objectIdSchema,
-    customerId: objectIdSchema,
-    services: z.array(invoiceServiceSchema).default([]),
-    parts: z.array(invoicePartSchema).default([]),
-    taxAmount: z.number().default(0),
-    completionSummary: z.string().optional(),
-    // 🔥 Coerce string to Date
-    invoiceDate: z.coerce.date().refine((val) => !isNaN(val.getTime()), {
-      message: "Invalid invoice date",
-    }),
-    dueDate: z.coerce.date().refine((val) => !isNaN(val.getTime()), {
-      message: "Invalid due date",
-    }),
-    callOutFee: z.number().min(0).default(0),
-    generalNotes: z.string().optional(),
-    partsTotal: z.number().default(0),
-    labourTotal: z.number().default(0),
-    subTotal: z.number().default(0),
-    discountAmount: z.number().default(0),
-    netTotal: z.number().default(0),
+export const createInvoiceSchemaValidation = z.object({
+  ...commonSchemaValidation,
+  invoiceId: z.string().min(1, "Invoice ID is required"),
+  jobId: objectIdSchema,
+  customerId: objectIdSchema,
+  services: z.array(invoiceServiceSchema).default([]),
+  parts: z.array(invoicePartSchema).default([]),
+  taxAmount: z.number().default(0),
+  completionSummary: z.string().optional(),
+  // 🔥 Coerce string to Date
+  invoiceDate: z.coerce.date().refine((val) => !isNaN(val.getTime()), {
+    message: "Invalid invoice date",
+  }),
+  dueDate: z.coerce.date().refine((val) => !isNaN(val.getTime()), {
+    message: "Invalid due date",
+  }),
+  callOutFee: z.number().min(0).default(0),
+  generalNotes: z.string().optional(),
+  partsTotal: z.number().default(0),
+  labourTotal: z.number().default(0),
+  subTotal: z.number().default(0),
+  discountAmount: z.number().default(0),
+  netTotal: z.number().default(0),
 
-    discountType: z.enum(["Percentage", "Fix Amount"]).default("Percentage"),
-    isVATEXEMPT: z.boolean().default(false),
+  discountType: z.enum(["Percentage", "Fix Amount"]).default("Percentage"),
+  isVATEXEMPT: z.boolean().default(false),
 
-    invoiceNotes: z.string().optional(),
-    termsAndConditions: z.string().optional(),
-    paymentLink: z
-      .string()
-      .url({ message: "Invalid payment link URL" })
-      .optional(),
-    paymentStatus: z.enum(["PENDING", "PAID"]).default("PENDING"),
-    paymentMethod: z
-      .enum([
-        "CASH",
-        "BANK TRANSFER",
-        "CARD PAYMENT",
-        "ONLINE PAYMENT",
-        "QR CODE",
-        "PENDING",
-      ])
-      .default("PENDING"),
-    status: z.enum(["DRAFT", "ISSUED", "CANCELLED", "PAID"]).default("DRAFT"),
-  })
-  // ----------------------------
-  // Extra Validation: dueDate must be after invoiceDate
-  // ----------------------------
-  .refine((data) => data.dueDate > data.invoiceDate, {
-    message: "Due date must be after invoice date",
-    path: ["dueDate"],
-  });
+  invoiceNotes: z.string().optional(),
+  termsAndConditions: z.string().optional(),
+  paymentLink: z
+    .string()
+    .url({ message: "Invalid payment link URL" })
+    .optional(),
+  paymentStatus: z.enum(["PENDING", "PAID"]).default("PENDING"),
+  paymentMethod: z
+    .enum([
+      "CASH",
+      "BANK TRANSFER",
+      "CARD PAYMENT",
+      "ONLINE PAYMENT",
+      "QR CODE",
+      "PENDING",
+    ])
+    .default("PENDING"),
+  status: z.enum(["DRAFT", "ISSUED", "CANCELLED", "PAID"]).default("DRAFT"),
+});
+// ----------------------------
+// Extra Validation: dueDate must be after invoiceDate
+// ----------------------------
