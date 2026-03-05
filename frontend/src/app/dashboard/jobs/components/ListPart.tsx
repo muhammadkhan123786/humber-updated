@@ -176,7 +176,7 @@ const ListPart = ({ quotationId, activityId, refreshKey, onPartsUpdate }: ListPa
           </span>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-indigo-300 scrollbar-track-indigo-100">
           {parts.map((part) => (
             <div
               key={part._id}
