@@ -90,7 +90,7 @@ export default function MarketplaceConnections() {
       createItem({
         type: formData.name,
         name: formData.type,
-        environment: "sandbox",
+        environment: formData.environment,
         userId: getUserId(),
         descripation: formData.description,
         credentials: formData.credentials,

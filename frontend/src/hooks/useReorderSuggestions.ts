@@ -83,17 +83,14 @@ export function useReorderSuggestions({
   const fetchReorderSuggestions = useCallback(async (forceRefresh = false) => {
 const token = localStorage.getItem('token');
     if (!userId) {
-          console.log("if", userId)
 
       toast.error("userId is required to load reorder suggestions.");
       return;
     }
-      console.log("out if", userId)
 
     
     if (isFetchingReorder) return;
     if (reorderFetched && !forceRefresh) return;
-      console.log("isFetchingReorder reorderFetched", userId)
 
     setIsFetchingReorder(true);
     setError(null);
