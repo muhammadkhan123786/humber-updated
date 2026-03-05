@@ -55,7 +55,6 @@ const ListInspectionJob = ({ jobId }: ListInspectionsProps) => {
     try {
       const token = localStorage.getItem("token")?.replace(/"/g, "").trim();
 
-      // Fetch both BEFORE and AFTER service inspections
       const beforeResponse = axios.get(
         `${BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${jobId}&inspectionTIME=BEFORE SERVICE`,
         { headers: { Authorization: `Bearer ${token}` } },
