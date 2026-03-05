@@ -1,11 +1,12 @@
 import React from 'react'
+import MainImports from './components/MainImports'
 
-const page = () => {
+const SharedJobsPage = () => {
   return (
     <div>
-      am shared jobs
+     <MainImports />
     </div>
   )
 }
 
-export default page
+export default SharedJobsPage
