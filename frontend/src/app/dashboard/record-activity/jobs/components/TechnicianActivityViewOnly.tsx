@@ -10,7 +10,11 @@ import {
   Calendar,
   MessageSquare,
   Pause,
+  Wrench,
+  Package,
+  Clock as TimerIcon,
 } from "lucide-react";
+
 export interface TechnicianActivity {
   _id: string;
   JobAssignedId: string | { _id: string; jobTitle: string; jobId: string };
@@ -31,7 +35,20 @@ export interface TechnicianActivity {
   additionalNotes: string;
   status: string;
   totalTimeInSeconds: number;
-  timeLogs: any[];
+  timeLogs: Array<{
+    startTime: string;
+    _id: string;
+    partsUsed: Array<{
+      partId: {
+        _id: string;
+        partName: string;
+      };
+      quotationPartId: string;
+      quantityUsed: number;
+      _id: string;
+    }>;
+    endTime: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -118,88 +135,143 @@ const TechnicianActivityViewOnly = ({ activities, isLoading }: Props) => {
 
   return (
     <div className="space-y-6">
-      {activities.map((activity) => (
-        <div
-          key={activity._id}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md"
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-                <Activity className="text-blue-600" size={20} />
+      {activities.map((activity) => {
+        const timeLogsWithParts =
+          activity.timeLogs?.filter(
+            (log) => log.partsUsed && log.partsUsed.length > 0,
+          ) || [];
+
+        return (
+          <div
+            key={activity._id}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md"
+          >
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Activity className="text-blue-600" size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-800">Activity Details</h3>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest">
+                    {activity._id.slice(-8)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-gray-800">Activity Details</h3>
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest">
-                  {activity._id.slice(-8)}
+              <span
+                className={`px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-2 shadow-lg ${getStatusStyles(activity.status)}`}
+              >
+                {getStatusIcon(activity.status)}
+                {activity.status.replace("_", " ").toUpperCase()}
+              </span>
+            </div>
+
+            {/* Data Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <DataBox
+                icon={<Briefcase size={14} />}
+                label="Job ID"
+                value={getJobId(activity)}
+                color="blue"
+              />
+              <DataBox
+                icon={<FileText size={14} />}
+                label="Quotation"
+                value={getQuotationNumber(activity)}
+                color="purple"
+              />
+              <DataBox
+                icon={<User size={14} />}
+                label="Technician"
+                value={getTechnicianName(activity)}
+                color="pink"
+              />
+              <DataBox
+                icon={<Activity size={14} />}
+                label="Service Type"
+                value={getActivityType(activity)}
+                color="green"
+              />
+              <DataBox
+                icon={<Clock size={14} />}
+                label="Duration"
+                value={formatTime(activity.totalTimeInSeconds)}
+                color="orange"
+              />
+              <DataBox
+                icon={<Calendar size={14} />}
+                label="Date"
+                value={formatDate(activity.createdAt)}
+                color="cyan"
+              />
+            </div>
+
+            {/* Time Logs with Parts Used Section */}
+            {timeLogsWithParts.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <TimerIcon size={16} className="text-blue-600" />
+                  </div>
+                  <h4 className="font-bold text-gray-700 text-sm">
+                    Parts Used During Activity
+                  </h4>
+                  <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
+                    {timeLogsWithParts.length}{" "}
+                    {timeLogsWithParts.length === 1 ? "session" : "sessions"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {timeLogsWithParts.map((log) => (
+                    <div
+                      key={log._id}
+                      className="bg-linear-to-r from-gray-50 to-white rounded-xl p-5 border border-gray-200"
+                    >
+                      <div className="space-y-3">
+                        {log.partsUsed.map((part, partIndex) => (
+                          <div
+                            key={part._id || partIndex}
+                            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                          >
+                            <DataBox
+                              icon={<Package size={14} />}
+                              label="Part Name"
+                              value={part.partId?.partName || "N/A"}
+                              color="blue"
+                            />
+                            <DataBox
+                              icon={<Wrench size={14} />}
+                              label="Quantity Used"
+                              value={part.quantityUsed?.toString() || "0"}
+                              color="green"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activity.additionalNotes && (
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare size={14} className="text-slate-400" />
+                  <span className="text-[11px] font-bold text-slate-500 uppercase">
+                    Technician Notes
+                  </span>
+                </div>
+                <p className="text-sm text-slate-600 italic">
+                  {activity.additionalNotes}
                 </p>
               </div>
-            </div>
-            <span
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-2 shadow-lg ${getStatusStyles(activity.status)}`}
-            >
-              {getStatusIcon(activity.status)}
-              {activity.status.replace("_", " ").toUpperCase()}
-            </span>
+            )}
           </div>
-
-          {/* Data Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <DataBox
-              icon={<Briefcase size={14} />}
-              label="Job ID"
-              value={getJobId(activity)}
-              color="blue"
-            />
-            <DataBox
-              icon={<FileText size={14} />}
-              label="Quotation"
-              value={getQuotationNumber(activity)}
-              color="purple"
-            />
-            <DataBox
-              icon={<User size={14} />}
-              label="Technician"
-              value={getTechnicianName(activity)}
-              color="pink"
-            />
-            <DataBox
-              icon={<Activity size={14} />}
-              label="Service Type"
-              value={getActivityType(activity)}
-              color="green"
-            />
-            <DataBox
-              icon={<Clock size={14} />}
-              label="Duration"
-              value={formatTime(activity.totalTimeInSeconds)}
-              color="orange"
-            />
-            <DataBox
-              icon={<Calendar size={14} />}
-              label="Date"
-              value={formatDate(activity.createdAt)}
-              color="cyan"
-            />
-          </div>
-
-          {/* Notes Section */}
-          {activity.additionalNotes && (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-              <div className="flex items-center gap-2 mb-2">
-                <MessageSquare size={14} className="text-slate-400" />
-                <span className="text-[11px] font-bold text-slate-500 uppercase">
-                  Technician Notes
-                </span>
-              </div>
-              <p className="text-sm text-slate-600 italic">
-                {activity.additionalNotes}
-              </p>
-            </div>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

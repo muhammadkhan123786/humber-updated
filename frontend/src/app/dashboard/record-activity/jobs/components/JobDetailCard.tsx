@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -15,28 +15,122 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import JobDetailModal from "./JobDetailModal";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { getAll, PaginatedResponse } from "../../../../../helper/apiHelper";
 
 interface Props {
   job: any;
   onDelete?: (jobId: string) => void;
 }
+
+interface InspectionCounts {
+  combined: {
+    total: number;
+    passed: number;
+  };
+}
+
+interface TechnicianActivity {
+  _id: string;
+  JobAssignedId: {
+    _id: string;
+    jobId: string;
+  };
+  quotationId: {
+    _id: string;
+    partsList: any[];
+  };
+  // Add other fields as needed
+}
+
 const JobDetailCard = ({ job, onDelete }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [inspectionCounts, setInspectionCounts] = useState<InspectionCounts>({
+    combined: { total: 0, passed: 0 },
+  });
+  const [loadingInspections, setLoadingInspections] = useState(false);
   const router = useRouter();
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
+  const { data: activitiesData, isLoading: isActivitiesLoading } = useQuery({
+    queryKey: ["technicianActivities", job?._id],
+    queryFn: () =>
+      getAll<TechnicianActivity>("/technician-job-activities", {
+        JobAssignedId: job?._id,
+        limit: "100",
+      }),
+    enabled: !!job?._id,
+  });
+  const activitiesCount =
+    (
+      activitiesData as PaginatedResponse<TechnicianActivity> & {
+        activeCount?: number;
+      }
+    )?.activeCount || 0;
+
+  const fetchInspectionCounts = useCallback(async () => {
+    const jobId = job._id || job.id;
+    if (!jobId) return;
+
+    setLoadingInspections(true);
+    try {
+      const token = localStorage.getItem("token")?.replace(/"/g, "").trim();
+      const beforeResponse = await axios.get(
+        `${API_BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${jobId}&inspectionTIME=BEFORE SERVICE`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      const afterResponse = await axios.get(
+        `${API_BASE_URL}/technician-vehicle-inspections/inspectionbyjobid?jobId=${jobId}&inspectionTIME=AFTER SERVICE`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      let beforeCounts = { total: 0, passed: 0 };
+      if (beforeResponse.data?.success && beforeResponse.data.data) {
+        const inspections = beforeResponse.data.data.inspections || [];
+        beforeCounts = {
+          total: inspections.length,
+          passed: inspections.filter((i: any) => i.status === "PASS").length,
+        };
+      }
+      let afterCounts = { total: 0, passed: 0 };
+      if (afterResponse.data?.success && afterResponse.data.data) {
+        const inspections = afterResponse.data.data.inspections || [];
+        afterCounts = {
+          total: inspections.length,
+          passed: inspections.filter((i: any) => i.status === "PASS").length,
+        };
+      }
+
+      const combined = {
+        total: beforeCounts.total + afterCounts.total,
+        passed: beforeCounts.passed + afterCounts.passed,
+      };
+
+      setInspectionCounts({ combined });
+    } catch (error) {
+      console.error("Error fetching inspection counts:", error);
+      setInspectionCounts({ combined: { total: 0, passed: 0 } });
+    } finally {
+      setLoadingInspections(false);
+    }
+  }, [job, API_BASE_URL]);
+
+  useEffect(() => {
+    if (job?._id || job?.id) {
+      fetchInspectionCounts();
+    }
+  }, [job, fetchInspectionCounts]);
   const formatDate = (date?: string) =>
     date ? new Date(date).toLocaleString() : "-";
 
   const partsCount = job.quotationId?.partsList?.length || 0;
-  const servicesCount = 0;
-  const passedInspections = 0;
-  const totalInspections = 0;
   const totalMinutes = job.quotationId?.labourTime || 0;
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -135,7 +229,6 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
     }
   };
 
-  // Simplified technician name function
   const getTechnicianName = () => {
     try {
       if (!job?.leadingTechnicianId) {
@@ -223,17 +316,15 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
             <div className="grid grid-cols-3 gap-4">
               <Stat
-                key="services-stat"
                 icon={<Settings size={16} className="text-blue-600" />}
-                label="Services"
-                value={servicesCount}
+                label="Activities"
+                value={isActivitiesLoading ? "..." : activitiesCount}
                 bg="from-blue-50 to-cyan-50"
                 border="border-blue-100"
                 color="text-blue-600"
               />
 
               <Stat
-                key="parts-stat"
                 icon={<Package size={16} className="text-purple-600" />}
                 label="Parts"
                 value={partsCount}
@@ -243,10 +334,13 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
               />
 
               <Stat
-                key="inspections-stat"
                 icon={<CheckCircle size={16} className="text-green-600" />}
                 label="Inspections"
-                value={`${passedInspections}/${totalInspections}`}
+                value={
+                  loadingInspections
+                    ? "..."
+                    : `${inspectionCounts.combined.passed}/${inspectionCounts.combined.total}`
+                }
                 bg="from-green-50 to-emerald-50"
                 border="border-green-100"
                 color="text-green-600"
@@ -268,16 +362,8 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
               </div>
 
               <div className="space-y-2 text-sm">
-                <Row
-                  key="parts-cost"
-                  label="Parts Cost:"
-                  value={`£${partsCost.toFixed(2)}`}
-                />
-                <Row
-                  key="labour-cost"
-                  label="Labour Cost:"
-                  value={`£${labourCost.toFixed(2)}`}
-                />
+                <Row label="Parts Cost:" value={`£${partsCost.toFixed(2)}`} />
+                <Row label="Labour Cost:" value={`£${labourCost.toFixed(2)}`} />
 
                 <div className="pt-3 mt-2 border-t-2 border-emerald-200 flex justify-between items-center">
                   <span className="font-bold text-gray-900">Total Bill:</span>
@@ -291,7 +377,6 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
           <div className="w-24 space-y-2">
             <button
-              key="view-btn"
               onClick={() => setIsModalOpen(true)}
               className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-colors"
             >
@@ -299,7 +384,6 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
             </button>
 
             <button
-              key="update-btn"
               onClick={handleUpdate}
               className="w-full h-8 rounded-[10px] bg-slate-50 border border-indigo-600/10 text-sm flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-colors"
             >
@@ -308,16 +392,14 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
 
             {!showDeleteConfirm ? (
               <button
-                key="delete-btn"
                 onClick={() => setShowDeleteConfirm(true)}
                 className="w-full h-8 rounded-[10px] bg-slate-50 border border-red-200 text-sm flex items-center justify-center gap-2 hover:bg-red-600 hover:text-white transition-colors"
               >
                 <Trash2 size={14} /> Delete
               </button>
             ) : (
-              <div key="delete-confirm" className="space-y-1">
+              <div className="space-y-1">
                 <button
-                  key="confirm-delete"
                   onClick={handleDelete}
                   disabled={isDeleting}
                   className="w-full h-8 rounded-[10px] bg-red-600 text-white text-sm flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -325,7 +407,6 @@ const JobDetailCard = ({ job, onDelete }: Props) => {
                   {isDeleting ? "Deleting..." : "Confirm"}
                 </button>
                 <button
-                  key="cancel-delete"
                   onClick={() => setShowDeleteConfirm(false)}
                   className="w-full h-8 rounded-[10px] bg-gray-100 text-gray-700 text-sm flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >
