@@ -27,6 +27,21 @@ interface SharedJobType {
   };
 }
 
+interface SharedJobsResponse {
+  success: boolean;
+  total: number;
+  page: number;
+  totalPages?: number;
+  limit?: number;
+  data: SharedJobType[];
+  statusCounts?: {
+    PENDING?: number;
+    IN_PROGRESS?: number;
+    ON_HOLD?: number;
+    COMPLETED?: number;
+  };
+}
+
 const MainImports = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [jobs, setJobs] = useState<SharedJobType[]>([]);
@@ -55,18 +70,23 @@ const MainImports = () => {
         params.status = statusFilter;
       }
 
-      const res = await getAlls<any>("/technician-job-assignments/getmysharedjobsassignedbyleadingtechnicians", params);
+      const res = await getAlls<SharedJobType>("/technician-job-assignments/getmysharedjobsassignedbyleadingtechnicians", params) as unknown as SharedJobsResponse;
       
       console.log("API Response Shared JOBS:", res);
+      console.log("API Response res.data:", res.data);
       
-      const responseData = res.data as any;
-      const jobsData = Array.isArray(responseData.data) ? responseData.data : [];
+      // Extract data from response
+      const jobsData = res.data || [];
+      const statusCountsData = res.statusCounts || {};
+      const totalCount = res.total || 0;
+      
+      console.log("Processed jobsData:", jobsData);
+      console.log("jobsData length:", jobsData.length);
+      console.log("statusCountsData:", statusCountsData);
       
       setJobs(jobsData);
-      setStatusCounts(responseData.statusCounts || {});
-      
-      const total = responseData.total || 0;
-      setTotalPages(Math.ceil(total / limit));
+      setStatusCounts(statusCountsData);
+      setTotalPages(Math.ceil(totalCount / limit));
     } catch (error: any) {
       console.log("Error fetching shared jobs:", error.message);
       setJobs([]);
