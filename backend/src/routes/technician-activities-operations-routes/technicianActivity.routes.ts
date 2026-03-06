@@ -11,7 +11,7 @@ const technicianActionsrouter = Router();
 // Zod Schemas
 // ----------------------
 const activityIdSchema = z.object({
-  activityId: objectIdOrStringSchema,
+  activityId: string,
 });
 
 const technicianIdSchema = z.object({
@@ -50,12 +50,22 @@ const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextF
 technicianActionsrouter.post(
   "/install-parts",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
-    const { activityId } = req.body;
-    const technicianId  = req.technicianId;
-    const {partsUsed} = req.body;
-    console.log("Installing parts with activityId:", activityId, "technicianId:", technicianId, "partsUsed:", partsUsed);
-    const activity = await installPartsDuringActivity(activityId.toString(),technicianId.toString(),partsUsed);
-    res.json({ success: true,updatedActivity: activity });
+    try{
+        const { activityId } = req.body;
+        const technicianId  = req.technicianId;
+        const {partsUsed} = req.body;
+        console.log("Installing parts with activityId:", activityId, "technicianId:", technicianId, "partsUsed:", partsUsed);
+        const activity = await installPartsDuringActivity(activityId.toString(),technicianId.toString(),partsUsed);
+        res.json({ success: true,updatedActivity: activity });
+
+    }
+    catch(error){
+              res.status(201).json({
+              success: false,
+              message: error.message,
+       });
+    }
+   
   })
 );
 
@@ -77,12 +87,20 @@ technicianActionsrouter.get(
 technicianActionsrouter.post(
   "/:activityId/start",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
-    console.log("Starting activity with params:", req.params, "and technicianId:", req.technicianId);
-    const { activityId } = activityIdSchema.parse(req.params);
-    const technicianId = req.technicianId; // Already a string from JWT middleware
+    try{
+      console.log("Starting activity with params:", req.params, "and technicianId:", req.technicianId);
+      const { activityId } = (req.params as { activityId: string });
+      const technicianId = req.technicianId; // Already a string from JWT middleware
+      const activity = await startActivity(activityId, technicianId);
+      res.json({ success: true, activity });
 
-    const activity = await startActivity(activityId, technicianId);
-    res.json({ success: true, activity });
+    }catch(error){
+              res.status(401).json({
+              success: false,
+              message: error.message,
+       });
+    }
+    
   })
 );
 
@@ -90,11 +108,18 @@ technicianActionsrouter.post(
 technicianActionsrouter.post(
   "/:activityId/pause",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
-    const { activityId } = activityIdSchema.parse(req.params);
+    try{
+    const { activityId } = (req.params as { activityId: string });
     const technicianId = req.technicianId; // Already a string from JWT middleware
 
     const activity = await pauseActivity(activityId, technicianId);
     res.json({ success: true, activity });
+    }catch(error){
+              res.status(401).json({
+              success: false,
+              message: error.message,
+       });
+    }
   })
 );
 
@@ -102,23 +127,40 @@ technicianActionsrouter.post(
 technicianActionsrouter.post(
   "/:activityId/resume",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
-    const { activityId } = activityIdSchema.parse(req.params);
-    const technicianId = req.technicianId; // Already a string from JWT middleware
+    try{
+      const { activityId } = (req.params as { activityId: string });
+      const technicianId = req.technicianId; // Already a string from JWT middleware
 
-    const activity = await resumeActivity(activityId, technicianId);
-    res.json({ success: true, activity });
-  })
+      const activity = await resumeActivity(activityId, technicianId);
+      res.json({ success: true, activity });
+
+    }
+    catch(error){
+              res.status(401).json({
+              success: false,
+              message: error.message,
+       });
+    }
+      })
 );
 
 // Complete activity
 technicianActionsrouter.post(
   "/:activityId/complete",
   asyncHandler(async (req: TechnicianAuthRequest, res: Response) => {
-    const { activityId } = activityIdSchema.parse(req.params);
-    const technicianId = req.technicianId; // Already a string from JWT middleware
+    try{
+          const { activityId } = (req.params as { activityId: string });
+          const technicianId = req.technicianId; // Already a string from JWT middleware
 
-    const activity = await completeActivity(activityId, technicianId);
-    res.json({ success: true, activity });
+          const activity = await completeActivity(activityId, technicianId);
+          res.json({ success: true, activity });
+    }catch(error){
+              res.status(401).json({
+              success: false,
+              message: error.message,
+       });
+    }
+    
   })
 );
 
