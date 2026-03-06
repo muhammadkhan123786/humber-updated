@@ -4,6 +4,7 @@ import { purchaseOrderCustomController } from "../controllers/purchaseOrder.cont
 import { AdvancedGenericController } from "../controllers/GenericController"
 import { GenericService } from "../services/generic.crud.services";
 import { PurchaseOrder } from "../models/purchaseOrder.model";
+import { interceptAndSendPOEmail } from "../middleware/purchaseOrderEmail.middleware";
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.patch("/alerts/:id/dismiss", purchaseOrderCustomController.dismissStockAl
 router.get("/:id", genericController.getById);
 
 // POST /api/purchase-orders                       → create single PO
-router.post("/", genericController.create);
+router.post("/",interceptAndSendPOEmail, genericController.create);
 
 // PUT /api/purchase-orders/:id                    → update single PO
 router.put("/:id", genericController.update);

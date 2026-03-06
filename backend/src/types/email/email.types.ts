@@ -8,8 +8,8 @@ export interface POEmailItem {
 
 export interface POEmailData {
     poNumber: string;
-    orderDate: string;         // formatted: "27 February 2026"
-    expectedDelivery: string;  // formatted: "06 March 2026"
+    orderDate: any;         // formatted: "27 February 2026"
+    expectedDelivery: any;  // formatted: "06 March 2026"
     supplierName: string;
     supplierEmail: string;
     buyerCompany: string;      // your company name
