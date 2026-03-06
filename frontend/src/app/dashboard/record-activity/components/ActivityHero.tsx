@@ -1,139 +1,57 @@
 "use client";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import {
-  Settings,
-  Package,
-  Image as ImageIcon,
-  Clock,
-  ArrowLeft,
-  ClipboardEdit,
-  ListTodo,
-} from "lucide-react";
+import { ArrowLeft, ClipboardEdit } from "lucide-react";
 
 interface ActivityHeroProps {
-  actualServicesCount: number;
-  actualPartsCount: number;
-  completedInspections: number;
-  totalInspectionTypes: number;
-  totalMedia: number;
-  totalDuration: number;
+  actualServicesCount?: number;
+  actualPartsCount?: number;
+  completedInspections?: number;
+  totalInspectionTypes?: number;
+  totalMedia?: number;
+  totalDuration?: number;
 }
 
-export const ActivityHero = ({
-  actualServicesCount,
-  actualPartsCount,
-  completedInspections,
-  totalInspectionTypes,
-  totalMedia,
-  totalDuration,
-}: ActivityHeroProps) => {
-  const formatTotalTime = (total: number) => {
-    if (total < 60) return `${total}m`;
-    const h = Math.floor(total / 60);
-    const m = total % 60;
-    return `${h}h ${m}m`;
-  };
-
-  const stats = [
-    {
-      label: "Service Activities",
-      value: actualServicesCount.toString(),
-      tag: "Activities",
-      icon: Settings,
-      color: "bg-gradient-to-br from-blue-500 to-cyan-500",
-    },
-    {
-      label: "Parts Changed",
-      value: actualPartsCount.toString(),
-      tag: "Parts",
-      icon: Package,
-      color: "from-[#E12AFB] to-[#FF2056]",
-    },
-    {
-      label: "Completed",
-      value: `${completedInspections}/${totalInspectionTypes}`,
-      tag: "Inspection",
-      icon: ListTodo,
-      color: "from-[#00BC7D] to-[#7CCF00]",
-    },
-    {
-      label: "Photos & Videos",
-      value: totalMedia.toString(),
-      tag: "Media",
-      icon: ImageIcon,
-      color: "from-[#8E51FF] to-[#615FFF]",
-    },
-    {
-      label: "Total Duration",
-      value: formatTotalTime(totalDuration),
-      tag: "Time",
-      icon: Clock,
-      color: "from-[#FF8C00] to-[#FF4500]",
-    },
-  ];
-
+export const ActivityHero = ({}: ActivityHeroProps) => {
   return (
-    <>
-      <div className="bg-linear-to-r from-[#4F39F6] to-[#9810FA] p-6 rounded-3xl shadow-xl flex items-center gap-4 text-white mb-8">
-        <Link href="/dashboard">
-          <button className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all cursor-pointer group">
-            <ArrowLeft
-              size={18}
-              className="group-hover:-translate-x-0.5 transition-transform"
-            />
-          </button>
-        </Link>
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{
-            scale: 1,
-            rotate: 360,
-          }}
-          transition={{
-            scale: { type: "spring", duration: 0.8 },
-            rotate: {
-              repeat: Infinity,
-              duration: 12,
-              ease: "linear",
-            },
-          }}
-        >
-          <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
-            <ClipboardEdit size={32} />
-          </div>
-        </motion.div>
-        <div>
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg">
-            Record Technician Activity
-          </h1>
-          <p className="text-white/90 mt-1 text-lg">
-            Enter service activities, parts, and inspection results
-          </p>
-        </div>
-      </div>
+    <div className="bg-linear-to-r from-[#4F39F6] to-[#9810FA] p-6 rounded-3xl shadow-xl flex items-center gap-4 text-white mb-8">
+      <Link href="/dashboard">
+        <button className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all cursor-pointer group">
+          <ArrowLeft
+            size={18}
+            className="group-hover:-translate-x-0.5 transition-transform"
+          />
+        </button>
+      </Link>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        {stats.map((stat, index) => (
-          <div
-            key={index}
-            className={`relative overflow-hidden p-5 rounded-2xl bg-linear-to-br ${stat.color} text-white shadow-lg transition-transform hover:scale-[1.02]`}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <stat.icon size={22} className="opacity-90" />
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-black/20 px-2 py-1 rounded-full">
-                {stat.tag}
-              </span>
-            </div>
-            <div>
-              <div className="text-3xl font-black mb-1">{stat.value}</div>
-              <div className="text-[10px] font-bold opacity-80 uppercase tracking-wider">
-                {stat.label}
-              </div>
-            </div>
-          </div>
-        ))}
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{
+          scale: 1,
+          rotate: 360,
+        }}
+        transition={{
+          scale: { type: "spring", duration: 0.8 },
+          rotate: {
+            repeat: Infinity,
+            duration: 12,
+            ease: "linear",
+          },
+        }}
+      >
+        <div className="h-16 w-16 rounded-2xl bg-white/20 backdrop-blur-lg flex items-center justify-center shadow-xl">
+          <ClipboardEdit size={32} />
+        </div>
+      </motion.div>
+
+      <div>
+        <h1 className="text-3xl md:text-4xl font-bold text-white drop-shadow-lg">
+          Record Technician Activity
+        </h1>
+        <p className="text-white/90 mt-1 text-base md:text-lg">
+          Enter service activities, parts, and inspection results
+        </p>
       </div>
-    </>
+    </div>
   );
 };
