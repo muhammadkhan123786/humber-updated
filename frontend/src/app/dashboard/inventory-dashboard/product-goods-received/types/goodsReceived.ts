@@ -58,7 +58,7 @@ export interface GoodsReceivedNoteItem {
   _id?: string;
   purchaseOrderItemId: string;  // references PurchaseOrderItem._id (or productId._id as fallback)
   // We keep productId as the populated object so the dialog table can read from it
-  productId?: PopulatedProduct;
+  productId?: any;
   // Flat copies for manual entries and display convenience
   productName: string;
   sku: string;

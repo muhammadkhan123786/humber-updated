@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import { emailService } from "../services/email.service";
 import { POEmailData, POEmailItem } from "../types/email/email.types";
-import { PurchaseOrder } from "../models/purchaseOrder.model";  // ← adjust path if needed
+import { PurchaseOrder } from "../models/purchaseOrder.model"; 
 
 export const interceptAndSendPOEmail = (
     req: Request,

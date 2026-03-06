@@ -10,22 +10,51 @@ const grnRoutes = Router();
 
 const grnBaseService = new GenericService<GrnDoc>(GrnModel);
 
+// const grnController = new AdvancedGenericController({
+//   service: grnBaseService,
+//   populate: [
+//     "userId", 
+//     {
+//       path: "purchaseOrderId",
+//       select: "orderNumber expectedDelivery  items.productId",
+//       populate: {
+//         path: "supplier",
+//         select: "contactInformation"
+//       }
+//     },
+    
+//   ],
+//   validationSchema: createGRNValidationsSchema, 
+//   searchFields: ["grnNumber", "receivedBy", "notes"], 
+// });
+
+
+// routes/grn.routes.ts
 const grnController = new AdvancedGenericController({
   service: grnBaseService,
   populate: [
-    "userId", 
+    "userId",
     {
       path: "purchaseOrderId",
-      select: "orderNumber expectedDelivery  items.productId",
-      populate: {
-        path: "supplier",
-        select: "contactInformation"
-      }
+      select: "orderNumber expectedDelivery items",
+      populate: [
+        {
+          path: "supplier",
+          select: "contactInformation"
+        },
+        {
+          path: "items.productId", // Populate product details in PO items
+          select: "productName sku price images"
+        }
+      ]
     },
-    
+    {
+      path: "items.productId", 
+      select: "productName sku price "
+    }
   ],
-  validationSchema: createGRNValidationsSchema, 
-  searchFields: ["grnNumber", "receivedBy", "notes"], 
+  validationSchema: createGRNValidationsSchema,
+  searchFields: ["grnNumber", "receivedBy", "notes"],
 });
 
 grnRoutes.get("/export/:id", exportGRNToPDF);

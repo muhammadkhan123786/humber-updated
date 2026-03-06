@@ -5,6 +5,7 @@ import { generateNextDocumentNumber } from "../services/documentNumber.service"
 
 export const GRNItemSchema = new Schema(
   {
+    productId: { type: string},
     productName: String,
     sku: String,
     orderedQuantity: Number,
@@ -57,7 +58,7 @@ GoodsReceivedSchema.pre("save", async function (this: any) {
 
 export const grnItemSchema = z
   .object({
-    
+    productId: z.string(),
     productName: z.string(),
     sku: z.string(),
     purchaseOrderItemId: z.string().optional(), 

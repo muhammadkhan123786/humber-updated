@@ -7,6 +7,7 @@ interface Supplier {
   };
 }
 export interface GoodsReceivedItem {
+  productId: string;
   purchaseOrderItemId?: string;
   productName: string;
   sku: string;
