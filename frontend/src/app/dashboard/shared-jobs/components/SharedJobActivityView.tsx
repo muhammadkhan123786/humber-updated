@@ -23,16 +23,57 @@ const SharedJobActivityView = ({ assignment, onClose }: SharedJobActivityViewPro
   const [isAnimating, setIsAnimating] = useState(false);
   const [inspectionBadge, setInspectionBadge] = useState<string>('0/0');
   const [currentInspectionTime, setCurrentInspectionTime] = useState<"BEFORE SERVICE" | "AFTER SERVICE">("BEFORE SERVICE");
+  const [fullJobData, setFullJobData] = useState<any>(null);
+  const [loadingJobData, setLoadingJobData] = useState(true);
 
   // Extract the actual job from the assignment
-  const job = assignment.job;
+  const job = fullJobData || assignment.job;
+
+  // Fetch complete job data with all populated fields
+  useEffect(() => {
+    const fetchFullJobData = async () => {
+      try {
+        setLoadingJobData(true);
+        const token = localStorage.getItem("token")?.replace(/"/g, "").trim();
+        
+        console.log("Assignment object:", assignment);
+        console.log("Assignment ID:", assignment._id);
+        
+        // Fetch the complete assignment data with populated fields
+        const response = await axios.get(
+          `${BASE_URL}/technician-job-assignments/${assignment._id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        
+        console.log("Full assignment data response:", response.data);
+        
+        if (response.data?.success && response.data.data?.jobId) {
+          // The jobId field contains the populated job data
+          setFullJobData(response.data.data.jobId);
+        } else {
+          // Fallback to assignment.job or assignment.jobId if fetch fails
+          setFullJobData(assignment.job || assignment.jobId);
+        }
+      } catch (error) {
+        console.error("Failed to fetch full assignment data:", error);
+        // Fallback to assignment.job or assignment.jobId
+        setFullJobData(assignment.job || assignment.jobId);
+      } finally {
+        setLoadingJobData(false);
+      }
+    };
+
+    fetchFullJobData();
+  }, [assignment._id]);
 
   useEffect(() => {
     // Trigger animation on mount
     setIsAnimating(true);
-    // Load inspection counts
-    loadInspectionCounts(currentInspectionTime);
-  }, []);
+    // Load inspection counts only after job data is loaded
+    if (!loadingJobData && job) {
+      loadInspectionCounts(currentInspectionTime);
+    }
+  }, [loadingJobData, job]);
 
   useEffect(() => {
     // Reset animation when tab changes
@@ -169,6 +210,24 @@ const SharedJobActivityView = ({ assignment, onClose }: SharedJobActivityViewPro
   ];
 
   const renderContent = () => {
+    // Show loading state while fetching job data
+    if (loadingJobData) {
+      return (
+        <div className="p-20 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-teal-500 border-t-transparent"></div>
+          <p className="mt-4 text-gray-600">Loading job information...</p>
+        </div>
+      );
+    }
+
+    if (!job) {
+      return (
+        <div className="p-20 text-center">
+          <p className="text-gray-600">No job data available</p>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'jobinfo':
         return <JobInfo job={job} />;
