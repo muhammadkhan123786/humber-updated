@@ -269,6 +269,7 @@ export const getAvailableTechniciansForJob = async (
     const filter: any = {
       _id: { $nin: assignedIds },
       isActive: true, // optional if you have status
+      isDeleted:false
     };
 
     // ✅ Search functionality
