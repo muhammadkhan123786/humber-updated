@@ -263,7 +263,10 @@ export const getAvailableTechniciansForJob = async (
       jobId: new Types.ObjectId(jobId),
     }).select("technicianId");
 
-    const assignedIds = assigned.map(a => a.technicianId);
+    const assignedIds = [
+        ...assigned.map(a => a.technicianId),
+        req.technicianId
+      ];
 
     // 2️⃣ Build filter
     const filter: any = {
