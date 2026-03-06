@@ -16,7 +16,7 @@ export const GRNTable: React.FC<GRNTableProps> = ({
   onView,
   onDownload
 }) => {
-
+console.log("grns", grns)
   if (grns?.length === 0) {
     return (
       <motion.div

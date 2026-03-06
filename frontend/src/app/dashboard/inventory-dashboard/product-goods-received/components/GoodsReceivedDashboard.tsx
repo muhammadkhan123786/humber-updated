@@ -50,6 +50,8 @@ export default function GoodsReceivedPage() {
     loadGRNs
   } = useGoodsReceived();
 
+
+  console.log("receivingItems", receivingItems)
   const handleOpenCreateGRN = () => {
     resetForm();
     setIsCreateDialogOpen(true);
@@ -147,7 +149,8 @@ export default function GoodsReceivedPage() {
         onOpenChange={setIsViewDialogOpen}
         grn={viewingGRN}
         handleDownloadGRN = { handleDownloadGRN}
-      />
+        receivingItems = { receivingItems }
+      /> 
     </div>
   );
 }

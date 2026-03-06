@@ -20,7 +20,7 @@ import {
 import { fetchOrders } from "../helper/purchaseOrderApi";
 
 export interface GoodsReceivedNoteItem extends GRNItem {
-  id?: string;
+  _id?: string;
 }
 
 export const useGoodsReceived = () => {
@@ -134,13 +134,14 @@ export const useGoodsReceived = () => {
 
     const items: GoodsReceivedNoteItem[] = po.items.map((item) => {
       // productId is a populated object: { _id, productName, sku, ... }
+      console.log("item", item)
       const product = item.productId;
 
       return {
         // Use item._id if present, otherwise fall back to product._id
         purchaseOrderItemId: item._id ?? product._id,
         // Keep the populated productId reference for display in the table
-        productId: product,
+        productId: product._id,
         // Flat copies for convenience / manual-entry fallback
         productName: product?.productName ?? "",
         sku: product?.sku ?? "",
