@@ -3,13 +3,25 @@ import { Briefcase, User, Car, AlertCircle, UserCheck, MapPin, Phone, Hash, File
 
 interface JobInfoProps {
   job: any;
+  assignment?: any; // For shared job assignments
 }
 
-const JobInfo = ({ job }: JobInfoProps) => {
+const JobInfo = ({ job, assignment }: JobInfoProps) => {
   const customer = job?.ticketId?.customerId;
   const vehicle = job?.ticketId?.vehicleId;
   const ticket = job?.ticketId;
   const leadingTechnician = job?.leadingTechnicianId;
+  
+  // For shared jobs, use the technician from assignment
+  // const sharedJobTechnician = assignment?.technicianId;
+  const assignedByTechnician = assignment?.assignedBy;
+  
+  // Debug logging
+  if (assignment) {
+    console.log("JobInfo - Assignment:", assignment);
+    // console.log("JobInfo - sharedJobTechnician:", sharedJobTechnician);
+    console.log("JobInfo - assignedByTechnician:", assignedByTechnician);
+  }
   
   // Handle multiple technicians - check if it's an array or single object
   const technicians = Array.isArray(job?.technicianId) 
@@ -172,23 +184,97 @@ const JobInfo = ({ job }: JobInfoProps) => {
       </div>
 
       {/* Assigned Technicians */}
-      {(leadingTechnician || technicians.length > 0) && (
+      {(assignment || leadingTechnician || technicians.length > 0) && (
         <div className="bg-linear-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-100 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-orange-600 rounded-lg">
               <UserCheck size={20} className="text-white" />
             </div>
             <h4 className="text-lg font-bold text-gray-900">
-              Assigned Technicians
+              Leading Technicians
               <span className="ml-2 px-3 py-1 bg-orange-600 text-white rounded-full text-sm">
-                {(leadingTechnician ? 1 : 0) + technicians.length}
+                {assignment ? (assignedByTechnician ? 1 : 1) : (leadingTechnician ? 1 : 0) + technicians.length}
               </span>
             </h4>
           </div>
 
           <div className="space-y-3">
-            {/* Leading Technician */}
-            {leadingTechnician && (
+            {/* Shared Job Leading Technician */}
+            {/* {assignment && sharedJobTechnician && (
+              <div className="bg-white rounded-lg p-4 border-2 border-orange-300 shadow-sm relative">
+                <div className="absolute top-2 right-2">
+                  <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-xs font-bold">
+                    {assignment.role || 'Leading'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Technician Name</label>
+                    <p className="text-base font-bold text-gray-900 mt-1">
+                      {sharedJobTechnician?.personId?.firstName} {sharedJobTechnician?.personId?.lastName || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mobile Number</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={16} className="text-orange-600" />
+                      <p className="text-base font-semibold text-gray-900">
+                        {sharedJobTechnician?.contactId?.mobileNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone Number</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={16} className="text-orange-600" />
+                      <p className="text-base font-semibold text-gray-900">
+                        {sharedJobTechnician?.contactId?.phoneNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )} */}
+
+            {/* Assigned By Technician (Shared Job) */}
+            {assignment && assignedByTechnician && (
+              <div className="bg-white rounded-lg p-4 border border-orange-200 shadow-sm relative">
+                <div className="absolute top-2 right-2">
+                  <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-xs font-bold">
+                    SHARED
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Technician Name</label>
+                    <p className="text-base font-bold text-gray-900 mt-1">
+                      {assignedByTechnician?.personId?.firstName} {assignedByTechnician?.personId?.lastName || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mobile Number</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={16} className="text-orange-600" />
+                      <p className="text-base font-semibold text-gray-900">
+                        {assignedByTechnician?.contactId?.mobileNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone Number</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Phone size={16} className="text-orange-600" />
+                      <p className="text-base font-semibold text-gray-900">
+                        {assignedByTechnician?.contactId?.phoneNumber || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Leading Technician (Original Job) */}
+            {!assignment && leadingTechnician && (
               <div className="bg-white rounded-lg p-4 border-2 border-orange-300 shadow-sm relative">
                 <div className="absolute top-2 right-2">
                   <span className="px-3 py-1 bg-orange-600 text-white rounded-full text-xs font-bold">
@@ -224,8 +310,8 @@ const JobInfo = ({ job }: JobInfoProps) => {
               </div>
             )}
 
-            {/* Other Assigned Technicians */}
-            {technicians.length > 0 && (
+            {/* Other Assigned Technicians (only for regular job view) */}
+            {!assignment && technicians.length > 0 && (
               <div className="space-y-3">
                 {technicians.map((tech: any, index: number) => (
                   <div 

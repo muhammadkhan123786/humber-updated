@@ -15,8 +15,8 @@ const jobAssignmentController = new AdvancedGenericController({
   populate: [
     "userId",
     "jobId",
-    "technicianId",
-    "assignedBy",
+    {path:"technicianId",select:"personId contactId employeeId",populate:[{path:"personId",select:"firstName lastName"},{path:"contactId",select:"phoneNumber mobileNumber"}]},
+    {path:"assignedBy",select:"personId contactId",populate:[{path:"personId",select:"firstName lastName"},{path:"contactId",select:"phoneNumber mobileNumber"}]},
     {
       path: "jobId",
       select: "ticketId jobId jobStatusId",

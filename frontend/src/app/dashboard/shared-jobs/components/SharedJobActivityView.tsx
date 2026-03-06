@@ -24,6 +24,7 @@ const SharedJobActivityView = ({ assignment, onClose }: SharedJobActivityViewPro
   const [inspectionBadge, setInspectionBadge] = useState<string>('0/0');
   const [currentInspectionTime, setCurrentInspectionTime] = useState<"BEFORE SERVICE" | "AFTER SERVICE">("BEFORE SERVICE");
   const [fullJobData, setFullJobData] = useState<any>(null);
+  const [fullAssignmentData, setFullAssignmentData] = useState<any>(assignment);
   const [loadingJobData, setLoadingJobData] = useState(true);
 
   // Extract the actual job from the assignment
@@ -47,7 +48,12 @@ const SharedJobActivityView = ({ assignment, onClose }: SharedJobActivityViewPro
         
         console.log("Full assignment data response:", response.data);
         
-        if (response.data?.success && response.data.data?.jobId) {
+        if (response.data?.success && response.data.data) {
+          // Store the complete assignment data
+          setFullAssignmentData(response.data.data);
+          console.log("Assignment technicianId:", response.data.data.technicianId);
+          console.log("Assignment assignedBy:", response.data.data.assignedBy);
+          
           // The jobId field contains the populated job data
           setFullJobData(response.data.data.jobId);
         } else {
@@ -230,7 +236,7 @@ const SharedJobActivityView = ({ assignment, onClose }: SharedJobActivityViewPro
 
     switch (activeTab) {
       case 'jobinfo':
-        return <JobInfo job={job} />;
+        return <JobInfo job={job} assignment={fullAssignmentData} />;
       
       case 'services':
         return <Services job={job} />;
