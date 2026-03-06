@@ -11,14 +11,47 @@ const jobAssignmentRouter = Router();
 const jobAssignmentServices = new GenericService<technicianJobsAssignmentDoc>(TechniciansJobsAssignment);
 
 const jobAssignmentController = new AdvancedGenericController({
-    service: jobAssignmentServices,
-    populate: ["userId","jobId","technicianId","assignedBy"],
-    validationSchema:technicianJobSchemaValidation,
+  service: jobAssignmentServices,
+  populate: [
+    "userId",
+    "jobId",
+    {path:"technicianId",select:"personId contactId employeeId",populate:[{path:"personId",select:"firstName lastName"},{path:"contactId",select:"phoneNumber mobileNumber"}]},
+    {path:"assignedBy",select:"personId contactId",populate:[{path:"personId",select:"firstName lastName"},{path:"contactId",select:"phoneNumber mobileNumber"}]},
+    {
+      path: "jobId",
+      select: "ticketId jobId jobStatusId",
+      populate: {
+        path: "ticketId",
+        select: "customerId ticketCode priorityId vehicleId ticketStatusId",
+        populate: [
+          {path:"ticketStatusId",select:"code"},
+          {
+            path:"vehicleId",
+            select:"productName vehicleType vehicleModelId serialNumber",
+            populate:[{path:"vehicleModelId",select:"modelName"}],
+          },
+          {
+            path: "customerId",
+            select: "personId addressId contactId",
+            populate: [{
+              path: "personId",
+              select: "firstName lastName",
+            },{path:"contactId",select:"phoneNumber mobileNumber"},{path:"addressId",select:"address zipCode"}],
+          },
+          {
+            path: "priorityId",
+            select: "serviceRequestPrioprity",
+          },
+        ],
+      },
+    },
+  ],
+  validationSchema: technicianJobSchemaValidation,
 });
 
 jobAssignmentRouter.get("/", getAllTechnicianAssignments);
 jobAssignmentRouter.get('/getavailabletechniciansforjob',getAvailableTechniciansForJob);
-jobAssignmentRouter.get('/getmysharedjobsassignedbyleadingtechnicians',getAllSharedJobsToAssignedByLeadingTechnicians);
+jobAssignmentRouter.get('/getmysharedjobsassignedbyleadingtechnicians',getAllSharedJobsToAssignedByLeadingTechnicians); 
 
 jobAssignmentRouter.get("/:id", jobAssignmentController.getById);
 jobAssignmentRouter.post("/",async(req:TechnicianAuthRequest,res:Response,next:NextFunction)=>{

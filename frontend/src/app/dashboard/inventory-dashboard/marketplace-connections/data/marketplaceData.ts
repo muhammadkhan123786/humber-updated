@@ -74,6 +74,7 @@ export interface FormData {
 
   // 🔥 REQUIRED for dynamic fields
   [key: string]: string;
+   environment: 'sandbox' | 'production';
 }
 
 /* =========================
@@ -84,5 +85,6 @@ export const initialFormData: any = {
   type: '',
   description: '',
   marketplaceId: '',
-  credentials: {}
+  credentials: {},
+   environment: 'sandbox',
 };

@@ -18,13 +18,12 @@ const calculateTotalTime = (timeLogs: TimeLog[]) => {
 
 //functions to manage start/ in progress/ end activity 
 //from pending to start (or restart from completed)
-export const startActivity = async (activityId: string|Types.ObjectId, technicianId: string|Types.ObjectId) => {
-  const activity = await TechniciansActivitiesMaster.findById(activityId);
-  if (!activity) throw new Error("Activity not found");
-
-  if (activity.technicianId.toString() !== technicianId) 
-      throw new Error("Not authorized");
-
+export const startActivity = async (activityId: string, technicianId: string) => {
+   const activity = await TechniciansActivitiesMaster.findOne({
+    _id:activityId, 
+    technicianId,
+  });
+  if (!activity) throw new Error("Activity not found or this not your actvity.");
   if (!["pending", "completed"].includes(activity.status)) 
       throw new Error(`Cannot start activity in status ${activity.status}`);
 
@@ -36,13 +35,12 @@ export const startActivity = async (activityId: string|Types.ObjectId, technicia
 };
 
 //from in_progress to pause function 
-export const pauseActivity = async (activityId: string|Types.ObjectId, technicianId: string|Types.ObjectId) => {
-  const activity = await TechniciansActivitiesMaster.findById(activityId);
-  if (!activity) throw new Error("Activity not found");
-
-  if (activity.technicianId.toString() !== technicianId) 
-      throw new Error("Not authorized");
-
+export const pauseActivity = async (activityId: string, technicianId: string) => {
+ const activity = await TechniciansActivitiesMaster.findOne({
+    _id:activityId, 
+    technicianId,
+  });
+   if (!activity) throw new Error("Activity not found or this not your actvity.");
   if (activity.status !== "in_progress") 
       throw new Error(`Cannot pause activity in status ${activity.status}`);
 
@@ -60,13 +58,12 @@ export const pauseActivity = async (activityId: string|Types.ObjectId, technicia
 
 //resume time 
 
-export const resumeActivity = async (activityId: string|Types.ObjectId, technicianId: string|Types.ObjectId) => {
-  const activity = await TechniciansActivitiesMaster.findById(activityId);
-  if (!activity) throw new Error("Activity not found");
-
-  if (activity.technicianId.toString() !== technicianId) 
-      throw new Error("Not authorized");
-
+export const resumeActivity = async (activityId: string, technicianId: string) => {
+  const activity = await TechniciansActivitiesMaster.findOne({
+    _id:activityId, 
+    technicianId,
+  });
+   if (!activity) throw new Error("Activity not found or this not your actvity.");
   if (activity.status !== "paused") 
       throw new Error(`Cannot resume activity in status ${activity.status}`);
 
@@ -78,13 +75,12 @@ export const resumeActivity = async (activityId: string|Types.ObjectId, technici
 };
 
 //complete and caculate total time 
-export const completeActivity = async (activityId: string|Types.ObjectId, technicianId: string|Types.ObjectId) => {
-  const activity = await TechniciansActivitiesMaster.findById(activityId);
-  if (!activity) throw new Error("Activity not found");
-
-  if (activity.technicianId.toString() !== technicianId) 
-      throw new Error("Not authorized");
-
+export const completeActivity = async (activityId: string, technicianId: string) => {
+  const activity = await TechniciansActivitiesMaster.findOne({
+    _id:activityId, 
+    technicianId,
+  });
+   if (!activity) throw new Error("Activity not found or this not your actvity.");
   if (!["in_progress","paused"].includes(activity.status)) 
       throw new Error(`Cannot complete activity in status ${activity.status}`);
 
@@ -126,7 +122,7 @@ export const installPartsDuringActivity = async (
     _id: activityId,
     technicianId,
   });
-  if (!activity) throw new Error("Activity not found");
+  if (!activity) throw new Error("Activity not found or this not your actvity.");
 
   const lastLog = activity.timeLogs[activity.timeLogs.length - 1];
   if (!lastLog || lastLog.endTime) throw new Error("Activity is not active");

@@ -93,38 +93,8 @@ const InstallParts = ({ activityId, parts, onInstallSuccess }: InstallPartsProps
       }
     } catch (err: any) {
       console.error("Error installing parts:", err);
-      
       // Handle different error scenarios
-      if (err.response) {
-        // Server responded with error
-        const status = err.response.status;
-        const message = err.response.data?.message;
-        
-        // Check for specific error messages first
-        if (message && message.toLowerCase().includes("activity is not active")) {
-          toast.error("Please start the activity first before installing parts.");
-        } else if (message && message.toLowerCase().includes("not authorized")) {
-          toast.error("You are not authorized to install parts for this activity.");
-        } else if (status === 401) {
-          toast.error("Session expired. Please login again.");
-        } else if (status === 403) {
-          toast.error("You don't have permission to install parts.");
-        } else if (status === 404) {
-          toast.error("Activity or parts not found.");
-        } else if (status === 400) {
-          toast.error(message || "Invalid request. Please check your selection.");
-        } else if (status >= 500) {
-          toast.error(message || "Server error. Please try again later.");
-        } else {
-          toast.error(message || "Failed to install parts. Please try again.");
-        }
-      } else if (err.request) {
-        // Request made but no response
-        toast.error("Network error. Please check your connection.");
-      } else {
-        // Something else happened
-        toast.error("An unexpected error occurred. Please try again.");
-      }
+      
     } finally {
       setIsInstalling(false);
     }

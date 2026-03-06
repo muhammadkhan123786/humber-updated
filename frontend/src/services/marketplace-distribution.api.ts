@@ -52,9 +52,13 @@ async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+
+  const token = localStorage.getItem("token"); // get token
+
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "", // add token
       ...options.headers,
     },
     ...options,
@@ -62,12 +66,11 @@ async function apiFetch<T>(
 
   const json = await res.json();
 
-  // 207 Multi-Status is still a valid response — don't throw on it
   if (!res.ok && res.status !== 207) {
     throw new Error(json.message ?? `HTTP ${res.status}`);
   }
 
-  return json as T;
+  return json;
 }
 
 // ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -96,7 +99,6 @@ export async function distributeProduct(
  * Used to map availableMarketplaces → their connectionId.
  */
 export async function getMarketplaceConnections(userId: string) {
-  console.log("userId", userId)
   return apiFetch<{
     success: boolean;
     data: Array<{

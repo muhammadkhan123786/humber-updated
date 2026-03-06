@@ -96,7 +96,10 @@ export class EmailService {
         const { html, text } = this.poTemplate.generate(data);
 
         const subject = `Purchase Order ${data.poNumber} - ${data.supplierName} - ${this.baseTemplate.formatCurrency(data.total)}`;
-
+if (!data.supplierEmail) {
+    console.warn("Supplier email missing. Skipping email.");
+    return;
+}
         await this.sendMail({
             from: `${data.buyerCompany} <${process.env.SMTP_FROM_EMAIL}>`,
             to: data.supplierEmail,

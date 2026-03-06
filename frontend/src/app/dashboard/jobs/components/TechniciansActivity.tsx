@@ -129,7 +129,7 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
         method: "POST",
         headers: getAuthHeaders(true),
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to start activity");
+        if (!res.ok) throw new Error("You are not authorized for this action.");
         return res.json();
       }),
     onSuccess: () => {
@@ -148,8 +148,9 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
         method: "POST",
         headers: getAuthHeaders(true),
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to pause activity");
+        if (!res.ok) throw new Error("You are not authorized for this action.");
         return res.json();
+        
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["technicianActivities"] });
@@ -167,7 +168,7 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
         method: "POST",
         headers: getAuthHeaders(true),
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to resume activity");
+        if (!res.ok) throw new Error("You are not authorized for this action.");
         return res.json();
       }),
     onSuccess: () => {
@@ -186,7 +187,7 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
         method: "POST",
         headers: getAuthHeaders(true),
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to complete activity");
+        if (!res.ok) throw new Error("You are not authorized for this action.");
         return res.json();
       }),
     onSuccess: () => {
@@ -234,7 +235,10 @@ const TechniciansActivity = ({ jobId, quotationId }: TechniciansActivityProps) =
     const fetchServiceTypes = async () => {
       setLoadingDropdowns(true);
       try {
-        const serviceTypesRes = await getAll<ServiceTypeWithId>("/technician-service-types", { limit: "100" });
+        const serviceTypesRes = await getAll<ServiceTypeWithId>("/technician-service-types", { 
+          limit: "100",
+          isActive: "true"
+        });
         setServiceTypes(serviceTypesRes.data || []);
       } catch (err: any) {
         console.error("Error fetching service types:", err?.response?.data || err?.message || err);

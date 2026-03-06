@@ -45,6 +45,10 @@ export const AVAILABLE_FIELDS: AvailableField[] = [
   { value: 'clientId', label: 'Client ID' },
   { value: 'clientSecret', label: 'Client Secret' },
   { value: 'ruName', label: "RuName" },
+  { value: 'storeUrl', label: 'Store URL'},
+  { value: 'consumerKey', label: 'Consumer Key'},
+  { value: 'consumerSecret', label: 'Consumer Secret'},
+
 
 ];
 

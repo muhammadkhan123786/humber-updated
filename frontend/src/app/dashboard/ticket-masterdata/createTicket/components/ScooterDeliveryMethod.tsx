@@ -37,7 +37,6 @@ interface PickupByOption {
 const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
   form,
   drivers,
-  isUpdating = false,
 }) => {
   const {
     formState: { errors },
@@ -48,12 +47,14 @@ const ScooterDeliveryMethod: React.FC<ScooterDeliveryMethodProps> = ({
     clearErrors,
   } = form;
 
-  const riderOptions = drivers.map((d) => ({
-    id: d._id,
-    label: d.personId
-      ? `${d.personId.firstName} ${d.personId.lastName}`
-      : "Unknown Rider",
-  }));
+  const riderOptions = drivers
+    .filter((d) => d.riderStatus === "APPROVED")
+    .map((d) => ({
+      id: d._id,
+      label: d.personId
+        ? `${d.personId.firstName} ${d.personId.lastName}`
+        : "Unknown Rider",
+    }));
 
   const deliveryMethods: DeliveryMethod[] = [
     {
