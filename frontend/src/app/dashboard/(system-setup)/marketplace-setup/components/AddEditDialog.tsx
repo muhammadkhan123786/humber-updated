@@ -26,6 +26,7 @@ import {
   ColorOption,
   IconOption
 } from '../data/marketplaceTemplates';
+import Image from 'next/image';
 
 interface AddEditDialogProps {
   isOpen: boolean;
@@ -49,7 +50,6 @@ export function AddEditDialog({
   onFormChange,
 }: AddEditDialogProps) {
   const [fieldSearch, setFieldSearch] = useState('');
-console.log("form", formData);
 
   const toggleFieldSelection = (field: string) => {
     if (formData.fields.includes(field)) {
@@ -275,7 +275,7 @@ console.log("form", formData);
               <div className="flex items-center gap-3">
               
                   <div className="h-12 w-12 bg-white/10 rounded p-2 flex items-center justify-center">
-                    <img
+                    <Image
                       src={formData.icon}
                       alt="Preview icon"
                       className="h-full w-full object-contain"
@@ -283,6 +283,8 @@ console.log("form", formData);
                         console.error('Preview icon failed:');
                         e.currentTarget.style.display = 'none';
                       }}
+                      width={50}
+                      height={50}
                     />
                   </div>
                

@@ -21,6 +21,7 @@ import {
 } from '@/components/form/Select';
 import { FormData, MarketplaceTemplate } from '../data/marketplaceData';
 import { useFormActions } from '@/hooks/useFormActions';
+import Image from 'next/image';
 
 interface AddEditDialogProps {
   isOpen: boolean;
@@ -88,13 +89,15 @@ export function AddEditDialog({
                       <SelectItem key={template._id} value={template._id}>
                         <div className="flex items-center gap-2">
                           {iconSrc ? (
-                            <img
+                            <Image
                               src={iconSrc}
                               alt={template.name}
                               className="w-5 h-5 object-contain"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none';
                               }}
+                              width={50}
+                              height={50}
                             />
                           ) : (
                             <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
@@ -141,6 +144,39 @@ export function AddEditDialog({
 
               />
 
+            </div>
+
+            <div>
+              <Label className="text-base font-semibold">Environment</Label>
+              <Select
+                value={formData.environment || 'sandbox'}
+                onValueChange={(value: string) => 
+                  onFormChange({ ...formData, environment: value as 'sandbox' | 'production' })
+                }
+              >
+                <SelectTrigger className="border-2 focus:border-indigo-500">
+                  <SelectValue placeholder="Select environment" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sandbox">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                      <span>Sandbox (Test)</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="production">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                      <span>Production (Live)</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                {formData.environment === 'sandbox' 
+                  ? 'Use sandbox for testing and development' 
+                  : 'Use production for live transactions'}
+              </p>
             </div>
             {/* Dynamic Fields Section */}
             {selectedTemplate && (

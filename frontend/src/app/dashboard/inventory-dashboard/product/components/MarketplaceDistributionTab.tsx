@@ -636,7 +636,7 @@ export default function DynamicMarketplaceTab({
     filteredProducts,
     categories,
     marketplaceTotals,
-    // connectionsLoading,
+    connectionsLoading,
     distributeStatus,
     filters,
     actions,
@@ -650,14 +650,14 @@ export default function DynamicMarketplaceTab({
 
   // ── Empty States ────────────────────────────────────────────────────────────
 
-  // if (connectionsLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center py-16">
-  //       <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-  //       <span className="ml-3 text-gray-600">Loading marketplace connections… adfasd asdfasd asdfasd </span>
-  //     </div>
-  //   );
-  // }
+  if (connectionsLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <span className="ml-3 text-gray-600">Loading marketplace connections… adfasd asdfasd asdfasd </span>
+      </div>
+    );
+  }
 
   if (!availableMarketplaces.length) {
     return (
