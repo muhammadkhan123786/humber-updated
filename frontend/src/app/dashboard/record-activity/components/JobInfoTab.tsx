@@ -173,6 +173,7 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
             value={selectedQuotationId}
             onChange={(id: any) => setValue("quotationId", id)}
             placeholder="Select an approved quotation..."
+            isSearchable={true}
           />
           {quotationOptions.length === 0 && (
             <p className="text-xs text-amber-600 mt-1">
@@ -295,6 +296,7 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
               placeholder="Select Technician"
               className="border-0 focus:border-0 focus:ring-0 ring-0 outline-none shadow-none"
               error={!selectedTechnicianId}
+              isSearchable={true}
             />
           </div>
 
