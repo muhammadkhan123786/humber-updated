@@ -300,7 +300,11 @@ export const JobInfoTab = ({ form, technicians, quotations }: any) => {
 
           <FormDisplay
             label="Customer Name"
-            value={selectedQuotation ? getCustomerName(selectedQuotation) : "-"}
+            value={
+              selectedQuotation
+                ? getCustomerName(selectedQuotation)
+                : "Select a quotation first"
+            }
           />
         </div>
 
