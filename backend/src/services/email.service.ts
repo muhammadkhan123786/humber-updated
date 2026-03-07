@@ -3,6 +3,7 @@ import { BaseEmailTemplate } from "../../templates/base.template";
 import { PurchaseOrderTemplate } from "../../templates/purchaseOrder.template";
 import { ReorderAlertTemplate } from "../../templates/reorderAlert.template";
 import { POEmailData, ReorderAlertData, EmailOptions, EmailRecipient } from "../types/email/email.types";
+   import { CancellationTemplate } from "../../templates/cancellation.template";
 import "dotenv/config";
 
 export class EmailService {
@@ -10,6 +11,8 @@ export class EmailService {
     private baseTemplate: BaseEmailTemplate;
     private poTemplate: PurchaseOrderTemplate;
     private reorderTemplate: ReorderAlertTemplate;
+    private cancellationTemplate: CancellationTemplate;
+
 
     private constructor() {
         this.baseTemplate = new BaseEmailTemplate({
@@ -247,6 +250,41 @@ if (!data.supplierEmail) {
             return false;
         }
     }
+
+
+
+ 
+
+
+
+// Add this new method to the EmailService class:
+async sendCancellationEmail(
+    po: any,
+    options?: {
+        cc?: string | EmailRecipient[];
+        bcc?: string | EmailRecipient[];
+    }
+): Promise<void> {
+    const supplier = po.supplier;
+    const supplierEmail = supplier?.contactInformation?.emailAddress;
+    
+    if (!supplierEmail) {
+        console.warn(`[EmailService] No supplier email for PO ${po.orderNumber} — skipping cancellation email`);
+        return;
+    }
+
+    const { html, text } = this.cancellationTemplate.generate(po);
+
+    await this.sendMail({
+        from: `${process.env.APP_NAME} <${process.env.SMTP_FROM_EMAIL}>`,
+        to: supplierEmail,
+        cc: options?.cc,
+        bcc: options?.bcc || process.env.PO_BCC_EMAIL,
+        subject: `❌ Purchase Order Cancelled — ${po.orderNumber}`,
+        html,
+        text
+    });
+}
 }
 
 // Export singleton instance

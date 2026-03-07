@@ -56,7 +56,6 @@ export const createGRN = async (
   const completePayload = {
     ...payload,
     userId,
-    status: payload.status || "draft",
     receivedDate: new Date().toISOString(),
   };
   

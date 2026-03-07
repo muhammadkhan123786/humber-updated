@@ -1,11 +1,11 @@
-import { string, z } from "zod";
+import { z } from "zod";
 import { Schema, SchemaDefinition } from "mongoose";
 import { commonSchema, commonSchemaValidation } from "./shared/common.schema";
 import { generateNextDocumentNumber } from "../services/documentNumber.service"
 
 export const GRNItemSchema = new Schema(
   {
-    productId: { type: string},
+    productId: { type: String},
     productName: String,
     sku: String,
     orderedQuantity: Number,
@@ -37,7 +37,8 @@ export const GoodsReceivedSchema = new Schema(
     notes: String,
     status: {
       type: String,
-      enum: ["received", "ordered"]
+      enum: ["received", "ordered"],
+       default: "received",
     }   
   },
   { timestamps: true },
@@ -88,5 +89,5 @@ export const createGRNValidationsSchema = z.object({
   receivedBy: z.string().min(2),
   items: z.array(grnItemSchema).min(1),
   notes: z.string().optional(),
-  status:z.enum(["received", "ordered"]),
+  status:z.enum(["received", "ordered"]).optional(),
 });

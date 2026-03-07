@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { Response, Request } from "express";
 import {
-  getCurrentPurchaseOrderCode,
+  generatePurchaseOrderCode,
   getCurrentTechnicianJobCode,
   getCurrentTicketCode,
   getCustomerInvoiceCurrentCode,
@@ -110,7 +110,7 @@ autoCodeGeneratorRouter.get(
   "/purchase-auto-code",
   async (req: Request, res: Response) => {
     try {
-      const purchaseOrderAutoCode = await getCurrentPurchaseOrderCode();
+      const purchaseOrderAutoCode = await generatePurchaseOrderCode();
       res.json({ purchaseOrderAutoCode: purchaseOrderAutoCode });
     } catch (error: any) {
       res

@@ -75,7 +75,7 @@ export const updateGoodsReturn = async (
   id: string,
   payload: Partial<IGoodsReturnNote>
 ): Promise<IGoodsReturnNote> => {
-  const res = await axios.put(`${API_URL}/${id}`, payload, getAuthConfig());
+  const res = await axios.patch(`${API_URL}/${id}/status`, payload, getAuthConfig());
   return res.data;
 };
 

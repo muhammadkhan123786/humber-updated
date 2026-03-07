@@ -1,3 +1,94 @@
+// import { Request, Response } from "express";
+// import { PurchaseOrder } from "../models/purchaseOrder.model";
+// import { emailService } from "../services/email.service"; // Correct import
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // Valid manual transitions
+// //
+// //  draft    → cancelled  (manual — email to supplier)
+// //  ordered  → cancelled  (manual — email to supplier)
+// //  received → []         terminal (AUTO by GRN)
+// //  cancelled→ []         terminal
+// //
+// // ─────────────────────────────────────────────────────────────────────────────
+// const VALID_TRANSITIONS: Record<string, string[]> = {
+//   draft:     ["cancelled"],
+//   ordered:   ["cancelled"],
+//   received:  [],
+//   cancelled: [],
+// };
+
+// // ─────────────────────────────────────────────────────────────────────────────
+// // PATCH /api/purchase-orders/:id/status
+// // ─────────────────────────────────────────────────────────────────────────────
+// export const updatePurchaseOrderStatus = async (
+//   req: Request,
+//   res: Response,
+// ) => {
+//   try {
+//     const { id }     = req.params;
+//     const { status } = req.body;
+
+//     if (!status) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Status is required",
+//       });
+//     }
+
+//     // ── Fetch PO with supplier populated ─────────────────────────────────────
+//     const po = await PurchaseOrder.findById(id)
+//       .populate("supplier")
+//       .lean() as any;
+
+//     if (!po) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Purchase Order not found",
+//       });
+//     }
+
+//     const currentStatus = po.status;
+
+//     // ── Validate transition ───────────────────────────────────────────────────
+//     const allowed = VALID_TRANSITIONS[currentStatus] ?? [];
+//     if (!allowed.includes(status)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: `Invalid transition: "${currentStatus}" → "${status}". Allowed: [${allowed.join(", ")}]`,
+//       });
+//     }
+
+//     // ── Update DB ─────────────────────────────────────────────────────────────
+//     await PurchaseOrder.updateOne({ _id: id }, { $set: { status } });
+
+//     console.log(`[PO] ${po.orderNumber}: "${currentStatus}" → "${status}"`);
+
+//     // ── Cancellation email → supplier (fire-and-forget) ───────────────────────
+//     if (status === "cancelled") {
+//       emailService.sendCancellationEmail(po).catch((err) =>
+//         console.error("[PO] ⚠️ Cancellation email failed:", err.message),
+//       );
+//     }
+
+//     return res.json({
+//       success: true,
+//       message: `Status updated to "${status}"`,
+//       data: {
+//         _id:         po._id,
+//         orderNumber: po.orderNumber,
+//         status,
+//       },
+//     });
+
+//   } catch (err: any) {
+//     console.error("[PO] updateStatus error:", err.message);
+//     return res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // FIXES IN THIS VERSION:
 //
@@ -28,6 +119,7 @@ import {
   dismissAlert,
   resolveAlertsForSkus,
 }                                    from "../services/stockAlert.service";
+
 
 export class PurchaseOrderCustomController {
 
@@ -132,77 +224,83 @@ export class PurchaseOrderCustomController {
       //   Before: stockQuantity = 59
       //   After:  stockQuantity = 59 + 41 = 100  ← equals maxStockLevel ✅
       //
-      if (status === "received") {
-        const items = ((updated as any).items ?? []) as Array<{
-          productId: Types.ObjectId;
-          sku:       string;
-          quantity:  number;
-        }>;
+//       if (status === "received") {
+//         const items = ((updated as any).items ?? []) as Array<{
+//           productId: Types.ObjectId;
+//           sku:       string;
+//           quantity:  number;
+//         }>;
 
 
-        const stockUpdates = items
-          .filter(item => item.productId && item.quantity > 0)
-          .map(async item => {
-            try {
+//         const stockUpdates = items
+//           .filter(item => item.productId && item.quantity > 0)
+//           .map(async item => {
+//             try {
              
-              const result = await ProductModal.updateOne(
-                {
-                  _id:              item.productId as any,
-                  "attributes.sku": item.sku,       
-                },
-                {
-                  $inc: {
-                    // Increment ONLY the matching attribute's stockQuantity
-                    "attributes.$[attr].stock.stockQuantity": item.quantity,
-                  },
-                },
-                {
-                  arrayFilters: [{ "attr.sku": item.sku }],
-                }
-              );
+//               const result = await ProductModal.updateOne(
+//                 {
+//                   _id:              item.productId as any,
+//                   "attributes.sku": item.sku,       
+//                 },
+//                 {
+//                   $inc: {
+//                     // Increment ONLY the matching attribute's stockQuantity
+//                     "attributes.$[attr].stock.stockQuantity": item.quantity,
+//                   },
+//                 },
+//                 {
+//                   arrayFilters: [{ "attr.sku": item.sku }],
+//                 }
+//               );
 
-              if (result.modifiedCount === 0) {
-                console.warn(`[PO received] ⚠️ Stock NOT updated — productId=${item.productId} sku="${item.sku}" — product or SKU not found`);
-              } else {
-                console.log(`[PO received] ✅ stockQuantity +${item.quantity} for sku="${item.sku}"`);
-              }
-            } catch (err) {
-              console.error(`[PO received] ❌ Stock increment failed — sku="${item.sku}":`, err);
-            }
-          });
+//               if (result.modifiedCount === 0) {
+//                 console.warn(`[PO received] ⚠️ Stock NOT updated — productId=${item.productId} sku="${item.sku}" — product or SKU not found`);
+//               } else {
+//                 console.log(`[PO received] ✅ stockQuantity +${item.quantity} for sku="${item.sku}"`);
+//               }
+//             } catch (err) {
+//               console.error(`[PO received] ❌ Stock increment failed — sku="${item.sku}":`, err);
+//             }
+//           });
 
-        await Promise.allSettled(stockUpdates);
+//         await Promise.allSettled(stockUpdates);
 
-        // Clear stock alerts for the received SKUs
-       if (updated.userId) {
-  console.log("updated.userId:", updated.userId);
+//         // Clear stock alerts for the received SKUs
+//        if (updated.userId) {
+//   console.log("updated.userId:", updated.userId);
   
-  // ✅ Multiple ways to safely extract ID
+//   // ✅ Multiple ways to safely extract ID
   
-  // Method 1: Type assertion
-  const userIdObj = updated.userId as any;
-  const userIdStr = userIdObj._id ? userIdObj._id.toString() : updated.userId.toString();
+//   // Method 1: Type assertion
+//   const userIdObj = updated.userId as any;
+//   const userIdStr = userIdObj._id ? userIdObj._id.toString() : updated.userId.toString();
   
-  // Method 2: Type guard function
-  function isPopulatedUser(obj: any): obj is { _id: Types.ObjectId } {
-    return obj && typeof obj === 'object' && '_id' in obj;
-  }
+//   // Method 2: Type guard function
+//   function isPopulatedUser(obj: any): obj is { _id: Types.ObjectId } {
+//     return obj && typeof obj === 'object' && '_id' in obj;
+//   }
   
-  if (isPopulatedUser(updated.userId)) {
-    // ✅ TypeScript ab janta hai ke yeh object hai with _id
-    const userIdStr = updated.userId._id.toString();
+//   if (isPopulatedUser(updated.userId)) {
+//     // ✅ TypeScript ab janta hai ke yeh object hai with _id
+//     const userIdStr = updated.userId._id.toString();
     
-    const skus = items.map(item => item.sku).filter(Boolean);
-    await resolveAlertsForSkus(skus, userIdStr);
-  } else {
-    // ✅ Direct string ID
-    const userIdStr = updated.userId.toString();
+//     const skus = items.map(item => item.sku).filter(Boolean);
+//     await resolveAlertsForSkus(skus, userIdStr);
+//   } else {
+//     // ✅ Direct string ID
+//     const userIdStr = updated.userId.toString();
     
-    const skus = items.map(item => item.sku).filter(Boolean);
-    await resolveAlertsForSkus(skus, userIdStr);
-  }
-}
-      }
+//     const skus = items.map(item => item.sku).filter(Boolean);
+//     await resolveAlertsForSkus(skus, userIdStr);
+//   }
+// }
+//       }
+
+       if (status === "cancelled") {
+      emailService.sendCancellationEmail(updated).catch((err) =>
+        console.error("[PO] ⚠️ Cancellation email failed:", err.message),
+      );
+    }
       // ─────────────────────────────────────────────────────────────────────
 
       res.status(200).json({ success: true, data: updated });
@@ -279,26 +377,53 @@ export class PurchaseOrderCustomController {
     }
   };
 
-  exportToPDF = async (req: Request, res: Response) => {
-    try {
-      const { userId } = req.query;
-      const orders = await PurchaseOrder.find({ userId, isDeleted: false })
-        .populate("supplier").sort({ orderDate: -1 }).lean();
-
-      const pdfBuffer = await generatePdfFromTemplate("purchase-orders", {
-        companyName: "Humber Mobility Scooter",
-        reportTitle: "Purchase Order Report",
-        generatedAt: new Date().toLocaleDateString("en-GB"),
-        orders,
-      });
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", "attachment; filename=Humber_Orders.pdf");
-      res.status(200).send(pdfBuffer);
-    } catch (err: any) {
-      res.status(500).json({ success: false, message: err.message });
+exportToPDF = async (req: Request, res: Response) => {
+  try {
+    const { _id, orderId } = req.query; // _id chota I, ya orderId
+    console.log("Query params:", { _id, orderId });
+    
+    // Build query properly
+    const query: any = { isDeleted: false };
+    
+    // Handle both _id and orderId
+    if (_id) {
+      query._id = _id; // _id chota I
+    } else if (orderId) {
+      query._id = orderId;
     }
-  };
+    
+    console.log("MongoDB Query:", query);
+    
+    const orders = await PurchaseOrder.find(query)
+      .populate("supplier")
+      .sort({ orderDate: -1 })
+      .lean();
+
+    console.log(`Found ${orders.length} orders`);
+
+    if (orders.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No orders found with the given criteria" 
+      });
+    }
+
+    const pdfBuffer = await generatePdfFromTemplate("purchase-orders", {
+      companyName: "Humber Mobility Scooter",
+      reportTitle: "Purchase Order Report",
+      generatedAt: new Date().toLocaleDateString("en-GB"),
+      orders,
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=Humber_Orders.pdf");
+    res.status(200).send(pdfBuffer);
+    
+  } catch (err: any) {
+    console.error("PDF Export Error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
   bulkUpdate = async (_req: Request, _res: Response) => { /* reserved */ };
 

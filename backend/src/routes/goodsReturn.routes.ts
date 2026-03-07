@@ -1,40 +1,48 @@
-import { Router } from "express";
+// routes/goodsReturn.routes.ts
+import express from "express";
 import { AdvancedGenericController } from "../controllers/GenericController";
-import { GenericService } from "../services/generic.crud.services";
-import { GoodsReturn, GoodsReturnDoc } from "../models/goodsReturn.model";
+import { GenericService }            from "../services/generic.crud.services";
+import { GoodsReturn }               from "../models/goodsReturn.model";
 import { CreateGoodsReturnValidation } from "../schemas/goodsReturn.schema";
+import { updateGoodsReturnStatus }     from "../controllers/goodsReturn.controller";
 import { exportGRTNToPDF } from "../controllers/pdf.controller"
 
-const goodsReturnRoutes = Router();
 
-const goodsReturnService = new GenericService<GoodsReturnDoc>(GoodsReturn);
+const router = express.Router();
 
-const goodsReturnController = new AdvancedGenericController({
-  service: goodsReturnService,  
+const returnService     = new GenericService(GoodsReturn);
+const genericController = new AdvancedGenericController({
+  service:          returnService,
+  validationSchema: CreateGoodsReturnValidation,
   populate: [
-    "userId",
     {
-      path: "grnId",
-      select: "grnNumber items purchaseOrderId", 
+      path:   "grnId",
+      select: "grnNumber purchaseOrderId",
       populate: {
-        path: "purchaseOrderId",
-        select: "items orderNumber supplier",
-        populate: {
-          path: "supplier",
-          select: "contactInformation", 
-        },
-      },
+        path:   "purchaseOrderId",
+        select: "orderNumber supplier",
+        populate: { path: "supplier", select: "contactInformation supplierIdentification" }
+      }
     },
   ],
-  validationSchema: CreateGoodsReturnValidation,
+  searchFields: ["grtnNumber", "returnReference", "returnedBy"],
 });
 
-goodsReturnRoutes.get("/export/:id", exportGRTNToPDF);
 
-goodsReturnRoutes.get("/", goodsReturnController.getAll);
-goodsReturnRoutes.get("/:id", goodsReturnController.getById);
-goodsReturnRoutes.post("/", goodsReturnController.create);
-goodsReturnRoutes.put("/:id", goodsReturnController.update);
-goodsReturnRoutes.delete("/:id", goodsReturnController.delete);
+router.get("/export/:id", exportGRTNToPDF);
+// ── CRUD ──────────────────────────────────────────────────────────────────
 
-export default goodsReturnRoutes;
+router.get("/",    genericController.getAll);
+router.get("/:id", genericController.getById);
+
+// ✅ POST: NO stock middleware here
+// Stock ONLY decreases when status → "completed" via PATCH below
+// Middleware was wrong — it fired on create, not on completion
+router.post("/",      genericController.create);
+router.put("/:id",    genericController.update);
+router.delete("/:id", genericController.delete);
+
+// ── Status Update — stock fires HERE on "completed" ──────────────────────
+router.patch("/:id/status", updateGoodsReturnStatus);
+
+export default router;
