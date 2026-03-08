@@ -6,6 +6,7 @@ interface NavigationButtonsProps {
   totalSteps: number;
   onPrev: () => void;
  onNext: (e: React.MouseEvent<HTMLButtonElement>) => void;
+ isNextDisabled: any;
  
 }
 
@@ -14,6 +15,7 @@ export function NavigationButtons({
   totalSteps,
   onPrev,
   onNext,
+  isNextDisabled,
   
 }: NavigationButtonsProps) {
   return (
@@ -46,6 +48,7 @@ export function NavigationButtons({
 
       {currentStep < totalSteps ? (
         <Button
+         disabled={isNextDisabled}
           type="button"
           onClick={onNext}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
@@ -55,7 +58,7 @@ export function NavigationButtons({
         </Button>
       ) : (
         <Button
-       
+       disabled={isNextDisabled}
           type="submit"
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8"
         >

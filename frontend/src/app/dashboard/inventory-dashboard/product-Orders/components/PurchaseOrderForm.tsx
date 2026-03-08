@@ -1,14 +1,8 @@
-
 "use client";
-// PurchaseOrderForm.tsx
-// Key change: reorder suggestions now come from the backend API
-// (GET /api/purchase-orders/reorder/suggestions) instead of being
-// computed locally from all products. This means:
-//   ✅ Products with an EXISTING active PO are automatically excluded
-//   ✅ Severity, suggested qty, supplier resolution done server-side
-//   ✅ Matches the exact same logic as the nightly cron job
+// PurchaseOrderForm.tsx with React Hook Form validation
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogDescription, DialogFooter,
@@ -40,6 +34,13 @@ export interface Supplier {
   legalBusinessName: string;
   contactInformation: { primaryContactName?: string; emailAddress: string };
 }
+
+// Form validation types
+interface FormValidationSchema {
+  supplier: string;
+  expectedDelivery: string;
+}
+
 export interface ProductPricing {
   _id: string; marketplaceName: string; costPrice: number; sellingPrice: number;
   retailPrice: number; discountPercentage: number; taxRate: number; vatExempt: boolean;
@@ -79,13 +80,12 @@ interface PurchaseOrderFormProps {
   onSaveOrder:        () => Promise<boolean>;
   onCancel:           () => void;
   orderNumber:        string;
-  userId:             string;                              // ← NEW: needed for the API call
+  userId:             string;
   calculateTotals:    (items: IPurchaseOrderItem[]) => { subtotal: number; tax: number; total: number };
   onCreateBulkOrders?: (groups: BulkOrderGroup[]) => any;
 }
 
-
-// ─── Local helpers (unchanged from original) ─────────────────────────────────
+// ─── Local helpers ─────────────────────────────────────────────────
 
 const productConfig: ComboboxItemConfig<ProductFull> = {
   getKey:           p => p._id,
@@ -149,7 +149,7 @@ const PricingSelector: React.FC<{
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MAIN FORM
+// MAIN FORM with React Hook Form
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
@@ -161,58 +161,107 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
   orderNumber, userId,
   onCreateBulkOrders,
 }) => {
-  const [isSaving,      setIsSaving]      = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [fetchProducts, setFetchProducts] = useState(false);
-  const [availablePricing,    setAvailablePricing]    = useState<ProductPricing[]>([]);
-  const [selectedPricingId,   setSelectedPricingId]   = useState("");
-  const [isReorderMode,       setIsReorderMode]       = useState(true);
+  const [availablePricing, setAvailablePricing] = useState<ProductPricing[]>([]);
+  const [selectedPricingId, setSelectedPricingId] = useState("");
+  const [isReorderMode, setIsReorderMode] = useState(true);
   const [selectedProductStock, setSelectedProductStock] = useState<ProductStock | null>(null);
-  const [supplierLocked,      setSupplierLocked]      = useState(false);
-  const [showProposals,       setShowProposals]       = useState(false);
-  const [isCreatingBulk,      setIsCreatingBulk]      = useState(false);
+  const [supplierLocked, setSupplierLocked] = useState(false);
+  const [showProposals, setShowProposals] = useState(false);
+  const [isCreatingBulk, setIsCreatingBulk] = useState(false);
+  const [touchedFields, setTouchedFields] = useState({
+    supplier: false,
+    expectedDelivery: false
+  });
 
+  // ─── React Hook Form Setup ─────────────────────────────────────────────
+  const {
+    control,
+    handleSubmit: handleFormSubmit,
+    formState: { errors, isValid },
+    setValue,
+    trigger,
+    watch,
+    reset
+  } = useForm<FormValidationSchema>({
+    mode: 'onChange', // Validate on change
+    defaultValues: {
+      supplier: orderForm.supplier || '',
+      expectedDelivery: orderForm.expectedDelivery || ''
+    }
+  });
+
+  // Watch values for real-time validation
+  const watchedSupplier = watch('supplier');
+  const watchedDelivery = watch('expectedDelivery');
+
+  // Update form when orderForm changes
+  useEffect(() => {
+    setValue('supplier', orderForm.supplier || '');
+    setValue('expectedDelivery', orderForm.expectedDelivery || '');
+  }, [orderForm, setValue]);
+
+  // Trigger validation when fields change
+  useEffect(() => {
+    if (touchedFields.supplier) {
+      trigger('supplier');
+    }
+  }, [watchedSupplier, trigger, touchedFields.supplier]);
+
+  useEffect(() => {
+    if (touchedFields.expectedDelivery) {
+      trigger('expectedDelivery');
+    }
+  }, [watchedDelivery, trigger, touchedFields.expectedDelivery]);
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      reset();
+      setTouchedFields({ supplier: false, expectedDelivery: false });
+    }
+  }, [open, reset]);
 
   const { data: products, isLoading } = useFormActions<ProductFull>(
     "/products", "products", "Product", 1, "", fetchProducts
   );
 
   const {
-  reorderProducts,
-  isFetchingReorder,
-  reorderFetched,
-  fetchReorderSuggestions,
-  resetReorderState
-} = useReorderSuggestions({
-  userId,
-  createAlerts: true,
-  sendEmails: false,
-  autoFetch: false // We'll control fetch manually
-});
- 
+    reorderProducts,
+    isFetchingReorder,
+    reorderFetched,
+    fetchReorderSuggestions,
+    resetReorderState
+  } = useReorderSuggestions({
+    userId,
+    createAlerts: true,
+    sendEmails: false,
+    autoFetch: false
+  });
 
   // Auto-fetch when reorder mode turns on (first time only)
-useEffect(() => {
-  console.log("isReorderMode", isReorderMode);
-  if (isReorderMode && !reorderFetched) {
-    console.log("isReorderMode in UseEffect", isReorderMode);
-    fetchReorderSuggestions();
-  }
-}, [isReorderMode, reorderFetched, fetchReorderSuggestions]);
+  useEffect(() => {
+    console.log("isReorderMode", isReorderMode);
+    if (isReorderMode && !reorderFetched) {
+      console.log("isReorderMode in UseEffect", isReorderMode);
+      fetchReorderSuggestions();
+    }
+  }, [isReorderMode, reorderFetched, fetchReorderSuggestions]);
 
-useEffect(() => {
-  if (!open) {
-    resetReorderState();
-    setIsReorderMode(false);
-    setSupplierLocked(false);
-  }
-}, [open, resetReorderState]);
+  useEffect(() => {
+    if (!open) {
+      resetReorderState();
+      setIsReorderMode(false);
+      setSupplierLocked(false);
+    }
+  }, [open, resetReorderState]);
 
   const productsNeedingReorder = reorderProducts.length;
 
   // ── Open proposals modal ───────────────────────────────────────────────────
   const handleOpenProposals = useCallback(() => {
     setShowProposals(true);
-    // If already fetched, don't re-fetch. User can hit refresh inside the modal.
     if (!reorderFetched) fetchReorderSuggestions();
   }, [reorderFetched, fetchReorderSuggestions]);
 
@@ -221,7 +270,6 @@ useEffect(() => {
     if (!onCreateBulkOrders) { toast.error("Bulk order handler not configured."); return; }
     setIsCreatingBulk(true);
     try {
-      // Group selected products by supplier
       const map = new Map<string, ReorderProduct[]>();
       selected.forEach(p => {
         const key = p.supplierId || "no-supplier";
@@ -230,12 +278,12 @@ useEffect(() => {
       });
 
       const groups: BulkOrderGroup[] = Array.from(map.entries()).map(([supplierId, prods]) => ({
-        poNumber:         "",               // generated by backend
+        poNumber: "",
         supplierId,
-        supplierName:     prods[0].supplierName,
-        supplierEmail:    prods[0].supplierEmail,
-        products:         prods,
-        expectedDelivery: "",               // optional — user can set later on PO
+        supplierName: prods[0].supplierName,
+        supplierEmail: prods[0].supplierEmail,
+        products: prods,
+        expectedDelivery: "",
       }));
 
       await onCreateBulkOrders(groups);
@@ -245,10 +293,7 @@ useEffect(() => {
         { duration: 4000 }
       );
 
-      // After bulk creation, refresh suggestions (those products should disappear
-      // because they now have an active PO)
       await fetchReorderSuggestions(true);
-
     } catch {
       toast.error("Failed to create purchase orders.");
     } finally {
@@ -263,10 +308,11 @@ useEffect(() => {
       setSupplierLocked(false);
       setSelectedProductStock(null);
       onOrderFormChange({ ...orderForm, supplier: "", orderContactEmail: "" });
+      setValue('supplier', '');
     }
   };
 
-  // ── Product input handlers (unchanged) ────────────────────────────────────
+  // ── Product input handlers ────────────────────────────────────
   const handleProductInputChange = (value: string) => {
     onNewItemChange({ ...newItem, productName: value, productId: "" });
     setAvailablePricing([]); setSelectedPricingId(""); setSelectedProductStock(null);
@@ -274,9 +320,9 @@ useEffect(() => {
   };
 
   const handleProductSelect = (product: ProductFull) => {
-    const allPricing   = product.attributes.flatMap(a => a.pricing);
+    const allPricing = product.attributes.flatMap(a => a.pricing);
     const firstPricing = allPricing[0];
-    const stock        = product.attributes[0]?.stock ?? null;
+    const stock = product.attributes[0]?.stock ?? null;
 
     setAvailablePricing(allPricing);
     setSelectedPricingId(firstPricing?._id ?? "");
@@ -284,23 +330,24 @@ useEffect(() => {
 
     onNewItemChange({
       ...newItem,
-      productId:   product._id,
+      productId: product._id,
       productName: product.productName,
-      sku:         product.attributes[0]?.sku ?? product.sku,
-      quantity:    newItem.quantity || "1",
-      unitPrice:   firstPricing ? String(firstPricing.sellingPrice) : String(product.ui_price),
+      sku: product.attributes[0]?.sku ?? product.sku,
+      quantity: newItem.quantity || "1",
+      unitPrice: firstPricing ? String(firstPricing.sellingPrice) : String(product.ui_price),
     });
 
     // Reorder mode: auto-fill supplier from product's linked supplier
     if (isReorderMode && stock?.supplierId) {
-      const id     = (stock.supplierId as any)?.$oid ?? stock.supplierId;
+      const id = (stock.supplierId as any)?.$oid ?? stock.supplierId;
       const linked = suppliers.find(s => s._id === id);
       if (linked) {
         onOrderFormChange({
           ...orderForm,
-          supplier:          linked._id,
+          supplier: linked._id,
           orderContactEmail: linked.contactInformation?.emailAddress || "",
         });
+        setValue('supplier', linked._id);
         setSupplierLocked(true);
         toast.success(
           `Supplier "${linked.legalBusinessName || linked.contactInformation?.primaryContactName}" auto-selected`,
@@ -319,6 +366,7 @@ useEffect(() => {
     if (isReorderMode) {
       setSupplierLocked(false);
       onOrderFormChange({ ...orderForm, supplier: "", orderContactEmail: "" });
+      setValue('supplier', '');
     }
   };
 
@@ -338,18 +386,56 @@ useEffect(() => {
     const f = suppliers.find(s => s._id === id);
     onOrderFormChange({
       ...orderForm,
-      supplier:          id,
+      supplier: id,
       orderContactEmail: f?.contactInformation?.emailAddress || "",
     });
+    setValue('supplier', id);
+    setTouchedFields(prev => ({ ...prev, supplier: true }));
   };
 
-  const handleSave = async () => {
+  const handleDeliveryChange = (value: string) => {
+    onOrderFormChange({ ...orderForm, expectedDelivery: value });
+    setValue('expectedDelivery', value);
+    setTouchedFields(prev => ({ ...prev, expectedDelivery: true }));
+  };
+
+  // ─── Form Submit Handler with Validation ──────────────────────────────
+  const onFormSubmit = async (data: FormValidationSchema) => {
+    // Mark all fields as touched
+    setTouchedFields({
+      supplier: true,
+      expectedDelivery: true
+    });
+
+    // Final validation
+    if (!data.supplier) {
+      toast.error('Please select a supplier');
+      document.querySelector('#supplier-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    if (!data.expectedDelivery) {
+      toast.error('Please select expected delivery date');
+      document.querySelector('#delivery-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    if (orderItems.length === 0) {
+      toast.error('Please add at least one item');
+      document.querySelector('#items-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const ok = await onSaveOrder();
-      if (ok) { toast.success("Purchase order created!"); onCancel(); }
+      if (ok) { 
+        toast.success("Purchase order created!"); 
+        onCancel(); 
+      }
     } catch (e) {
       console.error(e);
+      toast.error('Failed to save order');
     } finally {
       setIsSaving(false);
     }
@@ -367,11 +453,10 @@ useEffect(() => {
     return f?.legalBusinessName || f?.contactInformation?.primaryContactName || "";
   }, [suppliers, orderForm.supplier]);
 
-  // ── Severity breakdown for the button subtitle ────────────────────────────
   const severityCounts = useMemo(() => ({
     critical: reorderProducts.filter(p => p.severity === "critical").length,
-    warning:  reorderProducts.filter(p => p.severity === "warning").length,
-    low:      reorderProducts.filter(p => p.severity === "low").length,
+    warning: reorderProducts.filter(p => p.severity === "warning").length,
+    low: reorderProducts.filter(p => p.severity === "low").length,
   }), [reorderProducts]);
 
   // ─────────────────────────────────────────────────────────────────────
@@ -390,8 +475,7 @@ useEffect(() => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
-
+          <form onSubmit={handleFormSubmit(onFormSubmit)} className="space-y-6">
             {/* ── Order number + date ──────────────────────────────────── */}
             <div className="p-4 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-lg border-2 border-indigo-200">
               <div className="grid grid-cols-2 gap-4">
@@ -414,7 +498,6 @@ useEffect(() => {
 
             {/* ── Reorder mode toggle + proposals button ───────────────── */}
             <div className="space-y-3">
-
               {/* Toggle */}
               <motion.label whileTap={{ scale: 0.98 }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer select-none transition-all ${
@@ -442,7 +525,6 @@ useEffect(() => {
                     <span className={`text-sm font-semibold ${isReorderMode ? "text-amber-800" : "text-gray-700"}`}>
                       Reorder Mode
                     </span>
-                    {/* Badge — shows while loading or once count is known */}
                     {isReorderMode && (
                       isFetchingReorder ? (
                         <span className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-200 text-gray-500 text-[10px] font-bold rounded-full">
@@ -469,7 +551,7 @@ useEffect(() => {
                 {isReorderMode && <Lock className="h-4 w-4 text-amber-500 shrink-0" />}
               </motion.label>
 
-              {/* Proposals button — appears when reorder mode ON */}
+              {/* Proposals button */}
               <AnimatePresence>
                 {isReorderMode && (
                   <motion.button
@@ -501,7 +583,6 @@ useEffect(() => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {/* Severity breakdown pills */}
                       {!isFetchingReorder && productsNeedingReorder > 0 && (
                         <div className="hidden sm:flex items-center gap-1">
                           {severityCounts.critical > 0 && (
@@ -527,7 +608,7 @@ useEffect(() => {
                 )}
               </AnimatePresence>
 
-              {/* Refresh button (shows after first load) */}
+              {/* Refresh button */}
               <AnimatePresence>
                 {isReorderMode && reorderFetched && (
                   <motion.div
@@ -569,11 +650,12 @@ useEffect(() => {
               </AnimatePresence>
             </div>
 
-            {/* ── Supplier ─────────────────────────────────────────────── */}
-            <div className="space-y-4">
+            {/* ── Supplier Section with Validation ────────────────────────────── */}
+            <div id="supplier-section" className="space-y-4 scroll-mt-20">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-emerald-600" />
                 Supplier Information
+                <span className="text-red-500 text-sm font-normal">*</span>
                 {supplierLocked && (
                   <motion.span initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                     className="flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
@@ -581,60 +663,169 @@ useEffect(() => {
                   </motion.span>
                 )}
               </h3>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Supplier Name *</Label>
-                  <div className="relative">
-                    <select
-                      value={orderForm.supplier}
-                      onChange={e => handleSupplierChange(e.target.value)}
-                      disabled={isSaving || supplierLocked}
-                      className={`w-full h-10 px-3 rounded-md border-2 focus:outline-none transition-colors ${
-                        supplierLocked
-                          ? "border-amber-300 bg-amber-50 text-amber-900 cursor-not-allowed opacity-80"
-                          : "border-emerald-100 hover:border-emerald-300 focus:border-emerald-400"
-                      }`}
-                    >
-                      <option value="">Select a supplier...</option>
-                      {suppliers.map(s => (
-                        <option key={s._id} value={s._id}>
-                          {s.legalBusinessName || s.contactInformation?.primaryContactName}
-                        </option>
-                      ))}
-                    </select>
-                    {supplierLocked && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <Lock className="h-4 w-4 text-amber-500" />
+                  <Label className="flex items-center gap-2">
+                    Supplier Name <span className="text-red-500">*</span>
+                    {touchedFields.supplier && errors.supplier && (
+                      <span className="text-xs text-red-500 font-normal ml-auto">
+                        {errors.supplier.message}
+                      </span>
+                    )}
+                  </Label>
+                  
+                  <Controller
+                    name="supplier"
+                    control={control}
+                    rules={{ 
+                      required: 'Supplier is required' 
+                    }}
+                    render={({ field }) => (
+                      <div className="relative">
+                        <select
+                          {...field}
+                          value={orderForm.supplier}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleSupplierChange(e.target.value);
+                          }}
+                          onBlur={() => {
+                            field.onBlur();
+                            setTouchedFields(prev => ({ ...prev, supplier: true }));
+                          }}
+                          disabled={isSaving || supplierLocked}
+                          className={`w-full h-10 px-3 rounded-md border-2 focus:outline-none transition-colors ${
+                            touchedFields.supplier && errors.supplier
+                              ? 'border-red-300 bg-red-50 focus:border-red-500'
+                              : supplierLocked
+                                ? 'border-amber-300 bg-amber-50 text-amber-900 cursor-not-allowed opacity-80'
+                                : 'border-emerald-100 hover:border-emerald-300 focus:border-emerald-400'
+                          }`}
+                        >
+                          <option value="">Select a supplier...</option>
+                          {suppliers.map(s => (
+                            <option key={s._id} value={s._id}>
+                              {s.legalBusinessName || s.contactInformation?.primaryContactName}
+                            </option>
+                          ))}
+                        </select>
+                        
+                        {touchedFields.supplier && errors.supplier && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <AlertTriangle className="h-4 w-4 text-red-500" />
+                          </div>
+                        )}
+                        
+                        {supplierLocked && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <Lock className="h-4 w-4 text-amber-500" />
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
+                  />
+                  
+                  <AnimatePresence>
+                    {touchedFields.supplier && errors.supplier && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="text-xs text-red-500 flex items-center gap-1 mt-1"
+                      >
+                        <Info className="h-3 w-3" />
+                        {errors.supplier.message}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                  
                   {supplierLocked && (
                     <p className="text-xs text-amber-600 flex items-center gap-1">
                       <Info className="h-3 w-3" />Clear product to change supplier.
                     </p>
                   )}
                 </div>
+                
                 <div className="space-y-2">
                   <Label>Contact Email *</Label>
                   <Input type="email" value={orderForm.orderContactEmail || ""}
                     placeholder="supplier@email.com" disabled
-                    className="border-2 border-emerald-100" />
+                    className={`border-2 ${touchedFields.supplier && errors.supplier ? 'border-red-300' : 'border-emerald-100'}`} />
                 </div>
               </div>
             </div>
 
-            {/* ── Delivery ─────────────────────────────────────────────── */}
-            <div className="space-y-4">
+            {/* ── Delivery Section with Validation ───────────────────────────── */}
+            <div id="delivery-section" className="space-y-4 scroll-mt-20">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Truck className="h-5 w-5 text-teal-600" />Delivery Information
+                <Truck className="h-5 w-5 text-teal-600" />
+                Delivery Information
+                <span className="text-red-500 text-sm font-normal">*</span>
               </h3>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Expected Delivery Date *</Label>
-                  <Input type="date" value={orderForm.expectedDelivery} disabled={isSaving}
-                    onChange={e => onOrderFormChange({ ...orderForm, expectedDelivery: e.target.value })}
-                    className="border-2 border-teal-100 hover:border-teal-300 focus:border-teal-400" />
+                  <Label className="flex items-center gap-2">
+                    Expected Delivery Date <span className="text-red-500">*</span>
+                    {touchedFields.expectedDelivery && errors.expectedDelivery && (
+                      <span className="text-xs text-red-500 font-normal ml-auto">
+                        {errors.expectedDelivery.message}
+                      </span>
+                    )}
+                  </Label>
+                  
+                  <Controller
+                    name="expectedDelivery"
+                    control={control}
+                    rules={{ 
+                      required: 'Expected delivery date is required' 
+                    }}
+                    render={({ field }) => (
+                      <div className="relative">
+                        <Input 
+                          type="date" 
+                          value={orderForm.expectedDelivery} 
+                          disabled={isSaving}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleDeliveryChange(e.target.value);
+                          }}
+                          onBlur={() => {
+                            field.onBlur();
+                            setTouchedFields(prev => ({ ...prev, expectedDelivery: true }));
+                          }}
+                          className={`border-2 ${
+                            touchedFields.expectedDelivery && errors.expectedDelivery
+                              ? 'border-red-300 bg-red-50 focus:border-red-500'
+                              : 'border-teal-100 hover:border-teal-300 focus:border-teal-400'
+                          }`}
+                        />
+                        
+                        {touchedFields.expectedDelivery && errors.expectedDelivery && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <AlertTriangle className="h-4 w-4 text-red-500" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  />
+                  
+                  <AnimatePresence>
+                    {touchedFields.expectedDelivery && errors.expectedDelivery && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="text-xs text-red-500 flex items-center gap-1 mt-1"
+                      >
+                        <Info className="h-3 w-3" />
+                        {errors.expectedDelivery.message}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
+                
                 <div className="space-y-2">
                   <Label>Notes</Label>
                   <Textarea value={orderForm.notes} rows={3} disabled={isSaving}
@@ -645,11 +836,40 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* ── Order items ──────────────────────────────────────────── */}
-            <div className="space-y-4">
+            {/* ── Order items section ──────────────────────────────────────── */}
+            <div id="items-section" className="space-y-4 scroll-mt-20">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <Box className="h-5 w-5 text-indigo-600" />Order Items
+                <Box className="h-5 w-5 text-indigo-600" />
+                Order Items
+                {orderItems.length === 0 && (
+                  <span className="text-xs text-red-500 font-normal">(At least one item required)</span>
+                )}
               </h3>
+              
+              {/* Items Error Banner */}
+              <AnimatePresence>
+                {orderItems.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-3 bg-red-50 border-2 border-red-200 rounded-lg flex items-center gap-3"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-red-800">
+                        At least one item is required
+                      </p>
+                      <p className="text-xs text-red-600 mt-0.5">
+                        Please add a product to continue
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border-2 border-indigo-100 space-y-3">
                 <div className="grid grid-cols-5 gap-3">
                   <SearchableCombobox<ProductFull>
@@ -739,8 +959,17 @@ useEffect(() => {
                   </table>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                  No items added yet.
+                <div className={`text-center py-8 border-2 border-dashed rounded-lg transition-colors ${
+                  orderItems.length === 0 ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
+                }`}>
+                  <Box className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                  <p className="text-gray-500">No items added yet.</p>
+                  {orderItems.length === 0 && (
+                    <p className="text-xs text-red-500 mt-2 flex items-center justify-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Please add at least one item
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -761,21 +990,29 @@ useEffect(() => {
                 </div>
               )}
             </div>
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={onCancel} disabled={isSaving} type="button">
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              disabled={isSaving || orderItems.length === 0}
-              type="button"
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-            >
-              {isSaving ? "Saving…" : editingOrder ? "Update Order" : "Create Order"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={onCancel} disabled={isSaving} type="button">
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSaving || orderItems.length === 0 || !isValid}
+                className={`bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 ${
+                  (isSaving || orderItems.length === 0 || !isValid) ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  editingOrder ? "Update Order" : "Create Order"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

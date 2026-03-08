@@ -158,6 +158,7 @@ export interface ReturningItem {
   condition:        string;
   notes:            string;
   unitPrice:        number;
+  acceptedQuantity: number;
 }
 
 // ── GRN item shape coming from backend ───────────────────────────────────

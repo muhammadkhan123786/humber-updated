@@ -25,6 +25,8 @@ export class EmailService {
 
         this.poTemplate = new PurchaseOrderTemplate(this.baseTemplate['config']);
         this.reorderTemplate = new ReorderAlertTemplate(this.baseTemplate['config']);
+        // EmailService constructor mein add karo
+this.cancellationTemplate = new CancellationTemplate(this.baseTemplate['config']);
     }
 
     public static getInstance(): EmailService {
@@ -82,7 +84,6 @@ export class EmailService {
 
     private async logEmailDelivery(log: any): Promise<void> {
         // TODO: Implement email logging to database
-        console.log('Email delivery logged:', log);
     }
 
     /**
@@ -267,12 +268,13 @@ async sendCancellationEmail(
 ): Promise<void> {
     const supplier = po.supplier;
     const supplierEmail = supplier?.contactInformation?.emailAddress;
+   
     
     if (!supplierEmail) {
         console.warn(`[EmailService] No supplier email for PO ${po.orderNumber} — skipping cancellation email`);
         return;
     }
-
+console.log("Canneled email")
     const { html, text } = this.cancellationTemplate.generate(po);
 
     await this.sendMail({
