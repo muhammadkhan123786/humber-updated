@@ -21,6 +21,7 @@ export interface PaginatedResponse<T> {
   limit: number;
   data: T[];
 }
+
 const getAuthHeader = () => {
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -28,6 +29,7 @@ const getAuthHeader = () => {
   const cleanToken = token.replace(/^"|"$/g, "").trim();
   return { Authorization: `Bearer ${cleanToken}` };
 };
+
 const generateInvoiceCode = async (): Promise<string> => {
   try {
     const baseUrl =
@@ -47,6 +49,7 @@ const generateInvoiceCode = async (): Promise<string> => {
     return `INV-${year}${month}${day}-${random}`;
   }
 };
+
 const fetchDefaultTax = async (): Promise<number> => {
   try {
     const baseUrl =
@@ -58,6 +61,33 @@ const fetchDefaultTax = async (): Promise<number> => {
   } catch (error) {
     console.error("Failed to fetch default tax:", error);
     return 20;
+  }
+};
+
+const fetchDefaultLabourRate = async (): Promise<number> => {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+    const response = await axios.get(`${baseUrl}/labour-rate?filter=all`, {
+      headers: getAuthHeader(),
+    });
+    const responseData = response.data?.data || response.data;
+
+    if (Array.isArray(responseData)) {
+      const defaultRate = responseData.find(
+        (rate: any) => rate.isDefault === true,
+      );
+      return defaultRate?.value || 15;
+    }
+
+    if (responseData && responseData.isDefault === true) {
+      return responseData.value || 15;
+    }
+
+    return 15;
+  } catch (error) {
+    console.error("Failed to fetch default labour rate:", error);
+    return 15;
   }
 };
 const fetchInvoiceById = async (id: string): Promise<any> => {
@@ -73,22 +103,22 @@ const fetchInvoiceById = async (id: string): Promise<any> => {
     return null;
   }
 };
+
 export const useInvoice = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invoiceIdFromUrl = searchParams.get("id");
-
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(invoiceIdFromUrl);
   const [defaultTaxRate, setDefaultTaxRate] = useState<number>(20);
+  const [defaultLabourRate, setDefaultLabourRate] = useState<number>(15);
   const [jobs, setJobs] = useState<any[]>([]);
   const [partsInventory, setPartsInventory] = useState<any[]>([]);
   const [serviceTypes, setServiceTypes] = useState<any[]>([]);
   const [invoiceCode, setInvoiceCode] = useState<string>("");
-
   const [isFetchingJobs, setIsFetchingJobs] = useState(false);
   const [isFetchingParts, setIsFetchingParts] = useState(false);
   const [isFetchingServices, setIsFetchingServices] = useState(false);
@@ -129,40 +159,6 @@ export const useInvoice = () => {
   });
 
   useEffect(() => {
-    const loadInvoiceForEditing = async () => {
-      if (invoiceIdFromUrl) {
-        setIsLoading(true);
-        try {
-          const invoiceData = await fetchInvoiceById(invoiceIdFromUrl);
-          if (invoiceData) {
-            console.log("📥 Invoice data loaded:", {
-              callOutFee: invoiceData.callOutFee,
-              discountType: invoiceData.discountType,
-              partsCount: invoiceData.parts?.length,
-              parts: invoiceData.parts?.map((p: any) => ({
-                partId: p.partId?._id || p.partId,
-                quantity: p.quantity,
-                unitCost: p.unitCost,
-              })),
-            });
-            setEditData(invoiceData);
-            toast.success("Invoice loaded for editing");
-          } else {
-            toast.error("Invoice not found");
-          }
-        } catch (error) {
-          console.error("Error loading invoice:", error);
-          toast.error("Failed to load invoice");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadInvoiceForEditing();
-  }, [invoiceIdFromUrl]);
-
-  useEffect(() => {
     const loadInvoiceCode = async () => {
       if (!editingId) {
         const code = await generateInvoiceCode();
@@ -172,6 +168,17 @@ export const useInvoice = () => {
     };
     loadInvoiceCode();
   }, [editingId, form]);
+
+  useEffect(() => {
+    const loadDefaultRates = async () => {
+      const taxRate = await fetchDefaultTax();
+      setDefaultTaxRate(taxRate);
+
+      const labourRate = await fetchDefaultLabourRate();
+      setDefaultLabourRate(labourRate);
+    };
+    loadDefaultRates();
+  }, []);
 
   const {
     fields: serviceFields,
@@ -223,11 +230,10 @@ export const useInvoice = () => {
           hours = parseFloat(String(service.duration)) || 0;
         }
       }
-      // Ensure minimum 0.0167 hours (1 minute) if there's any time
       if (hours > 0 && hours < 0.0167) {
         hours = 0.0167;
       }
-      const rate = service?.rate || 50;
+      const rate = service?.rate || defaultLabourRate;
       return sum + hours * rate;
     }, 0);
 
@@ -299,16 +305,9 @@ export const useInvoice = () => {
     discountAmount,
     isVATEXEMPT,
     defaultTaxRate,
+    defaultLabourRate,
     form,
   ]);
-
-  useEffect(() => {
-    const loadDefaultTax = async () => {
-      const taxRate = await fetchDefaultTax();
-      setDefaultTaxRate(taxRate);
-    };
-    loadDefaultTax();
-  }, []);
 
   const fetchJobs = useCallback(async () => {
     setIsFetchingJobs(true);
@@ -368,8 +367,6 @@ export const useInvoice = () => {
       try {
         const baseUrl =
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-
-        // Fetch job details
         const jobResponse = await axios.get(
           `${baseUrl}/technician-job-by-admin/${jobId}`,
           {
@@ -379,8 +376,6 @@ export const useInvoice = () => {
 
         const jobData = jobResponse.data?.data || jobResponse.data;
         setSelectedJob(jobData);
-
-        // Fetch technician activities for this job
         const activitiesResponse = await axios.get(
           `${baseUrl}/technician-job-activities`,
           {
@@ -402,41 +397,25 @@ export const useInvoice = () => {
                 : jobData.ticketId.customerId;
             form.setValue("customerId", customerId);
           }
-
-          // Convert activities to services
           if (activitiesData && activitiesData.length > 0) {
             console.log("Activities data:", activitiesData);
 
             const servicesFromActivities = activitiesData.map(
               (activity: any) => {
-                // Convert totalTimeInSeconds to decimal hours for calculation
                 const totalSeconds = activity.totalTimeInSeconds || 0;
-
-                // Calculate hours and minutes for display
                 const hours = Math.floor(totalSeconds / 3600);
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-                // For very small durations (< 1 minute), show as 00:01 to indicate time was spent
                 const displayMinutes =
                   minutes === 0 && hours === 0 ? 1 : minutes;
                 const displayHours = hours;
-
-                // Format as HH:MM for display
                 const displayDuration = `${displayHours.toString().padStart(2, "0")}:${displayMinutes.toString().padStart(2, "0")}`;
-
-                // Calculate decimal hours for actual cost calculation
                 const decimalHours = totalSeconds / 3600;
-
-                // Ensure minimum 0.0167 hours (1 minute) if there's any time
                 const billableHours =
                   decimalHours > 0 && decimalHours < 0.0167
                     ? 0.0167
                     : decimalHours;
 
-                // Get rate from activityType or use default
-                const rate = activity.activityType?.rate || 50;
-
-                // Calculate line total
+                const rate = activity.activityType?.rate || defaultLabourRate;
                 const lineTotal = billableHours * rate;
 
                 console.log("Activity time conversion:", {
@@ -453,7 +432,7 @@ export const useInvoice = () => {
 
                 return {
                   activityId: activity.activityType?._id || "",
-                  duration: displayDuration, // This is for display in HH:MM format
+                  duration: displayDuration,
                   description:
                     activity.additionalNotes ||
                     `Service activity - ${activity.activityType?.technicianServiceType || ""}`,
@@ -466,8 +445,6 @@ export const useInvoice = () => {
 
             console.log("Services from activities:", servicesFromActivities);
             form.setValue("services", servicesFromActivities);
-
-            // Force recalculation of totals
             setTimeout(() => {
               form.trigger();
             }, 100);
@@ -476,7 +453,6 @@ export const useInvoice = () => {
             form.setValue("services", []);
           }
 
-          // Set parts from quotationId.partsList
           if (
             jobData.quotationId?.partsList &&
             jobData.quotationId.partsList.length > 0
@@ -507,21 +483,15 @@ export const useInvoice = () => {
           } else {
             form.setValue("parts", []);
           }
-
-          // Set labour total from quotationId (as fallback)
           if (jobData.quotationId?.labourTotalBill) {
             form.setValue(
               "labourTotal",
               jobData.quotationId.labourTotalBill || 0,
             );
           }
-
-          // Set parts total from quotationId
           if (jobData.quotationId?.partTotalBill) {
             form.setValue("partsTotal", jobData.quotationId.partTotalBill || 0);
           }
-
-          // Set subTotal and other totals
           if (jobData.quotationId?.subTotalBill) {
             form.setValue("subTotal", jobData.quotationId.subTotalBill || 0);
           }
@@ -542,7 +512,7 @@ export const useInvoice = () => {
         setIsLoading(false);
       }
     },
-    [form, partsInventory, editingId],
+    [form, partsInventory, defaultLabourRate, editingId],
   );
 
   const handleJobSelect = async (jobId: string) => {
@@ -553,8 +523,6 @@ export const useInvoice = () => {
     try {
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-
-      // Fetch job details
       const jobResponse = await axios.get(
         `${baseUrl}/technician-job-by-admin/${jobId}`,
         {
@@ -564,8 +532,6 @@ export const useInvoice = () => {
 
       const jobData = jobResponse.data?.data || jobResponse.data;
       setSelectedJob(jobData);
-
-      // Fetch technician activities for this job
       const activitiesResponse = await axios.get(
         `${baseUrl}/technician-job-activities`,
         {
@@ -580,7 +546,6 @@ export const useInvoice = () => {
       const activitiesData = activitiesResponse.data?.data || [];
 
       if (jobData && !editingId) {
-        // Set customer ID from ticketId.customerId
         if (jobData.ticketId?.customerId) {
           const customerId =
             typeof jobData.ticketId.customerId === "object"
@@ -588,37 +553,21 @@ export const useInvoice = () => {
               : jobData.ticketId.customerId;
           form.setValue("customerId", customerId);
         }
-
-        // Convert activities to services
         if (activitiesData && activitiesData.length > 0) {
           console.log("Activities data:", activitiesData);
 
           const servicesFromActivities = activitiesData.map((activity: any) => {
-            // Convert totalTimeInSeconds to decimal hours for calculation
             const totalSeconds = activity.totalTimeInSeconds || 0;
-
-            // Calculate hours and minutes for display
             const hours = Math.floor(totalSeconds / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-            // For very small durations (< 1 minute), show as 00:01 to indicate time was spent
             const displayMinutes = minutes === 0 && hours === 0 ? 1 : minutes;
             const displayHours = hours;
-
-            // Format as HH:MM for display
             const displayDuration = `${displayHours.toString().padStart(2, "0")}:${displayMinutes.toString().padStart(2, "0")}`;
-
-            // Calculate decimal hours for actual cost calculation
             const decimalHours = totalSeconds / 3600;
-
-            // Ensure minimum 0.0167 hours (1 minute) if there's any time
             const billableHours =
               decimalHours > 0 && decimalHours < 0.0167 ? 0.0167 : decimalHours;
 
-            // Get rate from activityType or use default
-            const rate = activity.activityType?.rate || 50;
-
-            // Calculate line total
+            const rate = activity.activityType?.rate || defaultLabourRate;
             const lineTotal = billableHours * rate;
 
             console.log("Activity time conversion:", {
@@ -635,7 +584,7 @@ export const useInvoice = () => {
 
             return {
               activityId: activity.activityType?._id || "",
-              duration: displayDuration, // This is for display in HH:MM format
+              duration: displayDuration,
               description:
                 activity.additionalNotes ||
                 `Service activity - ${activity.activityType?.technicianServiceType || ""}`,
@@ -647,8 +596,6 @@ export const useInvoice = () => {
 
           console.log("Services from activities:", servicesFromActivities);
           form.setValue("services", servicesFromActivities);
-
-          // Force recalculation of totals
           setTimeout(() => {
             form.trigger();
           }, 100);
@@ -656,8 +603,6 @@ export const useInvoice = () => {
           console.log("No activities found for job");
           form.setValue("services", []);
         }
-
-        // Set parts from quotationId.partsList
         if (
           jobData.quotationId?.partsList &&
           jobData.quotationId.partsList.length > 0
@@ -686,16 +631,12 @@ export const useInvoice = () => {
         } else {
           form.setValue("parts", []);
         }
-
-        // Set labour total from quotationId if available (as fallback)
         if (jobData.quotationId?.labourTotalBill) {
           form.setValue(
             "labourTotal",
             jobData.quotationId.labourTotalBill || 0,
           );
         }
-
-        // Set parts total from quotationId if available
         if (jobData.quotationId?.partTotalBill) {
           form.setValue("partsTotal", jobData.quotationId.partTotalBill || 0);
         }
@@ -737,7 +678,7 @@ export const useInvoice = () => {
             description: service.description || "",
             additionalNotes: service.additionalNotes || "",
             source: service.source || "INVOICE",
-            rate: service.rate || 50,
+            rate: service.rate || defaultLabourRate,
           }))
         : [];
 
@@ -832,8 +773,40 @@ export const useInvoice = () => {
         fetchJobById(jobId, false).catch(console.error);
       }
     },
-    [form, fetchJobById, partsInventory],
+    [form, fetchJobById, partsInventory, defaultLabourRate],
   );
+  useEffect(() => {
+    const loadInvoiceForEditing = async () => {
+      if (invoiceIdFromUrl) {
+        setIsLoading(true);
+        try {
+          const invoiceData = await fetchInvoiceById(invoiceIdFromUrl);
+          if (invoiceData) {
+            console.log("📥 Invoice data loaded:", {
+              callOutFee: invoiceData.callOutFee,
+              discountType: invoiceData.discountType,
+              partsCount: invoiceData.parts?.length,
+              parts: invoiceData.parts?.map((p: any) => ({
+                partId: p.partId?._id || p.partId,
+                quantity: p.quantity,
+                unitCost: p.unitCost,
+              })),
+            });
+            setEditData(invoiceData);
+          } else {
+            toast.error("Invoice not found");
+          }
+        } catch (error) {
+          console.error("Error loading invoice:", error);
+          toast.error("Failed to load invoice");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadInvoiceForEditing();
+  }, [invoiceIdFromUrl, setEditData]);
 
   const clearEdit = () => {
     setEditingId(null);
@@ -844,9 +817,6 @@ export const useInvoice = () => {
 
   const onSubmit = async (data: InvoiceFormData) => {
     try {
-      console.log("🔵 onSubmit called with data:", data);
-      console.log("🔵 editingId:", editingId);
-
       setIsSubmitting(true);
       setError(null);
       setSuccess(null);
@@ -908,11 +878,10 @@ export const useInvoice = () => {
             hours = parseFloat(String(service.duration)) || 0;
           }
         }
-        // Ensure minimum 0.0167 hours (1 minute) if there's any time
         if (hours > 0 && hours < 0.0167) {
           hours = 0.0167;
         }
-        const rate = service?.rate || 50;
+        const rate = service?.rate || defaultLabourRate;
         return sum + hours * rate;
       }, 0);
 
@@ -1057,7 +1026,7 @@ export const useInvoice = () => {
     appendService({
       activityId: "",
       duration: "1:00",
-      rate: 50,
+      rate: defaultLabourRate,
       description: "",
       additionalNotes: "",
       source: "INVOICE",
@@ -1095,6 +1064,7 @@ export const useInvoice = () => {
     serviceTypes,
     selectedJob,
     defaultTaxRate,
+    defaultLabourRate,
     serviceFields,
     partFields,
     invoiceCode,
