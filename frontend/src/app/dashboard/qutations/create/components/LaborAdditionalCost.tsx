@@ -29,6 +29,8 @@ const LaborAdditionalCost = ({
 }: LaborAdditionalCostProps) => {
   const [labourRates, setLabourRates] = useState<LabourRate[]>([]);
   const [isLoadingRates, setIsLoadingRates] = useState(true);
+  const [isCustomRate, setIsCustomRate] = useState(false);
+  const [selectedRateId, setSelectedRateId] = useState<string>('0');
   const laborTotal = laborHours * ratePerHour;
 
   // Fetch default labour rates on component mount
@@ -47,6 +49,7 @@ const LaborAdditionalCost = ({
         
         // Auto-select first default rate if available and no rate is set
         if (defaultRates.length > 0 && ratePerHour === 0) {
+          setSelectedRateId(defaultRates[0]._id);
           onRatePerHourChange(defaultRates[0].value);
         }
       } catch (error) {
@@ -98,19 +101,52 @@ const LaborAdditionalCost = ({
                   <span className="text-gray-500">Loading rates...</span>
                 </div>
               ) : (
-                <select
-                  value={ratePerHour}
-                  onChange={(e) => onRatePerHourChange(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6] cursor-pointer"
-                  required
-                >
-                  <option value="0">Select labour rate</option>
-                  {labourRates.map((rate) => (
-                    <option key={rate._id} value={rate.value}>
-                      {rate.name} - £{rate.value.toFixed(2)}/hour
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    value={selectedRateId}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedRateId(value);
+                      
+                      if (value === 'custom') {
+                        setIsCustomRate(true);
+                        // Keep current rate or set to 0 if selecting custom
+                      } else {
+                        setIsCustomRate(false);
+                        const selectedRate = labourRates.find(rate => rate._id === value);
+                        if (selectedRate) {
+                          onRatePerHourChange(selectedRate.value);
+                        } else {
+                          onRatePerHourChange(0);
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6] cursor-pointer"
+                    required={!isCustomRate}
+                  >
+                    <option value="0">Select labour rate</option>
+                    {labourRates.map((rate) => (
+                      <option key={rate._id} value={rate._id}>
+                        {rate.name} - £{rate.value.toFixed(2)}/hour
+                      </option>
+                    ))}
+                    <option value="custom">Custom Rate (Enter manually)</option>
+                  </select>
+                  
+                  {/* Custom Rate Input - Shows when Custom is selected */}
+                  {isCustomRate && (
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={ratePerHour}
+                      onChange={(e) => onRatePerHourChange(parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6] mt-2"
+                      placeholder="Enter custom rate (e.g., 45.00)"
+                      required
+                    />
+                  )}
+                </>
               )}
               {!isLoadingRates && labourRates.length === 0 && (
                 <p className="text-xs text-red-500 mt-1">
