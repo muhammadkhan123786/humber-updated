@@ -107,6 +107,9 @@ export interface BasicInfoStepProps {
   isUploading?: boolean;
   onBulkAddTags: (newTagsArray: string[]) => void;
   setImage: any;
+  validationErrors?: string[];
+  isValid?: boolean;
+  requiredFields?: string[];
 }
 
 export interface UploadedImage {
@@ -132,6 +135,8 @@ export interface AIResponse {
 export interface CategoryStepProps {
   categories: CategoryNode[];
   selectedPath: string[];
+  validationErrors?: string[];
+  isValid?: boolean;
   selectedCategories: CategoryNode[];
   getCategoriesAtLevel: (level: number) => CategoryNode[];
   handleCategorySelect: (level: number, value: string) => void;

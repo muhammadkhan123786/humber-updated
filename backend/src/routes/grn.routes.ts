@@ -4,6 +4,7 @@ import { GrnDoc, GrnModel } from "../models/grn.models";
 import { createGRNValidationsSchema } from "../schemas/grn.schema"; 
 import { AdvancedGenericController } from "../controllers/GenericController";
 import { exportGRNToPDF } from "../controllers/pdf.controller";
+import { applyGRNStockMiddleware } from "../middleware/grnStock.middleware"
 
 
 const grnRoutes = Router();
@@ -60,7 +61,7 @@ const grnController = new AdvancedGenericController({
 grnRoutes.get("/export/:id", exportGRNToPDF);
 grnRoutes.get("/", grnController.getAll);
 grnRoutes.get("/:id", grnController.getById);
-grnRoutes.post("/", grnController.create);
+grnRoutes.post("/", applyGRNStockMiddleware, grnController.create);
 grnRoutes.put("/:id", grnController.update);
 grnRoutes.delete("/:id", grnController.delete);
 

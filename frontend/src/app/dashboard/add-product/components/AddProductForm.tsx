@@ -63,6 +63,12 @@ export default function AddProductForm() {
     variants,
     setVariants,
     setImages,
+
+    isStep1Valid,
+    isStep2Valid,    
+    isCurrentStepValid,
+    
+
   } = useProductForm({
     initialData: {
       productName: "",
@@ -133,6 +139,9 @@ export default function AddProductForm() {
             onFullPathSelect={handleFullPathSelect}
             attributeCategoryIds={attributeCategoryIds}
             attributeIdsLoading={attributeIdsLoading}
+
+            
+            isValid={isStep1Valid}
           />
 
         );
@@ -152,6 +161,10 @@ export default function AddProductForm() {
             onRemoveImage={removeImage}
             setImage={setImages}
             onBulkAddTags={onBulkAddTags}
+
+          
+            isValid={isStep2Valid}
+            requiredFields={['productName', 'sku', 'brand', 'manufacturer']}
 
           />
 
@@ -205,6 +218,7 @@ export default function AddProductForm() {
           totalSteps={STEPS.length}
           onPrev={prevStep}
           onNext={nextStep}
+          isNextDisabled={!isCurrentStepValid}
         // nextLabel={
         //   currentStep === STEPS.length ? "Create Product" : "Next Step"
         // }

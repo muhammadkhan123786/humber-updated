@@ -55,7 +55,11 @@ interface InvoiceData {
   updatedAt?: string;
 }
 
-export const downloadInvoicePDF = (invoice: InvoiceData) => {
+// Logic updated: added 'action' parameter
+export const downloadInvoicePDF = (
+  invoice: InvoiceData,
+  action: "download" | "print" = "download",
+) => {
   const doc = new jsPDF();
 
   // Helper functions
@@ -601,5 +605,12 @@ export const downloadInvoicePDF = (invoice: InvoiceData) => {
     { align: "center" },
   );
 
-  doc.save(`Invoice-${invoice.invoiceId || "download"}.pdf`);
+  // LOGIC UPDATED: Handle Print vs Download
+  if (action === "print") {
+    doc.autoPrint();
+    const pdfBlob = doc.output("bloburl");
+    window.open(pdfBlob, "_blank");
+  } else {
+    doc.save(`Invoice-${invoice.invoiceId || "download"}.pdf`);
+  }
 };
