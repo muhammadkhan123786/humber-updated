@@ -1,8 +1,6 @@
-// components/PricingSupplierTab.tsx
-
 import { Input } from "@/components/form/Input";
 import { Label } from "@/components/form/Label";
-import { Badge } from "@/components/form/Badge";
+import { Switch } from "@/components/form/Switch";
 import {
   Select,
   SelectContent,
@@ -18,15 +16,14 @@ import {
   Search,
   CheckCircle2,
   Mail,
-  Phone,
-  MapPin,
+  Percent,
+  Globe,
 } from "lucide-react";
-import { ProductFormData } from "../types";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface PricingSupplierTabProps {
-  formData: ProductFormData;
-  onInputChange: (field: keyof ProductFormData, value: any) => void;
+  formData: any;
+  updateField: (path: string, value: any) => void;
   onSupplierChange: (supplierId: string) => void;
   suppliers: any[];
   profit: number;
@@ -35,7 +32,7 @@ interface PricingSupplierTabProps {
 
 export const PricingSupplierTab: React.FC<PricingSupplierTabProps> = ({
   formData,
-  onInputChange,
+  updateField,
   onSupplierChange,
   suppliers,
   profit,
@@ -43,263 +40,258 @@ export const PricingSupplierTab: React.FC<PricingSupplierTabProps> = ({
 }) => {
   const [supplierSearch, setSupplierSearch] = useState("");
 
-  // Debug logs
-  useEffect(() => {
-    console.log("🎯 PricingSupplierTab - formData:", {
-      supplierId: formData?.supplierId,
-      supplierName: formData?.supplierName
-    });
-    console.log("🎯 PricingSupplierTab - suppliers:", suppliers);
-  }, [formData, suppliers]);
+  const getSupplierName = (supplier: any): string =>
+    supplier?.contactInformation?.primaryContactName ||
+    supplier?.supplierIdentification?.legalBusinessName ||
+    supplier?.legalBusinessName ||
+    "Unnamed Supplier";
 
-  // Helper function to extract supplier display name
-  const getSupplierName = (supplier: any): string => {
-    return (
-      supplier?.contactInformation?.primaryContactName ||
-      supplier?.supplierIdentification?.legalBusinessName ||
-      supplier?.legalBusinessName ||
-      supplier?.name ||
-      "Unnamed Supplier"
-    );
-  };
+  const getSupplierEmail = (supplier: any): string =>
+    supplier?.contactInformation?.emailAddress ||
+    supplier?.operationalInformation?.orderContactEmail ||
+    "";
 
-  // Helper function to extract contact email
-  const getSupplierEmail = (supplier: any): string => {
-    return (
-      supplier?.contactInformation?.emailAddress ||
-      supplier?.operationalInformation?.orderContactEmail ||
-      supplier?.email ||
-      ""
-    );
-  };
-
-  // Helper function to extract contact phone
-  const getSupplierPhone = (supplier: any): string => {
-    return (
-      supplier?.contactInformation?.phoneNumber ||
-      supplier?.phone ||
-      ""
-    );
-  };
-
-  // Filter suppliers based on search
   const filteredSuppliers = supplierSearch
-    ? suppliers.filter(s => {
+    ? suppliers.filter((s) => {
         const name = getSupplierName(s).toLowerCase();
         const email = getSupplierEmail(s).toLowerCase();
-        const search = supplierSearch.toLowerCase();
-        
-        return name.includes(search) || email.includes(search);
+        const q = supplierSearch.toLowerCase();
+        return name.includes(q) || email.includes(q);
       })
     : suppliers;
 
   const calculateMarkup = () => {
-    if (formData.costPrice > 0) {
-      return (((formData.price - formData.costPrice) / formData.costPrice) * 100).toFixed(1);
-    }
+    const cost = formData.costPrice || 0;
+    const sell = formData.price || 0;
+    if (cost > 0) return (((sell - cost) / cost) * 100).toFixed(1);
     return "0";
   };
 
-  // Find selected supplier
-  const selectedSupplier = suppliers.find(s => s._id === formData?.supplierId);
+  const discountedPrice =
+    formData.price && formData.discountPercentage
+      ? formData.price - (formData.price * formData.discountPercentage) / 100
+      : formData.price || 0;
+
+  const selectedSupplier = suppliers.find((s) => s._id === formData?.supplierId);
 
   return (
-    <div className="space-y-6">
-      {/* Pricing Section */}
-      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
-        <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Pricing Information
+    <div className="space-y-5">
+
+      {/* ── Marketplace ── */}
+      <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+        <h4 className="font-semibold text-violet-800 mb-4 flex items-center gap-2">
+          <Globe className="h-4 w-4" /> Marketplace
         </h4>
-
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <div className="space-y-2">
-            <Label htmlFor="costPrice">Cost Price (£) *</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">£</span>
-              <Input
-                id="costPrice"
-                type="number"
-                step="0.01"
-                value={formData?.costPrice || ""}
-                onChange={(e) => onInputChange("costPrice", parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                className="pl-7"
-              />
-            </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Marketplace Name</Label>
+            <Select
+              value={formData?.marketplaceName || "woocommerce"}
+              onValueChange={(v) => updateField("marketplaceName", v)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="woocommerce">WooCommerce</SelectItem>
+                <SelectItem value="shopify">Shopify</SelectItem>
+                <SelectItem value="amazon">Amazon</SelectItem>
+                <SelectItem value="ebay">eBay</SelectItem>
+                <SelectItem value="etsy">Etsy</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="price">Selling Price (£) *</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">£</span>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData?.price || ""}
-                onChange={(e) => onInputChange("price", parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                className="pl-7"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="retailPrice">Retail Price (£)</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">£</span>
-              <Input
-                id="retailPrice"
-                type="number"
-                step="0.01"
-                value={formData?.retailPrice || ""}
-                onChange={(e) => onInputChange("retailPrice", parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-                className="pl-7"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Profit Calculations */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 bg-white rounded-lg border-2 border-green-300">
-            <p className="text-xs text-gray-600 mb-1">Gross Profit</p>
-            <p className={`text-2xl font-bold ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>
-              £{profit.toFixed(2)}
-            </p>
-          </div>
-          <div className="p-4 bg-white rounded-lg border-2 border-green-300">
-            <p className="text-xs text-gray-600 mb-1">Profit Margin</p>
-            <div className="flex items-center gap-2">
-              <TrendingUp className={`h-5 w-5 ${margin >= 0 ? "text-green-600" : "text-red-600"}`} />
-              <p className={`text-2xl font-bold ${margin >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {margin.toFixed(1)}%
-              </p>
-            </div>
-          </div>
-          <div className="p-4 bg-white rounded-lg border-2 border-blue-300">
-            <p className="text-xs text-gray-600 mb-1">Markup</p>
-            <p className="text-2xl font-bold text-blue-600">{calculateMarkup()}%</p>
+          <div>
+            <Label>Marketplace ID</Label>
+            <Input
+              value={formData?.marketplaceId || ""}
+              onChange={(e) => updateField("marketplaceId", e.target.value)}
+              placeholder="Marketplace reference ID"
+              className="font-mono text-sm"
+            />
           </div>
         </div>
       </div>
 
-      {/* Supplier Section */}
-      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-        <h4 className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
-          <Building2 className="h-5 w-5" />
-          Supplier Information
+      {/* ── Pricing ── */}
+      <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+        <h4 className="font-semibold text-green-800 mb-4 flex items-center gap-2">
+          <DollarSign className="h-4 w-4" /> Pricing Information
         </h4>
 
-        {/* Selected Supplier Badge */}
-        {selectedSupplier && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <span className="text-sm font-medium text-green-800">
-                Current: {getSupplierName(selectedSupplier)}
+        <div className="grid grid-cols-3 gap-4 mb-4">
+          <div>
+            <Label>Cost Price (£) *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">£</span>
+              <Input
+                type="number" step="0.01"
+                value={formData?.costPrice ?? ""}
+                onChange={(e) => updateField("costPrice", parseFloat(e.target.value) || 0)}
+                className="pl-7"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Selling Price (£) *</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">£</span>
+              <Input
+                type="number" step="0.01"
+                value={formData?.price ?? ""}
+                onChange={(e) => updateField("price", parseFloat(e.target.value) || 0)}
+                className="pl-7"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Retail Price (£)</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">£</span>
+              <Input
+                type="number" step="0.01"
+                value={formData?.retailPrice ?? ""}
+                onChange={(e) => updateField("retailPrice", parseFloat(e.target.value) || 0)}
+                className="pl-7"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-5">
+          <div>
+            <Label>Discount %</Label>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <Input
+                type="number" step="0.1" min="0" max="100"
+                value={formData?.discountPercentage ?? ""}
+                onChange={(e) => updateField("discountPercentage", parseFloat(e.target.value) || 0)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Tax Rate %</Label>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <Input
+                type="number" step="0.1" min="0"
+                value={formData?.taxRate ?? ""}
+                onChange={(e) => updateField("taxRate", parseFloat(e.target.value) || 0)}
+                className="pl-8"
+              />
+            </div>
+          </div>
+          <div>
+            <Label className="mb-2 block">VAT Exempt</Label>
+            <div className="flex items-center gap-3 px-3 py-2.5 bg-white rounded-lg border">
+              <Switch
+                checked={formData?.vatExempt ?? false}
+                onCheckedChange={(c) => updateField("vatExempt", c)}
+              />
+              <span className="text-sm text-gray-600">
+                {formData?.vatExempt ? "Yes — Exempt" : "No — VAT applies"}
               </span>
             </div>
-            {getSupplierEmail(selectedSupplier) && (
-              <p className="text-xs text-green-600 mt-1 ml-7">
-                {getSupplierEmail(selectedSupplier)}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="p-3 bg-white rounded-lg border-2 border-green-200 text-center">
+            <p className="text-xs text-gray-500 mb-1">Gross Profit</p>
+            <p className={`text-lg font-bold ${profit >= 0 ? "text-green-600" : "text-red-500"}`}>
+              £{profit.toFixed(2)}
+            </p>
+          </div>
+          <div className="p-3 bg-white rounded-lg border-2 border-green-200 text-center">
+            <p className="text-xs text-gray-500 mb-1">Margin</p>
+            <div className="flex items-center justify-center gap-1">
+              <TrendingUp className={`h-4 w-4 ${margin >= 0 ? "text-green-600" : "text-red-500"}`} />
+              <p className={`text-lg font-bold ${margin >= 0 ? "text-green-600" : "text-red-500"}`}>
+                {margin.toFixed(1)}%
               </p>
-            )}
+            </div>
+          </div>
+          <div className="p-3 bg-white rounded-lg border-2 border-blue-200 text-center">
+            <p className="text-xs text-gray-500 mb-1">Markup</p>
+            <p className="text-lg font-bold text-blue-600">{calculateMarkup()}%</p>
+          </div>
+          <div className="p-3 bg-white rounded-lg border-2 border-purple-200 text-center">
+            <p className="text-xs text-gray-500 mb-1">After Discount</p>
+            <p className="text-lg font-bold text-purple-600">£{discountedPrice.toFixed(2)}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Supplier ── */}
+      <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+        <h4 className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
+          <Building2 className="h-4 w-4" /> Supplier Information
+        </h4>
+
+        {selectedSupplier && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-green-800">
+                {getSupplierName(selectedSupplier)}
+              </p>
+              {getSupplierEmail(selectedSupplier) && (
+                <p className="text-xs text-green-600 mt-0.5">
+                  {getSupplierEmail(selectedSupplier)}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Dropdown for Supplier Selection */}
-        <div className="space-y-2">
-          <Label htmlFor="supplier" className="flex items-center gap-1">
-            <Users className="h-4 w-4" />
-            Change Supplier
-          </Label>
-
-          <Select
-            value={formData?.supplierId || ""}
-            onValueChange={onSupplierChange}
-          >
-            <SelectTrigger className="w-full border-2 border-blue-200">
-              <SelectValue placeholder="Select a supplier...">
-                {selectedSupplier && getSupplierName(selectedSupplier)}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="max-h-80">
-              {/* Search Input inside dropdown */}
-              <div className="sticky top-0 bg-white p-2 border-b z-10">
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search suppliers..."
-                    value={supplierSearch}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      setSupplierSearch(e.target.value);
-                    }}
-                    className="pl-8 h-9 text-sm"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
+        <Label className="flex items-center gap-1 mb-2">
+          <Users className="h-3.5 w-3.5" /> Change Supplier
+        </Label>
+        <Select value={formData?.supplierId || ""} onValueChange={onSupplierChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a supplier...">
+              {selectedSupplier && getSupplierName(selectedSupplier)}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="max-h-80">
+            <div className="sticky top-0 bg-white p-2 border-b z-10">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                <Input
+                  placeholder="Search suppliers..."
+                  value={supplierSearch}
+                  onChange={(e) => setSupplierSearch(e.target.value)}
+                  className="pl-7 h-8 text-sm"
+                />
               </div>
-
-              {/* Supplier List */}
-              {filteredSuppliers.length === 0 ? (
-                <div className="p-4 text-center text-gray-500 text-sm">
-                  No suppliers found
-                </div>
-              ) : (
-                filteredSuppliers.map((supplier) => {
-                  const isSelected = formData?.supplierId === supplier._id;
-                  const supplierName = getSupplierName(supplier);
-                  const supplierEmail = getSupplierEmail(supplier);
-                  
-                  return (
-                    <SelectItem 
-                      key={supplier._id} 
-                      value={supplier._id}
-                      className="py-3 cursor-pointer"
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className={`
-                          h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0
-                          ${isSelected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600'}
-                        `}>
-                          <Building2 className="h-4 w-4" />
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">
-                              {supplierName}
-                            </span>
-                            {isSelected && (
-                              <CheckCircle2 className="h-4 w-4 text-blue-500 ml-2 flex-shrink-0" />
-                            )}
-                          </div>
-                          
-                          {supplierEmail && (
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                              <Mail className="h-3 w-3" />
-                              {supplierEmail}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </SelectItem>
-                  );
-                })
-              )}
-            </SelectContent>
-          </Select>
-
-          <p className="text-xs text-gray-500 mt-1">
-            {suppliers.length} suppliers available
-          </p>
-        </div>
-
-     
+            </div>
+            {filteredSuppliers.length === 0 ? (
+              <div className="p-4 text-center text-gray-400 text-sm">No suppliers found</div>
+            ) : (
+              filteredSuppliers.map((supplier) => (
+                <SelectItem key={supplier._id} value={supplier._id} className="py-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="h-3.5 w-3.5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{getSupplierName(supplier)}</p>
+                      {getSupplierEmail(supplier) && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                          <Mail className="h-3 w-3" /> {getSupplierEmail(supplier)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-gray-400 mt-1.5">{suppliers.length} suppliers available</p>
       </div>
     </div>
   );

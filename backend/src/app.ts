@@ -51,6 +51,8 @@ import ticketStatusTransitionRouter from "./routes/ticket-management-system-rout
 import ticketReferenceTypesRouter from "./routes/ticket-management-system-routes/ticket.reference.types.routes";
 import documentTypesRouter from "./routes/document.types.routes";
 import jobTypesRouter from "./routes/job.types.routes";
+import supplierPriceHistoryRoutes from "./routes/supplierPriceHistory.routes";
+
 
 //  Muzamil Hassan 8/1/2026
 
@@ -661,6 +663,9 @@ app.use(`${process.env.API_PREFIX}/document-numbers`,adminProtecter, documentNum
 app.use(`${process.env.API_PREFIX}/upload`,adminProtecter, uploadRoutes);
 app.use(`${process.env.API_PREFIX}/marketplace`,adminProtecter, marketplaceRoute);
 app.use(`${process.env.API_PREFIX}/test/email`,adminProtecter, emailTestRoutes);
+app.use(`${process.env.API_PREFIX}/supplier-price-history`,adminProtecter, supplierPriceHistoryRoutes);
+
+
 // Muzamil Hassan end
 // Health check route
 app.get("/health", (_req, res) => {

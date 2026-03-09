@@ -268,7 +268,8 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
             onClick={() => onEdit(order)}
             className="h-8 w-8 p-0 rounded-lg hover:bg-emerald-50 hover:text-emerald-600"
             title={order.status === 'draft' ? 'Edit Order' : 'Order already placed — cannot edit'}
-            disabled={order.status !== 'draft'}>
+            // disabled={order.status !== 'draft'}
+            >
             <Edit className="h-4 w-4" />
           </Button>
 
@@ -277,7 +278,9 @@ export const PurchaseOrderRow: React.FC<PurchaseOrderRowProps> = ({
             onClick={() => onDelete(order._id!)}
             className="h-8 w-8 p-0 rounded-lg hover:bg-red-50 hover:text-red-600"
             title={['draft','cancelled'].includes(order.status) ? 'Delete' : 'Cannot delete active order'}
-            disabled={!['draft', 'cancelled'].includes(order.status)}>
+            // disabled={!['draft', 'cancelled'].includes(order.status)}
+            
+            >
             <Trash2 className="h-4 w-4" />
           </Button>
 
