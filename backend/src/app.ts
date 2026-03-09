@@ -615,7 +615,7 @@ app.use(
 
 //09-03-2026
 app.use(
-  `${process.env.API_PREFIX}/labour-rate`,
+  `${process.env.API_PREFIX}/labour`,
   technicianProtecter,
   labourRateRouter,
 );

@@ -652,6 +652,12 @@ export const navigation: INavBarLinkSharedInterface[] = [
         href: "/dashboard/rider-vehicle-type",
         icon: Bike,
         roleId: [1],
+      },
+      {
+        _id: nanoid(),label: "Labour Rates",
+        href: "/dashboard/labour",
+        icon: Wrench,
+        roleId: [1],
       }
     ],
   },

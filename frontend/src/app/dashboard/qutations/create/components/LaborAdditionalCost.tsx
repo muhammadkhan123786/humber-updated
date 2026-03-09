@@ -1,6 +1,10 @@
 "use client";
-import React from 'react';
-import { Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, Loader2 } from 'lucide-react';
+import { getAll } from '@/helper/apiHelper';
+import { ILABOURCOST } from '../../../../../../../common/master-interfaces/ILabour.interface';
+
+type LabourRate = ILABOURCOST & { _id: string };
 
 interface LaborAdditionalCostProps {
   laborHours: number;
@@ -23,7 +27,40 @@ const LaborAdditionalCost = ({
   onAdditionalNotesChange,
   onValidUntilChange,
 }: LaborAdditionalCostProps) => {
+  const [labourRates, setLabourRates] = useState<LabourRate[]>([]);
+  const [isLoadingRates, setIsLoadingRates] = useState(true);
+  const [isCustomRate, setIsCustomRate] = useState(false);
+  const [selectedRateId, setSelectedRateId] = useState<string>('0');
   const laborTotal = laborHours * ratePerHour;
+
+  // Fetch default labour rates on component mount
+  useEffect(() => {
+    const fetchLabourRates = async () => {
+      try {
+        setIsLoadingRates(true);
+        const response = await getAll<LabourRate>('/labour', {
+          limit: '1000',
+        });
+        // Filter only default and active rates
+        const defaultRates = response.data?.filter(
+          (rate: LabourRate) => rate.isDefault && rate.isActive
+        ) || [];
+        setLabourRates(defaultRates);
+        
+        // Auto-select first default rate if available and no rate is set
+        if (defaultRates.length > 0 && ratePerHour === 0) {
+          setSelectedRateId(defaultRates[0]._id);
+          onRatePerHourChange(defaultRates[0].value);
+        }
+      } catch (error) {
+        console.error('Error fetching labour rates:', error);
+      } finally {
+        setIsLoadingRates(false);
+      }
+    };
+
+    fetchLabourRates();
+  }, []);
 
   return (
     <div className="bg-white rounded-b-2xl border-t-4 border-purple-500 shadow-lg animate-slideUp">
@@ -56,17 +93,66 @@ const LaborAdditionalCost = ({
             {/* Rate per Hour */}
             <div>
               <label className="block text-sm font-medium text-gray-900 mb-1">
-                Rate per Hour (£)
+                Rate per Hour (£) <span className="text-gray-900">*</span>
               </label>
-              <input
-                type="number"
-                min="0"
-                step="1"
-                value={ratePerHour}
-                onChange={(e) => onRatePerHourChange(parseFloat(e.target.value) || 0)}
-                className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6]"
-                placeholder="45"
-              />
+              {isLoadingRates ? (
+                <div className="w-full px-4 py-3 text-sm rounded-lg bg-[#f3f4f6] flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
+                  <span className="text-gray-500">Loading rates...</span>
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={selectedRateId}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSelectedRateId(value);
+                      
+                      if (value === 'custom') {
+                        setIsCustomRate(true);
+                        // Keep current rate or set to 0 if selecting custom
+                      } else {
+                        setIsCustomRate(false);
+                        const selectedRate = labourRates.find(rate => rate._id === value);
+                        if (selectedRate) {
+                          onRatePerHourChange(selectedRate.value);
+                        } else {
+                          onRatePerHourChange(0);
+                        }
+                      }
+                    }}
+                    className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6] cursor-pointer"
+                    required={!isCustomRate}
+                  >
+                    <option value="0">Select labour rate</option>
+                    {labourRates.map((rate) => (
+                      <option key={rate._id} value={rate._id}>
+                        {rate.name} - £{rate.value.toFixed(2)}/hour
+                      </option>
+                    ))}
+                    <option value="custom">Custom Rate (Enter manually)</option>
+                  </select>
+                  
+                  {/* Custom Rate Input - Shows when Custom is selected */}
+                  {isCustomRate && (
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={ratePerHour}
+                      onChange={(e) => onRatePerHourChange(parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 text-sm rounded-lg focus:outline-none focus:border focus:border-[#4f46e5] focus:ring-[3px] focus:ring-[#4f46e5]/50 transition-all bg-[#f3f4f6] mt-2"
+                      placeholder="Enter custom rate (e.g., 45.00)"
+                      required
+                    />
+                  )}
+                </>
+              )}
+              {!isLoadingRates && labourRates.length === 0 && (
+                <p className="text-xs text-red-500 mt-1">
+                  No default labour rates available. Please add one in the master data.
+                </p>
+              )}
             </div>
           </div>
 
