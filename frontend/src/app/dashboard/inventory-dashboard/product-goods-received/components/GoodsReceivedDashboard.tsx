@@ -149,7 +149,7 @@ export default function GoodsReceivedPage() {
         onOpenChange={setIsViewDialogOpen}
         grn={viewingGRN}
         handleDownloadGRN = { handleDownloadGRN}
-        receivingItems = { receivingItems }
+        // receivingItems = { receivingItems }
       /> 
     </div>
   );

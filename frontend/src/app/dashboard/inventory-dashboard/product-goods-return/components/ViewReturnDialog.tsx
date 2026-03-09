@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 interface ViewReturnDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  grtn: GoodsReturnNote | null;
+  grtn: any ;
   onDownload: any;
 }
 
@@ -45,7 +45,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
   if (!grtn) return null;
 
   const totalReturnAmount = React.useMemo(() => {
-    return grtn.items.reduce((sum, item) => sum + item.totalAmount, 0);
+    return grtn.items.reduce((sum: any, item: any) => sum + item.totalAmount, 0);
   }, [grtn.items]);
   const StatusIcon = getStatusIcon(grtn.status);
 
@@ -127,7 +127,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
               >
                 {grtn?.status
                   ?.split("-")
-                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .map((w: any) => w.charAt(0).toUpperCase() + w.slice(1))
                   .join(" ")}
               </Badge>
             </div>
@@ -153,7 +153,7 @@ export const ViewReturnDialog: React.FC<ViewReturnDialogProps> = ({
               </Badge>
             </div>
             <div className="space-y-3">
-              {grtn?.grnId?.purchaseOrderId?.items?.map((poItem, index) => {
+              {grtn?.grnId?.purchaseOrderId?.items?.map((poItem: any, index: number) => {
                 const grnItem = grtn?.grnId?.items[index];
                 const returnItem = grtn?.items[index];
 

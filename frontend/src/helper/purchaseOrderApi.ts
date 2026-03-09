@@ -280,39 +280,37 @@ export const getPurchaseOrderStats = async (): Promise<{
 export const exportPurchaseOrders = async (
   filters: PurchaseOrderFilters = {},
 ): Promise<Blob> => {
-  const { status, startDate, endDate, supplier } = filters;
+  const { status, orderId } = filters;
 
-  const params: any = {
-    userId: getUserId(),
-  };
-
+  console.log("Export filters:", filters);
+  
+  const params: any = {};
+  
+  // Use _id (chota I) instead of _Id
+  if (orderId) {
+    params._id = orderId; // _id chota I
+  }
+  
   if (status) params.status = status;
-  if (startDate) params.startDate = startDate;
-  if (endDate) params.endDate = endDate;
-  if (supplier) params.supplier = supplier;
 
   try {
     console.log("Exporting with params:", params);
 
-    const res = await axios.get(`${API_URL}/export`, {
+    const res = await axios.get(`${API_URL}/export/pdf`, {
       ...getAuthConfig(),
       params,
       responseType: "blob",
     });
 
-    // Check if response is actually a blob
     if (!(res.data instanceof Blob)) {
-      // If it's JSON (error), try to parse it
       if (typeof res.data === "string" && res.data.startsWith("{")) {
         const errorData = JSON.parse(res.data);
         console.error("Server error:", errorData);
         throw new Error(errorData.message || "Export failed");
       }
-
       throw new Error("Invalid response format");
     }
 
-    // Check if blob is empty
     if (res.data.size === 0) {
       throw new Error("Exported file is empty");
     }
@@ -320,19 +318,14 @@ export const exportPurchaseOrders = async (
     return res.data;
   } catch (error: any) {
     console.error("Error exporting purchase orders:", error);
-
-    // More detailed error logging
-    if (error.response) {
-      // If error response is blob, convert to text
-      if (error.response.data instanceof Blob) {
-        const errorText = await error.response.data.text();
-        console.error("Error blob content:", errorText);
-      }
+    if (error.response?.data instanceof Blob) {
+      const errorText = await error.response.data.text();
+      console.error("Error blob content:", errorText);
     }
-
     throw error;
   }
 };
+
 
 /**
  * Bulk update purchase orders

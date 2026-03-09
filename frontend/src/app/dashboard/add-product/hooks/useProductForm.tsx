@@ -76,6 +76,9 @@ export function useProductForm({
   const [dropdowns, setDropdowns] = useState<Partial<FourDropdownData>>({});
   const [dropdownLoading, setDropdownLoading] = useState(false);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
+  const [isStep1Valid, setIsStep1Valid] = useState(false);
+  const [isStep2Valid, setIsStep2Valid] = useState(false);
+   const [isStep3Valid, setIsStep3Valid] = useState(false);
 
   // ─── NEW: Category attribute-filter state ────────────────────────────────
   // undefined  = not yet fetched  → combobox shows spinner, list is empty
@@ -116,6 +119,60 @@ export function useProductForm({
 
     loadAttributeCategoryIds();
   }, []);
+
+  useEffect(() => {
+    if (currentStep === 1) {
+      const hasSelectedCategory = selectedCategories.length > 0;
+      const hasAttributes = attributes && attributes.length > 0;
+      setIsStep1Valid(hasSelectedCategory && hasAttributes);
+    }
+  }, [currentStep,  attributes]);
+
+    // ─── NEW: Step 2 Validation Effect ───────────────────────────────────────
+  useEffect(() => {
+    if (currentStep === 2) {
+      // Required fields validation (images are optional)
+      const isProductNameValid = formData.productName?.trim().length > 0;
+      const isSkuValid = formData.sku?.trim().length > 0;
+      const isBrandValid = formData.brand?.trim().length > 0;
+      const isManufacturerValid = formData.manufacturer?.trim().length > 0;
+      const isModelNumberValid = formData.modelNumber?.trim().length > 0; // Optional? Make required if needed
+      const isBarcodeValid = formData.barcode?.trim().length > 0; // Optional?
+      
+      
+      // Set your required fields here
+      setIsStep2Valid(
+        isProductNameValid && 
+        isSkuValid && 
+        isBrandValid && 
+        isManufacturerValid &&
+        isModelNumberValid &&
+        isBarcodeValid
+       
+      );
+      
+     
+    }
+  }, [currentStep, formData.productName, formData.sku, formData.brand, formData.manufacturer, formData.modelNumber, formData.barcode]);
+  
+  useEffect(() => {
+    if (currentStep === 3) {
+      const hasValidVariants = variants.length > 0;
+      setIsStep3Valid(hasValidVariants);
+    }
+  }, [currentStep, variants]);
+
+  const isCurrentStepValid = useMemo(() => {
+    switch (currentStep) {
+      case 1: return isStep1Valid;
+      case 2: return isStep2Valid;
+      case 3: return isStep3Valid;
+      default: return true;
+    }
+  }, [currentStep, isStep1Valid, isStep2Valid, isStep3Valid]);
+
+
+
 
   // ─── Fetch dropdowns when step changes ───────────────────────────────────
   useEffect(() => {
@@ -256,6 +313,9 @@ export function useProductForm({
         setCurrentStep((prev) => prev + 1);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+
+      if (!isCurrentStepValid) return;      
+     
     },
     [currentStep],
   );
@@ -482,5 +542,9 @@ export function useProductForm({
 
     // ── Misc ──────────────────────────────────────────────────────────────
     getWarrantyOptions,
+
+    isStep1Valid,
+    isStep2Valid,    
+    isCurrentStepValid
   };
 }

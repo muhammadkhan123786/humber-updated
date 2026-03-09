@@ -124,7 +124,7 @@ export const generateQuotationCode = async (): Promise<string> => {
 //real code to save in db update
 export const generatePurchaseOrderCode = async (): Promise<string> => {
   const year = new Date().getFullYear();
-
+console.log("request is going")
   const counter = await PurchaseOrderCounter.findOneAndUpdate(
     { year },
     { $inc: { seq: 1 } },
@@ -209,14 +209,21 @@ export const getQuotationCurrentCode = async (): Promise<string> => {
   return `QUO-${year}-${String(seq).padStart(3, "0")}`;
 };
 
-//get Purchase Order Code 
-export const getCurrentPurchaseOrderCode = async (): Promise<string> => {
-  const year = new Date().getFullYear();
+// //get Purchase Order Code 
+// export const getCurrentPurchaseOrderCode = async (): Promise<string> => {
+//   const year = new Date().getFullYear();
 
-  // Just fetch current counter without updating
-  const counter = await PurchaseOrderCounter.findOne({ year });
+//   // Just fetch current counter without updating
+//    const counter = await PurchaseOrderCounter.findOneAndUpdate(
+//     { year },
+//     { $inc: { seq: 1 } },
+//     { 
+//       new: true,  // Return updated document
+//       upsert: true, // Create if doesn't exist
+//       setDefaultsOnInsert: true 
+//     }
+//   );
 
-  const seq = counter ? counter.seq + 1 : 1;
-
-  return `PO-${year}-${String(seq).padStart(3, "0")}`;
-};
+//   const seq = counter.seq;
+//   return `PO-${year}-${String(seq).padStart(3, "0")}`;
+// };

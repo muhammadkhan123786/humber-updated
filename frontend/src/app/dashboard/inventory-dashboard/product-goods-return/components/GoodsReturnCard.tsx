@@ -11,7 +11,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface GoodsReturnCardProps {
-  grtn: GoodsReturnNote;
+  grtn: any;
   index: number;
   onView: (grtn: GoodsReturnNote) => void;
   onDownload?: (grtn: GoodsReturnNote) => void;
@@ -25,7 +25,7 @@ export const GoodsReturnCard: React.FC<GoodsReturnCardProps> = ({
 }) => {
   const StatusIcon = getStatusIcon(grtn.status);
 const totalAmount = grtn.totalAmount || 
-    grtn.items.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
+    grtn.items.reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
 
   return (
     <motion.div
@@ -53,7 +53,7 @@ const totalAmount = grtn.totalAmount ||
                     "text-white border-0",
                     `bg-gradient-to-r ${getStatusColor(grtn.status)}`
                   )}>
-                    {grtn?.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    {grtn?.status?.split('-').map((w: any) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-3 text-sm text-gray-600">

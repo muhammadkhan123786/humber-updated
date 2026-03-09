@@ -1,47 +1,70 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion }       from 'framer-motion';
 import { Card, CardContent } from '@/components/form/Card';
-import { Button } from '@/components/form/CustomButton';
-import { Badge } from '@/components/form/Badge';
-import { GoodsReturnNote } from '../types/goodsReturn';
-import { getStatusColor, getStatusIcon } from '../utils/goodsReturnUtils';
-import { FileText, Truck, Calendar, User, Eye, Download, PackageX, Package } from 'lucide-react';
+import { Button }       from '@/components/form/CustomButton';
+import { Badge }        from '@/components/form/Badge';
+import { GoodsReturnNote, ReturnStatus } from '../types/goodsReturn';
+import { getStatusColor } from '../utils/goodsReturnUtils';
+import {
+  FileText, Truck, Calendar, User, Eye, Download,
+  PackageX, Package, Clock, CheckCircle, XCircle,
+  ChevronRight, Loader2
+} from 'lucide-react';
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 interface GoodsReturnTableViewProps {
-  returns: GoodsReturnNote[];
-  onView: (grtn: GoodsReturnNote) => void;
-  onDownload?: (grtn: GoodsReturnNote) => void;
+  returns:          GoodsReturnNote[];
+  onView:           (grtn: GoodsReturnNote) => void;
+  onDownload?:      (grtn: GoodsReturnNote) => void;
+  onStatusUpdate:   (id: string, status: ReturnStatus) => void;
+  isUpdatingStatus: string | null;
 }
 
-// Helper function to safely extract nested data from backend response
-const extractReturnData = (grtn: GoodsReturnNote) => {
-  // Extract Return Number (grtnNumber for new returns, returnNumber for legacy)
-  const returnNumber = grtn.grtnNumber || grtn.returnNumber || 'N/A';
-  
-  // Extract GRN Number (from nested grnId object or legacy grnNumber field)
-  const grnNumber = grtn.grnId?.grnNumber || grtn.grnNumber || 'N/A';
-  
-    
-  // Calculate total amount (use existing totalAmount or sum up items)
-  const totalAmount = grtn.totalAmount || 
-    grtn.items.reduce((sum, item) => sum + (item.totalAmount  || 0), 0);
-  
-  return {
-    returnNumber,
-    grnNumber,
-    totalAmount
-  };
+// ── Static status icon (no dynamic component — avoids React crash) ─────────
+const StatusIconInline = ({ status }: { status: string }) => {
+  switch (status) {
+    case 'pending':    return <Clock        className="h-5 w-5 text-white" />;
+    case 'approved':   return <CheckCircle  className="h-5 w-5 text-white" />;
+    case 'in-transit': return <Truck        className="h-5 w-5 text-white" />;
+    case 'completed':  return <CheckCircle  className="h-5 w-5 text-white" />;
+    case 'rejected':   return <XCircle      className="h-5 w-5 text-white" />;
+    default:           return <Package      className="h-5 w-5 text-white" />;
+  }
+};
+
+// ── Next allowed status per current status ─────────────────────────────────
+const NEXT_STATUSES: Record<string, { status: ReturnStatus; label: string; color: string }[]> = {
+  pending:    [
+    { status: 'approved',   label: '✅ Approve',        color: 'bg-green-500 hover:bg-green-600' },
+    { status: 'rejected',   label: '❌ Reject',         color: 'bg-red-500   hover:bg-red-600'   },
+  ],
+  approved:   [
+    { status: 'in-transit', label: '🚚 Mark Dispatched', color: 'bg-blue-500  hover:bg-blue-600'  },
+    { status: 'rejected',   label: '❌ Reject',          color: 'bg-red-500   hover:bg-red-600'   },
+  ],
+  'in-transit': [
+    { status: 'completed',  label: '✅ Mark Completed',  color: 'bg-green-500 hover:bg-green-600' },
+    { status: 'rejected',   label: '❌ Reject',          color: 'bg-red-500   hover:bg-red-600'   },
+  ],
+  completed:  [],   // terminal
+  rejected:   [],   // terminal
+};
+
+// ── Status label display ───────────────────────────────────────────────────
+const STATUS_LABELS: Record<string, string> = {
+  pending:      'Pending',
+  approved:     'Approved',
+  'in-transit': 'In Transit',
+  completed:    'Completed',
+  rejected:     'Rejected',
 };
 
 export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
-  returns,
-  onView,
-  onDownload
+  returns, onView, onDownload, onStatusUpdate, isUpdatingStatus,
 }) => {
-  
+
   if (returns.length === 0) {
     return (
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
@@ -55,149 +78,179 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-    >
+    <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}>
       <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500"></div>
+        <div className="h-1 bg-gradient-to-r from-red-500 via-orange-500 to-amber-500" />
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gradient-to-r from-orange-50 to-amber-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Return Number</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">GRN / PO</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Supplier</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Return Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Returned By</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Items</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Total Value</th>
-                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Actions</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Return #</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">GRN / PO</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Supplier</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Return Date</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Returned By</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Items</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Total Value</th>
+                {/* ✅ NEW column */}
+                <th className="px-5 py-4 text-left text-sm font-semibold text-gray-900">Next Action</th>
+                <th className="px-5 py-4 text-center text-sm font-semibold text-gray-900">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+
+            <tbody className="divide-y divide-gray-100">
               {returns.map((grtn, index) => {
-                console.log("grtn", grtn);
-                const StatusIcon = getStatusIcon(grtn.status);
-                
-                // Extract all data using helper function
-                const { returnNumber,  totalAmount } = extractReturnData(grtn);
-                
+                const nextOptions  = NEXT_STATUSES[grtn.status] || [];
+                const isUpdating   = isUpdatingStatus === grtn._id;
+                const isTerminal   = nextOptions.length === 0;
+
+                const totalAmount = grtn.totalAmount ||
+                  grtn.items.reduce((s, i) => s + (i.totalAmount || 0), 0);
+
+                const grnNumber  = (grtn.grnId as any)?.grnNumber ||  '—';
+                const grtnNumber = grtn.grtnNumber || grtn.returnNumber || '—';
+                const supplier   = (grtn.grnId as any)
+                  ?.purchaseOrderId?.supplier?.contactInformation?.primaryContactName || '—';
+
                 return (
                   <motion.tr
                     key={grtn._id!}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="hover:bg-orange-50/50 transition-colors"
+                    initial={{ opacity:0, x:-20 }}
+                    animate={{ opacity:1, x:0 }}
+                    transition={{ delay: 0.05 * index }}
+                    className="hover:bg-orange-50/40 transition-colors"
                   >
+
                     {/* Return Number */}
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <div className={cn(
-                          "h-10 w-10 rounded-lg flex items-center justify-center",
+                          "h-9 w-9 rounded-lg flex items-center justify-center flex-shrink-0",
                           `bg-gradient-to-br ${getStatusColor(grtn.status)}`
                         )}>
-                          <StatusIcon className="h-5 w-5 text-white" />
+                          <StatusIconInline status={grtn.status} />
                         </div>
-                        <span className="font-semibold text-gray-900">{returnNumber}</span>
+                        <span className="font-semibold text-gray-900 text-sm">{grtnNumber}</span>
                       </div>
                     </td>
-                    
-                    {/* GRN / PO Reference */}
-                    <td className="px-6 py-4">
+
+                    {/* GRN / PO */}
+                    <td className="px-5 py-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-1 text-sm">
-                          <FileText className="h-4 w-4 text-[#f97316]" />
-                          <span className="font-medium text-gray-900">{grtn.grnId?.grnNumber}</span>
+                          <FileText className="h-3.5 w-3.5 text-orange-500 flex-shrink-0" />
+                          <span className="font-medium text-gray-900">{grnNumber}</span>
                         </div>
-                        {grtn.grtnNumber !== 'N/A' && (
-                          <div className="flex items-center gap-1 text-xs">
-                            <Package className="h-3 w-3 text-blue-500" />
-                            <span className="text-gray-600">{grtn.grtnNumber}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Package className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                          <span>{grtnNumber}</span>
+                        </div>
                       </div>
                     </td>
-                    
+
                     {/* Supplier */}
-                    <td className="px-6 py-4">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-1 text-sm">
-                        <Truck className="h-4 w-4 text-purple-500" />
-                        <span className="text-gray-700 max-w-[200px] truncate" >
-                          <span>{grtn.grnId?.purchaseOrderId?.supplier?.contactInformation?.primaryContactName}</span>
-                        </span>
+                        <Truck className="h-3.5 w-3.5 text-purple-400 flex-shrink-0" />
+                        <span className="text-gray-700 max-w-[160px] truncate">{supplier}</span>
                       </div>
                     </td>
-                    
+
                     {/* Return Date */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-4 w-4 text-indigo-500" />
-                        <span className="text-gray-700">
-                          {new Date(grtn.returnDate).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </span>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1 text-sm text-gray-700">
+                        <Calendar className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />
+                        {new Date(grtn.returnDate).toLocaleDateString('en-GB', {
+                          day:'2-digit', month:'short', year:'numeric'
+                        })}
                       </div>
                     </td>
-                    
+
                     {/* Returned By */}
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-sm">
-                        <User className="h-4 w-4 text-green-500" />
-                        <span className="text-gray-700">{grtn.returnedBy}</span>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1 text-sm text-gray-700">
+                        <User className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
+                        {grtn.returnedBy || '—'}
                       </div>
                     </td>
-                    
-                    {/* Items Count */}
-                    <td className="px-6 py-4">
-                      <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">
+
+                    {/* Items */}
+                    <td className="px-5 py-4">
+                      <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200 text-xs">
                         {grtn.items.length} item(s)
                       </Badge>
                     </td>
-                    
-                    {/* Status */}
-                    <td className="px-6 py-4">
+
+                    {/* Status badge */}
+                    <td className="px-5 py-4">
                       <Badge className={cn(
-                        "text-white border-0",
+                        "text-white border-0 text-xs",
                         `bg-gradient-to-r ${getStatusColor(grtn.status)}`
                       )}>
-                        {grtn?.status?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        {STATUS_LABELS[grtn.status] || grtn.status}
                       </Badge>
                     </td>
-                    
-                    {/* Total Amount */}
-                    <td className="px-6 py-4">
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-[#ea580c]">
-                          £{totalAmount.toFixed(2)}
-                        </p>
-                      </div>
+
+                    {/* Total Value */}
+                    <td className="px-5 py-4">
+                      <span className="text-base font-bold text-orange-600">
+                        £{totalAmount.toFixed(2)}
+                      </span>
                     </td>
-                    
-                    {/* Actions */}
-                    <td className="px-6 py-4">
+
+                    {/* ✅ Next Action — manager clicks here to move status */}
+                    <td className="px-5 py-4">
+                      {isUpdating ? (
+                        // Loading spinner while updating
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Updating...
+                        </div>
+                      ) : isTerminal ? (
+                        // Terminal state — no further action
+                        <span className="text-xs text-gray-400 italic">
+                          {grtn.status === 'completed' ? '✅ Done' : '❌ Closed'}
+                        </span>
+                      ) : (
+                        // Action buttons
+                        <div className="flex flex-col gap-1.5">
+                          {nextOptions.map(({ status, label, color }) => (
+                            <button
+                              key={status}
+                              onClick={() => onStatusUpdate(grtn._id!, status)}
+                              disabled={!!isUpdatingStatus}
+                              className={cn(
+                                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all",
+                                "disabled:opacity-50 disabled:cursor-not-allowed",
+                                color
+                              )}
+                            >
+                              <ChevronRight className="h-3 w-3" />
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* View / Download */}
+                    <td className="px-5 py-4">
                       <div className="flex items-center justify-center gap-2">
                         <Button
-                          size="sm"
-                          variant="outline"
+                          size="sm" variant="outline"
                           onClick={() => onView(grtn)}
-                          className="h-8 w-8 p-0 hover:bg-orange-50 hover:border-orange-300 transition-colors"
+                          className="h-8 w-8 p-0 hover:bg-orange-50 hover:border-orange-300"
                           title="View Details"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
                         {onDownload && (
                           <Button
-                            size="sm"
-                            variant="outline"
+                            size="sm" variant="outline"
                             onClick={() => onDownload(grtn)}
-                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                            className="h-8 w-8 p-0 hover:bg-blue-50 hover:border-blue-300"
                             title="Download PDF"
                           >
                             <Download className="h-4 w-4" />
@@ -205,6 +258,7 @@ export const GoodsReturnTableView: React.FC<GoodsReturnTableViewProps> = ({
                         )}
                       </div>
                     </td>
+
                   </motion.tr>
                 );
               })}
