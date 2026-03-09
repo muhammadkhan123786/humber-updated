@@ -119,7 +119,6 @@ import riderRouter from "./routes/rider/rider.routes";
 import technicianActionsrouter from "./routes/technician-activities-operations-routes/technicianActivity.routes";
 import mobilecustomerSourceRouter from "./routes/mobile-development/customer-source-routes/customer.source.routes";
 import MobileCustomerBaseRouter from "./routes/mobile-development/customer-routes/customre.register.mobile.routes";
-import labourRateRouter from "./routes/master-data-routes/labour.routes";
 
 // Create express app
 const app: Application = express();
@@ -613,12 +612,7 @@ app.use(
   MobileCustomerBaseRouter,
 );
 
-//09-03-2026
-app.use(
-  `${process.env.API_PREFIX}/labour-rate`,
-  technicianProtecter,
-  labourRateRouter,
-);
+//
 
 
 
