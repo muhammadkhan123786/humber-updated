@@ -31,8 +31,6 @@ const LabourSection: React.FC<LabourSectionProps> = ({
   const handleAddService = () => {
     addService();
   };
-
-  // Helper function to convert HH:MM to decimal hours
   const convertDurationToHours = (duration: string): number => {
     if (!duration) return 0;
     if (typeof duration === "number") return duration;
@@ -46,7 +44,7 @@ const LabourSection: React.FC<LabourSectionProps> = ({
 
   const subtotal = watchedServices.reduce((acc: number, item: any) => {
     const hours = convertDurationToHours(item.duration || "0:00");
-    const rate = Number(item.rate) || 50;
+    const rate = Number(item.rate) || 0;
     return acc + hours * rate;
   }, 0);
 
@@ -96,16 +94,13 @@ const LabourSection: React.FC<LabourSectionProps> = ({
 
               const isFromJob = currentItem.source === "JOB";
 
-              // Parse duration for display
               const durationValue = currentItem.duration || "0:00";
               const hoursForDisplay =
                 typeof durationValue === "string" && durationValue.includes(":")
                   ? durationValue
                   : "00:00";
-
-              // Calculate line total using decimal hours
               const hours = convertDurationToHours(durationValue);
-              const rate = Number(currentItem.rate) || 50;
+              const rate = Number(currentItem.rate) || 0;
               const lineTotal = hours * rate;
 
               const serviceTypeName = getServiceTypeName(
@@ -215,7 +210,9 @@ const LabourSection: React.FC<LabourSectionProps> = ({
                         {...register(`services.${index}.rate` as any, {
                           valueAsNumber: true,
                         })}
-                        className="w-full h-10 px-3 bg-white rounded-xl border border-purple-200 text-sm focus:ring-2 ring-purple-300 outline-none font-bold text-purple-700"
+                        className={`w-full h-10 px-3 bg-white rounded-xl border border-purple-200 text-sm focus:ring-2 ring-purple-300 outline-none font-bold text-purple-700 ${
+                          isFromJob ? "bg-gray-50" : ""
+                        }`}
                       />
                     </div>
                   </div>
