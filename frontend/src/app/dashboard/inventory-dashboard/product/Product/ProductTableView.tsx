@@ -136,7 +136,7 @@ export const ProductTableView = ({
                               {/* Show category path as text (alternative view) */}
                               <p className="text-xs text-gray-500 italic">
                                 {product.categories
-                                  ?.map((cat) => cat.name)
+                                  ?.map((cat: any) => cat.name)
                                   .join(" → ")}
                               </p>
                             </div>

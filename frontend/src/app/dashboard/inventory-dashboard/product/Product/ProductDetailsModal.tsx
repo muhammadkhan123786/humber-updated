@@ -262,7 +262,7 @@ console.log("product.categories", product.categories)
                             
                             {/* Show category path as text (alternative view) */}
                             <p className="text-xs text-gray-500 italic">
-                              {product.categories?.map(cat => cat.name).join(' → ')}
+                              {product.categories?.map((cat: any) => cat.name).join(' → ')}
                             </p>
                           </div>
                         )}
