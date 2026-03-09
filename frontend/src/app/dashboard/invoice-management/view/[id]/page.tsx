@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Mail, Printer, Download, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -20,13 +20,7 @@ const Page = () => {
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (params?.id) {
-      fetchInvoice();
-    }
-  }, [params?.id]);
-
-  const fetchInvoice = async () => {
+  const fetchInvoice = useCallback(async () => {
     try {
       setLoading(true);
       const baseUrl =
@@ -47,7 +41,12 @@ const Page = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params?.id]);
+  useEffect(() => {
+    if (params?.id) {
+      fetchInvoice();
+    }
+  }, [params?.id, fetchInvoice]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -103,9 +102,17 @@ const Page = () => {
 
   const subtotal = partsTotal + labourTotal + (invoice.callOutFee || 0);
   const afterDiscount = subtotal - (invoice.discountAmount || 0);
+
+  // Logic Updated: Handles Download
   const handleDownloadPDF = () => {
-    downloadInvoicePDF(invoice);
+    downloadInvoicePDF(invoice, "download");
   };
+
+  // Logic Added: Handles Print
+  const handlePrintPDF = () => {
+    downloadInvoicePDF(invoice, "print");
+  };
+
   return (
     <div className="min-h-screen">
       <div className="w-full mx-auto h-9 flex justify-between items-center">
@@ -153,7 +160,8 @@ const Page = () => {
             </span>
           </button>
 
-          <button className={secondaryBtn}>
+          {/* Logic Updated: Added onClick for Print */}
+          <button onClick={handlePrintPDF} className={secondaryBtn}>
             <Printer className="w-4 h-4 transition-colors group-hover:text-white text-indigo-950" />
             <span className="text-sm font-normal font-['Arial'] transition-colors">
               Print
@@ -179,6 +187,8 @@ const Page = () => {
               <img
                 src="https://placehold.co/92x92"
                 alt="Logo"
+                width={92}
+                height={92}
                 className="w-full h-full object-cover"
               />
             </div>

@@ -77,7 +77,7 @@ const JobDetailModal = ({ isOpen, onClose, job, calculations }: ModalProps) => {
   console.log("notes ", job);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200 max-h-[90vh]">
+      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200 max-h-[90vh]">
         <div className="p-6 border-b flex justify-between items-start bg-gray-50/50">
           <div>
             <div className="flex items-center gap-3 mb-1">
