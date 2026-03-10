@@ -85,38 +85,64 @@ const RiderTable: React.FC<RiderTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const router = useRouter();
+  const isSearching = search.trim().length > 0;
 
   useEffect(() => {
-    const params: any = { page: currentPage, limit };
+    const params: any = {
+      page: isSearching ? 1 : currentPage,
+      limit: isSearching ? 100 : limit,
+    };
+
     if (activeStatus !== "All") {
       params.riderStatus = activeStatus.toUpperCase();
     }
+
     fetchRiders(params);
-  }, [currentPage, activeStatus, fetchRiders]);
+  }, [currentPage, activeStatus, fetchRiders, isSearching, search]);
 
   const filteredRiders = useMemo(() => {
-    if (!search.trim()) return riders;
+    if (!isSearching) return riders;
+
     const query = search.toLowerCase();
     return riders.filter((rider: any) => {
       const fullName =
         `${rider.personId?.firstName || ""} ${rider.personId?.lastName || ""}`.toLowerCase();
       const email = (rider.contactId?.emailId || "").toLowerCase();
       const riderId = (rider.riderAutoId || "").toLowerCase();
+      const city = (rider.addressId?.city || "").toLowerCase();
+      const vehicleType = (
+        rider.vehicleTypeId?.vehicleType || ""
+      ).toLowerCase();
+      const licensePlate = (rider.licensePlate || "").toLowerCase();
+
       return (
         fullName.includes(query) ||
         email.includes(query) ||
-        riderId.includes(query)
+        riderId.includes(query) ||
+        city.includes(query) ||
+        vehicleType.includes(query) ||
+        licensePlate.includes(query)
       );
     });
-  }, [search, riders]);
-
-  const totalPages = Math.ceil(totalRiders / limit);
+  }, [search, riders, isSearching]);
+  const totalPages = isSearching ? 1 : Math.ceil(totalRiders / limit);
 
   const handleStatusUpdate = async (riderId: string, status: string) => {
     try {
       await updateRiderStatus(riderId, status);
+      toast.success(`Status updated to ${status}`);
+
+      const params: any = {
+        page: isSearching ? 1 : currentPage,
+        limit: isSearching ? 100 : limit,
+      };
+      if (activeStatus !== "All") {
+        params.riderStatus = activeStatus.toUpperCase();
+      }
+      await fetchRiders(params);
     } catch (error) {
       console.error("Status update failed:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -125,11 +151,15 @@ const RiderTable: React.FC<RiderTableProps> = ({
     const loadingToast = toast.loading("Deleting rider...");
     try {
       await deleteRider(id);
-      await fetchRiders({
-        page: currentPage,
-        limit: 10,
-        riderStatus: activeStatus === "All" ? "" : activeStatus,
-      });
+      const params: any = {
+        page: isSearching ? 1 : currentPage,
+        limit: isSearching ? 100 : limit,
+      };
+      if (activeStatus !== "All") {
+        params.riderStatus = activeStatus.toUpperCase();
+      }
+      await fetchRiders(params);
+
       toast.success("Rider deleted successfully!", {
         id: loadingToast,
         duration: 3000,
@@ -335,18 +365,27 @@ const RiderTable: React.FC<RiderTableProps> = ({
             ) : (
               <tr>
                 <td colSpan={7} className="p-10 text-center text-gray-400">
-                  No riders match your selection.
+                  {isSearching
+                    ? `No riders found matching "${search}"`
+                    : "No riders match your selection."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => setCurrentPage(page)}
-      />
+      {isSearching && filteredRiders.length > 0 && (
+        <div className="mt-4 text-sm text-gray-500 text-center">
+          Found {filteredRiders.length} result(s) for {search}
+        </div>
+      )}
+      {!isSearching && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      )}
     </div>
   );
 };
