@@ -43,14 +43,7 @@ const technicianController = new AdvancedGenericController({
       populate: [{ path: "cityId" }, { path: "countryId" }],
     },
   ],
-  searchFields: [
-    "personId.firstName",
-    "personId.middleName",
-    "personId.lastName",
-    "employeeId",
-    "contactId.emailId",
-    "contactId.mobileNumber",
-  ],
+  searchFields: ["employeeId"],
   validationSchema: TECHNICIAN_SCHEMA_Validation,
 });
 

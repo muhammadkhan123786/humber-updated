@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Search,
   List,
@@ -15,55 +15,51 @@ import {
   Clock,
   X,
   Clock1,
+  Loader2,
 } from "lucide-react";
 
 interface ManageTechnicianListProps {
   technicians: any[];
   onEdit: (tech: any) => void;
   onDelete: (id: string) => void;
+  onSearch: (searchTerm: string) => void;
+  searchTerm: string;
+  loading?: boolean;
+  totalCount?: number;
 }
 
 const ManageTechnicianList = ({
   technicians,
   onEdit,
   onDelete,
+  onSearch,
+  searchTerm,
+  loading = false,
+  totalCount = 0,
 }: ManageTechnicianListProps) => {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const filteredTechnicians = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return technicians;
-    }
-
-    const query = searchTerm.toLowerCase().trim();
-    return technicians.filter((tech) => {
-      const fullName =
-        `${tech.personId?.firstName || ""} ${tech.personId?.lastName || ""}`.toLowerCase();
-      const email = tech.contactId?.emailId?.toLowerCase() || "";
-      const phone = tech.contactId?.mobileNumber || "";
-      const employeeId = tech.employeeId?.toLowerCase() || "";
-      const specialization =
-        tech.specializationIds
-          ?.map((s: any) => s.MasterServiceType?.toLowerCase())
-          .join(" ") || "";
-
-      return (
-        fullName.includes(query) ||
-        email.includes(query) ||
-        phone.includes(query) ||
-        employeeId.includes(query) ||
-        specialization.includes(query)
-      );
-    });
-  }, [searchTerm, technicians]);
+  const debounceTimeout = useRef<NodeJS.Timeout | undefined>(undefined);
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    const value = e.target.value;
+    setLocalSearchTerm(value);
+
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    debounceTimeout.current = setTimeout(() => {
+      onSearch(value);
+    }, 500);
   };
 
   const clearSearch = () => {
-    setSearchTerm("");
+    setLocalSearchTerm("");
+    onSearch("");
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
@@ -80,20 +76,25 @@ const ManageTechnicianList = ({
           <input
             ref={searchInputRef}
             type="text"
-            value={searchTerm}
+            value={localSearchTerm}
             onChange={handleSearchChange}
             placeholder="Search technicians by name, email, phone, or ID..."
             className="w-full pl-12 pr-12 py-3 bg-gray-50 rounded-xl text-sm border-2 border-orange-100 outline-none transition-all
                      placeholder:text-gray-500
                      focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:shadow-sm"
           />
-          {searchTerm && (
+          {localSearchTerm && (
             <button
               onClick={clearSearch}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 bg-white rounded-full p-1"
             >
               <X size={16} />
             </button>
+          )}
+          {loading && (
+            <div className="absolute right-12 top-1/2 -translate-y-1/2">
+              <Loader2 size={16} className="animate-spin text-orange-500" />
+            </div>
           )}
         </div>
         <div className="flex bg-slate-100 p-1 rounded-xl">
@@ -116,11 +117,16 @@ const ManageTechnicianList = ({
         <div className="text-sm text-gray-600 px-2">
           Showing results for:{" "}
           <span className="font-semibold">{searchTerm}</span> (
-          {filteredTechnicians.length} of {technicians.length} technicians)
+          {technicians.length} of {totalCount} technicians)
         </div>
       )}
 
-      {filteredTechnicians.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-orange-100">
+          <Loader2 size={40} className="animate-spin text-orange-500 mb-4" />
+          <p className="text-gray-500 text-lg">Searching technicians...</p>
+        </div>
+      ) : technicians.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-2xl border-2 border-orange-100">
           <p className="text-gray-500 text-lg">No technicians found</p>
           {searchTerm && (
@@ -170,7 +176,7 @@ const ManageTechnicianList = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTechnicians.map((tech) => (
+                  {technicians.map((tech) => (
                     <tr
                       key={tech._id}
                       className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors"
@@ -310,7 +316,7 @@ const ManageTechnicianList = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTechnicians.map((tech) => (
+          {technicians.map((tech) => (
             <div
               key={tech._id}
               className="relative bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border-t-0 hover:shadow-2xl transition-all overflow-hidden"
