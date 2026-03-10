@@ -55,12 +55,15 @@ export const pauseActivity = async (activityId: string, technicianId: string) =>
   (lastLog.endTime.getTime() - lastLog.startTime.getTime()) / 1000;
 
   activity.totalTimeInSeconds = calculateTotalTime(activity.timeLogs);
-  // calculate full activity stats
- const stats = calculateActivityStats(activity.timeLogs);
 
- activity.totalWorkDurationSeconds = stats.totalWorkSeconds;
- activity.totalPauseDurationSeconds = stats.totalPauseSeconds;
- activity.pauseCount = stats.pauseCount;
+  activity.pauseCount = (activity.pauseCount || 0) + 1;
+
+  // calculate full activity stats
+//  const stats = calculateActivityStats(activity.timeLogs);
+
+//  activity.totalWorkDurationSeconds = stats.totalWorkSeconds;
+//  activity.totalPauseDurationSeconds = stats.totalPauseSeconds;
+//  activity.pauseCount = stats.pauseCount;
 
  activity.status = "paused";
   await activity.save();
@@ -68,23 +71,25 @@ export const pauseActivity = async (activityId: string, technicianId: string) =>
 };
 
 //resume time 
-
 export const resumeActivity = async (activityId: string, technicianId: string) => {
-  const activity = await TechniciansActivitiesMaster.findOne({
-    _id:activityId, 
-    technicianId,
-  });
-   if (!activity) throw new Error("Activity not found or this not your actvity.");
-  if (activity.status !== "paused") 
-      throw new Error(`Cannot resume activity in status ${activity.status}`);
+  const activity = await TechniciansActivitiesMaster.findOne({ _id: activityId, technicianId });
+  if (!activity) throw new Error("Activity not found or this not your activity.");
+  if (activity.status !== "paused") throw new Error("Activity is not paused");
+
+  const now = new Date();
+  const lastLog = activity.timeLogs[activity.timeLogs.length - 1];
+
+  // ✅ Calculate pause duration
+  const pauseDuration = now.getTime() - (lastLog.endTime?.getTime() || now.getTime());
+  activity.totalPauseDurationSeconds = (activity.totalPauseDurationSeconds || 0) + pauseDuration / 1000;
+
+  // ✅ Start a new log
+  activity.timeLogs.push({ startTime: now });
 
   activity.status = "in_progress";
-  activity.timeLogs.push({ startTime: new Date() });
-
   await activity.save();
   return activity;
 };
-
 //complete and caculate total time 
 export const completeActivity = async (activityId: string, technicianId: string) => {
 
