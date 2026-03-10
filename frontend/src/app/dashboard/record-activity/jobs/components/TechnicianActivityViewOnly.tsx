@@ -13,6 +13,7 @@ import {
   Wrench,
   Package,
   Clock as TimerIcon,
+  PauseCircle,
 } from "lucide-react";
 
 export interface TechnicianActivity {
@@ -35,6 +36,8 @@ export interface TechnicianActivity {
   additionalNotes: string;
   status: string;
   totalTimeInSeconds: number;
+  pauseCount?: number;
+  totalPauseDurationSeconds?: number;
   timeLogs: Array<{
     startTime: string;
     _id: string;
@@ -110,6 +113,11 @@ const getStatusIcon = (status: string) => {
 };
 
 const formatTime = (seconds: number) => `${Math.floor(seconds / 60)} minutes`;
+const formatPauseDuration = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}m ${remainingSeconds}s`;
+};
 const formatDate = (date: string) => new Date(date).toLocaleDateString();
 
 const TechnicianActivityViewOnly = ({ activities, isLoading }: Props) => {
@@ -205,6 +213,18 @@ const TechnicianActivityViewOnly = ({ activities, isLoading }: Props) => {
                 value={formatDate(activity.createdAt)}
                 color="cyan"
               />
+              <DataBox
+                icon={<PauseCircle size={14} />}
+                label="Pause Count"
+                value={(activity.pauseCount || 0).toString()}
+                color="rose"
+              />
+              <DataBox
+                icon={<TimerIcon size={14} />}
+                label="Pause Duration"
+                value={formatPauseDuration(activity.totalPauseDurationSeconds || 0)}
+                color="amber"
+              />
             </div>
 
             {/* Time Logs with Parts Used Section */}
@@ -294,6 +314,8 @@ const DataBox = ({
     green: "bg-green-50 text-green-600 border-green-100",
     orange: "bg-orange-50 text-orange-600 border-orange-100",
     cyan: "bg-cyan-50 text-cyan-600 border-cyan-100",
+    rose: "bg-rose-50 text-rose-600 border-rose-100",
+    amber: "bg-amber-50 text-amber-600 border-amber-100",
   };
 
   return (
