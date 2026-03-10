@@ -366,6 +366,7 @@ export const calculateActivityStats = (timeLogs: any[]) => {
 
    totalWorkSeconds += duration;
   }
+  //this is good 
 
   if (i > 0) {
    const prev = timeLogs[i - 1];
