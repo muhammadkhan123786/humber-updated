@@ -9,20 +9,33 @@ import { useRider } from "../../../../../hooks/useRider";
 const Riders = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState("All");
-  const { statistics, fetchRiders, loading } = useRider({
-    page: 1,
-    limit: 10,
-    search: searchQuery,
-    riderStatus: activeStatus === "All" ? "" : activeStatus,
-  });
+  const { statistics, fetchRiders, loading } = useRider();
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   useEffect(() => {
-    fetchRiders({
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const params: any = {
       page: 1,
       limit: 10,
-      search: searchQuery,
-      riderStatus: activeStatus === "All" ? "" : activeStatus,
-    });
-  }, [searchQuery, activeStatus, fetchRiders]);
+    };
+
+    if (activeStatus !== "All") {
+      params.riderStatus = activeStatus.toUpperCase();
+    }
+
+    if (debouncedSearch) {
+      params.search = debouncedSearch;
+    }
+
+    fetchRiders(params);
+  }, [debouncedSearch, activeStatus, fetchRiders]);
 
   const displayStats = statistics;
 

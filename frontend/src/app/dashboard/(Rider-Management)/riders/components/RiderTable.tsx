@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import { useRef } from "react";
 import {
   Mail,
   Phone,
@@ -85,59 +86,62 @@ const RiderTable: React.FC<RiderTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const router = useRouter();
-  const isSearching = search.trim().length > 0;
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+  const isInitialRender = useRef(true);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    if (debouncedSearch.trim()) {
+      setTimeout(() => {
+        if (currentPage !== 1) {
+          setCurrentPage(1);
+        }
+      }, 0);
+    }
+  }, [debouncedSearch, currentPage]);
 
   useEffect(() => {
     const params: any = {
-      page: isSearching ? 1 : currentPage,
-      limit: isSearching ? 100 : limit,
+      page: currentPage,
+      limit: limit,
     };
-
     if (activeStatus !== "All") {
       params.riderStatus = activeStatus.toUpperCase();
     }
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch;
+    }
 
     fetchRiders(params);
-  }, [currentPage, activeStatus, fetchRiders, isSearching, search]);
+  }, [currentPage, activeStatus, fetchRiders, debouncedSearch]);
+  const displayRiders = riders;
 
-  const filteredRiders = useMemo(() => {
-    if (!isSearching) return riders;
-
-    const query = search.toLowerCase();
-    return riders.filter((rider: any) => {
-      const fullName =
-        `${rider.personId?.firstName || ""} ${rider.personId?.lastName || ""}`.toLowerCase();
-      const email = (rider.contactId?.emailId || "").toLowerCase();
-      const riderId = (rider.riderAutoId || "").toLowerCase();
-      const city = (rider.addressId?.city || "").toLowerCase();
-      const vehicleType = (
-        rider.vehicleTypeId?.vehicleType || ""
-      ).toLowerCase();
-      const licensePlate = (rider.licensePlate || "").toLowerCase();
-
-      return (
-        fullName.includes(query) ||
-        email.includes(query) ||
-        riderId.includes(query) ||
-        city.includes(query) ||
-        vehicleType.includes(query) ||
-        licensePlate.includes(query)
-      );
-    });
-  }, [search, riders, isSearching]);
-  const totalPages = isSearching ? 1 : Math.ceil(totalRiders / limit);
+  const totalPages = Math.ceil(totalRiders / limit);
 
   const handleStatusUpdate = async (riderId: string, status: string) => {
     try {
       await updateRiderStatus(riderId, status);
-      toast.success(`Status updated to ${status}`);
-
       const params: any = {
-        page: isSearching ? 1 : currentPage,
-        limit: isSearching ? 100 : limit,
+        page: currentPage,
+        limit: limit,
       };
       if (activeStatus !== "All") {
         params.riderStatus = activeStatus.toUpperCase();
+      }
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch;
       }
       await fetchRiders(params);
     } catch (error) {
@@ -152,11 +156,14 @@ const RiderTable: React.FC<RiderTableProps> = ({
     try {
       await deleteRider(id);
       const params: any = {
-        page: isSearching ? 1 : currentPage,
-        limit: isSearching ? 100 : limit,
+        page: currentPage,
+        limit: limit,
       };
       if (activeStatus !== "All") {
         params.riderStatus = activeStatus.toUpperCase();
+      }
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch;
       }
       await fetchRiders(params);
 
@@ -204,8 +211,8 @@ const RiderTable: React.FC<RiderTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {filteredRiders.length > 0 ? (
-              filteredRiders.map((rider: any) => (
+            {displayRiders.length > 0 ? (
+              displayRiders.map((rider: any) => (
                 <tr
                   key={rider._id}
                   className="hover:bg-blue-50/30 transition-colors"
@@ -365,8 +372,8 @@ const RiderTable: React.FC<RiderTableProps> = ({
             ) : (
               <tr>
                 <td colSpan={7} className="p-10 text-center text-gray-400">
-                  {isSearching
-                    ? `No riders found matching "${search}"`
+                  {debouncedSearch
+                    ? `No riders found matching "${debouncedSearch}"`
                     : "No riders match your selection."}
                 </td>
               </tr>
@@ -374,12 +381,13 @@ const RiderTable: React.FC<RiderTableProps> = ({
           </tbody>
         </table>
       </div>
-      {isSearching && filteredRiders.length > 0 && (
+      {debouncedSearch && displayRiders.length > 0 && (
         <div className="mt-4 text-sm text-gray-500 text-center">
-          Found {filteredRiders.length} result(s) for {search}
+          Found {totalRiders} result(s) for {debouncedSearch} (Page{" "}
+          {currentPage} of {totalPages})
         </div>
       )}
-      {!isSearching && totalPages > 1 && (
+      {totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
