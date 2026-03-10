@@ -263,6 +263,7 @@ export class AdvancedGenericController<T extends Document> {
       const updated = await this.options.service.updateById(id, data, {
         populate: this.options.populate,
       });
+      console.log("updata", updated)
       if (!updated)
         return res.status(404).json({ message: "Document not found" });
 

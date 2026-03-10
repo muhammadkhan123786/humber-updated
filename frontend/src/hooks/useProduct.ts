@@ -138,8 +138,8 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
       // Transform products
       const transformedProducts = transformProductsResponse(response.data);
-      setProducts(transformedProducts);
-      setStatistics(response.data.statistics || null);
+      setProducts(transformedProducts as ProductListItem[]);
+       setStatistics(response.data.statistics || null);
       setPagination({
         total: response.data.total || 0,
         activeCount: response.data.activeCount || 0,
@@ -241,9 +241,9 @@ const updateProduct = useCallback(async (id: string, productData: any) => {
     const transformedProduct = transformProduct(response.data.data);
     
     // Update the product in the local state
-    setProducts(prev => 
-      prev.map(p => p.id === id ? transformedProduct : p)
-    );
+   setProducts(prev => 
+  prev.map(p => p.id === id ? transformedProduct as ProductListItem : p)
+);
 
     return { success: true, data: transformedProduct };
   } catch (err: any) {

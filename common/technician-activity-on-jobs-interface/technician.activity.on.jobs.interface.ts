@@ -7,7 +7,8 @@ export type TimeLog<PARTSID = string | string[], QUOTATIONPARTID = string> = {
     partId: PARTSID;               // reference to actual Part(s)
     quotationPartId?: QUOTATIONPARTID; // optional reference to quotation part
     quantityUsed: number;          // how many units used
-  }[];                             // <-- change from tuple [ {...} ] to array {...}[]
+  }[];  
+  durationSeconds?:number;                       // <-- change from tuple [ {...} ] to array {...}[]
 };
 export interface ITechnicianRecordActivityMaster<TUserId=string,TTECHNICIANASSIGNEDJOBID=string,TQUOTATIONID=string,TACTIVITYTYPE=string,TTECHNICIANID=string> extends IBaseEntity<TUserId>{
     JobAssignedId:TTECHNICIANASSIGNEDJOBID,
@@ -17,5 +18,8 @@ export interface ITechnicianRecordActivityMaster<TUserId=string,TTECHNICIANASSIG
     additionalNotes:string,
     status:activitiyStatus,
     timeLogs:TimeLog[],
-    totalTimeInSeconds:number
+    totalTimeInSeconds:number,
+    totalWorkDurationSeconds?:number,
+    totalPauseDurationSeconds?:number,
+    pauseCount?:number  
 }

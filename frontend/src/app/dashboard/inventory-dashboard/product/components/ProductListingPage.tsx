@@ -154,7 +154,7 @@ export default function ProductListingPage() {
 
   // Event Handlers
  // inside ProductListingPage component
-
+console.log("Product inside of the Lisiting", products)
 const handleViewProduct = async (product: Product) => {
   const result = await getProductById(product.id);
   
