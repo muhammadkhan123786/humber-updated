@@ -8,7 +8,7 @@ import { Badge } from "@/components/form/Badge";
 import { Button } from "@/components/form/CustomButton";
 import { Star, ChevronRight, Eye, Edit, Package } from "lucide-react";
 import { motion } from "framer-motion";
-import { ProductListItem, CategoryInfo } from "../types/product";
+import { ProductListItem } from "../types/product";
 import { getImageUrl } from "@/helper/getImageUrl";
 
 interface ProductCardProps {
@@ -97,7 +97,7 @@ console.log("fullUrl", `${staticBaseUrl}/uploads/${product.imageUrl}`)
             <div className="mt-3 space-y-1">
               <div className="flex items-center gap-1 flex-wrap">
                 {product.categories?.map(
-                  (category: CategoryInfo, idx: number) => (
+                  (category: any, idx: number) => (
                     <div key={category.id} className="flex items-center gap-1">
                       {idx > 0 && (
                         <ChevronRight className="h-3 w-3 text-gray-400" />
@@ -114,7 +114,7 @@ console.log("fullUrl", `${staticBaseUrl}/uploads/${product.imageUrl}`)
 
               {/* Show category path as text (alternative view) */}
               <p className="text-xs text-gray-500 italic">
-                {product.categories?.map((cat) => cat.name).join(" → ")}
+                {product.categories?.map((cat: any) => cat.name).join(" → ")}
               </p>
             </div>
           )}

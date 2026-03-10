@@ -2,13 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import { applyGRNToStock } from "../services/stock.service";
 
-/**
- * Intercepts res.json() after genericController.create saves the GRN.
- * Fires stock update in background — never blocks the HTTP response.
- *
- * Usage in grn.routes.ts:
- *   router.post("/", applyGRNStockMiddleware, genericController.create);
- */
+
 export const applyGRNStockMiddleware = (
   req:  Request,
   res:  Response,

@@ -20,6 +20,7 @@ import {
 import SupplierForm from "./SupplierForm";
 import axios from "axios";
 import SupplierView from "./SupplierView";
+import { useRouter } from "next/navigation";
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const SuppliersPage = () => {
@@ -30,6 +31,7 @@ const SuppliersPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSupplier, setSelectedSupplier] = useState<any>(null); // New state
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const router = useRouter();
 
   const fetchSuppliers = async () => {
     try {
@@ -407,6 +409,12 @@ const SuppliersPage = () => {
                             >
                               <Trash2 size={18} />
                             </button>
+                           <button
+  onClick={() => router.push(`/dashboard/suppliers/${sup._id}`)}
+  className="p-2 text-slate-400 hover:text-indigo-600 transition-colors"
+>
+  Details
+</button>
                           </td>
                         </tr>
                       ))}
