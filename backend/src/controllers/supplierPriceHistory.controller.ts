@@ -6,8 +6,70 @@ import { Types }             from "mongoose";
 import { ProductModal }      from "../models/product.models";
 import { SupplierPriceHistory } from "../models/supplierPriceHistory.model";
 import { manualPriceUpdateSchema } from "../schemas/supplierPriceHistory.schema";
+import { SupplierModel } from "../models/suppliers/supplier.models";
 
 export class SupplierPriceHistoryController {
+
+
+  getStats = async (req: Request, res: Response) => {
+  const { id } = req.params as any;
+
+  // MongoDB aggregation — sab kuch DB mein calculate hota hai
+  const result = await ProductModal.aggregate([
+
+    // Step 1: Sirf woh products jinka koi attribute is supplier se linked ho
+    { $match: { "attributes.stock.supplierId": new Types.ObjectId(id) } },
+
+    // Step 2: attributes array ko flatten karo
+    { $unwind: "$attributes" },
+
+    // Step 3: Sirf is supplier ke attributes raho
+    { $match: { "attributes.stock.supplierId": new Types.ObjectId(id) } },
+
+    // Step 4: Calculate karo
+    {
+      $group: {
+        _id: null,
+        totalProducts:  { $sum: 1 },
+        activeProducts: {
+          $sum: {
+            $cond: [{ $gt: ["$attributes.stock.stockQuantity", 0] }, 1, 0]
+          }
+        },
+        totalValue: {
+          $sum: {
+            $multiply: [
+              { $ifNull: [{ $arrayElemAt: ["$attributes.pricing.costPrice", 0] }, 0] },
+              { $ifNull: ["$attributes.stock.stockQuantity", 0] }
+            ]
+          }
+        }
+      }
+    }
+  ]);
+
+  // Lead time supplier schema se
+  const supplier = await SupplierModel.findById(id)
+    .select("productServices.leadTimes")
+    .lean();
+
+  const stats = result[0] || { totalProducts: 0, activeProducts: 0, totalValue: 0 };
+console.log(" data", {
+      totalProducts:  stats.totalProducts,
+      activeProducts: stats.activeProducts,
+      totalValue:     stats.totalValue,
+      leadTime:       supplier?.productServices?.leadTimes || "—",
+    })
+  res.json({
+    success: true,
+    data: {
+      totalProducts:  stats.totalProducts,
+      activeProducts: stats.activeProducts,
+      totalValue:     stats.totalValue,
+      leadTime:       supplier?.productServices?.leadTimes || "—",
+    }
+  });
+};
 
   // ══════════════════════════════════════════════════════════════════════
   // GET /api/supplier-price-history

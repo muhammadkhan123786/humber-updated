@@ -11,6 +11,7 @@ router.get("/",       supplierPriceHistoryController.getHistory);
 
 // POST /api/supplier-price-history/manual
 router.post("/manual", supplierPriceHistoryController.manualUpdate);
+router.get("/:id/stats", supplierPriceHistoryController.getStats);
 
 export default router;
 
