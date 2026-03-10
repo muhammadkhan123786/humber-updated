@@ -21,7 +21,8 @@ interface TechnicianJobType {
 const TechnicianJob = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [jobs, setJobs] = useState<TechnicianJobType[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
@@ -29,53 +30,76 @@ const TechnicianJob = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const limit = 10;
 
-  const fetchJobs = useCallback(async () => {
+  const fetchJobs = useCallback(async (page = 1, search = "") => {
     try {
-      setLoading(true);
-      const res = await getAlls<TechnicianJobType>("/technician-job-by-admin", {
-        page: currentPage,
-        limit,
-      });
+      if (search) {
+        setSearchLoading(true);
+      } else {
+        setLoading(true);
+      }
 
-      setJobs(res.data || []);
-      setTotalPages(Math.ceil(res.total / limit));
+      const params: any = {
+        page,
+        limit,
+      };
+
+      if (search) {
+        params.search = search;
+      }
+
+      const res = await getAlls<TechnicianJobType>(
+        "/technician-job-by-admin",
+        params,
+      );
+
+      if (res.data) {
+        setJobs(res.data || []);
+        setTotalCount(res.total || res.data.length);
+        setTotalPages(Math.ceil((res.total || res.data.length) / limit));
+        setCurrentPage(page);
+      }
     } catch (error: any) {
       console.log("Error fetching jobs:", error.message);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
-  }, [currentPage]);
+  }, []);
 
   useEffect(() => {
-    fetchJobs();
-  }, [currentPage, fetchJobs]);
+    fetchJobs(1, "");
+  }, [fetchJobs]);
+
+  const handlePageChange = (page: number) => {
+    fetchJobs(page, searchTerm);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+    fetchJobs(1, term);
+  };
+
+  const handleStatusFilter = (status: string) => {
+    setStatusFilter(status);
+  };
+
+  const handlePriorityFilter = (priority: string) => {
+    setPriorityFilter(priority);
+  };
+
   const handleRefreshData = () => {
-    setRefreshTrigger((prev) => prev + 1);
-    fetchJobs();
+    fetchJobs(currentPage, searchTerm);
   };
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
-      const searchStr = searchTerm.toLowerCase().trim();
-      const matchesSearch =
-        !searchTerm ||
-        job.jobId?.toLowerCase().includes(searchStr) ||
-        job.ticketId?.ticketCode?.toLowerCase().includes(searchStr) ||
-        job.technicianId?.personId?.firstName
-          ?.toLowerCase()
-          .includes(searchStr) ||
-        job.technicianId?.personId?.lastName
-          ?.toLowerCase()
-          .includes(searchStr) ||
-        job.ticketId?.customerId?.personId?.firstName
-          ?.toLowerCase()
-          .includes(searchStr) ||
-        job.ticketId?.vehicleId?.productName?.toLowerCase().includes(searchStr);
       const currentStatus = job.jobStatusId || "";
       const matchesStatus =
         statusFilter === "All Statuses" ||
@@ -88,9 +112,10 @@ const TechnicianJob = () => {
         priorityFilter === "All Priorities" ||
         currentPriority.toLowerCase() === priorityFilter.toLowerCase();
 
-      return matchesSearch && matchesStatus && matchesPriority;
+      return matchesStatus && matchesPriority;
     });
-  }, [jobs, searchTerm, statusFilter, priorityFilter]);
+  }, [jobs, statusFilter, priorityFilter]);
+
   return (
     <div className="flex flex-col gap-6">
       <TechnicianHeader activeView={viewMode} setActiveView={setViewMode} />
@@ -99,31 +124,46 @@ const TechnicianJob = () => {
 
       <FilterSection
         searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
+        setSearchTerm={handleSearch}
         statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
+        setStatusFilter={handleStatusFilter}
         priorityFilter={priorityFilter}
-        setPriorityFilter={setPriorityFilter}
+        setPriorityFilter={handlePriorityFilter}
       />
 
-      {filteredJobs.length === 0 && !loading ? (
-        <div className="p-20 text-center bg-white rounded-2xl border border-dashed border-gray-300 text-gray-500">
-          No jobs found matching your criteria.
+      {searchTerm && (
+        <div className="text-sm text-gray-600 px-2">
+          Showing results for:{" "}
+          <span className="font-semibold">{searchTerm}</span> (
+          {filteredJobs.length} of {totalCount} jobs)
         </div>
-      ) : (
-        <JobCardsSection
-          jobs={filteredJobs}
-          loading={loading}
-          viewMode={viewMode}
-          onDelete={handleRefreshData}
-        />
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => setCurrentPage(page)}
-      />
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-orange-100">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mb-4"></div>
+          <p className="text-gray-500 text-lg">Loading jobs...</p>
+        </div>
+      ) : (
+        <>
+          <JobCardsSection
+            jobs={filteredJobs}
+            loading={searchLoading}
+            viewMode={viewMode}
+            onDelete={handleRefreshData}
+          />
+
+          {filteredJobs.length > 0 && totalPages > 1 && (
+            <div className="flex justify-end border-t border-slate-200 pt-6 pb-10">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
