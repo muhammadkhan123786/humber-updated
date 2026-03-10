@@ -96,7 +96,7 @@ export const assignTicketToTechnicianController = async (
   res: Response,
 ) => {
   try {
-    const  id  = req.params.id as string; // ✅ ticketId
+    const id = req.params.id as string; // ✅ ticketId
     const { technicianId } = req.body; // ✅ technicianId
 
     // Validate ObjectIds
@@ -310,31 +310,16 @@ export const getTechniciansWithActiveJobsController = async (
       page = 1,
       limit = 10,
       search = "",
-      filter = "paged", // ✅ paged | all
+      filter = "paged",
     } = req.query as any;
 
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
     const skip = (pageNumber - 1) * limitNumber;
 
-    // ✅ Base match
-    const matchStage: any = { isDeleted: false };
-
-    // ✅ Search support
-    if (search) {
-      matchStage.$or = [
-        { technicianName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    // =========================
-    // 🔥 BASE PIPELINE
-    // =========================
     const basePipeline: any[] = [
-      { $match: matchStage },
+      { $match: { isDeleted: false } },
 
-      // ✅ Populate Account
       {
         $lookup: {
           from: "users",
@@ -344,6 +329,7 @@ export const getTechniciansWithActiveJobsController = async (
         },
       },
       { $unwind: { path: "$accountId", preserveNullAndEmptyArrays: true } },
+
       {
         $lookup: {
           from: "servicetypemasters",
@@ -353,7 +339,6 @@ export const getTechniciansWithActiveJobsController = async (
         },
       },
 
-      // ✅ Populate Person
       {
         $lookup: {
           from: "people",
@@ -364,7 +349,6 @@ export const getTechniciansWithActiveJobsController = async (
       },
       { $unwind: { path: "$personId", preserveNullAndEmptyArrays: true } },
 
-      // ✅ Populate Contact
       {
         $lookup: {
           from: "contacts",
@@ -374,6 +358,7 @@ export const getTechniciansWithActiveJobsController = async (
         },
       },
       { $unwind: { path: "$contactId", preserveNullAndEmptyArrays: true } },
+
       {
         $lookup: {
           from: "addresses",
@@ -383,7 +368,32 @@ export const getTechniciansWithActiveJobsController = async (
         },
       },
       { $unwind: { path: "$addressId", preserveNullAndEmptyArrays: true } },
-      // ✅ Count Active Jobs
+    ];
+
+    basePipeline.push({
+      $addFields: {
+        fullName: {
+          $concat: ["$personId.firstName", " ", "$personId.lastName"],
+        },
+      },
+    });
+
+    if (search) {
+      basePipeline.push({
+        $match: {
+          $or: [
+            { employeeId: { $regex: search, $options: "i" } },
+            { fullName: { $regex: search, $options: "i" } },
+            { "personId.firstName": { $regex: search, $options: "i" } },
+            { "personId.lastName": { $regex: search, $options: "i" } },
+            { "accountId.email": { $regex: search, $options: "i" } },
+            { "contactId.phoneNumber": { $regex: search, $options: "i" } },
+          ],
+        },
+      });
+    }
+
+    basePipeline.push(
       {
         $lookup: {
           from: "techniciansjobs",
@@ -405,7 +415,6 @@ export const getTechniciansWithActiveJobsController = async (
           as: "jobsData",
         },
       },
-
       {
         $addFields: {
           activeJobs: {
@@ -413,19 +422,18 @@ export const getTechniciansWithActiveJobsController = async (
           },
         },
       },
-
       {
         $project: {
           jobsData: 0,
         },
       },
-    ];
+    );
 
-    // =========================
-    // ✅ IF FILTER = ALL → NO PAGINATION
-    // =========================
     if (filter === "all") {
-      const technicians = await Technicians.aggregate(basePipeline);
+      const technicians = await Technicians.aggregate([
+        ...basePipeline,
+        { $sort: { createdAt: -1 } },
+      ]);
 
       return res.status(200).json({
         success: true,
@@ -434,9 +442,6 @@ export const getTechniciansWithActiveJobsController = async (
       });
     }
 
-    // =========================
-    // ✅ PAGINATED RESULT
-    // =========================
     const pipeline = [
       ...basePipeline,
       {
@@ -456,6 +461,8 @@ export const getTechniciansWithActiveJobsController = async (
     const technicians = result[0]?.data || [];
     const total = result[0]?.totalCount[0]?.total || 0;
 
+    console.log("Technicians with Active Jobs (All):", technicians);
+
     return res.status(200).json({
       success: true,
       pagination: {
@@ -474,7 +481,6 @@ export const getTechniciansWithActiveJobsController = async (
     });
   }
 };
-
 //update quotation job status
 export const updateTechnicianQuotationStatusController = async (
   req: TechnicianAuthRequest,
@@ -600,8 +606,6 @@ export const updateTechnicianJobStatusController = async (
       });
     }
 
-    
-
     const filter: any = {
       _id: techncianJobId,
       isDeleted: false,
@@ -623,9 +627,9 @@ export const updateTechnicianJobStatusController = async (
     const updatedJob = await TechnicianJobsByAdmin.findOneAndUpdate(
       filter,
       { $set: { jobStatusId } },
-      { new: true }
+      { new: true },
     ).lean();
-    
+
     if (!updatedJob) {
       return res.status(404).json({
         success: false,
@@ -638,7 +642,6 @@ export const updateTechnicianJobStatusController = async (
       message: "Technician Job Status Updated Successfully.",
       data: updatedJob,
     });
-
   } catch (error) {
     console.error("Update Technician Job Status Error:", error);
     return res.status(500).json({

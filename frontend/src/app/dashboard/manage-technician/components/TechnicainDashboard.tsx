@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import MetricCard from "../../customerDashboard/components/MetricCard";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,26 +22,35 @@ const TechnicianDashboard = () => {
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
   const limit = 10;
 
-  const fetchData = async (page = 1) => {
+  const fetchData = useCallback(async (page = 1, search = "") => {
     try {
-      setLoading(true);
+      if (search) {
+        setSearchLoading(true);
+      } else {
+        setLoading(true);
+      }
+
       const headers = {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       };
 
+      let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians?page=${page}&limit=${limit}`;
+
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+
       const [techRes, summaryRes] = await Promise.all([
-        fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians?page=${page}&limit=${limit}`,
-          {
-            headers,
-          },
-        ),
+        fetch(url, { headers }),
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians/summary`, {
           headers,
         }),
@@ -53,23 +62,31 @@ const TechnicianDashboard = () => {
       if (techResult.success) {
         setTechnicians(techResult.data);
         setTotalPages(techResult.pagination?.totalPages || 1);
-
+        setTotalCount(techResult.total || techResult.data.length);
         setCurrentPage(page);
       }
+
       if (summaryResult) setSummary(summaryResult);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData(1);
   }, []);
 
+  useEffect(() => {
+    fetchData(1, "");
+  }, [fetchData]);
+
   const handlePageChange = (page: number) => {
-    fetchData(page);
+    fetchData(page, searchTerm);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page on new search
+    fetchData(1, term);
   };
 
   const handleDelete = async (id: string) => {
@@ -89,7 +106,7 @@ const TechnicianDashboard = () => {
 
       const result = await response.json();
       if (result.success) {
-        fetchData(currentPage);
+        fetchData(currentPage, searchTerm);
 
         const summaryRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/technicians/summary`,
@@ -115,7 +132,7 @@ const TechnicianDashboard = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTechnician(null);
-    fetchData(currentPage);
+    fetchData(currentPage, searchTerm);
   };
 
   return (
@@ -265,6 +282,10 @@ const TechnicianDashboard = () => {
           technicians={technicians}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onSearch={handleSearch}
+          searchTerm={searchTerm}
+          loading={searchLoading}
+          totalCount={totalCount}
         />
       )}
       {!loading && technicians.length > 0 && totalPages > 1 && (
