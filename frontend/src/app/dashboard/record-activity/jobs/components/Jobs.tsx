@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import TechnicianHeader from "./TechnicianHeader";
 import StatCard from "./StatCard";
 import {
@@ -65,29 +65,56 @@ const statusOptions = [
 const Jobs = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [stats, setStats] = useState<StatCardData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0); // Add this
-  const itemsPerPage = 10;
-  const fetchJobs = async (showLoading = true) => {
-    if (showLoading) setIsLoading(true);
-    try {
-      const response = await getAlls<any>("/technician-job-by-admin");
-      const jobsData = response?.data || [];
-      setJobs(jobsData);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-      toast.error("Failed to load jobs");
-    } finally {
-      if (showLoading) setIsLoading(false);
-    }
-  };
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
+  console.log(searchLoading);
+  const limit = 10;
+
+  const fetchJobs = useCallback(
+    async (page = 1, search = "", showLoading = true) => {
+      try {
+        if (search) {
+          setSearchLoading(true);
+        } else if (showLoading) {
+          setIsLoading(true);
+        }
+
+        const params: any = {
+          page,
+          limit,
+        };
+
+        if (search) {
+          params.search = search;
+        }
+
+        const response = await getAlls<any>("/technician-job-by-admin", params);
+        const jobsData = response?.data || [];
+
+        setJobs(jobsData);
+        setTotalCount(response?.total || jobsData.length);
+        setTotalPages(Math.ceil((response?.total || jobsData.length) / limit));
+        setCurrentPage(page);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        toast.error("Failed to load jobs");
+      } finally {
+        setIsLoading(false);
+        setSearchLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    fetchJobs();
-  }, []);
+    fetchJobs(1, "", true);
+  }, [fetchJobs]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -179,40 +206,35 @@ const Jobs = () => {
     fetchStats();
   }, [statsRefreshTrigger]);
 
-  const handleDeleteJob = (deletedJobId: string) => {
-    setJobs((prevJobs) => prevJobs.filter((job) => job._id !== deletedJobId));
-
-    setStatsRefreshTrigger((prev) => prev + 1);
-    fetchJobs(false);
+  const handlePageChange = (page: number) => {
+    fetchJobs(page, searchQuery, false);
   };
 
-  const filteredJobs = useMemo(() => {
-    return jobs.filter((job) => {
-      const matchesSearch =
-        job.jobId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        job.ticketId?.ticketCode
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        job.leadingTechnicianId?.personId?.firstName
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        job.leadingTechnicianId?.personId?.lastName
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase());
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+    fetchJobs(1, query, false);
+  };
 
-      const matchesStatus =
-        statusFilter === "all" || job.jobStatusId === statusFilter;
+  const handleStatusFilter = (status: string) => {
+    setStatusFilter(status);
+  };
 
-      return matchesSearch && matchesStatus;
-    });
-  }, [jobs, searchQuery, statusFilter]);
+  const handleDeleteJob = (deletedJobId: string) => {
+    setJobs((prevJobs) => prevJobs.filter((job) => job._id !== deletedJobId));
+    setStatsRefreshTrigger((prev) => prev + 1);
+    if (jobs.length === 1 && currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    } else {
+      fetchJobs(currentPage, searchQuery, false);
+    }
+  };
 
-  const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
-  const paginatedJobs = filteredJobs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const filteredJobs = jobs.filter((job) => {
+    const matchesStatus =
+      statusFilter === "all" || job.jobStatusId === statusFilter;
+    return matchesStatus;
+  });
 
   return (
     <div className="p-6 flex flex-col gap-8 bg-gray-50 min-h-screen">
@@ -235,11 +257,19 @@ const Jobs = () => {
 
       <JobFilters
         searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+        setSearchQuery={handleSearch}
         statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
+        setStatusFilter={handleStatusFilter}
         statuses={statusOptions}
       />
+
+      {searchQuery && (
+        <div className="text-sm text-gray-600 px-2">
+          Showing results for:{" "}
+          <span className="font-semibold">{searchQuery}</span> (
+          {filteredJobs.length} of {totalCount} jobs)
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex justify-center p-10">
@@ -247,8 +277,8 @@ const Jobs = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {paginatedJobs.length > 0 ? (
-            paginatedJobs.map((job) => (
+          {filteredJobs.length > 0 ? (
+            filteredJobs.map((job) => (
               <JobDetailCard
                 key={job._id}
                 job={job}
@@ -263,11 +293,15 @@ const Jobs = () => {
         </div>
       )}
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(p) => setCurrentPage(p)}
-      />
+      {!isLoading && filteredJobs.length > 0 && totalPages > 1 && (
+        <div className="flex justify-end border-t border-slate-200 pt-6">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
+      )}
     </div>
   );
 };
