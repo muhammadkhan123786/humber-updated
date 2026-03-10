@@ -705,7 +705,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
           )}
 
           {/* ── Add Manual Product ── */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>Add Manual Product</Label>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -772,7 +772,7 @@ export const CreateGRNDialog: React.FC<CreateGRNDialogProps> = ({
                 </Button>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* ── GRN Notes ── */}
           <div className="space-y-2">

@@ -658,7 +658,7 @@ export class PurchaseOrderCustomController {
           subtotal,
           tax,
           total,
-          status: "pending",
+          status: "draft",
           isReorderPO: true,
           isDeleted: false,
         });

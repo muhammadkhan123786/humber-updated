@@ -242,9 +242,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
 
   // Auto-fetch when reorder mode turns on (first time only)
   useEffect(() => {
-    console.log("isReorderMode", isReorderMode);
     if (isReorderMode && !reorderFetched) {
-      console.log("isReorderMode in UseEffect", isReorderMode);
       fetchReorderSuggestions();
     }
   }, [isReorderMode, reorderFetched, fetchReorderSuggestions]);
@@ -294,6 +292,8 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       );
 
       await fetchReorderSuggestions(true);
+      setShowProposals(false);
+    onOpenChange(false);
     } catch {
       toast.error("Failed to create purchase orders.");
     } finally {
@@ -425,7 +425,6 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       document.querySelector('#items-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-
     setIsSaving(true);
     try {
       const ok = await onSaveOrder();
@@ -458,6 +457,15 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     warning: reorderProducts.filter(p => p.severity === "warning").length,
     low: reorderProducts.filter(p => p.severity === "low").length,
   }), [reorderProducts]);
+
+
+  const handleProposalsClose = useCallback((open: boolean) => {
+  setShowProposals(open);
+  if (!open) {
+    // Close the purchase order form as well
+    onOpenChange(false);
+  }
+}, [onOpenChange]);
 
   // ─────────────────────────────────────────────────────────────────────
   return (
@@ -1019,10 +1027,11 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       {/* Proposals modal */}
       <ReplenishmentProposalsModal
         open={showProposals}
-        onOpenChange={setShowProposals}
+        onOpenChange={handleProposalsClose}
         products={reorderProducts}
         onCreateOrders={handleCreateBulkOrders}
         isCreating={isCreatingBulk}
+        //  onOpenChange={handleProposalsClose} 
       />
     </>
   );
