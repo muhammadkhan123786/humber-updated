@@ -68,7 +68,7 @@ const fetchDefaultLabourRate = async (): Promise<number> => {
   try {
     const baseUrl =
       process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-    const response = await axios.get(`${baseUrl}/labour-rate?filter=all`, {
+    const response = await axios.get(`${baseUrl}/labour?filter=all`, {
       headers: getAuthHeader(),
     });
     const responseData = response.data?.data || response.data;
