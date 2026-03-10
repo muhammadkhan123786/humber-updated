@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Pagination from "@/components/ui/Pagination";
 
@@ -39,42 +39,75 @@ const InvoicesSection = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
   const limit = 10;
 
   useEffect(() => {
-    fetchInvoices(currentPage);
-  }, [currentPage]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
 
-  const fetchInvoices = async (page = 1) => {
-    try {
-      setLoading(true);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm, statusFilter, sortOrder]);
 
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+  const fetchInvoices = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
 
-      const response = await axios.get(
-        `${baseUrl}/customer-invoices?page=${page}&limit=${limit}`,
-        {
-          headers: getAuthHeader(),
-        },
-      );
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
-      if (response.data?.success) {
-        setInvoices(response.data.data || []);
-        setCurrentPage(response.data.page || 1);
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: limit.toString(),
+          sortBy: "createdAt",
+          order: sortOrder === "newest" ? "desc" : sortOrder,
+        });
 
-        const total = response.data.total || 0;
-        setTotalPages(Math.ceil(total / limit));
+        if (statusFilter !== "all") {
+          params.append("status", statusFilter);
+        }
+        if (debouncedSearchTerm) {
+          params.append("search", debouncedSearchTerm);
+        }
+        if (sortOrder === "asc" || sortOrder === "desc") {
+          params.set("sortBy", "netTotal");
+          params.set("order", sortOrder);
+        }
+
+        const response = await axios.get(
+          `${baseUrl}/customer-invoices?${params.toString()}`,
+          {
+            headers: getAuthHeader(),
+          },
+        );
+
+        if (response.data?.success) {
+          setInvoices(response.data.data || []);
+          setCurrentPage(response.data.page || 1);
+          setTotalItems(response.data.total || 0);
+          setTotalPages(Math.ceil((response.data.total || 0) / limit));
+        }
+      } catch (error) {
+        console.error("Error fetching invoices:", error);
+        toast.error("Failed to fetch invoices");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      toast.error("Failed to fetch invoices");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [debouncedSearchTerm, statusFilter, sortOrder],
+  );
+  useEffect(() => {
+    fetchInvoices(currentPage);
+  }, [currentPage, fetchInvoices]);
+
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
@@ -111,8 +144,7 @@ const InvoicesSection = () => {
 
       if (response.data?.success) {
         toast.success("Invoice deleted successfully");
-
-        fetchInvoices();
+        fetchInvoices(currentPage);
         window.dispatchEvent(new Event("invoiceUpdated"));
       } else {
         toast.error("Failed to delete invoice");
@@ -187,26 +219,9 @@ const InvoicesSection = () => {
     { id: "asc", label: "Amount (Lowest)" },
     { id: "newest", label: "Newest Date" },
   ];
+  const displayInvoices = invoices;
 
-  const filteredInvoices = invoices.filter((inv: any) => {
-    const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
-
-    const matchesSearch = inv.invoiceId
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
-
-    return matchesStatus && matchesSearch;
-  });
-
-  const sortedInvoices = [...filteredInvoices].sort((a: any, b: any) => {
-    if (sortOrder === "desc") return b.netTotal - a.netTotal;
-    if (sortOrder === "asc") return a.netTotal - b.netTotal;
-    if (sortOrder === "newest")
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    return 0;
-  });
-
-  if (loading) {
+  if (loading && invoices.length === 0) {
     return (
       <div className="w-full flex justify-center items-center h-64">
         <div className="text-gray-500">Loading invoices...</div>
@@ -225,7 +240,6 @@ const InvoicesSection = () => {
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPage(1);
             }}
             className="w-full h-10 pl-10 pr-4 bg-gray-100 border-2 border-indigo-50 rounded-[10px] text-sm outline-none focus:border-indigo-600 focus:bg-white transition-all"
           />
@@ -265,15 +279,22 @@ const InvoicesSection = () => {
           </div>
         </div>
       </div>
-      {sortedInvoices.length > 0 && (
+
+      {displayInvoices.length > 0 && (
         <div className="text-sm text-gray-500 pl-2">
-          Showing {sortedInvoices.length} of {invoices.length} invoices
+          Showing {displayInvoices.length} of {totalItems} invoices
+          {debouncedSearchTerm && ` matching "${debouncedSearchTerm}"`}
+          {statusFilter !== "all" && ` with status ${statusFilter}`}
         </div>
       )}
 
-      {sortedInvoices.length === 0 ? (
+      {displayInvoices.length === 0 ? (
         <div className="w-full p-12 bg-white rounded-2xl border-2 border-indigo-100 flex flex-col items-center justify-center">
-          <p className="text-gray-500 text-lg">No invoices found</p>
+          <p className="text-gray-500 text-lg">
+            {debouncedSearchTerm
+              ? `No invoices found matching "${debouncedSearchTerm}"`
+              : "No invoices found"}
+          </p>
         </div>
       ) : viewType === "table" ? (
         <div className="w-full overflow-x-auto bg-white rounded-2xl border-2 border-indigo-100 shadow-sm">
@@ -296,7 +317,7 @@ const InvoicesSection = () => {
               </tr>
             </thead>
             <tbody>
-              {sortedInvoices.map((inv: any) => (
+              {displayInvoices.map((inv: any) => (
                 <tr
                   key={inv._id}
                   className="border-b border-indigo-50 hover:bg-indigo-50/30 transition-colors"
@@ -392,7 +413,7 @@ const InvoicesSection = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedInvoices.map((inv: any) => (
+          {displayInvoices.map((inv: any) => (
             <InvoiceCard
               key={inv._id}
               id={inv.invoiceId}
@@ -425,11 +446,13 @@ const InvoicesSection = () => {
           ))}
         </div>
       )}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-      />
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   );
 };

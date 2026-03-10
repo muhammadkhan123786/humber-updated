@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
+import { useRef } from "react";
 import {
   Mail,
   Phone,
@@ -85,38 +86,67 @@ const RiderTable: React.FC<RiderTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 10;
   const router = useRouter();
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   useEffect(() => {
-    const params: any = { page: currentPage, limit };
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+  const isInitialRender = useRef(true);
+
+  useEffect(() => {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+
+    if (debouncedSearch.trim()) {
+      setTimeout(() => {
+        if (currentPage !== 1) {
+          setCurrentPage(1);
+        }
+      }, 0);
+    }
+  }, [debouncedSearch, currentPage]);
+
+  useEffect(() => {
+    const params: any = {
+      page: currentPage,
+      limit: limit,
+    };
     if (activeStatus !== "All") {
       params.riderStatus = activeStatus.toUpperCase();
     }
-    fetchRiders(params);
-  }, [currentPage, activeStatus, fetchRiders]);
+    if (debouncedSearch.trim()) {
+      params.search = debouncedSearch;
+    }
 
-  const filteredRiders = useMemo(() => {
-    if (!search.trim()) return riders;
-    const query = search.toLowerCase();
-    return riders.filter((rider: any) => {
-      const fullName =
-        `${rider.personId?.firstName || ""} ${rider.personId?.lastName || ""}`.toLowerCase();
-      const email = (rider.contactId?.emailId || "").toLowerCase();
-      const riderId = (rider.riderAutoId || "").toLowerCase();
-      return (
-        fullName.includes(query) ||
-        email.includes(query) ||
-        riderId.includes(query)
-      );
-    });
-  }, [search, riders]);
+    fetchRiders(params);
+  }, [currentPage, activeStatus, fetchRiders, debouncedSearch]);
+  const displayRiders = riders;
 
   const totalPages = Math.ceil(totalRiders / limit);
 
   const handleStatusUpdate = async (riderId: string, status: string) => {
     try {
       await updateRiderStatus(riderId, status);
+      const params: any = {
+        page: currentPage,
+        limit: limit,
+      };
+      if (activeStatus !== "All") {
+        params.riderStatus = activeStatus.toUpperCase();
+      }
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch;
+      }
+      await fetchRiders(params);
     } catch (error) {
       console.error("Status update failed:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -125,11 +155,18 @@ const RiderTable: React.FC<RiderTableProps> = ({
     const loadingToast = toast.loading("Deleting rider...");
     try {
       await deleteRider(id);
-      await fetchRiders({
+      const params: any = {
         page: currentPage,
-        limit: 10,
-        riderStatus: activeStatus === "All" ? "" : activeStatus,
-      });
+        limit: limit,
+      };
+      if (activeStatus !== "All") {
+        params.riderStatus = activeStatus.toUpperCase();
+      }
+      if (debouncedSearch.trim()) {
+        params.search = debouncedSearch;
+      }
+      await fetchRiders(params);
+
       toast.success("Rider deleted successfully!", {
         id: loadingToast,
         duration: 3000,
@@ -174,8 +211,8 @@ const RiderTable: React.FC<RiderTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {filteredRiders.length > 0 ? (
-              filteredRiders.map((rider: any) => (
+            {displayRiders.length > 0 ? (
+              displayRiders.map((rider: any) => (
                 <tr
                   key={rider._id}
                   className="hover:bg-blue-50/30 transition-colors"
@@ -335,18 +372,28 @@ const RiderTable: React.FC<RiderTableProps> = ({
             ) : (
               <tr>
                 <td colSpan={7} className="p-10 text-center text-gray-400">
-                  No riders match your selection.
+                  {debouncedSearch
+                    ? `No riders found matching "${debouncedSearch}"`
+                    : "No riders match your selection."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => setCurrentPage(page)}
-      />
+      {debouncedSearch && displayRiders.length > 0 && (
+        <div className="mt-4 text-sm text-gray-500 text-center">
+          Found {totalRiders} result(s) for {debouncedSearch} (Page{" "}
+          {currentPage} of {totalPages})
+        </div>
+      )}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
+      )}
     </div>
   );
 };
