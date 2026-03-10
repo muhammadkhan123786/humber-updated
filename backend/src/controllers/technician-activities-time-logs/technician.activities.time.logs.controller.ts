@@ -47,11 +47,22 @@ export const pauseActivity = async (activityId: string, technicianId: string) =>
   // Close last log
   const lastLog = activity.timeLogs[activity.timeLogs.length - 1];
   if (!lastLog || lastLog.endTime) throw new Error("No active time log to pause");
+  if (!lastLog.startTime)
+      throw new Error("Invalid session start time");
 
   lastLog.endTime = new Date();
-  activity.status = "paused";
-  activity.totalTimeInSeconds = calculateTotalTime(activity.timeLogs);
+  lastLog.durationSeconds =
+  (lastLog.endTime.getTime() - lastLog.startTime.getTime()) / 1000;
 
+  activity.totalTimeInSeconds = calculateTotalTime(activity.timeLogs);
+  // calculate full activity stats
+ const stats = calculateActivityStats(activity.timeLogs);
+
+ activity.totalWorkDurationSeconds = stats.totalWorkSeconds;
+ activity.totalPauseDurationSeconds = stats.totalPauseSeconds;
+ activity.pauseCount = stats.pauseCount;
+
+ activity.status = "paused";
   await activity.save();
   return activity;
 };
@@ -76,26 +87,47 @@ export const resumeActivity = async (activityId: string, technicianId: string) =
 
 //complete and caculate total time 
 export const completeActivity = async (activityId: string, technicianId: string) => {
+
   const activity = await TechniciansActivitiesMaster.findOne({
-    _id:activityId, 
+    _id: activityId,
     technicianId,
   });
-   if (!activity) throw new Error("Activity not found or this not your actvity.");
-  if (!["in_progress","paused"].includes(activity.status)) 
-      throw new Error(`Cannot complete activity in status ${activity.status}`);
+  if (!activity)
+    throw new Error("Activity not found or this not your activity.");
+  if (!["in_progress", "paused"].includes(activity.status))
+    throw new Error(`Cannot complete activity in status ${activity.status}`);
 
-  // Close last log if running
+  // Get last session
   const lastLog = activity.timeLogs[activity.timeLogs.length - 1];
-  if (lastLog && !lastLog.endTime) lastLog.endTime = new Date();
+
+  // If activity still running close the session
+  if (lastLog && !lastLog.endTime) {
+
+    if (!lastLog.startTime)
+      throw new Error("Invalid session start time");
+
+    lastLog.endTime = new Date();
+
+    // calculate session duration
+    lastLog.durationSeconds =
+      (lastLog.endTime.getTime() - lastLog.startTime.getTime()) / 1000;
+  }
+
+  // calculate full activity stats
+  const stats = calculateActivityStats(activity.timeLogs);
+
+  activity.totalWorkDurationSeconds = stats.totalWorkSeconds;
+  activity.totalPauseDurationSeconds = stats.totalPauseSeconds;
+  activity.pauseCount = stats.pauseCount;
+
+  activity.totalTimeInSeconds = stats.totalWorkSeconds;
 
   activity.status = "completed";
-  activity.totalTimeInSeconds = calculateTotalTime(activity.timeLogs);
 
   await activity.save();
+
   return activity;
 };
-
-
 //fetch parts for logs time 
 
 
@@ -317,3 +349,41 @@ export const getTechnicianDashboard = async ({
   };
 };
 
+//calculate total time 
+export const calculateActivityStats = (timeLogs: any[]) => {
+
+ let totalWorkSeconds = 0;
+ let totalPauseSeconds = 0;
+
+ for (let i = 0; i < timeLogs.length; i++) {
+
+  const log = timeLogs[i];
+
+  if (log.startTime && log.endTime) {
+   const duration =
+    (new Date(log.endTime).getTime() -
+     new Date(log.startTime).getTime()) / 1000;
+
+   totalWorkSeconds += duration;
+  }
+  //this is good 
+
+  if (i > 0) {
+   const prev = timeLogs[i - 1];
+
+   if (prev.endTime && log.startTime) {
+    const pause =
+     (new Date(log.startTime).getTime() -
+      new Date(prev.endTime).getTime()) / 1000;
+
+    totalPauseSeconds += pause;
+   }
+  }
+ }
+
+ return {
+  totalWorkSeconds,
+  totalPauseSeconds,
+  pauseCount: timeLogs.length > 1 ? timeLogs.length - 1 : 0
+ };
+};
