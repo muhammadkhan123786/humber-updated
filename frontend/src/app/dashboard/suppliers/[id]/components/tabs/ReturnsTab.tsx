@@ -1,5 +1,5 @@
 // components/tabs/ReturnsTab.tsx
-import { RotateCcw, Loader2, Package, Calendar, CheckCircle, Clock, XCircle } from "lucide-react";
+import { RotateCcw, Loader2, Package, Calendar, CheckCircle, Clock, XCircle, DollarSign, TrendingUp } from "lucide-react";
 import { useSupplierReturns } from "../../hooks/useSupplierReturns";
 import { Badge } from "@/components/form/Badge";
 

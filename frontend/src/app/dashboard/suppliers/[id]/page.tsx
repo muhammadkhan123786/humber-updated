@@ -83,9 +83,11 @@ export default function SupplierDetailPage() {
   const businessName = supplier.supplierIdentification?.legalBusinessName;
 
   // Calculate stats for header
-  const totalProducts = supplier.products?.length || 0;
-  const activeProducts = supplier.products?.filter((p: any) => p.status === 'active').length || 0;
+  // const totalProducts = supplier.products?.length || 0;
+  // const activeProducts = supplier.products?.filter((p: any) => p.status === 'active').length || 0;
   const avgLeadTime = supplier.productServices?.leadTimes || "—";
+   const totalProducts =  0;
+  const activeProducts =  0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -96,7 +98,7 @@ export default function SupplierDetailPage() {
       </div>
 
       {/* Header Section */}
-      <SupplierHeader 
+      {/* <SupplierHeader 
         name={name}
         businessName={businessName}
         isActive={supplier.isActive}
@@ -106,7 +108,7 @@ export default function SupplierDetailPage() {
           activeProducts,
           avgLeadTime
         }}
-      />
+      /> */}
 
       {/* Quick Stats Row */}
       <div className="max-w-7xl mx-auto px-6 mt-6">
@@ -152,7 +154,7 @@ export default function SupplierDetailPage() {
               <div>
                 <p className="text-sm text-gray-500 font-medium">Total Value</p>
                 <p className="text-2xl font-bold text-gray-800">
-                  £{supplier.products?.reduce((acc: number, p: any) => acc + (p.unitPrice || 0), 0).toFixed(0) || 0}
+                  {/* £{supplier.products?.reduce((acc: number, p: any) => acc + (p.unitPrice || 0), 0).toFixed(0) || 0} */}
                 </p>
               </div>
             </div>
