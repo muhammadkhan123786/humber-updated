@@ -1,5 +1,5 @@
 "use client";
-import { Activity, Loader2, Edit, Trash2, Briefcase, FileText, User, Clock, Calendar, MessageSquare } from "lucide-react";
+import { Activity, Loader2, Edit, Trash2, Briefcase, FileText, User, Clock, Calendar, MessageSquare, PauseCircle, Timer as TimerIcon } from "lucide-react";
 import { useState } from "react";
 import TechnicianActivityButtons from "./TechnicianActivityButtons";
 import Timer from "./Timer";
@@ -23,6 +23,8 @@ export interface TechnicianActivity {
   additionalNotes: string;
   status: string;
   totalTimeInSeconds: number;
+  pauseCount?: number;
+  totalPauseDurationSeconds?: number;
   timeLogs: any[];
   createdAt: string;
   updatedAt: string;
@@ -104,6 +106,12 @@ const getStatusIcon = (status: string) => {
 
 const formatTime = (seconds: number): string => {
   return `${Math.floor(seconds / 60)} minutes`;
+};
+
+const formatPauseDuration = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}m ${remainingSeconds}s`;
 };
 
 const formatDate = (dateString: string): string => {
@@ -271,6 +279,24 @@ const TechnicianActivityGet = ({
                   <p className="text-xs font-semibold text-cyan-600 uppercase tracking-wide">Date</p>
                 </div>
                 <p className="font-bold text-gray-800">{formatDate(activity.createdAt)}</p>
+              </div>
+
+              {/* Pause Count */}
+              <div className="bg-linear-to-br from-rose-50 to-rose-100 rounded-xl p-4 border border-rose-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <PauseCircle size={16} className="text-rose-600" />
+                  <p className="text-xs font-semibold text-rose-600 uppercase tracking-wide">Pause Count</p>
+                </div>
+                <p className="font-bold text-gray-800 text-lg">{activity.pauseCount || 0}</p>
+              </div>
+
+              {/* Total Pause Duration */}
+              <div className="bg-linear-to-br from-amber-50 to-amber-100 rounded-xl p-4 border border-amber-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <TimerIcon size={16} className="text-amber-600" />
+                  <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Pause Duration</p>
+                </div>
+                <p className="font-bold text-gray-800">{formatPauseDuration(activity.totalPauseDurationSeconds || 0)}</p>
               </div>
             </div>
 
