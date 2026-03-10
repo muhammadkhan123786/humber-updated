@@ -1,11 +1,14 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { 
   Layers, Search, Pencil, Trash2, 
   ChevronDown, Hash, Type, 
   CheckSquare, List, Star, Tag
 } from "lucide-react";
 import { IAttribute } from "../../../../../../../common/IProductAttributes.interface";
+import { ICategory } from "../../../../../../../common/ICategory.interface";
+import axios from "axios";
+import { flattenCategories, FlatCategory } from "./flattenCategories"; // Import your existing utility
 
 interface AttributeTableProps {
   data: IAttribute[];
@@ -15,6 +18,39 @@ interface AttributeTableProps {
 
 const AttributeTable = ({ data, onEdit, onDelete }: AttributeTableProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState<ICategory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${BASE_URL}/categories`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCategories(response?.data?.data || response?.data || []);
+      } catch (error) { 
+        console.error("Error fetching categories:", error); 
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Create flat categories list with paths
+  const flatCategories = useMemo(() => flattenCategories(categories), [categories]);
+
+  // Create a map of categoryId -> FlatCategory for quick lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, FlatCategory>();
+    flatCategories.forEach(cat => {
+      map.set(cat.id, cat);
+    });
+    return map;
+  }, [flatCategories]);
 
   // Gradient definitions from your request
   const gradients = [
@@ -22,13 +58,26 @@ const AttributeTable = ({ data, onEdit, onDelete }: AttributeTableProps) => {
     "from-[#2B7FFF] to-[#00B8DB]"  // Blue-Cyan
   ];
 
-  // Group attributes by category
-  const groupedData = data.reduce((acc, curr) => {
-    const groupName = curr.categoryId || "Global Attributes";
-    if (!acc[groupName]) acc[groupName] = [];
-    acc[groupName].push(curr);
-    return acc;
-  }, {} as Record<string, IAttribute[]>);
+  // Group attributes by category - now using category name and path
+  const groupedData = useMemo(() => {
+    return data.reduce((acc, curr) => {
+      // Get category info from map
+      const categoryInfo = curr.categoryId ? categoryMap.get(curr.categoryId) : null;
+      
+      // Use category name if available, otherwise fallback to ID or "Global Attributes"
+      const groupName = categoryInfo?.name || curr.categoryId || "Global Attributes";
+      
+      // Store both the name and the full path for breadcrumb
+      if (!acc[groupName]) {
+        acc[groupName] = {
+          items: [],
+          path: categoryInfo?.path || []
+        };
+      }
+      acc[groupName].items.push(curr);
+      return acc;
+    }, {} as Record<string, { items: IAttribute[], path: string[] }>);
+  }, [data, categoryMap]);
 
   const TypeBadge = ({ type }: { type: string }) => {
     const types: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -48,9 +97,17 @@ const AttributeTable = ({ data, onEdit, onDelete }: AttributeTableProps) => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 max-w-[1400px] mx-auto p-4">
-      {/* Search Header matches Image C75D1F */}
+      {/* Search Header */}
       <div className="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 pl-4 text-gray-500 whitespace-nowrap">
            <Search size={18} />
@@ -67,20 +124,30 @@ const AttributeTable = ({ data, onEdit, onDelete }: AttributeTableProps) => {
         </div>
       </div>
 
-      {Object.entries(groupedData).map(([groupName, items], index) => {
-        const filteredItems = items.filter(i => i.attributeName.toLowerCase().includes(searchTerm.toLowerCase()));
+      {Object.entries(groupedData).map(([groupName, { items, path }], index) => {
+        const filteredItems = items.filter(i => 
+          i.attributeName.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        
         if (filteredItems.length === 0) return null;
+        
+        console.log("group", groupName); // Now shows category name
 
         // Alternate gradients based on index
         const currentGradient = gradients[index % gradients.length];
         const iconBg = index % 2 === 0 ? "bg-[#F6339A]" : "bg-[#2B7FFF]";
+
+        // Create breadcrumb path
+        const breadcrumbPath = path.length > 0 
+          ? path.join(" › ") 
+          : "Global Attributes";
 
         return (
           <div key={groupName} className="relative bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden">
             {/* THE TOP GRADIENT BORDER */}
             <div className={`h-[6px] w-full bg-gradient-to-r ${currentGradient}`} />
 
-            {/* Header matches Image C7C925 */}
+            {/* Header */}
             <div className="p-6 flex items-center justify-between bg-white">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center text-white shadow-lg`}>
@@ -88,7 +155,9 @@ const AttributeTable = ({ data, onEdit, onDelete }: AttributeTableProps) => {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-800 text-xl">{groupName}</h3>
-                  <p className="text-xs text-gray-400 font-medium tracking-wide">Mobility Accessories › {groupName}</p>
+                  <p className="text-xs text-gray-400 font-medium tracking-wide">
+                    {breadcrumbPath}
+                  </p>
                 </div>
               </div>
               <div className="bg-gray-50 border border-gray-100 px-3 py-1 rounded-full text-[10px] font-bold text-gray-400 uppercase">

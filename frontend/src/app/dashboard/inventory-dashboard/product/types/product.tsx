@@ -8,15 +8,23 @@ export interface CategoryInfo {
   name: string;
   level: number;
   parentId: string;
-  lenght?: any;
+  lenght?: any; // typo maybe?
 }
 
+interface Category {
+  id: string;
+  name: string;
+  level: number;
+  parentId: string;
+}
 
 /**
  * Base Product interface (used in listings, cards, tables)
  */
 export interface ProductListItem {
   id: string;
+  productName: string;
+  _id: string;
   name: string;
   sku: string;
   description: string;
@@ -27,8 +35,8 @@ export interface ProductListItem {
   barcode: string;
   
   // Categories - dynamic array for n-th level support
-  categories: CategoryInfo[];
-  categoryPath: CategoryInfo[];
+  categories: any;
+  categoryPath: any;
   primaryCategory: CategoryInfo;
   
   // Pricing
@@ -244,12 +252,7 @@ export interface Product {
   updatedAt: string;
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  level: number;
-  parentId: string;
-}
+
 
 export interface Marketplace {
   id: string;
