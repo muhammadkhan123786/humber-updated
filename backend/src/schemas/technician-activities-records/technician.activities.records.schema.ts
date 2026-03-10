@@ -22,6 +22,10 @@ export type TimeLog = {
   startTime: Date;
   endTime?: Date;
   partsUsed?: PartUsage[],
+  totalWorkDurationSeconds?:number,
+  totalPauseDurationSeconds?:number,
+  pauseCount?:number
+
 };
 
 export const technicianActivitiesSchema = {
@@ -42,6 +46,7 @@ export const technicianActivitiesSchema = {
       {
         startTime: { type: Date, required: true },
         endTime: { type: Date },
+        durationSeconds: { type: Number, default: 0 }, // ✅ Add this
         // Add parts used in this activity session
     partsUsed: [
       {
@@ -53,9 +58,13 @@ export const technicianActivitiesSchema = {
       },
     ],
     default: [],
-  },
-
+  },  
   totalTimeInSeconds: { type: Number, default: 0 },
+   totalWorkDurationSeconds: { type: Number, default: 0 },
+
+   totalPauseDurationSeconds: { type: Number, default: 0 },
+
+   pauseCount: { type: Number, default: 0 },
 
   ...commonSchema,
 };
