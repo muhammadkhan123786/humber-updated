@@ -44,7 +44,9 @@ const ListAllQuotations = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response: any = await getAlls<any>("/technician-ticket-quotation");
+      const response: any = await getAlls<any>(
+        "/technician-ticket-quotation?fillter=all",
+      );
       const quotationsData = Array.isArray(response.tickets)
         ? response.tickets
         : Array.isArray(response.data)
