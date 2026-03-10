@@ -11,8 +11,10 @@ import {
   X,
   ChevronRight,
   CheckCircle2,
+  Search,
+  FolderTree,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface VariantsTabProps {
   formData: any;
@@ -29,47 +31,108 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
 }) => {
   const [editingVariant, setEditingVariant] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
+  const [catSearch, setCatSearch] = useState("");
+  const [showCatPicker, setShowCatPicker] = useState(false);
 
   // ── Resolve category ID → name ──
   const getCategoryName = (catId: any): string => {
     const id = typeof catId === "string" ? catId : catId?.id || catId?._id || "";
     if (!id) return "Unknown";
     const found = categories.find((c) => c._id === id || c.id === id);
-    // Try common name fields
-    return (
-      found?.categoryName ||
-      found?.name ||
-      found?.title ||
-      id  // fallback: show ID only if truly not found
-    );
+    return found?.categoryName || found?.name || found?.title || id;
   };
 
-  // ── Resolve attribute key ID → name ──
-  // Your DB stores attribute keys as IDs like "699fdebd1b6a613904b011cd"
+  // ── Resolve attribute key ID → readable name ──
   const getAttributeName = (keyId: string): string => {
     if (!keyId) return keyId;
-    // If it looks like a MongoDB ObjectId (24 hex chars), try to resolve it
     const isObjectId = /^[a-f\d]{24}$/i.test(keyId);
-    if (!isObjectId) return keyId; // already a readable name
-    const found = attributeOptions.find(
-      (a) => a._id === keyId || a.id === keyId
-    );
+    if (!isObjectId) return keyId; // already readable
+
+    const found = attributeOptions.find((a) => a._id === keyId || a.id === keyId);
+    if (!found) return keyId; // still not found — return ID
+
+    // Try every possible name field your API might use
     return (
-      found?.attributeName ||
-      found?.name ||
-      found?.label ||
+      found.attributeName ||
+      found.name ||
+      found.label ||
+      found.title ||
+      found.attribute_name ||
+      found.attrName ||
+      found.displayName ||
+      found.display_name ||
       keyId
     );
   };
 
-  // ── Build breadcrumb from categoryPath ──
-  const categoryBreadcrumb = (formData.categoryPath || []).map(
-    (catId: any, i: number) => {
-      const id =
-        typeof catId === "string" ? catId : catId?.id || catId?._id || `unknown-${i}`;
-      return { id: id || `cat-${i}`, name: getCategoryName(catId) };
-    }
+  // ── Build breadcrumb from current categoryPath ──
+  const categoryBreadcrumb = useMemo(
+    () =>
+      (formData.categoryPath || []).map((catId: any, i: number) => {
+        const id =
+          typeof catId === "string" ? catId : catId?.id || catId?._id || `unknown-${i}`;
+        return { id: id || `cat-${i}`, name: getCategoryName(id) };
+      }),
+    [formData.categoryPath, categories]
   );
+
+  // ── Build category tree for picker ──
+  // Each category may have parentId or parentCategoryId
+  const buildTree = useMemo(() => {
+    // Get root categories (no parent)
+    const roots = categories.filter(
+      (c) => !c.parentId && !c.parentCategoryId && !c.parent
+    );
+    // Build path string for each category for easy search
+    const withPath = categories.map((c) => {
+      const id = c._id || c.id;
+      const name = c.categoryName || c.name || c.title || id;
+      return { ...c, _resolvedName: name, _id: id };
+    });
+    return withPath;
+  }, [categories]);
+
+  // ── Filtered categories for search ──
+  const filteredCategories = useMemo(() => {
+    if (!catSearch.trim()) return buildTree.slice(0, 50); // show first 50 by default
+    const q = catSearch.toLowerCase();
+    return buildTree.filter((c) =>
+      (c._resolvedName || "").toLowerCase().includes(q)
+    ).slice(0, 50);
+  }, [buildTree, catSearch]);
+
+  // ── When user selects a category from picker ──
+  const handleSelectCategory = (cat: any) => {
+    const id = cat._id || cat.id;
+    const name = cat._resolvedName || cat.categoryName || cat.name || "";
+
+    // Build the full path up to this category
+    const buildPath = (targetId: string): string[] => {
+      const target = categories.find((c) => (c._id || c.id) === targetId);
+      if (!target) return [targetId];
+      const parentId = target.parentId || target.parentCategoryId || target.parent;
+      if (!parentId) return [targetId];
+      return [...buildPath(parentId), targetId];
+    };
+
+    const path = buildPath(id);
+
+    updateField("categoryId", id);
+    updateField("categoryPath", path);
+    setCatSearch("");
+    setShowCatPicker(false);
+  };
+
+  // ── Get parent path display for a category ──
+  const getCategoryPath = (cat: any): string => {
+    const parentId = cat.parentId || cat.parentCategoryId || cat.parent;
+    if (!parentId) return "";
+    const parent = categories.find((c) => (c._id || c.id) === parentId);
+    if (!parent) return "";
+    const grandParentPath = getCategoryPath(parent);
+    const parentName = parent.categoryName || parent.name || "";
+    return grandParentPath ? `${grandParentPath} › ${parentName}` : parentName;
+  };
 
   const handleEditVariant = (index: number) => {
     setEditingVariant(index);
@@ -97,26 +160,32 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
   return (
     <div className="space-y-5">
 
-      {/* ── Category Section — like Image 1 ── */}
+      {/* ── Category Section ── */}
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        {/* Purple header bar */}
-        <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-500">
-          <Tag className="h-4 w-4 text-white" />
-          <span className="text-sm font-semibold text-white">Category</span>
-          <span className="text-purple-100 text-sm font-normal ml-1">
-            Select Category
-          </span>
+
+        {/* Purple header */}
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-500">
+          <div className="flex items-center gap-2">
+            <Tag className="h-4 w-4 text-white" />
+            <span className="text-sm font-semibold text-white">Category</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCatPicker(!showCatPicker)}
+            className="text-white hover:bg-white/20 h-7 px-3 text-xs"
+          >
+            {showCatPicker ? "Close" : "Change Category"}
+          </Button>
         </div>
 
-        {/* Breadcrumb text row (like the input row in Image 1) */}
+        {/* Current breadcrumb */}
         <div className="px-4 py-3 bg-white border-b border-gray-100">
           {categoryBreadcrumb.length > 0 ? (
             <div className="flex items-center gap-1 text-sm text-gray-700 flex-wrap">
               {categoryBreadcrumb.map((cat: any, i: number) => (
                 <span key={`${cat.id}-${i}`} className="flex items-center gap-1">
-                  {i > 0 && (
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  )}
+                  {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />}
                   <span className="text-gray-800">{cat.name}</span>
                 </span>
               ))}
@@ -126,9 +195,9 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
           )}
         </div>
 
-        {/* Green selected path section — like Image 1 */}
-        {categoryBreadcrumb.length > 0 && (
-          <div className="px-4 py-3 bg-green-50 border-t border-green-100">
+        {/* Green selected path badges */}
+        {categoryBreadcrumb.length > 0 && !showCatPicker && (
+          <div className="px-4 py-3 bg-green-50">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
               <span className="text-xs font-semibold text-green-700">
@@ -138,9 +207,7 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
             <div className="flex items-center gap-1.5 flex-wrap">
               {categoryBreadcrumb.map((cat: any, i: number) => (
                 <span key={`badge-${cat.id}-${i}`} className="flex items-center gap-1.5">
-                  {i > 0 && (
-                    <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
-                  )}
+                  {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />}
                   <Badge
                     className={`px-3 py-1 text-xs font-medium rounded-full border ${
                       i === 0
@@ -157,15 +224,78 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
             </div>
           </div>
         )}
+
+        {/* ── Category Picker ── */}
+        {showCatPicker && (
+          <div className="border-t border-gray-100">
+            {/* Search input */}
+            <div className="px-4 pt-3 pb-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search categories..."
+                  value={catSearch}
+                  onChange={(e) => setCatSearch(e.target.value)}
+                  className="pl-9 h-9 text-sm"
+                  autoFocus
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1.5">
+                {categories.length} categories loaded — type to search
+              </p>
+            </div>
+
+            {/* Category list */}
+            <div className="max-h-52 overflow-y-auto px-4 pb-3 space-y-1">
+              {filteredCategories.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  {catSearch ? "No categories found" : "Loading categories..."}
+                </p>
+              ) : (
+                filteredCategories.map((cat) => {
+                  const id = cat._id || cat.id;
+                  const name = cat._resolvedName || "";
+                  const parentPath = getCategoryPath(cat);
+                  const isSelected =
+                    formData.categoryId === id ||
+                    (formData.categoryPath || []).includes(id);
+
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => handleSelectCategory(cat)}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all flex items-start gap-2 ${
+                        isSelected
+                          ? "bg-purple-50 border border-purple-200 text-purple-700"
+                          : "hover:bg-gray-50 border border-transparent text-gray-700"
+                      }`}
+                    >
+                      <FolderTree className="h-4 w-4 mt-0.5 flex-shrink-0 text-gray-400" />
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{name}</p>
+                        {parentPath && (
+                          <p className="text-xs text-gray-400 truncate mt-0.5">
+                            {parentPath}
+                          </p>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-4 w-4 text-purple-600 ml-auto flex-shrink-0 mt-0.5" />
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Product Variants ── */}
       <div className="rounded-xl border border-indigo-100 bg-white shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
           <Layers className="h-4 w-4 text-indigo-600" />
-          <span className="font-semibold text-indigo-900 text-sm">
-            Product Variants
-          </span>
+          <span className="font-semibold text-indigo-900 text-sm">Product Variants</span>
           <Badge className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full ml-1">
             {formData.attributes?.length || 0}
           </Badge>
@@ -184,13 +314,10 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
               <Card
                 key={variant._id || index}
                 className={`border transition-all ${
-                  isEditing
-                    ? "border-indigo-300 shadow-md"
-                    : "border-gray-100 hover:border-indigo-200"
+                  isEditing ? "border-indigo-300 shadow-md" : "border-gray-100 hover:border-indigo-200"
                 }`}
               >
                 <CardContent className="p-4">
-                  {/* Variant header */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
@@ -246,7 +373,6 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
                     )}
                   </div>
 
-                  {/* Edit mode */}
                   {isEditing && editForm ? (
                     <div className="space-y-3 pt-3 border-t border-gray-100">
                       <div>
@@ -263,7 +389,8 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
                           <div className="grid grid-cols-2 gap-2">
                             {attrEntries.map(([key]) => (
                               <div key={key}>
-                                <Label className="text-xs text-gray-500 mb-1 capitalize">
+                                <Label className="text-xs text-gray-500 mb-1">
+                                  {/* ✅ Show resolved name */}
                                   {getAttributeName(key)}
                                 </Label>
                                 <Input
@@ -283,7 +410,6 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
                       )}
                     </div>
                   ) : (
-                    /* View mode */
                     attrEntries.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-50">
                         {attrEntries.map(([key, value]) => (
@@ -291,10 +417,8 @@ export const VariantsTab: React.FC<VariantsTabProps> = ({
                             key={key}
                             className="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full"
                           >
-                            {/* ✅ Show resolved name, not raw ID */}
-                            <span className="text-gray-500 mr-1">
-                              {getAttributeName(key)}:
-                            </span>
+                            {/* ✅ Resolved name shown, not raw ID */}
+                            <span className="text-gray-500 mr-1">{getAttributeName(key)}:</span>
                             {String(value)}
                           </Badge>
                         ))}

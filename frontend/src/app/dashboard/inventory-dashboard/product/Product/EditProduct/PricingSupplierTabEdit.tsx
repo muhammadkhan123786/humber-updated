@@ -78,7 +78,7 @@ export const PricingSupplierTab: React.FC<PricingSupplierTabProps> = ({
     <div className="space-y-5">
 
       {/* ── Marketplace ── */}
-      <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+      {/* <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
         <h4 className="font-semibold text-violet-800 mb-4 flex items-center gap-2">
           <Globe className="h-4 w-4" /> Marketplace
         </h4>
@@ -111,7 +111,7 @@ export const PricingSupplierTab: React.FC<PricingSupplierTabProps> = ({
             />
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* ── Pricing ── */}
       <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
