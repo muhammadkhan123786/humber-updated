@@ -37,7 +37,7 @@ export const useProductFilters = ({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // ✅ Debounce search — only updates `debouncedSearch` after user stops typing
-  const debounceTimer = useRef<NodeJS.Timeout>();
+  const debounceTimer = useRef<NodeJS.Timeout | any>( null );
   useEffect(() => {
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
