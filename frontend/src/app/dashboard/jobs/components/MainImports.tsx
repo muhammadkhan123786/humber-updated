@@ -2,7 +2,6 @@
 import TechnicianHeader from './Header'
 import { useEffect, useState, useMemo, useCallback } from "react";
 import StatsDashboard from './StatsCard';
-import CountCard from './CountCard';
 import FilterSection from './SearchBar';
 import JobCardsSection from './CardSection';
 
@@ -112,7 +111,6 @@ const MainImports = () => {
           <StatsDashboard refreshTrigger={refreshTrigger} />
         </div>
         <div className="w-full sm:w-auto">
-          <CountCard refreshTrigger={refreshTrigger} />
         </div>
       </div>
 

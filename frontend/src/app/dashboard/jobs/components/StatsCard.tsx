@@ -3,12 +3,9 @@ import React, { useEffect, useState } from "react";
 import {
   Briefcase,
   Clock,
-  User,
-  PlayCircle,
+  CheckCircle,
+  Loader,
   PauseCircle,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
 } from "lucide-react";
 import { getAlls } from "@/helper/apiHelper";
 interface StatItem {
@@ -22,64 +19,65 @@ interface StatItem {
 interface StatsDashboardProps {
   refreshTrigger?: number;
 }
-const statusConfig: Record<string, { icon: any; bg: string }> = {
-  Pending: {
+const statusConfig: Record<string, { icon: any; bg: string; label: string }> = {
+  pending: {
     icon: Clock,
-    bg: "bg-gradient-to-br from-gray-500 to-gray-600",
+    bg: "bg-gradient-to-br from-yellow-500 to-orange-500",
+    label: "Pending",
   },
-  Assigned: {
-    icon: User,
-    bg: "bg-gradient-to-br from-blue-500 to-cyan-500",
+  started: {
+    icon: Loader,
+    bg: "bg-gradient-to-br from-green-500 to-teal-500",
+    label: "Started",
   },
-  "In Progress": {
-    icon: PlayCircle,
-    bg: "bg-gradient-to-br from-amber-500 to-orange-500",
-  },
-  "On Hold": {
+  onHold: {
     icon: PauseCircle,
-    bg: "bg-gradient-to-br from-purple-500 to-pink-500",
+    bg: "bg-gradient-to-br from-red-500 to-pink-500",
+    label: "On Hold",
   },
-  Cancelled: {
-    icon: XCircle,
-    bg: "bg-gradient-to-br from-rose-500 to-red-600",
-  },
-  open: {
-    icon: Briefcase,
+  ended: {
+    icon: CheckCircle,
     bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
+    label: "Ended",
   },
-};
-const defaultStyle = {
-  icon: HelpCircle,
-  bg: "bg-gradient-to-br from-slate-500 to-slate-700",
 };
 const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
   const [stats, setStats] = useState<StatItem[]>([]);
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await getAlls<any>("/technician-dashboard-jobs-statistics");
+        const res = await getAlls<any>("/technician-dashboard-jobs");
         const apiData = res?.data as any;
+
+        console.log("StatsCard API Response:", apiData); // Debug log
+        console.log("StatusSummary:", apiData?.statusSummary); // Debug log
 
         if (!apiData) return;
         
         const dynamicStats: StatItem[] = [];
+        const statusSummary = apiData.statusSummary || {};
+
+        // Calculate total jobs from statusSummary
+        const totalJobs = 
+          (statusSummary.pending || 0) + 
+          (statusSummary.started || 0) + 
+          (statusSummary.onHold || 0) + 
+          (statusSummary.ended || 0);
 
         // 1. Adding Total Jobs Card
         dynamicStats.push({
           label: "Total Jobs",
-          value: apiData.overallTotalJobs || 0,
+          value: totalJobs,
           icon: Briefcase,
           bg: "bg-gradient-to-br from-indigo-500 to-purple-500",
         });
 
-        // 2. Mapping Dynamic Statuses from DB
-        apiData.statusCounts?.forEach((status: any) => {
-          const config =
-            statusConfig[status.technicianJobStatus] || defaultStyle;
-
+        // 2. Mapping statuses from statusSummary
+        Object.keys(statusConfig).forEach((statusKey) => {
+          const config = statusConfig[statusKey];
           dynamicStats.push({
-            label: status.technicianJobStatus,
-            value: status.totalJobs,
+            label: config.label,
+            value: statusSummary[statusKey] || 0,
             icon: config.icon,
             bg: config.bg,
           });
@@ -92,10 +90,10 @@ const StatsDashboard = ({ refreshTrigger = 0 }: StatsDashboardProps) => {
     };
 
     fetchStats();
-  }, [refreshTrigger]); // Jab bhi refreshTrigger change hoga (delete ke baad), ye foran fetch karega.
+  }, [refreshTrigger]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 bg-gray-50 rounded-xl">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 bg-gray-50 rounded-xl">
       {stats.map((item, index) => (
         <div
           key={index}
