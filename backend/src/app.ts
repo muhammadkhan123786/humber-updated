@@ -122,6 +122,7 @@ import technicianActionsrouter from "./routes/technician-activities-operations-r
 import mobilecustomerSourceRouter from "./routes/mobile-development/customer-source-routes/customer.source.routes";
 import MobileCustomerBaseRouter from "./routes/mobile-development/customer-routes/customre.register.mobile.routes";
 import labourRateRouter from "./routes/master-data-routes/labour.routes";
+import channelRouter from "./routes/communication-channels-integration-routes/channels.routes";
 
 // Create express app
 const app: Application = express();
@@ -622,6 +623,12 @@ app.use(
   labourRateRouter,
 );
 
+//11-03-2026
+app.use(
+  `${process.env.API_PREFIX}/channels`,
+  adminProtecter,
+  channelRouter,
+);
 
 
 //Muhammad Imran code ended here.
