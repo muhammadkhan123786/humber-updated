@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
-import { channelDoc, Channels } from "../../models/communication-channel-models/communication.channel.models";
+import { channelDoc, communicationChannels } from "../../models/communication-channel-models/communication.channel.models";
 import { channelValidation } from "../../schemas/communication-channels-integration-schema/channel.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 
 const channelRouter = Router();
 
-const channelServices = new GenericService<channelDoc>(Channels);
+const channelServices = new GenericService<channelDoc>(communicationChannels);
 
 const channelController = new AdvancedGenericController({
     service: channelServices,
