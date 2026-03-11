@@ -107,16 +107,17 @@ export default function ProductListingPage() {
     featuredCount:   statistics?.featuredCount   ?? 0,
   }), [statistics]);
 
-  console.log("stats", stats)
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleViewProduct = async (product: Product) => {
     const result = await getProductById(product.id);
     if (result.success && result.data) {
       const raw = (result.data as any).data || result.data;
+     
       const transformed = transformProduct(raw);
+     
       if (transformed?.categories) {
-        setSelectedProduct(enrichProductCategories(transformed, categoryMap) as any);
+        setSelectedProduct(raw);
         setIsViewDialogOpen(true);
       }
     } else {
@@ -141,6 +142,7 @@ export default function ProductListingPage() {
   };
 
   const handleConfirmDelete = async (productId: string, productName: string) => {
+    console.log("productID", productId)
     const result = await deleteProduct(productId);
     if (result.success) {
       toast.success(`${productName} deleted successfully!`);
@@ -263,7 +265,7 @@ export default function ProductListingPage() {
             onOpenChange={setIsViewDialogOpen}
             product={selectedProduct}
             getStockBadge={getStockBadge}
-            handleConfirmDelete={handleConfirmDelete}
+            onDelete={() => handleConfirmDelete(selectedProduct.id, selectedProduct.name)}
           />
           <ProductQuickEditDialog
             open={isEditDialogOpen}

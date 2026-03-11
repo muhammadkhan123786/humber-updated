@@ -31,7 +31,7 @@ interface ProductDetailsModalProps {
   onOpenChange: (open: boolean) => void;
   product: ProductListItem | null;
   getStockBadge: (status: string) => { class: string; icon: any };
-  handleConfirmDelete: any;
+  onDelete: any;
 }
 
 export default function ProductDetailsModal({
@@ -39,7 +39,7 @@ export default function ProductDetailsModal({
   onOpenChange,
   product,
   getStockBadge,
-  handleConfirmDelete,
+  onDelete,
 }: ProductDetailsModalProps) {
   if (!product) return null;
   console.log("pro", product);
@@ -382,10 +382,8 @@ console.log("product.categories", product.categories)
             <Button
   variant="outline"
   className="text-red-600 hover:bg-red-50 hover:text-red-700"
-  onClick={() =>
-    handleConfirmDelete(product.id, product.name)
-  }
->
+   onClick={() => onDelete(product)}
+  >
   <Trash2 className="h-4 w-4 mr-2" />
   Delete
 </Button>
