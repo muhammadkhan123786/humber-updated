@@ -41,6 +41,7 @@ const statItems = [
 ];
 
 export const ProductStat: React.FC<ProductStatsProps> = ({ stats }) => {
+ console.log("stats", stats)
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
       {statItems.map((item, index) => {

@@ -95,9 +95,10 @@ export interface Product {
 
 export interface ProductStats {
   total: number;
-  active: number;
-  inStock: number;
-  lowStock: number;
-  outOfStock: number;
-  featured: number;
+  activeCount: number;
+  inactiveCount: number;
+  inStockCount: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  featuredCount: number;
 }

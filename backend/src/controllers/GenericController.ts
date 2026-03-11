@@ -46,16 +46,7 @@ export class AdvancedGenericController<T extends Document> {
         order = "desc",
         search,
         filter,
-        includeStats = "false",
-        // Category filters
-        categoryId,
-        level1CategoryId,
-        level2CategoryId,
-        level3CategoryId,
-        // Other filters
-
-        stockStatus,
-        featured,
+        includeStats = "false", 
         ...rawFilters
       } = req.query;
 
@@ -80,53 +71,7 @@ export class AdvancedGenericController<T extends Document> {
           [field]: { $regex: search, $options: "i" },
         }));
       }
-      // ✅ CATEGORY FILTERS
-      // Direct category filter
-      if (categoryId && Types.ObjectId.isValid(categoryId as string)) {
-        queryFilters.categoryId = new Types.ObjectId(categoryId as string);
-      }
-
-      // Level 1 category filter
-      if (
-        level1CategoryId &&
-        Types.ObjectId.isValid(level1CategoryId as string)
-      ) {
-        queryFilters.categoryId = new Types.ObjectId(
-          level1CategoryId as string,
-        );
-      }
-
-      // Level 2 category filter (check categoryPath array)
-      if (
-        level2CategoryId &&
-        Types.ObjectId.isValid(level2CategoryId as string)
-      ) {
-        queryFilters.categoryPath = new Types.ObjectId(
-          level2CategoryId as string,
-        );
-      }
-
-      // Level 3 category filter (check categoryPath array)
-      if (
-        level3CategoryId &&
-        Types.ObjectId.isValid(level3CategoryId as string)
-      ) {
-        queryFilters.categoryPath = new Types.ObjectId(
-          level3CategoryId as string,
-        );
-      }
-
-      // ✅ STOCK STATUS FILTER
-      if (stockStatus) {
-        // This assumes you have stock status in the main product document
-        // If it's in attributes, you'll need to adjust this
-        queryFilters["attributes.stock.stockStatus"] = stockStatus;
-      }
-
-      // ✅ FEATURED FILTER
-      if (featured === "true") {
-        queryFilters["attributes.stock.featured"] = true;
-      }
+   
 
       // ✅ Dynamic filters from rawFilters
       Object.keys(rawFilters).forEach((key) => {

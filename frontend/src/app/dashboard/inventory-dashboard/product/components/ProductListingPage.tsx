@@ -1,12 +1,10 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { ProductListing } from "../Product/ProductListing";
 import { ProductTableView } from "../Product/ProductTableView";
 import ProductDetailsModal from "../Product/ProductDetailsModal";
-// import EditProductDialog from "../Product/EditProductDialog";
 import MarketplaceDistributionTab from "./MarketplaceDistributionTab";
-import { useProductFilters } from "../../../../../hooks/useProductFilters";
 import { useProducts } from "../../../../../hooks/useProduct";
 import { useCategories } from "../../../../../hooks/useCategory";
 import { Product, ProductListItem } from "../types/product";
@@ -18,166 +16,113 @@ import { NoProductsMessage } from "./NoProductsMessage";
 import { AnimatedBackground } from "./AnimatedBackground";
 import { CategoryFilters } from "../Product/CategoryFilters";
 import { ProductStatistics } from "../Product/ProductStats";
-import { transformProductsResponse, enrichProductCategories, transformProduct } from "@/lib/productTransformer";
-import  {ProductQuickEditDialog} from "../Product/EditProductDialog"
-const LoadingState = () => (
-  <div className="flex items-center justify-center py-12">
-    <div className="text-center">
-      <RefreshCw className="h-12 w-12 text-blue-600 mx-auto mb-4 animate-spin" />
-      <p className="text-gray-600">Loading products...</p>
+import { enrichProductCategories, transformProduct } from "@/lib/productTransformer";
+import { ProductQuickEditDialog } from "../Product/EditProductDialog";
+
+// ── Skeleton card ─────────────────────────────────────────────────────────────
+const SkeletonCard = () => (
+  <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3 animate-pulse">
+    <div className="h-40 bg-gray-100 rounded-lg" />
+    <div className="h-4 bg-gray-100 rounded w-3/4" />
+    <div className="h-3 bg-gray-100 rounded w-1/2" />
+    <div className="flex gap-2 pt-1">
+      <div className="h-6 bg-gray-100 rounded-full w-16" />
+      <div className="h-6 bg-gray-100 rounded-full w-16" />
     </div>
   </div>
 );
 
+const SkeletonStats = () => (
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <div key={i} className="rounded-xl h-20 bg-gray-100 animate-pulse" />
+    ))}
+  </div>
+);
 
-// =============== Main Component ===============
+const SkeletonGrid = () => (
+  <>
+    <SkeletonStats />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-4">
+      {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+    </div>
+  </>
+);
 
+// ── Main component ────────────────────────────────────────────────────────────
 export default function ProductListingPage() {
-  
-  // State
-  const [activeTab, setActiveTab] = useState<"products" | "distribution">(
-    "products",
-  );
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [selectedProduct, setSelectedProduct] = useState<ProductListItem | null>(null);
+
+  const [activeTab, setActiveTab]               = useState<"products" | "distribution">("products");
+  const [viewMode, setViewMode]                 = useState<"grid" | "table">("grid");
+  const [selectedProduct, setSelectedProduct]   = useState<ProductListItem | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<ProductListItem | null>(null);
-  const [editingProduct, setEditingProduct] = useState<ProductListItem | null>(null);
-  const [quickEditOpen, setQuickEditOpen] = useState(false);
 
-  const handleQuickEdit = (product: ProductListItem) => {
-    setEditingProduct(product);
-    setQuickEditOpen(true);
-  };
+  // ── Categories ──────────────────────────────────────────────────────────────
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } =
+    useCategories({ autoFetch: true });
 
-  const handleSaveQuickEdit = async (updatedProduct: Partial<ProductListItem>) => {
-    if (!editingProduct) return;
-
-    const result = await updateProduct(editingProduct.id, updatedProduct);
-    
-    if (result.success) {
-      setQuickEditOpen(false);
-      setEditingProduct(null);
-      // Optionally show success toast
-    }
-  };
-  //  const handleFullEdit = () => {
-  //   if (editingProduct) {
-  //     router.push(`/dashboard/inventory-dashboard/product/edit/${editingProduct.id}`);
-  //   }
-  // };
-  
-
-  // Hooks
-  const {
-    categories,
-    loading: categoriesLoading,
-    error: categoriesError,
-    refetch: refetchCategories,
-  } = useCategories({
-    autoFetch: true,
-  });
-
-
+  // ── Products + filters + statistics ────────────────────────────────────────
   const {
     products,
-    loading: productsLoading,
+    initialLoading,
+    filtering,
     error: productsError,
-     pagination,
-    createProduct,
+    statistics,          // ← comes from backend aggregation now
+    pagination,
     updateProduct,
     deleteProduct,
     getProductById,
-    goToPage,
-    changePageSize,
     refetch: refetchProducts,
-  } = useProducts({
-    autoFetch: true,
-    initialLimit: 12,
-  });
-
-  const {
-    filteredProducts,
-    searchTerm,
-    selectedCategory,
-    selectedStatus,
-    selectedStockStatus,
-    showFeaturedOnly,
-    hasActiveFilters,
-    handleSearchChange,
-    handleCategoryChange,
-    handleStatusChange,
-    handleStockStatusChange,
-    handleFeaturedToggle,
-    resetFilters,
-  } = useProductFilters({
-    products,
-    categories,
-  });
-
-   const stats = useMemo(() => ({
-        total: products.length,
-        active: products.filter(p => p.status === 'active').length,
-        inStock: products.filter(p => p.stockStatus === 'in-stock').length,
-        lowStock: products.filter(p => p.stockStatus === 'low-stock').length,
-        outOfStock: products.filter(p => p.stockStatus === 'out-of-stock').length,
-        featured: products.filter(p => p.featured).length
-      }), [products]);
-  // Helper Functions
-  const getStockBadge = (status: string) => {
-    const variants: Record<string, { class: string; icon: any }> = {
-      "in-stock": {
-        class: "bg-gradient-to-r from-emerald-500 to-green-500 text-white",
-        icon: CheckCircle,
-      },
-      "low-stock": {
-        class: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",
-        icon: AlertCircle,
-      },
-      "out-of-stock": {
-        class: "bg-gradient-to-r from-rose-500 to-red-600 text-white",
-        icon: AlertCircle,
-      },
-    };
-    return variants[status] || variants["in-stock"];
-  };
+    searchTerm, selectedCategory, selectedStatus, selectedStockStatus,
+    showFeaturedOnly, hasActiveFilters, categoryOptions,
+    handleSearchChange, handleCategoryChange, handleStatusChange,
+    handleStockStatusChange, handleFeaturedToggle, handlePageChange, resetFilters,
+  } = useProducts({ autoFetch: true, initialLimit: 12, categories });
 
   const categoryMap = useMemo(() => {
-  const map: Record<string, any> = {};
-  categories.forEach((cat: any) => {
-    map[cat.id || cat._id] = cat;
-  });
-  return map;
-}, [categories]);
+    const map: Record<string, any> = {};
+    categories.forEach((c: any) => { map[c.id || c._id] = c; });
+    return map;
+  }, [categories]);
 
-  // Event Handlers
- // inside ProductListingPage component
-console.log("Product inside of the Lisiting", products)
-const handleViewProduct = async (product: Product) => {
-  const result = await getProductById(product.id);
-  
-  if (result.success && result.data) {
-    // 1. Use the SINGULAR transform function for a single product result
-    // Note: If result.data is { data: productObj }, use result.data.data
-    const rawData = (result.data as any).data || result.data;
-    const transformed = transformProduct(rawData);
+  const getStockBadge = (status: string) => {
+    const v: Record<string, { class: string; icon: any }> = {
+      "in-stock":     { class: "bg-gradient-to-r from-emerald-500 to-green-500 text-white", icon: CheckCircle },
+      "low-stock":    { class: "bg-gradient-to-r from-amber-500 to-orange-500 text-white",  icon: AlertCircle },
+      "out-of-stock": { class: "bg-gradient-to-r from-rose-500 to-red-600 text-white",      icon: AlertCircle },
+    };
+    return v[status] || v["in-stock"];
+  };
 
-    // 2. Now enrich that single transformed object
-    if (transformed && transformed.categories) {
-      const fullyPopulatedProduct = enrichProductCategories(transformed, categoryMap);
-      
-      console.log("Success! Fully Populated:", fullyPopulatedProduct);
-      
-      // 3. IMPORTANT: Update the state with the enriched product
-      setSelectedProduct(fullyPopulatedProduct as any);
-      setIsViewDialogOpen(true);
+  // ✅ stats come entirely from backend — no frontend counting
+  //    statistics updates automatically when filters change
+  const stats = useMemo(() => ({
+    total:           statistics?.total           ?? 0,
+    activeCount:     statistics?.activeCount     ?? 0,
+    inactiveCount:   statistics?.inactiveCount   ?? 0,
+    inStockCount:    statistics?.inStockCount    ?? 0,
+    lowStockCount:   statistics?.lowStockCount   ?? 0,
+    outOfStockCount: statistics?.outOfStockCount ?? 0,
+    featuredCount:   statistics?.featuredCount   ?? 0,
+  }), [statistics]);
+
+  console.log("stats", stats)
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+  const handleViewProduct = async (product: Product) => {
+    const result = await getProductById(product.id);
+    if (result.success && result.data) {
+      const raw = (result.data as any).data || result.data;
+      const transformed = transformProduct(raw);
+      if (transformed?.categories) {
+        setSelectedProduct(enrichProductCategories(transformed, categoryMap) as any);
+        setIsViewDialogOpen(true);
+      }
+    } else {
+      toast.error("Failed to load product details");
     }
-  } else {
-    toast.error("Failed to load product details");
-  }
-};
+  };
 
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
@@ -186,7 +131,6 @@ const handleViewProduct = async (product: Product) => {
 
   const handleSaveEdit = async (updatedProduct: ProductListItem) => {
     const result = await updateProduct(updatedProduct.id, updatedProduct);
-
     if (result.success) {
       toast.success("Product updated successfully!");
       setIsEditDialogOpen(false);
@@ -196,22 +140,15 @@ const handleViewProduct = async (product: Product) => {
     }
   };
 
-  const handleDeleteClick = (product: ProductListItem) => {
-    setProductToDelete(product);
-    setIsDeleteDialogOpen(true);
-  };
-
   const handleConfirmDelete = async (productId: string, productName: string) => {
-  const result = await deleteProduct(productId);
-
-  if (result.success) {
-    toast.success(`${productName} deleted successfully!`);
-    setIsViewDialogOpen(false);
-  } else {
-    toast.error(result.error || "Failed to delete product");
-  }
-};
-
+    const result = await deleteProduct(productId);
+    if (result.success) {
+      toast.success(`${productName} deleted successfully!`);
+      setIsViewDialogOpen(false);
+    } else {
+      toast.error(result.error || "Failed to delete product");
+    }
+  };
 
   const handleRefresh = () => {
     refetchProducts();
@@ -219,77 +156,80 @@ const handleViewProduct = async (product: Product) => {
     toast.success("Refreshed!");
   };
 
-  // Effects
   useEffect(() => {
-    if (productsError) toast.error(productsError);
+    if (productsError)   toast.error(productsError);
     if (categoriesError) toast.error(categoriesError);
   }, [productsError, categoriesError]);
 
-  // Derived State
-  const isLoading = productsLoading || categoriesLoading;
-  const hasProducts = filteredProducts?.length > 0;
-
-  // Render Logic
+  // ── Render ──────────────────────────────────────────────────────────────
   const renderProductsContent = () => {
-    if (isLoading) return <LoadingState />;
 
-    if (!hasProducts) {
-      return (
-        <NoProductsMessage
-          hasActiveFilters={hasActiveFilters}
-          onResetFilters={resetFilters}
-        />
-      );
-    }
-    
+    // First-ever load → show skeletons
+    if (initialLoading || categoriesLoading) return <SkeletonGrid />;
+
     return (
       <>
-      <ProductStatistics stats={stats} />
-      
-            {/* Filters */}
-            <CategoryFilters
-              searchTerm={searchTerm}
-              selectedCategory={selectedCategory}
-              selectedStatus={selectedStatus}
-              selectedStockStatus={selectedStockStatus}
-              showFeaturedOnly={showFeaturedOnly}
-              categories={categories}
-              onSearchChange={handleSearchChange}
-              onCategoryChange={handleCategoryChange}
-              onStatusChange={handleStatusChange}
-              onStockStatusChange={handleStockStatusChange}
-              onFeaturedToggle={handleFeaturedToggle}
-              onResetFilters={resetFilters}
+        {/* ✅ Stats always visible — backend keeps them accurate across all pages */}
+        <ProductStatistics stats={stats} />
+
+        <CategoryFilters
+          searchTerm={searchTerm}
+          selectedCategory={selectedCategory}
+          selectedStatus={selectedStatus}
+          selectedStockStatus={selectedStockStatus}
+          showFeaturedOnly={showFeaturedOnly}
+          categories={categories}
+          onSearchChange={handleSearchChange}
+          onCategoryChange={handleCategoryChange}
+          onStatusChange={handleStatusChange}
+          onStockStatusChange={handleStockStatusChange}
+          onFeaturedToggle={handleFeaturedToggle}
+          onResetFilters={resetFilters}
+          hasActiveFilters={hasActiveFilters}
+          filterStats={{ total: pagination.total, filtered: products.length }}
+        />
+
+        {/* Product grid with overlay while filtering */}
+        <div className="relative">
+          {filtering && (
+            <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] rounded-xl
+                            flex items-center justify-center">
+              <div className="flex items-center gap-2 bg-white shadow-md rounded-full px-4 py-2 text-sm text-gray-500">
+                <svg className="animate-spin h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Updating results…
+              </div>
+            </div>
+          )}
+
+          {products.length === 0 && !filtering ? (
+            <NoProductsMessage hasActiveFilters={hasActiveFilters} onResetFilters={resetFilters} />
+          ) : viewMode === "grid" ? (
+            <ProductListing
+              products={products}
               hasActiveFilters={hasActiveFilters}
-              filterStats={{
-                total: 0, 
-                filtered: products.length
-              }}
+              onViewProduct={handleViewProduct}
+              onEditProduct={handleEditProduct}
+              onResetFilters={resetFilters}
             />
-        {viewMode === "grid" ? (
-          <ProductListing
-            products={filteredProducts}          
-            hasActiveFilters={hasActiveFilters}
-            onViewProduct={handleViewProduct}
-            onEditProduct={handleEditProduct} 
-            onResetFilters = {resetFilters }        
-            
-          />
-        ) : (
-          <ProductTableView
-            products={filteredProducts}
-            onView={handleViewProduct}
-            onEdit={handleEditProduct}
-            onDelete={handleDeleteClick}
-            getStockBadge={getStockBadge}
-          />
-        )}
+          ) : (
+            <ProductTableView
+              products={products}
+              onView={handleViewProduct}
+              onEdit={handleEditProduct}
+              onDelete={(p) => handleConfirmDelete(p.id, p.name)}
+              getStockBadge={getStockBadge}
+            />
+          )}
+        </div>
 
         {pagination.total > pagination.limit && (
           <Pagination
             pagination={pagination}
-            onPageChange={goToPage}
-            onPageSizeChange={changePageSize}
+            onPageChange={handlePageChange}
+            onPageSizeChange={() => {}}
           />
         )}
       </>
@@ -298,97 +238,41 @@ const handleViewProduct = async (product: Product) => {
 
   return (
     <div className="space-y-6 relative">
-      {/* Animated Background */}
       <AnimatedBackground />
-
-      {/* Header */}
       <PageHeader
         activeTab={activeTab}
         viewMode={viewMode}
-        isLoading={isLoading}
+        isLoading={initialLoading}
         onRefresh={handleRefresh}
         onViewModeChange={setViewMode}
       />
-
-      {/* Tab Navigation */}
       <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Main Content */}
       {activeTab === "products" ? (
         <div className="space-y-6">{renderProductsContent()}</div>
       ) : (
-        <MarketplaceDistributionTab 
-          products={products.map(p => ({
-            ...p,
-            attributes: p.attributes || []
-          }))} 
+        <MarketplaceDistributionTab
+          products={products.map(p => ({ ...p, attributes: p.attributes || [] }))}
         />
       )}
 
-      {/* Modals */}
-      <ProductModals
-        selectedProduct={selectedProduct}
-        isViewDialogOpen={isViewDialogOpen}
-        isEditDialogOpen={isEditDialogOpen}
-        onViewDialogChange={setIsViewDialogOpen}
-        onEditDialogChange={setIsEditDialogOpen}
-        onSaveEdit={handleSaveEdit}
-        getStockBadge={getStockBadge}
-        handleConfirmDelete = { handleConfirmDelete }
-      />
+      {selectedProduct && (
+        <>
+          <ProductDetailsModal
+            open={isViewDialogOpen}
+            onOpenChange={setIsViewDialogOpen}
+            product={selectedProduct}
+            getStockBadge={getStockBadge}
+            handleConfirmDelete={handleConfirmDelete}
+          />
+          <ProductQuickEditDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            product={selectedProduct}
+            onSave={handleSaveEdit}
+          />
+        </>
+      )}
     </div>
   );
 }
-
-// =============== Additional Components ===============
-
-interface ProductModalsProps {
-  selectedProduct: ProductListItem | null;
-  isViewDialogOpen: boolean;
-  isEditDialogOpen: boolean;
-  onViewDialogChange: (open: boolean) => void;
-  onEditDialogChange: (open: boolean) => void;
-  onSaveEdit: ( product: Product) => Promise<void>;
-  getStockBadge: (status: string) => { class: string; icon: any };
-  handleConfirmDelete: any;
-}
-
-const ProductModals: React.FC<ProductModalsProps> = ({
-  selectedProduct,
-  isViewDialogOpen,
-  isEditDialogOpen,
-  onViewDialogChange,
-  onEditDialogChange,
-  onSaveEdit,
-  getStockBadge,
-  handleConfirmDelete,
-}) => {
-  if (!selectedProduct) return null;
-
-  return (
-    <>
-      <ProductDetailsModal
-        open={isViewDialogOpen}
-        onOpenChange={onViewDialogChange}
-        product={selectedProduct}
-        getStockBadge={getStockBadge}
-        handleConfirmDelete = { handleConfirmDelete}
-      />
-
-      {/* <EditProductDialog
-        open={isEditDialogOpen}
-        onOpenChange={onEditDialogChange}
-        product={selectedProduct}
-        onSave={onSaveEdit}
-      /> */}
-
-      <ProductQuickEditDialog
-        open={isEditDialogOpen}
-        onOpenChange={onEditDialogChange}
-        product={selectedProduct}
-        onSave={onSaveEdit}
-        // onFullEdit={handleFullEdit}
-      />
-    </>
-  );
-};

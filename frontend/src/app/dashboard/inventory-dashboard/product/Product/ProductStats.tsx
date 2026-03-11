@@ -52,19 +52,18 @@ const STAT_CONFIGS = [
   { label: 'Featured', color: 'from-yellow-500 to-amber-500', icon: Star }
 ] as const;
 
-// Import icons dynamically
-import * as Icons from 'lucide-react';
+
 
 export const ProductStatistics = ({ stats }: ProductStatsProps) => {
   const statValues = [
     stats.total,
-    stats.active,
-    stats.inStock,
-    stats.lowStock,
-    stats.outOfStock,
-    stats.featured
+    stats.activeCount,
+    stats.inactiveCount,
+    stats.inStockCount,
+    stats.lowStockCount,
+    stats.featuredCount
   ];
-
+console.log("stats", stats)
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {STAT_CONFIGS.map((config, index) => {
