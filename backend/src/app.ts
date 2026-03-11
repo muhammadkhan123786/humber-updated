@@ -123,6 +123,7 @@ import mobilecustomerSourceRouter from "./routes/mobile-development/customer-sou
 import MobileCustomerBaseRouter from "./routes/mobile-development/customer-routes/customre.register.mobile.routes";
 import labourRateRouter from "./routes/master-data-routes/labour.routes";
 import channelRouter from "./routes/communication-channels-integration-routes/channels.routes";
+import channelProviderRouter from "./routes/communication-channels-integration-routes/communication.channel.provider.routes";
 
 // Create express app
 const app: Application = express();
@@ -630,6 +631,11 @@ app.use(
   channelRouter,
 );
 
+app.use(
+  `${process.env.API_PREFIX}/channel-providers`,
+  adminProtecter,
+  channelProviderRouter,
+);
 
 //Muhammad Imran code ended here.
 
