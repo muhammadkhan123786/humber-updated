@@ -124,6 +124,7 @@ import MobileCustomerBaseRouter from "./routes/mobile-development/customer-route
 import labourRateRouter from "./routes/master-data-routes/labour.routes";
 import channelRouter from "./routes/communication-channels-integration-routes/channels.routes";
 import channelProviderRouter from "./routes/communication-channels-integration-routes/communication.channel.provider.routes";
+import channelProviderConfigFieldsRouter from "./routes/communication-channels-integration-routes/channel.provider.config.fields.route";
 
 // Create express app
 const app: Application = express();
@@ -636,6 +637,13 @@ app.use(
   adminProtecter,
   channelProviderRouter,
 );
+
+app.use(
+  `${process.env.API_PREFIX}/channel-providers-fields`,
+  adminProtecter,
+  channelProviderConfigFieldsRouter,
+);
+
 
 //Muhammad Imran code ended here.
 
