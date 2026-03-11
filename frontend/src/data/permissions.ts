@@ -49,6 +49,8 @@ import {
   Plus,
   UserRoundCog,
   UnlockIcon,
+  MessageSquare,
+  ShieldCheckIcon,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -713,14 +715,21 @@ export const navigation: INavBarLinkSharedInterface[] = [
     _id: nanoid(),
     label: "Communication Master Data",
     href: "#",
-    icon: Settings,
+    icon: Settings, // Main category icon
     roleId: [1],
     subItems: [
       {
         _id: nanoid(),
         label: "Channels",
         href: "/dashboard/channels",
-        icon: Tag,
+        icon: MessageSquare,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Providers",
+        href: "/dashboard/providers",
+        icon: ShieldCheckIcon,
         roleId: [1],
       },
     ],
