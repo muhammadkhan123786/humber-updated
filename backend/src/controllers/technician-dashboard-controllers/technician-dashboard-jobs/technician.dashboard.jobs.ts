@@ -2,6 +2,7 @@ import { Response } from "express";
 import { TechnicianAuthRequest } from "../../../middleware/auth.middleware";
 import { JOB_STATUS } from "../../../schemas/technicians-jobs-by-admin/techncian.jobs.by.admin.schema";
 import { TechnicianJobsByAdmin } from "../../../models/techncian-jobs-by-admin-models/technician.jobs.by.admin.models";
+import { Types } from "mongoose";
 
 
 export const technicianDashboardJobsController = async (
@@ -112,7 +113,7 @@ export const technicianDashboardJobsController = async (
     const statusAggregation = await TechnicianJobsByAdmin.aggregate([
       {
         $match: {
-          leadingTechnicianId: technicianId,
+          leadingTechnicianId: new Types.ObjectId(technicianId),
           isDeleted: false,
         },
       },
