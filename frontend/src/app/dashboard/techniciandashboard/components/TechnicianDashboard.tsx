@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import MainBar from './MainBar';
 import RouteBar, { RouteType } from './RouteBar';
 import Profile from './Profile';
-import CountCard from '../../jobs/components/CountCard';
 import StatsDashboard from './StatsOverview';
 import Overview from './Overview';
 
@@ -50,9 +49,7 @@ const TechnicianDashboard = () => {
         <div className="flex-1 ">
           <StatsDashboard refreshTrigger={refreshTrigger} />
         </div>
-        <div className="w-full sm:w-auto">
-          <CountCard refreshTrigger={refreshTrigger} />
-        </div>
+       
       </div>
       <RouteBar activeRoute={activeRoute} onRouteChange={setActiveRoute} />
       
