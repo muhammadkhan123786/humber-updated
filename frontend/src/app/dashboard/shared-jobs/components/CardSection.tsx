@@ -45,6 +45,7 @@ const SharedJobsCardSection = ({
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showActivityView, setShowActivityView] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   // Update local jobs when props change
   useEffect(() => {
@@ -74,6 +75,14 @@ const SharedJobsCardSection = ({
 
   // Handle status update
   const handleStatusUpdate = async (assignmentId: string, newStatus: string) => {
+    // Prevent multiple simultaneous updates
+    if (updatingStatus) return;
+
+    // Set loading state for this specific assignment
+    setUpdatingStatus(assignmentId);
+
+    // Optimistically update the UI immediately
+    const previousJobs = [...localJobs];
     const updatedJobs = localJobs.map((job) =>
       job._id === assignmentId ? { ...job, jobStatus: newStatus } : job
     );
@@ -88,12 +97,17 @@ const SharedJobsCardSection = ({
       );
 
       if (response.data?.success) {
-        toast.success(`Job status updated to ${newStatus}`);
-        onJobUpdate?.();
+        toast.success(`Status updated to ${newStatus.replace("_", " ")}`);
+        // Don't call onJobUpdate to prevent page refresh
+        // The local state is already updated optimistically
       }
     } catch (error: any) {
+      // Revert to previous state on error
       toast.error(error.response?.data?.message || "Failed to update status");
-      setLocalJobs(jobs);
+      setLocalJobs(previousJobs);
+    } finally {
+      // Clear loading state
+      setUpdatingStatus(null);
     }
   };
 
@@ -147,6 +161,7 @@ const SharedJobsCardSection = ({
               const currentStatus = assignment.jobStatus || "PENDING";
               const isCompleted = currentStatus === "COMPLETED";
               const isInProgress = currentStatus === "IN_PROGRESS";
+              const isUpdating = updatingStatus === assignment._id;
 
               return (
                 <div
@@ -161,7 +176,7 @@ const SharedJobsCardSection = ({
                   />
 
                   <div className="p-5 pb-6">
-                    <div className={`${isCompleted ? 'opacity-50' : 'opacity-100'}`}>
+                    <div className={`transition-opacity duration-300 ${isCompleted ? 'opacity-50' : 'opacity-100'}`}>
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h3 className="text-teal-950 text-lg font-bold leading-none tracking-tight">
@@ -176,26 +191,53 @@ const SharedJobsCardSection = ({
                             {currentStatus === "PENDING" && (
                               <button
                                 onClick={() => handleStatusUpdate(assignment._id, "IN_PROGRESS")}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md bg-blue-500 text-white"
+                                disabled={isUpdating}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all ${
+                                  isUpdating 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-blue-500 hover:shadow-md hover:bg-blue-600'
+                                } text-white`}
                               >
-                                <Play size={14} />
-                                <span>Start</span>
+                                {isUpdating ? (
+                                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Play size={14} />
+                                )}
+                                <span>{isUpdating ? 'Starting...' : 'Start'}</span>
                               </button>
                             )}
                             {currentStatus === "IN_PROGRESS" && (
                               <>
                                 <button
                                   onClick={() => handleStatusUpdate(assignment._id, "ON_HOLD")}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md bg-orange-500 text-white"
+                                  disabled={isUpdating}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all ${
+                                    isUpdating 
+                                      ? 'bg-gray-400 cursor-not-allowed' 
+                                      : 'bg-orange-500 hover:shadow-md hover:bg-orange-600'
+                                  } text-white`}
                                 >
-                                  <Pause size={14} />
+                                  {isUpdating ? (
+                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <Pause size={14} />
+                                  )}
                                   <span>Pause</span>
                                 </button>
                                 <button
                                   onClick={() => handleStatusUpdate(assignment._id, "COMPLETED")}
-                                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md bg-green-500 text-white"
+                                  disabled={isUpdating}
+                                  className={`flex items-center gap-1.5 px-2 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all ${
+                                    isUpdating 
+                                      ? 'bg-gray-400 cursor-not-allowed' 
+                                      : 'bg-green-500 hover:shadow-md hover:bg-green-600'
+                                  } text-white`}
                                 >
-                                  <ClipboardList size={14} />
+                                  {isUpdating ? (
+                                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <ClipboardList size={14} />
+                                  )}
                                   <span>Done</span>
                                 </button>
                               </>
@@ -203,10 +245,19 @@ const SharedJobsCardSection = ({
                             {currentStatus === "ON_HOLD" && (
                               <button
                                 onClick={() => handleStatusUpdate(assignment._id, "IN_PROGRESS")}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all hover:shadow-md bg-purple-500 text-white"
+                                disabled={isUpdating}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold uppercase shadow-sm transition-all ${
+                                  isUpdating 
+                                    ? 'bg-gray-400 cursor-not-allowed' 
+                                    : 'bg-purple-500 hover:shadow-md hover:bg-purple-600'
+                                } text-white`}
                               >
-                                <Play size={14} />
-                                <span>Resume</span>
+                                {isUpdating ? (
+                                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <Play size={14} />
+                                )}
+                                <span>{isUpdating ? 'Resuming...' : 'Resume'}</span>
                               </button>
                             )}
                           </div>
@@ -269,7 +320,7 @@ const SharedJobsCardSection = ({
                         </div>
 
                         <div
-                          className="px-2 py-0.5 border rounded text-[10px] font-black uppercase tracking-tighter"
+                          className="px-2 py-0.5 border rounded text-[10px] font-black uppercase tracking-tighter transition-all duration-300"
                           style={{
                             backgroundColor: `${getStatusColor(currentStatus)}10`,
                             color: getStatusColor(currentStatus),
@@ -341,11 +392,12 @@ const SharedJobsCardSection = ({
                   const job = assignment.job;
                   const currentStatus = assignment.jobStatus || "PENDING";
                   const isCompleted = currentStatus === "COMPLETED";
+                  const isUpdating = updatingStatus === assignment._id;
 
                   return (
                     <tr
                       key={assignment._id || index}
-                      className={`hover:bg-teal-50/30 transition-all group ${isCompleted ? 'opacity-50' : 'opacity-100'}`}
+                      className={`hover:bg-teal-50/30 transition-all duration-300 group ${isCompleted ? 'opacity-50' : 'opacity-100'}`}
                     >
                       <td className="p-4">
                         <div className="font-bold text-sm text-teal-950">
@@ -358,7 +410,7 @@ const SharedJobsCardSection = ({
 
                       <td className="p-4">
                         <div
-                          className="px-2.5 py-1 rounded-full text-[12px] font-semibold inline-block"
+                          className="px-2.5 py-1 rounded-full text-[12px] font-semibold inline-block transition-all duration-300"
                           style={{
                             backgroundColor: `${getStatusColor(currentStatus)}15`,
                             color: getStatusColor(currentStatus),
@@ -405,14 +457,24 @@ const SharedJobsCardSection = ({
                         <div className="flex gap-2 justify-center items-center">
                           <button
                             onClick={() => handleView(assignment)}
-                            className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
+                            disabled={isUpdating}
+                            className={`p-2 bg-indigo-50 text-indigo-600 rounded-lg transition-all shadow-sm ${
+                              isUpdating 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'hover:bg-indigo-600 hover:text-white'
+                            }`}
                             title="View Details"
                           >
                             <Eye size={16} />
                           </button>
                           <button
                             onClick={() => handleActivity(assignment)}
-                            className="p-2 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-600 hover:text-white transition-all shadow-sm"
+                            disabled={isUpdating}
+                            className={`p-2 bg-teal-50 text-teal-600 rounded-lg transition-all shadow-sm ${
+                              isUpdating 
+                                ? 'opacity-50 cursor-not-allowed' 
+                                : 'hover:bg-teal-600 hover:text-white'
+                            }`}
                             title="Activity"
                           >
                             <ClipboardList size={16} />
@@ -423,33 +485,65 @@ const SharedJobsCardSection = ({
                               {currentStatus === "PENDING" && (
                                 <button
                                   onClick={() => handleStatusUpdate(assignment._id, "IN_PROGRESS")}
-                                  className="px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-all"
+                                  disabled={isUpdating}
+                                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                                    isUpdating 
+                                      ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                                  }`}
                                 >
-                                  Start
+                                  {isUpdating && (
+                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  )}
+                                  <span>{isUpdating ? 'Starting...' : 'Start'}</span>
                                 </button>
                               )}
                               {currentStatus === "IN_PROGRESS" && (
                                 <>
                                   <button
                                     onClick={() => handleStatusUpdate(assignment._id, "ON_HOLD")}
-                                    className="px-2 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-lg hover:bg-orange-600 transition-all"
+                                    disabled={isUpdating}
+                                    className={`px-2 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
+                                      isUpdating 
+                                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                        : 'bg-orange-500 text-white hover:bg-orange-600'
+                                    }`}
                                   >
-                                    Pause
+                                    {isUpdating && (
+                                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    )}
+                                    <span>Pause</span>
                                   </button>
                                   <button
                                     onClick={() => handleStatusUpdate(assignment._id, "COMPLETED")}
-                                    className="px-2 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-lg hover:bg-green-600 transition-all"
+                                    disabled={isUpdating}
+                                    className={`px-2 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
+                                      isUpdating 
+                                        ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                        : 'bg-green-500 text-white hover:bg-green-600'
+                                    }`}
                                   >
-                                    Complete
+                                    {isUpdating && (
+                                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    )}
+                                    <span>{isUpdating ? 'Completing...' : 'Complete'}</span>
                                   </button>
                                 </>
                               )}
                               {currentStatus === "ON_HOLD" && (
                                 <button
                                   onClick={() => handleStatusUpdate(assignment._id, "IN_PROGRESS")}
-                                  className="px-3 py-1.5 bg-purple-500 text-white text-xs font-semibold rounded-lg hover:bg-purple-600 transition-all"
+                                  disabled={isUpdating}
+                                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
+                                    isUpdating 
+                                      ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                      : 'bg-purple-500 text-white hover:bg-purple-600'
+                                  }`}
                                 >
-                                  Resume
+                                  {isUpdating && (
+                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  )}
+                                  <span>{isUpdating ? 'Resuming...' : 'Resume'}</span>
                                 </button>
                               )}
                             </>
