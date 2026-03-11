@@ -14,4 +14,4 @@ const channelDbSchema = new Schema<channelDoc>({
 }, { timestamps: true });
 
 
-export const Channels: Model<channelDoc> = model<channelDoc>("Channels", channelDbSchema);
+export const communicationChannels: Model<channelDoc> = model<channelDoc>("communicationChannels", channelDbSchema);
