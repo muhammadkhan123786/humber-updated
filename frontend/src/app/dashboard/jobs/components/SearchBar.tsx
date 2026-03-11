@@ -3,6 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Search, ChevronDown } from "lucide-react";
 
+export const JOB_STATUS = [
+  { value: "PENDING", label: "Pending" },
+  { value: "START", label: "Started" },
+  { value: "ON HOLD", label: "On Hold" },
+  { value: "END", label: "Ended" }
+] as const;
+
 interface FilterSectionProps {
   searchTerm: string;
   setSearchTerm: (val: string) => void;
@@ -20,7 +27,6 @@ const FilterSection = ({
   priorityFilter,
   setPriorityFilter,
 }: FilterSectionProps) => {
-  const [dbStatuses, setDbStatuses] = useState<any[]>([]);
   const [dbPriorities, setDbPriorities] = useState<any[]>([]);
 
   const API_BASE_URL =
@@ -35,13 +41,6 @@ const FilterSection = ({
       };
 
       try {
-        const statusRes = await fetch(`${API_BASE_URL}/technician-job-status`, {
-          headers,
-        });
-        const statusData = await statusRes.json();
-        setDbStatuses(
-          Array.isArray(statusData) ? statusData : statusData.data || [],
-        );
         const priorityRes = await fetch(
           `${API_BASE_URL}/service-request-prioprity-level`,
           { headers },
@@ -81,9 +80,9 @@ const FilterSection = ({
             className="appearance-none w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500  transition-all cursor-pointer"
           >
             <option value="All Statuses">All Statuses</option>
-            {dbStatuses.map((s: any) => (
-              <option key={s._id} value={s.technicianJobStatus}>
-                {s.technicianJobStatus}
+            {JOB_STATUS.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
               </option>
             ))}
           </select>

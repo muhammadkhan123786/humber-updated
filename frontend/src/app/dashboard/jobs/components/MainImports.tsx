@@ -87,10 +87,14 @@ const MainImports = () => {
           .includes(searchStr) ||
         job.ticketId?.vehicleId?.productName?.toLowerCase().includes(searchStr);
 
-      const currentStatus = job.jobStatusId?.technicianJobStatus || "";
+      const currentStatus = job.jobStatusId?.technicianJobStatus || job.jobStatusId || "";
+      
+      // Debug log to see actual status values
+      console.log("Job:", job.jobId, "jobStatusId:", job.jobStatusId, "Status:", currentStatus, "Filter:", statusFilter);
+      
       const matchesStatus =
         statusFilter === "All Statuses" ||
-        currentStatus.toLowerCase() === statusFilter.toLowerCase();
+        currentStatus.toUpperCase() === statusFilter.toUpperCase();
 
       const currentPriority =
         job.ticketId?.priorityId?.serviceRequestPrioprity || "";
