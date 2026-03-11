@@ -256,10 +256,18 @@ export interface CreateGoodsReturnDto {
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────
+// export interface ReturnStats {
+//   totalReturns:     number;
+//   pendingReturns:   number;
+//   inTransitReturns: number;
+//   completedReturns: number;
+//   totalReturnValue: number;
+// }
+
 export interface ReturnStats {
-  totalReturns:     number;
-  pendingReturns:   number;
-  inTransitReturns: number;
-  completedReturns: number;
-  totalReturnValue: number;
+  totalReturns: number;
+  completed:    number;
+  pending:      number;
+  rejected:     number;
+  totalValue:   number;
 }

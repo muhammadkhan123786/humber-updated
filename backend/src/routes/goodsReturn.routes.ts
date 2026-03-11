@@ -4,7 +4,7 @@ import { AdvancedGenericController } from "../controllers/GenericController";
 import { GenericService }            from "../services/generic.crud.services";
 import { GoodsReturn }               from "../models/goodsReturn.model";
 import { CreateGoodsReturnValidation } from "../schemas/goodsReturn.schema";
-import { updateGoodsReturnStatus }     from "../controllers/goodsReturn.controller";
+import { updateGoodsReturnStatus, getReturnsBySupplier, getReturnStatsBySupplier }     from "../controllers/goodsReturn.controller";
 import { exportGRTNToPDF } from "../controllers/pdf.controller"
 
 
@@ -44,5 +44,7 @@ router.delete("/:id", genericController.delete);
 
 // ── Status Update — stock fires HERE on "completed" ──────────────────────
 router.patch("/:id/status", updateGoodsReturnStatus);
+router.get("/by-supplier/:supplierId", getReturnsBySupplier)
+router.get("/stats/by-supplier/:supplierId", getReturnStatsBySupplier);
 
 export default router;

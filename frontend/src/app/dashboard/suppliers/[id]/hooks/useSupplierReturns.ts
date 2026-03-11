@@ -9,8 +9,8 @@ export function useSupplierReturns(supplierId: string, userId: string) {
   useEffect(() => {
     if (!supplierId || !userId) return;
      const token = localStorage.getItem("token");
-    axios.get(`${BASE_URL}/goods-return-notice`, { 
-      params: { supplierId, userId, limit: 50 },
+    axios.get(`${BASE_URL}/goods-return-notice/by-supplier/${supplierId}`, { 
+      params: {  userId, limit: 50 },
        headers: { Authorization: `Bearer ${token}` }, 
     })
       .then(r => setReturns(Array.isArray(r.data) ? r.data : (r.data?.data ?? [])))

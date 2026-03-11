@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Loader2,
   Building2,
@@ -27,6 +28,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function SupplierDetailPage() {
   const params = useParams();
   const id = params?.id as string;
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabId>("info");
   const [stats, setStats] = useState({
@@ -245,12 +247,14 @@ export default function SupplierDetailPage() {
                   </div>
 
                   {activeTab === "orders" && (
-                    <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/20 text-sm">
+                    <Button
+                        onClick={ ()  => router.push('/dashboard/inventory-dashboard/product-Orders')}
+                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/20 text-sm">
                       + Create New PO
                     </Button>
                   )}
                   {activeTab === "returns" && (
-                    <Button className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md shadow-purple-500/20 text-sm">
+                    <Button    onClick={ ()  => router.push('/dashboard/inventory-dashboard/product-goods-return')} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md shadow-purple-500/20 text-sm">
                       + Create Return
                     </Button>
                   )}

@@ -1,28 +1,11 @@
 // hooks/useProducts.ts
 "use client";
-import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { transformProductsResponse, transformProduct } from "../lib/productTransformer"
- import { ProductListItem } from '@/app/dashboard/inventory-dashboard/product/types/product';
-
-// interface Product {
-//   id: string;
-//   name: string;
-//   sku: string;
-//   description: string;
-//   categories: {
-//     level1: { id: string; name: string; level: number };
-//     level2: { id: string; name: string; level: number; parentId: string };
-//     level3: { id: string; name: string; level: number; parentId: string };
-//   };
-//   price: number;
-//   stockQuantity: number;
-//   stockStatus: string;
-//   status: string;
-//   featured: boolean;
-//   imageUrl: string;
-//   [key: string]: any;
-// }
+import { useState, useEffect, useCallback, useRef } from "react";
+import axios from "axios";
+import { transformProductsResponse, transformProduct } from "../lib/productTransformer";
+import { ProductListItem } from "@/app/dashboard/inventory-dashboard/product/types/product";
+import { useProductFilters } from "./useProductFilters";
+import { DatabaseCategory } from "./useCategory";
 
 interface Statistics {
   total: number;
@@ -38,26 +21,13 @@ interface UseProductsOptions {
   autoFetch?: boolean;
   initialPage?: number;
   initialLimit?: number;
-  initialFilters?: Record<string, any>;
-}
-
-interface ProductFilters {
-  search?: string;
-  categoryId?: string;
-  level1CategoryId?: string;
-  level2CategoryId?: string;
-  level3CategoryId?: string;
-  status?: string;
-  featured?: boolean;
-  stockStatus?: string;
-  [key: string]: any;
+  categories?: DatabaseCategory[];
 }
 
 const API_URL = `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`;
 
 const getAuthConfig = () => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   return { headers: { Authorization: `Bearer ${token}` } };
 };
 
@@ -68,335 +38,165 @@ const getUserId = () => {
 };
 
 export const useProducts = (options: UseProductsOptions = {}) => {
-  const {
-    autoFetch = true,
-    initialPage = 1,
-    initialLimit = 10,
-    initialFilters = {}
-  } = options;
+  const { autoFetch = true, initialPage = 1, initialLimit = 10, categories = [] } = options;
 
-  const [products, setProducts] = useState<ProductListItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    activeCount: 0,
-    inactiveCount: 0,
-    page: initialPage,
-    limit: initialLimit
+  const [products, setProducts]         = useState<ProductListItem[]>([]);
+  const [statistics, setStatistics]     = useState<Statistics | null>(null);
+  const [pagination, setPagination]     = useState({
+    total: 0, activeCount: 0, inactiveCount: 0,
+    page: initialPage, limit: initialLimit, totalPages: 0,
   });
-  const [filters, setFilters] = useState<ProductFilters>(initialFilters);
 
-  /**
-   * Build query params from filters
-   */
-  const buildQueryParams = useCallback((
-    currentFilters: ProductFilters,
-    page: number,
-    limit: number
-  ): Record<string, any> => {
-    const params: Record<string, any> = {
-      userId: getUserId(),
-      page,
-      limit,
-      includeStats: 'true'
-    };
+  // ✅ TWO loading states:
+  //    `initialLoading` — first load only → shows skeleton cards
+  //    `filtering`      — subsequent filter changes → shows subtle overlay, keeps old data visible
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [filtering, setFiltering]           = useState(false);
+  const [error, setError]                   = useState<string | null>(null);
 
-    // Add filters
-    Object.entries(currentFilters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        params[key] = value;
-      }
-    });
+  const isFirstFetch   = useRef(true);
+  const abortController = useRef<AbortController | null>(null);
 
-    return params;
-  }, []);
+  const filters = useProductFilters({ categories });
 
-  /**
-   * Fetch products from API
-   */
-  const fetchProducts = useCallback(async (
-    page = pagination.page,
-    limit = pagination.limit,
-    currentFilters = filters
-  ) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchProducts = useCallback(async () => {
+    // Cancel any in-flight request
+    if (abortController.current) abortController.current.abort();
+    abortController.current = new AbortController();
 
-      const params = buildQueryParams(currentFilters, page, limit);
-
-      const response = await axios.get(API_URL, {
-        ...getAuthConfig(),
-        params
-      });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch products');
-      }
-
-      // Transform products
-      const transformedProducts = transformProductsResponse(response.data);
-      setProducts(transformedProducts as ProductListItem[]);
-       setStatistics(response.data.statistics || null);
-      setPagination({
-        total: response.data.total || 0,
-        activeCount: response.data.activeCount || 0,
-        inactiveCount: response.data.inactiveCount || 0,
-        page: response.data.page || page,
-        limit: response.data.limit || limit
-      });
-
-      return { success: true, data: transformedProducts };
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMessage);
-      console.error('Error fetching products:', err);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+    // ✅ First load → full skeleton. Subsequent → silent background refresh
+    if (isFirstFetch.current) {
+      setInitialLoading(true);
+    } else {
+      setFiltering(true);  // keeps current products visible, just dims them
     }
-  }, [buildQueryParams, filters, pagination.page, pagination.limit]);
+    setError(null);
 
-  /**
-   * Create a new product
-   */
+    try {
+      const qs = filters.toQueryString(filters.queryParams);
+      const extraParams = new URLSearchParams(qs);
+      extraParams.set("userId", getUserId());
+      extraParams.set("includeStats", "true");
+
+      const response = await axios.get(`${API_URL}?${extraParams.toString()}`, {
+        ...getAuthConfig(),
+        signal: abortController.current.signal,
+      });
+
+      if (!response.data.success) throw new Error(response.data.message || "Failed to fetch products");
+
+      const transformed = transformProductsResponse(response.data);
+      setProducts(transformed as ProductListItem[]);
+      setStatistics(response.data.statistics || null);
+      setPagination({
+        total:         response.data.total         || 0,
+        activeCount:   response.data.activeCount   || 0,
+        inactiveCount: response.data.inactiveCount || 0,
+        page:          response.data.page          || filters.queryParams.page,
+        limit:         response.data.limit         || filters.queryParams.limit,
+        totalPages:    response.data.totalPages    || 0,
+      });
+
+      return { success: true, data: transformed };
+    } catch (err: any) {
+      if (axios.isCancel(err)) return { success: true, data: [] }; // cancelled — ignore
+      const msg = err.response?.data?.message || err.message || "An error occurred";
+      setError(msg);
+      return { success: false, error: msg };
+    } finally {
+      setInitialLoading(false);
+      setFiltering(false);
+      isFirstFetch.current = false;
+    }
+  }, [filters.queryParams, filters.toQueryString]);
+
+  useEffect(() => {
+    if (autoFetch) fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.queryParams]);
+
+  // ── CRUD ────────────────────────────────────────────────────────────────
   const createProduct = useCallback(async (productData: any) => {
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await axios.post(API_URL, productData, getAuthConfig());
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create product');
-      }
-
-      // Refresh the list
+      if (!response.data.success) throw new Error(response.data.message);
       await fetchProducts();
-
       return { success: true, data: response.data.data };
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+      return { success: false, error: err.response?.data?.message || err.message };
     }
   }, [fetchProducts]);
 
-  /**
-   * Update a product
-   */
-  // const updateProduct = useCallback(async (id: string, productData: any) => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-
-  //     const response = await axios.put(`${API_URL}/${id}`, productData, getAuthConfig());
-
-  //     if (!response.data.success) {
-  //       throw new Error(response.data.message || 'Failed to update product');
-  //     }
-
-  //     // Update the product in the list
-  //     setProducts(prev => 
-  //       prev.map(p => p.id === id ? transformProduct(response.data.data) : p)
-  //     );
-
-  //     return { success: true, data: response.data.data };
-  //   } catch (err: any) {
-  //     const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-  //     setError(errorMessage);
-  //     return { success: false, error: errorMessage };
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, []);
-
-
-  // ✅ NEW CODE - USE THIS:
-const updateProduct = useCallback(async (id: string, productData: any) => {
-  try {
-    setLoading(true);
-    setError(null);
-
-    console.log('🔄 Updating product ID:', id);
-    // console.log('📝 Product data:', productData);
-
-    const response = await axios.put(
-      `${API_URL}/${id}`, 
-      productData, 
-      getAuthConfig()
-    );
-
-    console.log('✅ API Response:', response.data);
-
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to update product');
+  const updateProduct = useCallback(async (id: string, productData: any) => {
+    try {
+      const response = await axios.put(`${API_URL}/${id}`, productData, getAuthConfig());
+      if (!response.data.success) throw new Error(response.data.message);
+      const transformed = transformProduct(response.data.data);
+      setProducts(prev => prev.map(p => p.id === id ? transformed as ProductListItem : p));
+      return { success: true, data: transformed };
+    } catch (err: any) {
+      return { success: false, error: err.response?.data?.message || err.message };
     }
+  }, []);
 
-    // Transform the updated product
-    const transformedProduct = transformProduct(response.data.data);
-    
-    // Update the product in the local state
-   setProducts(prev => 
-  prev.map(p => p.id === id ? transformedProduct as ProductListItem : p)
-);
-
-    return { success: true, data: transformedProduct };
-  } catch (err: any) {
-    const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-    setError(errorMessage);
-    console.error('❌ Update error:', err);
-    return { success: false, error: errorMessage };
-  } finally {
-    setLoading(false);
-  }
-}, []);
-  /**
-   * Delete a product
-   */
   const deleteProduct = useCallback(async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await axios.delete(`${API_URL}/${id}`, getAuthConfig());
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to delete product');
-      }
-
-      // Remove from list
+      if (!response.data.success) throw new Error(response.data.message);
       setProducts(prev => prev.filter(p => p.id !== id));
-
-      // Update pagination
-      setPagination(prev => ({
-        ...prev,
-        total: prev.total - 1
-      }));
-
+      setPagination(prev => ({ ...prev, total: prev.total - 1 }));
       return { success: true };
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+      return { success: false, error: err.response?.data?.message || err.message };
     }
   }, []);
 
-  /**
-   * Get a single product by ID
-   */
   const getProductById = useCallback(async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await axios.get(`${API_URL}/${id}`, {
         ...getAuthConfig(),
-        params: { populate: 'categoryId' }
+        params: { populate: "categoryId" },
       });
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch product');
-      }
-
+      if (!response.data.success) throw new Error(response.data.message);
       return { success: true, data: transformProduct(response.data.data) };
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMessage);
-      return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
+      return { success: false, error: err.response?.data?.message || err.message };
     }
   }, []);
 
-  /**
-   * Update filters and refetch
-   */
-  const updateFilters = useCallback((newFilters: Partial<ProductFilters>) => {
-    const updatedFilters = { ...filters, ...newFilters };
-    setFilters(updatedFilters);
-    fetchProducts(1, pagination.limit, updatedFilters);
-  }, [filters, pagination.limit, fetchProducts]);
-
-  /**
-   * Search by category levels
-   */
-  const searchByCategory = useCallback((level1Id?: string, level2Id?: string, level3Id?: string) => {
-    const categoryFilters: ProductFilters = {};
-    
-    if (level1Id) categoryFilters.level1CategoryId = level1Id;
-    if (level2Id) categoryFilters.level2CategoryId = level2Id;
-    if (level3Id) categoryFilters.level3CategoryId = level3Id;
-
-    updateFilters(categoryFilters);
-  }, [updateFilters]);
-
-  /**
-   * Reset filters
-   */
-  const resetFilters = useCallback(() => {
-    setFilters({});
-    fetchProducts(1, pagination.limit, {});
-  }, [fetchProducts, pagination.limit]);
-
-  /**
-   * Go to specific page
-   */
-  const goToPage = useCallback((page: number) => {
-    fetchProducts(page, pagination.limit, filters);
-  }, [fetchProducts, pagination.limit, filters]);
-
-  /**
-   * Change page size
-   */
-  const changePageSize = useCallback((limit: number) => {
-    fetchProducts(1, limit, filters);
-  }, [fetchProducts, filters]);
-
-  /**
-   * Refetch current page
-   */
-  const refetch = useCallback(() => {
-    fetchProducts(pagination.page, pagination.limit, filters);
-  }, [fetchProducts, pagination.page, pagination.limit, filters]);
-
-  // Auto-fetch on mount
-  useEffect(() => {
-    if (autoFetch) {
-      fetchProducts();
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   return {
-    // Data
     products,
-    loading,
+    initialLoading,   // ← use this for skeleton on first load
+    filtering,        // ← use this for subtle overlay on filter change
     error,
     statistics,
     pagination,
-    filters,
 
-    // CRUD operations
     createProduct,
     updateProduct,
     deleteProduct,
     getProductById,
+    refetch: fetchProducts,
 
-    // Filter operations
-    updateFilters,
-    searchByCategory,
-    resetFilters,
+    searchTerm:              filters.searchTerm,
+    selectedCategory:        filters.selectedCategory,
+    selectedStatus:          filters.selectedStatus,
+    selectedStockStatus:     filters.selectedStockStatus,
+    showFeaturedOnly:        filters.showFeaturedOnly,
+    page:                    filters.page,
+    limit:                   filters.limit,
+    sortBy:                  filters.sortBy,
+    sortOrder:               filters.sortOrder,
+    hasActiveFilters:        filters.hasActiveFilters,
+    categoryOptions:         filters.categoryOptions,
 
-    // Pagination
-    goToPage,
-    changePageSize,
-    refetch,
-    fetchProducts
+    handleSearchChange:      filters.handleSearchChange,
+    handleCategoryChange:    filters.handleCategoryChange,
+    handleStatusChange:      filters.handleStatusChange,
+    handleStockStatusChange: filters.handleStockStatusChange,
+    handleFeaturedToggle:    filters.handleFeaturedToggle,
+    handlePageChange:        filters.handlePageChange,
+    handleSortChange:        filters.handleSortChange,
+    resetFilters:            filters.resetFilters,
   };
 };

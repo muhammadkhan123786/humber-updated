@@ -4,12 +4,21 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/form/Card';
 import { Badge } from '@/components/form/Badge';
 import { ReturnStats } from '../types/goodsReturn';
-import { PackageX, AlertTriangle, Truck, CheckCircle2, TrendingDown } from 'lucide-react';
+import { PackageX, AlertTriangle, Truck, CheckCircle2, TrendingDown, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface GoodsReturnStatsProps {
   stats: ReturnStats;
 }
+
+// Map your API response to the format expected by statCards
+const mapStatsToDisplay = (stats: any) => ({
+  totalReturns: stats.totalReturns || 0,
+  pendingReturns: stats.pending || 0,
+  inTransitReturns: stats.rejected || 0, // Using rejected for inTransit if that's what you want
+  completedReturns: stats.completed || 0,
+  totalReturnValue: stats.totalValue || 0
+});
 
 const statCards = [
   {
@@ -28,10 +37,10 @@ const statCards = [
   },
   {
     key: 'inTransitReturns' as const,
-    label: 'In Transit',
-    gradient: 'from-purple-500 to-pink-500',
-    icon: Truck,
-    badgeText: 'Transit'
+    label: 'Rejected',
+    gradient: 'from-red-500 to-rose-500',
+    icon: XCircle, 
+    badgeText: 'Rejected'
   },
   {
     key: 'completedReturns' as const,
@@ -43,7 +52,7 @@ const statCards = [
   {
     key: 'totalReturnValue' as const,
     label: 'Return Value',
-    gradient: 'from-red-500 to-rose-500',
+    gradient: 'from-purple-500 to-pink-500',
     icon: TrendingDown,
     badgeText: 'Value',
     format: (value: number) => `£${value.toFixed(2)}`
@@ -51,6 +60,11 @@ const statCards = [
 ];
 
 export const GoodsReturnStats: React.FC<GoodsReturnStatsProps> = ({ stats }) => {
+  console.log("stats", stats);
+  
+  // Map the stats to the expected format
+  const displayStats = mapStatsToDisplay(stats);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -60,7 +74,7 @@ export const GoodsReturnStats: React.FC<GoodsReturnStatsProps> = ({ stats }) => 
     >
       {statCards.map((stat, index) => {
         const Icon = stat.icon;
-        const value = stats[stat.key];
+        const value = displayStats[stat.key];
         const displayValue = stat.format ? stat.format(value) : value;
         
         return (
