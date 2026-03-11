@@ -75,20 +75,21 @@ export default function GoodsReturnPage() {
         statuses={statuses}
       />
 
-      {viewMode === 'grid' ? (
-        <GoodsReturnGridView
-          returns={filteredReturns}
-          onView={handleOpenView}
-          onDownload={handleExportReturn}
-        />
-      ) : (
-        // ✅ FIXED: onStatusUpdate + isUpdatingStatus properly passed
+      {viewMode === 'table' ? (
         <GoodsReturnTableView
           returns={filteredReturns}
           onView={handleOpenView}
           onDownload={handleExportReturn}
           onStatusUpdate={handleStatusUpdate}
           isUpdatingStatus={isUpdatingStatus}
+        />
+      ) : (
+        // ✅ FIXED: onStatusUpdate + isUpdatingStatus properly passed
+        
+        <GoodsReturnGridView
+          returns={filteredReturns}
+          onView={handleOpenView}
+          onDownload={handleExportReturn}
         />
       )}
 

@@ -273,3 +273,95 @@ Reference: ${grtnNumber}
     console.error("[GoodsReturn] sendReturnCompletedEmail failed:", err.message);
   }
 }
+
+export const getReturnsBySupplier = async (req: Request, res: Response) => {
+  try {
+    const { supplierId } = req.params;
+    const { userId, limit } = req.query; 
+
+    
+    const returns = await GoodsReturn.find()
+      .populate({
+        path: "grnId",
+        select: "grnNumber purchaseOrderId",
+        populate: {
+          path: "purchaseOrderId",
+          select: "orderNumber supplier",
+          populate: {
+            path: "supplier",
+            select: "contactInformation supplierIdentification"
+          }
+        }
+      })
+      .limit(limit ? parseInt(limit as string) : 50) // Apply limit
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .lean();
+
+    // Filter returns for this supplier
+    const filtered = returns.filter((ret: any) => {
+      const poSupplier = ret?.grnId?.purchaseOrderId?.supplier;
+      return String(poSupplier?._id) === String(supplierId);
+    });
+
+    res.json({ 
+      success: true, 
+      data: filtered,
+      count: filtered.length 
+    });
+  } catch (err: any) {
+    res.status(500).json({ 
+      success: false, 
+      message: err.message 
+    });
+  }
+};
+
+export const getReturnStatsBySupplier = async (req: Request, res: Response) => {
+  try {
+    const { supplierId } = req.params;
+
+    const returns = await GoodsReturn.find()
+      .populate({
+        path: "grnId",
+        select: "purchaseOrderId",
+        populate: {
+          path: "purchaseOrderId",
+          select: "supplier",
+        },
+      })
+      .select("status items") // sirf zaruri fields
+      .lean();
+
+    // Filter — is supplier ki returns
+    const filtered = returns.filter((ret: any) => {
+      const poSupplier = ret?.grnId?.purchaseOrderId?.supplier;
+      return String(poSupplier) === String(supplierId);
+    });
+
+    // Calculate stats
+    const stats = {
+      totalReturns: filtered.length,
+
+      completed: filtered.filter((r: any) => r.status === "completed").length,
+
+      pending: filtered.filter((r: any) =>
+        ["pending", "approved", "in-transit"].includes(r.status)
+      ).length,
+
+      rejected: filtered.filter((r: any) => r.status === "rejected").length,
+
+      // SUM of returnQuantity × unitPrice across all items
+      totalValue: filtered.reduce((sum: number, ret: any) => {
+        const retValue = (ret.items || []).reduce((s: number, item: any) => {
+          return s + (item.returnQuantity || 0) * (item.unitPrice || 0);
+        }, 0);
+        return sum + retValue;
+      }, 0),
+    };
+
+    res.json({ success: true, data: stats });
+
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
