@@ -654,11 +654,12 @@ export const navigation: INavBarLinkSharedInterface[] = [
         roleId: [1],
       },
       {
-        _id: nanoid(),label: "Labour Rates",
+        _id: nanoid(),
+        label: "Labour Rates",
         href: "/dashboard/labour",
         icon: Wrench,
         roleId: [1],
-      }
+      },
     ],
   },
   //system users
@@ -702,6 +703,24 @@ export const navigation: INavBarLinkSharedInterface[] = [
         label: "Permissions",
         href: "/dashboard/Permissions",
         icon: UnlockIcon,
+        roleId: [1],
+      },
+    ],
+  },
+
+  /* ================= communication DATA ================= */
+  {
+    _id: nanoid(),
+    label: "Communication Master Data",
+    href: "#",
+    icon: Settings,
+    roleId: [1],
+    subItems: [
+      {
+        _id: nanoid(),
+        label: "Channels",
+        href: "/dashboard/channels",
+        icon: Tag,
         roleId: [1],
       },
     ],
