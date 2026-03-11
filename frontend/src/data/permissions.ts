@@ -732,6 +732,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ShieldCheckIcon,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Channel Provider Config",
+        href: "/dashboard/channel-provider-config",
+        icon: ShieldCheckIcon,
+        roleId: [1],
+      },
     ],
   },
   /* ================= SYSTEM SETUP ================= */
