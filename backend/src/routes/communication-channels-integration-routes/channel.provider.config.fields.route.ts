@@ -6,6 +6,7 @@ import {
 } from "../../models/communication-channel-models/channel.provider.config.models";
 import { channelConfigValidation } from "../../schemas/communication-channels-integration-schema/provider.config.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
+import { testCommunicationConnection } from "../../controllers/communication-channel-provider-controller/communication.channel.provider.controller";
 
 const channelProviderConfigFieldsRouter = Router();
 
@@ -21,25 +22,11 @@ const channelProviderConfigFieldsController = new AdvancedGenericController({
   searchFields: ["fields.name", "fields.label", "fields.type"],
 });
 
-channelProviderConfigFieldsRouter.get(
-  "/",
-  channelProviderConfigFieldsController.getAll,
-);
-channelProviderConfigFieldsRouter.get(
-  "/:id",
-  channelProviderConfigFieldsController.getById,
-);
-channelProviderConfigFieldsRouter.post(
-  "/",
-  channelProviderConfigFieldsController.create,
-);
-channelProviderConfigFieldsRouter.put(
-  "/:id",
-  channelProviderConfigFieldsController.update,
-);
-channelProviderConfigFieldsRouter.delete(
-  "/:id",
-  channelProviderConfigFieldsController.delete,
-);
+channelProviderConfigFieldsRouter.post('/communication/test-connection',testCommunicationConnection)
+channelProviderConfigFieldsRouter.get("/", channelProviderConfigFieldsController.getAll);
+channelProviderConfigFieldsRouter.get("/:id", channelProviderConfigFieldsController.getById);
+channelProviderConfigFieldsRouter.post("/", channelProviderConfigFieldsController.create);
+channelProviderConfigFieldsRouter.put("/:id", channelProviderConfigFieldsController.update);
+channelProviderConfigFieldsRouter.delete("/:id", channelProviderConfigFieldsController.delete);
 
 export default channelProviderConfigFieldsRouter;
