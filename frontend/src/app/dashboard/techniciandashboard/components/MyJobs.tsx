@@ -4,6 +4,7 @@ import { ListTodo, Pause, ClipboardList, Eye, Play, MapPin, Calendar, Clock, Pho
 import { getAlls } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import JobActivityView from "../../jobs/components/JobActivityView";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -11,6 +12,7 @@ interface JobData {
   _id: string;
   jobId: string;
   jobStatusId: string;
+  quotationId?: any;
   ticketId: {
     ticketCode: string;
     issue_Details: string;
@@ -52,6 +54,8 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [localJobs, setLocalJobs] = useState<JobData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showActivityView, setShowActivityView] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<any>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -162,9 +166,16 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
     }
   };
 
-  const handleRecordActivity = (jobId: string) => {
-    toast.success(`Recording activity for ${jobId}`);
-    // Add record activity logic here
+  const handleRecordActivity = (job: JobData) => {
+    setSelectedJob(job);
+    setShowActivityView(true);
+  };
+
+  const handleCloseActivityView = () => {
+    setShowActivityView(false);
+    setSelectedJob(null);
+    // Refresh jobs after closing
+    fetchJobs();
   };
 
   const handleViewDetails = (jobId: string) => {
@@ -181,7 +192,15 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
   }
 
   return (
-    <div className="bg-linear-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg border border-indigo-100 p-6">
+    <>
+      {showActivityView && selectedJob ? (
+        <JobActivityView 
+          job={selectedJob} 
+          onClose={handleCloseActivityView}
+          initialTab="technician-activities"
+        />
+      ) : (
+        <div className="bg-linear-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg border border-indigo-100 p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <ListTodo className="text-indigo-600" size={28} />
@@ -299,7 +318,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
                   )}
                   
                   <button
-                    onClick={() => handleRecordActivity(job.jobId)}
+                    onClick={() => handleRecordActivity(job)}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-all duration-200 shadow-md"
                   >
                     <ClipboardList size={16} />
@@ -320,6 +339,8 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
         )}
       </div>
     </div>
+      )}
+    </>
   );
 };
 

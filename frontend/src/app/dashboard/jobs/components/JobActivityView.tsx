@@ -16,10 +16,11 @@ export type ActivityTabType = 'jobinfo' | 'services' | 'parts' | 'inspection' | 
 interface JobActivityViewProps {
   job: any;
   onClose: () => void;
+  initialTab?: ActivityTabType;
 }
 
-const JobActivityView = ({ job, onClose }: JobActivityViewProps) => {
-  const [activeTab, setActiveTab] = useState<ActivityTabType>('jobinfo');
+const JobActivityView = ({ job, onClose, initialTab = 'jobinfo' }: JobActivityViewProps) => {
+  const [activeTab, setActiveTab] = useState<ActivityTabType>(initialTab);
   const [isAnimating, setIsAnimating] = useState(false);
   const [inspectionBadge, setInspectionBadge] = useState<string>('0/0');
   const [currentInspectionTime, setCurrentInspectionTime] = useState<"BEFORE SERVICE" | "AFTER SERVICE">("BEFORE SERVICE");
