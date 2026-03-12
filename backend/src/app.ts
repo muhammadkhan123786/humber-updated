@@ -125,6 +125,7 @@ import labourRateRouter from "./routes/master-data-routes/labour.routes";
 import channelRouter from "./routes/communication-channels-integration-routes/channels.routes";
 import channelProviderRouter from "./routes/communication-channels-integration-routes/communication.channel.provider.routes";
 import channelProviderConfigFieldsRouter from "./routes/communication-channels-integration-routes/channel.provider.config.fields.route";
+import clientChannelConfigurationDataRouter from "./routes/communication-channels-integration-routes/client.channel.config.data.routes";
 
 // Create express app
 const app: Application = express();
@@ -642,6 +643,13 @@ app.use(
   `${process.env.API_PREFIX}/channel-providers-fields`,
   adminProtecter,
   channelProviderConfigFieldsRouter,
+);
+
+// 12-03-2026
+app.use(
+  `${process.env.API_PREFIX}/client-channel-config-data`,
+  adminProtecter,
+  clientChannelConfigurationDataRouter,
 );
 
 
