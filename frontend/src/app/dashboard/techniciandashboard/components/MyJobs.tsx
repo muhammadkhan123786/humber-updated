@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 import JobActivityView from "../../jobs/components/JobActivityView";
 import JobDetailModal from "../../jobs/components/JobsDetail";
+import AnimationStyles from './Animation';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -213,14 +214,18 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
-      </div>
+      <>
+        <AnimationStyles />
+        <div className="flex items-center justify-center py-12 animate-fadeIn">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+        </div>
+      </>
     );
   }
 
   return (
     <>
+      <AnimationStyles />
       {showActivityView && selectedJob ? (
         <JobActivityView 
           job={selectedJob} 
@@ -228,7 +233,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
           initialTab="technician-activities"
         />
       ) : (
-        <div className="bg-white  shadow-lg  border-t-8 border-blue-400  p-6">
+        <div className="bg-white shadow-lg border-t-8 border-blue-400 p-6 animate-slideUp">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <ListTodo className="text-blue-600" size={22} />
@@ -238,12 +243,12 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
       {/* Jobs List */}
       <div className="space-y-6">
         {localJobs.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 animate-fadeIn">
             <ListTodo size={48} className="mx-auto mb-3 opacity-30" />
             <p className="text-lg">No active jobs assigned</p>
           </div>
         ) : (
-          localJobs.map((job) => {
+          localJobs.map((job, index) => {
             const customer = job.ticketId?.customerId;
             const vehicle = job.ticketId?.vehicleId;
             const priority = job.ticketId?.priorityId;
@@ -254,7 +259,8 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
             return (
               <div
                 key={job._id}
-                className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200 hover:shadow-xl transition-all duration-200"
+                style={{ animationDelay: `${index * 0.1}s` }}
+                className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200 hover:shadow-xl transition-all duration-200 animate-fadeInUp"
               >
                 {/* Job Header - ID, Status, Priority */}
                 <div className="flex items-center gap-3 mb-4">

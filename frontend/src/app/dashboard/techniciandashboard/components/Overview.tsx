@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Activity, Clock, Calendar, Package, CheckCircle, Eye } from "lucide-react";
 import { getAlls } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
+import AnimationStyles from './Animation';
 
 interface JobData {
   _id: string;
@@ -84,14 +85,19 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
-      </div>
+      <>
+        <AnimationStyles />
+        <div className="flex items-center justify-center py-12 animate-fadeIn">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-6">
+    <>
+      <AnimationStyles />
+      <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-6 animate-slideUp">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-green-500">
         <Activity className="text-green-600" size={24} />
@@ -101,12 +107,12 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
       {/* Activities List */}
       <div className="space-y-4">
         {jobs.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 animate-fadeIn">
             <Activity size={48} className="mx-auto mb-3 opacity-30" />
             <p className="text-lg">No completed activities yet</p>
           </div>
         ) : (
-          jobs.map((job) => {
+          jobs.map((job, index) => {
             // const firstService = job.services[0];
             // const serviceType = firstService?.activityId?.technicianServiceType || "N/A";
             const issueDetails = job.ticketId?.issue_Details || "No issue details available";
@@ -115,7 +121,8 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
             return (
               <div
                 key={job._id}
-                className="bg-linear-to-r from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-all duration-200"
+                style={{ animationDelay: `${index * 0.1}s` }}
+                className="bg-linear-to-r from-gray-50 to-gray-100 rounded-xl p-5 border border-gray-200 hover:shadow-md transition-all duration-200 animate-fadeInUp"
               >
                 {/* Job Header */}
                 <div className="flex items-start justify-between mb-3">
@@ -194,7 +201,8 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
           <span>View All Activities</span>
         </button>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
