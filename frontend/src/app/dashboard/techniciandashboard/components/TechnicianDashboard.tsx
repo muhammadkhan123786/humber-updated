@@ -6,6 +6,7 @@ import RouteBar, { RouteType } from './RouteBar';
 import Profile from './Profile';
 import StatsDashboard from './StatsOverview';
 import Overview from './Overview';
+import MyJobs from './MyJobs';
 
 const TechnicianDashboard = () => {
   const router = useRouter();
@@ -57,12 +58,7 @@ const TechnicianDashboard = () => {
       {activeRoute === 'overview' && <Overview refreshTrigger={refreshTrigger} />}
       
       {activeRoute === 'profile' && <Profile onProfileUpdate={handleProfileUpdate} />}
-      {activeRoute === 'myjobs' && (
-        <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
-          <h2 className="text-2xl font-bold text-gray-800">My Jobs</h2>
-          <p className="text-gray-600 mt-2">Jobs section coming soon...</p>
-        </div>
-      )}
+      {activeRoute === 'myjobs' && <MyJobs refreshTrigger={refreshTrigger} />}
       {activeRoute === 'activities' && (
         <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
           <h2 className="text-2xl font-bold text-gray-800">Activities</h2>
