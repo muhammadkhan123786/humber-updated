@@ -6,6 +6,7 @@ import {
 } from "../../models/communication-channel-models/provider.models";
 import { channelProviderValidation } from "../../schemas/communication-channels-integration-schema/providers.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
+import { getProviderFieldsByProviderId } from "../../controllers/communication-channel-provider-controller/communication.channel.provider.controller";
 
 const channelProviderRouter = Router();
 
@@ -20,6 +21,7 @@ const channelProviderController = new AdvancedGenericController({
   searchFields: ["providerName"],
 });
 
+channelProviderRouter.get("/get-provider-fields/:provider_id", getProviderFieldsByProviderId);
 channelProviderRouter.get("/", channelProviderController.getAll);
 channelProviderRouter.get("/:id", channelProviderController.getById);
 channelProviderRouter.post("/", channelProviderController.create);
