@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Activity, Clock, Calendar, Package, CheckCircle, Eye } from "lucide-react";
 import { getAlls } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
@@ -39,6 +39,7 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     fetchJobs();
@@ -51,7 +52,10 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
 
   const fetchJobs = async () => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load
+      if (isInitialLoad.current) {
+        setLoading(true);
+      }
       const response: any = await getAlls("/technician-dashboard-jobs");
       console.log("Fetched jobs:", response);
       
@@ -72,7 +76,10 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
       console.error("Error fetching jobs:", error);
       toast.error("Failed to load recent activities");
     } finally {
-      setLoading(false);
+      if (isInitialLoad.current) {
+        setLoading(false);
+        isInitialLoad.current = false;
+      }
     }
   };
 

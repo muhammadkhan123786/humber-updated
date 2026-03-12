@@ -54,11 +54,19 @@ const TechnicianDashboard = () => {
       </div>
       <RouteBar activeRoute={activeRoute} onRouteChange={setActiveRoute} />
       
-      {/* Conditional Rendering based on active route */}
-      {activeRoute === 'overview' && <Overview refreshTrigger={refreshTrigger} />}
+      {/* Render all components but hide inactive ones to preserve state */}
+      <div style={{ display: activeRoute === 'overview' ? 'block' : 'none' }}>
+        <Overview refreshTrigger={refreshTrigger} />
+      </div>
       
-      {activeRoute === 'profile' && <Profile onProfileUpdate={handleProfileUpdate} />}
-      {activeRoute === 'myjobs' && <MyJobs refreshTrigger={refreshTrigger} />}
+      <div style={{ display: activeRoute === 'myjobs' ? 'block' : 'none' }}>
+        <MyJobs refreshTrigger={refreshTrigger} />
+      </div>
+      
+      <div style={{ display: activeRoute === 'profile' ? 'block' : 'none' }}>
+        <Profile onProfileUpdate={handleProfileUpdate} />
+      </div>
+      
       {/* {activeRoute === 'activities' && (
         <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
           <h2 className="text-2xl font-bold text-gray-800">Activities</h2>

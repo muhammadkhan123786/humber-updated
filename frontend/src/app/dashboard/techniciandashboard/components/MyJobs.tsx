@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ListTodo, Pause, ClipboardList, Eye, Play, MapPin, Calendar, Clock, Phone, Package } from "lucide-react";
 import { getAlls } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
@@ -67,6 +67,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
   const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5; // Temporarily set to 2 for testing pagination
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     fetchJobs();
@@ -80,7 +81,10 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
 
   const fetchJobs = async () => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load
+      if (isInitialLoad.current) {
+        setLoading(true);
+      }
       const response: any = await getAlls("/technician-dashboard-jobs");
       console.log("Fetched jobs:", response);
       
@@ -101,7 +105,10 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
       console.error("Error fetching jobs:", error);
       toast.error("Failed to load jobs");
     } finally {
-      setLoading(false);
+      if (isInitialLoad.current) {
+        setLoading(false);
+        isInitialLoad.current = false;
+      }
     }
   };
 
