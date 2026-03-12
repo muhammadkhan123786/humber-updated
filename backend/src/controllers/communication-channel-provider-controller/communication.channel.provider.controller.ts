@@ -5,19 +5,18 @@ import { ChannelProviderConfigurationsFields } from "../../models/communication-
 
 export const getProviderFieldsByProviderId = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ) => {
   try {
     const providerId = new Types.ObjectId(req.params.provider_id as string);
 
-    const provider = await ChannelProviderConfigurationsFields
-    .findOne({
-        providerId,
-        userId: req.user.userId,
-        isDeleted: false
+    const provider = await ChannelProviderConfigurationsFields.findOne({
+      providerId,
+      // userId: req.user.userId,
+      isDeleted: false,
     })
-    .select("fields")
-    .lean();
+      .select("fields")
+      .lean();
 
     if (!provider) {
       return res.status(404).json({
@@ -30,7 +29,6 @@ export const getProviderFieldsByProviderId = async (
       success: true,
       data: provider.fields,
     });
-
   } catch (error) {
     console.error("Error fetching provider fields:", error);
 

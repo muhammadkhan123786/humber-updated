@@ -734,8 +734,15 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
       {
         _id: nanoid(),
-        label: "Channel Provider Config",
+        label: "Channel Provider Config Fields",
         href: "/dashboard/channel-provider-config",
+        icon: ShieldCheckIcon,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Channel Provider Configration",
+        href: "/dashboard/provider-configration",
         icon: ShieldCheckIcon,
         roleId: [1],
       },
