@@ -1,19 +1,25 @@
 import { Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
-import { channelProviderConfigDoc, ChannelProviderConfigurationsFields } from "../../models/communication-channel-models/channel.provider.config.models";
+import {
+  channelProviderConfigDoc,
+  ChannelProviderConfigurationsFields,
+} from "../../models/communication-channel-models/channel.provider.config.models";
 import { channelConfigValidation } from "../../schemas/communication-channels-integration-schema/provider.config.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { testCommunicationConnection } from "../../controllers/communication-channel-provider-controller/communication.channel.provider.controller";
 
 const channelProviderConfigFieldsRouter = Router();
 
-const channelProviderConfigFieldsServices = new GenericService<channelProviderConfigDoc>(ChannelProviderConfigurationsFields);
+const channelProviderConfigFieldsServices =
+  new GenericService<channelProviderConfigDoc>(
+    ChannelProviderConfigurationsFields,
+  );
 
 const channelProviderConfigFieldsController = new AdvancedGenericController({
-    service: channelProviderConfigFieldsServices,
-    populate: ["userId"],
-    validationSchema: channelConfigValidation,
-    searchFields: ["providerId"]
+  service: channelProviderConfigFieldsServices,
+  populate: ["userId", "providerId"],
+  validationSchema: channelConfigValidation,
+  searchFields: ["fields.name", "fields.label", "fields.type"],
 });
 
 channelProviderConfigFieldsRouter.post('/communication/test-connection',testCommunicationConnection)
@@ -24,4 +30,3 @@ channelProviderConfigFieldsRouter.put("/:id", channelProviderConfigFieldsControl
 channelProviderConfigFieldsRouter.delete("/:id", channelProviderConfigFieldsController.delete);
 
 export default channelProviderConfigFieldsRouter;
-
