@@ -59,12 +59,12 @@ const TechnicianDashboard = () => {
       
       {activeRoute === 'profile' && <Profile onProfileUpdate={handleProfileUpdate} />}
       {activeRoute === 'myjobs' && <MyJobs refreshTrigger={refreshTrigger} />}
-      {activeRoute === 'activities' && (
+      {/* {activeRoute === 'activities' && (
         <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
           <h2 className="text-2xl font-bold text-gray-800">Activities</h2>
           <p className="text-gray-600 mt-2">Activities section coming soon...</p>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { getAlls } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import JobActivityView from "../../jobs/components/JobActivityView";
+import JobDetailModal from "../../jobs/components/JobsDetail";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -12,7 +13,11 @@ interface JobData {
   _id: string;
   jobId: string;
   jobStatusId: string;
-  quotationId?: any;
+  quotationId?: {
+    _id?: string;
+    labourTime?: number;
+    partsList?: any[];
+  };
   ticketId: {
     ticketCode: string;
     issue_Details: string;
@@ -56,6 +61,8 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
   const [loading, setLoading] = useState(true);
   const [showActivityView, setShowActivityView] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -178,9 +185,30 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
     fetchJobs();
   };
 
-  const handleViewDetails = (jobId: string) => {
-    toast.success(`Viewing details for ${jobId}`);
-    // Add view details logic here
+  const handleViewDetails = (job: JobData) => {
+    setSelectedJobForDetails(job);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedJobForDetails(null);
+  };
+
+  // Calculate costs for the selected job
+  const calculateCosts = (job: any) => {
+    const partsCost = job.quotationId?.partsList?.reduce(
+      (total: number, part: any) => total + (Number(part.totalCost || part.unitCost || 0)),
+      0
+    ) || 0;
+
+    const labourCost = 0; // Add labour cost calculation if available
+
+    return {
+      partsCost,
+      labourCost,
+      totalBill: partsCost + labourCost,
+    };
   };
 
   if (loading) {
@@ -200,11 +228,11 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
           initialTab="technician-activities"
         />
       ) : (
-        <div className="bg-linear-to-br from-indigo-50 via-white to-purple-50 rounded-2xl shadow-lg border border-indigo-100 p-6">
+        <div className="bg-white  shadow-lg  border-t-8 border-blue-400  p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <ListTodo className="text-indigo-600" size={28} />
-        <h2 className="text-2xl font-bold text-gray-800">My Assigned Jobs</h2>
+        <ListTodo className="text-blue-600" size={22} />
+        <h2 className="text-xl font-semibold text-gray-800">My Assigned Jobs</h2>
       </div>
 
       {/* Jobs List */}
@@ -226,7 +254,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
             return (
               <div
                 key={job._id}
-                className="bg-white rounded-xl p-6 border-2 border-indigo-200 hover:shadow-xl transition-all duration-200"
+                className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200 hover:shadow-xl transition-all duration-200"
               >
                 {/* Job Header - ID, Status, Priority */}
                 <div className="flex items-center gap-3 mb-4">
@@ -245,7 +273,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
                   {/* Customer Info */}
                   <div>
                     <p className="text-gray-500 text-xs font-medium mb-2">Customer</p>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
                       {customer?.personId?.firstName} {customer?.personId?.lastName}
                     </h4>
                     <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
@@ -263,7 +291,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
                   {/* Product Info */}
                   <div>
                     <p className="text-gray-500 text-xs font-medium mb-2">Product</p>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
                       {vehicle?.productName}
                     </h4>
                     <p className="text-sm text-gray-700">
@@ -288,7 +316,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock size={16} className="text-gray-400" />
-                    <span>Est: 2 hours</span>
+                    <span>Est: {job.quotationId?.labourTime || 0} {job.quotationId?.labourTime === 1 ? 'hour' : 'hours'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <MapPin size={16} className="text-gray-400" />
@@ -326,7 +354,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
                   </button>
 
                   <button
-                    onClick={() => handleViewDetails(job.jobId)}
+                    onClick={() => handleViewDetails(job)}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
                   >
                     <Eye size={16} />
@@ -339,6 +367,16 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
         )}
       </div>
     </div>
+      )}
+      
+      {/* Job Details Modal */}
+      {showDetailsModal && selectedJobForDetails && (
+        <JobDetailModal
+          isOpen={showDetailsModal}
+          onClose={handleCloseDetailsModal}
+          job={selectedJobForDetails}
+          calculations={calculateCosts(selectedJobForDetails)}
+        />
       )}
     </>
   );
