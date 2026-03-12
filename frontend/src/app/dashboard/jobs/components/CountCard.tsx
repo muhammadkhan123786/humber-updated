@@ -47,7 +47,7 @@ const CountCard = ({ refreshTrigger = 0 }: CountCardProps) => {
     <div className="w-full h-24 bg-linear-to-br from-emerald-500 to-green-600 rounded-2xl p-4 flex justify-between items-center shadow-lg transition-transform hover:scale-105 cursor-pointer">
       <div className="flex flex-col justify-between h-full">
         <span className="text-white/90 text-xs font-semibold tracking-wide">
-         Completed Jobs
+         Ended Jobs
         </span>
         {loading ? (
           <div className="h-8 w-16 bg-white/20 rounded animate-pulse"></div>

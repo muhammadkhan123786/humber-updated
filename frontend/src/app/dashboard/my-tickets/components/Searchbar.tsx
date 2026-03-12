@@ -247,7 +247,7 @@ const Searchbar = ({
         <button
           type="button"
           onClick={handleToggle}
-          className={`flex items-center font-semibold justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all w-full md:min-w-48 h-9 focus:outline-none ${
+          className={`flex items-center font-semibold justify-between gap-2 px-4 py-2 bg-[#f3f4f6] border rounded-lg transition-all w-full md:min-w-60 h-9 focus:outline-none ${
             isOpen 
               ? 'border-[#4f46e5] ring-2 ring-[#4f46e5]/50' 
               : 'border-gray-300 hover:border-gray-400 focus:border-[#4f46e5] focus:ring-2 focus:ring-[#4f46e5]/50'
@@ -343,7 +343,7 @@ const Searchbar = ({
         </div>
 
         {/* View Toggle Buttons */}
-        <div className="flex items-center gap-1 md:ml-auto bg-gray-100 rounded-xl p-1 w-fit">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-fit">
           <button
             type="button"
             onClick={() => onViewModeChange('grid')}

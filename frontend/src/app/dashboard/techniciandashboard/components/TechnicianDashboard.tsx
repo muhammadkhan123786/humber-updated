@@ -4,9 +4,9 @@ import { useRouter } from 'next/navigation';
 import MainBar from './MainBar';
 import RouteBar, { RouteType } from './RouteBar';
 import Profile from './Profile';
-import CountCard from '../../jobs/components/CountCard';
 import StatsDashboard from './StatsOverview';
 import Overview from './Overview';
+import MyJobs from './MyJobs';
 
 const TechnicianDashboard = () => {
   const router = useRouter();
@@ -50,28 +50,29 @@ const TechnicianDashboard = () => {
         <div className="flex-1 ">
           <StatsDashboard refreshTrigger={refreshTrigger} />
         </div>
-        <div className="w-full sm:w-auto">
-          <CountCard refreshTrigger={refreshTrigger} />
-        </div>
+       
       </div>
       <RouteBar activeRoute={activeRoute} onRouteChange={setActiveRoute} />
       
-      {/* Conditional Rendering based on active route */}
-      {activeRoute === 'overview' && <Overview refreshTrigger={refreshTrigger} />}
+      {/* Render all components but hide inactive ones to preserve state */}
+      <div style={{ display: activeRoute === 'overview' ? 'block' : 'none' }}>
+        <Overview refreshTrigger={refreshTrigger} />
+      </div>
       
-      {activeRoute === 'profile' && <Profile onProfileUpdate={handleProfileUpdate} />}
-      {activeRoute === 'myjobs' && (
-        <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
-          <h2 className="text-2xl font-bold text-gray-800">My Jobs</h2>
-          <p className="text-gray-600 mt-2">Jobs section coming soon...</p>
-        </div>
-      )}
-      {activeRoute === 'activities' && (
+      <div style={{ display: activeRoute === 'myjobs' ? 'block' : 'none' }}>
+        <MyJobs refreshTrigger={refreshTrigger} />
+      </div>
+      
+      <div style={{ display: activeRoute === 'profile' ? 'block' : 'none' }}>
+        <Profile onProfileUpdate={handleProfileUpdate} />
+      </div>
+      
+      {/* {activeRoute === 'activities' && (
         <div className="bg-white border border-indigo-100 rounded-2xl shadow-lg p-8 mt-6">
           <h2 className="text-2xl font-bold text-gray-800">Activities</h2>
           <p className="text-gray-600 mt-2">Activities section coming soon...</p>
         </div>
-      )}
+      )} */}
     </div>
   )
 }

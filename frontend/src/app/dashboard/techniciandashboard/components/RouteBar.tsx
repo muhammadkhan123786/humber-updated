@@ -21,11 +21,11 @@ const RouteBar = ({ activeRoute, onRouteChange }: RouteBarProps) => {
       label: 'My Jobs',
       icon: ListTodo,
     },
-    {
-      id: 'activities' as RouteType,
-      label: 'Activities',
-      icon: Activity,
-    },
+    // {
+    //   id: 'activities' as RouteType,
+    //   label: 'Activities',
+    //   icon: Activity,
+    // },
     {
       id: 'profile' as RouteType,
       label: 'Profile',

@@ -99,7 +99,7 @@ export const technicianDashboardJobsController = async (
         },
         {
           path: "quotationId",
-          select: "quotationCode totalAmount partsList",
+          select: "quotationCode totalAmount partsList labourTime",
         },
       ])
       .sort({ createdAt: -1 })

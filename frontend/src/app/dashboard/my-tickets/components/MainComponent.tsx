@@ -5,6 +5,7 @@ import ListData from './ListData'
 import TicketDetailsPopup from './TicketDetailsPopup'
 import { fetchTechnicianTickets } from '@/services/ticketService'
 import { Ticket } from './TicketCard'
+import Pagination from '@/components/ui/Pagination'
 
 const MainComponent = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
@@ -15,6 +16,8 @@ const MainComponent = () => {
   const [filters, setFilters] = useState<{ status?: string; urgency?: string; source?: string }>({})
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 9 // 3x3 grid
 
   // Load all tickets once
   const loadTickets = async () => {
@@ -35,6 +38,11 @@ const MainComponent = () => {
   useEffect(() => {
     loadTickets()
   }, [])
+
+  // Reset to page 1 when filters or search changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filters])
 
   // Client-side filtering - no loading states!
   const filteredTickets = useMemo(() => {
@@ -78,6 +86,13 @@ const MainComponent = () => {
     return result
   }, [allTickets, searchQuery, filters])
 
+  // Paginated tickets
+  const paginatedTickets = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredTickets.slice(startIndex, endIndex)
+  }, [filteredTickets, currentPage, itemsPerPage])
+
   const handleSearchChange = (search: string) => {
     setSearchQuery(search)
   }
@@ -120,10 +135,19 @@ const MainComponent = () => {
         />
         <ListData 
           viewMode={viewMode} 
-          tickets={filteredTickets}
+          tickets={paginatedTickets}
           isLoading={isLoading}
           onViewDetails={handleViewDetails}
         />
+        
+        {/* Pagination */}
+        {filteredTickets.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={Math.ceil(filteredTickets.length / itemsPerPage)}
+            onPageChange={setCurrentPage}
+          />
+        )}
       </div>
 
       {/* Ticket Details Popup */}
