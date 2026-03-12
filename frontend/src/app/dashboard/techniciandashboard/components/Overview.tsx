@@ -4,6 +4,7 @@ import { Activity, Clock, Calendar, Package, CheckCircle, Eye } from "lucide-rea
 import { getAlls } from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import AnimationStyles from './Animation';
+import Pagination from "@/components/ui/Pagination";
 
 interface JobData {
   _id: string;
@@ -36,10 +37,17 @@ interface OverviewProps {
 const Overview = ({ refreshTrigger }: OverviewProps) => {
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     fetchJobs();
   }, [refreshTrigger]);
+
+  // Reset to page 1 when jobs change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [jobs]);
 
   const fetchJobs = async () => {
     try {
@@ -112,7 +120,9 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
             <p className="text-lg">No completed activities yet</p>
           </div>
         ) : (
-          jobs.map((job, index) => {
+          jobs
+            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+            .map((job, index) => {
             // const firstService = job.services[0];
             // const serviceType = firstService?.activityId?.technicianServiceType || "N/A";
             const issueDetails = job.ticketId?.issue_Details || "No issue details available";
@@ -189,7 +199,7 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
       </div>
 
       {/* View All Button */}
-      {jobs.length > 0 && (
+      {/* {jobs.length > 0 && (
         <button
           onClick={() => {
             // You can add navigation to all activities page here
@@ -200,6 +210,15 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
           <Eye size={18} />
           <span>View All Activities</span>
         </button>
+      )} */}
+
+      {/* Pagination */}
+      {jobs.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(jobs.length / itemsPerPage)}
+          onPageChange={setCurrentPage}
+        />
       )}
       </div>
     </>

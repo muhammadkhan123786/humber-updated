@@ -7,6 +7,7 @@ import axios from "axios";
 import JobActivityView from "../../jobs/components/JobActivityView";
 import JobDetailModal from "../../jobs/components/JobsDetail";
 import AnimationStyles from './Animation';
+import Pagination from "@/components/ui/Pagination";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -64,6 +65,8 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedJobForDetails, setSelectedJobForDetails] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5; // Temporarily set to 2 for testing pagination
 
   useEffect(() => {
     fetchJobs();
@@ -72,6 +75,7 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
   // Update local jobs when jobs change
   useEffect(() => {
     setLocalJobs(jobs);
+    setCurrentPage(1); // Reset to page 1 when jobs change
   }, [jobs]);
 
   const fetchJobs = async () => {
@@ -248,7 +252,9 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
             <p className="text-lg">No active jobs assigned</p>
           </div>
         ) : (
-          localJobs.map((job, index) => {
+          localJobs
+            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+            .map((job, index) => {
             const customer = job.ticketId?.customerId;
             const vehicle = job.ticketId?.vehicleId;
             const priority = job.ticketId?.priorityId;
@@ -372,6 +378,15 @@ const MyJobs = ({ refreshTrigger }: MyJobsProps) => {
           })
         )}
       </div>
+
+      {/* Pagination */}
+      {localJobs.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(localJobs.length / itemsPerPage)}
+          onPageChange={setCurrentPage}
+        />
+      )}
     </div>
       )}
       
