@@ -3,6 +3,7 @@ import { GenericService } from "../../services/generic.crud.services";
 import { channelProviderConfigDoc, ChannelProviderConfigurationsFields } from "../../models/communication-channel-models/channel.provider.config.models";
 import { channelConfigValidation } from "../../schemas/communication-channels-integration-schema/provider.config.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
+import { testCommunicationConnection } from "../../controllers/communication-channel-provider-controller/communication.channel.provider.controller";
 
 const channelProviderConfigFieldsRouter = Router();
 
@@ -15,6 +16,7 @@ const channelProviderConfigFieldsController = new AdvancedGenericController({
     searchFields: ["providerId"]
 });
 
+channelProviderConfigFieldsRouter.post('/communication/test-connection',testCommunicationConnection)
 channelProviderConfigFieldsRouter.get("/", channelProviderConfigFieldsController.getAll);
 channelProviderConfigFieldsRouter.get("/:id", channelProviderConfigFieldsController.getById);
 channelProviderConfigFieldsRouter.post("/", channelProviderConfigFieldsController.create);
