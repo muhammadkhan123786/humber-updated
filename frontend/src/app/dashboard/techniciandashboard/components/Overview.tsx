@@ -112,9 +112,9 @@ const Overview = ({ refreshTrigger }: OverviewProps) => {
   return (
     <>
       <AnimationStyles />
-      <div className="bg-white rounded-2xl shadow-lg border border-indigo-100 p-6 animate-slideUp">
+      <div className="bg-white   shadow-lg  border-t-8 border-green-500 p-6 animate-slideUp">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-green-500">
+      <div className="flex items-center gap-3 mb-6 pb-4  ">
         <Activity className="text-green-600" size={24} />
         <h2 className="text-2xl font-bold text-gray-800">Recent Activities</h2>
       </div>
