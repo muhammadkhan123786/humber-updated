@@ -21,6 +21,7 @@ import { InfoTab } from "./components/tabs/InfoTab";
 import { OrdersTab } from "./components/tabs/OrdersTab";
 import { ReturnsTab } from "./components/tabs/ReturnsTab";
 import { SupplierPricingTab } from "./components/tabs/PricingTab";
+import  PaymentsTab  from "./components/tabs/PaymentsTab";
 import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -233,6 +234,7 @@ export default function SupplierDetailPage() {
                       {activeTab === "pricing" && "Products & Pricing"}
                       {activeTab === "orders" && "Purchase Orders"}
                       {activeTab === "returns" && "Goods Returns"}
+                       {activeTab === "payment" && "Payment"}
                     </h2>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {activeTab === "info" &&
@@ -244,17 +246,21 @@ export default function SupplierDetailPage() {
                       {activeTab === "returns" &&
                         "All return notes and credits for this supplier"}
                     </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+      {activeTab === "payment" &&
+    "Payment history, credit notes and outstanding balance"}
+</p>    
                   </div>
 
                   {activeTab === "orders" && (
                     <Button
-                        onClick={ ()  => router.push('/dashboard/inventory-dashboard/product-Orders')}
+                        onClick={ ()  => router.push('/dashboard/product-Orders')}
                      className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/20 text-sm">
                       + Create New PO
                     </Button>
                   )}
                   {activeTab === "returns" && (
-                    <Button    onClick={ ()  => router.push('/dashboard/inventory-dashboard/product-goods-return')} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md shadow-purple-500/20 text-sm">
+                    <Button    onClick={ ()  => router.push('/dashboard/product-goods-return')} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md shadow-purple-500/20 text-sm">
                       + Create Return
                     </Button>
                   )}
@@ -280,6 +286,10 @@ export default function SupplierDetailPage() {
                 {activeTab === "returns" && (
                   <ReturnsTab supplierId={supplier._id} userId={userId} />
                 )}
+               {activeTab === "payment" && (
+              <PaymentsTab supplierId={supplier._id}  supplierName={name}
+ />
+            )}
               </div>
             </div>
           </div>
