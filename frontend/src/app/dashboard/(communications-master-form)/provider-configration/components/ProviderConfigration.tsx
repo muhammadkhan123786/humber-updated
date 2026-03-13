@@ -8,7 +8,7 @@ import {
   createItem,
   updateItem,
   deleteItem,
-} from "@/helper/apiHelper"; // Ensure deleteItem is exported from your helper
+} from "@/helper/apiHelper";
 import { toast } from "react-hot-toast";
 import {
   Mail,
@@ -21,10 +21,44 @@ import {
   Globe,
   Trash2,
 } from "lucide-react";
+import { IntegrationTips } from "./IntegrationTip";
 
 interface FormValues {
   configurationData: Record<string, any>;
 }
+
+const getChannelStyles = (channelName: string) => {
+  const name = channelName?.toLowerCase() || "";
+  const baseClasses =
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-primary/90 h-9 px-4 py-2 has-[>svg]:px-3";
+
+  if (name.includes("whatsapp")) {
+    return {
+      button: `${baseClasses} bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white`,
+      iconBg: "bg-teal-600",
+    };
+  }
+  if (
+    name.includes("sms") ||
+    name.includes("text") ||
+    name.includes("message")
+  ) {
+    return {
+      button: `${baseClasses} bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white`,
+      iconBg: "bg-green-600",
+    };
+  }
+  if (name.includes("whats")) {
+    return {
+      button: `${baseClasses} bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white`,
+      iconBg: "bg-blue-600",
+    };
+  }
+  return {
+    button: `${baseClasses} bg-blue-600 text-white hover:bg-blue-700`,
+    iconBg: "bg-blue-600",
+  };
+};
 
 const ChannelIcon = ({
   channelName,
@@ -54,6 +88,8 @@ const ProviderSection = ({ provider }: { provider: any }) => {
   const { control, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: { configurationData: {} },
   });
+
+  const styles = getChannelStyles(provider.channelId?.channelName || "");
 
   const { data: fields = [], isFetching: loading } = useQuery({
     queryKey: ["providerFields", provider._id],
@@ -100,11 +136,32 @@ const ProviderSection = ({ provider }: { provider: any }) => {
     },
   });
 
+  const testConnectionMutation = useMutation({
+    mutationFn: async () => {
+      const configRes = await getAll<any>(
+        `/client-channel-config-data?providerId=${provider._id}`,
+      );
+      const config = configRes.data?.[0];
+      if (!config) throw new Error("Configuration not found");
+      return createItem(
+        "/channel-providers-fields/communication/test-connection",
+        {
+          provider: config.providerId?.providerName,
+          config: config.configurationData,
+        },
+      );
+    },
+    onSuccess: (data: any) =>
+      toast.success(data?.data?.message || "Connection successful"),
+    onError: (error: any) =>
+      toast.error(error?.response?.data?.message || "Connection failed"),
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
       <div className="p-6 border-b border-gray-50 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-600 p-2 rounded-lg text-white">
+          <div className={`${styles.iconBg} p-2 rounded-lg text-white`}>
             <ChannelIcon
               channelName={provider.channelId?.channelName}
               size={20}
@@ -167,11 +224,6 @@ const ProviderSection = ({ provider }: { provider: any }) => {
                             )
                           }
                         />
-                        {error && (
-                          <p className="text-red-500 text-xs mt-1 font-medium">
-                            {error.message}
-                          </p>
-                        )}
                       </>
                     )}
                   />
@@ -181,14 +233,15 @@ const ProviderSection = ({ provider }: { provider: any }) => {
             <div className="flex justify-end pt-4 gap-3">
               <button
                 type="button"
-                className="px-5 py-1 rounded-xl font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50"
+                onClick={() => testConnectionMutation.mutate()}
+                className="px-5 py-1 rounded-xl font-semibold text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
               >
+                {testConnectionMutation.isPending && (
+                  <RefreshCw size={16} className="animate-spin" />
+                )}{" "}
                 Test Connection
               </button>
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-5 py-1 rounded-xl font-semibold flex items-center gap-2 hover:bg-blue-700"
-              >
+              <button type="submit" className={styles.button}>
                 <Settings size={18} />{" "}
                 {configId ? "Update Settings" : "Save Settings"}
               </button>
@@ -234,46 +287,46 @@ const ProviderConfigurationPage = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {providers.map((p: any) => (
-            <div
-              key={p._id}
-              className="group relative bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                  <ChannelIcon
-                    channelName={p.channelId?.channelName}
-                    size={24}
-                  />
+          {providers.map((p: any) => {
+            const styles = getChannelStyles(p.channelId?.channelName || "");
+            return (
+              <div
+                key={p._id}
+                className="group relative bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`${styles.iconBg} p-2 rounded-lg text-white`}>
+                    <ChannelIcon
+                      channelName={p.channelId?.channelName}
+                      size={24}
+                    />
+                  </div>
+                  <div className="text-green-600 text-[10px] font-bold uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full">
+                    <CheckCircle size={10} /> Connected
+                  </div>
                 </div>
-                <div className="text-green-600 text-[10px] font-bold uppercase flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full">
-                  <CheckCircle size={10} /> Connected
+                <p className="text-gray-400 text-xs font-medium">
+                  {p.channelId?.channelName} Service
+                </p>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-gray-900">Active</h3>
+                  <button
+                    onClick={() => deleteMutation.mutate(p._id)}
+                    className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
-
-              <p className="text-gray-400 text-xs font-medium">
-                {p.channelId?.channelName} Service
-              </p>
-
-              {/* New flex container to align text and icon horizontally */}
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-900">Active</h3>
-
-                <button
-                  onClick={() => deleteMutation.mutate(p._id)}
-                  className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {providers.map((p: any) => (
           <ProviderSection key={p._id} provider={p} />
         ))}
       </div>
+      <IntegrationTips />
     </div>
   );
 };
