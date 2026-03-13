@@ -87,7 +87,8 @@ import documentNumberRoutes from "./routes/document-numbers.routes";
 import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
-
+import supplierLedgrRoutes from "./routes/ledger.routes";
+import paymentRoutes from "./routes/payment.routes"
 // Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
@@ -685,7 +686,17 @@ app.use(`${process.env.API_PREFIX}/upload`,adminProtecter, uploadRoutes);
 app.use(`${process.env.API_PREFIX}/marketplace`,adminProtecter, marketplaceRoute);
 app.use(`${process.env.API_PREFIX}/test/email`,adminProtecter, emailTestRoutes);
 app.use(`${process.env.API_PREFIX}/supplier-price-history`,adminProtecter, supplierPriceHistoryRoutes);
+app.use(
+  `${process.env.API_PREFIX}/supplier-ledger`,
+  adminProtecter,
+  supplierLedgrRoutes,
+);
 
+app.use(
+  `${process.env.API_PREFIX}/supplier-payment`,
+  adminProtecter,
+  paymentRoutes,
+);
 
 // Muzamil Hassan end
 // Health check route

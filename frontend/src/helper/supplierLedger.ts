@@ -12,7 +12,7 @@ import {
   SupplierBalance,
   CreatePaymentDto,
   LedgerFilters,
-} from "../../../common/ISupplierledger.interface";
+} from "@common/ISupplierledger.interface";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
