@@ -5,6 +5,8 @@ import { EbayService } from "../marketplace-Services/marketplace/EbayService";
 // import { AmazonService } from './AmazonService';
 import { ShopifyService } from "../marketplace-Services/marketplace/ShopifyService";
 import { WooCommerceService } from "./marketplace/WooCommerceService";
+import { EtsyService } from "./marketplace/EtsyOAuthService";
+
 // import { TikTokService } from './TikTokService';
 // Import other services...
 
@@ -21,6 +23,10 @@ export class MarketplaceServiceFactory {
         return new ShopifyService(connection);
       case "woocommerce":
         return new WooCommerceService(connection);
+
+          case "etsy":
+        return new EtsyService(connection);
+
       // case 'tiktok': return new TikTokService(connection);
 
       // Add other marketplaces...

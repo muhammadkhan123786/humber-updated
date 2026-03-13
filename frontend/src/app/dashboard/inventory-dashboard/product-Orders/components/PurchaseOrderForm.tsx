@@ -140,7 +140,7 @@ const PricingSelector: React.FC<{
                 : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300"
             }`}>
             {p.marketplaceName}
-            <span className="ml-1.5 font-bold">£{p.sellingPrice}</span>
+            <span className="ml-1.5 font-bold">£{p.costPrice}</span>
           </button>
         ))}
       </div>
@@ -334,7 +334,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       productName: product.productName,
       sku: product.attributes[0]?.sku ?? product.sku,
       quantity: newItem.quantity || "1",
-      unitPrice: firstPricing ? String(firstPricing.sellingPrice) : String(product.ui_price),
+      unitPrice: firstPricing ? String(firstPricing.costPrice) : String(product.ui_price),
     });
 
     // Reorder mode: auto-fill supplier from product's linked supplier
@@ -376,9 +376,11 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setSelectedPricingId("");
   };
 
+
   const handlePricingSelect = (p: ProductPricing) => {
+    console.log("p", p)
     setSelectedPricingId(p._id);
-    onNewItemChange({ ...newItem, unitPrice: String(p.sellingPrice) });
+    onNewItemChange({ ...newItem, unitPrice: String(p.costPrice) });
   };
 
   const handleSupplierChange = (id: string) => {
@@ -948,6 +950,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                     </thead>
                     <tbody>
                       {orderItems.map((item, idx) => (
+                        
                         <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50">
                           <td className="p-3 text-sm">{item.productName}</td>
                           <td className="p-3 text-sm font-mono text-gray-600">{item.sku}</td>
