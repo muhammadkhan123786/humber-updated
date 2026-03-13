@@ -92,7 +92,7 @@ const productConfig: ComboboxItemConfig<ProductFull> = {
   getLabel:         p => p.productName,
   getSubLabel:      p => p.sku,
   getRightSubLabel: p => `Stock: ${p.ui_totalStock}`,
-  getRightLabel:    p => `£${p.ui_price.toFixed(2)}`,
+  getRightLabel:    p => `£${p.ui_price}`,
   getSearchFields:  p => [p.productName, p.sku],
 };
 
@@ -140,7 +140,7 @@ const PricingSelector: React.FC<{
                 : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300"
             }`}>
             {p.marketplaceName}
-            <span className="ml-1.5 font-bold">£{p.sellingPrice.toFixed(2)}</span>
+            <span className="ml-1.5 font-bold">£{p.costPrice}</span>
           </button>
         ))}
       </div>
@@ -334,7 +334,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
       productName: product.productName,
       sku: product.attributes[0]?.sku ?? product.sku,
       quantity: newItem.quantity || "1",
-      unitPrice: firstPricing ? String(firstPricing.sellingPrice) : String(product.ui_price),
+      unitPrice: firstPricing ? String(firstPricing.costPrice) : String(product.ui_price),
     });
 
     // Reorder mode: auto-fill supplier from product's linked supplier
@@ -376,9 +376,11 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     setSelectedPricingId("");
   };
 
+
   const handlePricingSelect = (p: ProductPricing) => {
+    console.log("p", p)
     setSelectedPricingId(p._id);
-    onNewItemChange({ ...newItem, unitPrice: String(p.sellingPrice) });
+    onNewItemChange({ ...newItem, unitPrice: String(p.costPrice) });
   };
 
   const handleSupplierChange = (id: string) => {
@@ -948,12 +950,13 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                     </thead>
                     <tbody>
                       {orderItems.map((item, idx) => (
+                        
                         <tr key={idx} className="border-t border-gray-100 hover:bg-gray-50">
                           <td className="p-3 text-sm">{item.productName}</td>
                           <td className="p-3 text-sm font-mono text-gray-600">{item.sku}</td>
                           <td className="p-3 text-sm text-center">{item.quantity}</td>
-                          <td className="p-3 text-sm text-right">£{item.unitPrice.toFixed(2)}</td>
-                          <td className="p-3 text-sm text-right font-semibold">£{item.totalPrice.toFixed(2)}</td>
+                          <td className="p-3 text-sm text-right">£{item.unitPrice}</td>
+                          <td className="p-3 text-sm text-right font-semibold">£{item.totalPrice}</td>
                           <td className="p-3 text-center">
                             <Button size="sm" variant="ghost" type="button"
                               onClick={() => onRemoveItem(idx)} disabled={isSaving}
@@ -985,15 +988,15 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-lg border-2 border-emerald-100 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-semibold">£{totals.subtotal.toFixed(2)}</span>
+                    <span className="font-semibold">£{totals.subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">VAT (20%):</span>
-                    <span className="font-semibold">£{totals.tax.toFixed(2)}</span>
+                    <span className="font-semibold">£{totals.tax}</span>
                   </div>
                   <div className="flex justify-between text-lg border-t-2 border-emerald-200 pt-2">
                     <span className="font-bold text-gray-900">Total:</span>
-                    <span className="font-bold text-emerald-600">£{totals.total.toFixed(2)}</span>
+                    <span className="font-bold text-emerald-600">£{totals.total}</span>
                   </div>
                 </div>
               )}

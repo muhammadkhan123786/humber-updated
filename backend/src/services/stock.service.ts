@@ -695,6 +695,7 @@ import { PurchaseOrder } from "../models/purchaseOrder.model";
 import { GrnModel }      from "../models/grn.models";
 import { GoodsReturn }   from "../models/goodsReturn.model";
 import { emailService }  from "./email.service";
+import { createDebitEntry } from "./ledger.service";
 
 interface StockDelta {
   productId: string;
@@ -934,7 +935,69 @@ async function sendGRNDiscrepancyEmail(grn: any, po: any): Promise<void> {
 // PUBLIC: GRN se stock apply karo
 // Flow: Stock update → PO status sync → Discrepancy email
 // ─────────────────────────────────────────────────────────────────────────────
-export async function applyGRNToStock(grnId: string): Promise<StockResult> {
+  // export async function applyGRNToStock(grnId: string): Promise<StockResult> {
+  //   try {
+  //     console.log(`[Stock] 🚀 applyGRNToStock START | grnId=${grnId}`);
+
+  //     const grn = await GrnModel.findById(grnId).lean() as any;
+  //     if (!grn) throw new Error(`GRN not found: ${grnId}`);
+
+  //     console.log(`[Stock] GRN found: ${grn.grnNumber} | items: ${grn.items?.length}`);
+  //     console.log(`[Stock] Items:`, grn.items?.map((i: any) => ({
+  //       sku: i.sku, productId: i.productId, accepted: i.acceptedQuantity
+  //     })));
+
+  //     // ── STEP 1: Stock update ──────────────────────────────────────────────
+  //     const deltas: StockDelta[] = (grn.items ?? [])
+  //       .filter((item: any) => (item.acceptedQuantity || 0) > 0)
+  //       .map((item: any) => ({
+  //         productId: String(item.productId),
+  //         sku:       item.sku,
+  //         delta:     item.acceptedQuantity,
+  //         reason:    `GRN ${grn.grnNumber}`,
+  //       }));
+
+  //     if (deltas.length === 0) {
+  //       console.warn(`[Stock] ⚠️ No accepted items in GRN ${grn.grnNumber} — nothing to update`);
+  //     }
+
+  //     const result = deltas.length > 0
+  //       ? await applyStockDeltas(deltas)
+  //       : { success: true, updated: [], skipped: [], errors: [] };
+
+  //     // ── STEP 2: PO status smart sync ─────────────────────────────────────
+  //     // PARTIAL delivery → stays "ordered"
+  //     // FULL delivery    → becomes "received"
+  //     await syncPOStatus(String(grn.purchaseOrderId));
+
+  //     // ── STEP 3: Discrepancy email (fire & forget — never block stock) ─────
+  //     const hasDiscrepancy = (grn.items ?? []).some(
+  //       (item: any) => (item.rejectedQuantity || 0) > 0 || (item.damageQuantity || 0) > 0
+  //     );
+
+  //     if (hasDiscrepancy) {
+  //       const po = await PurchaseOrder
+  //         .findById(grn.purchaseOrderId)
+  //         .populate("supplier", "contactInformation supplierIdentification")
+  //         .lean();
+  //       if (po) {
+  //         sendGRNDiscrepancyEmail(grn, po).catch(err =>
+  //           console.error("[Stock] Discrepancy email error:", err.message)
+  //         );
+  //       }
+  //     }
+
+  //     console.log(`[Stock] ✅ applyGRNToStock DONE | updated=${result.updated} skipped=${result.skipped}`);
+  //     return result;
+
+  //   } catch (err: any) {
+  //     console.error(`[Stock] ❌ applyGRNToStock FAILED:`, err.message);
+  //     return { success: false, updated: [], skipped: [], errors: [err.message] };
+  //   }
+  // }
+
+
+  export async function applyGRNToStock(grnId: string): Promise<StockResult> {
   try {
     console.log(`[Stock] 🚀 applyGRNToStock START | grnId=${grnId}`);
 
@@ -946,7 +1009,7 @@ export async function applyGRNToStock(grnId: string): Promise<StockResult> {
       sku: i.sku, productId: i.productId, accepted: i.acceptedQuantity
     })));
 
-    // ── STEP 1: Stock update ──────────────────────────────────────────────
+    // ── STEP 1: Stock update ─────────────────────────────── UNCHANGED ────
     const deltas: StockDelta[] = (grn.items ?? [])
       .filter((item: any) => (item.acceptedQuantity || 0) > 0)
       .map((item: any) => ({
@@ -964,12 +1027,10 @@ export async function applyGRNToStock(grnId: string): Promise<StockResult> {
       ? await applyStockDeltas(deltas)
       : { success: true, updated: [], skipped: [], errors: [] };
 
-    // ── STEP 2: PO status smart sync ─────────────────────────────────────
-    // PARTIAL delivery → stays "ordered"
-    // FULL delivery    → becomes "received"
+    // ── STEP 2: PO status smart sync ─────────────────────── UNCHANGED ───
     await syncPOStatus(String(grn.purchaseOrderId));
 
-    // ── STEP 3: Discrepancy email (fire & forget — never block stock) ─────
+    // ── STEP 3: Discrepancy email ─────────────────────────── UNCHANGED ──
     const hasDiscrepancy = (grn.items ?? []).some(
       (item: any) => (item.rejectedQuantity || 0) > 0 || (item.damageQuantity || 0) > 0
     );
@@ -985,6 +1046,47 @@ export async function applyGRNToStock(grnId: string): Promise<StockResult> {
         );
       }
     }
+
+    // ── STEP 4: ✅ NEW — Ledger DEBIT ─────────────────────────────────────
+    // GRN receive hua → hum supplier ke outstanding badha → DEBIT
+    // try/catch ensures ledger failure never blocks stock update
+    try {
+      const po = await PurchaseOrder
+        .findById(grn.purchaseOrderId)
+        .select("supplier")
+        .lean() as any;
+
+      const supplierId = po?.supplier;
+
+      const totalAmount =
+        grn.totalAmount ||
+        (grn.items ?? []).reduce((sum: number, item: any) =>
+          sum + (item.acceptedQuantity || 0) * (item.unitPrice || 0), 0
+        );
+
+      if (supplierId && totalAmount > 0) {
+        await createDebitEntry({
+          supplierId:      String(supplierId),
+          amount:          totalAmount,
+          referenceType:   "GRN",
+          referenceId:     grn._id,
+          referenceNumber: grn.grnNumber,
+          notes:           `GRN received: ${grn.grnNumber}`,
+          createdBy:       "system",
+        });
+
+        console.log(
+          `[Stock] 💰 Ledger DEBIT | GRN: ${grn.grnNumber} | £${totalAmount} | Supplier: ${supplierId}`
+        );
+      } else {
+        console.warn(
+          `[Stock] ⚠️ Ledger DEBIT skipped — supplierId: ${supplierId}, totalAmount: ${totalAmount}`
+        );
+      }
+    } catch (ledgerErr: any) {
+      console.error(`[Stock] ❌ Ledger DEBIT failed for ${grn.grnNumber}:`, ledgerErr.message);
+    }
+    // ── END STEP 4 ────────────────────────────────────────────────────────
 
     console.log(`[Stock] ✅ applyGRNToStock DONE | updated=${result.updated} skipped=${result.skipped}`);
     return result;

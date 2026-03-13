@@ -1,9 +1,17 @@
 // components/SupplierTabs.tsx
 "use client";
-import { Building2, TrendingUp, ShoppingCart, RotateCcw } from "lucide-react";
+import { Building2, TrendingUp, ShoppingCart, RotateCcw, Package, Truck, DollarSign, CreditCard  } from "lucide-react";
 
-export type TabId = "info" | "pricing" | "orders" | "returns";
+// SupplierTabs.tsx
+export type TabId = "info" | "pricing" | "orders" | "returns" | "payment";
 
+const tabs = [
+  { id: "info",    label: "Supplier Info",     icon: Building2  },
+  { id: "pricing", label: "Products & Pricing", icon: TrendingUp },
+  { id: "orders",  label: "Purchase Orders",    icon: Package    },
+  { id: "returns", label: "Goods Returns",      icon: Truck      },
+  { id: "payment", label: "Payments",           icon: DollarSign }, // ← ADD
+];
 interface Props {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
@@ -37,6 +45,13 @@ const TABS: { id: TabId; label: string; icon: any; gradient: string; activeGradi
     icon: RotateCcw,    
     gradient: "from-amber-500/10 to-amber-600/5",
     activeGradient: "from-amber-600 to-amber-700"
+  },
+ { 
+    id: "payment", 
+    label: "Payment",      
+    icon: CreditCard,                             
+    gradient: "from-rose-500/10 to-rose-600/5",   
+    activeGradient: "from-rose-600 to-rose-700"    
   },
 ];
 

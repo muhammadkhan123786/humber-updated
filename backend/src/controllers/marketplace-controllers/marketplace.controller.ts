@@ -92,7 +92,7 @@ export class MarketplaceController {
         try {
             const { name, description, type, environment, credentials, userId } =
                 req.body;
-
+            console.log("Is request is coming here !")
             console.log(req.body);
             // Validate marketplace type
             const marketplaceConfig = MARKETPLACE_CONFIGS[type];

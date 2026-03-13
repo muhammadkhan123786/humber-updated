@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import {
@@ -24,43 +24,60 @@ interface ReturnStats {
 
 interface UseGoodsReturnOptions {
   supplierId?: string;
-  // ─────────────────────────────────────────────────────────────────────────
-  // supplierId PASS KARO   → Supplier Tab Mode
-  //   - GET /goods-return-notice/by-supplier/:supplierId
-  //   - Sirf is supplier ki returns dikhata hai
-  //   - Stats bhi filtered hoti hain
-  //
-  // supplierId NAHI PASS   → Global Mode (Goods Return Notice page)
-  //   - fetchGoodsReturns() use karta hai (existing helper)
-  //   - Saari returns dikhata hai (pagination + search)
-  // ─────────────────────────────────────────────────────────────────────────
 }
+
+// ── Normalize status — never returns undefined ────────────────────────────
+const normalizeStatus = (status: any): ReturnStatus =>
+  (status as ReturnStatus) || "pending";
+
+// ── Compute stats from full data array ───────────────────────────────────
+const computeStats = (data: any[]): ReturnStats => ({
+  totalReturns: data.length,
+  completed: data.filter(r => normalizeStatus(r.status) === "completed").length,
+  pending:   data.filter(r =>
+    ["pending", "approved", "in-transit"].includes(normalizeStatus(r.status))
+  ).length,
+  rejected:  data.filter(r => normalizeStatus(r.status) === "rejected").length,
+  totalValue: data.reduce((sum, r) => {
+    const itemsTotal = (r.items || []).reduce((s: number, item: any) =>
+      s + (item.returnQty || item.returnQuantity || 0) * (item.unitPrice || 0), 0
+    );
+    return sum + (r.totalAmount || itemsTotal || 0);
+  }, 0),
+});
 
 export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
   const { supplierId } = options;
   const isSupplierMode = Boolean(supplierId);
 
-  // ── State ──────────────────────────────────────────────────────────────
+  // ── Core data ──────────────────────────────────────────────────────────
   const [goodsReturnNotes, setGoodsReturnNotes] = useState<GoodsReturnNote[]>([]);
   const [availableGRNs,    setAvailableGRNs]    = useState<GRNForReturn[]>([]);
-  const [searchTerm,       setSearchTerm]        = useState("");
-  const [selectedStatus,   setSelectedStatus]    = useState("");
-  const [viewMode,         setViewMode]          = useState<"grid" | "table">("table");
-  const [page,             setPage]              = useState(1);
-  const [limit,            setLimit]             = useState(10);
-  const [total,            setTotal]             = useState(0);
-  const [isExporting,      setIsExporting]       = useState<string | null>(null);
-  const [isUpdatingStatus, setIsUpdatingStatus]  = useState<string | null>(null);
-
-  const [serverStats, setServerStats] = useState<ReturnStats>({
-    totalReturns: 0,
-    pending:      0,
-    completed:    0,
-    rejected:     0,
-    totalValue:   0,
+  const [serverStats,      setServerStats]      = useState<ReturnStats>({
+    totalReturns: 0, pending: 0, completed: 0, rejected: 0, totalValue: 0,
   });
 
-  // Form state
+  // ── UI ─────────────────────────────────────────────────────────────────
+  const [selectedStatus,   setSelectedStatus]   = useState("");
+  const [viewMode,         setViewMode]         = useState<"grid" | "table">("grid");
+  const [page,             setPage]             = useState(1);
+  const [limit,            setLimit]            = useState(10);
+  const [total,            setTotal]            = useState(0);
+  const [isLoading,        setIsLoading]        = useState(true);
+  const [isExporting,      setIsExporting]      = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
+
+  // ── Search — raw input + debounced term ───────────────────────────────
+  const [searchInput, setSearchInput] = useState(""); // bound to <input> directly
+  const [searchTerm,  setSearchTerm]  = useState(""); // debounced — triggers fetch
+
+  // Debounce 400ms — keystrokes don't fire a fetch until user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => setSearchTerm(searchInput), 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // ── Form state ─────────────────────────────────────────────────────────
   const [selectedGRN,    setSelectedGRN]    = useState("");
   const [returnedBy,     setReturnedBy]     = useState("");
   const [returnReason,   setReturnReason]   = useState("");
@@ -68,101 +85,97 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
   const [returnDate,     setReturnDate]     = useState(new Date().toISOString().split("T")[0]);
   const [returningItems, setReturningItems] = useState<ReturningItem[]>([]);
 
-  // ── Load Returns ───────────────────────────────────────────────────────
-  const loadGoodsReturns = async () => {
-    try {
+  // ── GENERATION COUNTER — the real fix for the disappearing data ────────
+  // Every fetch call gets a unique generation number.
+  // When the fetch completes, it checks if it's still the LATEST one.
+  // If a newer fetch started while this one was in-flight → result discarded.
+  // This means: typing in form → triggers search → old search result comes back
+  // late → gets DISCARDED → table never gets set to empty. ✅
+  const fetchGenRef = useRef(0);
 
+  // ── Load Returns ───────────────────────────────────────────────────────
+  const loadGoodsReturns = useCallback(async () => {
+    const myGen = ++fetchGenRef.current; // claim this generation
+    setIsLoading(true);
+
+    try {
       if (isSupplierMode) {
-        // ╔══════════════════════════════════════════════╗
-        // ║  SUPPLIER TAB MODE                          ║
-        // ║  GET /goods-return-notice/by-supplier/:id   ║
-        // ╚══════════════════════════════════════════════╝
         const token = localStorage.getItem("token");
         const res   = await axios.get(
           `${BASE_URL}/goods-return-notice/by-supplier/${supplierId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const data: any[] = res.data?.data ?? [];
-        setGoodsReturnNotes(data as GoodsReturnNote[]);
-        setTotal(data.length);
 
-        // Stats — inline calculate (no extra round-trip)
-        setServerStats({
-          totalReturns: data.length,
-          completed:    data.filter(r => r.status === "completed").length,
-          pending:      data.filter(r =>
-            ["pending", "approved", "in-transit"].includes(r.status)
-          ).length,
-          rejected:     data.filter(r => r.status === "rejected").length,
-          totalValue:   data.reduce((sum, ret) => {
-            return sum + (ret.items || []).reduce((s: number, item: any) => {
-              return s + (item.returnQuantity || item.returnQty || 0) * (item.unitPrice || 0);
-            }, 0);
-          }, 0),
-        });
+        if (myGen !== fetchGenRef.current) return; // stale — discard ✅
+
+        const data       = res.data?.data ?? [] as any[];
+        const normalized = data.map((r: any) => ({ ...r, status: normalizeStatus(r.status) }));
+
+        setGoodsReturnNotes(normalized as GoodsReturnNote[]);
+        setTotal(normalized.length);
+        setServerStats(computeStats(normalized));
 
       } else {
-        // ╔════════════════════════════════════════════════╗
-        // ║  GLOBAL MODE (Goods Return Notice main page)  ║
-        // ║  Uses existing fetchGoodsReturns() helper     ║
-        // ╚════════════════════════════════════════════════╝
-        const res = await fetchGoodsReturns(page, limit, searchTerm);
-        setGoodsReturnNotes(res.data as any);
-        setTotal(res.total);
+        // Fetch current page + full dataset in parallel for accurate stats
+        const [pageRes, allRes] = await Promise.all([
+          fetchGoodsReturns(page, limit, searchTerm),
+          fetchGoodsReturns(1, 9999, ""),
+        ]);
 
-        // All data for accurate stats
-        const allRes  = await fetchGoodsReturns(1, 9999, "");
-        const allData = allRes.data as any[];
+        if (myGen !== fetchGenRef.current) return; // stale — discard ✅
 
-        setServerStats({
-          totalReturns: allRes.total,
-          pending:      allData.filter(g =>
-            ["pending", "approved", "in-transit"].includes(g.status)
-          ).length,
-          completed:    allData.filter(g => g.status === "completed").length,
-          rejected:     allData.filter(g => g.status === "rejected").length,
-          totalValue:   allData.reduce((sum, g) => sum + (g.totalAmount ?? 0), 0),
-        });
+        const pageData = (pageRes.data as any[]).map(r => ({
+          ...r, status: normalizeStatus(r.status)
+        }));
+        const allData = (allRes.data as any[]).map(r => ({
+          ...r, status: normalizeStatus(r.status)
+        }));
+
+        setGoodsReturnNotes(pageData as GoodsReturnNote[]);
+        setTotal(pageRes.total);
+        setServerStats(computeStats(allData)); // stats from full data always ✅
       }
 
-    } catch (err) {
+    } catch (err: any) {
+      if (myGen !== fetchGenRef.current) return; // stale error — ignore ✅
       console.error(err);
       toast.error("Failed to load goods return notes");
+    } finally {
+      if (myGen === fetchGenRef.current) {
+        setIsLoading(false); // only clear spinner for latest fetch ✅
+      }
     }
-  };
+  }, [page, limit, searchTerm, supplierId, isSupplierMode]);
+
+  // ── ONE effect — useCallback handles the deps correctly ───────────────
+  useEffect(() => {
+    loadGoodsReturns();
+  }, [loadGoodsReturns]);
 
   // ── Load Available GRNs ────────────────────────────────────────────────
-  const loadAvailableGRNs = async () => {
+  const loadAvailableGRNs = useCallback(async () => {
     try {
       const [grnRes, returnRes] = await Promise.all([
         fetchGRNs(1, 200, ""),
         fetchGoodsReturns(1, 9999, ""),
       ]);
 
-      const allReturns = returnRes.data as any[];
+      const allReturns    = returnRes.data as any[];
+      let   receivedGRNs  = (grnRes.data as any[]).filter(g => g.status === "received");
 
-      let receivedGRNs = (grnRes.data as any[]).filter(
-        grn => grn.status === "received"
-      );
-
-      // Supplier mode — sirf is supplier ke GRNs
       if (isSupplierMode) {
         receivedGRNs = receivedGRNs.filter((grn: any) => {
-          const grnSupplier =
-            grn?.purchaseOrderId?.supplier?._id ||
-            grn?.purchaseOrderId?.supplier;
-          return String(grnSupplier) === String(supplierId);
+          const s = grn?.purchaseOrderId?.supplier?._id || grn?.purchaseOrderId?.supplier;
+          return String(s) === String(supplierId);
         });
       }
 
-      // returnedQtyMap: grnId → { sku → qty }
+      // Build map of already-returned qty per GRN per SKU
       const returnedQtyMap: Record<string, Record<string, number>> = {};
       for (const ret of allReturns) {
-        if (ret.status === "rejected") continue;
+        if (normalizeStatus(ret.status) === "rejected") continue;
         if (!ret.grnId) continue;
-        const grnId = typeof ret.grnId === "object" && ret.grnId !== null
-          ? (ret.grnId as any)._id
-          : String(ret.grnId);
+        const grnId = typeof ret.grnId === "object" ? (ret.grnId as any)._id : String(ret.grnId);
         if (!grnId) continue;
         if (!returnedQtyMap[grnId]) returnedQtyMap[grnId] = {};
         for (const item of ret.items) {
@@ -183,35 +196,29 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
           });
           return { ...grn, id: grnId, items };
         })
-        .filter(grn => grn.items.some((item: any) => item.returnableQty > 0));
+        .filter(grn => grn.items.some((i: any) => i.returnableQty > 0));
 
       setAvailableGRNs(normalised as GRNForReturn[]);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load available GRNs");
     }
-  };
-
-  // ── Effects ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    loadGoodsReturns();
-  }, [page, limit, searchTerm, selectedStatus, supplierId]);
+  }, [supplierId, isSupplierMode]);
 
   useEffect(() => {
     loadAvailableGRNs();
-  }, [supplierId]);
+  }, [loadAvailableGRNs]);
 
   // ── Stats ──────────────────────────────────────────────────────────────
-  const stats: ReturnStats = useMemo(() => serverStats, [serverStats]);
+  const stats = useMemo(() => serverStats, [serverStats]);
 
-  // ── Filtered List ──────────────────────────────────────────────────────
+  // ── Filtered returns ───────────────────────────────────────────────────
   const filteredReturns = useMemo(() => {
     return goodsReturnNotes.filter(grtn => {
-      const matchesStatus =
-        !selectedStatus || selectedStatus === "all" || grtn.status === selectedStatus;
-      return matchesStatus;
+      const status = normalizeStatus(grtn.status);
+      return !selectedStatus || selectedStatus === "all" || status === selectedStatus;
     });
-  }, [goodsReturnNotes, searchTerm, selectedStatus]);
+  }, [goodsReturnNotes, selectedStatus]);
 
   // ── GRN Selection ──────────────────────────────────────────────────────
   const handleGRNSelection = (grnId: string) => {
@@ -232,7 +239,7 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
         productName:      item.productName,
         sku:              item.sku,
         acceptedQuantity: item.acceptedQuantity ?? 0,
-        receivedQuantity: item.returnableQty ?? 0,
+        receivedQuantity: item.returnableQty    ?? 0,
         returnQuantity:   0,
         returnReason:     "damaged",
         condition:        "",
@@ -270,11 +277,11 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
 
     for (const item of itemsToReturn) {
       if (item.returnQuantity > item.receivedQuantity)
-        return toast.error(`"${item.productName}" return qty exceeds returnable qty (${item.receivedQuantity})`);
+        return toast.error(`"${item.productName}" exceeds returnable qty (${item.receivedQuantity})`);
       if (!item.returnReason)
-        return toast.error(`Please select a return reason for "${item.productName}"`);
+        return toast.error(`Select a return reason for "${item.productName}"`);
       if (!item.productId)
-        return toast.error(`Product ID missing for "${item.productName}" — please re-select the GRN`);
+        return toast.error(`Product ID missing for "${item.productName}" — re-select GRN`);
     }
 
     const payload: CreateGoodsReturnDto = {
@@ -295,11 +302,53 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
     };
 
     try {
-      await createGoodsReturn(payload);
+      // Cast to any — createGoodsReturn may return the record directly
+      // or wrapped in { data: ... } depending on your helper implementation
+      const response = await createGoodsReturn(payload) as any;
+
+      // Unwrap either shape: { data: {...} }  OR  the record itself
+      const serverRecord = response?.data ?? response ?? {};
+
+      // ✅ Build optimistic record with status always set
+      const optimisticRecord: GoodsReturnNote = {
+        ...serverRecord,
+        _id:          serverRecord?._id || `temp-${Date.now()}`,
+        grnId:        selectedGRN as any,
+        returnedBy,
+        returnDate:   new Date(returnDate).toISOString(),
+        returnReason: returnReason || "General return",
+        notes:        returnNotes,
+        status:       "pending",
+        grtnNumber:   serverRecord?.grtnNumber || "Processing...",
+        totalAmount:  itemsToReturn.reduce((s, i) => s + i.returnQuantity * i.unitPrice, 0) || 0,
+        items: itemsToReturn.map(item => ({
+          ...item,
+          returnQty:   item.returnQuantity,
+          totalAmount: item.returnQuantity * item.unitPrice,
+        })) as any,
+      };
+
+      // Use a local variable — avoids "possibly undefined" TS error
+      const recordTotal: number = optimisticRecord.totalAmount || 0;
+
+      // ✅ Show immediately — no wait, no flash
+      setGoodsReturnNotes(prev => [optimisticRecord, ...prev]);
+      setServerStats(prev => ({
+        ...prev,
+        totalReturns: prev.totalReturns + 1,
+        pending:      prev.pending + 1,
+        totalValue:   prev.totalValue + recordTotal,
+      }));
+
       toast.success("Return Note created — awaiting manager approval");
-      await loadGoodsReturns();
-      await loadAvailableGRNs();
       resetForm();
+
+      // ✅ Background sync with generation counter — won't overwrite if stale
+      setTimeout(async () => {
+        await loadGoodsReturns();
+        await loadAvailableGRNs();
+      }, 600);
+
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to create goods return note");
     }
@@ -310,6 +359,7 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
     const current = goodsReturnNotes.find(g => g._id === returnId);
     if (!current) return;
 
+    const currentStatus = normalizeStatus(current.status);
     const validTransitions: Record<ReturnStatus, ReturnStatus[]> = {
       "pending":    ["approved",   "rejected"],
       "approved":   ["in-transit", "rejected"],
@@ -318,8 +368,8 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
       "rejected":   [],
     };
 
-    if (!validTransitions[current.status]?.includes(newStatus)) {
-      toast.error(`Cannot move from "${current.status}" to "${newStatus}"`);
+    if (!validTransitions[currentStatus]?.includes(newStatus)) {
+      toast.error(`Cannot move from "${currentStatus}" to "${newStatus}"`);
       return;
     }
 
@@ -327,28 +377,21 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
       setIsUpdatingStatus(returnId);
       await updateGoodsReturn(returnId, { status: newStatus });
 
-      // ✅ Optimistic UI — turant reflect karo, server ka wait mat karo
       setGoodsReturnNotes(prev =>
         prev.map(g => g._id === returnId ? { ...g, status: newStatus } : g)
       );
 
-      // ✅ Stats bhi optimistically update karo
       setServerStats(prev => {
-        const updated = { ...prev };
-        const oldStatus = current.status;
-
-        // Old status se ghatao
-        if (["pending", "approved", "in-transit"].includes(oldStatus)) updated.pending   = Math.max(0, prev.pending   - 1);
-        if (oldStatus === "completed")                                   updated.completed = Math.max(0, prev.completed - 1);
-        if (oldStatus === "rejected")                                    updated.rejected  = Math.max(0, prev.rejected  - 1);
-
-        // New status mein jodao
-        if (["pending", "approved", "in-transit"].includes(newStatus)) updated.pending    = prev.pending   + 1;
-        if (newStatus === "completed")                                  updated.completed  = prev.completed + 1;
-        if (newStatus === "rejected")                                   updated.rejected   = prev.rejected  + 1;
-
-        return updated;
+        const u = { ...prev };
+        if (["pending","approved","in-transit"].includes(currentStatus)) u.pending   = Math.max(0, u.pending   - 1);
+        if (currentStatus === "completed")                               u.completed = Math.max(0, u.completed - 1);
+        if (currentStatus === "rejected")                                u.rejected  = Math.max(0, u.rejected  - 1);
+        if (["pending","approved","in-transit"].includes(newStatus))     u.pending   = u.pending   + 1;
+        if (newStatus === "completed")                                   u.completed = u.completed + 1;
+        if (newStatus === "rejected")                                    u.rejected  = u.rejected  + 1;
+        return u;
       });
+
       const messages: Record<ReturnStatus, string> = {
         "approved":   "✅ Return approved — items ready to dispatch",
         "in-transit": "🚚 Items dispatched to supplier",
@@ -357,9 +400,10 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
         "pending":    "Return set to pending",
       };
       toast.success(messages[newStatus]);
-      // ✅ Refresh from server — accurate stats + latest data
+
       await loadGoodsReturns();
       if (newStatus === "completed") await loadAvailableGRNs();
+
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to update status");
       await loadGoodsReturns();
@@ -395,13 +439,20 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
   // ── Delete ─────────────────────────────────────────────────────────────
   const handleDeleteReturn = async (id: string) => {
     const target = goodsReturnNotes.find(g => g._id === id);
-    if (target && !["pending", "rejected"].includes(target.status)) {
-      toast.error(`Cannot delete a return in "${target.status}" status`);
+    const status = normalizeStatus(target?.status);
+    if (target && !["pending", "rejected"].includes(status)) {
+      toast.error(`Cannot delete a return in "${status}" status`);
       return;
     }
     try {
       await deleteGoodsReturn(id);
       setGoodsReturnNotes(prev => prev.filter(g => g._id !== id));
+      setServerStats(prev => ({
+        ...prev,
+        totalReturns: Math.max(0, prev.totalReturns - 1),
+        pending:      status === "pending"  ? Math.max(0, prev.pending  - 1) : prev.pending,
+        rejected:     status === "rejected" ? Math.max(0, prev.rejected - 1) : prev.rejected,
+      }));
       await loadAvailableGRNs();
       toast.success("Return Note deleted");
     } catch {
@@ -423,12 +474,16 @@ export const useGoodsReturn = (options: UseGoodsReturnOptions = {}) => {
 
   return {
     goodsReturnNotes, filteredReturns, stats, availableGRNs, statuses,
-    searchTerm, setSearchTerm, selectedStatus, setSelectedStatus,
-    viewMode, setViewMode, isExporting, isUpdatingStatus,
+    // ✅ searchTerm/setSearchTerm map to raw input — debounce is internal
+    searchTerm:    searchInput,
+    setSearchTerm: setSearchInput,
+    selectedStatus, setSelectedStatus,
+    viewMode, setViewMode,
+    isLoading, isExporting, isUpdatingStatus,
     page, setPage, limit, setLimit, total,
     selectedGRN, returnedBy, setReturnedBy,
     returnReason, setReturnReason,
-    returnNotes, setReturnNotes,
+    returnNotes,  setReturnNotes,
     returningItems, returnDate, setReturnDate,
     handleGRNSelection, handleUpdateItemReturn,
     handleCreateReturn, handleStatusUpdate,

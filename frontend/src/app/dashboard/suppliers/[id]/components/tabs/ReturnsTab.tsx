@@ -89,7 +89,7 @@ export function ReturnsTab({ supplierId, userId }: Props) {
             <button
               onClick={() =>
                 router.push(
-                  "/dashboard/inventory-dashboard/product-goods-return",
+                  "/dashboard/product-goods-return",
                 )
               }
               className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-xl transition-shadow"
