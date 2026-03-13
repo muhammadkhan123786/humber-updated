@@ -26,6 +26,8 @@ import { ReplenishmentProposalsModal } from "./ReplenishmentProposalsModal";
 import { ReorderProduct } from "../components/replenishment/types"
 import React from "react";
 import { useReorderSuggestions } from '@/hooks/useReorderSuggestions';
+import { useCurrencyStore } from "@/stores/currency.store";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -87,14 +89,23 @@ interface PurchaseOrderFormProps {
 
 // ─── Local helpers ─────────────────────────────────────────────────
 
-const productConfig: ComboboxItemConfig<ProductFull> = {
-  getKey:           p => p._id,
-  getLabel:         p => p.productName,
-  getSubLabel:      p => p.sku,
+// const productConfig: ComboboxItemConfig<ProductFull> = {
+//   getKey:           p => p._id,
+//   getLabel:         p => p.productName,
+//   getSubLabel:      p => p.sku,
+//   getRightSubLabel: p => `Stock: ${p.ui_totalStock}`,
+//   getRightLabel:    p => `${currencySymbol}${p.ui_price}`,
+//   getSearchFields:  p => [p.productName, p.sku],
+// };
+
+const getProductConfig = (currencySymbol: string): ComboboxItemConfig<ProductFull> => ({
+  getKey: p => p._id,
+  getLabel: p => p.productName,
+  getSubLabel: p => p.sku,
   getRightSubLabel: p => `Stock: ${p.ui_totalStock}`,
-  getRightLabel:    p => `£${p.ui_price}`,
-  getSearchFields:  p => [p.productName, p.sku],
-};
+  getRightLabel: p => `${currencySymbol}${p.ui_price}`,
+  getSearchFields: p => [p.productName, p.sku],
+}); 
 
 function getStockHealth(stock: ProductStock) {
   const { stockQuantity: qty = 0, reorderPoint = 0, minStockLevel = 0, safetyStock = 0 } = stock;
@@ -123,8 +134,9 @@ function StockChip({ stock }: { stock: ProductStock }) {
 const PricingSelector: React.FC<{
   pricingOptions:    ProductPricing[];
   selectedPricingId: string;
+  currencySymbol: string;
   onSelect:          (p: ProductPricing) => void;
-}> = ({ pricingOptions, selectedPricingId, onSelect }) => {
+}> = ({ pricingOptions, selectedPricingId, onSelect, currencySymbol }) => {
   if (pricingOptions.length <= 1) return null;
   return (
     <div className="col-span-5">
@@ -140,7 +152,7 @@ const PricingSelector: React.FC<{
                 : "bg-white border-gray-200 text-gray-600 hover:border-indigo-300"
             }`}>
             {p.marketplaceName}
-            <span className="ml-1.5 font-bold">£{p.costPrice}</span>
+            <span className="ml-1.5 font-bold">{currencySymbol}{p.costPrice}</span>
           </button>
         ))}
       </div>
@@ -174,6 +186,13 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
     supplier: false,
     expectedDelivery: false
   });
+
+const currencySymbol = useCurrencyStore((s) => s.currencySymbol);
+const productConfig = useMemo(
+  () => getProductConfig(currencySymbol),
+  [currencySymbol]
+);
+    console.log("currencySymbol", currencySymbol)
 
   // ─── React Hook Form Setup ─────────────────────────────────────────────
   const {
@@ -916,6 +935,7 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                     pricingOptions={availablePricing}
                     selectedPricingId={selectedPricingId}
                     onSelect={handlePricingSelect}
+                    currencySymbol = { currencySymbol }
                   />
                 </div>
 
@@ -955,8 +975,8 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                           <td className="p-3 text-sm">{item.productName}</td>
                           <td className="p-3 text-sm font-mono text-gray-600">{item.sku}</td>
                           <td className="p-3 text-sm text-center">{item.quantity}</td>
-                          <td className="p-3 text-sm text-right">£{item.unitPrice}</td>
-                          <td className="p-3 text-sm text-right font-semibold">£{item.totalPrice}</td>
+                          <td className="p-3 text-sm text-right">{currencySymbol}{item.unitPrice}</td>
+                          <td className="p-3 text-sm text-right font-semibold">{currencySymbol}{item.totalPrice}</td>
                           <td className="p-3 text-center">
                             <Button size="sm" variant="ghost" type="button"
                               onClick={() => onRemoveItem(idx)} disabled={isSaving}
@@ -988,15 +1008,15 @@ export const PurchaseOrderForm: React.FC<PurchaseOrderFormProps> = ({
                 <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-lg border-2 border-emerald-100 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-semibold">£{totals.subtotal}</span>
+                    <span className="font-semibold">{currencySymbol}{totals.subtotal}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">VAT (20%):</span>
-                    <span className="font-semibold">£{totals.tax}</span>
+                    <span className="font-semibold">{currencySymbol}{totals.tax}</span>
                   </div>
                   <div className="flex justify-between text-lg border-t-2 border-emerald-200 pt-2">
                     <span className="font-bold text-gray-900">Total:</span>
-                    <span className="font-bold text-emerald-600">£{totals.total}</span>
+                    <span className="font-bold text-emerald-600">{currencySymbol}{totals.total}</span>
                   </div>
                 </div>
               )}
