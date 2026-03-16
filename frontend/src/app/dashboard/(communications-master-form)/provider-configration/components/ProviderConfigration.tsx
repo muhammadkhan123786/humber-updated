@@ -154,7 +154,7 @@ const ProviderSection = ({ provider }: { provider: any }) => {
     onSuccess: (data: any) =>
       toast.success(data?.data?.message || "Connection successful"),
     onError: (error: any) =>
-      toast.error(error?.response?.data?.message || "Connection failed"),
+      toast.error(error?.response?.data?.message || "failed to connect"),
   });
 
   return (
