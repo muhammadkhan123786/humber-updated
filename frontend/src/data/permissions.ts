@@ -746,6 +746,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ShieldCheckIcon,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Event Actions",
+        href: "/dashboard/event-action",
+        icon: ShieldCheckIcon,
+        roleId: [1],
+      },
     ],
   },
   /* ================= SYSTEM SETUP ================= */
