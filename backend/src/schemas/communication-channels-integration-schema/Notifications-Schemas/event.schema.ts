@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { commonSchema, commonSchemaValidation } from "../../shared/common.schema";
+import {
+  commonSchema,
+  commonSchemaValidation,
+} from "../../shared/common.schema";
 
 export const eventActionSchema = {
   eventKey: { type: String, required: true, unique: true },
