@@ -1,8 +1,8 @@
 "use client";
 import { useEffect } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, Controller, useWatch, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, Zap } from "lucide-react";
+import { Save, Zap, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
@@ -14,8 +14,20 @@ const eventActionValidation = z.object({
   eventKey: z.string().min(1, "Please enter event key."),
   name: z.string().min(1, "Please enter event name."),
   description: z.string().min(1, "Please enter description."),
+  module: z.string().optional(),
   isActive: z.boolean(),
   isDefault: z.boolean(),
+  variables: z
+    .array(
+      z.object({
+        key: z
+          .string()
+          .min(1, "Key required")
+          .regex(/^[a-zA-Z0-9_]+$/, "Invalid key"),
+        description: z.string().min(1, "Description required"),
+      }),
+    )
+    .default([]),
 });
 
 type FormData = z.infer<typeof eventActionValidation>;
@@ -41,14 +53,21 @@ const EventActionForm = ({ editingData, onClose, themeColor }: Props) => {
     setValue,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(eventActionValidation),
+    resolver: zodResolver(eventActionValidation) as any,
     defaultValues: {
       eventKey: "",
       name: "",
       description: "",
+      module: "",
       isActive: true,
       isDefault: false,
+      variables: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "variables",
   });
 
   const isDefaultValue = useWatch({ control, name: "isDefault" });
@@ -59,8 +78,10 @@ const EventActionForm = ({ editingData, onClose, themeColor }: Props) => {
         eventKey: editingData.eventKey,
         name: editingData.name,
         description: editingData.description,
+        module: editingData.module || "",
         isActive: Boolean(editingData.isActive),
         isDefault: Boolean(editingData.isDefault),
+        variables: editingData.variables || [],
       });
     }
   }, [editingData, reset]);
@@ -88,13 +109,24 @@ const EventActionForm = ({ editingData, onClose, themeColor }: Props) => {
       onClose={onClose}
       themeColor={themeColor}
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
-        <FormInput
-          label="Event Key *"
-          placeholder="e.g. ORDER_CREATED"
-          {...register("eventKey")}
-          error={errors.eventKey?.message}
-        />
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="space-y-4 p-4 max-h-[80vh] overflow-y-auto"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput
+            label="Event Key *"
+            placeholder="e.g. ORDER_CREATED"
+            {...register("eventKey")}
+            error={errors.eventKey?.message}
+          />
+          <FormInput
+            label="Module"
+            placeholder="e.g. Sales"
+            {...register("module")}
+            error={errors.module?.message}
+          />
+        </div>
 
         <FormInput
           label="Event Name *"
@@ -118,6 +150,74 @@ const EventActionForm = ({ editingData, onClose, themeColor }: Props) => {
           {errors.description && (
             <p className="text-xs text-red-500">{errors.description.message}</p>
           )}
+        </div>
+        <div className="space-y-3 border-t pt-4">
+          <div className="flex justify-between items-center">
+            <div>
+              <label className="text-sm font-bold text-gray-700">
+                Available Variables
+              </label>
+
+              <p className="text-[11px] text-amber-600 font-medium">
+                Note: Only write the variable name (e.g.{" "}
+                <code className="bg-amber-100 px-1 rounded">user_name</code>).
+                The system will automatically convert it to{" "}
+                <code className="bg-amber-100 px-1 rounded">
+                  {"{{user_name}}"}
+                </code>
+                .
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => append({ key: "", description: "" })}
+              className="text-xs flex items-center gap-1 bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md hover:bg-indigo-100"
+            >
+              <Plus size={14} />
+              Add
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="flex gap-2 items-center bg-gray-50 p-2 rounded-lg border border-gray-100"
+              >
+                <div className="grid grid-cols-2 gap-2 flex-1">
+                  <div className="flex flex-col">
+                    <input
+                      {...register(`variables.${index}.key` as const)}
+                      placeholder="Key (e.g. order_id)"
+                      className={`text-xs p-2 rounded border outline-none focus:ring-1 focus:ring-indigo-400 ${
+                        errors.variables?.[index]?.key
+                          ? "border-red-500"
+                          : "border-gray-200"
+                      }`}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <input
+                      {...register(`variables.${index}.description` as const)}
+                      placeholder="Description"
+                      className={`text-xs p-2 rounded border outline-none focus:ring-1 focus:ring-indigo-400 ${
+                        errors.variables?.[index]?.description
+                          ? "border-red-500"
+                          : "border-gray-200"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="text-red-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">

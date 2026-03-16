@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Zap } from "lucide-react";
@@ -42,18 +41,49 @@ const EventActionTable = ({
               />
             </div>
             <div className="px-4 pb-4">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                {item.name}
-                {item.isDefault && (
-                  <Star size={16} className="text-yellow-500 fill-yellow-500" />
+              <div className="flex justify-between items-start gap-2">
+                <h3 className="text-lg font-bold flex items-center gap-2">
+                  {item.name}
+                  {item.isDefault && (
+                    <Star
+                      size={16}
+                      className="text-yellow-500 fill-yellow-500"
+                    />
+                  )}
+                </h3>
+                {item.module && (
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                    {item.module}
+                  </span>
                 )}
-              </h3>
+              </div>
+
               <p className="text-xs font-mono text-indigo-600 bg-indigo-50 w-fit px-2 py-0.5 rounded mt-1">
                 {item.eventKey}
               </p>
               <p className="text-sm text-gray-500 mt-3 whitespace-pre-wrap wrap-break-word">
                 {item.description}
               </p>
+              {item.variables?.length > 0 && (
+                <div className="mt-4 space-y-1">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase">
+                    Variables
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {item.variables.map((v: any, i: number) => (
+                      <span
+                        key={i}
+                        title={v.description}
+                        className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200"
+                      >
+                        {"{{"}
+                        {v.key}
+                        {"}}"}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4 pt-4 border-t border-gray-50">
                 <TableActionButton
@@ -103,16 +133,24 @@ const EventActionTable = ({
                   <Zap size={18} />
                 </div>
               </td>
-              <td className="px-6 py-4">
+              <td className="px-6 py-4 max-w-xs">
+                {" "}
                 <div className="flex flex-col">
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-gray-900 flex items-center gap-2">
                     {item.name}
+                    {item.module && (
+                      <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">
+                        {item.module}
+                      </span>
+                    )}
                     {item.isDefault && (
                       <Star size={14} className="inline text-yellow-500 ml-1" />
                     )}
                   </span>
-                  {/* Table view remains clamped to 1 line */}
-                  <span className="text-xs text-gray-500 line-clamp-1">
+                  <span
+                    className="text-xs text-gray-500 truncate block"
+                    title={item.description}
+                  >
                     {item.description}
                   </span>
                 </div>

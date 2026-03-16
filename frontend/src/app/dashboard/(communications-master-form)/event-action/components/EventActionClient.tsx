@@ -16,6 +16,8 @@ export interface IEventActionData {
   eventKey: string;
   name: string;
   description: string;
+  module?: string;
+  variables?: { key: string; description: string }[];
   isActive: boolean;
   isDefault: boolean;
   userId: string;
