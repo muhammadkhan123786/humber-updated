@@ -129,6 +129,7 @@ import channelProviderRouter from "./routes/communication-channels-integration-r
 import channelProviderConfigFieldsRouter from "./routes/communication-channels-integration-routes/channel.provider.config.fields.route";
 import clientChannelConfigurationDataRouter from "./routes/communication-channels-integration-routes/client.channel.config.data.routes";
 import eventActionRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/event.action.master.routes";
+import notificationTemplateRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.templates.routes";
 
 // Create express app
 const app: Application = express();
@@ -660,6 +661,12 @@ app.use(
   `${process.env.API_PREFIX}/event-action`,
   adminProtecter,
   eventActionRouter,
+);
+
+app.use(
+  `${process.env.API_PREFIX}/notification-templates`,
+  adminProtecter,
+  notificationTemplateRouter,
 );
 
 
