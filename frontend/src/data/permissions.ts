@@ -50,7 +50,11 @@ import {
   UserRoundCog,
   UnlockIcon,
   MessageSquare,
-  ShieldCheckIcon,
+  Server,
+  ListChecks,
+  Settings2,
+  Bell,
+  Puzzle,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -722,42 +726,49 @@ export const navigation: INavBarLinkSharedInterface[] = [
         _id: nanoid(),
         label: "Channels",
         href: "/dashboard/channels",
-        icon: MessageSquare,
+        icon: MessageSquare, // Communication / chat related
         roleId: [1],
       },
       {
         _id: nanoid(),
         label: "Providers",
         href: "/dashboard/providers",
-        icon: ShieldCheckIcon,
+        icon: Server, // Server/Provider related
         roleId: [1],
       },
       {
         _id: nanoid(),
         label: "Channel Provider Config Fields",
         href: "/dashboard/channel-provider-config",
-        icon: ShieldCheckIcon,
+        icon: ListChecks, // Configuration / fields
         roleId: [1],
       },
       {
         _id: nanoid(),
-        label: "Channel Provider Configration",
+        label: "Channel Provider Configuration",
         href: "/dashboard/provider-configration",
-        icon: ShieldCheckIcon,
+        icon: Settings2, // General settings icon
         roleId: [1],
       },
       {
         _id: nanoid(),
         label: "Event Actions",
         href: "/dashboard/event-action",
-        icon: ShieldCheckIcon,
+        icon: Zap, // Actions / events
         roleId: [1],
       },
       {
         _id: nanoid(),
         label: "Notification Templates",
         href: "/dashboard/notification-template",
-        icon: ShieldCheckIcon,
+        icon: Bell, // Notification / bell icon
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Module",
+        href: "/dashboard/module",
+        icon: Puzzle, // Module / component
         roleId: [1],
       },
     ],
