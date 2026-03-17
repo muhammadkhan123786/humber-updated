@@ -131,6 +131,7 @@ import clientChannelConfigurationDataRouter from "./routes/communication-channel
 import eventActionRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/event.action.master.routes";
 import notificationTemplateRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.templates.routes";
 import moduleRouter from "./routes/communication-channels-integration-routes/modules.routes";
+import notificationRulesRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.rules.routes";
 
 // Create express app
 const app: Application = express();
@@ -677,6 +678,11 @@ app.use(
   moduleRouter,
 );
 
+app.use(
+  `${process.env.API_PREFIX}/notification-rules`,
+  adminProtecter,
+  notificationRulesRouter,
+);
 
 //Muhammad Imran code ended here.
 

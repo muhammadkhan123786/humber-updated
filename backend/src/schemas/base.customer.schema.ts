@@ -3,6 +3,7 @@ import { z } from "zod";
 import { objectIdSchema } from "../validators/objectId.schema";
 
 export const baseCustomerSchema: SchemaDefinition = {
+  customerAutoCode:{type:String},
   userId: { type: Types.ObjectId, ref: "User", required: true },
   personId: { type: Types.ObjectId, ref: "Person" },
   addressId: { type: Types.ObjectId, ref: "Address" },
@@ -33,6 +34,7 @@ export const baseCustomerSchema: SchemaDefinition = {
 };
 
 export const baseCustomerZodSchema = z.object({
+  customerAutoCode:z.string().optional(),
   userId: objectIdSchema,
 
   personId: objectIdSchema.optional(),

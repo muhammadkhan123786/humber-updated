@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request,Response, Router } from "express";
 import { GenericService } from "../services/generic.crud.services";
 import { CustomerBaseDoc, CustomerBase } from "../models/customer.models";
 import { baseCustomerZodSchema } from "../schemas/base.customer.schema";
@@ -9,6 +9,7 @@ import {
   saveCustomer,
 } from "../controllers/customer.controller";
 import { genericProfileIdsMiddleware } from "../middleware/generic.profile.middleware";
+import { generateCustomerCode } from "../utils/generate.AutoCode.Counter";
 
 const CustomerBaseRouter = Router();
 
@@ -41,7 +42,11 @@ CustomerBaseRouter.get("/summary", getCustomerSummary);
 CustomerBaseRouter.get("/summary/dashboard", getCustomerDashboardSummary);
 CustomerBaseRouter.get("/", CustomerBaseController.getAll);
 CustomerBaseRouter.get("/:id", CustomerBaseController.getById);
-CustomerBaseRouter.post("/", customerProfileMiddleware, saveCustomer);
+CustomerBaseRouter.post("/",async(req:Request,res:Response,next:NextFunction)=>{
+     const customerCode = await generateCustomerCode();
+     req.body.customerAutoCode = customerCode;
+     next();
+}, customerProfileMiddleware, saveCustomer);
 CustomerBaseRouter.put("/:id", customerProfileMiddleware, saveCustomer);
 CustomerBaseRouter.delete("/:id", CustomerBaseController.delete);
 

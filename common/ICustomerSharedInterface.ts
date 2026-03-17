@@ -2,6 +2,7 @@ import { IBaseEntity } from './Base.Interface';
 import { customerType } from './DTOs/Customer.dto';
 
 export interface ICustomerBase<TUserId = string, TPersonId = string, TAddressId = string, TContactId = string, TCustomerSourceId = string, TAccountId = string, TPreviousCustomerId = string, TconvertedToCustomerId = string> extends IBaseEntity<TUserId> {
+    customerAutoCode?:string;
     personId: TPersonId;
     addressId: TAddressId;
     contactId: TContactId;
