@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { Response, Request } from "express";
 import {
+  generateCustomerCode,
   generatePurchaseOrderCode,
   getCurrentTechnicianJobCode,
   getCurrentTicketCode,
@@ -120,7 +121,19 @@ autoCodeGeneratorRouter.get(
   },
 );
 
-
-
+//customer auto generate code. 
+autoCodeGeneratorRouter.get(
+  "/customer-code",
+  async (req: Request, res: Response) => {
+    try {
+      const customerAutoCode = await generateCustomerCode();
+      res.json({ customerCode: customerAutoCode });
+    } catch (error: any) {
+      res
+        .status(500)
+        .json({ error: error.message || "Failed to get customer auto code." });
+    }
+  },
+);
 
 export default autoCodeGeneratorRouter;

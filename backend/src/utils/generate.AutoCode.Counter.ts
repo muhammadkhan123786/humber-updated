@@ -6,6 +6,8 @@ import { CustomerInvoiceSequenceCounter } from "../models/auto-generate-code-mod
 import { QuotationSequenceCounter } from "../models/auto-generate-code-models/quotation.code.model";
 import { PurchaseOrderCounter } from "../models/auto-generate-code-models/purchase.order.code.models";
 import { RiderSequenceCounter } from "../models/auto-generate-code-models/rider.code.models";
+import { CustomerSequenceCounter } from "../models/auto-generate-code-models/customer.code.models";
+import { NotificationRuleSequenceCounter } from "../models/auto-generate-code-models/notification.rule.code.models";
 
 //generate for db
 export const generateTicketCode = async (): Promise<string> => {
@@ -138,6 +140,42 @@ console.log("request is going")
   return `PO-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
+//real code to save in db update
+export const generateCustomerCode = async (): Promise<string> => {
+
+  const year = new Date().getFullYear();
+
+  const counter = await CustomerSequenceCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to generate purchase Code sequence");
+  }
+
+  return `CUS-${year}-${String(counter.seq).padStart(3, "0")}`;
+};
+
+//real code to save in db update
+export const generateNotificationRuleCode = async (): Promise<string> => {
+
+  const year = new Date().getFullYear();
+
+  const counter = await NotificationRuleSequenceCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to generate notification Code sequence");
+  }
+
+  return `RULE-${year}-${String(counter.seq).padStart(3, "0")}`;
+};
+
 
 
 //generate for view start from here
@@ -209,21 +247,28 @@ export const getQuotationCurrentCode = async (): Promise<string> => {
   return `QUO-${year}-${String(seq).padStart(3, "0")}`;
 };
 
-// //get Purchase Order Code 
-// export const getCurrentPurchaseOrderCode = async (): Promise<string> => {
-//   const year = new Date().getFullYear();
 
-//   // Just fetch current counter without updating
-//    const counter = await PurchaseOrderCounter.findOneAndUpdate(
-//     { year },
-//     { $inc: { seq: 1 } },
-//     { 
-//       new: true,  // Return updated document
-//       upsert: true, // Create if doesn't exist
-//       setDefaultsOnInsert: true 
-//     }
-//   );
+//get customer current code 
+export const getCustomerCurrentCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
 
-//   const seq = counter.seq;
-//   return `PO-${year}-${String(seq).padStart(3, "0")}`;
-// };
+  // Just fetch current counter without updating
+  const counter = await CustomerSequenceCounter.findOne({ year });
+
+  const seq = counter ? counter.seq + 1 : 1;
+
+  return `CUS-${year}-${String(seq).padStart(3, "0")}`;
+};
+
+//get rule current code 
+export const getNotificationRuleCurrentCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  // Just fetch current counter without updating
+  const counter = await NotificationRuleSequenceCounter.findOne({ year });
+
+  const seq = counter ? counter.seq + 1 : 1;
+
+  return `RULE-${year}-${String(seq).padStart(3, "0")}`;
+};
+
