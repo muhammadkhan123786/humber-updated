@@ -1,29 +1,32 @@
 import { z } from "zod";
-import { commonSchema, commonSchemaValidation } from "../../shared/common.schema";
+import {
+  commonSchema,
+  commonSchemaValidation,
+} from "../../shared/common.schema";
 import { Types } from "mongoose";
 import { objectIdOrStringSchema } from "../../../validators/objectId.schema";
 
-
-
 export const notificationRulesSchema = {
-    autoRuleId: { type: String },
+  autoRuleId: { type: String },
 
-    eventKeyId: { type: Types.ObjectId, ref: "EventActions", required: true },
-
-    notificationRulesName:{type:String}, 
+  notificationRulesName:{type:String}, 
     
 
-    moduleId:{type:Types.ObjectId,ref:"Modules"},
+  moduleId: { type: Types.ObjectId, ref: "Modules" },
 
-    templateId: { type: Types.ObjectId, ref: "NotificationTemplates", required: true },
+  templateId: {
+    type: Types.ObjectId,
+    ref: "NotificationTemplates",
+    required: true,
+  },
 
-    channelIds: [{ type: Types.ObjectId, ref: "communicationChannelsProvider" }],
+  channelIds: [{ type: Types.ObjectId, ref: "communicationChannels" }],
 
-    conditions:{type:String},
+  conditions: { type: String },
 
-    priority:{type:Number,default:1},
+  priority: { type: Number, default: 1 },
 
-    ...commonSchema,
+  ...commonSchema,
 };
 
 export const notificationRulesValidation = z.object({
@@ -33,9 +36,11 @@ export const notificationRulesValidation = z.object({
 
   eventKeyId: objectIdOrStringSchema,
 
-  moduleId:objectIdOrStringSchema,
+  moduleId: objectIdOrStringSchema,
 
-  channelIds: z.array(objectIdOrStringSchema).min(1, "Select at least one channel"),
+  channelIds: z
+    .array(objectIdOrStringSchema)
+    .min(1, "Select at least one channel"),
 
   templateId: objectIdOrStringSchema,
 
