@@ -753,6 +753,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: ShieldCheckIcon,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Notification Templates",
+        href: "/dashboard/notification-template",
+        icon: ShieldCheckIcon,
+        roleId: [1],
+      },
     ],
   },
   /* ================= SYSTEM SETUP ================= */
