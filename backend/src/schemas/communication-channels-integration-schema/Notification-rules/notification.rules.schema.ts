@@ -10,7 +10,8 @@ export const notificationRulesSchema = {
 
     eventKeyId: { type: Types.ObjectId, ref: "EventActions", required: true },
 
-    notificationRulesName:{type:String},
+    notificationRulesName:{type:String}, 
+    
 
     moduleId:{type:Types.ObjectId,ref:"Modules"},
 
