@@ -9,8 +9,9 @@ import { objectIdOrStringSchema } from "../../../validators/objectId.schema";
 export const notificationRulesSchema = {
   autoRuleId: { type: String },
 
-  notificationRulesName:{type:String}, 
-    
+  notificationRulesName: { type: String },
+
+  eventKeyId: { type: Types.ObjectId, ref: "EventActions" },
 
   moduleId: { type: Types.ObjectId, ref: "Modules" },
 
@@ -32,7 +33,9 @@ export const notificationRulesSchema = {
 export const notificationRulesValidation = z.object({
   autoRuleId: z.string().min(1, "Please enter auto rule id."),
 
-  notificationRulesName:z.string().min(1,"Please enter notification rule name."),
+  notificationRulesName: z
+    .string()
+    .min(1, "Please enter notification rule name."),
 
   eventKeyId: objectIdOrStringSchema,
 
