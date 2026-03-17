@@ -9,7 +9,8 @@ import { objectIdOrStringSchema } from "../../../validators/objectId.schema";
 export const notificationRulesSchema = {
   autoRuleId: { type: String },
 
-  eventKeyId: { type: Types.ObjectId, ref: "EventActions", required: true },
+  notificationRulesName:{type:String}, 
+    
 
   moduleId: { type: Types.ObjectId, ref: "Modules" },
 
