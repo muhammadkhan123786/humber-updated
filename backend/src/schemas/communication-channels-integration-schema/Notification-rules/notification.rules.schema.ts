@@ -10,6 +10,8 @@ export const notificationRulesSchema = {
 
     eventKeyId: { type: Types.ObjectId, ref: "EventActions", required: true },
 
+    notificationRulesName:{type:String},
+
     moduleId:{type:Types.ObjectId,ref:"Modules"},
 
     templateId: { type: Types.ObjectId, ref: "NotificationTemplates", required: true },
@@ -25,6 +27,8 @@ export const notificationRulesSchema = {
 
 export const notificationRulesValidation = z.object({
   autoRuleId: z.string().min(1, "Please enter auto rule id."),
+
+  notificationRulesName:z.string().min(1,"Please enter notification rule name."),
 
   eventKeyId: objectIdOrStringSchema,
 
