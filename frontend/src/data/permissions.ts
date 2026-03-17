@@ -771,6 +771,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Puzzle, // Module / component
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Alert Rules",
+        href: "/dashboard/alert-rules",
+        icon: Settings, // Alert / bell icon
+        roleId: [1],
+      },
     ],
   },
   /* ================= SYSTEM SETUP ================= */
