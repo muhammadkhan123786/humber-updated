@@ -47,6 +47,7 @@ clientChannelConfigurationDataRouter.post(
       next();
 
     } catch (error) {
+       console.error('🔥 Error in /api/client-channel-config-data:', error.stack || error);
       next(error);
     }
   },
@@ -82,6 +83,7 @@ clientChannelConfigurationDataRouter.put("/:id",
       next();
 
     } catch (error) {
+      console.error('🔥 Error in /api/client-channel-config-data:', error.stack || error);
       next(error);
     }
   }, clientChannelConfigDataController.update);
