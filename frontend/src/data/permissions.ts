@@ -724,6 +724,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
     subItems: [
       {
         _id: nanoid(),
+        label: "Alert Dashboard",
+        href: "/dashboard/alert-dashboard",
+        icon: LayoutDashboard, // Communication / chat related
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
         label: "Channels",
         href: "/dashboard/channels",
         icon: MessageSquare, // Communication / chat related
