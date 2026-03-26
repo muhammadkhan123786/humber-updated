@@ -1,10 +1,12 @@
 import mongoose from 'mongoose';
 
+const MONGO_URI = process.env.MONGO_URI || "mongodb://mongo:27017/humber";
+
 export const connectDB = async () => {
     try {
-        const mongoURI = process.env.MONGO_URI || "mongodb://mongo:27017/humber";
-        await mongoose.connect(mongoURI as string);
+        await mongoose.connect(MONGO_URI);
         console.log('✅ MongoDB connected');
+
     } catch (error) {
         console.error('❌ MongoDB connection error', error);
         process.exit(1);

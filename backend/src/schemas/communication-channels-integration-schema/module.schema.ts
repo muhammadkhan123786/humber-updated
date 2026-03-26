@@ -1,17 +1,18 @@
 import { z } from "zod";
-import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
-
 
 export const moduleSchema = {
     moduleName: { type: String },
     moduleKey:{type:String},
-    ...commonSchema,
+    isActive: { type: Boolean, required: true, default: true },
+    isDeleted: { type: Boolean, required: true, default: false },
+    isDefault: { type: Boolean, required: true, default: false }
 };
-
 
 export const modulesValidation = z.object({
   moduleName: z.string().min(1, "Please enter module name."),
   moduleKey:z.string().min(1,'Plase enter module key.'),
-  ...commonSchemaValidation,
+  isActive: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  isDefault: z.boolean().optional()
 });
 

@@ -1,5 +1,3 @@
-
-
 export const modulesData = [
   {
     moduleKey: "ticket",

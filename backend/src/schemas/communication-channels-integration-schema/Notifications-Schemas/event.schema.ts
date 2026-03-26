@@ -21,7 +21,9 @@ export const eventActionSchema = {
     default: []
   },
 
-  ...commonSchema
+    isActive: { type: Boolean, required: true, default: true },
+    isDeleted: { type: Boolean, required: true, default: false },
+    isDefault: { type: Boolean, required: true, default: false }
 };
 
 export const eventActionValidation = z.object({
@@ -44,6 +46,7 @@ export const eventActionValidation = z.object({
   )
   .optional()
   .default([]),
-
-  ...commonSchemaValidation
+ isActive: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  isDefault: z.boolean().optional()
 });

@@ -1,9 +1,7 @@
 export const eventsData = [
-
   // ==============================
   // TICKET MODULE
   // ==============================
-
   {
     moduleKey: "ticket",
     actionKey: "create",
@@ -18,7 +16,6 @@ export const eventsData = [
       { key: "status", description: "Ticket Status" }
     ]
   },
-
   {
     moduleKey: "ticket",
     actionKey: "assign",
@@ -31,7 +28,6 @@ export const eventsData = [
       { key: "customerName", description: "Customer Name" }
     ]
   },
-
   {
     moduleKey: "ticket",
     actionKey: "in-progress",
@@ -43,7 +39,6 @@ export const eventsData = [
       { key: "status", description: "Ticket Status" }
     ]
   },
-
   {
     moduleKey: "ticket",
     actionKey: "hold",
