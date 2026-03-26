@@ -7,7 +7,6 @@ import ModuleForm from "./ModuleForm";
 import Pagination from "@/components/ui/Pagination";
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 import { useFormActions } from "@/hooks/useFormActions";
-import { getAll } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
@@ -18,7 +17,6 @@ export interface IModuleData {
   isDefault: boolean;
   userId: string;
 }
-
 export default function ModuleClient() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -39,17 +37,17 @@ export default function ModuleClient() {
       "Module",
       currentPage,
       searchTerm,
+      true,
+      "false",
     );
+
+  console.log("Fltered imran data: ", data);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await getAll<IModuleData>("/modules", {
-          limit: "1000",
-          search: searchTerm.trim(),
-        });
-        setTotalActiveCount(res.data?.filter((d) => d.isActive).length || 0);
-        setTotalInactiveCount(res.data?.filter((d) => !d.isActive).length || 0);
+        setTotalActiveCount(data?.filter((d) => d.isActive).length || 0);
+        setTotalInactiveCount(data?.filter((d) => !d.isActive).length || 0);
       } catch (err) {
         console.error("Stats Error:", err);
       }
@@ -63,7 +61,6 @@ export default function ModuleClient() {
       filterStatus === "active" ? d.isActive : !d.isActive,
     );
   }, [filterStatus, data]);
-
   const totalPages = Math.ceil(total / 12) || 1;
 
   return (

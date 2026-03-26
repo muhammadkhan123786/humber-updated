@@ -12,15 +12,19 @@ const getGradient = (index: number) => {
   return colors[index % colors.length];
 };
 
-const ModuleTable = ({
-  data,
-  displayView,
+const ModuleTable = ({ data = [], displayView, onStatusChange }: any) => {
+  console.log("data", data);
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="bg-white p-10 text-center rounded-xl border border-dashed border-gray-300 mt-8">
+        <p className="text-gray-500">No modules found to display.</p>
+      </div>
+    );
+  }
 
-  onStatusChange,
-}: any) => {
   if (displayView === "card") {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {data.map((item: any, index: number) => (
           <div
             key={item._id}
@@ -39,8 +43,8 @@ const ModuleTable = ({
               />
             </div>
             <div className="px-4 pb-4">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                {item.moduleName}{" "}
+              <h3 className="text-lg font-bold flex items-center gap-2 text-gray-800">
+                {item.moduleName}
                 {item.isDefault && (
                   <Star size={16} className="text-yellow-500 fill-yellow-500" />
                 )}
@@ -55,13 +59,11 @@ const ModuleTable = ({
   return (
     <div className="bg-white mt-8 shadow-lg border border-gray-200 overflow-x-auto rounded-lg">
       <table className="w-full text-left">
-        <thead className="bg-[#ECFEFF] text=[#364153]! border-b-2 border-gray-200 sticky top-0">
+        <thead className="bg-[#ECFEFF] text-[#364153] border-b-2 border-gray-200 sticky top-0">
           <tr>
-            <th className="px-6 py-4 font-bold text-gray-700">Icon</th>
-            <th className="px-6 py-4 font-bold text-gray-700">Module Name</th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">
-              Status
-            </th>
+            <th className="px-6 py-4 font-bold">Icon</th>
+            <th className="px-6 py-4 font-bold">Module Name</th>
+            <th className="px-6 py-4 text-center font-bold">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
@@ -78,9 +80,12 @@ const ModuleTable = ({
                 </div>
               </td>
               <td className="px-6 py-4 font-bold text-gray-900">
-                {item.moduleName}{" "}
+                {item.moduleName}
                 {item.isDefault && (
-                  <Star size={14} className="inline text-yellow-500 ml-1" />
+                  <Star
+                    size={14}
+                    className="inline text-yellow-500 ml-1 fill-yellow-500"
+                  />
                 )}
               </td>
               <td className="px-6 py-4 text-center">

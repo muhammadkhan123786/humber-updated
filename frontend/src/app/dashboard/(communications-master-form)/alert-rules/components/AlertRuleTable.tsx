@@ -1,26 +1,5 @@
 "use client";
-import {
-  Mail,
-  MessageSquare,
-  Send,
-  Edit2,
-  Trash2,
-  Settings,
-  Star,
-} from "lucide-react";
-
-const ChannelBadge = ({ channel }: { channel: string }) => {
-  const icons: any = {
-    Email: <Mail size={12} />,
-    SMS: <MessageSquare size={12} />,
-    WhatsApp: <Send size={12} />,
-  };
-  return (
-    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-600">
-      {icons[channel] || <Send size={12} />} {channel}
-    </div>
-  );
-};
+import { Edit2, Trash2, Settings, Star } from "lucide-react";
 
 export const AlertRuleTable = ({ data, onEdit, onDelete }: any) => {
   return (
@@ -68,20 +47,22 @@ export const AlertRuleTable = ({ data, onEdit, onDelete }: any) => {
                 </td>
                 <td className="px-4 py-5">
                   <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold border bg-blue-50 text-blue-700 border-blue-100">
-                    {rule.moduleId?.moduleName || "N/A"}
+                    {rule.eventKeyId?.moduleId?.moduleName || "N/A"}
                   </span>
                 </td>
                 <td className="px-4 py-5 text-sm text-slate-600">
                   {rule.eventKeyId?.eventKey || "N/A"}
                 </td>
                 <td className="px-4 py-5 text-sm text-slate-600">
-                  {rule.templateId?.subject || "N/A"}
+                  {rule.channels
+                    ?.map((c: any) => c.templateId?.subject)
+                    .join(", ") || "N/A"}
                 </td>
                 <td className="px-4 py-5">
                   <div className="flex gap-1.5 flex-wrap">
-                    {rule.channelIds?.map((c: any) => (
-                      <ChannelBadge key={c._id} channel={c.channelName} />
-                    ))}
+                    {rule.channels
+                      ?.map((c: any) => c.channelId?.channelName)
+                      .join(", ") || "N/A"}
                   </div>
                 </td>
                 <td className="px-4 py-5">

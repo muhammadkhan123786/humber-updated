@@ -46,7 +46,8 @@ export class AdvancedGenericController<T extends Document> {
         order = "desc",
         search,
         filter,
-        includeStats = "false", 
+        includeStats = "false",
+        requiredUserId = "true", // Default as string
         ...rawFilters
       } = req.query;
 
@@ -54,30 +55,37 @@ export class AdvancedGenericController<T extends Document> {
       const pageSize = Number(limit);
       const queryFilters: Record<string, any> = { isDeleted: false };
 
-      if (!req.user) {
-        if (!req.body.userId) {
-          return res.json({ status: false, message: "Please provide userId." });
+      // ✅ FIXED: Explicitly check for the string "true"
+
+      if (requiredUserId === "true") {
+        if (!req.user) {
+          if (!req.body?.userId) {
+            return res.json({
+              status: false,
+              message: "Please provide userId.",
+            });
+          }
+          queryFilters.userId = new Types.ObjectId(req.body.userId);
+        } else if (req.user?.userId) {
+          queryFilters.userId = new Types.ObjectId(req.user.userId);
         }
-        queryFilters.userId = new Types.ObjectId(req.body.userId);
-      } else if (req.user && req.user.userId) {
-        queryFilters.userId = new Types.ObjectId(req.user.userId);
       }
-      //  if (req.technicianId) {
-      //        queryFilters.technicianId = new Types.ObjectId(req.technicianId);
-      //    }
+
       // ✅ GENERIC SEARCH across searchFields
       if (search && this.options.searchFields?.length) {
         queryFilters.$or = this.options.searchFields.map((field) => ({
           [field]: { $regex: search, $options: "i" },
         }));
       }
-   
 
       // ✅ Dynamic filters from rawFilters
       Object.keys(rawFilters).forEach((key) => {
         const value = rawFilters[key];
 
-        // Handle array of IDs (e.g., categoryIds, warehouseIds)
+        // Skip undefined or null values
+        if (value === undefined || value === null) return;
+
+        // Handle array of IDs
         if (key.endsWith("Ids")) {
           const ids = normalizeToStringArray(value)
             .filter((id) => Types.ObjectId.isValid(id))
@@ -97,7 +105,7 @@ export class AdvancedGenericController<T extends Document> {
         }
       });
 
-      // ✅ Get product statistics (only if requested and model is Product)
+      // ✅ Get stats and data
       let statistics = null;
       if (
         includeStats === "true" &&
@@ -114,26 +122,21 @@ export class AdvancedGenericController<T extends Document> {
       const sortOption: any = {};
       sortOption[sortBy as string] = order === "asc" ? 1 : -1;
 
-      // ✅ Check if filter=all, then skip pagination
+      // ✅ skip pagination if filter=all
       if (filter === "all") {
         const data = await query
           .sort(sortOption)
           .find({ isActive: true })
           .exec();
 
-        const response: any = {
+        return res.status(200).json({
           success: true,
           total,
           page: 1,
           limit: total,
           data,
-        };
-
-        if (statistics) {
-          response.statistics = statistics;
-        }
-
-        return res.status(200).json(response);
+          ...(statistics && { statistics }),
+        });
       }
 
       // 🔹 Normal pagination
@@ -143,7 +146,7 @@ export class AdvancedGenericController<T extends Document> {
         .limit(pageSize)
         .exec();
 
-      const response: any = {
+      res.status(200).json({
         success: true,
         total,
         activeCount,
@@ -151,13 +154,8 @@ export class AdvancedGenericController<T extends Document> {
         page: pageNumber,
         limit: pageSize,
         data,
-      };
-
-      if (statistics) {
-        response.statistics = statistics;
-      }
-
-      res.status(200).json(response);
+        ...(statistics && { statistics }),
+      });
     } catch (err: any) {
       res.status(500).json({
         success: false,
@@ -208,7 +206,7 @@ export class AdvancedGenericController<T extends Document> {
       const updated = await this.options.service.updateById(id, data, {
         populate: this.options.populate,
       });
-      console.log("updata", updated)
+      console.log("updata", updated);
       if (!updated)
         return res.status(404).json({ message: "Document not found" });
 
