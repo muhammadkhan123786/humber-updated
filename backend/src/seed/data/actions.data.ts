@@ -26,18 +26,18 @@ export const actionsData = [
       { actionKey: "create", name: "Quotation Created" },
       { actionKey: "send-to-customer", name: "Sent to Customer" },
       { actionKey: "accepted", name: "Accepted" },
-      { actionKey: "Rejected", name: "Rejected" },
-      { actionKey: "Expired", name: "Expired" }
+      { actionKey: "rejected", name: "Rejected" },
+      { actionKey: "expired", name: "Expired" }
     ]
   },
     {
     moduleKey: "purchase-order",
     actions: [
       { actionKey: "create", name: "PO Created" },
-      { actionKey: "Approved", name: "Approved" },
+      { actionKey: "approved", name: "Approved" },
       { actionKey: "sent-to-supplier", name: "Sent to Supplier" },
       { actionKey: "goods-received", name: "Goods Received" },
-      { actionKey: "Cancelled", name: "cancelled" }
+      { actionKey: "cancelled", name: "cancelled" }
     ]
   },
   {
