@@ -1,8 +1,7 @@
 "use client";
-import { TableActionButton } from "@/app/common-form/TableActionButtons";
+
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Zap } from "lucide-react";
-import { toast } from "react-hot-toast";
 
 const getGradient = (index: number) => {
   const colors = [
@@ -13,13 +12,7 @@ const getGradient = (index: number) => {
   return colors[index % colors.length];
 };
 
-const EventActionTable = ({
-  data,
-  displayView,
-  onEdit,
-  onDelete,
-  onStatusChange,
-}: any) => {
+const EventActionTable = ({ data, displayView, onStatusChange }: any) => {
   if (displayView === "card") {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -84,19 +77,6 @@ const EventActionTable = ({
                   </div>
                 </div>
               )}
-
-              <div className="mt-4 pt-4 border-t border-gray-50">
-                <TableActionButton
-                  itemName="event"
-                  fullWidth
-                  onEdit={() => onEdit(item)}
-                  onDelete={() =>
-                    item.isDefault
-                      ? toast.error("Default cannot be deleted")
-                      : onDelete(item._id)
-                  }
-                />
-              </div>
             </div>
           </div>
         ))}
@@ -114,9 +94,6 @@ const EventActionTable = ({
             <th className="px-6 py-4 font-bold text-gray-700">Key</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">
               Status
-            </th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">
-              Actions
             </th>
           </tr>
         </thead>
@@ -165,17 +142,6 @@ const EventActionTable = ({
                   isActive={item.isActive}
                   onChange={(s) => onStatusChange?.(item._id, s)}
                   editable={!item.isDefault}
-                />
-              </td>
-              <td className="px-6 py-4 text-center">
-                <TableActionButton
-                  itemName="event"
-                  onEdit={() => onEdit(item)}
-                  onDelete={() =>
-                    item.isDefault
-                      ? toast.error("Default cannot be deleted")
-                      : onDelete(item._id)
-                  }
                 />
               </td>
             </tr>

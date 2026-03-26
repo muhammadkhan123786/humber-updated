@@ -759,7 +759,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
       {
         _id: nanoid(),
-        label: "Event Actions",
+        label: "Events",
         href: "/dashboard/event-action",
         icon: Zap, // Actions / events
         roleId: [1],
