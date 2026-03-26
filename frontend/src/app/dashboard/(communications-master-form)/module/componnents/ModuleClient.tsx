@@ -1,6 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import { Search, Loader2, LayoutGrid, Table2, Plus, Box } from "lucide-react";
+import { Search, Loader2, LayoutGrid, Table2, Box } from "lucide-react";
 import StatsCards from "@/app/common-form/StatsCard";
 import ModuleTable from "./ModuleTable";
 import ModuleForm from "./ModuleForm";
@@ -34,7 +34,7 @@ export default function ModuleClient() {
 
   const { data, total, isLoading, deleteItem, updateItem } =
     useFormActions<IModuleData>(
-      "/modules", // Backend route updated to /modules
+      "/modules",
       "modules",
       "Module",
       currentPage,
@@ -80,15 +80,6 @@ export default function ModuleClient() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              setEditingData(null);
-              setShowForm(true);
-            }}
-            className="flex items-center justify-center gap-2 text-indigo-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg font-semibold shadow-lg transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
-          >
-            <Plus size={22} /> Add Module
-          </button>
         </div>
 
         <StatsCards
@@ -104,7 +95,6 @@ export default function ModuleClient() {
           icons={{ total: <Box size={24} /> }}
         />
 
-        {/* Search Bar */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-3 focus-within:ring-2 focus-within:ring-indigo-300 transition-all">
           <Search className="text-gray-400" size={20} />
           <input

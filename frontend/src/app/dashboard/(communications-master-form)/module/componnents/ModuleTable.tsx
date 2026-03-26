@@ -1,9 +1,7 @@
 "use client";
 import React from "react";
-import { TableActionButton } from "@/app/common-form/TableActionButtons";
 import { StatusBadge } from "@/app/common-form/StatusBadge";
 import { Star, Box } from "lucide-react";
-import { toast } from "react-hot-toast";
 
 const getGradient = (index: number) => {
   const colors = [
@@ -17,8 +15,7 @@ const getGradient = (index: number) => {
 const ModuleTable = ({
   data,
   displayView,
-  onEdit,
-  onDelete,
+
   onStatusChange,
 }: any) => {
   if (displayView === "card") {
@@ -48,18 +45,6 @@ const ModuleTable = ({
                   <Star size={16} className="text-yellow-500 fill-yellow-500" />
                 )}
               </h3>
-              <div className="mt-4">
-                <TableActionButton
-                  itemName="module"
-                  fullWidth
-                  onEdit={() => onEdit(item)}
-                  onDelete={() =>
-                    item.isDefault
-                      ? toast.error("Default cannot be deleted")
-                      : onDelete(item._id)
-                  }
-                />
-              </div>
             </div>
           </div>
         ))}
@@ -76,9 +61,6 @@ const ModuleTable = ({
             <th className="px-6 py-4 font-bold text-gray-700">Module Name</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">
               Status
-            </th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">
-              Actions
             </th>
           </tr>
         </thead>
@@ -106,17 +88,6 @@ const ModuleTable = ({
                   isActive={item.isActive}
                   onChange={(s) => onStatusChange?.(item._id, s)}
                   editable={!item.isDefault}
-                />
-              </td>
-              <td className="px-6 py-4 text-center">
-                <TableActionButton
-                  itemName="module"
-                  onEdit={() => onEdit(item)}
-                  onDelete={() =>
-                    item.isDefault
-                      ? toast.error("Default cannot be deleted")
-                      : onDelete(item._id)
-                  }
                 />
               </td>
             </tr>
