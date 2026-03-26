@@ -7,31 +7,66 @@ import { Types } from "mongoose";
 import { objectIdOrStringSchema } from "../../../validators/objectId.schema";
 
 export const notificationRulesSchema = {
-  autoRuleId: { type: String },
 
-  notificationRulesName: { type: String },
-
-  eventKeyId: { type: Types.ObjectId, ref: "EventActions" },
-
-  moduleId: { type: Types.ObjectId, ref: "Modules" },
-
-  templateId: {
-    type: Types.ObjectId,
-    ref: "NotificationTemplates",
-    required: true,
+  autoRuleId: {
+    type: String
   },
 
-  channelIds: [{ type: Types.ObjectId, ref: "communicationChannels" }],
+  notificationRulesName: {
+    type: String,
+    required: true
+  },
 
-  conditions: { type: String },
+  eventKeyId: {
+    type: Types.ObjectId,
+    ref: "EventActions",
+    required: true
+  },
 
-  priority: { type: Number, default: 1 },
+  channels: [
+    {
+      channelId: {
+        type: Types.ObjectId,
+        ref: "communicationChannels",
+        required: true
+      },
 
-  ...commonSchema,
+      templateId: {
+        type: Types.ObjectId,
+        ref: "NotificationTemplates",
+        required: true
+      }
+    }
+  ],
+
+  recipients: [
+    {
+      type: String
+    }
+  ],
+
+  conditions: {
+    type: String
+  },
+
+  priority: {
+    type: Number,
+    default: 1
+  },
+
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+
+  ...commonSchema
 };
 
+
+
 export const notificationRulesValidation = z.object({
-  autoRuleId: z.string().min(1, "Please enter auto rule id."),
+
+  autoRuleId: z.string().optional(),
 
   notificationRulesName: z
     .string()
@@ -39,17 +74,24 @@ export const notificationRulesValidation = z.object({
 
   eventKeyId: objectIdOrStringSchema,
 
-  moduleId: objectIdOrStringSchema,
+  channels: z.array(
 
-  channelIds: z
-    .array(objectIdOrStringSchema)
-    .min(1, "Select at least one channel"),
+    z.object({
+      channelId: objectIdOrStringSchema,
+      templateId: objectIdOrStringSchema
+    })
 
-  templateId: objectIdOrStringSchema,
+  ).min(1, "Select at least one channel"),
+
+  recipients: z
+    .array(z.string())
+    .min(1, "Select at least one recipient"),
 
   conditions: z.string().optional(),
 
   priority: z.number().optional().default(1),
 
-  ...commonSchemaValidation,
+  isActive: z.boolean().optional().default(true),
+
+  ...commonSchemaValidation
 });
