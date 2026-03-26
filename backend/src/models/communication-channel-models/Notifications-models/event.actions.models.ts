@@ -5,7 +5,7 @@ import { INotificationEvent } from "../../../../../common/communication-channels
 
 import { eventActionSchema } from "../../../schemas/communication-channels-integration-schema/Notifications-Schemas/event.schema";
 
-export type eventActionDoc = INotificationEvent<Types.ObjectId> & Document;
+export type eventActionDoc = INotificationEvent<Types.ObjectId,Types.ObjectId> & Document;
 
 const eventActionDbSchema = new Schema<eventActionDoc>({
 
