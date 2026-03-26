@@ -54,10 +54,9 @@ export const notificationRulesSchema = {
     default: 1
   },
 
-  isActive: {
-    type: Boolean,
-    default: true
-  },
+  moduleId:{type:Types.ObjectId,ref:"Modules"},
+  actionId:{type:Types.ObjectId,ref:"ModulesActions"},
+  description:{type:String},
 
   ...commonSchema
 };
@@ -67,6 +66,11 @@ export const notificationRulesSchema = {
 export const notificationRulesValidation = z.object({
 
   autoRuleId: z.string().optional(),
+
+  moduleId:objectIdOrStringSchema,
+
+  actionId:objectIdOrStringSchema,
+  description:z.string().optional(),
 
   notificationRulesName: z
     .string()
@@ -90,8 +94,6 @@ export const notificationRulesValidation = z.object({
   conditions: z.string().optional(),
 
   priority: z.number().optional().default(1),
-
-  isActive: z.boolean().optional().default(true),
 
   ...commonSchemaValidation
 });
