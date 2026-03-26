@@ -13,7 +13,7 @@ import {
 import vehicleBrandRouter from "./routes/vehicleBrand.routes";
 import modelRouter from "./routes/vehicleModel.routes";
 import aiRoutes from "./routes/ai.routes";
-import emailTestRoutes from './routes/emailTest.routes';
+import emailTestRoutes from "./routes/emailTest.routes";
 
 import customerSourceRouter from "./routes/customer.source.routes";
 import repairStatusRouter from "./routes/repair.status.routes";
@@ -53,7 +53,6 @@ import documentTypesRouter from "./routes/document.types.routes";
 import jobTypesRouter from "./routes/job.types.routes";
 import supplierPriceHistoryRoutes from "./routes/supplierPriceHistory.routes";
 
-
 //  Muzamil Hassan 8/1/2026
 
 import productAttributesRoutes from "./routes/product.attributes";
@@ -88,7 +87,7 @@ import productRoutes from "./routes/product.routes";
 import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
 import supplierLedgrRoutes from "./routes/ledger.routes";
-import paymentRoutes from "./routes/payment.routes"
+import paymentRoutes from "./routes/payment.routes";
 
 // Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
@@ -140,8 +139,6 @@ const app: Application = express();
 app.use(express.json()); // Parse JSON
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded
 app.use(cors());
-
-
 
 // Static files (for uploads/public folder)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
@@ -197,7 +194,11 @@ app.use(
   adminProtecter,
   serviceRequestTypeRouter,
 );
-app.use(`${process.env.API_PREFIX}/customers`,adminProtecter, CustomerBaseRouter);
+app.use(
+  `${process.env.API_PREFIX}/customers`,
+  adminProtecter,
+  CustomerBaseRouter,
+);
 app.use(
   `${process.env.API_PREFIX}/technicians`,
   technicianProtecter,
@@ -343,10 +344,10 @@ app.use(
 // 15-01-2026 Muhammad Imran
 app.use(`${process.env.API_PREFIX}/job-titles`, adminProtecter, jobTitleRouter);
 
-app.use(`${process.env.API_PREFIX}/icons`,adminProtecter, iconsRouter);
+app.use(`${process.env.API_PREFIX}/icons`, adminProtecter, iconsRouter);
 
 //16-02-2026
-app.use(`${process.env.API_PREFIX}/suppliers`,adminProtecter, SupplierRouters);
+app.use(`${process.env.API_PREFIX}/suppliers`, adminProtecter, SupplierRouters);
 
 //20-01-2026
 app.use(
@@ -602,11 +603,7 @@ app.use(
   vehicleTypesRouter,
 );
 
-app.use(
-  `${process.env.API_PREFIX}/riders`,
-  adminProtecter,
-  riderRouter,
-);
+app.use(`${process.env.API_PREFIX}/riders`, adminProtecter, riderRouter);
 
 app.use(
   `${process.env.API_PREFIX}/technician-work`,
@@ -633,11 +630,7 @@ app.use(
 );
 
 //11-03-2026
-app.use(
-  `${process.env.API_PREFIX}/channels`,
-  adminProtecter,
-  channelRouter,
-);
+app.use(`${process.env.API_PREFIX}/channels`, adminProtecter, channelRouter);
 
 app.use(
   `${process.env.API_PREFIX}/channel-providers`,
@@ -661,7 +654,7 @@ app.use(
 //16-03-2026
 app.use(
   `${process.env.API_PREFIX}/event-action`,
-  adminProtecter,
+  // adminProtecter,
   eventActionRouter,
 );
 
@@ -674,7 +667,7 @@ app.use(
 //17-03-2026
 app.use(
   `${process.env.API_PREFIX}/modules`,
-  adminProtecter,
+  // adminProtecter,
   moduleRouter,
 );
 
@@ -694,29 +687,21 @@ app.use(
   productAttributesRoutes,
 );
 
-app.use(`${process.env.API_PREFIX}/products`,adminProtecter, productRoutes);
+app.use(`${process.env.API_PREFIX}/products`, adminProtecter, productRoutes);
 
-app.use(
-  `${process.env.API_PREFIX}/ai`,
-adminProtecter,
-  aiRoutes,
-);
+app.use(`${process.env.API_PREFIX}/ai`, adminProtecter, aiRoutes);
 
 app.use(
   `${process.env.API_PREFIX}/purchase-orders`,
-adminProtecter,
+  adminProtecter,
   purchaseOrderRoutes,
 );
 
-app.use(
-  `${process.env.API_PREFIX}/grn`,
-adminProtecter,
-  grnRoutes,
-);
+app.use(`${process.env.API_PREFIX}/grn`, adminProtecter, grnRoutes);
 
 app.use(
   `${process.env.API_PREFIX}/goods-return-notice`,
-adminProtecter,
+  adminProtecter,
   goodsReturnRoutes,
 );
 
@@ -727,11 +712,27 @@ app.use(
 );
 
 // app.use(`${process.env.API_PREFIX}/marketplace`, marketplaceRoute);
-app.use(`${process.env.API_PREFIX}/document-numbers`,adminProtecter, documentNumberRoutes);
-app.use(`${process.env.API_PREFIX}/upload`,adminProtecter, uploadRoutes);
-app.use(`${process.env.API_PREFIX}/marketplace`,adminProtecter, marketplaceRoute);
-app.use(`${process.env.API_PREFIX}/test/email`,adminProtecter, emailTestRoutes);
-app.use(`${process.env.API_PREFIX}/supplier-price-history`,adminProtecter, supplierPriceHistoryRoutes);
+app.use(
+  `${process.env.API_PREFIX}/document-numbers`,
+  adminProtecter,
+  documentNumberRoutes,
+);
+app.use(`${process.env.API_PREFIX}/upload`, adminProtecter, uploadRoutes);
+app.use(
+  `${process.env.API_PREFIX}/marketplace`,
+  adminProtecter,
+  marketplaceRoute,
+);
+app.use(
+  `${process.env.API_PREFIX}/test/email`,
+  adminProtecter,
+  emailTestRoutes,
+);
+app.use(
+  `${process.env.API_PREFIX}/supplier-price-history`,
+  adminProtecter,
+  supplierPriceHistoryRoutes,
+);
 app.use(
   `${process.env.API_PREFIX}/supplier-ledger`,
   adminProtecter,

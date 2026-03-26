@@ -7,8 +7,6 @@ import EventActionForm from "./EventActionForm";
 import Pagination from "@/components/ui/Pagination";
 import AnimatedIcon from "@/app/common-form/AnimatedIcon";
 import { useFormActions } from "@/hooks/useFormActions";
-import { getAll } from "@/helper/apiHelper";
-
 const THEME_COLOR = "var(--primary-gradient)";
 
 export interface IEventActionData {
@@ -43,17 +41,17 @@ export default function EventActionClient() {
       "Event Action",
       currentPage,
       searchTerm,
+      true,
+      "false",
     );
+
+  console.log("Imran Data:", data);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await getAll<IEventActionData>("/event-action", {
-          limit: "1000",
-          search: searchTerm.trim(),
-        });
-        setTotalActiveCount(res.data?.filter((d) => d.isActive).length || 0);
-        setTotalInactiveCount(res.data?.filter((d) => !d.isActive).length || 0);
+        setTotalActiveCount(data?.filter((d) => d.isActive).length || 0);
+        setTotalInactiveCount(data?.filter((d) => !d.isActive).length || 0);
       } catch (err) {
         console.error("Stats Error:", err);
       }

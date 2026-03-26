@@ -22,6 +22,7 @@ export const useFormActions = <T extends { _id: string }>(
   page: number = 1,
   search: string = "",
   enabled: boolean = true,
+  isUserRequired = "true",
 ) => {
   const queryClient = useQueryClient();
 
@@ -30,10 +31,11 @@ export const useFormActions = <T extends { _id: string }>(
     queryKey: [queryKey, page, search],
     queryFn: () =>
       getAll<T>(endpoint, {
-        userId: getUserId(),
+        ...(isUserRequired === "true" && { userId: getUserId() }),
         page: String(page),
         limit: "12",
         search: search.trim(),
+        requiredUserId: isUserRequired,
       }),
     placeholderData: (previousData) => previousData, // Smooth transition between pages
     enabled,

@@ -55,7 +55,10 @@ const NotificationTemplateForm = ({
     const fetchDropdowns = async () => {
       try {
         const [eventsRes, providersRes] = await Promise.all([
-          getAll("/event-action?filter=all", { limit: "100" }),
+          getAll("/event-action?filter=all", {
+            limit: "100",
+            requiredUserId: "false",
+          }),
           getAll("/channel-providers?filter=all", { limit: "100" }),
         ]);
         setEventActions(eventsRes.data || []);

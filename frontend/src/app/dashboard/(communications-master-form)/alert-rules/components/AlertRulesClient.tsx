@@ -19,7 +19,6 @@ const exampleRules = [
 export default function AlertRulesClient() {
   const [showForm, setShowForm] = useState(false);
   const [editData, setEditData] = useState<any>(null);
-  const [modules, setModules] = useState<any[]>([]);
   const [channels, setChannels] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -31,17 +30,15 @@ export default function AlertRulesClient() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [m, c, t, e, r] = await Promise.all([
-        getAll<any>("/modules?filter=all"),
+      const [c, t, e, r] = await Promise.all([
         getAll<any>("/channels?filter=all"),
         getAll<any>("/notification-templates?filter=all"),
-        getAll<any>("/event-action?filter=all"),
+        getAll<any>("/event-action?filter=all", { requiredUserId: "false" }),
         getAll<any>(
           `/notification-rules?page=${currentPage}&limit=${PAGE_LIMIT}`,
         ),
       ]);
 
-      setModules(m.data || []);
       setChannels(c.data || []);
       setTemplates(t.data || []);
       setEvents(e.data || []);
@@ -52,14 +49,12 @@ export default function AlertRulesClient() {
       toast.error("Failed to load configuration data");
     }
   }, [currentPage]);
-
   useEffect(() => {
     const fetchWrapper = async () => {
       await fetchData();
     };
     fetchWrapper();
   }, [fetchData]);
-
   const handleEdit = (rule: any) => {
     setEditData(rule);
     setShowForm(true);
@@ -111,7 +106,6 @@ export default function AlertRulesClient() {
                 setShowForm(false);
                 setEditData(null);
               }}
-              modules={modules}
               channels={channels}
               templates={templates}
               events={events}
@@ -120,29 +114,31 @@ export default function AlertRulesClient() {
           )}
         </AnimatePresence>
 
-        <div className="space-y-6 bg-linear-to-br from-white to-purple-50 rounded-2xl border border-slate-200 p-6 md:p-7 overflow-hidden">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-lg text-white">
-              <Settings size={20} />
-            </div>
-            <h2 className="text-lg font-bold text-slate-800">
-              Example Alert Rules
-            </h2>
-          </div>
-          <div className="grid gap-3">
-            {exampleRules.map((rule, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-purple-200 transition-all"
-              >
-                <Bell size={16} className="text-purple-600" />
-                <p className="text-slate-700 font-medium text-sm flex-1">
-                  {rule}
-                </p>
+        {!showForm && (
+          <div className="space-y-6 bg-linear-to-br from-white to-purple-50 rounded-2xl border border-slate-200 p-6 md:p-7 overflow-hidden">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 p-2 rounded-lg text-white">
+                <Settings size={20} />
               </div>
-            ))}
+              <h2 className="text-lg font-bold text-slate-800">
+                Example Alert Rules
+              </h2>
+            </div>
+            <div className="grid gap-3">
+              {exampleRules.map((rule, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-purple-200 transition-all"
+                >
+                  <Bell size={16} className="text-purple-600" />
+                  <p className="text-slate-700 font-medium text-sm flex-1">
+                    {rule}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <AlertRuleTable
