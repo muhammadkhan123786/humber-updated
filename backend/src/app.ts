@@ -131,6 +131,7 @@ import eventActionRouter from "./routes/communication-channels-integration-route
 import notificationTemplateRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.templates.routes";
 import moduleRouter from "./routes/communication-channels-integration-routes/modules.routes";
 import notificationRulesRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.rules.routes";
+import moduleActionsRouter from "./routes/communication-channels-integration-routes/actions.routes";
 
 // Create express app
 const app: Application = express();
@@ -676,6 +677,15 @@ app.use(
   adminProtecter,
   notificationRulesRouter,
 );
+
+
+//26-03-2026 
+app.use(
+  `${process.env.API_PREFIX}/module-actions`,
+  //adminProtecter,
+  moduleActionsRouter,
+);
+
 
 //Muhammad Imran code ended here.
 

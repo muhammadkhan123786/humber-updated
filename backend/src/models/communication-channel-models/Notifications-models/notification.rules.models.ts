@@ -4,7 +4,7 @@ import { INotificationRulesInterface } from "../../../../../common/communication
 
 import { notificationRulesSchema } from "../../../schemas/communication-channels-integration-schema/Notification-rules/notification.rules.schema";
 
-export type notificationRulesDoc = INotificationRulesInterface<Types.ObjectId,Types.ObjectId,Types.ObjectId,Types.ObjectId> & Document;
+export type notificationRulesDoc = INotificationRulesInterface<Types.ObjectId,Types.ObjectId,Types.ObjectId,Types.ObjectId,Types.ObjectId,Types.ObjectId> & Document;
 
 const notificationRulesDbSchema = new Schema<notificationRulesDoc>({
 

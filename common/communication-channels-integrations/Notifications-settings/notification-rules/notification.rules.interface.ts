@@ -15,12 +15,18 @@ export interface INotificationRulesInterface<
   TUserId = string,
   TEVENTKEYID = string,
   TCHANNELID = string,
-  TTemplateId = string
+  TTemplateId = string,
+  TMODULEID=string,
+  TACTIONID=string
 > extends IBaseEntity<TUserId> {
 
   autoRuleId?: string;
 
   notificationRulesName: string;
+
+  moduleId:TMODULEID;
+
+  actionId:TACTIONID;
 
   eventKeyId: TEVENTKEYID;
 
@@ -34,6 +40,8 @@ export interface INotificationRulesInterface<
   conditions?: string;
 
   priority: number;
+
+  description:string;
   
 }
 
