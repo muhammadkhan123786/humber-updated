@@ -146,7 +146,7 @@ const MessageAlertDashboard = () => {
     <div className="p-8 bg-[#F8F9FD] min-h-screen font-sans">
       <div className="flex justify-between items-start mb-8">
         <div className="flex items-center gap-4">
-          <div className="bg-[#E440FF] p-3 rounded-2xl shadow-lg shadow-purple-100 text-white">
+          <div className="bg-linear-to-br from-purple-500 to-pink-500  p-3 rounded-2xl shadow-lg shadow-purple-100 text-white">
             <Bell size={24} />
           </div>
           <div>
@@ -220,7 +220,7 @@ const MessageAlertDashboard = () => {
             onClick={() => setViewMode("grid")}
             className={`flex items-center  hover:bg-green-600 gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               viewMode === "grid"
-                ? "bg-[#B347FF] text-white shadow-sm"
+                ? "bg-linear-to-br from-purple-500 to-pink-500  text-white shadow-sm"
                 : "text-[#808191] hover:bg-slate-100"
             }`}
           >
@@ -231,7 +231,7 @@ const MessageAlertDashboard = () => {
             onClick={() => setViewMode("table")}
             className={`flex items-center gap-2 hover:bg-green-600 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
               viewMode === "table"
-                ? "bg-[#B347FF] text-white shadow-sm"
+                ? "bg-linear-to-br from-purple-500 to-pink-500 ] text-white shadow-sm"
                 : "text-[#808191] hover:bg-slate-100"
             }`}
           >
