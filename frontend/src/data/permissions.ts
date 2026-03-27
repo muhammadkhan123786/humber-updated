@@ -766,6 +766,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
       },
       {
         _id: nanoid(),
+        label: "Message Alert Setup",
+        href: "/dashboard/message-alert-setup",
+        icon: Zap, // Actions / events
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
         label: "Notification Templates",
         href: "/dashboard/notification-template",
         icon: Bell, // Notification / bell icon
