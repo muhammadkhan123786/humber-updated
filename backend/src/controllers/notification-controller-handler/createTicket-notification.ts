@@ -1,7 +1,6 @@
 import NotificationEngine from "../../notification-engine/notification.engine";
 
 export const createTicketNotificationController = async (req, res) => {
-
   const {ticket} = await req.body;
 
   await NotificationEngine.trigger({

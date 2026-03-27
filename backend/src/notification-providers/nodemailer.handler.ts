@@ -6,12 +6,9 @@ export default async function handler(
   subject,
   message
 ) {
-
   const transporter = nodemailer.createTransport({
-
-    host: config.host,
-    port: config.port,
-
+ //   host: config.host,
+ //   port: config.port,
     auth: {
       user: config.user,
       pass: config.pass
