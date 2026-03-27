@@ -6,71 +6,54 @@ import { NotificationTemplates } from "../models/communication-channel-models/No
 import { communicationChannelsProvider } from "../models/communication-channel-models/provider.models";
 
 export default class NotificationEngine {
-
   static async trigger({ eventKey, payload }) {
-
     // 1️⃣ find event
     const event = await EventActions.findOne({ eventKey });
-
+    console.log("Event: ", event);
     if (!event) return;
 
     // 2️⃣ find rules
     const rules = await NotificationRules.find({
       eventKeyId: event._id,
-      isActive: true
+      isActive: true,
     });
+    console.log("Rules: ", rules);
 
     for (const rule of rules) {
-
       for (const channelId of rule.channels) {
-
-        await this.processChannel(
-          channelId,
-          rule,
-          payload
-        );
+        await this.processChannel(channelId, rule, payload);
       }
     }
   }
 
-  static async processChannel(
-    channelId,
-    rule,
-    payload
-  ) {
-
+  static async processChannel(channelId, rule, payload) {
     // 3️⃣ find channel
-    const channel = await communicationChannels.findById(channelId);
 
+    console.log("Channel Id: ", channelId);
+    const channel = await communicationChannels.findById(channelId.channelId);
+    console.log("Channel Id: ", channel);
     if (!channel) return;
 
     // 4️⃣ find provider
-    const provider = await communicationChannelsProvider.findById(
-      channel._id
-    );
-
+    const provider = await communicationChannelsProvider.findById(channel._id);
+    console.log("Provider: ", provider);
     if (!provider) return;
 
     // 5️⃣ find config
     const config = await ClientChannelConfigurationData.findOne({
       channelId: channel._id,
-      providerId: provider._id
+      providerId: provider._id,
     });
-
+    console.log("Config: ", config);
     if (!config) return;
 
     // 6️⃣ find template
-    const template = await NotificationTemplates.findById(
-      rule.templateId
-    );
-
+    const template = await NotificationTemplates.findById(rule.templateId);
+    console.log("Template: ", template);
     if (!template) return;
 
     // 7️⃣ parse template
-    const message = this.parseTemplate(
-      template.templateBody,
-      payload
-    );
+    const message = this.parseTemplate(template.templateBody, payload);
 
     const subject = template.subject
       ? this.parseTemplate(template.subject, payload)
@@ -83,15 +66,14 @@ export default class NotificationEngine {
       payload,
       subject,
       message,
-      channel._id
+      channel._id,
     );
   }
 
   static parseTemplate(template, payload) {
-
     return template.replace(
       /{{(.*?)}}/g,
-      (_, key) => payload[key.trim()] || ""
+      (_, key) => payload[key.trim()] || "",
     );
   }
 
@@ -101,19 +83,12 @@ export default class NotificationEngine {
     payload,
     subject,
     message,
-    channelKey
+    channelKey,
   ) {
-
     const handler = require(
-      `../notification-providers/${providerKey}.handler`
+      `../notification-providers/${providerKey}.handler`,
     ).default;
 
-    await handler(
-      config,
-      payload,
-      subject,
-      message,
-      channelKey
-    );
+    await handler(config, payload, subject, message, channelKey);
   }
 }

@@ -1,7 +1,7 @@
 import NotificationEngine from "../../notification-engine/notification.engine";
 
 export const createTicketNotificationController = async (req, res) => {
-  const {ticket} = await req.body;
+  const { ticket } = await req.body;
 
   await NotificationEngine.trigger({
     eventKey: "TICKET_CREATED",
@@ -10,8 +10,8 @@ export const createTicketNotificationController = async (req, res) => {
       customerName: ticket.customerName,
       email: ticket.email,
       phone: ticket.phone,
-      status: ticket.status
-    }
+      status: ticket.status,
+    },
   });
 
   res.json(ticket);
