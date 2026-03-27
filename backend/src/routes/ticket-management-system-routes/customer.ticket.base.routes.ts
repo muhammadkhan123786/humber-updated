@@ -15,6 +15,7 @@ import {
   getUnassignedTickets,
   sendTicketDetailsToCustomer,
 } from "../../controllers/customer.ticket.controllet";
+import { createTicketNotificationController } from "../../controllers/notification-controller-handler/createTicket-notification";
 
 const repairVehicleUpload = createUploader([
   {
@@ -76,6 +77,9 @@ const customerTicketBaseController = new AdvancedGenericController({
   searchFields: ["ticketCode"],
 });
 
+//send create notification 
+customerTicketBaseRouter.post('/create-ticket-notification',createTicketNotificationController)
+
 customerTicketBaseRouter.get(
   "/unassigned-technician-tickets",
   getUnassignedTickets,
@@ -84,6 +88,7 @@ customerTicketBaseRouter.get(
   "/ticket-count-status-wise",
   getTicketCountByStatus,
 );
+
 
 customerTicketBaseRouter.get("/", customerTicketBaseController.getAll);
 customerTicketBaseRouter.get("/:id", customerTicketBaseController.getById);
