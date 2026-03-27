@@ -8,13 +8,16 @@ interface AlertStatusFooterProps {
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   loading: boolean;
+  isEditMode?: boolean;
 }
 
 const AlertStatusFooter = ({
   isActive,
   onStatusChange,
+
   onCancel,
   loading,
+  isEditMode = false,
 }: AlertStatusFooterProps) => {
   return (
     <div className="space-y-4 mt-6">
@@ -52,7 +55,11 @@ const AlertStatusFooter = ({
           className="flex-1 bg-linear-to-r from-[#C236D3] to-[#F13A9B] text-white rounded-xl font-bold flex items-center justify-center gap-3 shadow-lg hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50"
         >
           <FileText size={18} />
-          {loading ? "Saving..." : "Save Configuration"}
+          {loading
+            ? "Saving..."
+            : isEditMode
+              ? "Update Configuration"
+              : "Save Configuration"}
         </button>
         <button
           type="button"
