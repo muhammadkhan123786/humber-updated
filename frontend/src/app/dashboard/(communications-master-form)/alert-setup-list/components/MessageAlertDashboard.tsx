@@ -141,6 +141,11 @@ const MessageAlertDashboard = () => {
     if (name.includes("staff")) return <UserCheck size={12} />;
     return <Users size={12} />;
   };
+  const handleClick = () => {
+    setTimeout(() => {
+      router.push("/dashboard/message-alert-setup");
+    });
+  };
 
   return (
     <div className="p-8 bg-[#F8F9FD] min-h-screen font-sans">
@@ -159,10 +164,7 @@ const MessageAlertDashboard = () => {
           </div>
         </div>
         <button
-          onClick={() => {
-            console.log("Add new alert");
-            toast.success("Opening alert setup form");
-          }}
+          onClick={handleClick}
           className="flex items-center gap-2 bg-linear-to-r from-[#B347FF] to-[#D61E9A] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:opacity-90 transition-all"
         >
           <Plus size={18} />
