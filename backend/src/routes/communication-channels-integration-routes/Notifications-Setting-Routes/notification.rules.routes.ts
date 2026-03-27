@@ -16,19 +16,40 @@ const NotificationRulesServices = new GenericService<notificationRulesDoc>(
 
 const NotificationRulesController = new AdvancedGenericController({
   service: NotificationRulesServices,
+
   populate: [
     { path: "userId" },
+
     {
       path: "eventKeyId",
       populate: { path: "moduleId" },
     },
+
     {
       path: "channels.channelId",
     },
+
     {
       path: "channels.templateId",
+      populate: [
+        {
+          path: "eventKeyId",
+          populate: { path: "moduleId" },
+        },
+        {
+          path: "channelId",
+        },
+      ],
+    },
+
+    {
+      path: "moduleId",
+    },
+    {
+      path: "actionId",
     },
   ],
+
   validationSchema: notificationRulesValidation,
   searchFields: ["conditions", "priority"],
 });

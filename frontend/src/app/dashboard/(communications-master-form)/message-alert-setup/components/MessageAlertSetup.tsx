@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BellDot,
   ChevronDown,
@@ -13,7 +14,7 @@ import {
   Info,
   RefreshCcw,
 } from "lucide-react";
-import { getAll, createItem, updateItem } from "@/helper/apiHelper";
+import { getAll, createItem, updateItem, getById } from "@/helper/apiHelper";
 import toast from "react-hot-toast";
 import CommunicationMode from "./CommunicationMode";
 import MessageTemplate from "./MessageTemplate";
@@ -28,6 +29,9 @@ interface ChannelTemplate {
 }
 
 const MessageAlertSetup = () => {
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
+
   const [loading, setLoading] = useState(false);
   const [modules, setModules] = useState<any[]>([]);
   const [moduleActions, setModuleActions] = useState<any[]>([]);
@@ -36,6 +40,8 @@ const MessageAlertSetup = () => {
   const [templates, setTemplates] = useState<any[]>([]);
   const [variables, setVariables] = useState<any[]>([]);
   const [selectedEventData, setSelectedEventData] = useState<any>(null);
+  const [channelProviders, setChannelProviders] = useState<any[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
   console.log(selectedEventData);
   const [formName, setFormName] = useState("");
   const [selectedModule, setSelectedModule] = useState("");
@@ -45,16 +51,58 @@ const MessageAlertSetup = () => {
   const [channelTemplates, setChannelTemplates] = useState<ChannelTemplate[]>(
     [],
   );
-  const [channelProviders, setChannelProviders] = useState<any[]>([]);
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [conditions, setConditions] = useState("");
   const [priority, setPriority] = useState(1);
   const [editData, setEditData] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetchData();
   }, []);
+  useEffect(() => {
+    if (
+      editId &&
+      modules.length > 0 &&
+      channels.length > 0 &&
+      templates.length > 0
+    ) {
+      fetchEditData(editId);
+    }
+  }, [editId, modules, channels, templates]);
+
+  const fetchEditData = async (id: string) => {
+    try {
+      const response = await getById("/notification-rules", id);
+      const ruleData: any = response.data;
+      setEditData(ruleData);
+      setIsEditMode(true);
+      setFormName(ruleData.notificationRulesName || "");
+      setSelectedModule(ruleData.moduleId?._id || ruleData.moduleId || "");
+      setDescription(ruleData.description || "");
+      setSelectedEvent(ruleData.eventKeyId?._id || ruleData.eventKeyId || "");
+      setConditions(ruleData.conditions || "");
+      setPriority(ruleData.priority || 1);
+      setIsActive(ruleData.isActive ?? true);
+      setSelectedRecipients(ruleData.recipients || []);
+
+      if (ruleData.actionId?.actionKey) {
+        setSelectedAction(ruleData.actionId.actionKey);
+      }
+
+      if (ruleData.channels && ruleData.channels.length > 0) {
+        const channelsData = ruleData.channels.map((ch: any) => ({
+          channelId: ch.channelId?._id || ch.channelId,
+          templateId: ch.templateId?._id || ch.templateId,
+        }));
+        setChannelTemplates(channelsData);
+      }
+    } catch (error: any) {
+      console.error("Error fetching edit data:", error);
+      toast.error("Failed to load rule data for editing");
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -88,6 +136,7 @@ const MessageAlertSetup = () => {
       toast.error("Failed to load module actions");
     }
   }, [selectedModule]);
+
   useEffect(() => {
     if (selectedModule) {
       fetchModuleActions();
@@ -103,7 +152,6 @@ const MessageAlertSetup = () => {
         requiredUserId: "false",
       });
 
-      // Find the selected action details
       const selectedActionData = moduleActions.find(
         (action) => action.actionKey === selectedAction,
       );
@@ -121,6 +169,7 @@ const MessageAlertSetup = () => {
       toast.error("Failed to load events");
     }
   }, [moduleActions, selectedAction]);
+
   useEffect(() => {
     if (selectedAction) {
       fetchEvents();
@@ -131,6 +180,7 @@ const MessageAlertSetup = () => {
       setSelectedEventData(null);
     }
   }, [selectedAction, fetchEvents]);
+
   useEffect(() => {
     if (selectedEvent) {
       const eventData = events.find((e) => e._id === selectedEvent);
@@ -158,10 +208,12 @@ const MessageAlertSetup = () => {
       { channelId: "", templateId: "" },
     ]);
   };
+
   const removeChannelTemplate = (index: number) => {
     const updated = channelTemplates.filter((_, i) => i !== index);
     setChannelTemplates(updated);
   };
+
   const updateChannelTemplate = (
     index: number,
     field: keyof ChannelTemplate,
@@ -171,6 +223,7 @@ const MessageAlertSetup = () => {
     updated[index] = { ...updated[index], [field]: value };
     setChannelTemplates(updated);
   };
+
   const getTemplatesForChannel = useCallback(
     (selectedChannelId: string) => {
       if (!selectedChannelId) return [];
@@ -186,16 +239,13 @@ const MessageAlertSetup = () => {
         );
       } else {
         filteredTemplates = templates;
-        console.log("No provider found, showing all templates:", {
-          selectedChannelId,
-          totalTemplates: templates.length,
-        });
       }
 
       return filteredTemplates;
     },
     [channelProviders, templates],
   );
+
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -205,6 +255,7 @@ const MessageAlertSetup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!formName) {
       toast.error("Please enter form name");
       return;
@@ -262,14 +313,14 @@ const MessageAlertSetup = () => {
     };
 
     try {
-      if (editData) {
+      if (isEditMode && editData) {
         await updateItem("/notification-rules", editData._id, payload);
         toast.success("Alert rule updated successfully");
       } else {
         await createItem("/notification-rules", payload);
         toast.success("Alert rule created successfully");
       }
-      resetForm();
+      router.push("/dashboard/alert-setup-list");
     } catch (error: any) {
       console.error("Submit error:", error);
       toast.error(error.message || "Failed to save alert rule");
@@ -292,11 +343,11 @@ const MessageAlertSetup = () => {
     setEditData(null);
     setVariables([]);
     setSelectedEventData(null);
+    setIsEditMode(false);
   };
 
   const getModuleName = (moduleId: string) => {
     const foundModule = modules.find((m) => m._id === moduleId);
-
     return (
       foundModule?.moduleKey ||
       foundModule?.moduleName ||
@@ -304,6 +355,7 @@ const MessageAlertSetup = () => {
       moduleId
     );
   };
+
   const getActionName = (actionKey: string) => {
     const action = moduleActions.find((a) => a.actionKey === actionKey);
     return action?.name || actionKey;
@@ -317,10 +369,12 @@ const MessageAlertSetup = () => {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-            Message Alert Setup
+            {isEditMode ? "Edit Message Alert" : "Message Alert Setup"}
           </h1>
           <p className="text-[13px] text-[#555675] font-medium opacity-80">
-            Configure automated notifications for customer events
+            {isEditMode
+              ? "Update your alert configuration"
+              : "Configure automated notifications for customer events"}
           </p>
         </div>
       </div>
@@ -475,6 +529,7 @@ const MessageAlertSetup = () => {
                 )}
               </div>
             </div>
+
             <div className="bg-white rounded-3xl my-3 p-8 shadow-sm border border-white/50">
               <div className="flex items-center gap-3 mb-8">
                 <div className="bg-linear-to-br from-purple-500 to-fuchsia-500 p-2.5 rounded-xl text-white">
@@ -539,6 +594,7 @@ const MessageAlertSetup = () => {
                 )}
               </div>
             </div>
+
             <div className="my-3">
               <CommunicationMode
                 channels={channels}
@@ -575,19 +631,23 @@ const MessageAlertSetup = () => {
                 />
               );
             })}
+
             <RecipientSettings
               selectedRecipients={selectedRecipients}
               onRecipientSelect={setSelectedRecipients}
             />
+
             <AlertStatusFooter
               isActive={isActive}
               onStatusChange={setIsActive}
               onSubmit={handleSubmit}
               onCancel={resetForm}
               loading={loading}
+              isEditMode={isEditMode}
             />
           </form>
         </div>
+
         <div className="flex-1 w-full space-y-6 lg:top-6">
           <div className="bg-white/40 backdrop-blur-md rounded-3xl p-6 border border-white/60 shadow-sm h-[480px] flex flex-col">
             <div className="flex items-center gap-3 mb-6">

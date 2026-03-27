@@ -61,7 +61,6 @@ const MessageTemplate = ({
     }
   };
 
-  // Formatting functions
   const formatText = (command: string) => {
     const textarea = document.getElementById(
       `message-body-${index}`,
@@ -105,8 +104,8 @@ const MessageTemplate = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-white/50 overflow-hidden">
-      <div className="bg-[#FFF9F0] p-6 border-b border-orange-50">
+    <div className="bg-white rounded-3xl my-3 shadow-sm border border-white/50 overflow-hidden">
+      <div className="bg-[#FFF9F0] p-6 border-b border-orange-50 ">
         <div className="flex items-center gap-3">
           <div className="bg-orange-500 p-2.5 rounded-xl text-white shadow-lg shadow-orange-100">
             <Mail size={18} />
@@ -163,7 +162,6 @@ const MessageTemplate = ({
           </label>
 
           <div className="border border-slate-100 rounded-2xl overflow-hidden focus-within:border-purple-300 transition-all shadow-sm">
-            {/* Formatting Toolbar */}
             <div className="flex items-center justify-between p-2 bg-slate-50/50 border-b border-slate-100">
               <div className="flex items-center gap-1">
                 <button
