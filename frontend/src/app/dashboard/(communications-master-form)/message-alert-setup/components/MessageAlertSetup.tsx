@@ -308,6 +308,7 @@ const MessageAlertSetup = () => {
       recipients: selectedRecipients,
       conditions: conditions,
       priority: priority,
+
       isActive: isActive,
       userId: userId,
     };
@@ -485,7 +486,21 @@ const MessageAlertSetup = () => {
                     className="w-full h-10 px-5 rounded-xl bg-[#F5F8FF] border border-transparent focus:border-blue-400 focus:bg-white outline-none text-[13px] transition-all"
                   />
                 </div>
-
+                <div className="space-y-1.5">
+                  <label className="text-[12px] font-medium ml-1 uppercase tracking-wider opacity-90">
+                    Conditions
+                  </label>
+                  <textarea
+                    value={conditions}
+                    onChange={(e) => setConditions(e.target.value)}
+                    placeholder='e.g., { "priority": { "$gt": 5 }, "status": "urgent" }'
+                    className="w-full h-20 p-5 rounded-2xl bg-[#F5F8FF] border border-transparent focus:border-blue-400 focus:bg-white outline-none text-[13px] transition-all placeholder:text-[#ACB5BD] resize-none font-mono"
+                  />
+                  <p className="text-[10px] text-gray-400 ml-1">
+                    Optional: Enter conditions in JSON format to filter when
+                    this alert should trigger
+                  </p>
+                </div>
                 {selectedModule && selectedAction && (
                   <div className="mt-6 p-5 bg-[#EFFFF6] border border-[#00C48C44] rounded-2xl flex items-start gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="bg-[#00C48C] p-2 rounded-xl text-white">
