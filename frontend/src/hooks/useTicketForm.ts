@@ -407,6 +407,50 @@ export const useTicketForm = () => {
       console.log("API Response:", res.data);
 
       if (res.data?.success) {
+        if (!editingId) {
+          try {
+            const createdTicket = res.data.data;
+
+            const customer = customers.find(
+              (c) => (c._id || c.id) === data.customerId,
+            );
+            const firstName =
+              customer?.personId?.firstName ||
+              customer?.firstName ||
+              "Customer";
+            const lastName =
+              customer?.personId?.lastName || customer?.lastName || "";
+            const email = customer?.contactId?.emailId || customer?.email || "";
+            const phone =
+              customer?.contactId?.mobileNumber || customer?.phoneNumber || "";
+
+            const statusObj = statuses.find(
+              (s) =>
+                (s._id || s.id) ===
+                (data.ticketStatusId || defaultTicketStatusId),
+            );
+
+            await axios.post(
+              `${baseUrl}/customer-tickets/create-ticket-notification`,
+              {
+                ticket: {
+                  ticketNumber: createdTicket.ticketCode || "TKT-NEW",
+                  customerName: `${firstName} ${lastName}`.trim(),
+                  email: email,
+                  phone: phone,
+                  status: statusObj?.label || "open",
+                },
+              },
+              {
+                headers: getAuthHeader(),
+              },
+            );
+            console.log("Notification sent for:", firstName);
+          } catch (notifErr) {
+            console.error("Notification engine failed:", notifErr);
+          }
+        }
+
         clearEdit();
         return res.data;
       } else {
