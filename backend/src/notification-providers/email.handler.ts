@@ -5,7 +5,7 @@ export default async function handler(config, payload, subject, message) {
   const transporter = nodemailer.createTransport({
     host: config.host,
     port: config.port,
-    secure: config.port == 465, // auto SSL
+    secure: false, // auto SSL
     auth: {
       user: config.user,
       pass: config.pass,
