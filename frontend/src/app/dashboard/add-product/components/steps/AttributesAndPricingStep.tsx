@@ -2,11 +2,15 @@
 
 export interface MarketplaceTemplate {
   _id: string;
-  name: string;
-  icon: {
+  name: {
     _id: string;
-    icon: string;
-    iconName: string;
+    name: string;
+    icon: {
+      icon: string;
+    };
+    color: {
+      colorCode: string;
+    };
   };
 }
 
@@ -36,6 +40,7 @@ import InfoBoxSection from '../sections/InfoBoxSection';
 
 import { ProductVariant, MarketplacePricing } from '../../hooks/useProductForm';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface ValidationIssue {
@@ -193,20 +198,16 @@ function ValidationPanel({
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 export function AttributesAndPricingStep({
-  dynamicFields,
-  formData,
-  onDynamicFieldChange,
-  onInputChange,
+ 
   attributes = [],
-  currencies = [],
+
   taxes = [],
   warehouses = [],
   warehouseStatus = [],
   productStatus = [],
   conditions = [],
   marketplaces = [],
-  warrantyOptions = [],
-  getAllFields,
+  
   variants,
   setVariants,
 }: AttributesAndPricingStepProps) {
@@ -260,9 +261,10 @@ export function AttributesAndPricingStep({
   const currencySymbol = '£';
 
   const { data: templates } = useFormActions<MarketplaceTemplate>(
-    "/marketplace-templates", "marketplaceTemplates", "MarketplaceTemplates"
+    "/marketplace", "marketplaceTemplates", "MarketplaceTemplates"
   );
 
+  console.log("templates", templates)
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleAttributeChange = (fieldId: string, value: any) =>
     setCurrentVariant(p => ({ ...p, attributes: { ...p.attributes, [fieldId]: value } }));
@@ -627,7 +629,7 @@ export function AttributesAndPricingStep({
                           setShowPricingForm(true);
                           const existing = addedMarketplacePricing.find(p => p.marketplaceId === value);
                           setCurrentMarketplacePricing(existing || {
-                            marketplaceId: value, marketplaceName: template.name,
+                            marketplaceId: value, marketplaceName: template.name.name,
                             costPrice: 0, sellingPrice: 0, retailPrice: 0,
                             discountPercentage: 0, taxId: '', taxRate: 0, vatExempt: false,
                           });
@@ -642,12 +644,12 @@ export function AttributesAndPricingStep({
                             .map(template => (
                               <SelectItem key={template._id} value={template._id}>
                                 <div className="flex items-center gap-3 py-1">
-                                  {template.icon?.icon ? (
-                                    <img src={template.icon.icon} alt={template.name} className="h-6 w-6 object-contain rounded" />
+                                  {template.name.icon?.icon ? (
+                                    <Image src={template.name.icon.icon} alt={template.name.name} width={20} height={20} className="object-contain rounded" />
                                   ) : (
                                     <Store className="h-5 w-5 text-gray-400" />
                                   )}
-                                  <span className="font-medium">{template.name}</span>
+                                  <span className="font-medium">{template.name.name}</span>
                                 </div>
                               </SelectItem>
                             ))}

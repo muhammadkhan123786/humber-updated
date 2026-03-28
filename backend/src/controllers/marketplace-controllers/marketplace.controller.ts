@@ -183,7 +183,7 @@ export class MarketplaceController {
                 .select("-credentials -tokens")
                 .sort({ createdAt: -1 }).populate({
                     path: "name",
-                    select: "_id Icons Color",
+                    select: "_id name Icons Color",
                     populate: [
                         { path: 'icon', select: '_id  icon' },
                         { path: 'color', select: '_id colorCode' }
