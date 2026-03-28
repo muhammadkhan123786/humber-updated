@@ -1,3 +1,4 @@
+import { EventEmitter } from "stream";
 import { ClientChannelConfigurationData } from "../models/communication-channel-models/client.channel.config.data.models";
 import { communicationChannels } from "../models/communication-channel-models/communication.channel.models";
 import { EventActions } from "../models/communication-channel-models/Notifications-models/event.actions.models";
@@ -21,12 +22,12 @@ export default class NotificationEngine {
 
     for (const rule of rules) {
       for (const channelId of rule.channels) {
-        await this.processChannel(channelId, rule, payload);
+        await this.processChannel(channelId, event, payload);
       }
     }
   }
 
-  static async processChannel(channelId, rule, payload) {
+  static async processChannel(channelId, event, payload) {
     // 3️⃣ find channel
 
     console.log("Channel Id: ", channelId);
@@ -35,20 +36,25 @@ export default class NotificationEngine {
     if (!channel) return;
 
     // 4️⃣ find provider
-    const provider = await communicationChannelsProvider.findById(channel._id);
+    const provider = await communicationChannelsProvider
+      .findOne({ channelId: channel._id })
+      .populate("channelId");
     console.log("Provider: ", provider);
     if (!provider) return;
 
     // 5️⃣ find config
     const config = await ClientChannelConfigurationData.findOne({
-      channelId: channel._id,
       providerId: provider._id,
     });
     console.log("Config: ", config);
     if (!config) return;
 
     // 6️⃣ find template
-    const template = await NotificationTemplates.findById(rule.templateId);
+    console.log("Event Id: ", event._id);
+    console.log("channel Id: ", channelId.channelId);
+    const template = await NotificationTemplates.findOne({
+      eventKeyId: event._id,
+    });
     console.log("Template: ", template);
     if (!template) return;
 
@@ -85,10 +91,32 @@ export default class NotificationEngine {
     message,
     channelKey,
   ) {
-    const handler = require(
-      `../notification-providers/${providerKey}.handler`,
-    ).default;
+    try {
+      console.log("Execute Provider key: ", providerKey);
 
-    await handler(config, payload, subject, message, channelKey);
+      // ✅ safe key extract
+      const providerName = providerKey?.channelName;
+
+      if (!providerName) {
+        console.log("❌ Provider name missing");
+        return;
+      }
+
+      let handler;
+
+      try {
+        handler = require(
+          `../notification-providers/${providerName}.handler`,
+        ).default;
+      } catch (err) {
+        console.log(`❌ Handler not found for provider: ${providerName}`);
+        return; // 🚀 skip instead of crash
+      }
+
+      // ✅ execute safely
+      await handler(config, payload, subject, message, channelKey);
+    } catch (error) {
+      console.error("❌ executeProvider error:", error.message);
+    }
   }
 }
