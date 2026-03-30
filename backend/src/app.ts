@@ -631,17 +631,17 @@ app.use(
 );
 
 //11-03-2026
-app.use(`${process.env.API_PREFIX}/channels`, adminProtecter, channelRouter);
+app.use(`${process.env.API_PREFIX}/channels`, channelRouter);
 
 app.use(
   `${process.env.API_PREFIX}/channel-providers`,
-  adminProtecter,
+  // adminProtecter,
   channelProviderRouter,
 );
 
 app.use(
   `${process.env.API_PREFIX}/channel-providers-fields`,
-  adminProtecter,
+  // adminProtecter,
   channelProviderConfigFieldsRouter,
 );
 
@@ -678,14 +678,12 @@ app.use(
   notificationRulesRouter,
 );
 
-
-//26-03-2026 
+//26-03-2026
 app.use(
   `${process.env.API_PREFIX}/module-actions`,
   //adminProtecter,
   moduleActionsRouter,
 );
-
 
 //Muhammad Imran code ended here.
 

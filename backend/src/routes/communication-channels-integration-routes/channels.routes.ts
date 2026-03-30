@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { GenericService } from "../../services/generic.crud.services";
-import { channelDoc, communicationChannels } from "../../models/communication-channel-models/communication.channel.models";
+import {
+  channelDoc,
+  communicationChannels,
+} from "../../models/communication-channel-models/communication.channel.models";
 import { channelValidation } from "../../schemas/communication-channels-integration-schema/channel.schema";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 
@@ -9,10 +12,10 @@ const channelRouter = Router();
 const channelServices = new GenericService<channelDoc>(communicationChannels);
 
 const channelController = new AdvancedGenericController({
-    service: channelServices,
-    populate: ["userId"],
-    validationSchema: channelValidation,
-    searchFields: ["channelName"]
+  service: channelServices,
+  // populate: ["userId"],
+  validationSchema: channelValidation,
+  searchFields: ["channelName"],
 });
 
 channelRouter.get("/", channelController.getAll);
@@ -22,4 +25,3 @@ channelRouter.put("/:id", channelController.update);
 channelRouter.delete("/:id", channelController.delete);
 
 export default channelRouter;
-

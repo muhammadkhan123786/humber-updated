@@ -256,18 +256,23 @@ const ProviderSection = ({ provider }: { provider: any }) => {
 const ProviderConfigurationPage = () => {
   const queryClient = useQueryClient();
   const { data: providers = [] } = useQuery({
-    queryKey: ["providers"],
+    queryKey: ["providers", { limit: "100", requiredUserId: "false" }],
     queryFn: async () =>
-      (await getAll<any>("/channel-providers?filter=all")).data || [],
+      (
+        await getAll("/channel-providers?filter=all", {
+          limit: "100",
+          requiredUserId: "false",
+        })
+      ).data || [],
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteItem("/channel-providers", id),
-    onSuccess: () => {
-      toast.success("Provider deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["providers"] });
-    },
-  });
+  // const deleteMutation = useMutation({
+  //   mutationFn: (id: string) => deleteItem("/channel-providers", id),
+  //   onSuccess: () => {
+  //     toast.success("Provider deleted successfully");
+  //     queryClient.invalidateQueries({ queryKey: ["providers"] });
+  //   },
+  // });
 
   return (
     <div className="min-h-screen p-5">
@@ -310,12 +315,12 @@ const ProviderConfigurationPage = () => {
                 </p>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-900">Active</h3>
-                  <button
+                  {/* <button
                     onClick={() => deleteMutation.mutate(p._id)}
                     className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 size={18} />
-                  </button>
+                  </button> */}
                 </div>
               </div>
             );

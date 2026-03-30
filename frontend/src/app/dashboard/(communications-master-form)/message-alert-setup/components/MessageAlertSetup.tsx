@@ -109,9 +109,9 @@ const MessageAlertSetup = () => {
       const [modulesRes, channelsRes, templatesRes, providersRes] =
         await Promise.all([
           getAll("/modules?filter=all", { requiredUserId: "false" }),
-          getAll("/channels?filter=all"),
+          getAll("/channels?filter=all", { requiredUserId: "false" }),
           getAll("/notification-templates?filter=all"),
-          getAll("/channel-providers?filter=all"),
+          getAll("/channel-providers?filter=all", { requiredUserId: "false" }),
         ]);
 
       setModules(modulesRes.data || []);

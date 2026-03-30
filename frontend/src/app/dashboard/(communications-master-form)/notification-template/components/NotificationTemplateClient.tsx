@@ -156,7 +156,9 @@ export default function NotificationTemplateClient() {
   useEffect(() => {
     const fetchChannels = async () => {
       try {
-        const res: any = await getAll("/channels?filter=all");
+        const res: any = await getAll("/channels?filter=all", {
+          requiredUserId: "false",
+        });
         const channelList = res.data || [];
         setChannels(channelList);
         if (channelList.length > 0) setActiveTab(channelList[0]._id);

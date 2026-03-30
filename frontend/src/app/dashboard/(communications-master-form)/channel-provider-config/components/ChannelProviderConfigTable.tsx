@@ -169,7 +169,7 @@ const ChannelProviderConfigTable = ({
                 </div>
               </div>
 
-              <div className="pt-4">
+              {/* <div className="pt-4">
                 <TableActionButton
                   itemName="configuration"
                   fullWidth={true}
@@ -183,7 +183,7 @@ const ChannelProviderConfigTable = ({
                     onDelete(item._id);
                   }}
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         ))}
@@ -213,9 +213,6 @@ const ChannelProviderConfigTable = ({
             </th>
             <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">
               Status
-            </th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">
-              Actions
             </th>
           </tr>
         </thead>
@@ -268,7 +265,7 @@ const ChannelProviderConfigTable = ({
                     editable={!item.isDefault}
                   />
                 </td>
-                <td className="px-6 py-4 text-center">
+                {/* <td className="px-6 py-4 text-center">
                   <TableActionButton
                     itemName="configuration"
                     onEdit={() => onEdit(item)}
@@ -281,7 +278,7 @@ const ChannelProviderConfigTable = ({
                       onDelete(item._id);
                     }}
                   />
-                </td>
+                </td> */}
               </tr>
               {expandedRows.has(item._id) && (
                 <tr className="bg-blue-50/50">

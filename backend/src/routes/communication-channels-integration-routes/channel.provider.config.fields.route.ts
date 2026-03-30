@@ -17,16 +17,34 @@ const channelProviderConfigFieldsServices =
 
 const channelProviderConfigFieldsController = new AdvancedGenericController({
   service: channelProviderConfigFieldsServices,
-  populate: ["userId", "providerId"],
+  populate: ["providerId"],
   validationSchema: channelConfigValidation,
   searchFields: ["fields.name", "fields.label", "fields.type"],
 });
 
-channelProviderConfigFieldsRouter.post('/communication/test-connection',testCommunicationConnection)
-channelProviderConfigFieldsRouter.get("/", channelProviderConfigFieldsController.getAll);
-channelProviderConfigFieldsRouter.get("/:id", channelProviderConfigFieldsController.getById);
-channelProviderConfigFieldsRouter.post("/", channelProviderConfigFieldsController.create);
-channelProviderConfigFieldsRouter.put("/:id", channelProviderConfigFieldsController.update);
-channelProviderConfigFieldsRouter.delete("/:id", channelProviderConfigFieldsController.delete);
+channelProviderConfigFieldsRouter.post(
+  "/communication/test-connection",
+  testCommunicationConnection,
+);
+channelProviderConfigFieldsRouter.get(
+  "/",
+  channelProviderConfigFieldsController.getAll,
+);
+channelProviderConfigFieldsRouter.get(
+  "/:id",
+  channelProviderConfigFieldsController.getById,
+);
+channelProviderConfigFieldsRouter.post(
+  "/",
+  channelProviderConfigFieldsController.create,
+);
+channelProviderConfigFieldsRouter.put(
+  "/:id",
+  channelProviderConfigFieldsController.update,
+);
+channelProviderConfigFieldsRouter.delete(
+  "/:id",
+  channelProviderConfigFieldsController.delete,
+);
 
 export default channelProviderConfigFieldsRouter;

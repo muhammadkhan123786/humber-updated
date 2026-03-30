@@ -39,6 +39,8 @@ export default function ProviderClient() {
       "Provider",
       currentPage,
       searchTerm,
+      true,
+      "false",
     );
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function ProviderClient() {
               </p>
             </div>
           </div>
-          <button
+          {/* <button
             onClick={() => {
               setEditingData(null);
               setShowForm(true);
@@ -103,7 +105,7 @@ export default function ProviderClient() {
             className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
             <Plus size={22} /> Add Provider
-          </button>
+          </button> */}
         </div>
         <StatsCards
           totalCount={total}
