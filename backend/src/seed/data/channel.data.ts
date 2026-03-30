@@ -1,3 +1,13 @@
-export const channels = [
-    
-]
+export const channelData = [
+  {
+    channelName: "email",    
+  },
+  {
+    channelName: "whatsapp",
+  },
+  {
+    channelName: "sms",   
+  }
+];
+
+ 
