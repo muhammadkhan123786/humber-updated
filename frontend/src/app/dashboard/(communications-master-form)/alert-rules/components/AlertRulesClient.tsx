@@ -31,7 +31,7 @@ export default function AlertRulesClient() {
   const fetchData = useCallback(async () => {
     try {
       const [c, t, e, r] = await Promise.all([
-        getAll<any>("/channels?filter=all"),
+        getAll<any>("/channels?filter=all", { requiredUserId: "false" }),
         getAll<any>("/notification-templates?filter=all"),
         getAll<any>("/event-action?filter=all", { requiredUserId: "false" }),
         getAll<any>(

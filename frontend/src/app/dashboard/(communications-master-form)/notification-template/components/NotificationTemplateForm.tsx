@@ -59,7 +59,10 @@ const NotificationTemplateForm = ({
             limit: "100",
             requiredUserId: "false",
           }),
-          getAll("/channel-providers?filter=all", { limit: "100" }),
+          getAll("/channel-providers?filter=all", {
+            limit: "100",
+            requiredUserId: "false",
+          }),
         ]);
         setEventActions(eventsRes.data || []);
         setProviders(providersRes.data || []);

@@ -48,7 +48,7 @@ const ChannelsTable = ({
                   <Star size={16} className="text-yellow-500 fill-yellow-500" />
                 )}
               </h3>
-              <div className="mt-4">
+              {/* <div className="mt-4">
                 <TableActionButton
                   itemName="channel"
                   fullWidth
@@ -59,7 +59,7 @@ const ChannelsTable = ({
                       : onDelete(item._id)
                   }
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         ))}
@@ -76,9 +76,6 @@ const ChannelsTable = ({
             <th className="px-6 py-4 font-bold text-gray-700">Channel Name</th>
             <th className="px-6 py-4 text-center font-bold text-gray-700">
               Status
-            </th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700">
-              Actions
             </th>
           </tr>
         </thead>
@@ -106,17 +103,6 @@ const ChannelsTable = ({
                   isActive={item.isActive}
                   onChange={(s) => onStatusChange?.(item._id, s)}
                   editable={!item.isDefault}
-                />
-              </td>
-              <td className="px-6 py-4 text-center">
-                <TableActionButton
-                  itemName="channel"
-                  onEdit={() => onEdit(item)}
-                  onDelete={() =>
-                    item.isDefault
-                      ? toast.error("Default cannot be deleted")
-                      : onDelete(item._id)
-                  }
                 />
               </td>
             </tr>

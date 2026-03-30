@@ -58,6 +58,8 @@ export default function ChannelProviderConfigClient() {
       "Configuration",
       currentPage,
       searchTerm,
+      true,
+      "false",
     );
 
   useEffect(() => {
@@ -134,7 +136,7 @@ export default function ChannelProviderConfigClient() {
               </p>
             </div>
           </div>
-          <button
+          {/* <button
             onClick={() => {
               setEditingData(null);
               setShowForm(true);
@@ -142,7 +144,7 @@ export default function ChannelProviderConfigClient() {
             className="flex items-center justify-center gap-2 text-blue-600 bg-white hover:bg-white/90 px-5 py-2 rounded-lg text-sm h-9 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 w-full md:w-auto"
           >
             <Plus size={22} /> Add Configuration
-          </button>
+          </button> */}
         </div>
 
         <StatsCards

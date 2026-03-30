@@ -91,7 +91,7 @@ const ProviderTable = ({
                   </span>
                 </div>
               </div>
-
+              {/*
               <div className="pt-4">
                 <TableActionButton
                   itemName="provider"
@@ -104,7 +104,7 @@ const ProviderTable = ({
                     onDelete(item._id);
                   }}
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         ))}
@@ -134,9 +134,6 @@ const ProviderTable = ({
             </th>
             <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">
               Status
-            </th>
-            <th className="px-6 py-4 text-center font-bold text-gray-700 whitespace-nowrap">
-              Actions
             </th>
           </tr>
         </thead>
@@ -175,7 +172,7 @@ const ProviderTable = ({
                   editable={!item.isDefault}
                 />
               </td>
-              <td className="px-6 py-4 text-center">
+              {/* <td className="px-6 py-4 text-center">
                 <TableActionButton
                   itemName="provider"
                   onEdit={() => onEdit(item)}
@@ -186,7 +183,7 @@ const ProviderTable = ({
                     onDelete(item._id);
                   }}
                 />
-              </td>
+              </td> */}
             </tr>
           ))}
           {data.length === 0 && (

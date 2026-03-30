@@ -16,12 +16,15 @@ const channelProviderServices = new GenericService<channelProviderDoc>(
 
 const channelProviderController = new AdvancedGenericController({
   service: channelProviderServices,
-  populate: ["userId", "channelId"],
+  populate: ["channelId"],
   validationSchema: channelProviderValidation,
   searchFields: ["providerName"],
 });
 
-channelProviderRouter.get("/get-provider-fields/:provider_id", getProviderFieldsByProviderId);
+channelProviderRouter.get(
+  "/get-provider-fields/:provider_id",
+  getProviderFieldsByProviderId,
+);
 channelProviderRouter.get("/", channelProviderController.getAll);
 channelProviderRouter.get("/:id", channelProviderController.getById);
 channelProviderRouter.post("/", channelProviderController.create);
