@@ -1,14 +1,16 @@
 import { z } from "zod";
-import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
-
 
 export const channelSchema = {
     channelName: { type: String },
-    ...commonSchema,
+    isActive: { type: Boolean, required: true, default: true },
+    isDeleted: { type: Boolean, required: true, default: false },
+    isDefault: { type: Boolean, required: true, default: false },
 };
 
 export const channelValidation = z.object({
   channelName: z.string().min(1, "Please enter channel name."),
-  ...commonSchemaValidation,
+  isActive: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  isDefault: z.boolean().optional()
 });
 

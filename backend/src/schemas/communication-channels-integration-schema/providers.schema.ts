@@ -6,12 +6,16 @@ import { objectIdOrStringSchema } from "../../validators/objectId.schema";
 export const channelProviderSchema = {
     providerName: { type: String },
     channelId:{type:Types.ObjectId,ref:"communicationChannels"},
-    ...commonSchema,
+    isActive: { type: Boolean, required: true, default: true },
+    isDeleted: { type: Boolean, required: true, default: false },
+    isDefault: { type: Boolean, required: true, default: false }
 };
 
 export const channelProviderValidation = z.object({
   providerName: z.string().min(1, "Please enter provider name."),
   channelId:objectIdOrStringSchema,
-  ...commonSchemaValidation,
+  isActive: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  isDefault: z.boolean().optional()
 });
 

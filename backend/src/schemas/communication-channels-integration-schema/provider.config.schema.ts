@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { commonSchema, commonSchemaValidation } from "../shared/common.schema";
 import { Schema, Types } from "mongoose";
 import { objectIdOrStringSchema } from "../../validators/objectId.schema";
 
@@ -24,7 +23,9 @@ const fieldSchema = new Schema(
 export const channelConfigSchema = {
     providerId: { type: Types.ObjectId,ref:"communicationChannelsProvider" },
     fields:{type:[fieldSchema],default:[]},
-    ...commonSchema,
+   isActive: { type: Boolean, required: true, default: true },
+    isDeleted: { type: Boolean, required: true, default: false },
+    isDefault: { type: Boolean, required: true, default: false }
 };
 
 export const channelConfigFieldValidation = z.object({
@@ -47,6 +48,8 @@ export const channelConfigFieldValidation = z.object({
 export const channelConfigValidation = z.object({
   providerId: objectIdOrStringSchema,
   fields:z.array(channelConfigFieldValidation).default([]),
-  ...commonSchemaValidation,
+   isActive: z.boolean().optional(),
+  isDeleted: z.boolean().optional(),
+  isDefault: z.boolean().optional()
 });
 

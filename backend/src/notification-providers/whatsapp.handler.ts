@@ -5,7 +5,7 @@ export default async function handler(config, payload, subject, message) {
 
   await client.messages.create({
     from: config.from,
-    to: payload.phone,
+    to: `whatsapp:${payload.phone}`,
     body: message
   });
 }
