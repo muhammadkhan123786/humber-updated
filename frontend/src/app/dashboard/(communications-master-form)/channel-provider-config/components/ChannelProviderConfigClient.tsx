@@ -95,9 +95,26 @@ export default function ChannelProviderConfigClient() {
   };
 
   const handleStatusChange = (id: string, newStatus: boolean) => {
-    updateItem({ id, payload: { isActive: newStatus } });
-  };
+    const itemToUpdate = data.find((item) => item._id === id);
 
+    if (itemToUpdate) {
+      const payload = {
+        isActive: newStatus,
+        fields: itemToUpdate.fields,
+        providerId:
+          typeof itemToUpdate.providerId === "object"
+            ? itemToUpdate.providerId._id
+            : itemToUpdate.providerId,
+
+        userId:
+          typeof itemToUpdate.userId === "object"
+            ? (itemToUpdate.userId as any)._id
+            : itemToUpdate.userId,
+      };
+
+      updateItem({ id, payload });
+    }
+  };
   const totalPages = Math.ceil(total / 12) || 1;
 
   return (
