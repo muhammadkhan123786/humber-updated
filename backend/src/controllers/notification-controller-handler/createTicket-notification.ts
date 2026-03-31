@@ -16,3 +16,18 @@ export const createTicketNotificationController = async (req, res) => {
 
   res.json(ticket);
 };
+
+//customer create notificaton 
+export const customerRegisterNotificationController = async (req, res) => {
+  const { customer } = await req.body;
+
+  await NotificationEngine.trigger({
+    eventKey: "CUSTOMER_REGISTERED",
+    payload: {
+      customerName: customer.customerName,
+      email: customer.email,
+      phone:customer.phone
+    },
+  });
+  res.json(customer);
+};
