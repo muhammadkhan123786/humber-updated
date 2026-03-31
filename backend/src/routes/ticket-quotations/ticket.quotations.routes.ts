@@ -13,6 +13,7 @@ import {
 import { technicianTicketsQuotationsController } from "../../controllers/technician-dashboard-controllers/technician.quotations.controller";
 import { generateQuotationCode } from "../../utils/generate.AutoCode.Counter";
 import { Types } from "mongoose";
+import { quotationCreateNotificationController } from "../../controllers/notification-controller-handler/createTicket-notification";
 
 const ticketQuotationRouter = Router();
 
@@ -43,6 +44,8 @@ const ticketQuotationController = new AdvancedGenericController({
   validationSchema: ticketQuotationValidation,
   searchFields: ["quotationAutoId"],
 });
+
+ticketQuotationRouter.post('/quotation-create-notification',quotationCreateNotificationController)
 
 ticketQuotationRouter.get(
   "/",
