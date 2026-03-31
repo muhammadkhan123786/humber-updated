@@ -17,16 +17,17 @@ export const createTicketNotificationController = async (req, res) => {
   res.json(ticket);
 };
 
-//customer create notificaton 
+//customer create notificaton
 export const customerRegisterNotificationController = async (req, res) => {
   const { customer } = await req.body;
+  console.log("Customer Backend Notification: ", customer);
 
   await NotificationEngine.trigger({
     eventKey: "CUSTOMER_REGISTERED",
     payload: {
       customerName: customer.customerName,
       email: customer.email,
-      phone:customer.phone
+      phone: customer.phone,
     },
   });
   res.json(customer);
@@ -46,7 +47,7 @@ export const quotationCreateNotificationController = async (req, res) => {
   res.json(quotation);
 };
 
-//quotation create notification 
+//invoice send notification create notifiction 
 export const customerSendInvoiceNotificationController = async (req, res) => {
   const { invoice } = await req.body;
 
