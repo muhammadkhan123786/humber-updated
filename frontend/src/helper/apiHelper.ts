@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
@@ -32,15 +32,12 @@ const getAuthConfig = (): AxiosRequestConfig => {
   };
 };
 
-
-
-
 export const getAll = async <T>(
   endpoint: string,
   params?: Record<string, unknown>,
 ): Promise<PaginatedResponse<T>> => {
   try {
-    console.log("param", params)
+    console.log("param", params);
     const response = await api.get<PaginatedResponse<T>>(endpoint, {
       ...getAuthConfig(),
       params,
@@ -90,6 +87,7 @@ export const createItem = async <T>(
 ): Promise<T> => {
   try {
     const rawToken = localStorage.getItem("token");
+    console.log("payLoad Data notification: ", payload);
 
     const isFormData = payload instanceof FormData;
     const headers: Record<string, string> = {
@@ -200,21 +198,18 @@ const getUserId = () => {
   return user.id || user._id || "";
 };
 
-
 export const marketplaceAPIHelper = async (
   endpoint: string,
   id: string,
   lastEndPoint: string,
-
 ): Promise<{ success: boolean; message?: string }> => {
   try {
     const response = await api.post<{ success: boolean; message?: string }>(
       `${endpoint}/${id}/${getUserId()}/${lastEndPoint}`,
       {},
       getAuthConfig(),
-
     );
-    console.log("respse", response)
+    console.log("respse", response);
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -224,4 +219,3 @@ export const marketplaceAPIHelper = async (
     throw { message: "Unknown error occurred" };
   }
 };
-

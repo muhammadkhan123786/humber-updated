@@ -46,14 +46,48 @@ export const saveCustomer = async (
   const finalPayload = { ...payload, userId } as Customer;
 
   const customerId = (payload as { _id?: string })._id;
-
   if (customerId) {
     return await updateItem<Customer>(ENDPOINT, customerId, finalPayload);
   }
 
-  return await createItem<Customer>(ENDPOINT, finalPayload);
-};
+  const response = await createItem<any>(ENDPOINT, finalPayload);
+  console.log("New Customer Response: ", response);
+  const createdCustomer = response?.data || response;
+  if (createdCustomer) {
+    try {
+      const tempPayload = payload as any;
 
+      const notificationData = {
+        customerName:
+          createdCustomer.firstName ||
+          tempPayload.firstName ||
+          tempPayload.customerName ||
+          "N/A",
+
+        email: createdCustomer.email || tempPayload.email || "N/A",
+
+        phone:
+          createdCustomer.phone ||
+          createdCustomer.mobileNumber ||
+          tempPayload.phone ||
+          tempPayload.mobileNumber ||
+          "N/A",
+      };
+
+      console.log("Sending Notification Payload: ", notificationData);
+
+      await createItem(`${ENDPOINT}/customer-create-notification`, {
+        customer: notificationData,
+      });
+
+      console.log("Customer creation notification triggered!");
+    } catch (error) {
+      console.error("Notification trigger failed:", error);
+    }
+  }
+
+  return response;
+};
 export const modifyCustomer = async (
   id: string,
   payload: Partial<Customer>,
