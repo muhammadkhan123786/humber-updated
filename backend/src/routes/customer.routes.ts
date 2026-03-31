@@ -10,6 +10,7 @@ import {
 } from "../controllers/customer.controller";
 import { genericProfileIdsMiddleware } from "../middleware/generic.profile.middleware";
 import { generateCustomerCode } from "../utils/generate.AutoCode.Counter";
+import { customerRegisterNotificationController } from "../controllers/notification-controller-handler/createTicket-notification";
 
 const CustomerBaseRouter = Router();
 
@@ -36,6 +37,7 @@ const customerProfileMiddleware = genericProfileIdsMiddleware<CustomerBaseDoc>({
   targetModel: CustomerBase,
 });
 
+CustomerBaseRouter.post('/customer-create-notification',customerRegisterNotificationController)
 
 // Correct order:
 CustomerBaseRouter.get("/summary", getCustomerSummary);
