@@ -7,6 +7,7 @@ import {
 import { createInvoiceSchemaValidation } from "../../schemas/job-invoice-schemas/job.invoice.validation";
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { generateCustomerInvoiceCode } from "../../utils/generate.AutoCode.Counter";
+import { customerSendInvoiceNotificationController } from "../../controllers/notification-controller-handler/createTicket-notification";
 
 const customerInvoiceRouter = Router();
 
@@ -59,6 +60,9 @@ const customerInvoiceController = new AdvancedGenericController({
   validationSchema: createInvoiceSchemaValidation,
   searchFields: ["invoiceId"],
 });
+
+//customer invoice sent 
+customerInvoiceRouter.post('customer-invoice-send-notification',customerSendInvoiceNotificationController);
 
 customerInvoiceRouter.get("/", customerInvoiceController.getAll);
 customerInvoiceRouter.get("/:id", customerInvoiceController.getById);
