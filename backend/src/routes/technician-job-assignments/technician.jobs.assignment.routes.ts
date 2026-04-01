@@ -5,6 +5,7 @@ import { technicianJobSchemaValidation } from "../../schemas/job-assignment/job.
 import { AdvancedGenericController } from "../../controllers/GenericController";
 import { TechnicianAuthRequest } from "../../middleware/auth.middleware";
 import { getAllSharedJobsToAssignedByLeadingTechnicians, getAllTechnicianAssignments, getAvailableTechniciansForJob } from "../../controllers/technician-jobs-assignment-controller/technician.jobs.assignment.controller";
+import { ticketAssignedToTechnicianNotificationController } from "../../controllers/notification-controller-handler/createTicket-notification";
 
 const jobAssignmentRouter = Router();
 
@@ -83,6 +84,8 @@ const jobAssignmentController = new AdvancedGenericController({
 
   validationSchema: technicianJobSchemaValidation,
 });
+
+jobAssignmentRouter.post('ticket-assigned-notification',ticketAssignedToTechnicianNotificationController)
 
 jobAssignmentRouter.get("/", getAllTechnicianAssignments);
 jobAssignmentRouter.get('/getavailabletechniciansforjob',getAvailableTechniciansForJob);

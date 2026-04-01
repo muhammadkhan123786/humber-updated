@@ -63,3 +63,19 @@ export const customerSendInvoiceNotificationController = async (req, res) => {
   });
   res.json(invoice);
 };
+
+//ticket assigned to technician notification 
+export const ticketAssignedToTechnicianNotificationController = async (req, res) => {
+  const { ticketDetails } = await req.body;
+  
+  await NotificationEngine.trigger({
+    eventKey: "TICKET_ASSIGNED",
+    payload: {
+      ticketNumber: ticketDetails.ticketNumber,
+      technicianName: ticketDetails.technicianName,
+      customerName:ticketDetails.customerName,
+      email:ticketDetails.technicianEmailId
+     },
+  });
+  res.json(ticketDetails);
+};

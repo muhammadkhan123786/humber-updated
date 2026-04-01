@@ -80,6 +80,7 @@ const customerTicketBaseController = new AdvancedGenericController({
 //send create notification 
 customerTicketBaseRouter.post('/create-ticket-notification',createTicketNotificationController)
 
+
 customerTicketBaseRouter.get(
   "/unassigned-technician-tickets",
   getUnassignedTickets,
