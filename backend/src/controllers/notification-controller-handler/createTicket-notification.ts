@@ -42,6 +42,7 @@ export const quotationCreateNotificationController = async (req, res) => {
     payload: {
       quotationNumber: quotation.quotationNumber,
       customerName: quotation.customerName,
+      email:quotation.email
     },
   });
   res.json(quotation);
