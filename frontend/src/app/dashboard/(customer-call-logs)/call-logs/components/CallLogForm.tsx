@@ -1,40 +1,57 @@
 "use client";
 import React, { useState } from "react";
-import {
-  X,
-  Phone,
-  ChevronDown,
-  Bell,
-  Calendar as CalendarIcon,
-  Clock,
-  Check,
-} from "lucide-react";
+import { X, Phone, ChevronDown, Bell, Check, Loader2 } from "lucide-react";
+import { useCallLogs } from "../../../../../hooks/useCallLogsHook";
 
 interface CallLogFormProps {
   onClose: () => void;
   editingData?: any;
+  onSuccess?: () => void;
 }
 
 const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
   const [showFollowUp, setShowFollowUp] = useState(false);
 
+  const { form, onSubmit, isLoading, dropdowns } = useCallLogs(
+    editingData?._id,
+    onClose,
+  );
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = form;
+
   return (
-    <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <form
+      onSubmit={handleSubmit(
+        (data) => {
+          console.log("Form Data is Valid:", data);
+          onSubmit(data);
+        },
+        (err) => {
+          console.log("Form Validation Errors:", err);
+        },
+      )}
+      className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+    >
       <div className="p-6 pb-2 flex justify-between items-start">
         <div className="flex gap-4">
           <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-200 mt-2">
             <Phone size={15} fill="currentColor" />
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              Log New Call
+          <div className="flex flex-col">
+            <h2 className="text-xl font-semibold text-gray-900 leading-tight">
+              {editingData ? "Update Call Log" : "Log New Call"}
             </h2>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 text-sm mt-0.5">
               Record details of a new customer call
             </p>
           </div>
         </div>
         <button
+          type="button"
           onClick={onClose}
           className="p-1 hover:bg-gray-100 rounded-full transition-colors"
         >
@@ -48,38 +65,62 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
             Customer Name *
           </label>
           <input
+            {...register("customerName")}
             type="text"
             placeholder="Enter customer name"
-            className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
+            className={`w-full h-11 px-4 rounded-xl border-2 outline-none transition-all text-gray-700 font-medium ${
+              errors.customerName
+                ? "border-red-500 bg-red-50/30"
+                : "border-transparent bg-gray-50/50 focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10"
+            }`}
           />
+          {errors.customerName && (
+            <p className="text-red-500 text-xs font-medium px-1">
+              {errors.customerName.message}
+            </p>
+          )}
         </div>
+
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">
             Phone Number *
           </label>
           <input
+            {...register("phoneNumber")}
             type="text"
             placeholder="+44 7700 900000"
-            className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
+            className={`w-full h-11 px-4 rounded-xl border-2 outline-none transition-all text-gray-700 font-medium ${
+              errors.phoneNumber
+                ? "border-red-500 bg-red-50/30"
+                : "border-transparent bg-gray-50/50 focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10"
+            }`}
           />
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-xs font-medium px-1">
+              {errors.phoneNumber.message}
+            </p>
+          )}
         </div>
+
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">Address</label>
           <input
+            {...register("address")}
             type="text"
             placeholder="Enter customer address"
             className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-800">
+            <label className="text-sm font-medium text-gray-800 px-2">
               Post Code
             </label>
             <input
+              {...register("postCode")}
               type="text"
-              placeholder="Enter post code"
+              placeholder="Post code"
               className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
             />
           </div>
@@ -88,6 +129,7 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
               City
             </label>
             <input
+              {...register("city")}
               type="text"
               placeholder="Enter city"
               className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
@@ -101,58 +143,96 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
               Call Type *
             </label>
             <div className="relative">
-              <select className="w-full h-11 pl-4 pr-10 rounded-xl border-2 border-gray-200 bg-white outline-none appearance-none text-gray-700 font-medium cursor-pointer focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all">
-                <option>Support</option>
-                <option>Sales</option>
+              <select
+                {...register("callTypeId")}
+                className={`w-full h-11 pl-4 pr-10 rounded-xl border-2 bg-white outline-none appearance-none text-gray-700 font-medium cursor-pointer focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all ${errors.callTypeId ? "border-red-500" : "border-gray-200"}`}
+              >
+                <option value="">Select Type</option>
+                {dropdowns.callTypes.map((type: any) => (
+                  <option key={type._id} value={type._id}>
+                    {type.callTypeName}
+                  </option>
+                ))}
               </select>
               <ChevronDown
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 size={18}
               />
             </div>
+            {errors.callTypeId && (
+              <p className="text-red-500 text-xs font-medium">
+                {errors.callTypeId.message}
+              </p>
+            )}
           </div>
+
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-gray-800">
               Priority *
             </label>
             <div className="relative">
-              <select className="w-full h-11 pl-4 pr-10 rounded-xl border-2 border-gray-200 bg-white outline-none appearance-none text-gray-700 font-medium cursor-pointer focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all">
-                <option>Medium</option>
-                <option>High</option>
-                <option>Low</option>
+              <select
+                {...register("priorityLevelId")}
+                className={`w-full h-11 pl-4 pr-10 rounded-xl border-2 bg-white outline-none appearance-none text-gray-700 font-medium cursor-pointer focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all ${errors.priorityLevelId ? "border-red-500" : "border-gray-200"}`}
+              >
+                <option value="">Select Priority</option>
+                {dropdowns.priorities.map((p: any) => (
+                  <option key={p._id} value={p._id}>
+                    {p.serviceRequestPrioprity}
+                  </option>
+                ))}
               </select>
               <ChevronDown
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                 size={18}
               />
             </div>
+            {errors.priorityLevelId && (
+              <p className="text-red-500 text-xs font-medium">
+                {errors.priorityLevelId.message}
+              </p>
+            )}
           </div>
         </div>
+
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">
             Agent Name *
           </label>
           <input
+            {...register("agentName")}
             type="text"
             placeholder="Enter agent name"
-            className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
+            className={`w-full h-11 px-4 rounded-xl border-2 outline-none transition-all text-gray-700 font-medium ${
+              errors.agentName
+                ? "border-red-500"
+                : "border-transparent bg-gray-50/50 focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10"
+            }`}
           />
         </div>
+
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">
             Call Purpose *
           </label>
           <input
+            {...register("callPurpose")}
             type="text"
             placeholder="Brief description of call purpose"
-            className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
+            className={`w-full h-11 px-4 rounded-xl border-2 outline-none transition-all text-gray-700 font-medium ${
+              errors.callPurpose
+                ? "border-red-500"
+                : "border-transparent bg-gray-50/50 focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10"
+            }`}
           />
         </div>
+
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">
             Call Notes
           </label>
           <textarea
+            {...register("callNotes")}
             placeholder="Detailed notes about the call..."
             className="w-full min-h-[100px] p-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 resize-none"
           />
@@ -186,31 +266,25 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-800">
-                    Follow-Up Date *
+                    Follow-Up Date
                   </label>
                   <div className="relative">
                     <input
+                      {...register("followUpDate")}
                       type="date"
-                      className="w-full h-10 pl-4 pr-10 rounded-lg border-2 border-transparent bg-gray-50/50 text-sm outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all appearance-none"
-                    />
-                    <CalendarIcon
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                      size={16}
+                      className="w-full h-10 pl-4 pr-10 rounded-lg border-2 border-transparent bg-gray-50/50 text-sm outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all"
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-800">
-                    Follow-Up Time *
+                    Follow-Up Time
                   </label>
                   <div className="relative">
                     <input
+                      {...register("followUpTime")}
                       type="time"
                       className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
-                    />
-                    <Clock
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                      size={16}
                     />
                   </div>
                 </div>
@@ -220,6 +294,7 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
                   Follow-Up Notes
                 </label>
                 <textarea
+                  {...register("followUpNotes")}
                   placeholder="What should be done in the follow-up..."
                   className="w-full min-h-20 p-3 rounded-lg border-2 border-transparent bg-gray-50/50 text-sm outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all resize-none"
                 />
@@ -228,18 +303,30 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
           )}
         </div>
       </div>
+
       <div className="p-6 border-t border-gray-50 flex justify-end gap-3 bg-white">
         <button
+          type="button"
           onClick={onClose}
+          disabled={isLoading}
           className="px-6 py-2.5 border border-gray-200 rounded-xl text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-all flex items-center gap-2"
         >
           <X size={16} /> Cancel
         </button>
-        <button className="px-8 py-2.5 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-200 hover:opacity-90 transition-all active:scale-95 flex items-center gap-2">
-          <Phone size={16} fill="currentColor" /> Log Call
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="px-8 py-2.5 bg-linear-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-200 hover:opacity-90 transition-all active:scale-95 flex items-center gap-2"
+        >
+          {isLoading ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <Phone size={16} fill="currentColor" />
+          )}
+          {editingData ? "Update Log" : "Log Call"}
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 
