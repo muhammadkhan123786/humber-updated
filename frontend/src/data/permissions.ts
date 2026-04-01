@@ -57,6 +57,7 @@ import {
   Puzzle,
   Contact2Icon,
   Phone,
+  CircleUser,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -808,7 +809,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
 
   {
     _id: nanoid(),
-    label: "Communication Master Data",
+    label: "Customer Call Logs",
     href: "#",
     icon: Phone, // Main category icon
     roleId: [1],
@@ -818,6 +819,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         label: "Call Type",
         href: "/dashboard/call-type",
         icon: Contact2Icon, // Communication / chat related
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Call Status",
+        href: "/dashboard/call-status",
+        icon: CircleUser, // Communication / chat related
         roleId: [1],
       },
     ],
