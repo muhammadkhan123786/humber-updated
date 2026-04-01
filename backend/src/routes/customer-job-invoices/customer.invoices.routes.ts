@@ -61,8 +61,11 @@ const customerInvoiceController = new AdvancedGenericController({
   searchFields: ["invoiceId"],
 });
 
-//customer invoice sent 
-customerInvoiceRouter.post('customer-invoice-send-notification',customerSendInvoiceNotificationController);
+//customer invoice sent
+customerInvoiceRouter.post(
+  "/customer-invoice-send-notification",
+  customerSendInvoiceNotificationController,
+);
 
 customerInvoiceRouter.get("/", customerInvoiceController.getAll);
 customerInvoiceRouter.get("/:id", customerInvoiceController.getById);

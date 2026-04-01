@@ -815,7 +815,10 @@ export const useInvoice = () => {
     form.reset();
   };
 
-  const onSubmit = async (data: InvoiceFormData) => {
+  const onSubmit = async (
+    data: InvoiceFormData,
+    shouldSendNotification = false,
+  ) => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -990,6 +993,37 @@ export const useInvoice = () => {
       });
 
       if (res.data?.success || res.data?.data) {
+        if (shouldSendNotification) {
+          try {
+            const createdInvoice = res.data?.data || res.data;
+            const firstName =
+              selectedJob?.ticketId?.customerId?.personId?.firstName || "";
+            const lastName =
+              selectedJob?.ticketId?.customerId?.personId?.lastName || "";
+            const fullName = `${firstName} ${lastName}`.trim() || "Customer";
+            const email =
+              selectedJob?.ticketId?.customerId?.contactId?.emailId || "";
+            await axios.post(
+              `${baseUrl}/customer-invoices/customer-invoice-send-notification`,
+              {
+                invoice: {
+                  invoiceNumber: createdInvoice.invoiceId,
+                  customerName: fullName,
+                  amount: createdInvoice.netTotal,
+                  email: email,
+                },
+              },
+              { headers: getAuthHeader() },
+            );
+
+            console.log(
+              "Notification sent for Invoice:",
+              createdInvoice.invoiceId,
+            );
+          } catch (notifErr) {
+            console.error("Notification Flow Error:", notifErr);
+          }
+        }
         clearEdit();
         toast.success(
           editingId

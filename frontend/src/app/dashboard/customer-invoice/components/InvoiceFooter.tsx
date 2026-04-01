@@ -4,14 +4,17 @@ import React from "react";
 import { CheckCircle2, FileText, Send } from "lucide-react";
 
 interface InvoiceFooterProps {
-  onSubmit: () => Promise<void>;
+  onSubmit: (sendNotification: boolean) => Promise<void>;
   isSubmitting: boolean;
 }
 
 const InvoiceFooter = ({ onSubmit, isSubmitting }: InvoiceFooterProps) => {
   const handleGenerateInvoice = async () => {
-    console.log("Handle Generate Invoice.");
-    await onSubmit();
+    await onSubmit(false);
+  };
+
+  const handleSendToCustomer = async () => {
+    await onSubmit(true);
   };
 
   return (
@@ -35,13 +38,15 @@ const InvoiceFooter = ({ onSubmit, isSubmitting }: InvoiceFooterProps) => {
       {/* Send to Customer Button */}
       <button
         type="button"
+        onClick={handleSendToCustomer}
         disabled={isSubmitting}
         className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-blue-100 disabled:opacity-50"
       >
         <Send size={18} />
-        <span className="text-sm font-medium">Send to Customer</span>
+        <span className="text-sm font-medium">
+          {isSubmitting ? "Sending..." : "Send to Customer"}
+        </span>
       </button>
-
       {/* Generate Invoice Button */}
       <button
         type="button"

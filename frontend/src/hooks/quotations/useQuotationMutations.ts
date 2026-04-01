@@ -48,23 +48,27 @@ export const useCreateQuotation = () => {
           "/customer-tickets",
           ticketId,
         );
+
         const ticketData = ticketResponse?.data || ticketResponse;
+
         const firstName = ticketData?.customerId?.personId?.firstName || "";
         const lastName = ticketData?.customerId?.personId?.lastName || "";
         const fullName = `${firstName} ${lastName}`.trim() || "Customer";
-        const email = ticketResponse?.customerId?.contactId?.email || "";
+
+        const customerEmail = ticketData?.customerId?.contactId?.emailId || "";
+
         await createItem(
           "/technician-ticket-quotation/quotation-create-notification",
           {
             quotation: {
               quotationNumber: createdQuotation.quotationAutoId,
               customerName: fullName,
-              email: email,
+              email: customerEmail,
             },
           },
         );
 
-        console.log("Notification Sent with Fetched Name:", fullName);
+        console.log("Notification Sent to:", fullName, "Email:", customerEmail);
       } catch (err) {
         console.error("Notification Flow Error:", err);
       }
