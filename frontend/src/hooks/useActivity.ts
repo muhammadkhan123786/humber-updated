@@ -7,7 +7,7 @@ import {
   activityRecordSchema,
   ActivityRecordFormData,
 } from "../schema/activityRecordSchema";
-import { getAlls } from "../helper/apiHelper";
+import { getAlls, getById } from "../helper/apiHelper";
 import axios from "axios";
 import { useSearchParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -140,25 +140,8 @@ export const useActivityRecordForm = () => {
     try {
       setIsLoading(true);
 
-      if (!data.leadingTechnicianId) {
-        toast.error("Please select a leading technician");
-        setIsLoading(false);
-        return;
-      }
-
-      if (!data.quotationId) {
-        toast.error("Please select a quotation");
-        setIsLoading(false);
-        return;
-      }
-
       const userId =
         localStorage.getItem("userId")?.replace(/^"|"$/g, "") || "";
-      if (!userId) {
-        toast.error("User not found");
-        return;
-      }
-
       const baseUrl =
         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
 
@@ -176,19 +159,59 @@ export const useActivityRecordForm = () => {
         method: editingId ? "put" : "post",
         url: apiEndpoint,
         data: payload,
-        headers: {
-          ...getAuthHeader(),
-          "Content-Type": "application/json",
-        },
+        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
       });
 
       if (res.data?.success !== false) {
+        if (!editingId) {
+          try {
+            const createdJobTicketId = res.data?.data?.ticketId;
+
+            const ticketResponse: any = await getById(
+              "/customer-tickets",
+              createdJobTicketId,
+            );
+
+            const ticketData = ticketResponse?.data || ticketResponse;
+
+            const tech = technicians.find(
+              (t) => t._id === data.leadingTechnicianId,
+            );
+            const techName =
+              `${tech?.personId?.firstName || ""} ${tech?.personId?.lastName || ""}`.trim();
+
+            const customerFirstName =
+              ticketData?.customerId?.personId?.firstName || "";
+            const customerLastName =
+              ticketData?.customerId?.personId?.lastName || "";
+            const customerFullName =
+              `${customerFirstName} ${customerLastName}`.trim();
+
+            await axios.post(
+              `${baseUrl}/technician-job-assignments/ticket-assigned-notification`,
+              {
+                ticketDetails: {
+                  ticketNumber: ticketData?.ticketCode,
+                  technicianName: techName,
+                  customerName: customerFullName || "Customer",
+                  technicianEmailId: tech?.contactId?.emailId,
+                },
+              },
+              { headers: getAuthHeader() },
+            );
+
+            console.log("✅ Notification Sent Successfully!");
+          } catch (notifErr) {
+            console.error("❌ Notification flow failed:", notifErr);
+          }
+        }
+
         toast.success(editingId ? "Job Updated!" : "Job Created!");
         router.push("/dashboard/record-activity/jobs");
       }
     } catch (err: any) {
-      console.error("Submission error:", err.response?.data || err);
-      toast.error(err.response?.data?.message || "Submission failed");
+      console.error("Submission error:", err);
+      toast.error("Submission failed");
     } finally {
       setIsLoading(false);
     }
