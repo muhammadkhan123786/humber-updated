@@ -133,6 +133,7 @@ import moduleRouter from "./routes/communication-channels-integration-routes/mod
 import notificationRulesRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.rules.routes";
 import moduleActionsRouter from "./routes/communication-channels-integration-routes/actions.routes";
 import callTypeRouter from "./routes/call-logs-modules-routes/call.type.routes";
+import callStatusRouter from "./routes/call-logs-modules-routes/call.status.routes";
 
 // Create express app
 const app: Application = express();
@@ -692,6 +693,14 @@ app.use(
   adminProtecter,
   callTypeRouter,
 );
+
+app.use(
+  `${process.env.API_PREFIX}/call-status`,
+  adminProtecter,
+  callStatusRouter,
+);
+
+
 
 //Muhammad Imran code ended here.
 
