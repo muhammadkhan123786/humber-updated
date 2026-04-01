@@ -58,6 +58,7 @@ import {
   Contact2Icon,
   Phone,
   CircleUser,
+  PhoneCall,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -826,6 +827,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         label: "Call Status",
         href: "/dashboard/call-status",
         icon: CircleUser, // Communication / chat related
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Call Logs",
+        href: "/dashboard/call-logs",
+        icon: PhoneCall, // Communication / chat related
         roleId: [1],
       },
     ],
