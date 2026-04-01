@@ -153,6 +153,7 @@ export default function NotificationTemplateClient() {
     searchTerm,
   );
 
+  console.log("data is temolate", data);
   useEffect(() => {
     const fetchChannels = async () => {
       try {
