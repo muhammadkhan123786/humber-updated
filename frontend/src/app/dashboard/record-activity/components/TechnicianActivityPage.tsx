@@ -3,7 +3,7 @@ import { Briefcase, Save, Send } from "lucide-react";
 
 import { ActivityHero } from "./ActivityHero";
 import { JobInfoTab } from "./JobInfoTab";
-import { useActivityRecordForm } from "../../../../hooks/useActivity";
+import { useActivityRecordForm } from "@/hooks/useActivity";
 
 const TechnicianActivityPage = () => {
   const { form, isLoading, technicians, quotations, handleSubmit } =
