@@ -21,7 +21,7 @@ export const callLogsSchema = {
 
   priorityLevelId: {
     type: Types.ObjectId,
-    ref: "ServiceRequestPriorityModel",
+    ref: "ServiceRequestPrioprityModel",
     required: true,
   },
 
@@ -45,9 +45,7 @@ export const callLogsSchema = {
   ...commonSchema,
 };
 
-
 export const callLogsValidation = z.object({
-
   autoCallId: z.string().min(1),
 
   customerName: z.string().min(2),
