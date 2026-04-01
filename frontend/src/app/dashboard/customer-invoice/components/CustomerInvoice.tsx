@@ -142,9 +142,9 @@ const CustomerInvoice = () => {
     });
   }, [watchedServices]);
 
-  const handleSubmit = async () => {
-    console.log("Handle Submit in Customer invoice.");
-    await onSubmit(form.getValues());
+  const handleSubmit = async (sendNotification = false) => {
+    console.log("Submit clicked. Send Notification:", sendNotification);
+    await onSubmit(form.getValues(), sendNotification);
   };
 
   const partsSubtotal = parts.reduce(
