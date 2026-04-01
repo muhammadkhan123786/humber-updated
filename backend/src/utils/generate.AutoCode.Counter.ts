@@ -8,6 +8,7 @@ import { PurchaseOrderCounter } from "../models/auto-generate-code-models/purcha
 import { RiderSequenceCounter } from "../models/auto-generate-code-models/rider.code.models";
 import { CustomerSequenceCounter } from "../models/auto-generate-code-models/customer.code.models";
 import { NotificationRuleSequenceCounter } from "../models/auto-generate-code-models/notification.rule.code.models";
+import { CallLogsSequenceCounter } from "../models/auto-generate-code-models/call.logs.code.models";
 
 //generate for db
 export const generateTicketCode = async (): Promise<string> => {
@@ -88,6 +89,22 @@ export const generateCustomerInvoiceCode = async (): Promise<string> => {
   }
 
   return `INV-${year}-${String(counter.seq).padStart(3, "0")}`;
+};
+
+export const generateCallLogsCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  const counter = await CallLogsSequenceCounter.findOneAndUpdate(
+    { year },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true },
+  );
+
+  if (!counter) {
+    throw new Error("Failed to Call logs Code sequence");
+  }
+
+  return `CL-${year}-${String(counter.seq).padStart(3, "0")}`;
 };
 
 //real code to save rider id into db 
@@ -272,3 +289,14 @@ export const getNotificationRuleCurrentCode = async (): Promise<string> => {
   return `RULE-${year}-${String(seq).padStart(3, "0")}`;
 };
 
+//get call logs current code 
+export const getCallLogsCurrentCode = async (): Promise<string> => {
+  const year = new Date().getFullYear();
+
+  // Just fetch current counter without updating
+  const counter = await CallLogsSequenceCounter.findOne({ year });
+
+  const seq = counter ? counter.seq + 1 : 1;
+
+  return `CL-${year}-${String(seq).padStart(3, "0")}`;
+};
