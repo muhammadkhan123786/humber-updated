@@ -132,6 +132,7 @@ import notificationTemplateRouter from "./routes/communication-channels-integrat
 import moduleRouter from "./routes/communication-channels-integration-routes/modules.routes";
 import notificationRulesRouter from "./routes/communication-channels-integration-routes/Notifications-Setting-Routes/notification.rules.routes";
 import moduleActionsRouter from "./routes/communication-channels-integration-routes/actions.routes";
+import callTypeRouter from "./routes/call-logs-modules-routes/call.type.routes";
 
 // Create express app
 const app: Application = express();
@@ -683,6 +684,13 @@ app.use(
   `${process.env.API_PREFIX}/module-actions`,
   //adminProtecter,
   moduleActionsRouter,
+);
+
+// 01-04-2026 
+app.use(
+  `${process.env.API_PREFIX}/call-types`,
+  adminProtecter,
+  callTypeRouter,
 );
 
 //Muhammad Imran code ended here.
