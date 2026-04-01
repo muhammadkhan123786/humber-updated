@@ -315,7 +315,7 @@ app.use(
 
 app.use(
   `${process.env.API_PREFIX}/customer-tickets`,
-  adminProtecter,
+  technicianProtecter,
   customerTicketBaseRouter,
 );
 
