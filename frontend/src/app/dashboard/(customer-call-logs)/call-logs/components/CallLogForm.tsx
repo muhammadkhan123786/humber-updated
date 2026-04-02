@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X, Phone, ChevronDown, Bell, Check, Loader2 } from "lucide-react";
 import { useCallLogs } from "../../../../../hooks/useCallLogsHook";
 
@@ -9,11 +9,11 @@ interface CallLogFormProps {
   onSuccess?: () => void;
 }
 
-const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
+const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
   const [showFollowUp, setShowFollowUp] = useState(false);
 
   const { form, onSubmit, isLoading, dropdowns } = useCallLogs(
-    editingData?._id,
+    editingData,
     onClose,
   );
 
@@ -22,13 +22,23 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
     handleSubmit,
     formState: { errors },
   } = form;
+  useEffect(() => {
+    const shouldShow = !!editingData?.followUpDate;
+
+    const timer = setTimeout(() => {
+      setShowFollowUp(shouldShow);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [editingData?.followUpDate]);
 
   return (
     <form
       onSubmit={handleSubmit(
-        (data) => {
-          console.log("Form Data is Valid:", data);
-          onSubmit(data);
+        async (data) => {
+          console.log("Submitting Data:", data);
+          await onSubmit(data);
+          if (onSuccess) onSuccess();
         },
         (err) => {
           console.log("Form Validation Errors:", err);
@@ -46,7 +56,9 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
               {editingData ? "Update Call Log" : "Log New Call"}
             </h2>
             <p className="text-gray-500 text-sm mt-0.5">
-              Record details of a new customer call
+              {editingData
+                ? `Editing record for ${editingData.customerName}`
+                : "Record details of a new customer call"}
             </p>
           </div>
         </div>
@@ -76,7 +88,7 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
           />
           {errors.customerName && (
             <p className="text-red-500 text-xs font-medium px-1">
-              {errors.customerName.message}
+              {errors.customerName.message as string}
             </p>
           )}
         </div>
@@ -87,7 +99,7 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
           </label>
           <input
             {...register("phoneNumber")}
-            type="text"
+            type="number"
             placeholder="+44 7700 900000"
             className={`w-full h-11 px-4 rounded-xl border-2 outline-none transition-all text-gray-700 font-medium ${
               errors.phoneNumber
@@ -97,7 +109,7 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
           />
           {errors.phoneNumber && (
             <p className="text-red-500 text-xs font-medium px-1">
-              {errors.phoneNumber.message}
+              {errors.phoneNumber.message as string}
             </p>
           )}
         </div>
@@ -161,7 +173,7 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
             </div>
             {errors.callTypeId && (
               <p className="text-red-500 text-xs font-medium">
-                {errors.callTypeId.message}
+                {errors.callTypeId.message as string}
               </p>
             )}
           </div>
@@ -189,12 +201,11 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
             </div>
             {errors.priorityLevelId && (
               <p className="text-red-500 text-xs font-medium">
-                {errors.priorityLevelId.message}
+                {errors.priorityLevelId.message as string}
               </p>
             )}
           </div>
         </div>
-
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">
             Agent Name *
@@ -208,6 +219,23 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
                 ? "border-red-500"
                 : "border-transparent bg-gray-50/50 focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10"
             }`}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-800">
+            Call Duration (mins)
+          </label>
+          <input
+            {...register("callDuration")}
+            type="text"
+            inputMode="decimal"
+            placeholder="e.g. 7.3"
+            onInput={(e) => {
+              e.currentTarget.value = e.currentTarget.value
+                .replace(/[^0-9.]/g, "")
+                .replace(/(\..*?)\..*/g, "$1");
+            }}
+            className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
           />
         </div>
 
@@ -268,25 +296,21 @@ const CallLogForm = ({ onClose, editingData }: CallLogFormProps) => {
                   <label className="text-xs font-medium text-gray-800">
                     Follow-Up Date
                   </label>
-                  <div className="relative">
-                    <input
-                      {...register("followUpDate")}
-                      type="date"
-                      className="w-full h-10 pl-4 pr-10 rounded-lg border-2 border-transparent bg-gray-50/50 text-sm outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all"
-                    />
-                  </div>
+                  <input
+                    {...register("followUpDate")}
+                    type="date"
+                    className="w-full h-10 px-4 rounded-lg border-2 border-transparent bg-gray-50/50 text-sm outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all"
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-gray-800">
                     Follow-Up Time
                   </label>
-                  <div className="relative">
-                    <input
-                      {...register("followUpTime")}
-                      type="time"
-                      className="w-full h-11 px-4 rounded-xl border-2 border-transparent bg-gray-50/50 outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all text-gray-700 font-medium"
-                    />
-                  </div>
+                  <input
+                    {...register("followUpTime")}
+                    type="time"
+                    className="w-full h-10 px-4 rounded-lg border-2 border-transparent bg-gray-50/50 text-sm outline-none focus:bg-white focus:border-[#4F46E5]/60 focus:ring-4 focus:ring-[#4F46E5]/10 transition-all"
+                  />
                 </div>
               </div>
               <div className="space-y-1.5">
