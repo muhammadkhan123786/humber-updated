@@ -80,11 +80,11 @@ export default function ProductListingPage() {
     handleStockStatusChange, handleFeaturedToggle, handlePageChange, resetFilters,
   } = useProducts({ autoFetch: true, initialLimit: 12, categories });
 
-  const categoryMap = useMemo(() => {
-    const map: Record<string, any> = {};
-    categories.forEach((c: any) => { map[c.id || c._id] = c; });
-    return map;
-  }, [categories]);
+  // const categoryMap = useMemo(() => {
+  //   const map: Record<string, any> = {};
+  //   categories.forEach((c: any) => { map[c.id || c._id] = c; });
+  //   return map;
+  // }, [categories]);
 
   const getStockBadge = (status: string) => {
     const v: Record<string, { class: string; icon: any }> = {

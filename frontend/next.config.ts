@@ -25,6 +25,12 @@ const nextConfig: NextConfig = {
           : undefined, // must be number or undefined
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "via.placeholder.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
   turbopack: {

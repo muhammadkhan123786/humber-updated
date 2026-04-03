@@ -10,6 +10,7 @@ import { Star, ChevronRight, Eye, Edit, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { ProductListItem } from "../types/product";
 import { getImageUrl } from "@/helper/getImageUrl";
+import Image from "next/image";
 
 interface ProductCardProps {
   product: ProductListItem;
@@ -59,9 +60,11 @@ console.log("fullUrl", `${staticBaseUrl}/uploads/${product.imageUrl}`)
     >
       <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden h-full flex flex-col">
         {/* Product Image */}
-        <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+        <div className="h-48 bg-liner-to-br from-gray-100 to-gray-200 relative overflow-hidden">
           {product.imageUrl ? (
-            <img
+            <Image
+            width={200}
+             height={200}
               src={product.imageUrl}
               alt={product.name}
               className="w-full h-full object-contain bg-gray-50"
