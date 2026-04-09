@@ -59,6 +59,7 @@ import {
   Phone,
   CircleUser,
   PhoneCall,
+  ShoppingBag
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -149,6 +150,32 @@ export const navigation: INavBarLinkSharedInterface[] = [
         label: "Invoice Management",
         href: "/dashboard/invoice-management",
         icon: FileSpreadsheet,
+        roleId: [1],
+      },
+    ],
+  },
+
+  /* ================= Sales Management ================= */
+   {
+    _id: nanoid(),
+    label: "Sales Management",
+    href: "#",
+    icon: ShoppingBag,
+    roleId: [1],
+    subItems: [
+      
+      {
+        _id: nanoid(),
+        label: "All Orders",
+        href: "/dashboard/sales",
+        icon: ShoppingBag,
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Delivery Assignments",
+        href: "/dashboard/delivery-assignments",
+        icon: Truck,
         roleId: [1],
       },
     ],
