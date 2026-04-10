@@ -873,14 +873,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Clock, // Communication / chat related
         roleId: [1],
       },
-      {
-        _id: nanoid(),
-        label: "Customers",
-        href: "/dashboard/call-customers",
-        icon: Users, // Communication / chat related
-        roleId: [1],
-      },
-
+     
       {
         _id: nanoid(),
         label: "Call Type",
