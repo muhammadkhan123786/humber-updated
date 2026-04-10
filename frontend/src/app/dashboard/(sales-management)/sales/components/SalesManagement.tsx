@@ -19,7 +19,7 @@ export default function SalesManagement() {
   const [showLabelDialog, setShowLabelDialog] = useState(false);
   const [showDriverDialog, setShowDriverDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState('');
+const [selectedDriverId, setSelectedDriverId] = useState('');
   const [orders, setOrders] = useState<Order[]>(mockOrders);
 
   const filteredOrders = orders.filter(order => {
@@ -47,22 +47,22 @@ export default function SalesManagement() {
   };
 
   const handleAssignDriverConfirm = () => {
-    if (selectedOrder && selectedDriver) {
+    if (selectedOrder && selectedDriverId) {
       const updatedOrders = orders.map(order => {
         if (order.id === selectedOrder.id) {
           return {
             ...order,
-            driver: selectedDriver,
+            driver: selectedDriverId,
             trackingNumber: `TRK-2026-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`
           };
         }
         return order;
       });
       setOrders(updatedOrders);
-      toast.success(`Driver ${selectedDriver} assigned to order ${selectedOrder.orderNumber}`);
+      toast.success(`Driver ${selectedDriverId} assigned to order ${selectedOrder.orderNumber}`);
       setShowDriverDialog(false);
       setSelectedOrder(null);
-      setSelectedDriver('');
+      setSelectedDriverId('');
     }
   };
 
@@ -150,14 +150,14 @@ export default function SalesManagement() {
         />
       )}
 
-      <AssignDriverDialog
-        open={showDriverDialog}
-        onClose={() => setShowDriverDialog(false)}
-        order={selectedOrder}
-        selectedDriver={selectedDriver}
-        onDriverSelect={setSelectedDriver}
-        onAssign={handleAssignDriverConfirm}
-      />
+     <AssignDriverDialog
+  open={showDriverDialog}
+  onClose={() => setShowDriverDialog(false)}
+  order={selectedOrder}
+  selectedDriverId={selectedDriverId}
+  onDriverSelect={setSelectedDriverId}
+  onAssign={handleAssignDriverConfirm}
+/>
 
       <EditOrderDialog
         open={showEditDialog}

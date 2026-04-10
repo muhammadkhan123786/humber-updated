@@ -117,3 +117,58 @@ export const getAllRiders = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+
+export const getAvailableDrivers = async (req: AuthRequest, res: Response) => {
+  try {
+      const { userId, page, limit, search, requiredUserId } = req.query;
+    console.log("request is coming be here", userId)
+    const accountId = req.user?.id;
+
+    // if (!accountId) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: "Unauthorized",
+    //   });
+    // }
+
+    // ✅ Sirf ACTIVE aur APPROVED drivers fetch karo
+    const drivers = await Riders.find({
+      // accountId: new Types.ObjectId(accountId),
+      isDeleted: false,
+      riderStatus: { $in: ["ACTIVE", "APPROVED"] }
+    })
+    .populate("personId", "firstName lastName")  // ✅ IMPORTANT: Populate personId first
+    .select("riderAutoId phoneNumber vehicleNumber riderStatus personId"); // ✅ Include personId in select
+
+    // ✅ Data ko simple format mein convert karo (with null check)
+    const formattedDrivers = drivers.map(driver => {
+      // ✅ Safely access personId after population
+      const person = driver.personId as any; // Type assertion for populated data
+      
+      return {
+        _id: driver._id,
+        name: person?.firstName && person?.lastName 
+          ? `${person.firstName} ${person.lastName}`.trim()
+          : person?.firstName || person?.lastName || "Unknown",
+        phone: driver.phoneNumber,
+        // vehicleNumber: driver.vehicleNumber,
+        status: driver.riderStatus,
+        riderId: driver.riderAutoId
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: formattedDrivers,
+      total: formattedDrivers.length
+    });
+
+  } catch (error: any) {
+    console.error("Error in getAvailableDrivers:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch drivers",
+    });
+  }
+};
