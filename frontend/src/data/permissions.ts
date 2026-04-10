@@ -59,7 +59,9 @@ import {
   Phone,
   CircleUser,
   PhoneCall,
-  ShoppingBag
+  ShoppingBag,
+  Clock,
+  Mic,
 } from "lucide-react";
 import { INavBarLinkSharedInterface } from "@common/INavBarLinkSharedInterface";
 
@@ -842,6 +844,43 @@ export const navigation: INavBarLinkSharedInterface[] = [
     icon: Phone, // Main category icon
     roleId: [1],
     subItems: [
+       {
+        _id: nanoid(),
+        label: "Call Dashboard",
+        href: "/dashboard/call-dashboard",
+        icon: LayoutDashboard, // Communication / chat related
+        roleId: [1],
+      },
+         {
+        _id: nanoid(),
+        label: "Call Logs",
+        href: "/dashboard/call-logs",
+        icon: PhoneCall, // Communication / chat related
+        roleId: [1],
+      },
+
+   {
+        _id: nanoid(),
+        label: "Call Recordings",
+        href: "/dashboard/recordings",
+        icon: Mic, // Communication / chat related
+        roleId: [1],
+      },
+       {
+        _id: nanoid(),
+        label: "Follow-Ups",
+        href: "/dashboard/follow-ups",
+        icon: Clock, // Communication / chat related
+        roleId: [1],
+      },
+      {
+        _id: nanoid(),
+        label: "Customers",
+        href: "/dashboard/call-customers",
+        icon: Users, // Communication / chat related
+        roleId: [1],
+      },
+
       {
         _id: nanoid(),
         label: "Call Type",
@@ -856,13 +895,7 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: CircleUser, // Communication / chat related
         roleId: [1],
       },
-      {
-        _id: nanoid(),
-        label: "Call Logs",
-        href: "/dashboard/call-logs",
-        icon: PhoneCall, // Communication / chat related
-        roleId: [1],
-      },
+   
     ],
   },
   /* ================= SYSTEM SETUP ================= */
