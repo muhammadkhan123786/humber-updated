@@ -191,7 +191,7 @@ const CallLogHeader = ({
             onClick={onClose}
           />
 
-          <div className="relative z-10 w-full max-w-lg animate-in zoom-in-95 duration-200">
+          <div className="relative z-10 w-full max-w-[950px] animate-in zoom-in-95 duration-200">
             <CallLogForm
               onClose={onClose}
               editingData={editingData}
