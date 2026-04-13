@@ -123,7 +123,7 @@ const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
             setPhone(val);
             setValue("phoneNumber", val);
           }}
-          label=" Phone Number *"
+          label=" Phone Number"
           placeholder="+44 7700 900000"
           defaultCountry="gb"
           required={true}
