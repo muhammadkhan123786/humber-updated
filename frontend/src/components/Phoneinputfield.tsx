@@ -294,7 +294,7 @@ import { AlertTriangle } from "lucide-react";
 // TYPES
 // ============================================================
 interface PhoneInputFieldProps {
-  value: string;
+  value: string | undefined;
   onChange: (value: string) => void;
 
   // Optional customization

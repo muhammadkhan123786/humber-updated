@@ -16,6 +16,7 @@ import FormInput from "../../components/FormInput";
 import Image from "next/image";
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
 import { RiderFormData } from "@/schema/rider.schema";
+import PhoneInputField from '@/components/Phoneinputfield'
 
 interface GoogleAddressComponent {
   long_name: string;
@@ -290,27 +291,30 @@ const PersonalInfoForm: React.FC = () => {
           )}
         </div>
 
-        <div className="space-y-1">
-          <Controller
-            name="mobileNumber"
-            control={control}
-            render={({ field }) => (
-              <FormInput
-                label="Phone Number"
-                placeholder="+44 7700 900123"
-                required
-                {...field}
-                error={!!errors.mobileNumber}
-                icon={<Phone size={18} />}
-              />
-            )}
-          />
-          {errors.mobileNumber && (
-            <p className="text-xs text-red-500 pl-1">
-              {errors.mobileNumber.message}
-            </p>
-          )}
-        </div>
+       <div className="space-y-1">
+  <Controller
+    name="mobileNumber"
+    control={control}
+    render={({ field, fieldState: { error } }) => (
+      <PhoneInputField
+        {...field}                  // Passes value, onChange, onBlur, and name
+        label="Phone Number"
+        placeholder="+44 7700 900123"
+        required={true}
+        
+        // --- CUSTOMIZATION PROPS ---
+        labelIcon={Phone}           // Pass the component reference, not <Phone />
+        borderColor={"#d0d5dd"} 
+        height="38px"               // You can adjust size here
+        fontSize="14px"
+        
+        // --- VALIDATION PROPS ---
+        showValidation={!!error}    // Shows error state if RHF has an error
+        errorMessage={error?.message} // Pass the RHF message to your component
+      />
+    )}
+  />
+</div>
 
         <div className="space-y-1">
           <Controller
