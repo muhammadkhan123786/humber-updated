@@ -28,7 +28,7 @@ export const callLogsSchema = {
   callStatusId: {
     type: Types.ObjectId,
     ref: "CallStatus",
-    required: true,
+    // required: true,
   },
 
   agentName: { type: String, trim: true },
