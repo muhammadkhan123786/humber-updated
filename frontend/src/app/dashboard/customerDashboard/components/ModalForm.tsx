@@ -1,5 +1,5 @@
 "use client";
-import { PhoneInput } from "react-international-phone";
+import PhoneInputField from "@/components/Phoneinputfield";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -577,123 +577,16 @@ const ModalForm: React.FC<ModalProps> = ({
                 </div>
 
                 {/* ✅ FIXED: Phone Number with Country Code + Flag Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
-                    <Phone size={16} className="text-[#3B82F6]" /> Phone Number
-                    *
-                  </label>
-
-                  <style>{`
-                    .phone-input-wrapper {
-                      position: relative;
-                      overflow: visible;
-                    }
-                    .phone-input-wrapper .react-international-phone-input-container {
-                      display: flex;
-                      width: 100%;
-                      height: 48px;
-                      border-radius: 12px;
-                      border: 3px solid transparent;
-                      background: #F0F9FF;
-                      overflow: visible;
-                      transition: border-color 0.2s;
-                    }
-                    .phone-input-wrapper .react-international-phone-input-container:focus-within {
-                      border-color: #3B82F6;
-                    }
-                    .phone-input-wrapper .react-international-phone-input-container:hover {
-                      border-color: rgba(59, 130, 246, 0.4);
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-button {
-                      background: #E0F2FE !important;
-                      border: none !important;
-                      border-right: 2px solid #BFDBFE !important;
-                      padding: 0 10px !important;
-                      height: 100% !important;
-                      border-radius: 0 !important;
-                      cursor: pointer;
-                      display: flex;
-                      align-items: center;
-                      gap: 4px;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-button:hover {
-                      background: #BFDBFE !important;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-button__button-content {
-                      display: flex;
-                      align-items: center;
-                      gap: 6px;
-                    }
-                    .phone-input-wrapper .react-international-phone-flag-emoji {
-                      font-size: 20px;
-                      line-height: 1;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-button__dropdown-arrow {
-                      font-size: 8px !important;
-                      color: #64748B;
-                    }
-                    .phone-input-wrapper .react-international-phone-input {
-                      flex: 1 !important;
-                      width: 100% !important;
-                      height: 100% !important;
-                      border: none !important;
-                      background: transparent !important;
-                      padding: 0 14px !important;
-                      font-size: 14px !important;
-                      font-weight: 500 !important;
-                      color: #334155 !important;
-                      outline: none !important;
-                    }
-                    .phone-input-wrapper .react-international-phone-input::placeholder {
-                      color: #94A3B8;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-dropdown {
-                      border-radius: 12px !important;
-                      box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
-                      border: 1px solid #E2E8F0 !important;
-                      overflow-x: auto !important;
-                      overflow-y: auto !important;
-                      max-height: 280px !important;
-                      z-index: 50 !important;
-                      width: auto !important;
-                      min-width: 100% !important;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-dropdown__list-item {
-                      padding: 8px 14px !important;
-                      font-size: 13px !important;
-                      font-weight: 500 !important;
-                      color: #334155 !important;
-                      white-space: nowrap !important;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-dropdown__list-item:hover {
-                      background: #EFF6FF !important;
-                    }
-                    .phone-input-wrapper .react-international-phone-country-selector-dropdown__list-item--selected {
-                      background: #DBEAFE !important;
-                      color: #1D4ED8 !important;
-                    }
-                  `}</style>
-
-                  <div className="phone-input-wrapper">
-                    <PhoneInput
-                      defaultCountry="gb"
-                      value={phone}
-                      onChange={(value) => {
-                        setPhone(value);
-                        setValue("contact.mobileNumber", value);
-                      }}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-
-                  {/* ✅ Validation hint */}
-                  {phone && phone.replace(/\D/g, "").length < 7 && (
-                    <p className="text-xs text-red-500 flex items-center gap-1">
-                      <AlertTriangle size={12} /> Please enter a valid phone
-                      number
-                    </p>
-                  )}
-                </div>
+                <PhoneInputField
+  value={phone}
+  onChange={(val: any) => {
+    setPhone(val);
+    setValue("contact.mobileNumber", val);
+  }}
+  label="Customer Phone Number"
+  required={true}
+  defaultCountry="gb"
+/>
               </div>
 
               {/* Address Fields */}
