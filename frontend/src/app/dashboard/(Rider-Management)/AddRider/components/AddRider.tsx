@@ -71,16 +71,7 @@ const AddRider = () => {
 
   const { handleSubmit, trigger, reset, setError: setFormError } = methods;
 
-  // ADD THIS LOGGING BLOCK
-const { errors: formErrors, isSubmitting: isFormSubmitting } = methods.formState;
 
-useEffect(() => {
-  if (Object.keys(formErrors).length > 0) {
-    console.log("❌ VALIDATION ERRORS:", formErrors);
-  }
-}, [formErrors]);
-
-console.log("📝 CURRENT FORM VALUES:", methods.getValues());
   useEffect(() => {
     if (riderId) {
       fetchRiderById(riderId);
