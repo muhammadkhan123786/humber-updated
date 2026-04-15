@@ -89,6 +89,8 @@ import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
 import supplierLedgrRoutes from "./routes/ledger.routes";
 import paymentRoutes from "./routes/payment.routes";
 
+import aiTemplateRoutes from "./routes/aiTemplate.routes"
+
 // Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
@@ -777,10 +779,27 @@ app.use(
   paymentRoutes,
 );
 
+
+app.use(
+  `${process.env.API_PREFIX}/ai-templates`,
+    aiTemplateRoutes,
+);
+
+
+
 // Muzamil Hassan end
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
+
+app.get("/api/ai-test", (req, res) => {
+  res.json({ message: "AI test working" });
+});
+
+
+import listEndpoints from 'express-list-endpoints';
+
 export default app;
+

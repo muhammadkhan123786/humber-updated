@@ -6,7 +6,7 @@ export const analyzeImagesWithGemini = async (
   files: { buffer: Buffer; mimetype: string }[],
   retries = 3
 ): Promise<any> => {
- const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+ const model = genAI.getGenerativeModel({ model: process.env.GEMINI_API_MODEL });
   const imageParts = files.map(file => ({
     inlineData: { data: file.buffer.toString('base64'), mimeType: file.mimetype }
   }));

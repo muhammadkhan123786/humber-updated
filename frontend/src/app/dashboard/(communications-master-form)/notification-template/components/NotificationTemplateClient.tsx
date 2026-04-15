@@ -18,6 +18,85 @@ import { getAll } from "@/helper/apiHelper";
 
 const THEME_COLOR = "var(--primary-gradient)";
 
+// const PreviewModal = ({
+//   item,
+//   onClose,
+// }: {
+//   item: any;
+//   onClose: () => void;
+// }) => {
+//   if (!item) return null;
+
+//   return (
+//     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+//       <div className="bg-white rounded-4xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+//         <div className="p-6 flex items-center justify-between border-b border-slate-100 shrink-0">
+//           <div className="flex items-center gap-3">
+//             <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-200">
+//               <Eye size={20} />
+//             </div>
+//             <h2 className="text-xl font-bold text-slate-800 truncate max-w-[300px]">
+//               Template Preview
+//             </h2>
+//           </div>
+//           <button
+//             onClick={onClose}
+//             className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+//           >
+//             <X size={24} />
+//           </button>
+//         </div>
+//         <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
+//           <div className="space-y-1.5">
+//             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+//               Category
+//             </label>
+//             <div>
+//               <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold border border-emerald-100">
+//                 {item.eventKeyId?.module || "Service"}
+//               </span>
+//             </div>
+//           </div>
+//           <div className="space-y-1.5">
+//             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+//               Subject Line
+//             </label>
+//             <div className="bg-blue-50/30 border border-blue-100 p-4 rounded-2xl text-slate-700 font-semibold leading-relaxed">
+//               {item.subject || "No Subject"}
+//             </div>
+//           </div>
+//           <div className="space-y-1.5">
+//             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+//               Message Body
+//             </label>
+//             <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-2xl text-slate-600 leading-relaxed whitespace-pre-wrap font-sans text-sm">
+//               {item.templateBody}
+//             </div>
+//           </div>
+//         </div>
+//         <div className="p-6 bg-slate-50/50 flex justify-end gap-3 border-t border-slate-100 shrink-0">
+//           <button
+//             onClick={onClose}
+//             className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all border border-transparent hover:border-slate-300"
+//           >
+//             Close
+//           </button>
+//           <button
+//             onClick={onClose}
+//             className="px-8 py-2.5 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
+//           >
+//             Use Template
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+
+
+
+
 const PreviewModal = ({
   item,
   onClose,
@@ -25,11 +104,41 @@ const PreviewModal = ({
   item: any;
   onClose: () => void;
 }) => {
+  const [previewMode, setPreviewMode] = useState<'rendered' | 'raw'>('rendered');
+  
   if (!item) return null;
+
+  // Replace variables with sample data for preview
+  const renderTemplateBody = (templateBody: string) => {
+    if (!templateBody) return '';
+    
+    const sampleData = {
+      userName: 'John Doe',
+      customerName: 'John Doe',
+      userEmail: 'john.doe@example.com',
+      email: 'john.doe@example.com',
+      userPhone: '+1 (555) 123-4567',
+      phone: '+1 (555) 123-4567',
+      companyName: 'Acme Inc.',
+      customerEmail: 'customer@example.com',
+      customerPhone: '+1 (555) 987-6543',
+      orderId: 'ORD-12345',
+      transactionAmount: '$99.99',
+    };
+
+    let renderedHtml = templateBody;
+    
+    Object.entries(sampleData).forEach(([key, value]) => {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      renderedHtml = renderedHtml.replace(regex, value);
+    });
+    
+    return renderedHtml;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white rounded-4xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-4xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
         <div className="p-6 flex items-center justify-between border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-200">
@@ -46,8 +155,34 @@ const PreviewModal = ({
             <X size={24} />
           </button>
         </div>
-        <div className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-          <div className="space-y-1.5">
+        
+        {/* Tab buttons */}
+        <div className="flex gap-2 px-6 pt-4 border-b border-slate-100">
+          <button
+            onClick={() => setPreviewMode('rendered')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              previewMode === 'rendered'
+                ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Rendered Preview
+          </button>
+          <button
+            onClick={() => setPreviewMode('raw')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              previewMode === 'raw'
+                ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            Raw HTML
+          </button>
+        </div>
+        
+        <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
+          {/* Category */}
+          <div className="space-y-1.5 mb-6">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Category
             </label>
@@ -57,7 +192,9 @@ const PreviewModal = ({
               </span>
             </div>
           </div>
-          <div className="space-y-1.5">
+          
+          {/* Subject */}
+          <div className="space-y-1.5 mb-6">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Subject Line
             </label>
@@ -65,19 +202,39 @@ const PreviewModal = ({
               {item.subject || "No Subject"}
             </div>
           </div>
+          
+          {/* Message Body */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Message Body
             </label>
-            <div className="bg-slate-50/50 border border-slate-100 p-6 rounded-2xl text-slate-600 leading-relaxed whitespace-pre-wrap font-sans text-sm">
-              {item.templateBody}
-            </div>
+            
+            {previewMode === 'rendered' ? (
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <div className="border-b border-slate-100 bg-slate-50 px-4 py-2">
+                  <span className="text-xs text-slate-500">Email Preview</span>
+                </div>
+                <div className="p-6">
+                  <div 
+                    className="prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ 
+                      __html: renderTemplateBody(item.templateBody || '') 
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <pre className="bg-gray-900 text-green-400 p-6 rounded-2xl overflow-x-auto text-xs font-mono leading-relaxed">
+                {item.templateBody || 'No content'}
+              </pre>
+            )}
           </div>
         </div>
+        
         <div className="p-6 bg-slate-50/50 flex justify-end gap-3 border-t border-slate-100 shrink-0">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all border border-transparent hover:border-slate-300"
+            className="px-6 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all"
           >
             Close
           </button>
@@ -92,6 +249,7 @@ const PreviewModal = ({
     </div>
   );
 };
+
 
 const getChannelStyles = (channelName: string, isActive: boolean) => {
   const name = channelName?.toLowerCase() || "";

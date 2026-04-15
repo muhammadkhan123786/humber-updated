@@ -1,7 +1,8 @@
+// components/NotificationTemplateForm/index.tsx
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { Save, Bell, Hash } from "lucide-react";
+import { Save, Bell, Sparkles, Eye } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FormModal } from "@/app/common-form/FormModal";
 import { FormInput } from "@/app/common-form/FormInput";
@@ -10,70 +11,70 @@ import { FormButton } from "@/app/common-form/FormButton";
 import { useFormActions } from "@/hooks/useFormActions";
 import { getAll } from "@/helper/apiHelper";
 import toast from "react-hot-toast";
+import HtmlTemplateEditor from "./Templateaigenerator";
+import { ChannelBadge } from "./NotificationTemplateForm/ChannelBadge";
+import { VariablesList } from "./NotificationTemplateForm/VariablesList";
+import { AIPanel } from "./NotificationTemplateForm/AIPanel/index";
+import { EmailPreviewModal } from "./NotificationTemplateForm/PreviewModals/EmailPreviewModal";
+import { SMSPreviewModal } from "./NotificationTemplateForm/PreviewModals/SMSPreviewModal";
+import { WAPreviewModal } from "./NotificationTemplateForm/PreviewModals/WAPreviewModal"
+import { ChannelType, Variable } from "./NotificationTemplateForm/types";
 
-const NotificationTemplateForm = ({
-  editingData,
-  onClose,
-  themeColor,
-}: any) => {
+const detectChannel = (name = ""): ChannelType => {
+  const n = name.toLowerCase();
+  if (n.includes("sms") || n.includes("text")) return "sms";
+  if (n.includes("whatsapp")) return "whatsapp";
+  return "email";
+};
+
+const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => {
   const queryClient = useQueryClient();
   const [eventActions, setEventActions] = useState<any[]>([]);
   const [providers, setProviders] = useState<any[]>([]);
-  const [selectedVariables, setSelectedVariables] = useState<any[]>([]);
+  const [selectedVariables, setSelectedVariables] = useState<Variable[]>([]);
   const [isDropdownLoading, setIsDropdownLoading] = useState(true);
+  const [showAI, setShowAI] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const { createItem, updateItem, isSaving } = useFormActions("/notification-templates", "notification-templates", "Template");
 
-  const { createItem, updateItem, isSaving } = useFormActions(
-    "/notification-templates",
-    "notification-templates",
-    "Template",
-  );
-
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    watch,
-    reset,
-    formState: {},
-  } = useForm({
-    defaultValues: {
-      eventKeyId: "",
-      channelId: "",
-      subject: "",
-      templateBody: "",
-      isActive: true,
-      isDefault: false,
-    },
+  const { register, handleSubmit, control, setValue, watch, reset } = useForm({
+    defaultValues: { eventKeyId: "", channelId: "", subject: "", templateBody: "", isActive: true, isDefault: false },
   });
 
   const selectedEventId = watch("eventKeyId");
+  const selectedChannelId = watch("channelId");
+  const templateBody = watch("templateBody");
   const isDefaultChecked = watch("isDefault");
+
+  const selectedEvent = eventActions.find((e) => e._id === selectedEventId);
+  const selectedProvider = providers.find((p) => p._id === selectedChannelId);
+  const channelName = selectedProvider?.channelId?.channelName || "Email";
+  const currentChannel = detectChannel(channelName);
+  const isEmail = currentChannel === "email";
+  const isSMS = currentChannel === "sms";
+  const isWA = currentChannel === "whatsapp";
+
+  // Fetch data
   useEffect(() => {
-    const fetchDropdowns = async () => {
+    const load = async () => {
       try {
         const [eventsRes, providersRes] = await Promise.all([
-          getAll("/event-action?filter=all", {
-            limit: "100",
-            requiredUserId: "false",
-          }),
-          getAll("/channel-providers?filter=all", {
-            limit: "100",
-            requiredUserId: "false",
-          }),
+          getAll("/event-action?filter=all", { limit: "100", requiredUserId: "false" }),
+          getAll("/channel-providers?filter=all", { limit: "100", requiredUserId: "false" }),
         ]);
         setEventActions(eventsRes.data || []);
         setProviders(providersRes.data || []);
-        setIsDropdownLoading(false);
       } catch (err) {
-        console.error("Error fetching dropdowns:", err);
+        toast.error("Failed to load form data");
+      } finally {
         setIsDropdownLoading(false);
       }
     };
-    fetchDropdowns();
+    load();
   }, []);
+
+  // Load editing data
   useEffect(() => {
     if (editingData && !isDropdownLoading) {
       reset({
@@ -87,191 +88,115 @@ const NotificationTemplateForm = ({
     }
   }, [editingData, reset, isDropdownLoading]);
 
+  // Update variables on event change
   useEffect(() => {
     const event = eventActions.find((e) => e._id === selectedEventId);
-    setSelectedVariables(event?.variables || []);
+    setSelectedVariables(event?.variables?.map((v: any) => ({ key: v.key, label: v.label || v.key })) || []);
   }, [selectedEventId, eventActions]);
-
-  const injectIdentifier = (key: string) => {
-    const placeholder = `{{${key}}}`;
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = watch("templateBody");
-    const newValue =
-      text.substring(0, start) + placeholder + text.substring(end);
-    setValue("templateBody", newValue);
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(
-        start + placeholder.length,
-        start + placeholder.length,
-      );
-    }, 0);
-  };
 
   const onSubmit = async (values: any) => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const payload = { ...values, userId: user.id || user._id };
 
     const handleSuccess = async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["notification-templates"],
-      });
+      await queryClient.invalidateQueries({ queryKey: ["notification-templates"] });
+      toast.success(editingData ? "Template updated!" : "Template created!");
       onClose();
-    };
-    const handleError = (error: any) => {
-      toast.dismiss();
-
-      const errorMessage =
-        error?.response?.data?.message || error?.message || "";
-      const isDuplicate =
-        errorMessage.includes("E11000") ||
-        errorMessage.includes("duplicate key");
-
-      if (isDuplicate) {
-        toast.error(
-          "A template for this Event and Channel already exists. Please edit the existing one instead.",
-        );
-      } else {
-        toast.error("Failed to process the template. Please try again.");
-      }
     };
 
     if (editingData?._id) {
-      updateItem(
-        { id: editingData._id, payload },
-        { onSuccess: handleSuccess, onError: handleError },
-      );
+      updateItem({ id: editingData._id, payload }, { onSuccess: handleSuccess });
     } else {
-      createItem(payload, { onSuccess: handleSuccess, onError: handleError });
+      createItem(payload, { onSuccess: handleSuccess });
     }
   };
 
   return (
-    <FormModal
-      title={editingData ? "Edit Template" : "Add Template"}
-      icon={<Bell size={24} />}
-      onClose={onClose}
-      themeColor={themeColor}
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-slate-700">
-              Event Action *
-            </label>
-            <select
-              {...register("eventKeyId")}
-              className="p-2.5 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-100 text-sm bg-white shadow-sm"
-            >
-              <option value="">Select Event</option>
-              {eventActions.map((e) => (
-                <option key={e._id} value={e._id}>
-                  {e.name}
-                </option>
-              ))}
-            </select>
-          </div>
+    <>
+      {/* Preview Modals */}
+      {showPreview && isEmail && <EmailPreviewModal html={templateBody} onClose={() => setShowPreview(false)} />}
+      {showPreview && isSMS && <SMSPreviewModal text={templateBody} onClose={() => setShowPreview(false)} />}
+      {showPreview && isWA && <WAPreviewModal text={templateBody} onClose={() => setShowPreview(false)} />}
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-slate-700">
-              Channel Provider *
-            </label>
-            <select
-              {...register("channelId")}
-              className="p-2.5 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-100 text-sm bg-white shadow-sm"
-            >
-              <option value="">Select Provider</option>
-              {providers.map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.providerName} ({p.channelId?.channelName || "No Channel"})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      {/* AI Panel */}
+      {showAI && selectedEvent && (
+        <AIPanel
+          channel={currentChannel}
+          eventName={selectedEvent.name}
+          eventDescription={selectedEvent.description}
+          variables={selectedVariables}
+          onInsert={(subject, body) => { setValue("subject", subject); setValue("templateBody", body); }}
+          onClose={() => setShowAI(false)}
+        />
+      )}
 
-        {selectedVariables.length > 0 && (
-          <div className="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-            <label className="text-xs font-bold text-indigo-700 uppercase mb-3 block">
-              Available Placeholders (Click to Insert)
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {selectedVariables.map((v, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => injectIdentifier(v.key)}
-                  className="bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shadow-sm flex items-center gap-1"
-                >
-                  <Hash size={12} /> {"{{"}
-                  {v.key}
-                  {"}}"}
-                </button>
-              ))}
+      <FormModal title={editingData ? "Edit Template" : "Add Template"} icon={<Bell size={24} width={"max-w-[950px]"} />} onClose={onClose} themeColor={themeColor}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-5 max-h-[80vh] overflow-y-auto">
+          
+          {/* Event & Channel Dropdowns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-semibold text-slate-700">Event Action *</label>
+              <select {...register("eventKeyId")} className="w-full p-2.5 rounded-lg border border-slate-200">
+                <option value="">Select Event</option>
+                {eventActions.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700">Channel Provider *</label>
+              <select {...register("channelId")} className="w-full p-2.5 rounded-lg border border-slate-200">
+                <option value="">Select Provider</option>
+                {providers.map((p) => <option key={p._id} value={p._id}>{p.providerName} ({p.channelId?.channelName})</option>)}
+              </select>
             </div>
           </div>
-        )}
 
-        <FormInput
-          label="Subject"
-          placeholder="Template Subject"
-          {...register("subject")}
-        />
+          {/* Actions Bar */}
+          {selectedChannelId && selectedEventId && (
+            <div className="flex items-center justify-between">
+              <ChannelBadge channel={currentChannel} />
+              <div className="flex gap-2">
+                {templateBody && (
+                  <button type="button" onClick={() => setShowPreview(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-bold border bg-blue-50">
+                    <Eye size={12} /> Preview
+                  </button>
+                )}
+                <button type="button" onClick={() => setShowAI(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600">
+                  <Sparkles size={14} /> Generate with AI
+                </button>
+              </div>
+            </div>
+          )}
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-semibold text-slate-700">
-            Template Body *
-          </label>
-          <textarea
-            {...register("templateBody")}
-            ref={(e) => {
-              register("templateBody").ref(e);
-              textareaRef.current = e;
-            }}
-            className="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-100 min-h-[150px] text-sm font-mono leading-relaxed bg-white shadow-sm"
-            placeholder="Write your message here..."
+          {/* Variables */}
+          <VariablesList variables={selectedVariables} onInsert={(key) => setValue("templateBody", templateBody + `{{${key}}}`)} />
+
+          {/* Subject */}
+          <FormInput label="Subject" placeholder="Template Subject" {...register("subject")} />
+
+          {/* Rich Editor */}
+          <HtmlTemplateEditor
+            value={templateBody}
+            onChange={(val: any) => setValue("templateBody", val)}
+            variables={selectedVariables}
+            label="Template Body"
+            required
+            channelType={currentChannel}
+            isEmailChannel={isEmail}
+            minHeight={isEmail ? "min-h-[260px]" : "min-h-[140px]"}
+            placeholder={isEmail ? "HTML email will appear here..." : isSMS ? "SMS text (160 chars max)..." : "WhatsApp message..."}
           />
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Controller
-            control={control}
-            name="isActive"
-            render={({ field }) => (
-              <FormToggle
-                label="Active"
-                checked={field.value}
-                onChange={field.onChange}
-                disabled={isDefaultChecked}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="isDefault"
-            render={({ field }) => (
-              <FormToggle
-                label="Default"
-                checked={field.value}
-                onChange={field.onChange}
-              />
-            )}
-          />
-        </div>
+          {/* Toggles */}
+          <div className="grid grid-cols-2 gap-4">
+            <Controller control={control} name="isActive" render={({ field }) => <FormToggle label="Active" checked={field.value} onChange={field.onChange} disabled={isDefaultChecked} />} />
+            <Controller control={control} name="isDefault" render={({ field }) => <FormToggle label="Default Template" checked={field.value} onChange={field.onChange} />} />
+          </div>
 
-        <FormButton
-          type="submit"
-          label={editingData ? "Update Template" : "Save Template"}
-          icon={<Save size={20} />}
-          loading={isSaving}
-          themeColor={themeColor}
-          onCancel={onClose}
-        />
-      </form>
-    </FormModal>
+          <FormButton type="submit" label={editingData ? "Update Template" : "Save Template"} icon={<Save size={20} />} loading={isSaving} themeColor={themeColor} onCancel={onClose} />
+        </form>
+      </FormModal>
+    </>
   );
 };
 
