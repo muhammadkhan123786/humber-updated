@@ -148,6 +148,7 @@ app.use(cors());
 
 // Static files (for uploads/public folder)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(express.static(path.join(__dirname, "../public")));
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
@@ -799,7 +800,7 @@ app.get("/api/ai-test", (req, res) => {
 });
 
 
-import listEndpoints from 'express-list-endpoints';
+
 
 export default app;
 

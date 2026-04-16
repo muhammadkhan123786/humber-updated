@@ -9,7 +9,7 @@ export const validateTemplateVariables = async (
   try {
 
     const { eventKeyId, templateBody } = req.body;
-
+    
     if (!templateBody) return next();
 
     const event = await EventActions.findById(eventKeyId);

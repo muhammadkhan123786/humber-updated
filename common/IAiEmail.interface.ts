@@ -9,6 +9,8 @@ export interface GenerateTemplateRequest {
   eventDescription?: string;     // e.g. "Fired when a new customer registers"
   variables: VariableItem[];      // e.g. [{key:"customerName", label:"Customer Name"}]
   additionalContext?: string;
+  eventKey?: string;
+  socialLinks?: any
 
   // Company branding (used in email header/footer)
   companyName?: string;
@@ -21,6 +23,7 @@ export interface GenerateTemplateRequest {
 export interface VariableItem {
   key: string;     // e.g. "customerName"
   label?: string;  // e.g. "Customer Name"
+  description?: string;
 }
 
 // ── What Gemini returns (parsed JSON) ────────────────────────
