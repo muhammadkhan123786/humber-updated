@@ -168,7 +168,7 @@ export function buildEmailHTML(
         <tr>
           <td style="background:${headerGradient};padding:14px 40px;text-align:center;">
             <p style="margin:0;color:rgba(255,255,255,0.65);font-size:11px;">
-              Sent to {{email}} &bull; 
+            
               <a href="${companyWebsite}/unsubscribe" style="color:rgba(255,255,255,0.85);text-decoration:underline;">Unsubscribe</a>
             </p>
           <\/td>
@@ -182,3 +182,8 @@ export function buildEmailHTML(
 </body>
 </html>`;
 }
+
+
+
+
+  // Sent to {{email}} &bull; 

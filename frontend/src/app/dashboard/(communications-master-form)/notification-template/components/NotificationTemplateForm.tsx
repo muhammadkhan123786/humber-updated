@@ -11,7 +11,8 @@ import { FormButton } from "@/app/common-form/FormButton";
 import { useFormActions } from "@/hooks/useFormActions";
 import { getAll } from "@/helper/apiHelper";
 import toast from "react-hot-toast";
-import HtmlTemplateEditor from "./Templateaigenerator";
+
+import TemplateEditor from "./NotificationTemplateForm/TemplateEditor";
 import { ChannelBadge } from "./NotificationTemplateForm/ChannelBadge";
 import { VariablesList } from "./NotificationTemplateForm/VariablesList";
 import { AIPanel } from "./NotificationTemplateForm/AIPanel/index";
@@ -35,9 +36,6 @@ const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => 
   const [isDropdownLoading, setIsDropdownLoading] = useState(true);
   const [showAI, setShowAI] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  
-  // ✅ Track used event IDs to hide them from dropdown
-  const [usedEventIds, setUsedEventIds] = useState<string[]>([]);
 
   const { createItem, updateItem, isSaving } = useFormActions("/notification-templates", "notification-templates", "Template");
 
@@ -66,15 +64,6 @@ const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => 
           getAll("/event-action?filter=all", { limit: "100", requiredUserId: "false" }),
           getAll("/channel-providers?filter=all", { limit: "100", requiredUserId: "false" }),
         ]);
-        
-        // ✅ Fetch existing templates to know which events are already used
-        const templatesRes = await getAll("/notification-templates?filter=all", { limit: "1000" });
-        const existingTemplates = templatesRes.data || [];
-        
-        // ✅ Collect event IDs that already have templates
-        const usedEvents = existingTemplates.map((template: any) => template.eventKeyId?._id || template.eventKeyId);
-        setUsedEventIds(usedEvents.filter(Boolean));
-        
         setEventActions(eventsRes.data || []);
         setProviders(providersRes.data || []);
       } catch (err) {
@@ -106,16 +95,6 @@ const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => 
     setSelectedVariables(event?.variables?.map((v: any) => ({ key: v.key, label: v.label || v.key })) || []);
   }, [selectedEventId, eventActions]);
 
-  // ✅ Filter available events - hide used ones except currently selected in edit mode
-  const getAvailableEvents = () => {
-    return eventActions.filter(event => {
-      // If in edit mode, show the currently selected event even if used
-      if (editingData && event._id === selectedEventId) return true;
-      // Otherwise hide events that already have templates
-      return !usedEventIds.includes(event._id);
-    });
-  };
-
   const onSubmit = async (values: any) => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const payload = { ...values, userId: user.id || user._id };
@@ -132,8 +111,6 @@ const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => 
       createItem(payload, { onSuccess: handleSuccess });
     }
   };
-
-  const availableEvents = getAvailableEvents();
 
   return (
     <>
@@ -163,20 +140,8 @@ const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => 
               <label className="text-sm font-semibold text-slate-700">Event Action *</label>
               <select {...register("eventKeyId")} className="w-full p-2.5 rounded-lg border border-slate-200">
                 <option value="">Select Event</option>
-                {availableEvents.map((e) => (
-                  <option key={e._id} value={e._id}>
-                    {e.name}
-                    {/* ✅ Show indicator if event already has template (only in edit mode) */}
-                    {editingData && e._id === selectedEventId && usedEventIds.includes(e._id) && " (Current)"}
-                  </option>
-                ))}
+                {eventActions.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
               </select>
-              {/* ✅ Show message if no events available */}
-              {availableEvents.length === 0 && !editingData && (
-                <p className="text-xs text-amber-600 mt-1">
-                  ⚠️ All events already have templates. Please edit existing templates or delete some to create new ones.
-                </p>
-              )}
             </div>
             <div>
               <label className="text-sm font-semibold text-slate-700">Channel Provider *</label>
@@ -210,17 +175,20 @@ const NotificationTemplateForm = ({ editingData, onClose, themeColor }: any) => 
           {/* Subject */}
           <FormInput label="Subject" placeholder="Template Subject" {...register("subject")} />
 
-          {/* Rich Editor */}
-          <HtmlTemplateEditor
+          {/* ✅ Template Editor - Replaces HtmlTemplateEditor */}
+          <TemplateEditor
             value={templateBody}
-            onChange={(val: any) => setValue("templateBody", val)}
+            onChange={(val) => setValue("templateBody", val)}
             variables={selectedVariables}
             label="Template Body"
             required
             channelType={currentChannel}
-            isEmailChannel={isEmail}
             minHeight={isEmail ? "min-h-[260px]" : "min-h-[140px]"}
-            placeholder={isEmail ? "HTML email will appear here..." : isSMS ? "SMS text (160 chars max)..." : "WhatsApp message..."}
+            placeholder={
+              isEmail ? "HTML email will appear here..." : 
+              isSMS ? "SMS text (160 chars max)..." : 
+              "WhatsApp message (*bold* _italic_ ~strike~)..."
+            }
           />
 
           {/* Toggles */}
