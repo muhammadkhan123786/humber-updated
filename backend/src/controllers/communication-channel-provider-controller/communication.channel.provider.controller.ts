@@ -49,6 +49,8 @@ export const testCommunicationConnection = async (
 
     const { provider, config } = req.body;
 
+    console.log("provide", provider, "config", config)
+
     const result = await CommunicationTester.test(provider, config);
 
     return res.status(200).json({

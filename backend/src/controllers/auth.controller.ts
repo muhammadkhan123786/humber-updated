@@ -230,8 +230,9 @@ export const login = async (req: Request, res: Response) => {
 export const setupPassword = async (req: Request, res: Response) => {
     try {
         const { token, password } = req.body;
-
+console.log("token", token, "password", password)
         const user = await User.findOne({ emailToken: token, emailTokenExpires: { $gt: new Date() } });
+        console.log("user", user)
         if (!user) return res.status(400).json({ message: "Invalid or expired token" });
 
         // Hash password

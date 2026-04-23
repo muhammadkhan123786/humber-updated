@@ -308,6 +308,13 @@ export const navigation: INavBarLinkSharedInterface[] = [
         icon: Store,
         roleId: [1],
       },
+      {
+        _id: nanoid(),
+        label: "Reports",
+        href: "/dashboard/inventory-dashboard/reports",
+        icon: ReceiptText,
+        roleId: [1],
+      },
     ],
   },
 
