@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ProductModal }  from "../../models/product.models";
-import { PurchaseOrder } from "../../models/purchaseOrder.model";
+
 import { GrnModel } from "../../models/grn.models"
 import { GoodsReturn }   from "../../models/goodsReturn.model";
 

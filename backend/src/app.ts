@@ -137,7 +137,8 @@ import moduleActionsRouter from "./routes/communication-channels-integration-rou
 import callTypeRouter from "./routes/call-logs-modules-routes/call.type.routes";
 import callStatusRouter from "./routes/call-logs-modules-routes/call.status.routes";
 import callLogsRouter from "./routes/call-logs-modules-routes/call.logs.routes";
-import inventoryReportsRoutes from "./routes/reports/inventoryReports.routes"
+import inventoryReportsRoutes from "./routes/reports/inventoryReports.routes";
+import purchaseReportRoutes from "./routes/reports/purchaseReport.routes"
 
 // Create express app
 const app: Application = express();
@@ -788,7 +789,7 @@ app.use(
 );
 
 app.use(`${process.env.API_PREFIX}/reports/inventory`, inventoryReportsRoutes);
-
+app.use(`${process.env.API_PREFIX}/reports/purchase`, purchaseReportRoutes);
 
 // Muzamil Hassan end
 // Health check route
