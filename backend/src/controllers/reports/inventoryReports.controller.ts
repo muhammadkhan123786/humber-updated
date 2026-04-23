@@ -191,8 +191,42 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
 export const getLowStockReport = async (req: Request, res: Response) => {
   try {
 
-    const lowStockProducts = await ProductModal.aggregate([
+    const data = await ProductModal.aggregate([
+      { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
+
+      // ✅ Category Join
+      {
+        $lookup: {
+          from: "categories",
+          localField: "categoryId",
+          foreignField: "_id",
+          as: "category"
+        }
+      },
+      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+
+      // ✅ Purchase Orders Join (for last purchase date)
+      {
+        $lookup: {
+          from: "purchaseorders",
+          let: { sku: "$attributes.sku" },
+          pipeline: [
+            { $unwind: "$items" },
+            {
+              $match: {
+                $expr: { $eq: ["$items.sku", "$$sku"] }
+              }
+            },
+            { $sort: { orderDate: -1 } }, // latest first
+            { $limit: 1 }
+          ],
+          as: "lastPurchase"
+        }
+      },
+      { $unwind: { path: "$lastPurchase", preserveNullAndEmptyArrays: true } },
+
+      // ✅ Filter Low Stock
       {
         $match: {
           $expr: {
@@ -203,52 +237,135 @@ export const getLowStockReport = async (req: Request, res: Response) => {
           }
         }
       },
+
+      // ✅ Add Fields
+      {
+        $addFields: {
+          stockStatus: {
+            $switch: {
+              branches: [
+                {
+                  case: { $eq: ["$attributes.stock.stockQuantity", 0] },
+                  then: "Out of Stock"
+                },
+                {
+                  case: {
+                    $lte: [
+                      "$attributes.stock.stockQuantity",
+                      "$attributes.stock.minStockLevel"
+                    ]
+                  },
+                  then: "Critical"
+                }
+              ],
+              default: "Low"
+            }
+          },
+
+          reorderQuantity: {
+            $max: [
+              {
+                $subtract: [
+                  "$attributes.stock.maxStockLevel",
+                  "$attributes.stock.stockQuantity"
+                ]
+              },
+              0
+            ]
+          }
+        }
+      },
+
+      // ✅ Final Projection
       {
         $project: {
           productName: 1,
           sku: "$attributes.sku",
+          category: "$category.categoryName",
+
           currentStock: "$attributes.stock.stockQuantity",
-          reorderPoint: "$attributes.stock.reorderPoint",
-          supplier: "$attributes.stock.supplierId"
+          minStockLevel: "$attributes.stock.minStockLevel",
+
+          reorderQuantity: 1,
+          supplier: "$attributes.stock.supplierId",
+
+          stockStatus: 1,
+
+          lastPurchaseDate: "$lastPurchase.orderDate"
         }
       }
     ]);
 
-    const outOfStock = await ProductModal.aggregate([
-      { $unwind: "$attributes" },
-      {
-        $match: {
-          "attributes.stock.stockQuantity": 0
-        }
-      },
-      { $count: "count" }
-    ]);
+    // ✅ KPIs
+    const lowStockItems = data.length;
+    const criticalStock = data.filter(i => i.stockStatus === "Critical").length;
+    const outOfStock = data.filter(i => i.stockStatus === "Out of Stock").length;
+    const reorderRequired = data.filter(i => i.reorderQuantity > 0).length;
 
     res.json({
       kpis: {
-        lowStockItems: lowStockProducts.length,
-        outOfStock: outOfStock[0]?.count || 0
+        lowStockItems,
+        criticalStock,
+        outOfStock,
+        reorderRequired
       },
-      table: lowStockProducts
+      table: data
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Low stock report error", error });
+    res.status(500).json({
+      message: "Low stock report error",
+      error
+    });
   }
 };
 
 export const getInventoryValuationReport = async (req: Request, res: Response) => {
   try {
 
-    const valuation = await ProductModal.aggregate([
+    const data = await ProductModal.aggregate([
+      { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
       { $unwind: "$attributes.pricing" },
+
+      // ✅ Category
       {
-        $project: {
-          productName: 1,
-          sku: "$attributes.sku",
-          quantityOnHand: "$attributes.stock.stockQuantity",
-          unitCost: "$attributes.pricing.costPrice",
+        $lookup: {
+          from: "categories",
+          localField: "categoryId",
+          foreignField: "_id",
+          as: "category"
+        }
+      },
+      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+
+      // ✅ Purchase Orders (for Total Purchase Value)
+      {
+        $lookup: {
+          from: "purchaseorders",
+          let: { sku: "$attributes.sku" },
+          pipeline: [
+            { $unwind: "$items" },
+            {
+              $match: {
+                $expr: { $eq: ["$items.sku", "$$sku"] }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                totalPurchaseValue: { $sum: "$items.totalPrice" },
+                lastPurchaseCost: { $last: "$items.unitPrice" }
+              }
+            }
+          ],
+          as: "purchaseData"
+        }
+      },
+      { $unwind: { path: "$purchaseData", preserveNullAndEmptyArrays: true } },
+
+      {
+        $addFields: {
           inventoryValue: {
             $multiply: [
               "$attributes.stock.stockQuantity",
@@ -256,45 +373,74 @@ export const getInventoryValuationReport = async (req: Request, res: Response) =
             ]
           }
         }
+      },
+
+      {
+        $project: {
+          productName: 1,
+          sku: "$attributes.sku",
+          category: "$category.categoryName",
+
+          quantityOnHand: "$attributes.stock.stockQuantity",
+          unitCost: "$attributes.pricing.costPrice",
+
+          inventoryValue: 1,
+
+          lastPurchaseCost: "$purchaseData.lastPurchaseCost",
+          avgCost: "$attributes.pricing.costPrice",
+
+          totalPurchaseValue: {
+            $ifNull: ["$purchaseData.totalPurchaseValue", 0]
+          }
+        }
       }
     ]);
 
-    const totalValue = valuation.reduce(
-      (acc, item) => acc + item.inventoryValue,
-      0
-    );
+    // ✅ KPIs
+    const totalInventoryValue = data.reduce((acc, i) => acc + i.inventoryValue, 0);
+    const totalPurchaseValue = data.reduce((acc, i) => acc + i.totalPurchaseValue, 0);
+
+    const highest = [...data].sort((a, b) => b.inventoryValue - a.inventoryValue)[0];
+    const lowest = [...data].sort((a, b) => a.inventoryValue - b.inventoryValue)[0];
 
     res.json({
       kpis: {
-        totalInventoryValue: totalValue,
-        totalProducts: valuation.length
+        totalInventoryValue,
+        totalPurchaseValue, // ✅ NEW KPI
+        averageProductCost: totalInventoryValue / (data.length || 1),
+        highestValueProduct: highest?.productName,
+        lowestValueProduct: lowest?.productName
       },
-      table: valuation
+      table: data
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Inventory valuation error", error });
+    res.status(500).json({
+      message: "Inventory valuation error",
+      error
+    });
   }
 };
 
 export const getStockMovementReport = async (req: Request, res: Response) => {
   try {
 
-    const received = await GrnModel.aggregate([
+    const stockIn = await GrnModel.aggregate([
       { $unwind: "$items" },
       {
         $project: {
           date: "$receivedDate",
           productName: "$items.productName",
           sku: "$items.sku",
-          movementType: "Stock In",
-          quantity: "$items.acceptedQuantity",
+          movementType: "Purchase",
+          quantityIn: "$items.acceptedQuantity",
+          quantityOut: 0,
           reference: "$grnNumber"
         }
       }
     ]);
 
-    const returns = await GoodsReturn.aggregate([
+    const stockOut = await GoodsReturn.aggregate([
       { $unwind: "$items" },
       {
         $project: {
@@ -302,19 +448,26 @@ export const getStockMovementReport = async (req: Request, res: Response) => {
           productName: "$items.productName",
           sku: "$items.sku",
           movementType: "Return",
-          quantity: "$items.returnQty",
+          quantityIn: 0,
+          quantityOut: "$items.returnQty",
           reference: "$grtnNumber"
         }
       }
     ]);
 
+    const combined = [...stockIn, ...stockOut];
+
+    const totalStockIn = combined.reduce((acc, i) => acc + i.quantityIn, 0);
+    const totalStockOut = combined.reduce((acc, i) => acc + i.quantityOut, 0);
+
     res.json({
       kpis: {
-        totalMovements: received.length + returns.length,
-        stockIn: received.length,
-        stockOut: returns.length
+        totalMovements: combined.length,
+        totalStockIn,
+        totalStockOut,
+        adjustments: 0 // future: add manual adjustments
       },
-      table: [...received, ...returns]
+      table: combined
     });
 
   } catch (error) {
