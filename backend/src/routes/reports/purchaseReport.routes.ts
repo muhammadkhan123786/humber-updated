@@ -8,8 +8,8 @@ import {
 const router = express.Router();
 
 // 🔹 Purchase Reports Routes
-router.get("/purchase-orders", getPurchaseOrderReport);
-router.get("/goods-received", getGRNReport);
+router.get("/purchase-orders",getPurchaseOrderReport);
+router.get("/goods-received",getGRNReport);
 router.get("/summary", getPurchaseSummaryReport);
 
 export default router;
