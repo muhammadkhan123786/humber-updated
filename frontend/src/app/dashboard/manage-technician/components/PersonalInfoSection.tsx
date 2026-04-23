@@ -2,6 +2,7 @@ import React from "react";
 import FormSection from "../../suppliers/components/FormSection";
 import FormField from "../../suppliers/components/FormInput";
 import { User, Mail, Phone, Loader2 } from "lucide-react";
+import PhoneInputField from "@/components/Phoneinputfield"
 
 interface PersonalInfoSectionProps {
   formData: any;
@@ -62,7 +63,7 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
           hoverColor="blue"
           required
         />
-        <FormField
+        {/* <FormField
           label="Phone Number *"
           name="phoneNumber"
           labelIcon={Phone}
@@ -72,7 +73,24 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({
           placeholder="+1 (555) 123-4567"
           hoverColor="purple"
           required
-        />
+        /> */}
+
+   <PhoneInputField
+  label="Phone Number" 
+  value={formData.phoneNumber}
+  onChange={(value: string) =>
+    handleChange({
+      target: { name: "phoneNumber", value },
+    })
+  }
+  labelIcon={Phone}
+  height="36px"
+  borderColor="#d0d5dd"
+  // hoverColor="purple"
+  placeholder="+1 (555) 123-4567"
+  defaultCountry="gb"
+  required
+/>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

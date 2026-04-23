@@ -13,6 +13,7 @@ import {
 import FormInput from "../../components/FormInput";
 import { useRider } from "@/hooks/useRider";
 import { RiderFormData } from "@/schema/rider.schema";
+import PhoneInputField from "@/components/Phoneinputfield";
 
 const DriverSection: React.FC = () => {
   const { vehicleTypes, loading } = useRider();
@@ -308,7 +309,7 @@ const DriverSection: React.FC = () => {
           <CircleAlert size={18} />
           <span>Emergency Contact</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
           <div className="space-y-1">
             <Controller
               name="emergencyContactNumber"
@@ -370,7 +371,83 @@ const DriverSection: React.FC = () => {
               </p>
             )}
           </div>
-        </div>
+        </div> */}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+  
+  {/* 1. Emergency Contact Number - No Icon */}
+  <div className="space-y-1">
+    <Controller
+      name="emergencyContactNumber"
+      control={control}
+      render={({ field, fieldState: { error } }) => (
+        <PhoneInputField
+          {...field}
+          label="Emergency Contact Number"
+          placeholder="+44 7700 900456"
+          required={true}
+          
+          // --- CUSTOMIZATION PROPS ---
+          // labelIcon={Phone} // Omitted to hide the icon
+          borderColor={"#d0d5dd"} 
+          height="38px"
+          fontSize="14px"
+          
+          // --- VALIDATION PROPS ---
+          showValidation={!!error}
+          errorMessage={error?.message}
+        />
+      )}
+    />
+  </div>
+
+  {/* 2. Phone Number - With Icon */}
+  <div className="space-y-1">
+    <Controller
+      name="phoneNumber"
+      control={control}
+      render={({ field, fieldState: { error } }) => (
+        <PhoneInputField
+          {...field}
+          label="Phone Number"
+          placeholder="+44 7700 900123"
+          required={true}
+          
+          // --- CUSTOMIZATION PROPS ---
+          labelIcon={Phone} 
+          borderColor={"#d0d5dd"} 
+          height="38px"
+          fontSize="14px"
+          
+          // --- VALIDATION PROPS ---
+          showValidation={!!error}
+          errorMessage={error?.message}
+        />
+      )}
+    />
+  </div>
+
+  {/* 3. Relationship (Full Width) */}
+  <div className="md:col-span-2 space-y-1">
+    <Controller
+      name="relationShip"
+      control={control}
+      render={({ field }) => (
+        <FormInput
+          label="Relationship"
+          placeholder="Mother"
+          {...field}
+          error={!!errors.relationShip}
+        />
+      )}
+    />
+    {errors.relationShip && (
+      <p className="text-xs text-red-500 pl-1">
+        {errors.relationShip.message}
+      </p>
+    )}
+  </div>
+</div>
       </div>
 
       <div className="p-5 bg-linear-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 flex gap-4">

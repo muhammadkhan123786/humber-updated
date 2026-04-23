@@ -38,11 +38,12 @@ static async testTwilio(config:any) {
 
 static async testWhatsapp(config:any) {
 
+  console.log("accessToken", config.phoneNumber)
   await axios.get(
-    "https://graph.facebook.com/v18.0/me",
+     `https://graph.facebook.com/v18.0/${config.phoneNumber}`,
     {
       headers: {
-        Authorization: `Bearer ${config.access_token}`
+       Authorization:`Bearer ${config.apiKey}`
       }
     }
   );

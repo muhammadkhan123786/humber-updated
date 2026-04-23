@@ -71,6 +71,7 @@ const AddRider = () => {
 
   const { handleSubmit, trigger, reset, setError: setFormError } = methods;
 
+
   useEffect(() => {
     if (riderId) {
       fetchRiderById(riderId);

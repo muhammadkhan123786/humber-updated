@@ -184,7 +184,10 @@ const ProviderSection = ({ provider }: { provider: any }) => {
           </div>
         ) : (
           <form
-            onSubmit={handleSubmit((d) => mutation.mutate(d.configurationData))}
+           onSubmit={handleSubmit((d) => {
+  console.log("FORM DATA:", d);
+  mutation.mutate(d.configurationData);
+})}
             className="space-y-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

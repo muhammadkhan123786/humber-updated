@@ -1,4 +1,6 @@
 "use client";
+import PhoneInputField from "@/components/Phoneinputfield";
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +27,7 @@ import { saveCustomer } from "../../../../hooks/useCustomer";
 import { Customer } from "../../../../../../common/DTOs/Customer.dto";
 import { getById } from "../../../../helper/apiHelper";
 import useGoogleMapLoad from "@/hooks/useGoogleMapLoad";
+
 interface GoogleAddressComponent {
   long_name: string;
   short_name: string;
@@ -61,6 +64,9 @@ const ModalForm: React.FC<ModalProps> = ({
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [sourceOptions, setSourceOptions] = useState<any[]>([]);
 
+  // ✅ FIX: phone state declare kiya — yahi missing tha
+  const [phone, setPhone] = useState<string>("");
+
   const googleMapLoader = useGoogleMapLoad();
 
   const { register, handleSubmit, watch, setValue, reset } = useForm<Customer>({
@@ -83,6 +89,7 @@ const ModalForm: React.FC<ModalProps> = ({
   const isActive = watch("isActive");
   const sourceId = watch("sourceId");
   const isVatExemption = watch("isVatExemption" as any);
+
   useEffect(() => {
     if (!googleMapLoader || typeof window === "undefined" || !window.google)
       return;
@@ -96,9 +103,9 @@ const ModalForm: React.FC<ModalProps> = ({
       types: ["address"],
       componentRestrictions: { country: "uk" },
     });
+
     const listener = autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace() as GooglePlaceResult;
-
       if (!place?.place_id) return;
 
       const service = new window.google.maps.places.PlacesService(
@@ -160,6 +167,11 @@ const ModalForm: React.FC<ModalProps> = ({
         if (response.success && response.data) {
           const d = response.data;
 
+          // ✅ FIX: Edit mode mein phone state bhi set karo
+          const existingPhone =
+            d.contactId?.mobileNumber || d.contact?.mobileNumber || "";
+          setPhone(existingPhone);
+
           reset({
             customerType: d.customerType,
             companyName: d.companyName,
@@ -168,7 +180,10 @@ const ModalForm: React.FC<ModalProps> = ({
             isVatExemption: d.isVatExemption,
             vatExemptionReason: d.vatExemptionReason,
             person: d.personId || {},
-            contact: d.contactId || {},
+            contact: {
+              ...(d.contactId || {}),
+              mobileNumber: existingPhone,
+            },
             address: d.addressId || {},
           } as any);
         }
@@ -194,13 +209,10 @@ const ModalForm: React.FC<ModalProps> = ({
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        console.log(data);
         if (data.success) {
           const activeSources = data.data?.filter((s: any) => s.isActive) || [];
           setSourceOptions(activeSources);
-          
-        } 
-        
+        }
       } catch (err) {
         console.error(err);
         setSourceOptions([
@@ -232,6 +244,12 @@ const ModalForm: React.FC<ModalProps> = ({
       return;
     }
 
+    // ✅ FIX: phone validation — empty check
+    if (!phone || phone.replace(/\D/g, "").length < 7) {
+      setError("Please enter a valid phone number.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
@@ -240,6 +258,11 @@ const ModalForm: React.FC<ModalProps> = ({
         ...data,
         _id: customerId || undefined,
         userId: currentUserId,
+        // ✅ FIX: phone state se value include karo
+        contact: {
+          ...data.contact,
+          mobileNumber: phone,
+        },
         address: {
           ...data.address,
           userId: currentUserId,
@@ -259,14 +282,12 @@ const ModalForm: React.FC<ModalProps> = ({
   };
 
   const getSourceIcon = (sourceName: string, isActive: boolean) => {
-    console.log(isActive);
     const name = sourceName.toLowerCase();
     if (name.includes("walk")) return <Store size={22} strokeWidth={2.5} />;
     if (name.includes("phone"))
       return <PhoneCall size={22} strokeWidth={2.5} />;
     if (name.includes("web") || name.includes("online"))
       return <Globe size={22} strokeWidth={2.5} />;
-
     return <Building size={22} strokeWidth={2.5} />;
   };
 
@@ -314,7 +335,7 @@ const ModalForm: React.FC<ModalProps> = ({
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#F8FAFC] w-full max-w-[550px] rounded-3xl shadow-2xl relative z-10 overflow-hidden max-h-[95vh] flex flex-col"
+        className="bg-[#F8FAFC] w-full max-w-[950px] rounded-3xl shadow-2xl relative z-10 overflow-hidden max-h-[95vh] flex flex-col"
       >
         {fetchingData && (
           <div className="absolute inset-0 z-60 bg-white/80 flex items-center justify-center">
@@ -343,7 +364,7 @@ const ModalForm: React.FC<ModalProps> = ({
           onSubmit={handleSubmit(onFormSubmit)}
           className="flex flex-col flex-1 overflow-y-auto custom-scrollbar"
         >
-          <div className="p-8  flex-1 custom-scrollbar">
+          <div className="p-8 flex-1 custom-scrollbar">
             <div className="flex justify-between items-start mb-2">
               <div>
                 <h2 className="font-semibold text-xl bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
@@ -369,6 +390,7 @@ const ModalForm: React.FC<ModalProps> = ({
             )}
 
             <div className="space-y-6 mt-6">
+              {/* Customer Type */}
               <div>
                 <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-3">
                   <User size={16} className="text-[#6366F1]" /> Customer Type *
@@ -376,7 +398,7 @@ const ModalForm: React.FC<ModalProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div
                     onClick={() => setValue("customerType", "domestic" as any)}
-                    className={`cursor-pointer relative min-h-[140px] rounded-2xl transition-all duration-300 flex flex-col p-[18px]  outline-2 -outline-offset-2 hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
+                    className={`cursor-pointer relative min-h-[140px] rounded-2xl transition-all duration-300 flex flex-col p-[18px] outline-2 -outline-offset-2 hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
                       customerType === "domestic"
                         ? "bg-linear-to-br from-[#3B82F6] to-[#06B6D4] outline-white/20 shadow-[0px_4px_12px_rgba(59,130,246,0.3)]"
                         : "bg-white outline-gray-200 hover:outline-[#3B82F6] shadow-sm"
@@ -393,7 +415,6 @@ const ModalForm: React.FC<ModalProps> = ({
                         }
                       />
                     </div>
-
                     <div className="flex flex-col gap-1">
                       <span
                         className={`text-base font-bold font-['Arial'] leading-6 ${
@@ -415,9 +436,10 @@ const ModalForm: React.FC<ModalProps> = ({
                       </span>
                     </div>
                   </div>
+
                   <div
                     onClick={() => setValue("customerType", "corporate" as any)}
-                    className={`cursor-pointer relative min-h-[140px] rounded-2xl transition-all duration-300 flex flex-col p-[18px]  outline-2 -outline-offset-2 hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
+                    className={`cursor-pointer relative min-h-[140px] rounded-2xl transition-all duration-300 flex flex-col p-[18px] outline-2 -outline-offset-2 hover:shadow-xl hover:scale-[1.02] active:scale-95 ${
                       customerType === "corporate"
                         ? "bg-linear-to-br from-[#D946EF] to-[#E11DBC] outline-white/20 shadow-[0px_4px_12px_rgba(217,70,239,0.3)]"
                         : "bg-white outline-gray-200 hover:outline-[#D946EF] shadow-sm"
@@ -434,7 +456,6 @@ const ModalForm: React.FC<ModalProps> = ({
                         }
                       />
                     </div>
-
                     <div className="flex flex-col gap-1">
                       <span
                         className={`text-base font-bold font-['Arial'] leading-6 ${
@@ -458,10 +479,12 @@ const ModalForm: React.FC<ModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Name Fields */}
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
-                    <CircleUserRound size={16} className="text-[#6366F1]" />{" "}
+                    <CircleUserRound size={16} className="text-[#6366F1]" />
                     {customerType === "corporate"
                       ? "Contact Person Name *"
                       : "Full Name *"}
@@ -469,19 +492,7 @@ const ModalForm: React.FC<ModalProps> = ({
                   <input
                     {...register("person.firstName", { required: true })}
                     placeholder="Enter full name"
-                    className="
-                    w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                    bg-[#F8FAFF] text-slate-700 placeholder:text-slate-400 outline-none
-                    selection:bg-primary selection:text-primary-foreground
-                    border-[3px] border-transparent
-                    hover:border-indigo-200
-                    focus:border-indigo-400
-                    focus-visible:ring-4px
-                    focus-visible:ring-indigo-100/60
-                    aria-invalid:border-destructive
-                    aria-invalid:ring-destructive/30
-                    disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
-                  "
+                    className="w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 bg-[#F8FAFF] text-slate-700 placeholder:text-slate-400 outline-none border-[3px] border-transparent hover:border-indigo-200 focus:border-indigo-400"
                   />
                 </div>
                 {customerType === "corporate" && (
@@ -499,6 +510,7 @@ const ModalForm: React.FC<ModalProps> = ({
                 )}
               </div>
 
+              {/* Customer Source */}
               <div>
                 <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 mb-3">
                   <MapPin size={16} className="text-[#10B981]" /> Customer
@@ -512,22 +524,15 @@ const ModalForm: React.FC<ModalProps> = ({
                       const hoverBorder = getSourceHoverBorder(
                         item.customerSource,
                       );
-
                       return (
                         <div
                           key={item._id || index}
                           onClick={() => setValue("sourceId", item._id)}
-                          className={`
-                            cursor-pointer relative p-4 rounded-2xl transition-all duration-300
-                            flex flex-col items-center justify-center gap-2 text-center
-                            outline-2 -outline-offset-2
-                            hover:scale-[1.05] active:scale-95 shadow-lg
-                            ${
-                              sourceId === item._id
-                                ? `${activeBg} text-white outline-white/20`
-                                : `bg-white text-slate-500 border-2 border-transparent outline-gray-100 ${hoverBorder}`
-                            }
-                          `}
+                          className={`cursor-pointer relative p-4 rounded-2xl transition-all duration-300 flex flex-col items-center justify-center gap-2 text-center outline-2 -outline-offset-2 hover:scale-[1.05] active:scale-95 shadow-lg ${
+                            sourceId === item._id
+                              ? `${activeBg} text-white outline-white/20`
+                              : `bg-white text-slate-500 border-2 border-transparent outline-gray-100 ${hoverBorder}`
+                          }`}
                         >
                           <div
                             className={
@@ -541,9 +546,12 @@ const ModalForm: React.FC<ModalProps> = ({
                               sourceId === item._id,
                             )}
                           </div>
-
                           <span
-                            className={`text-[12px] font-bold font-['Arial'] ${sourceId === item._id ? "text-white" : "text-slate-600"}`}
+                            className={`text-[12px] font-bold font-['Arial'] ${
+                              sourceId === item._id
+                                ? "text-white"
+                                : "text-slate-600"
+                            }`}
                           >
                             {item.customerSource}
                           </span>
@@ -552,6 +560,8 @@ const ModalForm: React.FC<ModalProps> = ({
                     })}
                 </div>
               </div>
+
+              {/* Email & Phone */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
@@ -562,46 +572,24 @@ const ModalForm: React.FC<ModalProps> = ({
                     {...register("contact.emailId", { required: true })}
                     type="email"
                     placeholder="customer@example.com"
-                    className="
-                      w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                      bg-[#F8FAFF] text-slate-700 placeholder:text-slate-400 outline-none shadow-sm
-                      selection:bg-primary selection:text-primary-foreground
-                      border-[3px] border-transparent
-                      hover:border-[#A855F7]/40
-                      focus:border-[#A855F7]
-                      focus-visible:ring-4px
-                      focus-visible:ring-[#A855F7]/20
-                      aria-invalid:border-destructive
-                      aria-invalid:ring-destructive/30
-                      disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
-                    "
+                    className="w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 bg-[#F8FAFF] text-slate-700 placeholder:text-slate-400 outline-none border-[3px] border-transparent hover:border-[#A855F7]/40 focus:border-[#A855F7]"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
-                    <Phone size={16} className="text-[#3B82F6]" /> Phone Number
-                    *
-                  </label>
-                  <input
-                    {...register("contact.mobileNumber", { required: true })}
-                    placeholder="+1 (555) 123-4567"
-                    className="
-                      w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                      bg-[#F8FAFF] text-slate-700 placeholder:text-slate-400 outline-none shadow-sm
-                      selection:bg-primary selection:text-primary-foreground
-                      border-[3px] border-transparent
-                      hover:border-[#3B82F6]/40
-                      focus:border-[#3B82F6]
-                      focus-visible:ring-4px
-                      focus-visible:ring-[#3B82F6]/20
-                      aria-invalid:border-destructive
-                      aria-invalid:ring-destructive/30
-                      disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
-                    "
-                  />
-                </div>
+
+                {/* ✅ FIXED: Phone Number with Country Code + Flag Dropdown */}
+                <PhoneInputField
+  value={phone}
+  onChange={(val: any) => {
+    setPhone(val);
+    setValue("contact.mobileNumber", val);
+  }}
+  label="Customer Phone Number"
+  required={true}
+  defaultCountry="gb"
+/>
               </div>
 
+              {/* Address Fields */}
               <div className="space-y-4">
                 <div className="space-y-2 group">
                   <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 transition-colors group-focus-within:text-[#10B981]">
@@ -612,12 +600,7 @@ const ModalForm: React.FC<ModalProps> = ({
                     id="street-address-input"
                     {...register("address.address", { required: true })}
                     placeholder="123 Main Street"
-                    className="
-                      w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                      bg-[#F0FDF4] text-slate-700 placeholder:text-slate-400 outline-none
-                      border-[3px] border-transparent hover:border-[#10B981]/30
-                      focus:border-[#10B981] focus-visible:ring-4px focus-visible:ring-[#10B981]/20
-                    "
+                    className="w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 bg-[#F0FDF4] text-slate-700 placeholder:text-slate-400 outline-none border-[3px] border-transparent hover:border-[#10B981]/30 focus:border-[#10B981]"
                   />
                   <p className="text-xs text-slate-500">
                     Start typing your UK address and select from suggestions
@@ -626,48 +609,37 @@ const ModalForm: React.FC<ModalProps> = ({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2 group">
-                    <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 transition-colors group-focus-within:text-[#3B82F6]">
+                    <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
                       <Building size={16} className="text-[#3B82F6]" /> City *
                     </label>
                     <input
                       {...register("address.city", { required: true })}
                       placeholder="London"
-                      className="
-                        w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                        bg-[#F0F9FF] text-slate-700 placeholder:text-slate-400 outline-none
-                        border-[3px] border-transparent hover:border-[#3B82F6]/30
-                        focus:border-[#3B82F6] focus-visible:ring-4px focus-visible:ring-[#3B82F6]/20
-                        read-only:bg-[#F1F5F9] read-only:cursor-not-allowed
-                      "
+                      className="w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 bg-[#F0F9FF] text-slate-700 placeholder:text-slate-400 outline-none border-[3px] border-transparent hover:border-[#3B82F6]/30 focus:border-[#3B82F6] read-only:bg-[#F1F5F9] read-only:cursor-not-allowed"
                     />
                   </div>
-
                   <div className="space-y-2 group">
-                    <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700 transition-colors group-focus-within:text-[#EC4899]">
+                    <label className="flex items-center gap-2 text-[13px] font-bold text-slate-700">
                       <MapPin size={16} className="text-[#EC4899]" /> Postcode *
                     </label>
                     <input
                       {...register("address.zipCode", { required: true })}
                       placeholder="SW1A 1AA"
-                      className="
-                        w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200
-                        bg-[#FDF2F8] text-slate-700 placeholder:text-slate-400 outline-none
-                        border-[3px] border-transparent hover:border-[#EC4899]/30
-                        focus:border-[#EC4899] focus-visible:ring-4px focus-visible:ring-[#EC4899]/20
-                        read-only:bg-[#F1F5F9] read-only:cursor-not-allowed
-                      "
+                      className="w-full h-12 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 bg-[#FDF2F8] text-slate-700 placeholder:text-slate-400 outline-none border-[3px] border-transparent hover:border-[#EC4899]/30 focus:border-[#EC4899] read-only:bg-[#F1F5F9] read-only:cursor-not-allowed"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 ">
+                <div className="grid grid-cols-2 gap-4">
                   <input type="hidden" {...register("address.latitude")} />
                   <input type="hidden" {...register("address.longitude")} />
                   <input type="hidden" {...register("address.country")} />
                 </div>
               </div>
 
+              {/* Status Toggles */}
               <div className="space-y-3">
+                {/* Active Status */}
                 <div
                   className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
                     isActive
@@ -689,7 +661,6 @@ const ModalForm: React.FC<ModalProps> = ({
                         <X size={20} strokeWidth={3} />
                       )}
                     </div>
-
                     <div>
                       <p className="text-sm font-bold text-[#1E293B]">
                         Customer Status
@@ -701,7 +672,6 @@ const ModalForm: React.FC<ModalProps> = ({
                       </p>
                     </div>
                   </div>
-
                   <button
                     type="button"
                     onClick={() => setValue("isActive", !isActive)}
@@ -717,6 +687,7 @@ const ModalForm: React.FC<ModalProps> = ({
                   </button>
                 </div>
 
+                {/* VAT Exemption */}
                 <div
                   className={`p-4 rounded-2xl border-2 transition-all duration-300 ${
                     isVatExemption
@@ -735,7 +706,6 @@ const ModalForm: React.FC<ModalProps> = ({
                       >
                         <Receipt size={22} strokeWidth={2.5} />
                       </div>
-
                       <div>
                         <p className="text-sm font-bold text-[#1E293B]">
                           VAT Exemption
@@ -747,7 +717,6 @@ const ModalForm: React.FC<ModalProps> = ({
                         </p>
                       </div>
                     </div>
-
                     <button
                       type="button"
                       onClick={() =>
@@ -769,7 +738,7 @@ const ModalForm: React.FC<ModalProps> = ({
                     <div className="mt-4 border-t border-amber-100 pt-4 space-y-3">
                       <div className="space-y-2 group">
                         <label className="flex items-center gap-2 text-[12px] font-bold text-slate-700 group-focus-within:text-[#FF8F00] transition-colors">
-                          <FileText size={16} className="text-[#FF8F00]" />{" "}
+                          <FileText size={16} className="text-[#FF8F00]" />
                           Exemption Reason *
                         </label>
                         <textarea
@@ -777,15 +746,9 @@ const ModalForm: React.FC<ModalProps> = ({
                             required: isVatExemption,
                           })}
                           placeholder="e.g., Disability aids, Charity organization, Medical equipment..."
-                          className="
-                            w-full min-h-[100px] bg-white rounded-xl p-4 text-sm font-medium transition-all
-                            border-[3px] border-slate-100 focus:border-[#FF8F00]
-                            outline-none focus:ring-4px focus:ring-[#FF8F00]/10
-                            placeholder:text-slate-300
-                          "
+                          className="w-full min-h-[100px] bg-white rounded-xl p-4 text-sm font-medium transition-all border-[3px] border-slate-100 focus:border-[#FF8F00] outline-none placeholder:text-slate-300"
                         />
                       </div>
-
                       <div className="flex items-start gap-2 p-3 bg-amber-50/50 rounded-lg border border-amber-100">
                         <AlertTriangle
                           size={16}
@@ -803,19 +766,20 @@ const ModalForm: React.FC<ModalProps> = ({
             </div>
           </div>
 
+          {/* Footer Buttons */}
           <div className="p-6 bg-white border-t border-slate-100 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="py-3 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-green-500 hover:text-white"
+                className="py-3 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-green-500 hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || fetchingData || !googleMapLoader}
-                className="py-3 rounded-xl font-bold text-white bg-linear-to-r from-[#6366F1] to-[#8B5CF6] shadow-lg flex items-center justify-center gap-2"
+                className="py-3 rounded-xl font-bold text-white bg-linear-to-r from-[#6366F1] to-[#8B5CF6] shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
               >
                 {isSubmitting ? (
                   <Loader2 className="animate-spin" size={20} />

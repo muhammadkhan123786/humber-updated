@@ -1,5 +1,5 @@
 /* src/styles/globals.css */
-
+@import 'react-international-phone/style.css';
 
 @import "tailwindcss";
 

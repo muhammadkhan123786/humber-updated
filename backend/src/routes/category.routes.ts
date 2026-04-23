@@ -7,6 +7,9 @@ import { createCategory, getAllCategories, updateCategory } from '../controllers
 
 const categoryRouter = Router();
 
+
+
+
 const categoryServices = new GenericService<categoryDoc>(Category);
 
 const categoryController = new AdvancedGenericController({

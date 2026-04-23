@@ -8,7 +8,7 @@ import { genericProfileIdsMiddleware } from "../../middleware/generic.profile.mi
 import { createUploader } from "../../config/multer";
 import { mapUploadedFilesToBody } from "../../middleware/mapUploadedFiles";
 import { generateRiderCode } from "../../utils/generate.AutoCode.Counter";
-import { getAllRiders } from "../../controllers/rider/rider.statistics.controller";
+import { getAllRiders, getAvailableDrivers } from "../../controllers/rider/rider.statistics.controller";
 import { Types } from "mongoose";
 import { ActivityStatus } from "../../schemas/technician-activities-records/technician.activities.records.schema";
 
@@ -114,8 +114,10 @@ riderRouter.put('/update-status',async (req: Request, res: Response) => {
   }
 });
 
-riderRouter.get("/:id", riderController.getById);
+riderRouter.get("/available", getAvailableDrivers);
 riderRouter.get("/", getAllRiders);
+riderRouter.get("/:id", riderController.getById);
+
 
 // backend/src/routes/rider/rider.routes.ts
 riderRouter.post(

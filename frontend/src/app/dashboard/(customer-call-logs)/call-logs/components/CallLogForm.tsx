@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Phone, ChevronDown, Bell, Check, Loader2 } from "lucide-react";
 import { useCallLogs } from "../../../../../hooks/useCallLogsHook";
+import PhoneInputField from "@/components/Phoneinputfield";
 
 interface CallLogFormProps {
   onClose: () => void;
@@ -11,6 +12,7 @@ interface CallLogFormProps {
 
 const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
   const [showFollowUp, setShowFollowUp] = useState(false);
+  const [phone, setPhone] = useState<string>("");
 
   const { form, onSubmit, isLoading, dropdowns } = useCallLogs(
     editingData,
@@ -20,6 +22,7 @@ const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = form;
   useEffect(() => {
@@ -44,7 +47,7 @@ const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
           console.log("Form Validation Errors:", err);
         },
       )}
-      className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+      className="bg-white rounded-3xl w-full max-w-[950px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
     >
       <div className="p-6 pb-2 flex justify-between items-start">
         <div className="flex gap-4">
@@ -93,7 +96,7 @@ const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
           )}
         </div>
 
-        <div className="space-y-1.5">
+        {/* <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">
             Phone Number *
           </label>
@@ -112,7 +115,19 @@ const CallLogForm = ({ onClose, editingData, onSuccess }: CallLogFormProps) => {
               {errors.phoneNumber.message as string}
             </p>
           )}
-        </div>
+        </div> */}
+
+        <PhoneInputField
+          value={phone}
+          onChange={(val) => {
+            setPhone(val);
+            setValue("phoneNumber", val);
+          }}
+          label=" Phone Number"
+          placeholder="+44 7700 900000"
+          defaultCountry="gb"
+          required={true}
+        />
 
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-800">Address</label>

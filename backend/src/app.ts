@@ -89,6 +89,8 @@ import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
 import supplierLedgrRoutes from "./routes/ledger.routes";
 import paymentRoutes from "./routes/payment.routes";
 
+import aiTemplateRoutes from "./routes/aiTemplate.routes"
+
 // Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
@@ -135,6 +137,8 @@ import moduleActionsRouter from "./routes/communication-channels-integration-rou
 import callTypeRouter from "./routes/call-logs-modules-routes/call.type.routes";
 import callStatusRouter from "./routes/call-logs-modules-routes/call.status.routes";
 import callLogsRouter from "./routes/call-logs-modules-routes/call.logs.routes";
+import inventoryReportsRoutes from "./routes/reports/inventoryReports.routes";
+import purchaseReportRoutes from "./routes/reports/purchaseReport.routes"
 
 // Create express app
 const app: Application = express();
@@ -146,6 +150,7 @@ app.use(cors());
 
 // Static files (for uploads/public folder)
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(express.static(path.join(__dirname, "../public")));
 // Routes
 app.use(`${process.env.API_PREFIX}/auth`, authRouter);
 app.use(`${process.env.API_PREFIX}/register`, shopRouter);
@@ -777,10 +782,28 @@ app.use(
   paymentRoutes,
 );
 
+
+app.use(
+  `${process.env.API_PREFIX}/ai-templates`,
+    aiTemplateRoutes,
+);
+
+app.use(`${process.env.API_PREFIX}/reports/inventory`, inventoryReportsRoutes);
+app.use(`${process.env.API_PREFIX}/reports/purchase`, purchaseReportRoutes);
+
 // Muzamil Hassan end
 // Health check route
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "OK" });
 });
 
+
+app.get("/api/ai-test", (req, res) => {
+  res.json({ message: "AI test working" });
+});
+
+
+
+
 export default app;
+
