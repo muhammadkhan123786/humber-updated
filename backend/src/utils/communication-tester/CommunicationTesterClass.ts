@@ -172,7 +172,7 @@ export class CommunicationTester {
 
       // 🔴 Priority: DB config → fallback to static
       const ACCESS_TOKEN =
-         "EAAU7ZCIG2aGUBRYQDV6PS5evcr6LeCnmjJ3ZA39JWvXxeSKTR4VxigWKoAtrZAouFHhd1eW8sHW45dycqJTPus1a0BlTayPArdZBtYo347YyVXZA319qZCsT2VMSmxwZAc8fALadQmRQaJCbz6Gfqj6VIFhkEnwiuxbcMwXWPmNQmLh7xBlK3CkIkxXZC17cYNhTpZBEvibsCxSF5y2ZCxwSpYJIQRPzPM3kKWUBfFOK9ZBF2Nty9dlb718KkALsgkBnu0iMSpYpmiA1ffZALtvFZBAZDZD";
+         "c2d148224697674855585fbb89ac1992";
 
       const PHONE_NUMBER_ID =
          "1134803813043310";
