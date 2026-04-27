@@ -4,6 +4,7 @@ import { ProductModal }  from "../../models/product.models";
 import { GrnModel } from "../../models/grn.models"
 import { GoodsReturn }   from "../../models/goodsReturn.model";
 
+
 export const getStockSummaryReport = async (req: Request, res: Response) => {
   try {
 
