@@ -15,6 +15,7 @@ interface ProfessionalTableProps {
   statusStyles?: Record<string, { bg: string; color: string; dot: string }>;
   accentColor?: string;
   accentLight?: string;
+   onExport?: (type: "csv" | "excel" | "pdf") => void;
 }
 
 export function ProfessionalTable({ 
@@ -22,7 +23,8 @@ export function ProfessionalTable({
   rows = [], 
   statusStyles = {},
   accentColor = "#059669",
-  accentLight = "#ecfdf5"
+  accentLight = "#ecfdf5",
+  onExport,
 }: ProfessionalTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -614,7 +616,7 @@ export function ProfessionalTable({
                     <button onClick={exportToExcel} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "8px 14px", background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "#334155" }}>
                       <FileSpreadsheet size={12} style={{ color: "#16a34a" }} /> Excel
                     </button>
-                    <button onClick={exportToPDF} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "8px 14px", background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "#334155" }}>
+                    <button onClick={() => onExport?.("pdf")} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "8px 14px", background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "#334155" }}>
                       <FileJson size={12} style={{ color: "#dc2626" }} /> PDF
                     </button>
                     <button onClick={printReport} style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%", padding: "8px 14px", background: "transparent", border: "none", cursor: "pointer", fontSize: "11px", color: "#334155" }}>

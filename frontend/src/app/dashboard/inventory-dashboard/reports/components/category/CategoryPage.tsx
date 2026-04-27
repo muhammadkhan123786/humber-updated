@@ -1,183 +1,3 @@
-// import { useState, useEffect, useMemo } from 'react';
-// import { Category } from '../../types';
-// import { CategoryData } from '../../types';
-// import { dataService } from '../../services/dataService';
-// import { KpiCard } from './KpiCard';
-// import { CategoryTabs } from './CategoryTabs';
-// import { ChartSection } from './ChartSection';
-// import { DataTable } from './DataTable';
-// import { Skeleton } from '../../components/common/Skeleton';
-
-// interface CategoryPageProps {
-//   cat: Category;
-//   onBack: () => void;
-// }
-
-// export function CategoryPage({ cat, onBack }: CategoryPageProps) {
-//   const [activeTab, setActiveTab] = useState(0);
-//   const [loading, setLoading] = useState(false);
-//   const [catData, setCatData] = useState<CategoryData | null>(null);
-  
-//   useEffect(() => {
-//     setLoading(true);
-//     dataService.getCategoryData(cat.id).then((data) => {
-//       setCatData(data);
-//       setLoading(false);
-//     });
-//   }, [cat.id]);
-  
-//   const chartKeys = useMemo(() => {
-//     if (!catData) return [];
-//     return Object.keys(catData.chart[0]).filter(k => k !== "name");
-//   }, [catData]);
-  
-//   if (!catData && loading) {
-//     return (
-//       <div className="min-h-screen bg-slate-50">
-//         <div className="bg-gradient-to-r from-slate-900 to-slate-800 py-5 px-7">
-//           <div className="max-w-[1400px] mx-auto">
-//             <Skeleton height={40} radius={8} className="mb-4" />
-//             <Skeleton height={80} radius={12} />
-//           </div>
-//         </div>
-//         <div className="max-w-[1400px] mx-auto py-6 px-7">
-//           <div className="grid grid-cols-4 gap-4 mb-5">
-//             {[1, 2, 3, 4].map(i => <Skeleton key={i} height={100} />)}
-//           </div>
-//           <Skeleton height={300} radius={18} />
-//           <div className="mt-5"><Skeleton height={280} radius={18} /></div>
-//         </div>
-//       </div>
-//     );
-//   }
-  
-//   if (!catData) return null;
-  
-//   return (
-//     <div className="min-h-screen bg-slate-50">
-//       {/* Gradient Category Header */}
-//       <div className="pt-5 px-7 pb-0" style={{ background: cat.grad }}>
-//         <div className="max-w-[1400px] mx-auto">
-//           {/* Breadcrumb */}
-//           <div className="flex items-center gap-2 mb-3.5">
-//             <button
-//               onClick={onBack}
-//               className="bg-white/20 border-none rounded-md py-1 px-2.5 text-white text-xs font-semibold cursor-pointer flex items-center gap-1"
-//             >
-//               ← Back
-//             </button>
-//             {["HOME", "REPORTS", cat.title.toUpperCase()].map((s, i, a) => (
-//               <span key={s} className="flex items-center gap-2">
-//                 <span className={`text-[11px] ${i === a.length - 1 ? "text-white font-bold" : "text-white/45"}`}>
-//                   {s}
-//                 </span>
-//                 {i < a.length - 1 && <span className="text-white/30">›</span>}
-//               </span>
-//             ))}
-//           </div>
-          
-//           {/* Category title row */}
-//           <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
-//             <div className="flex items-center gap-3.5">
-//               <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-2xl backdrop-blur-sm border border-white/25">
-//                 {cat.icon}
-//               </div>
-//               <div>
-//                 <h1 className="text-white text-2xl font-extrabold tracking-tight">{cat.title}</h1>
-//                 <p className="text-white/65 text-xs mt-1">{cat.desc}</p>
-//               </div>
-//             </div>
-//             <div className="flex gap-2 flex-wrap">
-//               <select className="bg-white/15 border border-white/25 rounded-xl py-2 px-3 text-xs text-white cursor-pointer outline-none">
-//                 <option>Last 6 Months</option>
-//                 <option>Last 30 Days</option>
-//                 <option>This Year</option>
-//               </select>
-//               <select className="bg-white/15 border border-white/25 rounded-xl py-2 px-3 text-xs text-white cursor-pointer outline-none">
-//                 <option>All Products</option>
-//                 <option>Electronics</option>
-//                 <option>Furniture</option>
-//               </select>
-//             </div>
-//           </div>
-          
-//           {/* Tabs */}
-//           <CategoryTabs
-//             tabs={cat.tabs}
-//             activeTab={activeTab}
-//             accent={cat.accent}
-//             accentLight={cat.accentLight}
-//             accentBorder={cat.accentBorder}
-//             onTabChange={(i) => { setActiveTab(i); }}
-//           />
-//         </div>
-//       </div>
-      
-//       {/* Main Content */}
-//       <div className="max-w-[1400px] mx-auto py-6 px-7 pb-12">
-//         {/* KPI Cards */}
-//         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
-//           {catData.kpis.map((kpi, i) => (
-//             <KpiCard
-//               key={kpi.label}
-//               kpi={kpi}
-//               accent={cat.accent}
-//               accentLight={cat.accentLight}
-//               delay={i * 0.07}
-//             />
-//           ))}
-//         </div>
-        
-//         {/* Chart Section */}
-//         <ChartSection
-//           cat={cat}
-//           activeTab={activeTab}
-//           chartData={catData.chart}
-//           chartKeys={chartKeys}
-//         />
-        
-//         {/* Data Table */}
-//         <DataTable
-//           headers={catData.headers}
-//           rows={catData.rows}
-//           accent={cat.accent}
-//           accentLight={cat.accentLight}
-//           accentBorder={cat.accentBorder}
-//           grad={cat.grad}
-//           activeTabLabel={cat.tabs[activeTab].label}
-//         />
-//       </div>
-//     </div>
-//   );
-// }
-
-
-// src/components/category/CategoryPage.tsx - Update to use InventoryPage for inventory category
-
-// import { CategoryPage as GenericCategoryPage } from './CategoryPageGeneric';
-// import InventoryPage  from '../inventory/InventoryPage';
-// import { Category } from '../../types';
-
-// interface CategoryPageProps {
-//   cat: Category;
-//   onBack: () => void;
-// }
-
-// export function CategoryPage({ cat, onBack }: CategoryPageProps) {
-//   // Use specialized InventoryPage for inventory category
-//   if (cat.id === 'inventory') {
-//     return <InventoryPage cat={cat} onBack={onBack} />;
-//   }
-  
-//   // Use generic page for other categories
-//   // return <GenericCategoryPage cat={cat} onBack={onBack} />;
-// }
-
-
-
-
-
-
 
 // components/category/CategoryPage.tsx
 "use client";
@@ -193,6 +13,7 @@ import {
 import  {ProfessionalTable}  from "../reports/ProfessionalTable";
 import { KpiCard } from "../reports/KPICard";
 import { ChartCard } from "../reports/ReportChart";
+import { useReport } from "@/hooks/useExport";
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
   "In Stock": { bg: "#ecfdf5", color: "#065f46", dot: "#10b981" },
@@ -218,6 +39,12 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState({ start: "2024-01-01", end: "2024-06-30" });
+
+  const { data, isLoading, exportFile } = useReport(cat.id, {
+  startDate: dateRange.start,
+  endDate: dateRange.end,
+  search: searchTerm,
+});
 
   // Get data based on category
   const getCategoryData = () => {
@@ -250,13 +77,10 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   };
 
   // Filter rows based on search
-  const filteredRows = useMemo(() => {
-    if (!tabData?.rows) return [];
-    if (!searchTerm) return tabData.rows;
-    return tabData.rows.filter((row) =>
-      row.some((cell) => String(cell).toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  }, [tabData?.rows, searchTerm]);
+ const filteredRows = useMemo(() => {
+  if (!tabData?.rows) return [];
+  return tabData.rows;
+}, [tabData]);
 
   if (!tabData) {
     return (
@@ -451,7 +275,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
 
       {/* Main Content */}
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px 48px" }}>
-        {loading ? (
+        {isLoading  ? (
           <div>
             <div
               style={{
@@ -516,13 +340,21 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
             />
 
             {/* Data Table */}
-            <ProfessionalTable
-              headers={tabData.headers}
-              rows={filteredRows}
-              statusStyles={STATUS_STYLES}
-              accentColor={cat.accent}
-              accentLight={cat.accentLight}
-            />
+           <ProfessionalTable
+  headers={tabData.headers}
+  rows={filteredRows}
+  statusStyles={STATUS_STYLES}
+  accentColor={cat.accent}
+  accentLight={cat.accentLight}
+  onExport={(type) => exportFile({ 
+    format: type, 
+    reportData: {
+      headers: tabData.headers,
+      rows: filteredRows,
+      kpis: tabData.kpis
+    }
+  })}
+/>
           </div>
         )}
       </div>

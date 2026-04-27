@@ -3,6 +3,6 @@ import { exportReportController } from "../../controllers/reports/reportExport.c
 
 const router = Router();
 
-router.get("/export", exportReportController);
+router.post("/export", exportReportController);
 
 export default router;

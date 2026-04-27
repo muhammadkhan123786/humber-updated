@@ -1,4 +1,7 @@
 // services/dataService.ts
+import axios from "axios";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export class DataService {
   private static instance: DataService;
@@ -10,44 +13,37 @@ export class DataService {
     return DataService.instance;
   }
 
-  private BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000/api";
-
-  // ✅ Fetch report (for table UI)
+  // ✅ Fetch report data
   async fetchReport(categoryId: string, filters?: Record<string, any>) {
-    const queryParams = new URLSearchParams(filters || {}).toString();
-
-    const res = await fetch(
-      `${this.BASE_URL}/reports/${categoryId}?${queryParams}`
-    );
-
-    if (!res.ok) throw new Error("Failed to fetch report");
-
-    return res.json();
+    const response = await axios.get(`${API_BASE}/reports/${categoryId}`, {
+      params: filters,
+    });
+    return response.data;
   }
 
-  // ✅ Export (PDF / Excel / CSV)
+  // ✅ Export file (CSV / Excel / PDF)
   async exportData(
-    payload: any,
-    format: "pdf" | "excel" | "csv"
-  ): Promise<Blob> {
-    const res = await fetch(
-      `${this.BASE_URL}/reports/export`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...payload,
-          type: format, // 👈 important
-        }),
-      }
-    );
-
-    if (!res.ok) throw new Error("Export failed");
-
-    return res.blob(); // 👈 VERY IMPORTANT
-  }
+  categoryId: string,
+  format: "csv" | "excel" | "pdf",
+  filters?: Record<string, any>,
+  reportData?: { headers: string[], rows: any[], kpis?: any[] }  // Add this
+): Promise<Blob> {
+  const response = await axios.post(
+    `${API_BASE}/reports/export`,
+    {
+      type: format,
+      module: categoryId,
+      reportName: `${categoryId}-report`,
+      kpis: reportData?.kpis || [],
+      headers: reportData?.headers || [],
+      rows: reportData?.rows || [],
+    },
+    {
+      responseType: "blob",
+    }
+  );
+  return response.data;
+}
 }
 
 export const dataService = DataService.getInstance();
