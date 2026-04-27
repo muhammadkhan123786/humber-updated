@@ -1,6 +1,6 @@
 // import { inventoryData } from './inventoryData';
 import { purchaseData } from './purchaseData';
-import { supplierData } from './supplierData';
+// import { supplierData } from './supplierData';
 import { financialData } from './financialData';
 import { CategoryData } from '../types';
 
@@ -8,7 +8,7 @@ import { CategoryData } from '../types';
 export const DATA_REGISTRY: Record<string, CategoryData> = {
   // inventory: inventoryData,
   purchase: purchaseData,
-  supplier: supplierData,
+  // supplier: supplierData,
   financial: financialData,
 };
 
@@ -21,4 +21,4 @@ export const getCategoryData = async (categoryId: string): Promise<CategoryData>
   return Promise.resolve(DATA_REGISTRY[categoryId]);
 };
 
-export {  purchaseData, supplierData, financialData };
+export {  purchaseData,  financialData };
