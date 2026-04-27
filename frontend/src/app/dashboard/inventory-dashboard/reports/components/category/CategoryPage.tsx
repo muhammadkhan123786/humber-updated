@@ -1,8 +1,7 @@
-
 // components/category/CategoryPage.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Category } from "../../types";
 import {
   INVENTORY_DATA,
@@ -10,10 +9,35 @@ import {
   SUPPLIER_DATA,
   FINANCIAL_DATA,
 } from "../../data/categories";
-import  {ProfessionalTable}  from "../reports/ProfessionalTable";
+import { ProfessionalTable } from "../reports/ProfessionalTable";
 import { KpiCard } from "../reports/KPICard";
 import { ChartCard } from "../reports/ReportChart";
-import { useReport } from "@/hooks/useExport";
+import { useReport } from "@/hooks/reports/useExport";
+
+// Map category ID + tab label → backend report name
+const TAB_TO_REPORT: Record<string, Record<string, string>> = {
+  inventory: {
+    "Stock Summary": "stock-summary",
+    "Low Stock": "low-stock",
+    "Valuation": "valuation",
+    "Movement": "movement",
+  },
+  purchase: {
+    "Purchase Orders": "purchase-orders",
+    "Goods Received": "goods-received",
+    "Summary": "summary",
+  },
+  supplier: {
+    "Supplier History": "supplier-history",
+    "Performance": "performance",
+    "Price History": "price-history",
+  },
+  financial: {
+    "Cost Analysis": "cost-analysis",
+    "Profit & Loss": "profit-loss",
+    "Budget vs Actual": "budget-vs-actual",
+  },
+};
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
   "In Stock": { bg: "#ecfdf5", color: "#065f46", dot: "#10b981" },
@@ -36,66 +60,64 @@ interface CategoryPageProps {
 
 export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState({ start: "2024-01-01", end: "2024-06-30" });
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
+  const currentTab = cat.tabs[activeTab];
+  const reportName = TAB_TO_REPORT[cat.id]?.[currentTab.label] || "stock-summary";
+
+  // Fetch data for the current tab only (reportName changes when tab changes)
   const { data, isLoading, exportFile } = useReport(cat.id, {
-  startDate: dateRange.start,
-  endDate: dateRange.end,
-  search: searchTerm,
-});
+    startDate: dateRange.start,
+    endDate: dateRange.end,
+    search: searchTerm,
+    reportName, // 👈 this triggers the correct endpoint
+  });
 
-  // Get data based on category
+  // Fallback static data for chart (unchanged)
   const getCategoryData = () => {
     switch (cat.id) {
-      case "inventory":
-        return INVENTORY_DATA;
-      case "purchase":
-        return PURCHASE_DATA;
-      case "supplier":
-        return SUPPLIER_DATA;
-      case "financial":
-        return FINANCIAL_DATA;
-      default:
-        return INVENTORY_DATA;
+      case "inventory": return INVENTORY_DATA;
+      case "purchase": return PURCHASE_DATA;
+      case "supplier": return SUPPLIER_DATA;
+      case "financial": return FINANCIAL_DATA;
+      default: return INVENTORY_DATA;
     }
   };
-
   const categoryData = getCategoryData();
-  const currentTab = cat.tabs[activeTab];
-  const tabData = categoryData[currentTab.label];
+  const staticTabData = categoryData[currentTab.label];
+
+  // Prepare table rows from API response
+  const rowsData = data?.rows || [];
+  const headers = rowsData.length > 0
+    ? Object.keys(rowsData[0]).filter(k => k !== "_id" && k !== "createdAt" && k !== "__v")
+    : [];
+  const tableRows = rowsData.map((row: any) => headers.map(h => row[h]));
+
+  // KPIs from API (fallback to static if empty)
+  const apiKpis = data?.kpis || {};
+  const hasApiKpis = Object.keys(apiKpis).length > 0;
+  const kpisToShow = hasApiKpis
+    ? Object.entries(apiKpis).map(([label, value]) => ({ label, value }))
+    : staticTabData?.kpis || [];
+
+  // Chart data – keep static for now (you can later use data?.chart if API provides)
+  const chartData = staticTabData?.chart || { labels: [], datasets: [] };
+
+  // Reset page when tab changes? Not needed because we don't paginate yet.
+  // If you want server pagination later, add page/limit state and pass to useReport.
 
   const switchTab = (index: number) => {
     if (index === activeTab) return;
-    setLoading(true);
+    setActiveTab(index);
     setSearchTerm("");
-    setTimeout(() => {
-      setActiveTab(index);
-      setLoading(false);
-    }, 300);
+    setDateRange({ start: "", end: "" });
+    // No need to manually reset data – React Query will refetch because reportName changed
   };
-
-  // Filter rows based on search
- const filteredRows = useMemo(() => {
-  if (!tabData?.rows) return [];
-  return tabData.rows;
-}, [tabData]);
-
-  if (!tabData) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "40px", textAlign: "center" }}>
-        <p>No data available for this tab</p>
-        <button onClick={onBack} style={{ marginTop: 20, padding: "10px 20px", cursor: "pointer" }}>
-          Go Back
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
-      {/* Gradient Category Header */}
+      {/* Gradient Category Header (unchanged) */}
       <div style={{ background: cat.grad, padding: "22px 28px 0" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           {/* Breadcrumb */}
@@ -163,15 +185,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                 {cat.icon}
               </div>
               <div>
-                <h1
-                  style={{
-                    color: "#fff",
-                    fontSize: 24,
-                    fontWeight: 800,
-                    margin: 0,
-                    letterSpacing: "-0.4px",
-                  }}
-                >
+                <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 800, margin: 0 }}>
                   {cat.title}
                 </h1>
                 <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, margin: "4px 0 0" }}>
@@ -185,9 +199,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
               <div style={{ position: "relative" }}>
                 <input
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                  }}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search data..."
                   style={{
                     background: "rgba(255,255,255,0.15)",
@@ -275,7 +287,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
 
       {/* Main Content */}
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px 48px" }}>
-        {isLoading  ? (
+        {isLoading ? (
           <div>
             <div
               style={{
@@ -326,35 +338,43 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                 marginBottom: 22,
               }}
             >
-              {tabData.kpis.map((kpi, i) => (
-                <KpiCard key={kpi.label} kpi={kpi} accent={cat.accent} accentLight={cat.accentLight} delay={i * 0.07} />
+              {kpisToShow.map((kpi, i) => (
+                <KpiCard
+                  key={kpi.label}
+                  kpi={kpi}
+                  accent={cat.accent}
+                  accentLight={cat.accentLight}
+                  delay={i * 0.07}
+                />
               ))}
             </div>
 
-            {/* Chart Section */}
+            {/* Chart Section (static) */}
             <ChartCard
               title={`${currentTab.label} — Trend Analysis`}
-              chartData={tabData.chart}
+              chartData={chartData}
               chartColors={cat.chartColors}
               marginBottom={20}
             />
 
-            {/* Data Table */}
-           <ProfessionalTable
-  headers={tabData.headers}
-  rows={filteredRows}
-  statusStyles={STATUS_STYLES}
-  accentColor={cat.accent}
-  accentLight={cat.accentLight}
-  onExport={(type) => exportFile({ 
-    format: type, 
-    reportData: {
-      headers: tabData.headers,
-      rows: filteredRows,
-      kpis: tabData.kpis
-    }
-  })}
-/>
+            {/* Data Table – now using API rows */}
+            <ProfessionalTable
+              headers={headers.length ? headers : staticTabData?.headers || []}
+              rows={tableRows.length ? tableRows : staticTabData?.rows || []}
+              statusStyles={STATUS_STYLES}
+              accentColor={cat.accent}
+              accentLight={cat.accentLight}
+              onExport={(type) =>
+                exportFile({
+                  format: type,
+                  reportData: {
+                    headers: headers.length ? headers : staticTabData?.headers || [],
+                    rows: tableRows.length ? tableRows : staticTabData?.rows || [],
+                    kpis: kpisToShow,
+                  },
+                })
+              }
+            />
           </div>
         )}
       </div>

@@ -1,5 +1,90 @@
 import { Category } from '../types/index';
 
+
+// constants/modules.ts
+// export interface ModuleTab {
+//   label: string;
+//   icon: string;
+//   reportName: string; // matches backend endpoint after /module/
+// }
+
+// export interface ModuleConfig {
+//   id: string;
+//   title: string;
+//   icon: string;
+//   desc: string;
+//   grad: string;
+//   accent: string;
+//   accentLight: string;
+//   chartColors: string[];
+//   tabs: ModuleTab[];
+// }
+
+// export const MODULES: Record<string, ModuleConfig> = {
+//   inventory: {
+//     id: "inventory",
+//     title: "Inventory Reports",
+//     icon: "📦",
+//     desc: "Track stock levels, movements, and valuations",
+//     grad: "linear-gradient(135deg,#064e3b 0%,#059669 55%,#34d399 100%)",
+//     accent: "#059669",
+//     accentLight: "#ecfdf5",
+//     chartColors: ["#059669", "#34d399", "#6ee7b7"],
+//     tabs: [
+//       { label: "Stock Summary", icon: "📊", reportName: "stock-summary" },
+//       { label: "Low Stock", icon: "⚠️", reportName: "low-stock" },
+//       { label: "Valuation", icon: "💎", reportName: "valuation" },
+//       { label: "Movement", icon: "🔄", reportName: "movement" },
+//     ],
+//   },
+//   purchase: {
+//     id: "purchase",
+//     title: "Purchase Reports",
+//     icon: "🛒",
+//     desc: "Monitor purchase orders and procurement",
+//     grad: "linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#60a5fa 100%)",
+//     accent: "#2563eb",
+//     accentLight: "#eff6ff",
+//     chartColors: ["#2563eb", "#60a5fa", "#93c5fd"],
+//     tabs: [
+//       { label: "Purchase Orders", icon: "📋", reportName: "purchase-orders" },
+//       { label: "Goods Received", icon: "📥", reportName: "goods-received" },
+//       { label: "Summary", icon: "📈", reportName: "summary" },
+//     ],
+//   },
+//   supplier: {
+//     id: "supplier",
+//     title: "Supplier Reports",
+//     icon: "🏢",
+//     desc: "Evaluate supplier performance and pricing",
+//     grad: "linear-gradient(135deg,#4c1d95 0%,#7c3aed 55%,#c084fc 100%)",
+//     accent: "#7c3aed",
+//     accentLight: "#f5f3ff",
+//     chartColors: ["#7c3aed", "#a78bfa", "#c4b5fd"],
+//     tabs: [
+//       { label: "Supplier History", icon: "📜", reportName: "supplier-history" },
+//       { label: "Performance", icon: "⭐", reportName: "performance" },
+//       { label: "Price History", icon: "💲", reportName: "price-history" },
+//     ],
+//   },
+//   financial: {
+//     id: "financial",
+//     title: "Financial Reports",
+//     icon: "💰",
+//     desc: "Analyze costs, margins, profitability",
+//     grad: "linear-gradient(135deg,#78350f 0%,#d97706 55%,#fbbf24 100%)",
+//     accent: "#d97706",
+//     accentLight: "#fffbeb",
+//     chartColors: ["#d97706", "#f59e0b", "#fbbf24"],
+//     tabs: [
+//       { label: "Cost Analysis", icon: "🔢", reportName: "cost-analysis" },
+//       { label: "Profit & Loss", icon: "📊", reportName: "profit-loss" },
+//       { label: "Budget vs Actual", icon: "🎯", reportName: "budget-vs-actual" },
+//     ],
+//   },
+// };
+
+
 export const CATEGORIES: Category[] = [
   {
     id: "inventory",
@@ -14,10 +99,10 @@ export const CATEGORIES: Category[] = [
     accentText: "#065f46",
     glow: "0 8px 32px rgba(5,150,105,0.25)",
     tabs: [
-      { label: "Stock Summary", icon: "📊" },
-      { label: "Low Stock", icon: "⚠️" },
-      { label: "Valuation", icon: "💎" },
-      { label: "Movement", icon: "🔄" },
+      { label: "Stock Summary", icon: "📊", reportName: "stock-summary" },
+      { label: "Low Stock", icon: "⚠️", reportName: "low-stock" },
+      { label: "Valuation", icon: "💎", reportName: "valuation" },
+      { label: "Movement", icon: "🔄", reportName: "movement" },
     ],
     chartColors: ["#059669", "#34d399", "#6ee7b7"],
   },

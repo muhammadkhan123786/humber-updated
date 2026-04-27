@@ -17,6 +17,7 @@ export interface Category {
 export interface Tab {
   label: string;
   icon: string;
+  reportName?: string;
 }
 
 export interface Kpi {
@@ -61,7 +62,7 @@ export interface Category {
   accentBorder: string;
   accentText: string;
   glow: string;
-  tabs: { label: string; icon: string }[];
+  tabs: { label: string; icon: string; reportName?: string }[];
   chartColors: string[];
 }
 

@@ -12,7 +12,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
 
-  const filtered = CATEGORIES.filter(cat => {
+  const filtered = CATEGORIES?.filter(cat => {
     const matches = cat.title.toLowerCase().includes(search.toLowerCase()) || 
                     cat.desc.toLowerCase().includes(search.toLowerCase());
     return matches && (filter === "All" || cat.id === filter);
