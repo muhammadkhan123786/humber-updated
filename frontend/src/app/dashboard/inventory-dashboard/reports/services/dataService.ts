@@ -22,7 +22,7 @@
 //     // const queryParams = new URLSearchParams(filters as Record<string, string>);
 //     // const response = await fetch(`/api/reports/${categoryId}?${queryParams}`);
 //     // return response.json();
-//     return this.getCategoryData(categoryId);
+   
 //   }
   
 //   async exportData(categoryId: string, format: 'csv' | 'excel' | 'pdf'): Promise<Blob> {
