@@ -483,8 +483,8 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   }));
 
   // ── Chart data from API (if available) ────────────────────────────────────
-  const chartData = Array.isArray(data?.chart) ? data.chart : [];
-  console.log("chartData", chartData);
+  const chartData = Array.isArray((data as any)?.chart) ? (data as any).chart : []
+
   // ── Tab switching ─────────────────────────────────────────────────────────
   const switchTab = (index: number) => {
     if (index === activeTab) return;
