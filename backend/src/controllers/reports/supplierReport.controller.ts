@@ -1,14 +1,28 @@
+// controllers/supplierReports.controller.ts
 import { Request, Response } from "express";
 import { PurchaseOrder } from "../../models/purchaseOrder.model";
-import { GrnModel } from "../../models/grn.models"
+import { GoodsReturn } from "../../models/goodsReturn.model";
+import { buildQueryOptions } from "../../utils/queryHelper";
+import { applyFilters } from "../../utils/filterBuilder";
 
+// ----------------------------------------------------------------------
+// 1. Supplier History Report
+// ----------------------------------------------------------------------
 export const getSupplierHistoryReport = async (req: Request, res: Response) => {
   try {
+    const options = buildQueryOptions(req);
+    
+    // Base match stage (isDeleted false + date range)
+    let matchStage: any = { isDeleted: false };
+    if (options.startDate || options.endDate) {
+      matchStage.orderDate = {};
+      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
+      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
+    }
 
-    const data = await PurchaseOrder.aggregate([
-      { $match: { isDeleted: false } },
-
-      // Supplier
+    // Pipeline without pagination (for total counts and KPIs later)
+    const basePipeline: any[] = [
+      { $match: matchStage },
       {
         $lookup: {
           from: "suppliers",
@@ -18,100 +32,142 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
         }
       },
       { $unwind: "$supplier" },
-
-      // Items
       { $unwind: "$items" },
-
-      // GRN join
       {
         $lookup: {
-          from: "goodsreceiveds",
-          localField: "_id",
-          foreignField: "purchaseOrderId",
-          as: "grn"
+          from: "grns",
+          let: { poId: "$_id", sku: "$items.sku" },
+          pipeline: [
+            { $unwind: "$items" },
+            { $match: { $expr: { $and: [{ $eq: ["$purchaseOrderId", "$$poId"] }, { $eq: ["$items.sku", "$$sku"] }] } } },
+            { $project: { acceptedQuantity: "$items.acceptedQuantity", grnNumber: 1, receivedDate: 1 } }
+          ],
+          as: "grnData"
         }
       },
-
-      {
-        $addFields: {
-          grnItem: {
-            $first: {
-              $filter: {
-                input: { $ifNull: [{ $arrayElemAt: ["$grn.items", 0] }, []] },
-                as: "g",
-                cond: { $eq: ["$$g.sku", "$items.sku"] }
-              }
-            }
-          }
-        }
-      },
-
-      // Goods Return join
       {
         $lookup: {
           from: "goodsreturns",
-          localField: "items.sku",
-          foreignField: "items.sku",
-          as: "returns"
+          let: { sku: "$items.sku" },
+          pipeline: [
+            { $unwind: "$items" },
+            { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
+            { $group: { _id: null, totalReturned: { $sum: "$items.returnQty" } } }
+          ],
+          as: "returnData"
         }
       },
-
       {
         $addFields: {
-          returnedQty: {
-            $sum: "$returns.items.returnQty"
-          }
+          grnItem: { $arrayElemAt: ["$grnData", 0] },
+          returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.totalReturned", 0] }, 0] }
         }
       },
-
       {
         $project: {
           supplierName: "$supplier.name",
           poNumber: "$orderNumber",
-          grnNumber: { $arrayElemAt: ["$grn.grnNumber", 0] },
+          grnNumber: { $ifNull: ["$grnItem.grnNumber", ""] },
           productName: "$items.productName",
           sku: "$items.sku",
           orderedQuantity: "$items.quantity",
           receivedQuantity: { $ifNull: ["$grnItem.acceptedQuantity", 0] },
-          returnedQuantity: { $ifNull: ["$returnedQty", 0] },
+          returnedQuantity: "$returnedQty",
           unitCost: "$items.unitPrice",
           totalAmount: "$items.totalPrice",
           orderDate: "$orderDate",
-          deliveryDate: { $arrayElemAt: ["$grn.receivedDate", 0] }
+          deliveryDate: { $ifNull: ["$grnItem.receivedDate", null] }
         }
       }
-    ]);
+    ];
 
-    // KPIs
-    const totalSuppliers = new Set(data.map(i => i.supplierName)).size;
-    const totalPurchases = data.length;
-    const totalPurchaseValue = data.reduce((a, i) => a + (i.totalAmount || 0), 0);
-    const totalReceived = data.reduce((a, i) => a + (i.receivedQuantity || 0), 0);
-    const totalReturns = data.reduce((a, i) => a + (i.returnedQuantity || 0), 0);
+    // Apply search if needed (on supplierName, poNumber, productName, sku)
+    let searchMatch: any = {};
+    if (options.search) {
+      const searchRegex = new RegExp(options.search, "i");
+      searchMatch = {
+        $or: [
+          { supplierName: searchRegex },
+          { poNumber: searchRegex },
+          { productName: searchRegex },
+          { sku: searchRegex }
+        ]
+      };
+      basePipeline.push({ $match: searchMatch });
+    }
+
+    const facetPipeline = [
+      ...basePipeline,
+      {
+        $facet: {
+          paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+          totalCount: [{ $count: "count" }],
+          kpis: [
+            {
+              $group: {
+                _id: null,
+                totalSuppliers: { $addToSet: "$supplierName" },
+                totalPurchases: { $sum: 1 },
+                totalPurchaseValue: { $sum: "$totalAmount" },
+                totalGoodsReceived: { $sum: "$receivedQuantity" },
+                totalReturnsToSuppliers: { $sum: "$returnedQuantity" }
+              }
+            },
+            {
+              $project: {
+                totalSuppliers: { $size: "$totalSuppliers" },
+                totalPurchases: 1,
+                totalPurchaseValue: 1,
+                totalGoodsReceived: 1,
+                totalReturnsToSuppliers: 1
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const result = await PurchaseOrder.aggregate(facetPipeline);
+    const data = result[0] || { paginated: [], totalCount: [], kpis: [] };
+    
+    const rows = data.paginated;
+    const total = data.totalCount[0]?.count || 0;
+    const kpis = data.kpis[0] || {
+      totalSuppliers: 0,
+      totalPurchases: 0,
+      totalPurchaseValue: 0,
+      totalGoodsReceived: 0,
+      totalReturnsToSuppliers: 0
+    };
 
     res.json({
-      kpis: {
-        totalSuppliers,
-        totalPurchases,
-        totalPurchaseValue,
-        totalGoodsReceived: totalReceived,
-        totalReturnsToSuppliers: totalReturns
-      },
-      table: data
+      rows,
+      total,
+      page: options.page,
+      totalPages: Math.ceil(total / options.limit),
+      kpis
     });
-
   } catch (error) {
     res.status(500).json({ message: "Supplier history error", error });
   }
 };
 
-
+// ----------------------------------------------------------------------
+// 2. Supplier Performance Report
+// ----------------------------------------------------------------------
 export const getSupplierPerformanceReport = async (req: Request, res: Response) => {
   try {
+    const options = buildQueryOptions(req);
+    
+    let matchStage: any = { isDeleted: false };
+    if (options.startDate || options.endDate) {
+      matchStage.orderDate = {};
+      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
+      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
+    }
 
-    const data = await PurchaseOrder.aggregate([
-      { $match: { isDeleted: false } },
-
+    const basePipeline: any[] = [
+      { $match: matchStage },
       {
         $lookup: {
           from: "suppliers",
@@ -121,16 +177,14 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
         }
       },
       { $unwind: "$supplier" },
-
       {
         $lookup: {
-          from: "goodsreceiveds",
+          from: "grns",
           localField: "_id",
           foreignField: "purchaseOrderId",
           as: "grn"
         }
       },
-
       {
         $addFields: {
           delivered: { $size: "$grn" },
@@ -142,10 +196,10 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
                 cond: { $gt: ["$$g.receivedDate", "$expectedDelivery"] }
               }
             }
-          }
+          },
+          totalPurchaseValue: "$total"
         }
       },
-
       {
         $group: {
           _id: "$supplier._id",
@@ -153,27 +207,20 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
           totalOrders: { $sum: 1 },
           totalDelivered: { $sum: "$delivered" },
           lateDeliveries: { $sum: "$late" },
-          totalPurchaseValue: { $sum: "$total" }
+          totalPurchaseValue: { $sum: "$totalPurchaseValue" }
         }
       },
-
       {
-        $project: {
-          supplierName: 1,
-          totalOrders: 1,
-          totalDelivered: 1,
-          lateDeliveries: 1,
+        $addFields: {
           onTimeDeliveries: { $subtract: ["$totalDelivered", "$lateDeliveries"] },
-          avgDeliveryDays: 3, // optional logic later
-          totalPurchaseValue: 1,
-          returnedItems: 1,
+          returnedItems: { $literal: 0 }, // placeholder – you can add a lookup to goodsreturns
           supplierRating: {
             $round: [
               {
                 $multiply: [
                   {
                     $divide: [
-                      { $subtract: ["$totalDelivered", "$lateDeliveries"] },
+                      { $ifNull: ["$onTimeDeliveries", 0] },
                       { $cond: [{ $eq: ["$totalDelivered", 0] }, 1, "$totalDelivered"] }
                     ]
                   },
@@ -182,34 +229,91 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
               },
               1
             ]
-          }
+          },
+          avgDeliveryDays: { $literal: "N/A" } // placeholder – can be computed
         }
       }
-    ]);
+    ];
+
+    // Search filter on supplier name
+    if (options.search) {
+      const searchRegex = new RegExp(options.search, "i");
+      basePipeline.push({ $match: { supplierName: searchRegex } });
+    }
+
+    const facetPipeline = [
+      ...basePipeline,
+      {
+        $facet: {
+          paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+          totalCount: [{ $count: "count" }],
+          kpis: [
+            {
+              $group: {
+                _id: null,
+                totalActiveSuppliers: { $sum: 1 },
+                onTimeDeliveries: { $sum: "$onTimeDeliveries" },
+                lateDeliveries: { $sum: "$lateDeliveries" },
+                avgDeliveryTime: { $avg: "$avgDeliveryDays" },
+                supplierRatingScore: { $avg: "$supplierRating" }
+              }
+            },
+            {
+              $project: {
+                totalActiveSuppliers: 1,
+                onTimeDeliveries: 1,
+                lateDeliveries: 1,
+                avgDeliveryTime: { $ifNull: ["$avgDeliveryTime", "N/A"] },
+                supplierRatingScore: { $round: ["$supplierRatingScore", 1] }
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const result = await PurchaseOrder.aggregate(facetPipeline);
+    const data = result[0] || { paginated: [], totalCount: [], kpis: [] };
+    
+    const rows = data.paginated;
+    const total = data.totalCount[0]?.count || 0;
+    const kpis = data.kpis[0] || {
+      totalActiveSuppliers: 0,
+      onTimeDeliveries: 0,
+      lateDeliveries: 0,
+      avgDeliveryTime: "N/A",
+      supplierRatingScore: 0
+    };
 
     res.json({
-      kpis: {
-        totalActiveSuppliers: data.length,
-        onTimeDeliveries: data.reduce((a, i) => a + i.onTimeDeliveries, 0),
-        lateDeliveries: data.reduce((a, i) => a + i.lateDeliveries, 0),
-        avgDeliveryTime: "N/A",
-        supplierRatingScore: "Dynamic"
-      },
-      table: data
+      rows,
+      total,
+      page: options.page,
+      totalPages: Math.ceil(total / options.limit),
+      kpis
     });
-
   } catch (error) {
     res.status(500).json({ message: "Supplier performance error", error });
   }
 };
 
+// ----------------------------------------------------------------------
+// 3. Supplier Price History Report
+// ----------------------------------------------------------------------
 export const getSupplierPriceHistoryReport = async (req: Request, res: Response) => {
   try {
+    const options = buildQueryOptions(req);
+    
+    let matchStage: any = { isDeleted: false };
+    if (options.startDate || options.endDate) {
+      matchStage.orderDate = {};
+      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
+      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
+    }
 
-    const data = await PurchaseOrder.aggregate([
-      { $match: { isDeleted: false } },
+    const basePipeline: any[] = [
+      { $match: matchStage },
       { $unwind: "$items" },
-
       {
         $lookup: {
           from: "suppliers",
@@ -219,11 +323,9 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
         }
       },
       { $unwind: "$supplier" },
-
       {
         $sort: { "items.sku": 1, orderDate: 1 }
       },
-
       {
         $group: {
           _id: "$items.sku",
@@ -240,9 +342,7 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           }
         }
       },
-
       { $unwind: "$history" },
-
       {
         $setWindowFields: {
           partitionBy: "$_id",
@@ -257,7 +357,6 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           }
         }
       },
-
       {
         $project: {
           productName: "$history.productName",
@@ -273,19 +372,65 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           poNumber: "$history.poNumber"
         }
       }
-    ]);
+    ];
+
+    // Search filter
+    if (options.search) {
+      const searchRegex = new RegExp(options.search, "i");
+      basePipeline.push({
+        $match: {
+          $or: [
+            { productName: searchRegex },
+            { sku: searchRegex },
+            { supplier: searchRegex },
+            { poNumber: searchRegex }
+          ]
+        }
+      });
+    }
+
+    const facetPipeline = [
+      ...basePipeline,
+      {
+        $facet: {
+          paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+          totalCount: [{ $count: "count" }],
+          kpis: [
+            {
+              $group: {
+                _id: null,
+                totalProductsTracked: { $sum: 1 },
+                avgPurchasePrice: { $avg: "$currentPrice" },
+                highestPrice: { $max: "$currentPrice" },
+                lowestPrice: { $min: "$currentPrice" },
+                priceChangePercent: { $avg: { $multiply: [{ $divide: ["$priceDifference", { $max: ["$previousPrice", 1] }] }, 100] } }
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const result = await PurchaseOrder.aggregate(facetPipeline);
+    const data = result[0] || { paginated: [], totalCount: [], kpis: [] };
+    
+    const rows = data.paginated;
+    const total = data.totalCount[0]?.count || 0;
+    const kpis = data.kpis[0] || {
+      totalProductsTracked: 0,
+      avgPurchasePrice: 0,
+      highestPrice: 0,
+      lowestPrice: 0,
+      priceChangePercent: 0
+    };
 
     res.json({
-      kpis: {
-        totalProductsTracked: data.length,
-        avgPurchasePrice: 0,
-        highestPrice: Math.max(...data.map(i => i.currentPrice || 0)),
-        lowestPrice: Math.min(...data.map(i => i.currentPrice || 0)),
-        priceChangePercent: 0
-      },
-      table: data
+      rows,
+      total,
+      page: options.page,
+      totalPages: Math.ceil(total / options.limit),
+      kpis
     });
-
   } catch (error) {
     res.status(500).json({ message: "Price history error", error });
   }
