@@ -188,42 +188,28 @@
 
 
 // controllers/purchaseReports.controller.ts
+// controllers/supplierReports.controller.ts
 import { Request, Response } from "express";
 import { PurchaseOrder } from "../../models/purchaseOrder.model";
-import { GrnModel } from "../../models/grn.models"
+import { GoodsReturn } from "../../models/goodsReturn.model";
 import { buildQueryOptions } from "../../utils/queryHelper";
 import { applyFilters } from "../../utils/filterBuilder";
-
+import { PipelineStage } from "mongoose"; 
 // ----------------------------------------------------------------------
-// 1. Purchase Orders Report (with pagination & search)
+// 1. Supplier History Report (with chart: Orders, Received, Returns by supplier)
 // ----------------------------------------------------------------------
-export const getPurchaseOrderReport = async (req: Request, res: Response) => {
+export const getSupplierHistoryReport = async (req: Request, res: Response) => {
   try {
-    const options = buildQueryOptions(req); // gives { page, limit, skip, search, startDate, endDate }
+    const options = buildQueryOptions(req);
 
-    // Build match stage
     let matchStage: any = { isDeleted: false };
-    
-    // Date range filter on orderDate
     if (options.startDate || options.endDate) {
       matchStage.orderDate = {};
       if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
       if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
     }
-    
-    // Search: poNumber or supplier name (via lookup)
-    let searchMatch: any = {};
-    if (options.search) {
-      const searchRegex = new RegExp(options.search, "i");
-      searchMatch = {
-        $or: [
-          { orderNumber: searchRegex },
-          { "supplier.name": searchRegex }
-        ]
-      };
-    }
 
-    const pipeline: any[] = [
+    const basePipeline: any[] = [
       { $match: matchStage },
       {
         $lookup: {
@@ -233,202 +219,159 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
           as: "supplier"
         }
       },
-      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
-      ...(options.search ? [{ $match: searchMatch }] : []),
-      {
-        $addFields: {
-          totalItems: { $size: "$items" },
-          totalQuantity: { $sum: "$items.quantity" }
-        }
-      },
-      // receivedQuantity & pendingQuantity could be computed via GRN lookup, but we'll keep as 0 for now
-      // For demo, we assume receivedQuantity = 0, pending = totalQuantity
-      // (You can later add a lookup to GRN to get actual received quantities)
-      {
-        $project: {
-          poNumber: "$orderNumber",
-          orderDate: 1,
-          supplierName: { $ifNull: ["$supplier.name", "N/A"] },
-          totalItems: 1,
-          totalQuantity: 1,
-          totalAmount: "$total",
-          receivedQuantity: { $literal: 0 },
-          pendingQuantity: "$totalQuantity", // placeholder
-          status: 1,
-          createdBy: { $ifNull: ["$createdBy", "N/A"] }
-        }
-      }
-    ];
-
-    // Apply filters (if any)
-    const filteredPipeline = applyFilters(pipeline, options); // this may add extra $match for dimensions
-
-    const finalPipeline = [
-      ...filteredPipeline,
-      {
-        $facet: {
-          paginated: [{ $skip: options.skip }, { $limit: options.limit }],
-          totalCount: [{ $count: "count" }],
-          kpis: [
-            {
-              $group: {
-                _id: null,
-                totalPurchaseOrders: { $sum: 1 },
-                pendingPurchaseOrders: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
-                completedPurchaseOrders: { $sum: { $cond: [{ $eq: ["$status", "received"] }, 1, 0] } },
-                cancelledPurchaseOrders: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
-                totalPurchaseValue: { $sum: "$totalAmount" }
-              }
-            }
-          ]
-        }
-      }
-    ];
-
-    const result = await PurchaseOrder.aggregate(finalPipeline);
-    const data = result[0] || { paginated: [], totalCount: [], kpis: [] };
-    
-    const rows = data.paginated;
-    const total = data.totalCount[0]?.count || 0;
-    const kpis = data.kpis[0] || {
-      totalPurchaseOrders: 0,
-      pendingPurchaseOrders: 0,
-      completedPurchaseOrders: 0,
-      cancelledPurchaseOrders: 0,
-      totalPurchaseValue: 0
-    };
-
-    res.json({
-      rows,
-      total,
-      page: options.page,
-      totalPages: Math.ceil(total / options.limit),
-      kpis
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Purchase order report error", error });
-  }
-};
-
-// ----------------------------------------------------------------------
-// 2. Goods Received (GRN) Report with pagination & search
-// ----------------------------------------------------------------------
-export const getGRNReport = async (req: Request, res: Response) => {
-  try {
-    const options = buildQueryOptions(req);
-    
-    let matchStage: any = {};
-    if (options.startDate || options.endDate) {
-      matchStage.receivedDate = {};
-      if (options.startDate) matchStage.receivedDate.$gte = new Date(options.startDate);
-      if (options.endDate) matchStage.receivedDate.$lte = new Date(options.endDate);
-    }
-
-    const pipeline: any[] = [
-      { $match: matchStage },
-      {
-        $lookup: {
-          from: "purchaseorders",
-          localField: "purchaseOrderId",
-          foreignField: "_id",
-          as: "purchaseOrder"
-        }
-      },
-      { $unwind: { path: "$purchaseOrder", preserveNullAndEmptyArrays: true } },
+      { $unwind: "$supplier" },
       { $unwind: "$items" },
       {
+        $lookup: {
+          from: "grns",
+          let: { poId: "$_id", sku: "$items.sku" },
+          pipeline: [
+            { $unwind: "$items" },
+            { $match: { $expr: { $and: [{ $eq: ["$purchaseOrderId", "$$poId"] }, { $eq: ["$items.sku", "$$sku"] }] } } },
+            { $project: { acceptedQuantity: "$items.acceptedQuantity", grnNumber: 1, receivedDate: 1 } }
+          ],
+          as: "grnData"
+        }
+      },
+      {
+        $lookup: {
+          from: "goodsreturns",
+          let: { sku: "$items.sku" },
+          pipeline: [
+            { $unwind: "$items" },
+            { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
+            { $group: { _id: null, totalReturned: { $sum: "$items.returnQty" } } }
+          ],
+          as: "returnData"
+        }
+      },
+      {
         $addFields: {
-          totalCost: { $multiply: ["$items.acceptedQuantity", "$items.unitPrice"] },
-          remainingQuantity: { $subtract: ["$items.orderedQuantity", "$items.receivedQuantity"] }
+          grnItem: { $arrayElemAt: ["$grnData", 0] },
+          returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.totalReturned", 0] }, 0] }
         }
       },
       {
         $project: {
-          grnNumber: 1,
-          grnDate: "$receivedDate",
-          poNumber: "$purchaseOrder.orderNumber",
-          supplierName: { $literal: "N/A" }, // can be populated via PO.supplier if needed
+          supplierName: "$supplier.name",
+          poNumber: "$orderNumber",
+          grnNumber: { $ifNull: ["$grnItem.grnNumber", ""] },
           productName: "$items.productName",
           sku: "$items.sku",
-          orderedQuantity: "$items.orderedQuantity",
-          receivedQuantity: "$items.receivedQuantity",
-          remainingQuantity: 1,
+          orderedQuantity: "$items.quantity",
+          receivedQuantity: { $ifNull: ["$grnItem.acceptedQuantity", 0] },
+          returnedQuantity: "$returnedQty",
           unitCost: "$items.unitPrice",
-          totalCost: 1,
-          warehouse: { $ifNull: ["$warehouse", "N/A"] },
-          receivedBy: { $ifNull: ["$receivedBy", "N/A"] }
+          totalAmount: "$items.totalPrice",
+          orderDate: "$orderDate",
+          deliveryDate: { $ifNull: ["$grnItem.receivedDate", null] }
         }
       }
     ];
 
-    // Apply search filter (on productName, sku, poNumber, grnNumber)
     if (options.search) {
-      const searchRegex = new RegExp(options.search, "i");
-      pipeline.push({
+      const regex = new RegExp(options.search, "i");
+      basePipeline.push({
         $match: {
           $or: [
-            { productName: searchRegex },
-            { sku: searchRegex },
-            { poNumber: searchRegex },
-            { grnNumber: searchRegex }
+            { supplierName: regex },
+            { poNumber: regex },
+            { productName: regex },
+            { sku: regex }
           ]
         }
       });
     }
 
-    const finalPipeline = [
-      ...pipeline,
+    // Chart: aggregated by supplier (Orders, Received, Returns) – top 5 suppliers
+    const chartPipeline = [
+      ...basePipeline,
       {
-        $facet: {
-          paginated: [{ $skip: options.skip }, { $limit: options.limit }],
-          totalCount: [{ $count: "count" }],
-          kpis: [
-            {
-              $group: {
-                _id: null,
-                totalGRN: { $sum: 1 },
-                totalItemsReceived: { $sum: "$receivedQuantity" },
-                totalPurchaseValueReceived: { $sum: "$totalCost" },
-                pendingDeliveries: { $sum: { $cond: [{ $gt: ["$remainingQuantity", 0] }, 1, 0] } }
-              }
-            }
-          ]
+        $group: {
+          _id: "$supplierName",
+          Orders: { $sum: 1 },
+          Received: { $sum: "$receivedQuantity" },
+          Returns: { $sum: "$returnedQuantity" }
+        }
+      },
+      { $sort: { Orders: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          name: "$_id",
+          Orders: 1,
+          Received: 1,
+          Returns: 1
         }
       }
     ];
 
-    const result = await GrnModel.aggregate(finalPipeline);
-    const data = result[0] || { paginated: [], totalCount: [], kpis: [] };
-    
+    const [mainResult, chartResult] = await Promise.all([
+      PurchaseOrder.aggregate([
+        ...basePipeline,
+        {
+          $facet: {
+            paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+            totalCount: [{ $count: "count" }],
+            kpis: [
+              {
+                $group: {
+                  _id: null,
+                  totalSuppliers: { $addToSet: "$supplierName" },
+                  totalPurchases: { $sum: 1 },
+                  totalPurchaseValue: { $sum: "$totalAmount" },
+                  totalGoodsReceived: { $sum: "$receivedQuantity" },
+                  totalReturnsToSuppliers: { $sum: "$returnedQuantity" }
+                }
+              },
+              {
+                $project: {
+                  totalSuppliers: { $size: "$totalSuppliers" },
+                  totalPurchases: 1,
+                  totalPurchaseValue: 1,
+                  totalGoodsReceived: 1,
+                  totalReturnsToSuppliers: 1
+                }
+              }
+            ]
+          }
+        }
+      ]),
+      PurchaseOrder.aggregate(chartPipeline)
+    ]);
+
+    const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
     const rows = data.paginated;
     const total = data.totalCount[0]?.count || 0;
     const kpis = data.kpis[0] || {
-      totalGRN: 0,
-      totalItemsReceived: 0,
-      totalPurchaseValueReceived: 0,
-      pendingDeliveries: 0
+      totalSuppliers: 0,
+      totalPurchases: 0,
+      totalPurchaseValue: 0,
+      totalGoodsReceived: 0,
+      totalReturnsToSuppliers: 0
     };
+    const chart = chartResult;
 
     res.json({
       rows,
       total,
       page: options.page,
       totalPages: Math.ceil(total / options.limit),
-      kpis
+      kpis,
+      chart
     });
   } catch (error) {
-    res.status(500).json({ message: "GRN report error", error });
+    res.status(500).json({ message: "Supplier history error", error });
   }
 };
 
 // ----------------------------------------------------------------------
-// 3. Purchase Summary (Supplier) with pagination & search
+// 2. Supplier Performance Report (with chart: On-Time vs Late deliveries by supplier)
 // ----------------------------------------------------------------------
-export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
+export const getSupplierPerformanceReport = async (req: Request, res: Response) => {
   try {
     const options = buildQueryOptions(req);
-    
-    // Build aggregation pipeline for purchase orders grouped by supplier
+
     let matchStage: any = { isDeleted: false };
     if (options.startDate || options.endDate) {
       matchStage.orderDate = {};
@@ -436,7 +379,7 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
       if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
     }
 
-    const groupPipeline = [
+    const basePipeline: any[] = [
       { $match: matchStage },
       {
         $lookup: {
@@ -446,88 +389,329 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
           as: "supplier"
         }
       },
-      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
+      { $unwind: "$supplier" },
+      {
+        $lookup: {
+          from: "grns",
+          localField: "_id",
+          foreignField: "purchaseOrderId",
+          as: "grn"
+        }
+      },
+      {
+        $addFields: {
+          delivered: { $size: "$grn" },
+          late: {
+            $size: {
+              $filter: {
+                input: "$grn",
+                as: "g",
+                cond: { $gt: ["$$g.receivedDate", "$expectedDelivery"] }
+              }
+            }
+          },
+          totalPurchaseValue: "$total"
+        }
+      },
       {
         $group: {
           _id: "$supplier._id",
           supplierName: { $first: "$supplier.name" },
           totalOrders: { $sum: 1 },
-          totalQuantityPurchased: { $sum: { $sum: "$items.quantity" } },
-          totalPurchaseAmount: { $sum: "$total" },
-          lastPurchaseDate: { $max: "$orderDate" },
-          // topProduct: we can't easily get here without more complex aggregation, keep as "N/A"
+          totalDelivered: { $sum: "$delivered" },
+          lateDeliveries: { $sum: "$late" },
+          totalPurchaseValue: { $sum: "$totalPurchaseValue" }
         }
       },
       {
-        $project: {
-          supplierName: { $ifNull: ["$supplierName", "N/A"] },
-          totalOrders: 1,
-          totalQuantityPurchased: 1,
-          totalPurchaseAmount: 1,
-          averageOrderValue: { $divide: ["$totalPurchaseAmount", { $max: ["$totalOrders", 1] }] },
-          lastPurchaseDate: 1,
-          topProductPurchased: { $literal: "N/A" }
+        $addFields: {
+          onTimeDeliveries: { $subtract: ["$totalDelivered", "$lateDeliveries"] },
+          returnedItems: { $literal: 0 },
+          supplierRating: {
+            $round: [
+              {
+                $multiply: [
+                  {
+                    $divide: [
+                      { $ifNull: ["$onTimeDeliveries", 0] },
+                      { $cond: [{ $eq: ["$totalDelivered", 0] }, 1, "$totalDelivered"] }
+                    ]
+                  },
+                  5
+                ]
+              },
+              1
+            ]
+          },
+          avgDeliveryDays: { $literal: "N/A" }
         }
       }
     ];
 
-    // Apply search filter on supplier name
     if (options.search) {
-      const searchRegex = new RegExp(options.search, "i");
-      groupPipeline.push({
-        $match: { supplierName: searchRegex }
-      });
+      const regex = new RegExp(options.search, "i");
+      basePipeline.push({ $match: { supplierName: regex } });
     }
 
-    const finalPipeline = [
-      ...groupPipeline,
+    // Chart: top 5 suppliers by On-Time vs Late deliveries
+    const chartPipeline = [
+      ...basePipeline,
       {
-        $facet: {
-          paginated: [{ $skip: options.skip }, { $limit: options.limit }],
-          totalCount: [{ $count: "count" }],
-          kpis: [
-            {
-              $group: {
-                _id: null,
-                totalPurchaseAmount: { $sum: "$totalPurchaseAmount" },
-                totalPurchaseOrders: { $sum: "$totalOrders" },
-                totalProductsPurchased: { $sum: "$totalQuantityPurchased" },
-                avgPurchaseValue: { $avg: "$averageOrderValue" },
-                topSupplier: { $first: "$supplierName" } // not accurate, better to sort later
-              }
-            }
-          ]
+        $project: {
+          name: "$supplierName",
+          "On-Time": "$onTimeDeliveries",
+          Late: "$lateDeliveries"
         }
-      }
+      },
+      { $sort: { "On-Time": -1 } },
+      { $limit: 5 }
     ];
 
-    const result = await PurchaseOrder.aggregate(finalPipeline);
-    const data = result[0] || { paginated: [], totalCount: [], kpis: [] };
-    
+    const [mainResult, chartResult] = await Promise.all([
+      PurchaseOrder.aggregate([
+        ...basePipeline,
+        {
+          $facet: {
+            paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+            totalCount: [{ $count: "count" }],
+            kpis: [
+              {
+                $group: {
+                  _id: null,
+                  totalActiveSuppliers: { $sum: 1 },
+                  onTimeDeliveries: { $sum: "$onTimeDeliveries" },
+                  lateDeliveries: { $sum: "$lateDeliveries" },
+                  avgDeliveryTime: { $avg: "$avgDeliveryDays" },
+                  supplierRatingScore: { $avg: "$supplierRating" }
+                }
+              },
+              {
+                $project: {
+                  totalActiveSuppliers: 1,
+                  onTimeDeliveries: 1,
+                  lateDeliveries: 1,
+                  avgDeliveryTime: { $ifNull: ["$avgDeliveryTime", "N/A"] },
+                  supplierRatingScore: { $round: ["$supplierRatingScore", 1] }
+                }
+              }
+            ]
+          }
+        }
+      ]),
+      PurchaseOrder.aggregate(chartPipeline)
+    ]);
+
+    const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
     const rows = data.paginated;
     const total = data.totalCount[0]?.count || 0;
-    let kpis = data.kpis[0] || {
-      totalPurchaseAmount: 0,
-      totalPurchaseOrders: 0,
-      totalProductsPurchased: 0,
-      avgPurchaseValue: 0,
-      topSupplier: "N/A"
+    const kpis = data.kpis[0] || {
+      totalActiveSuppliers: 0,
+      onTimeDeliveries: 0,
+      lateDeliveries: 0,
+      avgDeliveryTime: "N/A",
+      supplierRatingScore: 0
     };
-
-    // Correct topSupplier by sorting rows
-    if (rows.length) {
-      const top = [...rows].sort((a, b) => b.totalPurchaseAmount - a.totalPurchaseAmount)[0];
-      if (top) kpis.topSupplier = top.supplierName;
-    }
+    const chart = chartResult;
 
     res.json({
       rows,
       total,
       page: options.page,
       totalPages: Math.ceil(total / options.limit),
-      kpis
+      kpis,
+      chart
     });
   } catch (error) {
-    res.status(500).json({ message: "Purchase summary error", error });
+    res.status(500).json({ message: "Supplier performance error", error });
+  }
+};
+
+// ----------------------------------------------------------------------
+// 3. Supplier Price History Report (with chart: price trends over months)
+// ----------------------------------------------------------------------
+
+
+
+
+export const getSupplierPriceHistoryReport = async (req: Request, res: Response) => {
+  try {
+    // Assuming buildQueryOptions is defined or imported
+    const options = (req as any).buildQueryOptions ? (req as any).buildQueryOptions(req) : { skip: 0, limit: 10, page: 1 };
+
+    let matchStage: any = { isDeleted: false };
+    if (options.startDate || options.endDate) {
+      matchStage.orderDate = {};
+      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
+      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
+    }
+
+    // 1. Strictly type the base pipeline
+    const basePipeline: PipelineStage[] = [
+      { $match: matchStage },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "suppliers",
+          localField: "supplier",
+          foreignField: "_id",
+          as: "supplier",
+        },
+      },
+      { $unwind: "$supplier" },
+      {
+        $sort: { "items.sku": 1, orderDate: 1 },
+      },
+      {
+        $group: {
+          _id: "$items.sku",
+          history: {
+            $push: {
+              productName: "$items.productName",
+              sku: "$items.sku",
+              supplier: "$supplier.name",
+              purchaseDate: "$orderDate",
+              price: "$items.unitPrice",
+              quantity: "$items.quantity",
+              poNumber: "$orderNumber",
+            },
+          },
+        },
+      },
+      { $unwind: "$history" },
+      {
+        $setWindowFields: {
+          partitionBy: "$_id",
+          sortBy: { "history.purchaseDate": 1 },
+          output: {
+            prevPrice: {
+              $shift: {
+                output: "$history.price",
+                by: -1,
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          productName: "$history.productName",
+          sku: "$history.sku",
+          supplier: "$history.supplier",
+          purchaseDate: "$history.purchaseDate",
+          previousPrice: "$prevPrice",
+          currentPrice: "$history.price",
+          priceDifference: {
+            $subtract: ["$history.price", { $ifNull: ["$prevPrice", 0] }],
+          },
+          purchaseQuantity: "$history.quantity",
+          poNumber: "$history.poNumber",
+        },
+      },
+    ];
+
+    if (options.search) {
+      const regex = new RegExp(options.search, "i");
+      basePipeline.push({
+        $match: {
+          $or: [
+            { productName: regex },
+            { sku: regex },
+            { supplier: regex },
+            { poNumber: regex },
+          ],
+        },
+      } as PipelineStage.Match); // Explicitly cast the push
+    }
+
+    // 2. Strictly type the chart pipeline
+    const chartPipeline: PipelineStage[] = [
+      { $match: matchStage },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$orderDate" },
+            productName: "$items.productName",
+          },
+          monthName: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+          avgPrice: { $avg: "$items.unitPrice" },
+        },
+      },
+      { $sort: { "_id.month": 1 } },
+      {
+        $group: {
+          _id: "$monthName",
+          Laptop: { $avg: { $cond: [{ $eq: ["$_id.productName", "Gaming Laptop"] }, "$avgPrice", null] } },
+          Monitor: { $avg: { $cond: [{ $eq: ["$_id.productName", "Monitor 27\""] }, "$avgPrice", null] } },
+          Keyboard: { $avg: { $cond: [{ $eq: ["$_id.productName", "Mechanical Keyboard"] }, "$avgPrice", null] } },
+          Mouse: { $avg: { $cond: [{ $eq: ["$_id.productName", "Wireless Mouse"] }, "$avgPrice", null] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          name: "$_id",
+          Laptop: { $round: ["$Laptop", 0] },
+          Monitor: { $round: ["$Monitor", 0] },
+          Keyboard: { $round: ["$Keyboard", 0] },
+          Mouse: { $round: ["$Mouse", 0] },
+        },
+      },
+    ];
+
+    const [mainResult, chartResult] = await Promise.all([
+      PurchaseOrder.aggregate([
+        ...basePipeline,
+        {
+          $facet: {
+            paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+            totalCount: [{ $count: "count" }],
+            kpis: [
+              {
+                $group: {
+                  _id: null,
+                  totalProductsTracked: { $sum: 1 },
+                  avgPurchasePrice: { $avg: "$currentPrice" },
+                  highestPrice: { $max: "$currentPrice" },
+                  lowestPrice: { $min: "$currentPrice" },
+                  priceChangePercent: {
+                    $avg: {
+                      $multiply: [
+                        { $divide: ["$priceDifference", { $max: [{ $ifNull: ["$previousPrice", 1] }, 1] }] },
+                        100,
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+      ]),
+      PurchaseOrder.aggregate(chartPipeline),
+    ]);
+
+    const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
+    const rows = data.paginated;
+    const total = data.totalCount[0]?.count || 0;
+    const kpis = data.kpis[0] || {
+      totalProductsTracked: 0,
+      avgPurchasePrice: 0,
+      highestPrice: 0,
+      lowestPrice: 0,
+      priceChangePercent: 0,
+    };
+
+    res.json({
+      rows,
+      total,
+      page: options.page,
+      totalPages: Math.ceil(total / options.limit),
+      kpis,
+      chart: chartResult,
+    });
+  } catch (error) {
+    console.error("Price History Error:", error);
+    res.status(500).json({ message: "Price history error", error });
   }
 };

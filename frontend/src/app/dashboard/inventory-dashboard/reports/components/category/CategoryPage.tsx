@@ -461,7 +461,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   // ── Shape API rows → [headers, tableRows] ─────────────────────────────────
   const apiRows = data?.rows ?? [];
   console.log("data", data)
-  console.log("apiRows", apiRows)
+ 
 
   const headers = useMemo<string[]>(() => {
     if (apiRows.length === 0) return [];
