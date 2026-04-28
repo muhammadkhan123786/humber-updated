@@ -403,9 +403,6 @@
 //   );
 // }
 
-
-
-
 // components/category/CategoryPage.tsx
 "use client";
 
@@ -419,7 +416,10 @@ import { useModuleReport } from "@/hooks/reports/useExport";
 // Keys from MongoDB documents to strip from table headers
 const HIDDEN_KEYS = new Set(["_id", "__v", "createdAt", "updatedAt"]);
 
-const STATUS_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
+const STATUS_STYLES: Record<
+  string,
+  { bg: string; color: string; dot: string }
+> = {
   "In Stock": { bg: "#ecfdf5", color: "#065f46", dot: "#10b981" },
   "Low Stock": { bg: "#fefce8", color: "#713f12", dot: "#eab308" },
   "Out of Stock": { bg: "#fef2f2", color: "#991b1b", dot: "#ef4444" },
@@ -460,8 +460,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
 
   // ── Shape API rows → [headers, tableRows] ─────────────────────────────────
   const apiRows = data?.rows ?? [];
-  console.log("data", data)
- 
+  console.log("data", data);
 
   const headers = useMemo<string[]>(() => {
     if (apiRows.length === 0) return [];
@@ -469,8 +468,11 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   }, [apiRows]);
 
   const tableRows = useMemo<(string | number)[][]>(
-    () => apiRows.map((row: Record<string, any>) => headers.map((h) => row[h] ?? "")),
-    [apiRows, headers]
+    () =>
+      apiRows.map((row: Record<string, any>) =>
+        headers.map((h) => row[h] ?? ""),
+      ),
+    [apiRows, headers],
   );
 
   // ── KPIs from API only ───────────────────────────────────────────────────
@@ -481,8 +483,8 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   }));
 
   // ── Chart data from API (if available) ────────────────────────────────────
-  const chartData = data?.chart ?? { labels: [], datasets: [] };
-
+  const chartData = Array.isArray(data?.chart) ? data.chart : [];
+  console.log("chartData", chartData);
   // ── Tab switching ─────────────────────────────────────────────────────────
   const switchTab = (index: number) => {
     if (index === activeTab) return;
@@ -497,7 +499,14 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
       <div style={{ background: cat.grad, padding: "22px 28px 0" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           {/* Breadcrumb */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 14,
+            }}
+          >
             <button
               onClick={onBack}
               style={{
@@ -517,17 +526,23 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
               ← Back
             </button>
             {["HOME", "REPORTS", cat.title.toUpperCase()].map((s, i, a) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                key={s}
+                style={{ display: "flex", alignItems: "center", gap: 8 }}
+              >
                 <span
                   style={{
                     fontSize: 11,
-                    color: i === a.length - 1 ? "#fff" : "rgba(255,255,255,0.45)",
+                    color:
+                      i === a.length - 1 ? "#fff" : "rgba(255,255,255,0.45)",
                     fontWeight: i === a.length - 1 ? 700 : 500,
                   }}
                 >
                   {s}
                 </span>
-                {i < a.length - 1 && <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>}
+                {i < a.length - 1 && (
+                  <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>
+                )}
               </span>
             ))}
           </div>
@@ -561,10 +576,23 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                 {cat.icon}
               </div>
               <div>
-                <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 800, margin: 0 }}>
+                <h1
+                  style={{
+                    color: "#fff",
+                    fontSize: 24,
+                    fontWeight: 800,
+                    margin: 0,
+                  }}
+                >
                   {cat.title}
                 </h1>
-                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, margin: "4px 0 0" }}>
+                <p
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 12,
+                    margin: "4px 0 0",
+                  }}
+                >
                   {cat.desc}
                 </p>
               </div>
@@ -588,7 +616,12 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                 }}
               />
               <svg
-                style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }}
+                style={{
+                  position: "absolute",
+                  left: 9,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
                 width="13"
                 height="13"
                 fill="none"
@@ -609,7 +642,8 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                 key={tab.label}
                 onClick={() => switchTab(i)}
                 style={{
-                  background: activeTab === i ? "#fff" : "rgba(255,255,255,0.1)",
+                  background:
+                    activeTab === i ? "#fff" : "rgba(255,255,255,0.1)",
                   color: activeTab === i ? cat.accent : "rgba(255,255,255,0.8)",
                   border: "none",
                   borderRadius: "12px 12px 0 0",
@@ -644,7 +678,9 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
       </div>
 
       {/* ── Main Content ──────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px 48px" }}>
+      <div
+        style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px 48px" }}
+      >
         {isLoading ? (
           // Skeleton
           <div>
@@ -687,7 +723,10 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
             />
           </div>
         ) : (
-          <div key={`${cat.id}-${activeTab}`} style={{ animation: "fadeInUp 0.35s ease both" }}>
+          <div
+            key={`${cat.id}-${activeTab}`}
+            style={{ animation: "fadeInUp 0.35s ease both" }}
+          >
             {/* KPI Cards */}
             {kpisToShow.length > 0 && (
               <div
@@ -711,7 +750,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
             )}
 
             {/* Chart – only render if API provided data */}
-            {chartData.labels?.length > 0 && chartData.datasets?.length > 0 && (
+            {chartData.length > 0 && (
               <ChartCard
                 title={`${currentTab.label} — Trend Analysis`}
                 chartData={chartData}
@@ -728,7 +767,10 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
               accentColor={cat.accent}
               accentLight={cat.accentLight}
               isFetching={isFetching}
-              dateRange={{ start: filters.startDate ?? "", end: filters.endDate ?? "" }}
+              dateRange={{
+                start: filters.startDate ?? "",
+                end: filters.endDate ?? "",
+              }}
               onDateRangeChange={(start, end) => setDateRange(start, end)}
               onExport={(type) =>
                 exportFile({
