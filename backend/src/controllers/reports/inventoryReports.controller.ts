@@ -6,6 +6,7 @@ import { PurchaseOrder } from "../../models/purchaseOrder.model";
 import { buildQueryOptions } from "../../utils/queryHelper";
 import { applyFilters } from "../../utils/filterBuilder";
 import { PipelineStage } from "mongoose";
+import { mapColumnFilters } from "../../utils/reports/fieldMapper"
 // ----------------------------------------------------------------------
 // 1. Stock Summary Report (with chart: monthly Purchased, Sold, Opening, Closing)
 // ----------------------------------------------------------------------
@@ -413,11 +414,23 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
 // ----------------------------------------------------------------------
 // 2. Low Stock Report (with chart: Low Stock & Critical by category)
 // ----------------------------------------------------------------------
+// controllers/inventoryReports.controller.ts (excerpt)
+
+const LOWSTOCK_FIELD_MAP: Record<string, string> = {
+  productName: "productName",
+  sku: "attributes.sku",
+  reorderQty: "reorderQuantity",      // computed field, will be available after $addFields
+  stockStatus: "stockStatus",         // computed field
+};
+
 export const getLowStockReport = async (req: Request, res: Response) => {
   try {
-    const options = buildQueryOptions(req);
+    let options = buildQueryOptions(req);
+    // Map column filters to real database paths
+    options = mapColumnFilters(options, LOWSTOCK_FIELD_MAP);
 
-    let basePipeline: any[] = [
+    // 1. Base pipeline (unwind, lookups, etc.)
+    let basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
       {
@@ -425,8 +438,8 @@ export const getLowStockReport = async (req: Request, res: Response) => {
           from: "categories",
           localField: "categoryId",
           foreignField: "_id",
-          as: "category"
-        }
+          as: "category",
+        },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
       {
@@ -437,61 +450,69 @@ export const getLowStockReport = async (req: Request, res: Response) => {
             { $unwind: "$items" },
             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
             { $sort: { orderDate: -1 } },
-            { $limit: 1 }
+            { $limit: 1 },
           ],
-          as: "lastPurchase"
-        }
+          as: "lastPurchase",
+        },
       },
       { $unwind: { path: "$lastPurchase", preserveNullAndEmptyArrays: true } },
-      {
-        $match: {
-          $expr: {
-            $lte: ["$attributes.stock.stockQuantity", "$attributes.stock.reorderPoint"]
-          }
-        }
-      },
-      {
-        $addFields: {
-          stockStatus: {
-            $switch: {
-              branches: [
-                { case: { $eq: ["$attributes.stock.stockQuantity", 0] }, then: "Out of Stock" },
-                {
-                  case: {
-                    $lte: ["$attributes.stock.stockQuantity", "$attributes.stock.minStockLevel"]
-                  },
-                  then: "Critical"
-                }
-              ],
-              default: "Low"
-            }
-          },
-          reorderQuantity: {
-            $max: [
-              { $subtract: ["$attributes.stock.maxStockLevel", "$attributes.stock.stockQuantity"] },
-              0
-            ]
-          }
-        }
-      },
-      {
-        $project: {
-          productName: 1,
-          sku: "$attributes.sku",
-          category: "$category.categoryName",
-          currentStock: "$attributes.stock.stockQuantity",
-          minStockLevel: "$attributes.stock.minStockLevel",
-          reorderQuantity: 1,
-          supplier: "$attributes.stock.supplierId",
-          stockStatus: 1,
-          lastPurchaseDate: "$lastPurchase.orderDate",
-          createdAt: 1
-        }
-      }
     ];
 
+    // 2. Apply low‑stock condition
+    basePipeline.push({
+      $match: {
+        $expr: {
+          $lte: ["$attributes.stock.stockQuantity", "$attributes.stock.reorderPoint"],
+        },
+      },
+    });
+
+    // 3. Add computed fields (stockStatus, reorderQuantity)
+    basePipeline.push({
+      $addFields: {
+        stockStatus: {
+          $switch: {
+            branches: [
+              { case: { $eq: ["$attributes.stock.stockQuantity", 0] }, then: "Out of Stock" },
+              {
+                case: {
+                  $lte: ["$attributes.stock.stockQuantity", "$attributes.stock.minStockLevel"],
+                },
+                then: "Critical",
+              },
+            ],
+            default: "Low",
+          },
+        },
+        reorderQuantity: {
+          $max: [
+            { $subtract: ["$attributes.stock.maxStockLevel", "$attributes.stock.stockQuantity"] },
+            0,
+          ],
+        },
+      },
+    });
+
+    // 4. Project final shape
+    basePipeline.push({
+      $project: {
+        productName: 1,
+        sku: "$attributes.sku",
+        category: "$category.categoryName",
+        currentStock: "$attributes.stock.stockQuantity",
+        minStockLevel: "$attributes.stock.minStockLevel",
+        reorderQuantity: 1,
+        supplier: "$attributes.stock.supplierId",
+        stockStatus: 1,
+        lastPurchaseDate: "$lastPurchase.orderDate",
+        createdAt: 1,
+      },
+    });
+
+    // ✅ 5. Apply column filters (after all fields are available)
     basePipeline = applyFilters(basePipeline, options);
 
+    // 6. Facet for pagination, totals, KPIs, chart
     const finalPipeline = [
       ...basePipeline,
       {
@@ -505,55 +526,43 @@ export const getLowStockReport = async (req: Request, res: Response) => {
                 lowStockItems: { $sum: 1 },
                 criticalStock: { $sum: { $cond: [{ $eq: ["$stockStatus", "Critical"] }, 1, 0] } },
                 outOfStock: { $sum: { $cond: [{ $eq: ["$stockStatus", "Out of Stock"] }, 1, 0] } },
-                reorderRequired: { $sum: { $cond: [{ $gt: ["$reorderQuantity", 0] }, 1, 0] } }
-              }
-            }
+                reorderRequired: { $sum: { $cond: [{ $gt: ["$reorderQuantity", 0] }, 1, 0] } },
+              },
+            },
           ],
           chart: [
             {
               $group: {
                 _id: "$category",
-                LowStock: {
-                  $sum: { $cond: [{ $eq: ["$stockStatus", "Low"] }, 1, 0] }
-                },
-                Critical: {
-                  $sum: { $cond: [{ $eq: ["$stockStatus", "Critical"] }, 1, 0] }
-                }
-              }
+                LowStock: { $sum: { $cond: [{ $eq: ["$stockStatus", "Low"] }, 1, 0] } },
+                Critical: { $sum: { $cond: [{ $eq: ["$stockStatus", "Critical"] }, 1, 0] } },
+              },
             },
             {
               $project: {
                 name: "$_id",
                 LowStock: 1,
-                Critical: 1
-              }
-            }
-          ]
-        }
-      }
+                Critical: 1,
+              },
+            },
+          ],
+        },
+      },
     ];
 
     const result = await ProductModal.aggregate(finalPipeline);
     const data = result[0] || { paginated: [], totalCount: [], kpis: [], chart: [] };
-    const rows = data.paginated;
-    const total = data.totalCount[0]?.count || 0;
-    const kpis = data.kpis[0] || {
-      lowStockItems: 0,
-      criticalStock: 0,
-      outOfStock: 0,
-      reorderRequired: 0
-    };
-    const chart = data.chart;
 
     res.json({
-      rows,
-      total,
+      rows: data.paginated,
+      total: data.totalCount[0]?.count || 0,
       page: options.page,
-      totalPages: Math.ceil(total / options.limit),
-      kpis,
-      chart
+      totalPages: Math.ceil((data.totalCount[0]?.count || 0) / options.limit),
+      kpis: data.kpis[0] || { lowStockItems: 0, criticalStock: 0, outOfStock: 0, reorderRequired: 0 },
+      chart: data.chart,
     });
   } catch (error) {
+    console.error("Low stock report error:", error);
     res.status(500).json({ message: "Low stock report error", error });
   }
 };
@@ -561,11 +570,19 @@ export const getLowStockReport = async (req: Request, res: Response) => {
 // ----------------------------------------------------------------------
 // 3. Inventory Valuation Report (with chart: Value by category)
 // ----------------------------------------------------------------------
+const VALUATION_FIELD_MAP: Record<string, string> = {
+  productName: "productName",
+  sku: "attributes.sku",
+  category: "category.categoryName",
+  inventoryValue: "inventoryValue",
+};
+
 export const getInventoryValuationReport = async (req: Request, res: Response) => {
   try {
-    const options = buildQueryOptions(req);
+    let options = buildQueryOptions(req);
+    options = mapColumnFilters(options, VALUATION_FIELD_MAP);
 
-    let basePipeline: any[] = [
+    let basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
       { $unwind: "$attributes.pricing" },
@@ -574,8 +591,8 @@ export const getInventoryValuationReport = async (req: Request, res: Response) =
           from: "categories",
           localField: "categoryId",
           foreignField: "_id",
-          as: "category"
-        }
+          as: "category",
+        },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
       {
@@ -589,20 +606,20 @@ export const getInventoryValuationReport = async (req: Request, res: Response) =
               $group: {
                 _id: null,
                 totalPurchaseValue: { $sum: "$items.totalPrice" },
-                lastPurchaseCost: { $last: "$items.unitPrice" }
-              }
-            }
+                lastPurchaseCost: { $last: "$items.unitPrice" },
+              },
+            },
           ],
-          as: "purchaseData"
-        }
+          as: "purchaseData",
+        },
       },
       { $unwind: { path: "$purchaseData", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
           inventoryValue: {
-            $multiply: ["$attributes.stock.stockQuantity", "$attributes.pricing.costPrice"]
-          }
-        }
+            $multiply: ["$attributes.stock.stockQuantity", "$attributes.pricing.costPrice"],
+          },
+        },
       },
       {
         $project: {
@@ -615,14 +632,16 @@ export const getInventoryValuationReport = async (req: Request, res: Response) =
           lastPurchaseCost: "$purchaseData.lastPurchaseCost",
           avgCost: "$attributes.pricing.costPrice",
           totalPurchaseValue: { $ifNull: ["$purchaseData.totalPurchaseValue", 0] },
-          createdAt: 1
-        }
-      }
+          createdAt: 1,
+        },
+      },
     ];
 
+    // Apply column filters
     basePipeline = applyFilters(basePipeline, options);
 
-    const extendedPipeline = [
+    // ✅ Cast to any[] to avoid TypeScript error with $facet
+    const finalPipeline: any[] = [
       ...basePipeline,
       {
         $facet: {
@@ -634,167 +653,163 @@ export const getInventoryValuationReport = async (req: Request, res: Response) =
                 _id: null,
                 totalInventoryValue: { $sum: "$inventoryValue" },
                 totalPurchaseValue: { $sum: "$totalPurchaseValue" },
-                avgUnitCost: { $avg: "$unitCost" }
-              }
-            }
+                avgUnitCost: { $avg: "$unitCost" },
+              },
+            },
           ],
           highestValueProduct: [
-            { $sort: { inventoryValue: -1 } },
+            { $sort: { inventoryValue: -1 as const } },   // ✅ as const fixes literal type
             { $limit: 1 },
-            { $project: { _id: 0, productName: 1, inventoryValue: 1 } }
+            { $project: { _id: 0, productName: 1, inventoryValue: 1 } },
           ],
           lowestValueProduct: [
-            { $sort: { inventoryValue: 1 } },
+            { $sort: { inventoryValue: 1 as const } },    // ✅ as const
             { $limit: 1 },
-            { $project: { _id: 0, productName: 1, inventoryValue: 1 } }
+            { $project: { _id: 0, productName: 1, inventoryValue: 1 } },
           ],
           chart: [
             {
               $group: {
                 _id: "$category",
-                Value: { $sum: "$inventoryValue" }
-              }
+                Value: { $sum: "$inventoryValue" },
+              },
             },
             {
               $project: {
                 name: "$_id",
-                Value: 1
-              }
-            }
-          ]
-        }
-      }
+                Value: 1,
+              },
+            },
+          ],
+        },
+      },
     ];
 
-    const fullResult = await ProductModal.aggregate(extendedPipeline);
-    const facetData = fullResult[0] || { paginated: [], totalCount: [], kpis: [], highestValueProduct: [], lowestValueProduct: [], chart: [] };
-    const rows = facetData.paginated;
-    const total = facetData.totalCount[0]?.count || 0;
-    const kpisAgg = facetData.kpis[0] || { totalInventoryValue: 0, totalPurchaseValue: 0, avgUnitCost: 0 };
-    const highest = facetData.highestValueProduct[0] || { productName: "N/A" };
-    const lowest = facetData.lowestValueProduct[0] || { productName: "N/A" };
-    const chart = facetData.chart;
+    const result = await ProductModal.aggregate(finalPipeline);
+    const data = result[0] || {
+      paginated: [],
+      totalCount: [],
+      kpis: [],
+      highestValueProduct: [],
+      lowestValueProduct: [],
+      chart: [],
+    };
 
     res.json({
-      rows,
-      total,
+      rows: data.paginated,
+      total: data.totalCount[0]?.count || 0,
       page: options.page,
-      totalPages: Math.ceil(total / options.limit),
+      totalPages: Math.ceil((data.totalCount[0]?.count || 0) / options.limit),
       kpis: {
-        totalInventoryValue: kpisAgg.totalInventoryValue,
-        totalPurchaseValue: kpisAgg.totalPurchaseValue,
-        averageProductCost: kpisAgg.avgUnitCost,
-        highestValueProduct: highest.productName,
-        lowestValueProduct: lowest.productName
+        totalInventoryValue: data.kpis[0]?.totalInventoryValue || 0,
+        totalPurchaseValue: data.kpis[0]?.totalPurchaseValue || 0,
+        averageProductCost: data.kpis[0]?.avgUnitCost || 0,
+        highestValueProduct: data.highestValueProduct[0]?.productName || "N/A",
+        lowestValueProduct: data.lowestValueProduct[0]?.productName || "N/A",
       },
-      chart
+      chart: data.chart,
     });
   } catch (error) {
+    console.error("Inventory valuation error:", error);
     res.status(500).json({ message: "Inventory valuation error", error });
   }
-};
+};;
 
 // ----------------------------------------------------------------------
 // 4. Stock Movement Report (with chart: Monthly Stock In vs Stock Out)
 // ----------------------------------------------------------------------
+const MOVEMENT_FIELD_MAP: Record<string, string> = {
+  movementType: "movementType",
+  productName: "productName",
+  sku: "sku",
+};
+
 export const getStockMovementReport = async (req: Request, res: Response) => {
   try {
-    const options = buildQueryOptions(req);
-    const { skip, limit, page } = options;
+    let options = buildQueryOptions(req);
+    // Map column filters (they refer to fields in the final projected object)
+    options = mapColumnFilters(options, MOVEMENT_FIELD_MAP);
 
-    // Date filter
     const dateFilter: any = {};
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // Stock‑in (GRN)
+    // Stock‑in pipeline (GRN)
     const stockInPipeline = [
       { $unwind: "$items" },
       {
         $match: {
-          ...(Object.keys(dateFilter).length && { receivedDate: dateFilter })
-        }
-      },
-      {
-        $addFields: {
-          date: "$receivedDate",
-          productName: "$items.productName",
-          sku: "$items.sku",
-          movementType: "Purchase",
-          quantityIn: "$items.acceptedQuantity",
-          quantityOut: { $literal: 0 },
-          reference: "$grnNumber"
-        }
+          ...(Object.keys(dateFilter).length && { receivedDate: dateFilter }),
+        },
       },
       {
         $project: {
-          date: 1,
-          productName: 1,
-          sku: 1,
-          movementType: 1,
-          quantityIn: 1,
-          quantityOut: 1,
-          reference: 1,
-          _id: 0
-        }
-      }
+          date: "$receivedDate",
+          productName: "$items.productName",
+          sku: "$items.sku",
+          movementType: { $literal: "Purchase" },
+          quantityIn: "$items.acceptedQuantity",
+          quantityOut: { $literal: 0 },
+          reference: "$grnNumber",
+        },
+      },
     ];
 
-    // Stock‑out (Goods Returns)
+    // Stock‑out pipeline (Returns)
     const stockOutPipeline = [
       { $unwind: "$items" },
       {
         $match: {
-          ...(Object.keys(dateFilter).length && { returnDate: dateFilter })
-        }
-      },
-      {
-        $addFields: {
-          date: "$returnDate",
-          productName: "$items.productName",
-          sku: "$items.sku",
-          movementType: "Return",
-          quantityIn: { $literal: 0 },
-          quantityOut: "$items.returnQty",
-          reference: "$grtnNumber"
-        }
+          ...(Object.keys(dateFilter).length && { returnDate: dateFilter }),
+        },
       },
       {
         $project: {
-          date: 1,
-          productName: 1,
-          sku: 1,
-          movementType: 1,
-          quantityIn: 1,
-          quantityOut: 1,
-          reference: 1,
-          _id: 0
-        }
-      }
+          date: "$returnDate",
+          productName: "$items.productName",
+          sku: "$items.sku",
+          movementType: { $literal: "Return" },
+          quantityIn: { $literal: 0 },
+          quantityOut: "$items.returnQty",
+          reference: "$grtnNumber",
+        },
+      },
     ];
 
     const [stockIn, stockOut] = await Promise.all([
       GrnModel.aggregate(stockInPipeline),
-      GoodsReturn.aggregate(stockOutPipeline)
+      GoodsReturn.aggregate(stockOutPipeline),
     ]);
 
     let combined = [...stockIn, ...stockOut];
     combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    // ✅ Apply column filters (case‑insensitive partial match)
+    if (options.columnFilters && Object.keys(options.columnFilters).length > 0) {
+      combined = combined.filter((item) => {
+        return Object.entries(options.columnFilters).every(([field, filterValue]) => {
+          const itemValue = String(item[field] ?? "").toLowerCase();
+          return itemValue.includes(String(filterValue).toLowerCase());
+        });
+      });
+    }
+
+    // Global search (if any) – optional, but keep for backward compatibility
     if (options.search) {
       const searchRegex = new RegExp(options.search, "i");
       combined = combined.filter(
-        item => searchRegex.test(item.productName) || searchRegex.test(item.sku)
+        (item) => searchRegex.test(item.productName) || searchRegex.test(item.sku)
       );
     }
 
     const total = combined.length;
-    const paginatedRows = combined.slice(skip, skip + limit);
+    const paginatedRows = combined.slice(options.skip, options.skip + options.limit);
 
+    // KPIs
     const totalStockIn = combined.reduce((acc, i) => acc + i.quantityIn, 0);
     const totalStockOut = combined.reduce((acc, i) => acc + i.quantityOut, 0);
 
-    // Build chart: group by month
+    // Chart: group by month
     const monthlyMap = new Map<string, { StockIn: number; StockOut: number }>();
     for (const item of combined) {
       const month = new Date(item.date).toLocaleString("default", { month: "short" });
@@ -806,21 +821,21 @@ export const getStockMovementReport = async (req: Request, res: Response) => {
     const chart = Array.from(monthlyMap.entries()).map(([name, values]) => ({
       name,
       "Stock In": values.StockIn,
-      "Stock Out": values.StockOut
+      "Stock Out": values.StockOut,
     }));
 
     res.json({
       rows: paginatedRows,
       total,
-      page,
-      totalPages: Math.ceil(total / limit),
+      page: options.page,
+      totalPages: Math.ceil(total / options.limit),
       kpis: {
         totalMovements: total,
         totalStockIn,
         totalStockOut,
-        adjustments: 0
+        adjustments: 0,
       },
-      chart
+      chart,
     });
   } catch (error) {
     console.error("Stock movement error:", error);
