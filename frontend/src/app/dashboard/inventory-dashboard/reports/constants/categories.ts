@@ -138,9 +138,9 @@ export const CATEGORIES: Category[] = [
     accentText: "#4c1d95",
     glow: "0 8px 32px rgba(124,58,237,0.25)",
     tabs: [
-      { label: "Supplier History", icon: "📜" },
-      { label: "Performance", icon: "⭐" },
-      { label: "Price History", icon: "💲" },
+      { label: "Supplier History", icon: "📜", reportName: "history" },
+      { label: "Performance", icon: "⭐", reportName: "performance" },
+      { label: "Price History", icon: "💲", reportName: "price-history" },
     ],
     chartColors: ["#7c3aed", "#a78bfa", "#c4b5fd"],
   },
