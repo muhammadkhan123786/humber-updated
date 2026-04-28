@@ -19,9 +19,12 @@ export interface Tab {
   label: string;
   icon: string;
   reportName?: string;
-  filter?: any;
+  filters?: {
+    label: string;
+    field: string;
+    type: "text" | "date" | "number";
+  }[];
 }
-
 export interface Kpi {
   label: string;
   value: string;
@@ -52,21 +55,21 @@ export interface StatusStyle {
 export type StatusStyles = Record<string, StatusStyle>;
 
 // types/index.ts
-export interface Category {
-  id: string;
-  title: string;
-  icon: string;
-  desc: string;
-  grad: string;
-  gradLight: string;
-  accent: string;
-  accentLight: string;
-  accentBorder: string;
-  accentText: string;
-  glow: string;
-  tabs: { label: string; icon: string; reportName?: string, filter?: any }[];
-  chartColors: string[];
-}
+// export interface Category {
+//   id: string;
+//   title: string;
+//   icon: string;
+//   desc: string;
+//   grad: string;
+//   gradLight: string;
+//   accent: string;
+//   accentLight: string;
+//   accentBorder: string;
+//   accentText: string;
+//   glow: string;
+//   tabs: { label: string; icon: string; reportName?: string, filter?: any }[];
+//   chartColors: string[];
+// }
 
 export interface KPI {
   label: string;

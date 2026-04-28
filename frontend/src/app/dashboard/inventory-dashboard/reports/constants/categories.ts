@@ -194,7 +194,7 @@ export const CATEGORIES: Category[] = [
   ],
     chartColors: ["#2563eb", "#60a5fa", "#93c5fd"],
   },
-  
+
   {
     id: "supplier",
     title: "Supplier Reports",
@@ -208,10 +208,40 @@ export const CATEGORIES: Category[] = [
     accentText: "#4c1d95",
     glow: "0 8px 32px rgba(124,58,237,0.25)",
     tabs: [
-      { label: "Supplier History", icon: "📜", reportName: "history" },
-      { label: "Performance", icon: "⭐", reportName: "performance" },
-      { label: "Price History", icon: "💲", reportName: "price-history" },
-    ],
+    {
+      label: "Supplier History",
+      icon: "📜",
+      reportName: "supplier-history",
+      filters: [
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "PO Number", field: "poNumber", type: "text" },
+        { label: "GRN Number", field: "grnNumber", type: "text" },
+        { label: "Order Date", field: "orderDate", type: "date" },
+      ],
+    },
+
+    {
+      label: "Performance",
+      icon: "📊",
+      reportName: "performance",
+      filters: [
+        { label: "Supplier Name", field: "supplierName", type: "text" },
+      ],
+    },
+
+    {
+      label: "Price History",
+      icon: "💰",
+      reportName: "price-history",
+      filters: [
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "PO Number", field: "poNumber", type: "text" },
+        { label: "Purchase Date", field: "purchaseDate", type: "date" },
+      ],
+    },
+  ],
     chartColors: ["#7c3aed", "#a78bfa", "#c4b5fd"],
   },
   {
