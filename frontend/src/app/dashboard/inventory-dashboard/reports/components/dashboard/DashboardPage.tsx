@@ -1,23 +1,15 @@
-import { useState } from 'react';
-import { CATEGORIES, QUICK_STATS } from '../../constants/categories';
+import {  QUICK_STATS } from '../../constants/categories';
 import { CategoryCard } from './CategoryCard';
 import { DashboardCharts } from './DashboardCharts';
 import { Category } from '../../types';
 
 interface DashboardPageProps {
   onNavigate: (cat: Category) => void;
+  filtered: any
 }
 
-export function DashboardPage({ onNavigate }: DashboardPageProps) {
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
-
-  const filtered = CATEGORIES?.filter(cat => {
-    const matches = cat.title.toLowerCase().includes(search.toLowerCase()) || 
-                    cat.desc.toLowerCase().includes(search.toLowerCase());
-    return matches && (filter === "All" || cat.id === filter);
-  });
-
+export function DashboardPage({ onNavigate, filtered }: DashboardPageProps) {
+ 
   return (
     <div className="">
           {/* Main Content */}
@@ -31,7 +23,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {filtered.map((cat, i) => (
+            {filtered.map((cat: any, i: any) => (
               <CategoryCard key={cat.id} cat={cat} delay={i * 0.08} onClick={() => onNavigate(cat)} />
             ))}
           </div>

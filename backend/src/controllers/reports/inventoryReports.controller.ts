@@ -9,11 +9,13 @@ import { PipelineStage } from "mongoose";
 // ----------------------------------------------------------------------
 // 1. Stock Summary Report (with chart: monthly Purchased, Sold, Opening, Closing)
 // ----------------------------------------------------------------------
+
+
 export const getStockSummaryReport = async (req: Request, res: Response) => {
   try {
     const options = buildQueryOptions(req);
 
-    // 2. Explicitly type the base pipeline
+    // 1. Base Pipeline: Data Aggregation & Lookups
     const basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
@@ -27,6 +29,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      // Purchase Orders Lookup
       {
         $lookup: {
           from: "purchaseorders",
@@ -39,6 +42,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           as: "purchaseData",
         },
       },
+      // GRN Lookup
       {
         $lookup: {
           from: "grns",
@@ -51,6 +55,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           as: "grnData",
         },
       },
+      // Returns Lookup
       {
         $lookup: {
           from: "goodsreturns",
@@ -63,27 +68,32 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           as: "returnData",
         },
       },
+      // Project final flat structure
       {
         $project: {
           productName: 1,
           sku: "$attributes.sku",
           category: "$category.categoryName",
-          closingStock: "$attributes.stock.stockQuantity",
-          unitCost: "$attributes.pricing.costPrice",
-          stockValue: { $multiply: ["$attributes.stock.stockQuantity", "$attributes.pricing.costPrice"] },
+          closingStock: { $ifNull: ["$attributes.stock.stockQuantity", 0] },
+          unitCost: { $ifNull: ["$attributes.pricing.costPrice", 0] },
+          stockValue: { 
+            $multiply: [
+              { $ifNull: ["$attributes.stock.stockQuantity", 0] }, 
+              { $ifNull: ["$attributes.pricing.costPrice", 0] }
+            ] 
+          },
           purchasedQty: { $ifNull: [{ $arrayElemAt: ["$purchaseData.purchasedQty", 0] }, 0] },
           soldQty: { $ifNull: ["$attributes.stock.soldQty", 0] },
           returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.returnedQty", 0] }, 0] },
-          adjustmentQty: { $ifNull: ["$attributes.stock.adjustmentQty", 0] },
           createdAt: 1,
         },
       },
     ];
 
-    // Ensure applyFilters returns PipelineStage[]
-    const filteredPipeline: PipelineStage[] = applyFilters(basePipeline, options);
+    // ✅ APPLY DYNAMIC FILTERS (Applied after project so you can filter by 'category' name)
+    const filteredPipeline = applyFilters(basePipeline, options);
 
-    // 3. Explicitly type the chart pipeline
+    // 2. Chart Pipeline (Independent timeline data)
     const chartPipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$items" },
@@ -93,7 +103,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
               orderDate: {
                 ...(options.startDate && { $gte: new Date(options.startDate) }),
                 ...(options.endDate && { $lte: new Date(options.endDate) }),
-              } as any, // Cast specific date logic to any if Mongo types conflict
+              } as any,
             }
           : {},
       },
@@ -109,13 +119,12 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
         $project: {
           name: "$month",
           Purchased: 1,
-          "Opening Stock": { $literal: 0 },
-          "Sold": { $literal: 0 },
-          "Closing Stock": { $literal: 0 },
+          "Sold": { $literal: 0 }, // Placeholder for comparison
         },
       },
     ];
 
+    // 3. Parallel Execution for Speed
     const [mainResult, chartResult] = await Promise.all([
       ProductModal.aggregate([
         ...filteredPipeline,
@@ -130,7 +139,6 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
                   totalProducts: { $sum: 1 },
                   availableStock: { $sum: "$closingStock" },
                   incomingStock: { $sum: "$purchasedQty" },
-                  outgoingStock: { $sum: "$soldQty" },
                   totalInventoryValue: { $sum: "$stockValue" },
                 },
               },
@@ -142,29 +150,29 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
-    const rows = data.paginated;
     const total = data.totalCount[0]?.count || 0;
-    const kpis = data.kpis[0] || {
-      totalProducts: 0,
-      availableStock: 0,
-      incomingStock: 0,
-      outgoingStock: 0,
-      totalInventoryValue: 0,
-    };
 
     res.json({
-      rows,
+      rows: data.paginated,
       total,
       page: options.page,
       totalPages: Math.ceil(total / options.limit),
-      kpis,
+      kpis: data.kpis[0] || {
+        totalProducts: 0,
+        availableStock: 0,
+        incomingStock: 0,
+        totalInventoryValue: 0
+      },
       chart: chartResult,
     });
+
   } catch (error) {
     console.error("Stock Summary Error:", error);
-    res.status(500).json({ message: "Stock summary report error", error });
+    res.status(500).json({ message: "Internal server error during report generation", error });
   }
 };
+
+
 
 // ----------------------------------------------------------------------
 // 2. Low Stock Report (with chart: Low Stock & Critical by category)

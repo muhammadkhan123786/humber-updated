@@ -99,11 +99,51 @@ export const CATEGORIES: Category[] = [
     accentText: "#065f46",
     glow: "0 8px 32px rgba(5,150,105,0.25)",
     tabs: [
-      { label: "Stock Summary", icon: "📊", reportName: "stock-summary" },
-      { label: "Low Stock", icon: "⚠️", reportName: "low-stock" },
-      { label: "Valuation", icon: "💎", reportName: "valuation" },
-      { label: "Movement", icon: "🔄", reportName: "movement" },
-    ],
+    {
+      label: "Stock Summary",
+      icon: "📊",
+      reportName: "stock-summary",
+      filters: [
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "Closing Stock", field: "closingStock", type: "number" },
+        { label: "Category", field: "category", type: "text" },
+      ],
+    },
+    {
+      label: "Low Stock",
+      icon: "⚠️",
+      reportName: "low-stock",
+      filters: [
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "Reorder Qty", field: "reorderQty", type: "number" },
+        { label: "Stock Status", field: "stockStatus", type: "text" },
+      ],
+    },
+    {
+      label: "Valuation",
+      icon: "💎",
+      reportName: "valuation",
+      filters: [
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "Category", field: "category", type: "text" },
+        { label: "Inventory Value", field: "inventoryValue", type: "number" },
+      ],
+    },
+    {
+      label: "Movement",
+      icon: "🔄",
+      reportName: "movement",
+      filters: [
+        { label: "Movement Type", field: "movementType", type: "text" },
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+      ],
+    },
+  ],
+   
     chartColors: ["#059669", "#34d399", "#6ee7b7"],
   },
   {
