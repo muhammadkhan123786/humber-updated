@@ -1,15 +1,14 @@
 // components/reports/KPICard.tsx
 "use client";
 
-import { TrendingUp, TrendingDown, Package, DollarSign, AlertTriangle, Truck, ShoppingCart, Boxes, Target, MinusCircle, RefreshCw, Crown, Star, Activity, PlusCircle, Edit3, Clock, CheckCircle, XCircle, Building2, FileText, Award } from "lucide-react";
+import { TrendingUp, Package, DollarSign, AlertTriangle, Truck, ShoppingCart, Boxes, Activity, Edit3, Clock, CheckCircle, XCircle, Building2, FileText, Award } from "lucide-react";
 
 interface KPI {
   label: string;
   value: string | number;
-  change?: string;        // e.g., "+12%" or "-3%"
-  up?: boolean;           // true for positive trend, false for negative
-  icon?: string | React.ReactNode; // can be string emoji or React node
-  sparkline?: number[];
+  change?: string;
+  up?: boolean;
+  icon?: string | React.ReactNode;
 }
 
 interface KPICardProps {
@@ -41,7 +40,7 @@ const getIconComponent = (label: string, fallbackIcon?: string | React.ReactNode
   if (lowerLabel.includes('supplier')) return <Building2 size={18} />;
   if (lowerLabel.includes('order')) return <FileText size={18} />;
   if (lowerLabel.includes('rating')) return <Award size={18} />;
-  return <TrendingUp size={18} />; // default
+  return <TrendingUp size={18} />;
 };
 
 // Parse change string like "+12%" or "-3%" into numeric change and up flag
@@ -55,37 +54,18 @@ const parseChange = (changeStr?: string): { numericChange?: number; up?: boolean
   return { numericChange: num, up };
 };
 
-// Generate a simple sparkline if not provided (based on label and value)
-const getDefaultSparkline = (label: string, value: string | number): number[] => {
-  // Just a simple ascending/descending pattern
-  const base = typeof value === 'number' ? value : parseFloat(String(value).replace(/[^0-9.-]/g, ''));
-  if (isNaN(base)) return [40, 45, 48, 52, 55, 60];
-  const step = base / 6;
-  return [base - step*3, base - step*2, base - step, base, base + step, base + step*1.5].map(v => Math.max(0, v));
-};
-
 export function KpiCard({ kpi, accent, accentLight, delay }: KPICardProps) {
-  // If change is not provided but we have a numeric value, we can try to infer
-  let changeDisplay = kpi.change;
+  const changeDisplay = kpi.change;
   let isUp = kpi.up;
-  let numericChange = 0;
 
-  if (!changeDisplay && typeof kpi.value === 'string' && kpi.value.includes('$')) {
-    // No change info, skip
-  } else if (!changeDisplay) {
-    // No change, hide indicator
-  } else {
+  if (changeDisplay) {
     const parsed = parseChange(changeDisplay);
-    if (parsed.numericChange !== undefined) {
-      numericChange = parsed.numericChange;
-      if (isUp === undefined) isUp = parsed.up;
+    if (parsed.numericChange !== undefined && isUp === undefined) {
+      isUp = parsed.up;
     }
   }
 
   const iconNode = getIconComponent(kpi.label, kpi.icon);
-  const sparklineData = kpi.sparkline || getDefaultSparkline(kpi.label, kpi.value);
-
-  // Format value for display
   const displayValue = typeof kpi.value === 'number' ? kpi.value.toLocaleString() : kpi.value;
 
   return (
@@ -168,18 +148,6 @@ export function KpiCard({ kpi, accent, accentLight, delay }: KPICardProps) {
           <span style={{ fontSize: 10, color: "#94a3b8" }}>vs previous period</span>
         </div>
       )}
-      {/* Mini sparkline (optional) */}
-      <div style={{ marginTop: 12 }}>
-        <svg width="100%" height="24" viewBox="0 0 100 24" preserveAspectRatio="none">
-          <polyline
-            points={sparklineData.map((v, i) => `${(i / (sparklineData.length - 1)) * 100},${24 - (v / Math.max(...sparklineData)) * 18}`).join(" ")}
-            fill="none"
-            stroke={accent}
-            strokeWidth="1.5"
-            opacity="0.5"
-          />
-        </svg>
-      </div>
     </div>
   );
 }
