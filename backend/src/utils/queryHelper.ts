@@ -21,31 +21,47 @@
 //   };
 // };
 
-
 export const buildQueryOptions = (req: any) => {
-  const page = parseInt(req.query.page) || 1;
+  const page  = parseInt(req.query.page)  || 1;
   const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+  const skip  = (page - 1) * limit;
 
-  // parse columnFilters from JSON string (sent by your table hook)
-  let columnFilters = {};
+  let columnFilters: Record<string, string> = {};
+
   try {
     if (req.query.columnFilters) {
-      columnFilters = JSON.parse(req.query.columnFilters);
+      const raw = req.query.columnFilters;
+
+      if (typeof raw === "string" && raw.startsWith("{")) {
+        // ✅ Properly JSON stringified object from frontend
+        columnFilters = JSON.parse(raw);
+      } else if (typeof raw === "object" && !Array.isArray(raw)) {
+        // Already an object (edge case with some parsers)
+        columnFilters = raw;
+      }
+
+      // 🔍 Debug: remove in production
+      console.log("✅ Parsed columnFilters:", columnFilters);
     }
-  } catch (e) {
+  } catch (err) {
+    console.error("❌ Failed to parse columnFilters:", req.query.columnFilters, err);
     columnFilters = {};
   }
 
-  return {
+  const options = {
     page,
     limit,
     skip,
-    search: req.query.search || "",
-    searchField: req.query.searchField || "",
-    startDate: req.query.startDate,
-    endDate: req.query.endDate,
-    columnFilters, // New: supports multiple column searches
+    search:      req.query.search      || "",
+    searchField: req.query.searchField || "productName",
+    startDate:   req.query.startDate,
+    endDate:     req.query.endDate,
+    columnFilters,
   };
+
+  // 🔍 Debug: remove in production
+  console.log("📦 buildQueryOptions result:", options);
+
+  return options;
 };
 

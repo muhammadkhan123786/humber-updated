@@ -56,12 +56,13 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
     isExporting,
     setColumnFilter, 
   clearColumnFilters,
+  columnFilters,
   } = useModuleReport(cat.id, reportName);
 
   const apiRows = data?.rows ?? [];
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
-  console.log("data", data);
+ 
 
   const headers = useMemo<string[]>(() => {
     if (apiRows.length === 0) return [];
@@ -343,6 +344,8 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
       accentColor={cat.accent}
       accentLight={cat.accentLight}
       isFetching={isFetching}
+      columnFilters={columnFilters}
+       onClearAllFilters={clearColumnFilters}
       onColumnFilterChange={setColumnFilter} // From Hook
       onClearFilters={clearColumnFilters}
       dateRange={{ start: filters.startDate ?? "", end: filters.endDate ?? "" }}

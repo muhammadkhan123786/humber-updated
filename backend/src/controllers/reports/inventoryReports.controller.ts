@@ -11,15 +11,205 @@ import { PipelineStage } from "mongoose";
 // ----------------------------------------------------------------------
 
 
+// export const getStockSummaryReport = async (req: Request, res: Response) => {
+//   try {
+//     const options = buildQueryOptions(req);
+
+//     // 1. Base Pipeline: Data Aggregation & Lookups
+//     const basePipeline: PipelineStage[] = [
+//       { $match: { isDeleted: false } },
+//       { $unwind: "$attributes" },
+//       { $unwind: "$attributes.pricing" },
+//       {
+//         $lookup: {
+//           from: "categories",
+//           localField: "categoryId",
+//           foreignField: "_id",
+//           as: "category",
+//         },
+//       },
+//       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+//       // Purchase Orders Lookup
+//       {
+//         $lookup: {
+//           from: "purchaseorders",
+//           let: { sku: "$attributes.sku" },
+//           pipeline: [
+//             { $unwind: "$items" },
+//             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
+//             { $group: { _id: null, purchasedQty: { $sum: "$items.quantity" } } },
+//           ],
+//           as: "purchaseData",
+//         },
+//       },
+//       // GRN Lookup
+//       {
+//         $lookup: {
+//           from: "grns",
+//           let: { sku: "$attributes.sku" },
+//           pipeline: [
+//             { $unwind: "$items" },
+//             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
+//             { $group: { _id: null, receivedQty: { $sum: "$items.acceptedQuantity" } } },
+//           ],
+//           as: "grnData",
+//         },
+//       },
+//       // Returns Lookup
+//       {
+//         $lookup: {
+//           from: "goodsreturns",
+//           let: { sku: "$attributes.sku" },
+//           pipeline: [
+//             { $unwind: "$items" },
+//             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
+//             { $group: { _id: null, returnedQty: { $sum: "$items.returnQty" } } },
+//           ],
+//           as: "returnData",
+//         },
+//       },
+//       // Project final flat structure
+//       {
+//         $project: {
+//           productName: 1,
+//           sku: "$attributes.sku",
+//           category: "$category.categoryName",
+//           closingStock: { $ifNull: ["$attributes.stock.stockQuantity", 0] },
+//           unitCost: { $ifNull: ["$attributes.pricing.costPrice", 0] },
+//           stockValue: { 
+//             $multiply: [
+//               { $ifNull: ["$attributes.stock.stockQuantity", 0] }, 
+//               { $ifNull: ["$attributes.pricing.costPrice", 0] }
+//             ] 
+//           },
+//           purchasedQty: { $ifNull: [{ $arrayElemAt: ["$purchaseData.purchasedQty", 0] }, 0] },
+//           soldQty: { $ifNull: ["$attributes.stock.soldQty", 0] },
+//           returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.returnedQty", 0] }, 0] },
+//           createdAt: 1,
+//         },
+//       },
+//     ];
+
+//     // ✅ APPLY DYNAMIC FILTERS (Applied after project so you can filter by 'category' name)
+//     const filteredPipeline = applyFilters(basePipeline, options);
+
+//     // 2. Chart Pipeline (Independent timeline data)
+//     const chartPipeline: PipelineStage[] = [
+//       { $match: { isDeleted: false } },
+//       { $unwind: "$items" },
+//       {
+//         $match: (options.startDate || options.endDate)
+//           ? {
+//               orderDate: {
+//                 ...(options.startDate && { $gte: new Date(options.startDate) }),
+//                 ...(options.endDate && { $lte: new Date(options.endDate) }),
+//               } as any,
+//             }
+//           : {},
+//       },
+//       {
+//         $group: {
+//           _id: { $month: "$orderDate" },
+//           month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+//           Purchased: { $sum: "$items.quantity" },
+//         },
+//       },
+//       { $sort: { _id: 1 } },
+//       {
+//         $project: {
+//           name: "$month",
+//           Purchased: 1,
+//           "Sold": { $literal: 0 }, // Placeholder for comparison
+//         },
+//       },
+//     ];
+
+//     // 3. Parallel Execution for Speed
+//     const [mainResult, chartResult] = await Promise.all([
+//       ProductModal.aggregate([
+//         ...filteredPipeline,
+//         {
+//           $facet: {
+//             paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+//             totalCount: [{ $count: "count" }],
+//             kpis: [
+//               {
+//                 $group: {
+//                   _id: null,
+//                   totalProducts: { $sum: 1 },
+//                   availableStock: { $sum: "$closingStock" },
+//                   incomingStock: { $sum: "$purchasedQty" },
+//                   totalInventoryValue: { $sum: "$stockValue" },
+//                 },
+//               },
+//             ],
+//           },
+//         },
+//       ]),
+//       PurchaseOrder.aggregate(chartPipeline),
+//     ]);
+
+//     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
+//     const total = data.totalCount[0]?.count || 0;
+
+//     res.json({
+//       rows: data.paginated,
+//       total,
+//       page: options.page,
+//       totalPages: Math.ceil(total / options.limit),
+//       kpis: data.kpis[0] || {
+//         totalProducts: 0,
+//         availableStock: 0,
+//         incomingStock: 0,
+//         totalInventoryValue: 0
+//       },
+//       chart: chartResult,
+//     });
+
+//   } catch (error) {
+//     console.error("Stock Summary Error:", error);
+//     res.status(500).json({ message: "Internal server error during report generation", error });
+//   }
+// };
+
+// ✅ FIX 2: Map frontend field names → actual MongoDB paths (post-unwind, pre-$project)
+const STOCK_FIELD_MAP: Record<string, string> = {
+  productName:  "productName",
+  sku:          "attributes.sku",
+  category:     "category.categoryName",
+  closingStock: "attributes.stock.stockQuantity",
+  unitCost:     "attributes.pricing.costPrice",
+};
+
 export const getStockSummaryReport = async (req: Request, res: Response) => {
   try {
     const options = buildQueryOptions(req);
 
-    // 1. Base Pipeline: Data Aggregation & Lookups
-    const basePipeline: PipelineStage[] = [
+    // Map column filter keys to real MongoDB field paths
+    const mappedColumnFilters: Record<string, string> = {};
+    Object.entries(options.columnFilters || {}).forEach(([field, value]) => {
+      const mappedField = STOCK_FIELD_MAP[field] ?? field;
+      mappedColumnFilters[mappedField] = value as string;
+    });
+
+    // Map the global searchField too
+    const mappedSearchField =
+      STOCK_FIELD_MAP[options.searchField] ?? options.searchField;
+
+    const mappedOptions = {
+      ...options,
+      columnFilters: mappedColumnFilters,
+      searchField: mappedSearchField,
+    };
+
+    // 1. BASE PIPELINE
+    let basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
+
       { $unwind: "$attributes" },
       { $unwind: "$attributes.pricing" },
+
+      // Category Lookup
       {
         $lookup: {
           from: "categories",
@@ -29,7 +219,8 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-      // Purchase Orders Lookup
+
+      // Purchase Orders
       {
         $lookup: {
           from: "purchaseorders",
@@ -37,12 +228,18 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           pipeline: [
             { $unwind: "$items" },
             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
-            { $group: { _id: null, purchasedQty: { $sum: "$items.quantity" } } },
+            {
+              $group: {
+                _id: null,
+                purchasedQty: { $sum: "$items.quantity" },
+              },
+            },
           ],
           as: "purchaseData",
         },
       },
-      // GRN Lookup
+
+      // GRN
       {
         $lookup: {
           from: "grns",
@@ -50,12 +247,18 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           pipeline: [
             { $unwind: "$items" },
             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
-            { $group: { _id: null, receivedQty: { $sum: "$items.acceptedQuantity" } } },
+            {
+              $group: {
+                _id: null,
+                receivedQty: { $sum: "$items.acceptedQuantity" },
+              },
+            },
           ],
           as: "grnData",
         },
       },
-      // Returns Lookup
+
+      // Returns
       {
         $lookup: {
           from: "goodsreturns",
@@ -63,54 +266,81 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           pipeline: [
             { $unwind: "$items" },
             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
-            { $group: { _id: null, returnedQty: { $sum: "$items.returnQty" } } },
+            {
+              $group: {
+                _id: null,
+                returnedQty: { $sum: "$items.returnQty" },
+              },
+            },
           ],
           as: "returnData",
         },
       },
-      // Project final flat structure
-      {
-        $project: {
-          productName: 1,
-          sku: "$attributes.sku",
-          category: "$category.categoryName",
-          closingStock: { $ifNull: ["$attributes.stock.stockQuantity", 0] },
-          unitCost: { $ifNull: ["$attributes.pricing.costPrice", 0] },
-          stockValue: { 
-            $multiply: [
-              { $ifNull: ["$attributes.stock.stockQuantity", 0] }, 
-              { $ifNull: ["$attributes.pricing.costPrice", 0] }
-            ] 
-          },
-          purchasedQty: { $ifNull: [{ $arrayElemAt: ["$purchaseData.purchasedQty", 0] }, 0] },
-          soldQty: { $ifNull: ["$attributes.stock.soldQty", 0] },
-          returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.returnedQty", 0] }, 0] },
-          createdAt: 1,
-        },
-      },
     ];
 
-    // ✅ APPLY DYNAMIC FILTERS (Applied after project so you can filter by 'category' name)
-    const filteredPipeline = applyFilters(basePipeline, options);
+    // 2. ✅ APPLY FILTERS — after all lookups/unwinds, before $project
+    //    applyFilters now uses push(), so this is safe
+    basePipeline = applyFilters(basePipeline, mappedOptions);
 
-    // 2. Chart Pipeline (Independent timeline data)
+    // 3. FINAL PROJECT
+    basePipeline.push({
+      $project: {
+        productName: 1,
+        sku: "$attributes.sku",
+        category: "$category.categoryName",
+
+        closingStock: {
+          $ifNull: ["$attributes.stock.stockQuantity", 0],
+        },
+
+        unitCost: {
+          $ifNull: ["$attributes.pricing.costPrice", 0],
+        },
+
+        stockValue: {
+          $multiply: [
+            { $ifNull: ["$attributes.stock.stockQuantity", 0] },
+            { $ifNull: ["$attributes.pricing.costPrice", 0] },
+          ],
+        },
+
+        purchasedQty: {
+          $ifNull: [{ $arrayElemAt: ["$purchaseData.purchasedQty", 0] }, 0],
+        },
+
+        soldQty: {
+          $ifNull: ["$attributes.stock.soldQty", 0],
+        },
+
+        returnedQty: {
+          $ifNull: [{ $arrayElemAt: ["$returnData.returnedQty", 0] }, 0],
+        },
+
+        createdAt: 1,
+      },
+    });
+
+    // 4. CHART PIPELINE (unchanged)
     const chartPipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$items" },
       {
-        $match: (options.startDate || options.endDate)
-          ? {
-              orderDate: {
-                ...(options.startDate && { $gte: new Date(options.startDate) }),
-                ...(options.endDate && { $lte: new Date(options.endDate) }),
-              } as any,
-            }
-          : {},
+        $match:
+          options.startDate || options.endDate
+            ? {
+                orderDate: {
+                  ...(options.startDate && { $gte: new Date(options.startDate) }),
+                  ...(options.endDate && { $lte: new Date(options.endDate) }),
+                },
+              }
+            : {},
       },
       {
         $group: {
           _id: { $month: "$orderDate" },
-          month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+          month: {
+            $first: { $dateToString: { format: "%b", date: "$orderDate" } },
+          },
           Purchased: { $sum: "$items.quantity" },
         },
       },
@@ -119,26 +349,29 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
         $project: {
           name: "$month",
           Purchased: 1,
-          "Sold": { $literal: 0 }, // Placeholder for comparison
+          Sold: { $literal: 0 },
         },
       },
     ];
 
-    // 3. Parallel Execution for Speed
+    // 5. EXECUTION
     const [mainResult, chartResult] = await Promise.all([
       ProductModal.aggregate([
-        ...filteredPipeline,
+        ...basePipeline,
         {
           $facet: {
-            paginated: [{ $skip: options.skip }, { $limit: options.limit }],
+            paginated: [
+              { $skip: options.skip },
+              { $limit: options.limit },
+            ],
             totalCount: [{ $count: "count" }],
             kpis: [
               {
                 $group: {
                   _id: null,
-                  totalProducts: { $sum: 1 },
-                  availableStock: { $sum: "$closingStock" },
-                  incomingStock: { $sum: "$purchasedQty" },
+                  totalProducts:       { $sum: 1 },
+                  availableStock:      { $sum: "$closingStock" },
+                  incomingStock:       { $sum: "$purchasedQty" },
                   totalInventoryValue: { $sum: "$stockValue" },
                 },
               },
@@ -146,6 +379,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           },
         },
       ]),
+
       PurchaseOrder.aggregate(chartPipeline),
     ]);
 
@@ -161,14 +395,16 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
         totalProducts: 0,
         availableStock: 0,
         incomingStock: 0,
-        totalInventoryValue: 0
+        totalInventoryValue: 0,
       },
       chart: chartResult,
     });
-
   } catch (error) {
     console.error("Stock Summary Error:", error);
-    res.status(500).json({ message: "Internal server error during report generation", error });
+    res.status(500).json({
+      message: "Internal server error during report generation",
+      error,
+    });
   }
 };
 

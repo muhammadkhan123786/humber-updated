@@ -66,7 +66,7 @@ export function ProfessionalTable({
   const [sortConfig, setSortConfig] = useState<{ key: number; direction: "asc" | "desc" } | null>(null);
 
 
-  console.log("filtersConfig", filtersConfig)
+ 
   const sortedRows = useMemo(() => {
     if (!sortConfig || !rows.length) return rows;
     return [...rows].sort((a, b) => {

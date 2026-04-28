@@ -33,29 +33,34 @@ export const applyFilters = (pipeline: any[], options: any) => {
 
   const matchStage: any = {};
 
-  // 1. Global Search (Existing logic)
+  // 1. Global search
   if (search && searchField) {
     matchStage[searchField] = { $regex: search, $options: "i" };
   }
 
-  // 2. Dynamic Column Filters (New professional logic)
+  // 2. Column filters
   if (columnFilters && Object.keys(columnFilters).length > 0) {
     Object.entries(columnFilters).forEach(([field, value]) => {
-      if (value) {
-        // Use regex for strings, exact match for others
-        matchStage[field] = { $regex: String(value), $options: "i" };
+      if (value !== undefined && value !== "") {
+        // Numeric fields: use $gte/$lte range, not regex
+        const num = parseFloat(value as string);
+        if (!isNaN(num)) {
+          matchStage[field] = { $gte: num };
+        } else {
+          matchStage[field] = { $regex: String(value), $options: "i" };
+        }
       }
     });
   }
 
-  // 3. Date Range
-  if (startDate && endDate) {
-    matchStage.createdAt = {
-      $gte: new Date(startDate),
-      $lte: new Date(endDate),
-    };
+  // 3. Date filter
+  if (startDate || endDate) {
+    matchStage.createdAt = {};
+    if (startDate) matchStage.createdAt.$gte = new Date(startDate);
+    if (endDate) matchStage.createdAt.$lte = new Date(endDate);
   }
 
+  // ✅ FIX 1: push() not unshift() — must run AFTER lookups/unwinds
   if (Object.keys(matchStage).length > 0) {
     pipeline.push({ $match: matchStage });
   }

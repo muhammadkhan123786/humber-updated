@@ -159,12 +159,42 @@ export const CATEGORIES: Category[] = [
     accentText: "#1e40af",
     glow: "0 8px 32px rgba(37,99,235,0.25)",
     tabs: [
-      { label: "Purchase Orders", icon: "📋", reportName: "purchase-orders" },
-      { label: "Goods Received", icon: "📥", reportName: "goods-received" },
-      { label: "Summary", icon: "📈", reportName: "summary" },
-    ],
+    {
+      label: "Purchase Orders",
+      icon: "📋",
+      reportName: "purchase-orders",
+      filters: [
+        { label: "Order Date", field: "orderDate", type: "date" },
+        { label: "Status", field: "status", type: "text" },
+        { label: "Supplier", field: "supplier", type: "text" },
+        { label: "PO Number", field: "poNumber", type: "text" },
+      ],
+    },
+    {
+      label: "Goods Received",
+      icon: "📥",
+      reportName: "goods-received",
+      filters: [
+        { label: "GRN No", field: "grnNo", type: "text" },
+        { label: "Total Cost", field: "totalCost", type: "number" },
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "Supplier", field: "supplier", type: "text" },
+      ],
+    },
+    {
+      label: "Summary",
+      icon: "📈",
+      reportName: "summary",
+      filters: [
+        { label: "Total Quantity Purchased", field: "totalQuantityPurchased", type: "number" },
+        { label: "Supplier", field: "supplier", type: "text" },
+      ],
+    },
+  ],
     chartColors: ["#2563eb", "#60a5fa", "#93c5fd"],
   },
+  
   {
     id: "supplier",
     title: "Supplier Reports",

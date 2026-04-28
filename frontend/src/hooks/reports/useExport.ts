@@ -127,7 +127,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { reportService, ReportFilters } from "@/services/reportService";
 import { dataService } from "@/services/dataService";
 import { useDebounce } from "./useDebounce";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { toast } from "react-hot-toast";
 
 export function useModuleReport(
@@ -135,7 +135,7 @@ export function useModuleReport(
   reportName: string | null,
   initialFilters?: Partial<ReportFilters>
 ) {
-  // Base filters (global search, date, pagination)
+  // ─── MAIN FILTER STATE ────────────────────────────────────────────────────
   const [filters, setFilters] = useState<ReportFilters>({
     search: "",
     startDate: "",
@@ -145,23 +145,21 @@ export function useModuleReport(
     ...initialFilters,
   });
 
-  // NEW: columnFilters = { productName: "abc", sku: "123", ... }
+  // ✅ FIX 3: columnFilters is its own state — setColumnFilter must update THIS
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
 
-  // Debounce search & date range (as before)
-  const debouncedSearch = useDebounce(filters.search, 500);
-  const debouncedStart  = useDebounce(filters.startDate, 400);
-  const debouncedEnd    = useDebounce(filters.endDate, 400);
+  // ─── DEBOUNCES ────────────────────────────────────────────────────────────
+  const debouncedSearch        = useDebounce(filters.search, 500);
+  const debouncedStart         = useDebounce(filters.startDate, 400);
+  const debouncedEnd           = useDebounce(filters.endDate, 400);
+  const debouncedColumnFilters = useDebounce(JSON.stringify(columnFilters), 500);
 
-  // NEW: debounce columnFilters because we don't want to call API on every keystroke
-  const debouncedColumnFilters = useDebounce(columnFilters, 500);
+  const parsedColumnFilters = useMemo(
+    () => columnFilters,
+    [columnFilters]
+  );
 
-  // Reset to page 1 when any filter changes
-  useEffect(() => {
-    setFilters(prev => ({ ...prev, page: 1 }));
-  }, [debouncedSearch, debouncedStart, debouncedEnd, debouncedColumnFilters]);
-
-  // ── Data query ────────────────────────────────────────────────────────────
+  // ─── QUERY ────────────────────────────────────────────────────────────────
   const query = useQuery({
     queryKey: [
       "module-report",
@@ -170,28 +168,29 @@ export function useModuleReport(
       debouncedSearch,
       debouncedStart,
       debouncedEnd,
-      debouncedColumnFilters,       // 👈 columnFilters added to cache key
+      debouncedColumnFilters,   // ← changes when columnFilters change
       filters.page,
       filters.limit,
     ],
+
     queryFn: () =>
       reportService.fetchReport(module, reportName!, {
-        search:         debouncedSearch,
-        startDate:      debouncedStart,
-        endDate:        debouncedEnd,
-        page:           filters.page,
-        limit:          filters.limit,
-        columnFilters:  debouncedColumnFilters,   // 👈 send to API
-        // If you also need a dedicated global searchField, add it here
-        searchField:    "productName",            // example: global search on productName
+        search:        debouncedSearch,
+        startDate:     debouncedStart,
+        endDate:       debouncedEnd,
+        page:          filters.page,
+        limit:         filters.limit,
+        columnFilters: parsedColumnFilters,  // ← now always up-to-date
+        searchField:   "productName",
       }),
-    enabled: !!module && !!reportName,
-    placeholderData: (prev: any) => prev,
-    staleTime: 60_000,
-    gcTime:    5 * 60_000,
+
+    enabled:         !!module && !!reportName,
+    placeholderData: (prev) => prev,
+    staleTime:       60_000,
+    gcTime:          5 * 60_000,
   });
 
-  // ── Export mutation (unchanged) ───────────────────────────────────────────
+  // ─── EXPORT ───────────────────────────────────────────────────────────────
   const exportMutation = useMutation({
     mutationFn: ({
       format,
@@ -217,54 +216,54 @@ export function useModuleReport(
     },
   });
 
-  // ── Filter helpers ────────────────────────────────────────────────────────
-  const setSearch = (search: string) =>
-    setFilters(prev => ({ ...prev, search, page: 1 }));
+  // ─── FILTER HANDLERS ──────────────────────────────────────────────────────
+  const setSearch = (value: string) =>
+    setFilters((prev) => ({ ...prev, search: value, page: 1 }));
 
   const setDateRange = (startDate: string, endDate: string) =>
-    setFilters(prev => ({ ...prev, startDate, endDate, page: 1 }));
+    setFilters((prev) => ({ ...prev, startDate, endDate, page: 1 }));
 
-  const setPage  = (page: number)  => setFilters(prev => ({ ...prev, page }));
-  const setLimit = (limit: number) => setFilters(prev => ({ ...prev, limit, page: 1 }));
+  const setPage  = (page: number)  => setFilters((prev) => ({ ...prev, page }));
+  const setLimit = (limit: number) => setFilters((prev) => ({ ...prev, limit, page: 1 }));
 
-  // NEW: Update a single column filter (e.g., when user types in a column's search box)
-  const setColumnFilter = useCallback((column: string, value: string) => {
-    setColumnFilters(prev => {
-      if (value === "") {
-        const { [column]: _, ...rest } = prev;
-        return rest;
+  // ✅ FIX 3 (continued): update columnFilters state, NOT filters state
+  const setColumnFilter = useCallback((field: string, value: string) => {
+    setColumnFilters((prev) => {
+      const next = { ...prev };
+      if (value !== "") {
+        next[field] = value;
+      } else {
+        delete next[field]; // clean up empty values
       }
-      return { ...prev, [column]: value };
+      return next;
     });
+    setFilters((prev) => ({ ...prev, page: 1 })); // reset page
   }, []);
 
-  // Optional: clear all column filters at once
   const clearColumnFilters = useCallback(() => {
     setColumnFilters({});
+    setFilters((prev) => ({ ...prev, page: 1 }));
   }, []);
 
+  // ─── RETURN ───────────────────────────────────────────────────────────────
   return {
-    // data
-    data:       query.data,
-    isLoading:  query.isLoading,
-    isFetching: query.isFetching,
-    error:      query.error,
-    total:      query.data?.total      ?? 0,
-    totalPages: query.data?.totalPages ?? 1,
+    data:        query.data,
+    isLoading:   query.isLoading,
+    isFetching:  query.isFetching,
+    error:       query.error,
+    total:       query.data?.total    ?? 0,
+    totalPages:  query.data?.totalPages ?? 1,
 
-    // filters state & setters
     filters,
+    columnFilters,           // ✅ expose so CategoryPage can pass it to the table
     setSearch,
     setDateRange,
     setPage,
     setLimit,
 
-    // NEW: column filters
-    columnFilters,
     setColumnFilter,
     clearColumnFilters,
 
-    // export
     exportFile:  exportMutation.mutate,
     isExporting: exportMutation.isPending,
 
