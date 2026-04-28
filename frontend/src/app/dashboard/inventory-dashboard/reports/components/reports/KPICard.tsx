@@ -1,4 +1,4 @@
-// components/reports/KPICard.tsx
+
 "use client";
 
 import { TrendingUp, Package, DollarSign, AlertTriangle, Truck, ShoppingCart, Boxes, Activity, Edit3, Clock, CheckCircle, XCircle, Building2, FileText, Award } from "lucide-react";
