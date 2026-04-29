@@ -1,101 +1,3 @@
-// // components/reports/ReportChart.tsx
-// "use client";
-
-// import {
-//   BarChart,
-//   Bar,
-//   LineChart,
-//   Line,
-//   XAxis,
-//   YAxis,
-//   CartesianGrid,
-//   Tooltip,
-//   Legend,
-//   ResponsiveContainer,
-// } from "recharts";
-
-// interface ChartData {
-//   labels: string[];
-//   datasets: {
-//     label: string;
-//     data: number[];
-//     color: string;
-//   }[];
-// }
-
-// interface ReportChartProps {
-//   data: ChartData;
-// }
-
-// export default function ReportChart({ data }: ReportChartProps) {
-//   const chartData = data.labels.map((label, idx) => {
-//     const point: any = { name: label };
-//     data.datasets.forEach((dataset) => {
-//       point[dataset.label] = dataset.data[idx];
-//     });
-//     return point;
-//   });
-
-//   const isBarChart = data.datasets.length === 1 || data.datasets[0]?.label === "Low Stock Items";
-
-//   return (
-//     <ResponsiveContainer width="100%" height={300}>
-//       {isBarChart ? (
-//         <BarChart data={chartData}>
-//           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-//           <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-//           <YAxis stroke="#64748b" fontSize={12} />
-//           <Tooltip
-//             contentStyle={{
-//               backgroundColor: "white",
-//               border: "1px solid #e2e8f0",
-//               borderRadius: "8px",
-//               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-//             }}
-//           />
-//           <Legend />
-//           {data.datasets.map((dataset, idx) => (
-//             <Bar
-//               key={idx}
-//               dataKey={dataset.label}
-//               fill={dataset.color}
-//               radius={[4, 4, 0, 0]}
-//             />
-//           ))}
-//         </BarChart>
-//       ) : (
-//         <LineChart data={chartData}>
-//           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-//           <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-//           <YAxis stroke="#64748b" fontSize={12} />
-//           <Tooltip
-//             contentStyle={{
-//               backgroundColor: "white",
-//               border: "1px solid #e2e8f0",
-//               borderRadius: "8px",
-//               boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-//             }}
-//           />
-//           <Legend />
-//           {data.datasets.map((dataset, idx) => (
-//             <Line
-//               key={idx}
-//               type="monotone"
-//               dataKey={dataset.label}
-//               stroke={dataset.color}
-//               strokeWidth={2}
-//               dot={{ fill: dataset.color, r: 4 }}
-//             />
-//           ))}
-//         </LineChart>
-//       )}
-//     </ResponsiveContainer>
-//   );
-// }
-
-
-
-
 // components/reports/ChartCard.tsx
 "use client";
 
@@ -112,8 +14,24 @@ interface ChartCardProps {
 export function ChartCard({ title, chartData, chartColors, marginBottom = 20 }: ChartCardProps) {
   const [chartType, setChartType] = useState<"bar" | "line">("bar");
 
+  // Guard against empty data
+  if (!chartData.length) {
+    return (
+      <div style={{ background: "#fff", borderRadius: 20, padding: "20px 24px", marginBottom }}>
+        <p style={{ color: "#94a3b8", textAlign: "center" }}>No data available</p>
+      </div>
+    );
+  }
+
   const chartKeys = Object.keys(chartData[0] || {}).filter((k) => k !== "name");
-  const maxValue = Math.max(...chartData.flatMap((d) => chartKeys.map((k) => Number(d[k]))));
+  const allValues = chartData.flatMap((d) => chartKeys.map((k) => Number(d[k]) || 0));
+  const maxValue = Math.max(...allValues, 0); // ensure maxValue is at least 0
+
+  // Helper for safe y-coordinate calculation
+  const getY = (value: number) => {
+    if (maxValue === 0) return 200; // baseline when all values are zero
+    return 200 - (value / maxValue) * 160;
+  };
 
   return (
     <div
@@ -175,14 +93,14 @@ export function ChartCard({ title, chartData, chartColors, marginBottom = 20 }: 
                 const barWidth = (780 / chartData.length) * 0.7;
                 const barSpacing = (780 / chartData.length) * 0.3;
                 const x = idx * (780 / chartData.length) + barSpacing / 2 + 10;
-                
+
                 return chartKeys.map((key, kidx) => {
-                  const value = Number(item[key]);
-                  const barHeight = (value / maxValue) * 160;
+                  const value = Number(item[key]) || 0;
+                  const barHeight = maxValue === 0 ? 0 : (value / maxValue) * 160;
                   const y = 200 - barHeight;
-                  const barX = x + (kidx * (barWidth / chartKeys.length));
+                  const barX = x + kidx * (barWidth / chartKeys.length);
                   const individualBarWidth = barWidth / chartKeys.length - 2;
-                  
+
                   return (
                     <g key={`${idx}-${kidx}`}>
                       <rect
@@ -202,14 +120,7 @@ export function ChartCard({ title, chartData, chartColors, marginBottom = 20 }: 
               {chartData.map((item, idx) => {
                 const x = idx * (780 / chartData.length) + (780 / chartData.length) / 2 + 10;
                 return (
-                  <text
-                    key={idx}
-                    x={x}
-                    y="220"
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="#94a3b8"
-                  >
+                  <text key={idx} x={x} y="220" textAnchor="middle" fontSize="10" fill="#94a3b8">
                     {item.name}
                   </text>
                 );
@@ -219,12 +130,18 @@ export function ChartCard({ title, chartData, chartColors, marginBottom = 20 }: 
             // Line Chart
             <>
               {chartKeys.map((key, kidx) => {
-                const points = chartData.map((item, idx) => {
-                  const x = idx * (780 / (chartData.length - 1)) + 10;
-                  const y = 200 - (Number(item[key]) / maxValue) * 160;
-                  return `${x},${y}`;
-                }).join(" ");
-                
+                // divisor = chartData.length-1 when >1, otherwise 1 to avoid division by zero
+                const divisor = chartData.length > 1 ? chartData.length - 1 : 1;
+                const step = 780 / divisor;
+
+                const points = chartData
+                  .map((item, idx) => {
+                    const x = idx * step + 10;
+                    const y = getY(Number(item[key]) || 0);
+                    return `${x},${y}`;
+                  })
+                  .join(" ");
+
                 return (
                   <g key={kidx}>
                     <polyline
@@ -235,9 +152,10 @@ export function ChartCard({ title, chartData, chartColors, marginBottom = 20 }: 
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
+                    {/* Circles on data points */}
                     {chartData.map((item, idx) => {
-                      const x = idx * (780 / (chartData.length - 1)) + 10;
-                      const y = 200 - (Number(item[key]) / maxValue) * 160;
+                      const x = idx * step + 10;
+                      const y = getY(Number(item[key]) || 0);
                       return (
                         <circle
                           key={`${kidx}-${idx}`}
@@ -253,40 +171,30 @@ export function ChartCard({ title, chartData, chartColors, marginBottom = 20 }: 
                   </g>
                 );
               })}
-              {/* X-axis labels */}
-              {chartData.map((item, idx) => {
-                const x = idx * (780 / (chartData.length - 1)) + 10;
-                return (
-                  <text
-                    key={idx}
-                    x={x}
-                    y="220"
-                    textAnchor="middle"
-                    fontSize="10"
-                    fill="#94a3b8"
-                  >
-                    {item.name}
-                  </text>
-                );
-              })}
+              {/* X-axis labels for line chart */}
+              {(() => {
+                const divisor = chartData.length > 1 ? chartData.length - 1 : 1;
+                const step = 780 / divisor;
+                return chartData.map((item, idx) => {
+                  const x = idx * step + 10;
+                  return (
+                    <text key={idx} x={x} y="220" textAnchor="middle" fontSize="10" fill="#94a3b8">
+                      {item.name}
+                    </text>
+                  );
+                });
+              })()}
             </>
           )}
           {/* Y-axis grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
             const y = 200 - ratio * 160;
+            const value = maxValue * ratio;
             return (
               <g key={idx}>
-                <line
-                  x1="10"
-                  y1={y}
-                  x2="790"
-                  y2={y}
-                  stroke="#e2e8f0"
-                  strokeWidth="1"
-                  strokeDasharray="4"
-                />
+                <line x1="10" y1={y} x2="790" y2={y} stroke="#e2e8f0" strokeWidth="1" strokeDasharray="4" />
                 <text x="5" y={y + 3} fontSize="9" fill="#94a3b8" textAnchor="end">
-                  ${Math.round(maxValue * ratio).toLocaleString()}
+                  ${Math.round(value).toLocaleString()}
                 </text>
               </g>
             );

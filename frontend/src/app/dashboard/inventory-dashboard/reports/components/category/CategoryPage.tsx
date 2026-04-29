@@ -1,21 +1,20 @@
 
-// components/category/CategoryPage.tsx
 "use client";
 
 import { useState, useMemo } from "react";
 import { Category } from "../../types";
-import {
-  INVENTORY_DATA,
-  PURCHASE_DATA,
-  SUPPLIER_DATA,
-  FINANCIAL_DATA,
-} from "../../data/categories";
-import  {ProfessionalTable}  from "../reports/ProfessionalTable";
+import { ProfessionalTable } from "../reports/ProfessionalTable/index";
 import { KpiCard } from "../reports/KPICard";
 import { ChartCard } from "../reports/ReportChart";
-import { useReport } from "@/hooks/useExport";
+import { useModuleReport } from "@/hooks/reports/useExport";
 
-const STATUS_STYLES: Record<string, { bg: string; color: string; dot: string }> = {
+// Keys from MongoDB documents to strip from table headers
+const HIDDEN_KEYS = new Set(["_id", "__v", "createdAt", "updatedAt"]);
+
+const STATUS_STYLES: Record<
+  string,
+  { bg: string; color: string; dot: string }
+> = {
   "In Stock": { bg: "#ecfdf5", color: "#065f46", dot: "#10b981" },
   "Low Stock": { bg: "#fefce8", color: "#713f12", dot: "#eab308" },
   "Out of Stock": { bg: "#fef2f2", color: "#991b1b", dot: "#ef4444" },
@@ -32,74 +31,89 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; dot: string }> 
 interface CategoryPageProps {
   cat: Category;
   onBack: () => void;
+  
 }
 
 export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState({ start: "2024-01-01", end: "2024-06-30" });
 
-  const { data, isLoading, exportFile } = useReport(cat.id, {
-  startDate: dateRange.start,
-  endDate: dateRange.end,
-  search: searchTerm,
-});
-
-  // Get data based on category
-  const getCategoryData = () => {
-    switch (cat.id) {
-      case "inventory":
-        return INVENTORY_DATA;
-      case "purchase":
-        return PURCHASE_DATA;
-      case "supplier":
-        return SUPPLIER_DATA;
-      case "financial":
-        return FINANCIAL_DATA;
-      default:
-        return INVENTORY_DATA;
-    }
-  };
-
-  const categoryData = getCategoryData();
   const currentTab = cat.tabs[activeTab];
-  const tabData = categoryData[currentTab.label];
+  const reportName =
+    currentTab.reportName ??
+    currentTab.label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
+  // ── Single hook for data fetch + export ───────────────────────────────────
+  const {
+   data,
+    isLoading,
+    isFetching,
+    filters,
+    setSearch,
+    setDateRange,
+    setPage,
+    setLimit,
+    exportFile,
+    isExporting,
+    setColumnFilter, 
+  clearColumnFilters,
+  columnFilters,
+  } = useModuleReport(cat.id, reportName);
+
+  const apiRows = data?.rows ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+ 
+
+  const headers = useMemo<string[]>(() => {
+    if (apiRows.length === 0) return [];
+    return Object.keys(apiRows[0]).filter((k) => !HIDDEN_KEYS.has(k));
+  }, [apiRows]);
+
+  const tableRows = useMemo<(string | number)[][]>(
+    () =>
+      apiRows.map((row: Record<string, any>) =>
+        headers.map((h) => row[h] ?? ""),
+      ),
+    [apiRows, headers],
+  );
+
+ 
+  // ── KPIs from API only ───────────────────────────────────────────────────
+  const apiKpis = data?.kpis ?? {};
+  const kpisToShow = Object.entries(apiKpis)
+  .filter(([key]) => key !== "_id")
+  .map(([label, value]) => ({
+    label,
+    value: String(value),
+  }));
+
+  // ── Chart data from API (if available) ────────────────────────────────────
+  const chartData = Array.isArray((data as any)?.chart) ? (data as any).chart : []
+
+  console.log("chartData", chartData);
+  // ── Tab switching ─────────────────────────────────────────────────────────
   const switchTab = (index: number) => {
     if (index === activeTab) return;
-    setLoading(true);
-    setSearchTerm("");
-    setTimeout(() => {
-      setActiveTab(index);
-      setLoading(false);
-    }, 300);
+    setActiveTab(index);
+    setSearch("");
+    setDateRange("", "");
+    clearColumnFilters();
   };
-
-  // Filter rows based on search
- const filteredRows = useMemo(() => {
-  if (!tabData?.rows) return [];
-  return tabData.rows;
-}, [tabData]);
-
-  if (!tabData) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#f8fafc", padding: "40px", textAlign: "center" }}>
-        <p>No data available for this tab</p>
-        <button onClick={onBack} style={{ marginTop: 20, padding: "10px 20px", cursor: "pointer" }}>
-          Go Back
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc" }}>
-      {/* Gradient Category Header */}
+      {/* ── Gradient Category Header ─────────────────────────────────────── */}
       <div style={{ background: cat.grad, padding: "22px 28px 0" }}>
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           {/* Breadcrumb */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 14,
+            }}
+          >
             <button
               onClick={onBack}
               style={{
@@ -119,22 +133,28 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
               ← Back
             </button>
             {["HOME", "REPORTS", cat.title.toUpperCase()].map((s, i, a) => (
-              <span key={s} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                key={s}
+                style={{ display: "flex", alignItems: "center", gap: 8 }}
+              >
                 <span
                   style={{
                     fontSize: 11,
-                    color: i === a.length - 1 ? "#fff" : "rgba(255,255,255,0.45)",
+                    color:
+                      i === a.length - 1 ? "#fff" : "rgba(255,255,255,0.45)",
                     fontWeight: i === a.length - 1 ? 700 : 500,
                   }}
                 >
                   {s}
                 </span>
-                {i < a.length - 1 && <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>}
+                {i < a.length - 1 && (
+                  <span style={{ color: "rgba(255,255,255,0.3)" }}>›</span>
+                )}
               </span>
             ))}
           </div>
 
-          {/* Category title row */}
+          {/* Title row */}
           <div
             style={{
               display: "flex",
@@ -169,67 +189,23 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                     fontSize: 24,
                     fontWeight: 800,
                     margin: 0,
-                    letterSpacing: "-0.4px",
                   }}
                 >
                   {cat.title}
                 </h1>
-                <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, margin: "4px 0 0" }}>
+                <p
+                  style={{
+                    color: "rgba(255,255,255,0.65)",
+                    fontSize: 12,
+                    margin: "4px 0 0",
+                  }}
+                >
                   {cat.desc}
                 </p>
               </div>
             </div>
 
-            {/* Global Filters */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <div style={{ position: "relative" }}>
-                <input
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                  }}
-                  placeholder="Search data..."
-                  style={{
-                    background: "rgba(255,255,255,0.15)",
-                    border: "1px solid rgba(255,255,255,0.25)",
-                    borderRadius: 10,
-                    padding: "8px 12px 8px 34px",
-                    fontSize: 12,
-                    color: "#fff",
-                    outline: "none",
-                    width: 180,
-                  }}
-                />
-                <svg
-                  style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)" }}
-                  width="13"
-                  height="13"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.6)"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-              </div>
-              <select
-                style={{
-                  background: "rgba(255,255,255,0.15)",
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  borderRadius: 10,
-                  padding: "8px 12px",
-                  fontSize: 12,
-                  color: "#fff",
-                  cursor: "pointer",
-                  outline: "none",
-                }}
-              >
-                <option>Last 6 Months</option>
-                <option>Last 30 Days</option>
-                <option>This Year</option>
-              </select>
-            </div>
+          
           </div>
 
           {/* Tabs */}
@@ -239,7 +215,8 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
                 key={tab.label}
                 onClick={() => switchTab(i)}
                 style={{
-                  background: activeTab === i ? "#fff" : "rgba(255,255,255,0.1)",
+                  background:
+                    activeTab === i ? "#fff" : "rgba(255,255,255,0.1)",
                   color: activeTab === i ? cat.accent : "rgba(255,255,255,0.8)",
                   border: "none",
                   borderRadius: "12px 12px 0 0",
@@ -273,14 +250,17 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px 48px" }}>
-        {isLoading  ? (
+      {/* ── Main Content ──────────────────────────────────────────────────── */}
+      <div
+        style={{ maxWidth: 1400, margin: "0 auto", padding: "24px 28px 48px" }}
+      >
+        {isLoading ? (
+          // Skeleton
           <div>
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))",
                 gap: 16,
                 marginBottom: 20,
               }}
@@ -316,45 +296,78 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
             />
           </div>
         ) : (
-          <div key={`${cat.id}-${activeTab}`} style={{ animation: "fadeInUp 0.35s ease both" }}>
+          <div
+            key={`${cat.id}-${activeTab}`}
+            style={{ animation: "fadeInUp 0.35s ease both" }}
+          >
             {/* KPI Cards */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                gap: 16,
-                marginBottom: 22,
-              }}
-            >
-              {tabData.kpis.map((kpi, i) => (
-                <KpiCard key={kpi.label} kpi={kpi} accent={cat.accent} accentLight={cat.accentLight} delay={i * 0.07} />
-              ))}
-            </div>
+            {kpisToShow.length > 0 && (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))",
+                  gap: 16,
+                  marginBottom: 22,
+                }}
+              >
+                {kpisToShow.map((kpi, i) => (
+                  <KpiCard
+                    key={kpi.label}
+                    kpi={kpi}
+                    accent={cat.accent}
+                    accentLight={cat.accentLight}
+                    delay={i * 0.07}
+                  />
+                ))}
+              </div>
+            )}
 
-            {/* Chart Section */}
-            <ChartCard
-              title={`${currentTab.label} — Trend Analysis`}
-              chartData={tabData.chart}
-              chartColors={cat.chartColors}
-              marginBottom={20}
-            />
+            {/* Chart – only render if API provided data */}
+            {chartData.length > 0 && (
+              <ChartCard
+                title={`${currentTab.label} — Trend Analysis`}
+                chartData={chartData}
+                chartColors={cat.chartColors}
+                marginBottom={20}
+              />
+            )}
 
-            {/* Data Table */}
-           <ProfessionalTable
-  headers={tabData.headers}
-  rows={filteredRows}
-  statusStyles={STATUS_STYLES}
-  accentColor={cat.accent}
-  accentLight={cat.accentLight}
-  onExport={(type) => exportFile({ 
-    format: type, 
-    reportData: {
-      headers: tabData.headers,
-      rows: filteredRows,
-      kpis: tabData.kpis
-    }
-  })}
-/>
+            {/* Table */}
+             <ProfessionalTable
+      headers={headers}
+      rows={tableRows}
+      total={total}
+      totalPages={totalPages}
+      page={filters.page}
+      rowsPerPage={filters.limit}
+      onPageChange={setPage}
+      onRowsPerPageChange={setLimit}
+      search={filters.search}
+      onSearchChange={setSearch}
+      statusStyles={STATUS_STYLES}
+      accentColor={cat.accent}
+      accentLight={cat.accentLight}
+      isFetching={isFetching}
+      columnFilters={columnFilters}
+       onClearAllFilters={clearColumnFilters}
+      onColumnFilterChange={setColumnFilter} // From Hook
+      // onClearFilters={clearColumnFilters}
+      dateRange={{ start: filters.startDate ?? "", end: filters.endDate ?? "" }}
+      onDateRangeChange={(start, end) => setDateRange(start, end)}
+      onExport={(type) =>
+        exportFile({
+          format: type,
+          reportData: {
+            headers,
+            rows: apiRows,
+            kpis: kpisToShow,
+          },
+        })
+      }
+      isExporting={isExporting}
+      filtersConfig={currentTab.filters}
+    />
+
           </div>
         )}
       </div>
@@ -371,7 +384,8 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
           }
         }
         @keyframes pulse {
-          0%, 100% {
+          0%,
+          100% {
             opacity: 1;
           }
           50% {

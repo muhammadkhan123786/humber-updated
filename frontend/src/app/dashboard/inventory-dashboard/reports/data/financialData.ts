@@ -8,12 +8,11 @@ export const financialData: CategoryData = {
     { label: "Inventory Turnover", value: "5.2x", change: "+0.8x", up: true, icon: "🔃", sparkline: [40, 45, 48, 52, 56, 62] },
   ],
   chart: [
-    { name: "Jan", "Revenue": 1800, "COGS": 1100, "Profit": 700 },
+    { name: "Jan", "Revenue": 1800, "COGS": 1100, "Profit": 700 }, // Added comma at end, removed leading comma
     { name: "Feb", "Revenue": 1950, "COGS": 1220, "Profit": 730 },
     { name: "Mar", "Revenue": 2100, "COGS": 1350, "Profit": 750 },
     { name: "Apr", "Revenue": 2350, "COGS": 1480, "Profit": 870 },
-    { name: "May", "Revenue": 2180, "COGS": 1360, "Profit": 820 },
-    { name: "Jun", "Revenue": 2020, "COGS": 1290, "Profit": 730 },
+    { name: "May", "Revenue": 2180, "COGS": 1360, "Profit": 820 }
   ],
   headers: ["ID", "Category", "Revenue", "COGS", "Gross Margin", "Turnover"],
   rows: [
