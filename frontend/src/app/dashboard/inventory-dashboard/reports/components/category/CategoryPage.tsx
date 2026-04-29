@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from "react";
 import { Category } from "../../types";
-import { ProfessionalTable } from "../reports/ProfessionalTable";
+import { ProfessionalTable } from "../reports/ProfessionalTable/index";
 import { KpiCard } from "../reports/KPICard";
 import { ChartCard } from "../reports/ReportChart";
 import { useModuleReport } from "@/hooks/reports/useExport";
