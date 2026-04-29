@@ -351,7 +351,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
       columnFilters={columnFilters}
        onClearAllFilters={clearColumnFilters}
       onColumnFilterChange={setColumnFilter} // From Hook
-      onClearFilters={clearColumnFilters}
+      // onClearFilters={clearColumnFilters}
       dateRange={{ start: filters.startDate ?? "", end: filters.endDate ?? "" }}
       onDateRangeChange={(start, end) => setDateRange(start, end)}
       onExport={(type) =>

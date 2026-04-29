@@ -34,4 +34,5 @@ export interface ProfessionalTableProps {
   isExporting?: boolean;
   isFetching?: boolean;
   filtersConfig?: TableFilter[];
+
 }

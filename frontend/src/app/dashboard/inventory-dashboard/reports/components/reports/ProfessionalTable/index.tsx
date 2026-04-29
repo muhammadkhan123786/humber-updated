@@ -35,6 +35,7 @@ export function ProfessionalTable({
   isExporting = false,
   isFetching = false,
   filtersConfig = [],
+  
 }: ProfessionalTableProps) {
   // Local UI state
   const [visibleColumns, setVisibleColumns] = useState<boolean[]>(() => headers.map(() => true));
