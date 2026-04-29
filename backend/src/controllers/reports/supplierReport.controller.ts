@@ -1,25 +1,47 @@
 import { Request, Response } from "express";
 import { PurchaseOrder } from "../../models/purchaseOrder.model";
-import { GoodsReturn } from "../../models/goodsReturn.model";
 import { buildQueryOptions } from "../../utils/queryHelper";
 import { applyFilters } from "../../utils/filterBuilder";
-import { PipelineStage } from "mongoose"; 
+import { mapColumnFilters } from "../../utils/reports/fieldMapper";
+
+// ------------------------------
+// Field maps for supplier reports
+// ------------------------------
+const SUPPLIER_HISTORY_FIELD_MAP: Record<string, string> = {
+  productName: "productName",
+  sku: "sku",
+  poNumber: "poNumber",
+  grnNumber: "grnNumber",
+  orderDate: "orderDate",
+};
+
+const SUPPLIER_PERFORMANCE_FIELD_MAP: Record<string, string> = {
+  supplierName: "supplierName",
+};
+
+const PRICE_HISTORY_FIELD_MAP: Record<string, string> = {
+  productName: "productName",
+  sku: "sku",
+  poNumber: "poNumber",
+  purchaseDate: "purchaseDate",
+};
+
 // ----------------------------------------------------------------------
-// 1. Supplier History Report (with chart: Orders, Received, Returns by supplier)
+// 1. Supplier History Report
 // ----------------------------------------------------------------------
 export const getSupplierHistoryReport = async (req: Request, res: Response) => {
   try {
-    const options = buildQueryOptions(req);
+    let options = buildQueryOptions(req);
+    options = mapColumnFilters(options, SUPPLIER_HISTORY_FIELD_MAP);
 
-    let matchStage: any = { isDeleted: false };
-    if (options.startDate || options.endDate) {
-      matchStage.orderDate = {};
-      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
-      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
-    }
+    // Date filter
+    const dateFilter: any = {};
+    if (options.startDate) dateFilter.$gte = new Date(options.startDate);
+    if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    const basePipeline: any[] = [
-      { $match: matchStage },
+    // Base pipeline
+    let basePipeline: any[] = [
+      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
       {
         $lookup: {
           from: "suppliers",
@@ -28,7 +50,7 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           as: "supplier"
         }
       },
-      { $unwind: "$supplier" },
+      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       { $unwind: "$items" },
       {
         $lookup: {
@@ -78,22 +100,11 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
       }
     ];
 
-    if (options.search) {
-      const regex = new RegExp(options.search, "i");
-      basePipeline.push({
-        $match: {
-          $or: [
-            { supplierName: regex },
-            { poNumber: regex },
-            { productName: regex },
-            { sku: regex }
-          ]
-        }
-      });
-    }
+    // Apply column filters (productName, sku, poNumber, grnNumber, orderDate)
+    basePipeline = applyFilters(basePipeline, options);
 
-    // Chart: aggregated by supplier (Orders, Received, Returns) – top 5 suppliers
-    const chartPipeline = [
+    // Chart: top 5 suppliers by orders, received, returns
+    const chartPipeline: any[] = [
       ...basePipeline,
       {
         $group: {
@@ -103,7 +114,7 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           Returns: { $sum: "$returnedQuantity" }
         }
       },
-      { $sort: { Orders: -1 } },
+      { $sort: { Orders: -1 as const } },
       { $limit: 5 },
       {
         $project: {
@@ -150,46 +161,40 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
-    const rows = data.paginated;
-    const total = data.totalCount[0]?.count || 0;
-    const kpis = data.kpis[0] || {
-      totalSuppliers: 0,
-      totalPurchases: 0,
-      totalPurchaseValue: 0,
-      totalGoodsReceived: 0,
-      totalReturnsToSuppliers: 0
-    };
-    const chart = chartResult;
-
     res.json({
-      rows,
-      total,
+      rows: data.paginated,
+      total: data.totalCount[0]?.count || 0,
       page: options.page,
-      totalPages: Math.ceil(total / options.limit),
-      kpis,
-      chart
+      totalPages: Math.ceil((data.totalCount[0]?.count || 0) / options.limit),
+      kpis: data.kpis[0] || {
+        totalSuppliers: 0,
+        totalPurchases: 0,
+        totalPurchaseValue: 0,
+        totalGoodsReceived: 0,
+        totalReturnsToSuppliers: 0
+      },
+      chart: chartResult
     });
   } catch (error) {
+    console.error("Supplier history error:", error);
     res.status(500).json({ message: "Supplier history error", error });
   }
 };
 
 // ----------------------------------------------------------------------
-// 2. Supplier Performance Report (with chart: On-Time vs Late deliveries by supplier)
+// 2. Supplier Performance Report
 // ----------------------------------------------------------------------
 export const getSupplierPerformanceReport = async (req: Request, res: Response) => {
   try {
-    const options = buildQueryOptions(req);
+    let options = buildQueryOptions(req);
+    options = mapColumnFilters(options, SUPPLIER_PERFORMANCE_FIELD_MAP);
 
-    let matchStage: any = { isDeleted: false };
-    if (options.startDate || options.endDate) {
-      matchStage.orderDate = {};
-      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
-      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
-    }
+    const dateFilter: any = {};
+    if (options.startDate) dateFilter.$gte = new Date(options.startDate);
+    if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    const basePipeline: any[] = [
-      { $match: matchStage },
+    let basePipeline: any[] = [
+      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
       {
         $lookup: {
           from: "suppliers",
@@ -198,7 +203,7 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
           as: "supplier"
         }
       },
-      { $unwind: "$supplier" },
+      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: "grns",
@@ -235,7 +240,6 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
       {
         $addFields: {
           onTimeDeliveries: { $subtract: ["$totalDelivered", "$lateDeliveries"] },
-          returnedItems: { $literal: 0 },
           supplierRating: {
             $round: [
               {
@@ -251,19 +255,16 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
               },
               1
             ]
-          },
-          avgDeliveryDays: { $literal: "N/A" }
+          }
         }
       }
     ];
 
-    if (options.search) {
-      const regex = new RegExp(options.search, "i");
-      basePipeline.push({ $match: { supplierName: regex } });
-    }
+    // Apply column filter (supplierName)
+    basePipeline = applyFilters(basePipeline, options);
 
-    // Chart: top 5 suppliers by On-Time vs Late deliveries
-    const chartPipeline = [
+    // Chart: top 5 suppliers by on‑time vs late deliveries
+    const chartPipeline: any[] = [
       ...basePipeline,
       {
         $project: {
@@ -272,7 +273,7 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
           Late: "$lateDeliveries"
         }
       },
-      { $sort: { "On-Time": -1 } },
+      { $sort: { "On-Time": -1 as const } },
       { $limit: 5 }
     ];
 
@@ -290,17 +291,7 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
                   totalActiveSuppliers: { $sum: 1 },
                   onTimeDeliveries: { $sum: "$onTimeDeliveries" },
                   lateDeliveries: { $sum: "$lateDeliveries" },
-                  avgDeliveryTime: { $avg: "$avgDeliveryDays" },
                   supplierRatingScore: { $avg: "$supplierRating" }
-                }
-              },
-              {
-                $project: {
-                  totalActiveSuppliers: 1,
-                  onTimeDeliveries: 1,
-                  lateDeliveries: 1,
-                  avgDeliveryTime: { $ifNull: ["$avgDeliveryTime", "N/A"] },
-                  supplierRatingScore: { $round: ["$supplierRatingScore", 1] }
                 }
               }
             ]
@@ -311,64 +302,68 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
-    const rows = data.paginated;
-    const total = data.totalCount[0]?.count || 0;
-    const kpis = data.kpis[0] || {
-      totalActiveSuppliers: 0,
-      onTimeDeliveries: 0,
-      lateDeliveries: 0,
-      avgDeliveryTime: "N/A",
-      supplierRatingScore: 0
-    };
-    const chart = chartResult;
-
     res.json({
-      rows,
-      total,
+      rows: data.paginated,
+      total: data.totalCount[0]?.count || 0,
       page: options.page,
-      totalPages: Math.ceil(total / options.limit),
-      kpis,
-      chart
+      totalPages: Math.ceil((data.totalCount[0]?.count || 0) / options.limit),
+      kpis: data.kpis[0] || {
+        totalActiveSuppliers: 0,
+        onTimeDeliveries: 0,
+        lateDeliveries: 0,
+        supplierRatingScore: 0
+      },
+      chart: chartResult
     });
   } catch (error) {
+    console.error("Supplier performance error:", error);
     res.status(500).json({ message: "Supplier performance error", error });
   }
 };
 
 // ----------------------------------------------------------------------
-// 3. Supplier Price History Report (with chart: price trends over months)
+// 3. Supplier Price History Report (dynamic chart: top 5 products by total quantity)
 // ----------------------------------------------------------------------
-
-
-
-
 export const getSupplierPriceHistoryReport = async (req: Request, res: Response) => {
   try {
-    // Assuming buildQueryOptions is defined or imported
-    const options = (req as any).buildQueryOptions ? (req as any).buildQueryOptions(req) : { skip: 0, limit: 10, page: 1 };
+    let options = buildQueryOptions(req);
+    options = mapColumnFilters(options, PRICE_HISTORY_FIELD_MAP);
 
-    let matchStage: any = { isDeleted: false };
-    if (options.startDate || options.endDate) {
-      matchStage.orderDate = {};
-      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
-      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
-    }
+    const dateFilter: any = {};
+    if (options.startDate) dateFilter.$gte = new Date(options.startDate);
+    if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // 1. Strictly type the base pipeline
-    const basePipeline: PipelineStage[] = [
-      { $match: matchStage },
+    // 1. Get top 5 products by total purchased quantity
+    const topProducts = await PurchaseOrder.aggregate([
+      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.productName",
+          totalQty: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { totalQty: -1 as const } },
+      { $limit: 5 },
+      { $project: { productName: "$_id" } }
+    ]);
+    const topProductNames = topProducts.map(p => p.productName);
+
+    // Base pipeline for price history (with previous price difference)
+    let basePipeline: any[] = [
+      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
       { $unwind: "$items" },
       {
         $lookup: {
           from: "suppliers",
           localField: "supplier",
           foreignField: "_id",
-          as: "supplier",
-        },
+          as: "supplier"
+        }
       },
-      { $unwind: "$supplier" },
+      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       {
-        $sort: { "items.sku": 1, orderDate: 1 },
+        $sort: { "items.sku": 1, orderDate: 1 as const }
       },
       {
         $group: {
@@ -381,10 +376,10 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
               purchaseDate: "$orderDate",
               price: "$items.unitPrice",
               quantity: "$items.quantity",
-              poNumber: "$orderNumber",
-            },
-          },
-        },
+              poNumber: "$orderNumber"
+            }
+          }
+        }
       },
       { $unwind: "$history" },
       {
@@ -395,11 +390,11 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
             prevPrice: {
               $shift: {
                 output: "$history.price",
-                by: -1,
-              },
-            },
-          },
-        },
+                by: -1
+              }
+            }
+          }
+        }
       },
       {
         $project: {
@@ -410,63 +405,66 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           previousPrice: "$prevPrice",
           currentPrice: "$history.price",
           priceDifference: {
-            $subtract: ["$history.price", { $ifNull: ["$prevPrice", 0] }],
+            $subtract: ["$history.price", { $ifNull: ["$prevPrice", 0] }]
           },
           purchaseQuantity: "$history.quantity",
-          poNumber: "$history.poNumber",
-        },
-      },
+          poNumber: "$history.poNumber"
+        }
+      }
     ];
 
-    if (options.search) {
-      const regex = new RegExp(options.search, "i");
-      basePipeline.push({
-        $match: {
-          $or: [
-            { productName: regex },
-            { sku: regex },
-            { supplier: regex },
-            { poNumber: regex },
-          ],
+    // Apply column filters
+    basePipeline = applyFilters(basePipeline, options);
+
+    // Chart pipeline (only if we have top products)
+    let chartPipeline: any[] = [];
+    if (topProductNames.length > 0) {
+      chartPipeline = [
+        { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+        { $unwind: "$items" },
+        { $match: { "items.productName": { $in: topProductNames } } },
+        {
+          $group: {
+            _id: {
+              month: { $month: "$orderDate" },
+              productName: "$items.productName"
+            },
+            monthName: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+            avgPrice: { $avg: "$items.unitPrice" }
+          }
         },
-      } as PipelineStage.Match); // Explicitly cast the push
+        { $sort: { "_id.month": 1 as const } },
+        {
+          $group: {
+            _id: "$monthName",
+            ...topProductNames.reduce((acc, name) => {
+              acc[name.replace(/\s/g, "_")] = {
+                $avg: { $cond: [{ $eq: ["$_id.productName", name] }, "$avgPrice", null] }
+              };
+              return acc;
+            }, {} as Record<string, any>)
+          }
+        },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            name: "$_id",
+            ...topProductNames.reduce((acc, name) => {
+              const safeKey = name?.replace(/\s/g, "_") || "unknown";
+             acc[safeKey] = {
+  $round: [
+    {
+      $ifNull: [`$${safeKey}`, 0]
+    },
+    0
+  ]
+};
+              return acc;
+            }, {} as Record<string, any>)
+          }
+        }
+      ];
     }
-
-    // 2. Strictly type the chart pipeline
-    const chartPipeline: PipelineStage[] = [
-      { $match: matchStage },
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: {
-            month: { $month: "$orderDate" },
-            productName: "$items.productName",
-          },
-          monthName: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
-          avgPrice: { $avg: "$items.unitPrice" },
-        },
-      },
-      { $sort: { "_id.month": 1 } },
-      {
-        $group: {
-          _id: "$monthName",
-          Laptop: { $avg: { $cond: [{ $eq: ["$_id.productName", "Gaming Laptop"] }, "$avgPrice", null] } },
-          Monitor: { $avg: { $cond: [{ $eq: ["$_id.productName", "Monitor 27\""] }, "$avgPrice", null] } },
-          Keyboard: { $avg: { $cond: [{ $eq: ["$_id.productName", "Mechanical Keyboard"] }, "$avgPrice", null] } },
-          Mouse: { $avg: { $cond: [{ $eq: ["$_id.productName", "Wireless Mouse"] }, "$avgPrice", null] } },
-        },
-      },
-      { $sort: { _id: 1 } },
-      {
-        $project: {
-          name: "$_id",
-          Laptop: { $round: ["$Laptop", 0] },
-          Monitor: { $round: ["$Monitor", 0] },
-          Keyboard: { $round: ["$Keyboard", 0] },
-          Mouse: { $round: ["$Mouse", 0] },
-        },
-      },
-    ];
 
     const [mainResult, chartResult] = await Promise.all([
       PurchaseOrder.aggregate([
@@ -487,40 +485,36 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
                     $avg: {
                       $multiply: [
                         { $divide: ["$priceDifference", { $max: [{ $ifNull: ["$previousPrice", 1] }, 1] }] },
-                        100,
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        },
+                        100
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
       ]),
-      PurchaseOrder.aggregate(chartPipeline),
+      topProductNames.length ? PurchaseOrder.aggregate(chartPipeline) : Promise.resolve([])
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
-    const rows = data.paginated;
-    const total = data.totalCount[0]?.count || 0;
-    const kpis = data.kpis[0] || {
-      totalProductsTracked: 0,
-      avgPurchasePrice: 0,
-      highestPrice: 0,
-      lowestPrice: 0,
-      priceChangePercent: 0,
-    };
-
     res.json({
-      rows,
-      total,
+      rows: data.paginated,
+      total: data.totalCount[0]?.count || 0,
       page: options.page,
-      totalPages: Math.ceil(total / options.limit),
-      kpis,
-      chart: chartResult,
+      totalPages: Math.ceil((data.totalCount[0]?.count || 0) / options.limit),
+      kpis: data.kpis[0] || {
+        totalProductsTracked: 0,
+        avgPurchasePrice: 0,
+        highestPrice: 0,
+        lowestPrice: 0,
+        priceChangePercent: 0
+      },
+      chart: chartResult
     });
   } catch (error) {
-    console.error("Price History Error:", error);
+    console.error("Price history error:", error);
     res.status(500).json({ message: "Price history error", error });
   }
 };

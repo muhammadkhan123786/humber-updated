@@ -211,7 +211,7 @@ export const CATEGORIES: Category[] = [
     {
       label: "Supplier History",
       icon: "📜",
-      reportName: "supplier-history",
+      reportName: "history",
       filters: [
         { label: "Product Name", field: "productName", type: "text" },
         { label: "SKU", field: "sku", type: "text" },
