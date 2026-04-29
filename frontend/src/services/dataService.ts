@@ -104,6 +104,8 @@ export class DataService {
     );
     return response.data;
   }
+
+  
 }
 
 export const dataService = DataService.getInstance();
