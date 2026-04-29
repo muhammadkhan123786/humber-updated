@@ -34,12 +34,10 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, SUPPLIER_HISTORY_FIELD_MAP);
 
-    // Date filter
     const dateFilter: any = {};
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // Base pipeline
     let basePipeline: any[] = [
       {
         $match: {
@@ -111,7 +109,14 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
       },
       {
         $project: {
-          supplierName: "$supplier.name",
+          supplierName: {
+            $ifNull: [
+              "$supplier.companyName",
+              "$supplier.contactInformation.companyName",
+              "$supplier.contactInformation.primaryContactName",
+              "N/A",
+            ],
+          },
           poNumber: "$orderNumber",
           grnNumber: { $ifNull: ["$grnItem.grnNumber", ""] },
           productName: "$items.productName",
@@ -127,10 +132,8 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
       },
     ];
 
-    // Apply column filters (productName, sku, poNumber, grnNumber, orderDate)
     basePipeline = applyFilters(basePipeline, options);
 
-    // Chart: top 5 suppliers by orders, received, returns
     const chartPipeline: any[] = [
       ...basePipeline,
       {
@@ -211,10 +214,7 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
 // ----------------------------------------------------------------------
 // 2. Supplier Performance Report
 // ----------------------------------------------------------------------
-export const getSupplierPerformanceReport = async (
-  req: Request,
-  res: Response,
-) => {
+export const getSupplierPerformanceReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, SUPPLIER_PERFORMANCE_FIELD_MAP);
@@ -223,7 +223,7 @@ export const getSupplierPerformanceReport = async (
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    let basePipeline: any[] = [
+    let pipeline: any[] = [
       {
         $match: {
           isDeleted: false,
@@ -260,12 +260,21 @@ export const getSupplierPerformanceReport = async (
             },
           },
           totalPurchaseValue: "$total",
+          // ✅ Extract supplier name here, not inside $group
+          supplierName: {
+            $ifNull: [
+              "$supplier.companyName",
+              "$supplier.contactInformation.companyName",
+              "$supplier.contactInformation.primaryContactName",
+              "N/A",
+            ],
+          },
         },
       },
       {
         $group: {
           _id: "$supplier._id",
-          supplierName: { $first: "$supplier.name" },
+          supplierName: { $first: "$supplierName" },   // ✅ use accumulator
           totalOrders: { $sum: 1 },
           totalDelivered: { $sum: "$delivered" },
           lateDeliveries: { $sum: "$late" },
@@ -303,12 +312,11 @@ export const getSupplierPerformanceReport = async (
       },
     ];
 
-    // Apply column filter (supplierName)
-    basePipeline = applyFilters(basePipeline, options);
+    // Apply column filters
+    pipeline = applyFilters(pipeline, options);
 
-    // Chart: top 5 suppliers by on‑time vs late deliveries
     const chartPipeline: any[] = [
-      ...basePipeline,
+      ...pipeline,
       {
         $project: {
           name: "$supplierName",
@@ -322,7 +330,7 @@ export const getSupplierPerformanceReport = async (
 
     const [mainResult, chartResult] = await Promise.all([
       PurchaseOrder.aggregate([
-        ...basePipeline,
+        ...pipeline,
         {
           $facet: {
             paginated: [{ $skip: options.skip }, { $limit: options.limit }],
@@ -367,10 +375,7 @@ export const getSupplierPerformanceReport = async (
 // ----------------------------------------------------------------------
 // 3. Supplier Price History Report (dynamic chart: top 5 products by total quantity)
 // ----------------------------------------------------------------------
-export const getSupplierPriceHistoryReport = async (
-  req: Request,
-  res: Response,
-) => {
+export const getSupplierPriceHistoryReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, PRICE_HISTORY_FIELD_MAP);
@@ -379,7 +384,7 @@ export const getSupplierPriceHistoryReport = async (
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // 1. Get top 5 products by total purchased quantity
+    // ---------- 1. Get top 5 products by total purchased quantity ----------
     const topProducts = await PurchaseOrder.aggregate([
       {
         $match: {
@@ -394,13 +399,19 @@ export const getSupplierPriceHistoryReport = async (
           totalQty: { $sum: "$items.quantity" },
         },
       },
+      {
+        $match: { _id: { $nin: [null, ""] } }, // remove empty product names
+      },
       { $sort: { totalQty: -1 as const } },
       { $limit: 5 },
       { $project: { productName: "$_id" } },
     ]);
-    const topProductNames = topProducts.map((p) => p.productName);
 
-    // Base pipeline for price history (with previous price difference)
+    const topProductNames = topProducts
+      .map((p) => p.productName)
+      .filter((name) => name && name.trim() !== "");
+
+    // ---------- 2. Base pipeline for price history ----------
     let basePipeline: any[] = [
       {
         $match: {
@@ -419,6 +430,18 @@ export const getSupplierPriceHistoryReport = async (
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          supplierName: {
+            $ifNull: [
+              "$supplier.companyName",
+              "$supplier.contactInformation.companyName",
+              "$supplier.contactInformation.primaryContactName",
+              "N/A",
+            ],
+          },
+        },
+      },
+      {
         $sort: { "items.sku": 1, orderDate: 1 as const },
       },
       {
@@ -428,7 +451,7 @@ export const getSupplierPriceHistoryReport = async (
             $push: {
               productName: "$items.productName",
               sku: "$items.sku",
-              supplier: "$supplier.name",
+              supplier: "$supplierName",
               purchaseDate: "$orderDate",
               price: "$items.unitPrice",
               quantity: "$items.quantity",
@@ -469,10 +492,9 @@ export const getSupplierPriceHistoryReport = async (
       },
     ];
 
-    // Apply column filters
     basePipeline = applyFilters(basePipeline, options);
 
-    // Chart pipeline (only if we have top products)
+    // ---------- 3. Chart pipeline (only if we have valid product names) ----------
     let chartPipeline: any[] = [];
     if (topProductNames.length > 0) {
       chartPipeline = [
@@ -500,47 +522,39 @@ export const getSupplierPriceHistoryReport = async (
         {
           $group: {
             _id: "$monthName",
-            ...topProductNames.reduce(
-              (acc, name) => {
-                acc[name.replace(/\s/g, "_")] = {
-                  $avg: {
-                    $cond: [
-                      { $eq: ["$_id.productName", name] },
-                      "$avgPrice",
-                      null,
-                    ],
-                  },
-                };
-                return acc;
-              },
-              {} as Record<string, any>,
-            ),
+            ...topProductNames.reduce((acc, name) => {
+              // Create safe field name: replace spaces with underscores
+              const safeKey = name.replace(/\s+/g, "_");
+              acc[safeKey] = {
+                $avg: {
+                  $cond: [
+                    { $eq: ["$_id.productName", name] },
+                    "$avgPrice",
+                    null,
+                  ],
+                },
+              };
+              return acc;
+            }, {} as Record<string, any>),
           },
         },
         { $sort: { _id: 1 } },
         {
           $project: {
             name: "$_id",
-            ...topProductNames.reduce(
-              (acc, name) => {
-                const safeKey = name?.replace(/\s/g, "_") || "unknown";
-                acc[safeKey] = {
-                  $round: [
-                    {
-                      $ifNull: [`$${safeKey}`, 0],
-                    },
-                    0,
-                  ],
-                };
-                return acc;
-              },
-              {} as Record<string, any>,
-            ),
+            ...topProductNames.reduce((acc, name) => {
+              const safeKey = name.replace(/\s+/g, "_");
+              acc[safeKey] = {
+                $round: [{ $ifNull: [`$${safeKey}`, 0] }, 0],
+              };
+              return acc;
+            }, {} as Record<string, any>),
           },
         },
       ];
     }
 
+    // ---------- 4. Execute main and chart queries ----------
     const [mainResult, chartResult] = await Promise.all([
       PurchaseOrder.aggregate([
         ...basePipeline,
