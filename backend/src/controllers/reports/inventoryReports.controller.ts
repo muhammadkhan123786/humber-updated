@@ -21,31 +21,25 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
   try {
     const options = buildQueryOptions(req);
 
-    // Map column filter keys to real MongoDB field paths
+    // Field mapping (unchanged)
     const mappedColumnFilters: Record<string, string> = {};
     Object.entries(options.columnFilters || {}).forEach(([field, value]) => {
       const mappedField = STOCK_FIELD_MAP[field] ?? field;
       mappedColumnFilters[mappedField] = value as string;
     });
-
-    // Map the global searchField too
-    const mappedSearchField =
-      STOCK_FIELD_MAP[options.searchField] ?? options.searchField;
-
+    const mappedSearchField = STOCK_FIELD_MAP[options.searchField] ?? options.searchField;
     const mappedOptions = {
       ...options,
       columnFilters: mappedColumnFilters,
       searchField: mappedSearchField,
     };
 
-    // 1. BASE PIPELINE
     let basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
-
       { $unwind: "$attributes" },
       { $unwind: "$attributes.pricing" },
 
-      // Category Lookup
+      // Category lookup
       {
         $lookup: {
           from: "categories",
@@ -56,158 +50,132 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
 
-      // Purchase Orders
+      // ✅ Purchase Orders – match by productId (not sku)
       {
         $lookup: {
           from: "purchaseorders",
-          let: { sku: "$attributes.sku" },
+          let: { productId: "$_id" }, // product's _id
           pipeline: [
+            { $match: { isDeleted: false, status: { $in: ["received", "ordered"] } } },
             { $unwind: "$items" },
-            { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
             {
-              $group: {
-                _id: null,
-                purchasedQty: { $sum: "$items.quantity" },
-              },
+              $match: {
+                $expr: {
+                  $eq: ["$items.productId", "$$productId"] // match productId
+                }
+              }
             },
+            { $group: { _id: null, purchasedQty: { $sum: "$items.quantity" } } }
           ],
           as: "purchaseData",
         },
       },
 
-      // GRN
+      // ✅ GRN – match by productId
       {
         $lookup: {
           from: "grns",
-          let: { sku: "$attributes.sku" },
+          let: { productId: "$_id" },
           pipeline: [
+            { $match: { isDeleted: false, status: "received" } },
             { $unwind: "$items" },
-            { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
             {
-              $group: {
-                _id: null,
-                receivedQty: { $sum: "$items.acceptedQuantity" },
-              },
+              $match: {
+                $expr: {
+                  $eq: ["$items.productId", "$$productId"]
+                }
+              }
             },
+            { $group: { _id: null, receivedQty: { $sum: "$items.acceptedQuantity" } } }
           ],
           as: "grnData",
         },
       },
 
-      // Returns
+      // ✅ Goods Returns – match by productId
       {
         $lookup: {
           from: "goodsreturns",
-          let: { sku: "$attributes.sku" },
+          let: { productId: "$_id" },
           pipeline: [
+            { $match: { isDeleted: false, status: "completed" } },
             { $unwind: "$items" },
-            { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
             {
-              $group: {
-                _id: null,
-                returnedQty: { $sum: "$items.returnQty" },
-              },
+              $match: {
+                $expr: {
+                  $eq: ["$items.productId", "$$productId"]
+                }
+              }
             },
+            { $group: { _id: null, returnedQty: { $sum: "$items.returnQty" } } }
           ],
           as: "returnData",
         },
       },
     ];
 
-    // 2. ✅ APPLY FILTERS — after all lookups/unwinds, before $project
-    //    applyFilters now uses push(), so this is safe
     basePipeline = applyFilters(basePipeline, mappedOptions);
 
-    // 3. FINAL PROJECT
     basePipeline.push({
       $project: {
         productName: 1,
         sku: "$attributes.sku",
         category: "$category.categoryName",
-
-        closingStock: {
-          $ifNull: ["$attributes.stock.stockQuantity", 0],
-        },
-
-        unitCost: {
-          $ifNull: ["$attributes.pricing.costPrice", 0],
-        },
-
+        closingStock: { $ifNull: ["$attributes.stock.stockQuantity", 0] },
+        unitCost: { $ifNull: ["$attributes.pricing.costPrice", 0] },
         stockValue: {
           $multiply: [
             { $ifNull: ["$attributes.stock.stockQuantity", 0] },
             { $ifNull: ["$attributes.pricing.costPrice", 0] },
           ],
         },
-
-        purchasedQty: {
-          $ifNull: [{ $arrayElemAt: ["$purchaseData.purchasedQty", 0] }, 0],
-        },
-
-        soldQty: {
-          $ifNull: ["$attributes.stock.soldQty", 0],
-        },
-
-        returnedQty: {
-          $ifNull: [{ $arrayElemAt: ["$returnData.returnedQty", 0] }, 0],
-        },
-
+        purchasedQty: { $ifNull: [{ $arrayElemAt: ["$purchaseData.purchasedQty", 0] }, 0] },
+        soldQty: { $ifNull: ["$attributes.stock.soldQty", 0] },
+        returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.returnedQty", 0] }, 0] },
         createdAt: 1,
       },
     });
 
-    // 4. CHART PIPELINE (unchanged)
+    // Chart pipeline – still uses sku? Chart is aggregate of all purchases (no product filter)
+    // Kept unchanged for overall trend
     const chartPipeline: PipelineStage[] = [
-      { $match: { isDeleted: false } },
+      { $match: { isDeleted: false, status: { $in: ["received", "ordered"] } } },
       { $unwind: "$items" },
       {
-        $match:
-          options.startDate || options.endDate
-            ? {
-                orderDate: {
-                  ...(options.startDate && { $gte: new Date(options.startDate) }),
-                  ...(options.endDate && { $lte: new Date(options.endDate) }),
-                },
-              }
-            : {},
+        $match: options.startDate || options.endDate
+          ? {
+              orderDate: {
+                ...(options.startDate && { $gte: new Date(options.startDate) }),
+                ...(options.endDate && { $lte: new Date(options.endDate) }),
+              },
+            }
+          : {},
       },
       {
         $group: {
           _id: { $month: "$orderDate" },
-          month: {
-            $first: { $dateToString: { format: "%b", date: "$orderDate" } },
-          },
+          month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
           Purchased: { $sum: "$items.quantity" },
         },
       },
       { $sort: { _id: 1 } },
-      {
-        $project: {
-          name: "$month",
-          Purchased: 1,
-          Sold: { $literal: 0 },
-        },
-      },
+      { $project: { name: "$month", Purchased: 1, Sold: { $literal: 0 } } },
     ];
 
-    // 5. EXECUTION
     const [mainResult, chartResult] = await Promise.all([
       ProductModal.aggregate([
         ...basePipeline,
         {
           $facet: {
-            paginated: [
-              { $skip: options.skip },
-              { $limit: options.limit },
-            ],
+            paginated: [{ $skip: options.skip }, { $limit: options.limit }],
             totalCount: [{ $count: "count" }],
             kpis: [
               {
                 $group: {
                   _id: 0,
-                  totalProducts:       { $sum: 1 },
-                  availableStock:      { $sum: "$closingStock" },
-                  incomingStock:       { $sum: "$purchasedQty" },
+                  totalProducts: { $sum: 1 },
+                  availableStock: { $sum: "$closingStock" },
+                  incomingStock: { $sum: "$purchasedQty" },
                   totalInventoryValue: { $sum: "$stockValue" },
                 },
               },
@@ -215,7 +183,6 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
           },
         },
       ]),
-
       PurchaseOrder.aggregate(chartPipeline),
     ]);
 
@@ -237,10 +204,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Stock Summary Error:", error);
-    res.status(500).json({
-      message: "Internal server error during report generation",
-      error,
-    });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 
@@ -261,10 +225,9 @@ const LOWSTOCK_FIELD_MAP: Record<string, string> = {
 export const getLowStockReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
-    // Map column filters to real database paths
     options = mapColumnFilters(options, LOWSTOCK_FIELD_MAP);
 
-    // 1. Base pipeline (unwind, lookups, etc.)
+    // 1. Base pipeline
     let basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
@@ -277,6 +240,19 @@ export const getLowStockReport = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      
+      // ✅ Lookup supplier using the supplierId stored in attributes.stock.supplierId
+      {
+        $lookup: {
+          from: "suppliers",
+          localField: "attributes.stock.supplierId",
+          foreignField: "_id",
+          as: "supplier",
+        },
+      },
+      { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
+      
+      // Last purchase date lookup (keep as is)
       {
         $lookup: {
           from: "purchaseorders",
@@ -328,7 +304,7 @@ export const getLowStockReport = async (req: Request, res: Response) => {
       },
     });
 
-    // 4. Project final shape
+    // 4. Project final shape (including supplier name from the lookup)
     basePipeline.push({
       $project: {
         productName: 1,
@@ -337,17 +313,24 @@ export const getLowStockReport = async (req: Request, res: Response) => {
         currentStock: "$attributes.stock.stockQuantity",
         minStockLevel: "$attributes.stock.minStockLevel",
         reorderQuantity: 1,
-        supplier: "$attributes.stock.supplierId",
+        supplierName: {
+          $ifNull: [
+            "$supplier.companyName",
+            "$supplier.contactInformation.companyName",
+            "$supplier.contactInformation.primaryContactName",
+            "N/A",
+          ],
+        },
         stockStatus: 1,
         lastPurchaseDate: "$lastPurchase.orderDate",
         createdAt: 1,
       },
     });
 
-    // ✅ 5. Apply column filters (after all fields are available)
+    // 5. Apply column filters
     basePipeline = applyFilters(basePipeline, options);
 
-    // 6. Facet for pagination, totals, KPIs, chart
+    // 6. Facet for pagination, KPIs, chart
     const finalPipeline = [
       ...basePipeline,
       {
@@ -393,7 +376,12 @@ export const getLowStockReport = async (req: Request, res: Response) => {
       total: data.totalCount[0]?.count || 0,
       page: options.page,
       totalPages: Math.ceil((data.totalCount[0]?.count || 0) / options.limit),
-      kpis: data.kpis[0] || { lowStockItems: 0, criticalStock: 0, outOfStock: 0, reorderRequired: 0 },
+      kpis: data.kpis[0] || {
+        lowStockItems: 0,
+        criticalStock: 0,
+        outOfStock: 0,
+        reorderRequired: 0,
+      },
       chart: data.chart,
     });
   } catch (error) {
