@@ -90,12 +90,14 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
   // ── Chart data from API (if available) ────────────────────────────────────
   const chartData = Array.isArray((data as any)?.chart) ? (data as any).chart : []
 
+  console.log("chartData", chartData);
   // ── Tab switching ─────────────────────────────────────────────────────────
   const switchTab = (index: number) => {
     if (index === activeTab) return;
     setActiveTab(index);
     setSearch("");
     setDateRange("", "");
+    clearColumnFilters();
   };
 
   return (
