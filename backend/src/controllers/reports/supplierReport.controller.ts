@@ -41,14 +41,19 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
 
     // Base pipeline
     let basePipeline: any[] = [
-      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+      {
+        $match: {
+          isDeleted: false,
+          ...(Object.keys(dateFilter).length && { orderDate: dateFilter }),
+        },
+      },
       {
         $lookup: {
           from: "suppliers",
           localField: "supplier",
           foreignField: "_id",
-          as: "supplier"
-        }
+          as: "supplier",
+        },
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       { $unwind: "$items" },
@@ -58,11 +63,26 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           let: { poId: "$_id", sku: "$items.sku" },
           pipeline: [
             { $unwind: "$items" },
-            { $match: { $expr: { $and: [{ $eq: ["$purchaseOrderId", "$$poId"] }, { $eq: ["$items.sku", "$$sku"] }] } } },
-            { $project: { acceptedQuantity: "$items.acceptedQuantity", grnNumber: 1, receivedDate: 1 } }
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$purchaseOrderId", "$$poId"] },
+                    { $eq: ["$items.sku", "$$sku"] },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                acceptedQuantity: "$items.acceptedQuantity",
+                grnNumber: 1,
+                receivedDate: 1,
+              },
+            },
           ],
-          as: "grnData"
-        }
+          as: "grnData",
+        },
       },
       {
         $lookup: {
@@ -71,16 +91,23 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           pipeline: [
             { $unwind: "$items" },
             { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
-            { $group: { _id: null, totalReturned: { $sum: "$items.returnQty" } } }
+            {
+              $group: {
+                _id: null,
+                totalReturned: { $sum: "$items.returnQty" },
+              },
+            },
           ],
-          as: "returnData"
-        }
+          as: "returnData",
+        },
       },
       {
         $addFields: {
           grnItem: { $arrayElemAt: ["$grnData", 0] },
-          returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.totalReturned", 0] }, 0] }
-        }
+          returnedQty: {
+            $ifNull: [{ $arrayElemAt: ["$returnData.totalReturned", 0] }, 0],
+          },
+        },
       },
       {
         $project: {
@@ -95,9 +122,9 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           unitCost: "$items.unitPrice",
           totalAmount: "$items.totalPrice",
           orderDate: "$orderDate",
-          deliveryDate: { $ifNull: ["$grnItem.receivedDate", null] }
-        }
-      }
+          deliveryDate: { $ifNull: ["$grnItem.receivedDate", null] },
+        },
+      },
     ];
 
     // Apply column filters (productName, sku, poNumber, grnNumber, orderDate)
@@ -111,8 +138,8 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           _id: "$supplierName",
           Orders: { $sum: 1 },
           Received: { $sum: "$receivedQuantity" },
-          Returns: { $sum: "$returnedQuantity" }
-        }
+          Returns: { $sum: "$returnedQuantity" },
+        },
       },
       { $sort: { Orders: -1 as const } },
       { $limit: 5 },
@@ -121,9 +148,9 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           name: "$_id",
           Orders: 1,
           Received: 1,
-          Returns: 1
-        }
-      }
+          Returns: 1,
+        },
+      },
     ];
 
     const [mainResult, chartResult] = await Promise.all([
@@ -141,8 +168,8 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
                   totalPurchases: { $sum: 1 },
                   totalPurchaseValue: { $sum: "$totalAmount" },
                   totalGoodsReceived: { $sum: "$receivedQuantity" },
-                  totalReturnsToSuppliers: { $sum: "$returnedQuantity" }
-                }
+                  totalReturnsToSuppliers: { $sum: "$returnedQuantity" },
+                },
               },
               {
                 $project: {
@@ -150,14 +177,14 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
                   totalPurchases: 1,
                   totalPurchaseValue: 1,
                   totalGoodsReceived: 1,
-                  totalReturnsToSuppliers: 1
-                }
-              }
-            ]
-          }
-        }
+                  totalReturnsToSuppliers: 1,
+                },
+              },
+            ],
+          },
+        },
       ]),
-      PurchaseOrder.aggregate(chartPipeline)
+      PurchaseOrder.aggregate(chartPipeline),
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
@@ -171,9 +198,9 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
         totalPurchases: 0,
         totalPurchaseValue: 0,
         totalGoodsReceived: 0,
-        totalReturnsToSuppliers: 0
+        totalReturnsToSuppliers: 0,
       },
-      chart: chartResult
+      chart: chartResult,
     });
   } catch (error) {
     console.error("Supplier history error:", error);
@@ -184,7 +211,10 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
 // ----------------------------------------------------------------------
 // 2. Supplier Performance Report
 // ----------------------------------------------------------------------
-export const getSupplierPerformanceReport = async (req: Request, res: Response) => {
+export const getSupplierPerformanceReport = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, SUPPLIER_PERFORMANCE_FIELD_MAP);
@@ -194,14 +224,19 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
     let basePipeline: any[] = [
-      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+      {
+        $match: {
+          isDeleted: false,
+          ...(Object.keys(dateFilter).length && { orderDate: dateFilter }),
+        },
+      },
       {
         $lookup: {
           from: "suppliers",
           localField: "supplier",
           foreignField: "_id",
-          as: "supplier"
-        }
+          as: "supplier",
+        },
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       {
@@ -209,8 +244,8 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
           from: "grns",
           localField: "_id",
           foreignField: "purchaseOrderId",
-          as: "grn"
-        }
+          as: "grn",
+        },
       },
       {
         $addFields: {
@@ -220,12 +255,12 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
               $filter: {
                 input: "$grn",
                 as: "g",
-                cond: { $gt: ["$$g.receivedDate", "$expectedDelivery"] }
-              }
-            }
+                cond: { $gt: ["$$g.receivedDate", "$expectedDelivery"] },
+              },
+            },
           },
-          totalPurchaseValue: "$total"
-        }
+          totalPurchaseValue: "$total",
+        },
       },
       {
         $group: {
@@ -234,12 +269,14 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
           totalOrders: { $sum: 1 },
           totalDelivered: { $sum: "$delivered" },
           lateDeliveries: { $sum: "$late" },
-          totalPurchaseValue: { $sum: "$totalPurchaseValue" }
-        }
+          totalPurchaseValue: { $sum: "$totalPurchaseValue" },
+        },
       },
       {
         $addFields: {
-          onTimeDeliveries: { $subtract: ["$totalDelivered", "$lateDeliveries"] },
+          onTimeDeliveries: {
+            $subtract: ["$totalDelivered", "$lateDeliveries"],
+          },
           supplierRating: {
             $round: [
               {
@@ -247,17 +284,23 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
                   {
                     $divide: [
                       { $ifNull: ["$onTimeDeliveries", 0] },
-                      { $cond: [{ $eq: ["$totalDelivered", 0] }, 1, "$totalDelivered"] }
-                    ]
+                      {
+                        $cond: [
+                          { $eq: ["$totalDelivered", 0] },
+                          1,
+                          "$totalDelivered",
+                        ],
+                      },
+                    ],
                   },
-                  5
-                ]
+                  5,
+                ],
               },
-              1
-            ]
-          }
-        }
-      }
+              1,
+            ],
+          },
+        },
+      },
     ];
 
     // Apply column filter (supplierName)
@@ -270,11 +313,11 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
         $project: {
           name: "$supplierName",
           "On-Time": "$onTimeDeliveries",
-          Late: "$lateDeliveries"
-        }
+          Late: "$lateDeliveries",
+        },
       },
       { $sort: { "On-Time": -1 as const } },
-      { $limit: 5 }
+      { $limit: 5 },
     ];
 
     const [mainResult, chartResult] = await Promise.all([
@@ -291,14 +334,14 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
                   totalActiveSuppliers: { $sum: 1 },
                   onTimeDeliveries: { $sum: "$onTimeDeliveries" },
                   lateDeliveries: { $sum: "$lateDeliveries" },
-                  supplierRatingScore: { $avg: "$supplierRating" }
-                }
-              }
-            ]
-          }
-        }
+                  supplierRatingScore: { $avg: "$supplierRating" },
+                },
+              },
+            ],
+          },
+        },
       ]),
-      PurchaseOrder.aggregate(chartPipeline)
+      PurchaseOrder.aggregate(chartPipeline),
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
@@ -311,9 +354,9 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
         totalActiveSuppliers: 0,
         onTimeDeliveries: 0,
         lateDeliveries: 0,
-        supplierRatingScore: 0
+        supplierRatingScore: 0,
       },
-      chart: chartResult
+      chart: chartResult,
     });
   } catch (error) {
     console.error("Supplier performance error:", error);
@@ -324,7 +367,10 @@ export const getSupplierPerformanceReport = async (req: Request, res: Response) 
 // ----------------------------------------------------------------------
 // 3. Supplier Price History Report (dynamic chart: top 5 products by total quantity)
 // ----------------------------------------------------------------------
-export const getSupplierPriceHistoryReport = async (req: Request, res: Response) => {
+export const getSupplierPriceHistoryReport = async (
+  req: Request,
+  res: Response,
+) => {
   try {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, PRICE_HISTORY_FIELD_MAP);
@@ -335,35 +381,45 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
 
     // 1. Get top 5 products by total purchased quantity
     const topProducts = await PurchaseOrder.aggregate([
-      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+      {
+        $match: {
+          isDeleted: false,
+          ...(Object.keys(dateFilter).length && { orderDate: dateFilter }),
+        },
+      },
       { $unwind: "$items" },
       {
         $group: {
           _id: "$items.productName",
-          totalQty: { $sum: "$items.quantity" }
-        }
+          totalQty: { $sum: "$items.quantity" },
+        },
       },
       { $sort: { totalQty: -1 as const } },
       { $limit: 5 },
-      { $project: { productName: "$_id" } }
+      { $project: { productName: "$_id" } },
     ]);
-    const topProductNames = topProducts.map(p => p.productName);
+    const topProductNames = topProducts.map((p) => p.productName);
 
     // Base pipeline for price history (with previous price difference)
     let basePipeline: any[] = [
-      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+      {
+        $match: {
+          isDeleted: false,
+          ...(Object.keys(dateFilter).length && { orderDate: dateFilter }),
+        },
+      },
       { $unwind: "$items" },
       {
         $lookup: {
           from: "suppliers",
           localField: "supplier",
           foreignField: "_id",
-          as: "supplier"
-        }
+          as: "supplier",
+        },
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       {
-        $sort: { "items.sku": 1, orderDate: 1 as const }
+        $sort: { "items.sku": 1, orderDate: 1 as const },
       },
       {
         $group: {
@@ -376,10 +432,10 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
               purchaseDate: "$orderDate",
               price: "$items.unitPrice",
               quantity: "$items.quantity",
-              poNumber: "$orderNumber"
-            }
-          }
-        }
+              poNumber: "$orderNumber",
+            },
+          },
+        },
       },
       { $unwind: "$history" },
       {
@@ -390,11 +446,11 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
             prevPrice: {
               $shift: {
                 output: "$history.price",
-                by: -1
-              }
-            }
-          }
-        }
+                by: -1,
+              },
+            },
+          },
+        },
       },
       {
         $project: {
@@ -405,12 +461,12 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           previousPrice: "$prevPrice",
           currentPrice: "$history.price",
           priceDifference: {
-            $subtract: ["$history.price", { $ifNull: ["$prevPrice", 0] }]
+            $subtract: ["$history.price", { $ifNull: ["$prevPrice", 0] }],
           },
           purchaseQuantity: "$history.quantity",
-          poNumber: "$history.poNumber"
-        }
-      }
+          poNumber: "$history.poNumber",
+        },
+      },
     ];
 
     // Apply column filters
@@ -420,49 +476,68 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
     let chartPipeline: any[] = [];
     if (topProductNames.length > 0) {
       chartPipeline = [
-        { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+        {
+          $match: {
+            isDeleted: false,
+            ...(Object.keys(dateFilter).length && { orderDate: dateFilter }),
+          },
+        },
         { $unwind: "$items" },
         { $match: { "items.productName": { $in: topProductNames } } },
         {
           $group: {
             _id: {
               month: { $month: "$orderDate" },
-              productName: "$items.productName"
+              productName: "$items.productName",
             },
-            monthName: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
-            avgPrice: { $avg: "$items.unitPrice" }
-          }
+            monthName: {
+              $first: { $dateToString: { format: "%b", date: "$orderDate" } },
+            },
+            avgPrice: { $avg: "$items.unitPrice" },
+          },
         },
         { $sort: { "_id.month": 1 as const } },
         {
           $group: {
             _id: "$monthName",
-            ...topProductNames.reduce((acc, name) => {
-              acc[name.replace(/\s/g, "_")] = {
-                $avg: { $cond: [{ $eq: ["$_id.productName", name] }, "$avgPrice", null] }
-              };
-              return acc;
-            }, {} as Record<string, any>)
-          }
+            ...topProductNames.reduce(
+              (acc, name) => {
+                acc[name.replace(/\s/g, "_")] = {
+                  $avg: {
+                    $cond: [
+                      { $eq: ["$_id.productName", name] },
+                      "$avgPrice",
+                      null,
+                    ],
+                  },
+                };
+                return acc;
+              },
+              {} as Record<string, any>,
+            ),
+          },
         },
         { $sort: { _id: 1 } },
         {
           $project: {
             name: "$_id",
-            ...topProductNames.reduce((acc, name) => {
-              const safeKey = name?.replace(/\s/g, "_") || "unknown";
-             acc[safeKey] = {
-  $round: [
-    {
-      $ifNull: [`$${safeKey}`, 0]
-    },
-    0
-  ]
-};
-              return acc;
-            }, {} as Record<string, any>)
-          }
-        }
+            ...topProductNames.reduce(
+              (acc, name) => {
+                const safeKey = name?.replace(/\s/g, "_") || "unknown";
+                acc[safeKey] = {
+                  $round: [
+                    {
+                      $ifNull: [`$${safeKey}`, 0],
+                    },
+                    0,
+                  ],
+                };
+                return acc;
+              },
+              {} as Record<string, any>,
+            ),
+          },
+        },
       ];
     }
 
@@ -484,18 +559,25 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
                   priceChangePercent: {
                     $avg: {
                       $multiply: [
-                        { $divide: ["$priceDifference", { $max: [{ $ifNull: ["$previousPrice", 1] }, 1] }] },
-                        100
-                      ]
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        }
+                        {
+                          $divide: [
+                            "$priceDifference",
+                            { $max: [{ $ifNull: ["$previousPrice", 1] }, 1] },
+                          ],
+                        },
+                        100,
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
       ]),
-      topProductNames.length ? PurchaseOrder.aggregate(chartPipeline) : Promise.resolve([])
+      topProductNames.length
+        ? PurchaseOrder.aggregate(chartPipeline)
+        : Promise.resolve([]),
     ]);
 
     const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
@@ -509,9 +591,9 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
         avgPurchasePrice: 0,
         highestPrice: 0,
         lowestPrice: 0,
-        priceChangePercent: 0
+        priceChangePercent: 0,
       },
-      chart: chartResult
+      chart: chartResult,
     });
   } catch (error) {
     console.error("Price history error:", error);

@@ -80,7 +80,7 @@ export const reportService = {
     const { data } = await axios.get(`${API_BASE}/reports/${module}/${reportName}`, {
       params,
     });
-
+console.log("data", data)
     return data;
   },
 };

@@ -80,7 +80,9 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
  
   // ── KPIs from API only ───────────────────────────────────────────────────
   const apiKpis = data?.kpis ?? {};
-  const kpisToShow = Object.entries(apiKpis).map(([label, value]) => ({
+  const kpisToShow = Object.entries(apiKpis)
+  .filter(([key]) => key !== "_id")
+  .map(([label, value]) => ({
     label,
     value: String(value),
   }));

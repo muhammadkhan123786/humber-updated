@@ -369,7 +369,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
             kpis: [
               {
                 $group: {
-                  _id: null,
+                  _id: 0,
                   totalProducts:       { $sum: 1 },
                   availableStock:      { $sum: "$closingStock" },
                   incomingStock:       { $sum: "$purchasedQty" },
