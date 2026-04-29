@@ -244,25 +244,54 @@ export const CATEGORIES: Category[] = [
   ],
     chartColors: ["#7c3aed", "#a78bfa", "#c4b5fd"],
   },
-  {
-    id: "financial",
-    title: "Financial Reports",
-    icon: "💰",
-    desc: "Analyze costs, margins, profitability, and financial summaries.",
-    grad: "linear-gradient(135deg,#78350f 0%,#d97706 55%,#fbbf24 100%)",
-    gradLight: "linear-gradient(135deg,#fffbeb,#fef3c7)",
-    accent: "#d97706",
-    accentLight: "#fffbeb",
-    accentBorder: "#fcd34d",
-    accentText: "#78350f",
-    glow: "0 8px 32px rgba(217,119,6,0.25)",
-    tabs: [
-      { label: "Cost Analysis", icon: "🔢" },
-      { label: "Profit & Loss", icon: "📊" },
-      { label: "Budget vs Actual", icon: "🎯" },
-    ],
-    chartColors: ["#d97706", "#f59e0b", "#fbbf24"],
-  },
+  // In your CATEGORIES array, update the financial section:
+{
+  id: "financial",
+  title: "Financial Reports",
+  icon: "💰",
+  desc: "Analyze costs, margins, profitability, and financial summaries.",
+  grad: "linear-gradient(135deg,#78350f 0%,#d97706 55%,#fbbf24 100%)",
+  gradLight: "linear-gradient(135deg,#fffbeb,#fef3c7)",
+  accent: "#d97706",
+  accentLight: "#fffbeb",
+  accentBorder: "#fcd34d",
+  accentText: "#78350f",
+  glow: "0 8px 32px rgba(217,119,6,0.25)",
+  tabs: [
+    {
+      label: "Cost Analysis",
+      icon: "🔢",
+      reportName: "cost-analysis",  
+      filters: [
+        { label: "Product Name", field: "productName", type: "text" },
+        { label: "SKU", field: "sku", type: "text" },
+        { label: "Category", field: "category", type: "text" },
+        { label: "Stock Value", field: "stockValue", type: "number" },
+      ],
+    },
+    {
+      label: "Profit & Loss",
+      icon: "📊",
+      reportName: "profit-loss",
+      filters: [
+        { label: "Purchase Date", field: "purchaseDate", type: "date" },
+        { label: "Supplier", field: "supplier", type: "text" },
+        { label: "Product", field: "product", type: "text" },
+        { label: "Total Cost", field: "totalCost", type: "number" },
+      ],
+    },
+    {
+      label: "Budget vs Actual",
+      icon: "🎯",
+      reportName: "budget-vs-actual",
+      filters: [
+        { label: "Category", field: "category", type: "text" },
+        { label: "Status", field: "status", type: "text" },
+      ],
+    },
+  ],
+  chartColors: ["#d97706", "#f59e0b", "#fbbf24"],
+}
 ];
 
 // src/constants/categories.ts - Update just the QUICK_STATS section
