@@ -359,7 +359,7 @@ export function CategoryPage({ cat, onBack }: CategoryPageProps) {
           format: type,
           reportData: {
             headers,
-            rows: apiRows,
+            rows: tableRows,
             kpis: kpisToShow,
           },
         })
