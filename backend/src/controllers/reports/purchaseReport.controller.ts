@@ -131,7 +131,7 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
       {
         $group: {
           _id: { $month: "$orderDate" },
-          month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+          month: { $first: { $dateToString: { format: "%m", date: "$orderDate" } } },
           totalValue: { $sum: "$total" },
         },
       },
@@ -315,7 +315,7 @@ export const getGRNReport = async (req: Request, res: Response) => {
       {
         $group: {
           _id: { $month: "$receivedDate" },
-          month: { $first: { $dateToString: { format: "%b", date: "$receivedDate" } } },
+          month: { $first: { $dateToString: { format: "%m", date: "$receivedDate" } } },
           totalReceivedValue: { $sum: { $multiply: ["$items.acceptedQuantity", "$items.unitPrice"] } },
         },
       },

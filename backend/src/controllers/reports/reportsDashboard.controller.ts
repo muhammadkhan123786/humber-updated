@@ -225,7 +225,7 @@ export const getDashboardCharts = async (req: Request, res: Response) => {
       {
         $group: {
           _id: { $month: "$orderDate" },
-          month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+          month: { $first: { $dateToString: { format: "%m", date: "$orderDate" } } },
           COGS: { $sum: "$total" }
         }
       },
