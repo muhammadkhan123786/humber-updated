@@ -3,7 +3,7 @@ import { PurchaseOrder } from "../../models/purchaseOrder.model";
 import { buildQueryOptions } from "../../utils/queryHelper";
 import { applyFilters } from "../../utils/filterBuilder";
 import { mapColumnFilters } from "../../utils/reports/fieldMapper";
-
+import { ProductModal } from "../../models/product.models";
 // ------------------------------
 // Field maps for supplier reports
 // ------------------------------
@@ -55,10 +55,19 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       { $unwind: "$items" },
+
+      // ✅ Compute totalAmount = quantity * unitPrice
+      {
+        $addFields: {
+          computedTotalAmount: { $multiply: ["$items.quantity", "$items.unitPrice"] },
+        },
+      },
+
+      // ✅ 1. Lookup GRNs that belong to this purchase order and match the productId
       {
         $lookup: {
           from: "grns",
-          let: { poId: "$_id", sku: "$items.sku" },
+          let: { poId: "$_id", productId: { $toString: "$items.productId" } },
           pipeline: [
             { $unwind: "$items" },
             {
@@ -66,29 +75,33 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
                 $expr: {
                   $and: [
                     { $eq: ["$purchaseOrderId", "$$poId"] },
-                    { $eq: ["$items.sku", "$$sku"] },
-                  ],
-                },
-              },
+                    { $eq: ["$items.productId", "$$productId"] }
+                  ]
+                }
+              }
             },
             {
               $project: {
                 acceptedQuantity: "$items.acceptedQuantity",
                 grnNumber: 1,
                 receivedDate: 1,
+                _id: 1,  // we need the GRN _id to link returns
               },
             },
           ],
           as: "grnData",
         },
       },
+      { $unwind: { path: "$grnData", preserveNullAndEmptyArrays: true } },
+
+      // ✅ 2. Lookup goods returns that reference this GRN and have status "completed"
       {
         $lookup: {
           from: "goodsreturns",
-          let: { sku: "$items.sku" },
+          let: { grnId: "$grnData._id" },
           pipeline: [
+            { $match: { $expr: { $eq: ["$grnId", "$$grnId"] }, status: "completed" } },
             { $unwind: "$items" },
-            { $match: { $expr: { $eq: ["$items.sku", "$$sku"] } } },
             {
               $group: {
                 _id: null,
@@ -99,14 +112,28 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
           as: "returnData",
         },
       },
+
       {
         $addFields: {
-          grnItem: { $arrayElemAt: ["$grnData", 0] },
-          returnedQty: {
-            $ifNull: [{ $arrayElemAt: ["$returnData.totalReturned", 0] }, 0],
-          },
+          returnedQty: { $ifNull: [{ $arrayElemAt: ["$returnData.totalReturned", 0] }, 0] },
         },
       },
+
+      // ✅ Optional: lookup product details to get correct productName & sku
+      {
+        $lookup: {
+          from: "products",
+          let: { productId: "$items.productId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$productId" }] } } },
+            { $unwind: "$attributes" },
+            { $project: { productName: 1, sku: "$attributes.sku" } }
+          ],
+          as: "productInfo",
+        },
+      },
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+
       {
         $project: {
           supplierName: {
@@ -118,16 +145,16 @@ export const getSupplierHistoryReport = async (req: Request, res: Response) => {
             ],
           },
           poNumber: "$orderNumber",
-          grnNumber: { $ifNull: ["$grnItem.grnNumber", ""] },
-          productName: "$items.productName",
-          sku: "$items.sku",
+          grnNumber: { $ifNull: ["$grnData.grnNumber", ""] },
+          productName: { $ifNull: ["$productInfo.productName", "$items.productName", ""] },
+          sku: { $ifNull: ["$productInfo.sku", "$items.sku", ""] },
           orderedQuantity: "$items.quantity",
-          receivedQuantity: { $ifNull: ["$grnItem.acceptedQuantity", 0] },
+          receivedQuantity: { $ifNull: ["$grnData.acceptedQuantity", 0] },
           returnedQuantity: "$returnedQty",
           unitCost: "$items.unitPrice",
-          totalAmount: "$items.totalPrice",
+          totalAmount: "$computedTotalAmount",
           orderDate: "$orderDate",
-          deliveryDate: { $ifNull: ["$grnItem.receivedDate", null] },
+          deliveryDate: { $ifNull: ["$grnData.receivedDate", null] },
         },
       },
     ];
@@ -384,7 +411,7 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // ---------- 1. Get top 5 products by total purchased quantity ----------
+    // ---------- 1. Get top 5 products by total purchased quantity (using productId) ----------
     const topProducts = await PurchaseOrder.aggregate([
       {
         $match: {
@@ -395,23 +422,27 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
       { $unwind: "$items" },
       {
         $group: {
-          _id: "$items.productName",
+          _id: "$items.productId",           // group by productId (ObjectId)
           totalQty: { $sum: "$items.quantity" },
         },
       },
-      {
-        $match: { _id: { $nin: [null, ""] } }, // remove empty product names
-      },
+      { $match: { _id: { $ne: null } } },    // remove null productIds
       { $sort: { totalQty: -1 as const } },
       { $limit: 5 },
-      { $project: { productName: "$_id" } },
     ]);
 
-    const topProductNames = topProducts
-      .map((p) => p.productName)
-      .filter((name) => name && name.trim() !== "");
+    // Fetch product names and skus for these top productIds
+    const topProductIds = topProducts.map(p => p._id);
+    let topProductNames: string[] = [];
+    if (topProductIds.length) {
+      const products = await ProductModal.find(
+        { _id: { $in: topProductIds } },
+        { productName: 1, "attributes.sku": 1 }
+      ).lean();
+      topProductNames = products.map(p => p.productName).filter(Boolean);
+    }
 
-    // ---------- 2. Base pipeline for price history ----------
+    // ---------- 2. Base pipeline for price history with product lookup ----------
     let basePipeline: any[] = [
       {
         $match: {
@@ -420,6 +451,7 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
         },
       },
       { $unwind: "$items" },
+      // ✅ Lookup supplier
       {
         $lookup: {
           from: "suppliers",
@@ -441,16 +473,36 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           },
         },
       },
+      // ✅ Lookup product details using productId
       {
-        $sort: { "items.sku": 1, orderDate: 1 as const },
+        $lookup: {
+          from: "products",
+          let: { prodId: "$items.productId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$prodId" }] } } },
+            { $unwind: "$attributes" },
+            { $project: { productName: 1, sku: "$attributes.sku" } }
+          ],
+          as: "productInfo",
+        },
+      },
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          finalProductName: { $ifNull: ["$productInfo.productName", "$items.productName", "Unknown"] },
+          finalSku: { $ifNull: ["$productInfo.sku", "$items.sku", ""] },
+        },
+      },
+      {
+        $sort: { finalSku: 1, orderDate: 1 as const },
       },
       {
         $group: {
-          _id: "$items.sku",
+          _id: "$finalSku",
           history: {
             $push: {
-              productName: "$items.productName",
-              sku: "$items.sku",
+              productName: "$finalProductName",
+              sku: "$finalSku",
               supplier: "$supplierName",
               purchaseDate: "$orderDate",
               price: "$items.unitPrice",
@@ -505,12 +557,25 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           },
         },
         { $unwind: "$items" },
-        { $match: { "items.productName": { $in: topProductNames } } },
+        // Lookup product name for each item (to filter by top product names)
+        {
+          $lookup: {
+            from: "products",
+            let: { prodId: "$items.productId" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$prodId" }] } } },
+              { $project: { productName: 1 } }
+            ],
+            as: "prodInfo",
+          },
+        },
+        { $unwind: { path: "$prodInfo", preserveNullAndEmptyArrays: true } },
+        { $match: { "prodInfo.productName": { $in: topProductNames } } },
         {
           $group: {
             _id: {
               month: { $month: "$orderDate" },
-              productName: "$items.productName",
+              productName: "$prodInfo.productName",
             },
             monthName: {
               $first: { $dateToString: { format: "%b", date: "$orderDate" } },
@@ -523,7 +588,6 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
           $group: {
             _id: "$monthName",
             ...topProductNames.reduce((acc, name) => {
-              // Create safe field name: replace spaces with underscores
               const safeKey = name.replace(/\s+/g, "_");
               acc[safeKey] = {
                 $avg: {
@@ -544,9 +608,7 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
             name: "$_id",
             ...topProductNames.reduce((acc, name) => {
               const safeKey = name.replace(/\s+/g, "_");
-              acc[safeKey] = {
-                $round: [{ $ifNull: [`$${safeKey}`, 0] }, 0],
-              };
+              acc[safeKey] = { $round: [{ $ifNull: [`$${safeKey}`, 0] }, 0] };
               return acc;
             }, {} as Record<string, any>),
           },
