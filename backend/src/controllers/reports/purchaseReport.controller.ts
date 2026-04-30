@@ -36,9 +36,17 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, PURCHASE_ORDER_FIELD_MAP);
 
-    // Base pipeline for main data
+    // Date range filter
+    let matchStage: any = { isDeleted: false };
+    if (options.startDate || options.endDate) {
+      matchStage.orderDate = {};
+      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
+      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
+    }
+
+    // Base pipeline with GRN lookup to compute received quantity
     let basePipeline: any[] = [
-      { $match: { isDeleted: false } },
+      { $match: matchStage },
       {
         $lookup: {
           from: "suppliers",
@@ -48,47 +56,66 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
+
+      // ✅ Lookup GRNs to get total accepted quantity for this PO
+      {
+        $lookup: {
+          from: "grns",
+          let: { poId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$purchaseOrderId", "$$poId"] }, status: "received" } },
+            { $unwind: "$items" },
+            {
+              $group: {
+                _id: null,
+                totalReceivedQty: { $sum: "$items.acceptedQuantity" }
+              }
+            }
+          ],
+          as: "grnData"
+        }
+      },
+      { $unwind: { path: "$grnData", preserveNullAndEmptyArrays: true } },
+
       {
         $addFields: {
           totalItems: { $size: "$items" },
           totalQuantity: { $sum: "$items.quantity" },
+          receivedQuantity: { $ifNull: ["$grnData.totalReceivedQty", 0] },
         },
+      },
+      {
+        $addFields: {
+          pendingQuantity: { $subtract: ["$totalQuantity", "$receivedQuantity"] }
+        }
       },
       {
         $project: {
           poNumber: "$orderNumber",
           orderDate: 1,
-          supplierName: { 
-  $ifNull: [
-    "$supplier.companyName", 
-    "$supplier.contactInformation.companyName",
-    "$supplier.contactInformation.primaryContactName",
-    "N/A"
-  ] 
-},
+          supplierName: {
+            $ifNull: [
+              "$supplier.companyName",
+              "$supplier.contactInformation.companyName",
+              "$supplier.contactInformation.primaryContactName",
+              "N/A"
+            ]
+          },
           totalItems: 1,
           totalQuantity: 1,
           totalAmount: "$total",
-          receivedQuantity: { $literal: 0 },
-          pendingQuantity: "$totalQuantity",
+          receivedQuantity: 1,
+          pendingQuantity: 1,
           status: 1,
           createdBy: { $ifNull: ["$createdBy", "N/A"] },
         },
       },
     ];
 
-    // Date range filter
-    if (options.startDate || options.endDate) {
-      const dateMatch: any = {};
-      if (options.startDate) dateMatch.$gte = new Date(options.startDate);
-      if (options.endDate) dateMatch.$lte = new Date(options.endDate);
-      basePipeline.unshift({ $match: { orderDate: dateMatch } });
-    }
-
     // Apply column filters
     basePipeline = applyFilters(basePipeline, options);
 
-    // ---------- Chart pipeline: monthly total purchase value ----------
+    // Chart pipeline (unchanged)
     const chartPipeline: any[] = [
       { $match: { isDeleted: false } },
       ...(options.startDate || options.endDate
@@ -109,15 +136,9 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
         },
       },
       { $sort: { _id: 1 as const } },
-      {
-        $project: {
-          name: "$month",
-          "Purchase Value": { $round: ["$totalValue", 0] },
-        },
-      },
+      { $project: { name: "$month", "Purchase Value": { $round: ["$totalValue", 0] } } },
     ];
 
-    // Execute main query and chart in parallel
     const [mainResult, chartResult] = await Promise.all([
       PurchaseOrder.aggregate([
         ...basePipeline,
@@ -130,8 +151,8 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
                 $group: {
                   _id: null,
                   totalPurchaseOrders: { $sum: 1 },
-                  pendingPurchaseOrders: { $sum: { $cond: [{ $eq: ["$status", "pending"] }, 1, 0] } },
-                  completedPurchaseOrders: { $sum: { $cond: [{ $eq: ["$status", "received"] }, 1, 0] } },
+                  pendingPurchaseOrders: { $sum: { $cond: [{ $gt: ["$pendingQuantity", 0] }, 1, 0] } },
+                  completedPurchaseOrders: { $sum: { $cond: [{ $eq: ["$pendingQuantity", 0] }, 1, 0] } },
                   cancelledPurchaseOrders: { $sum: { $cond: [{ $eq: ["$status", "cancelled"] }, 1, 0] } },
                   totalPurchaseValue: { $sum: "$totalAmount" },
                 },
@@ -169,9 +190,6 @@ export const getPurchaseOrderReport = async (req: Request, res: Response) => {
 // ----------------------------------------------------------------------
 // 2. Goods Received (GRN) Report with chart: monthly received value
 // ----------------------------------------------------------------------
-// ----------------------------------------------------------------------
-// 2. Goods Received (GRN) Report with chart: monthly received value
-// ----------------------------------------------------------------------
 export const getGRNReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
@@ -189,7 +207,7 @@ export const getGRNReport = async (req: Request, res: Response) => {
       },
       { $unwind: { path: "$purchaseOrder", preserveNullAndEmptyArrays: true } },
 
-      // 2. Lookup supplier using the purchase order's supplier field
+      // 2. Lookup supplier
       {
         $lookup: {
           from: "suppliers",
@@ -200,15 +218,51 @@ export const getGRNReport = async (req: Request, res: Response) => {
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
 
-      // 3. Unwind items array
+      // 3. Unwind GRN items
       { $unwind: "$items" },
 
+      // 4. Find matching PO item by productId (convert ObjectId to string)
+      {
+        $addFields: {
+          poItem: {
+            $arrayElemAt: [
+              {
+                $filter: {
+                  input: "$purchaseOrder.items",
+                  as: "poi",
+                  cond: {
+                    $eq: [
+                      { $toString: "$$poi.productId" },
+                      "$items.productId"
+                    ]
+                  }
+                }
+              },
+              0
+            ]
+          }
+        }
+      },
+
+      // 5. ✅ Use acceptedQuantity for both totalCost and remaining calculation
       {
         $addFields: {
           totalCost: { $multiply: ["$items.acceptedQuantity", "$items.unitPrice"] },
-          remainingQuantity: { $subtract: ["$items.orderedQuantity", "$items.receivedQuantity"] },
-        },
+          poOrderedQuantity: { $ifNull: ["$poItem.quantity", 0] },
+          remainingQuantity: {
+            $max: [
+              { $subtract: [
+                  { $ifNull: ["$poItem.quantity", 0] },
+                  "$items.acceptedQuantity"          // ✅ use accepted, not received
+                ] 
+              },
+              0
+            ]
+          }
+        }
       },
+
+      // 6. Final projection
       {
         $project: {
           grnNumber: 1,
@@ -224,8 +278,8 @@ export const getGRNReport = async (req: Request, res: Response) => {
           },
           productName: "$items.productName",
           sku: "$items.sku",
-          orderedQuantity: "$items.orderedQuantity",
-          receivedQuantity: "$items.receivedQuantity",
+          orderedQuantity: "$poOrderedQuantity",
+          receivedQuantity: "$items.acceptedQuantity",   // ✅ show accepted as "received" for UI clarity
           remainingQuantity: 1,
           unitCost: "$items.unitPrice",
           totalCost: 1,
@@ -235,7 +289,7 @@ export const getGRNReport = async (req: Request, res: Response) => {
       },
     ];
 
-    // Date range filter (applies before $unwind for efficiency)
+    // Date range filter
     if (options.startDate || options.endDate) {
       const dateMatch: any = {};
       if (options.startDate) dateMatch.$gte = new Date(options.startDate);
@@ -245,7 +299,7 @@ export const getGRNReport = async (req: Request, res: Response) => {
 
     basePipeline = applyFilters(basePipeline, options);
 
-    // Chart pipeline (unchanged – works on raw GRN data)
+    // Chart pipeline (unchanged – uses acceptedQuantity for value)
     const chartPipeline: any[] = [
       { $unwind: "$items" },
       ...(options.startDate || options.endDate
@@ -286,7 +340,7 @@ export const getGRNReport = async (req: Request, res: Response) => {
                 $group: {
                   _id: null,
                   totalGRN: { $sum: 1 },
-                  totalItemsReceived: { $sum: "$receivedQuantity" },
+                  totalItemsReceived: { $sum: "$items.acceptedQuantity" },   // ✅ use accepted
                   totalPurchaseValueReceived: { $sum: "$totalCost" },
                   pendingDeliveries: { $sum: { $cond: [{ $gt: ["$remainingQuantity", 0] }, 1, 0] } },
                 },
@@ -328,9 +382,16 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, PURCHASE_SUMMARY_FIELD_MAP);
 
-    // Build summary aggregation (without $facet initially, because we need full list for chart)
+    // Date range filter
+    let matchStage: any = { isDeleted: false };
+    if (options.startDate || options.endDate) {
+      matchStage.orderDate = {};
+      if (options.startDate) matchStage.orderDate.$gte = new Date(options.startDate);
+      if (options.endDate) matchStage.orderDate.$lte = new Date(options.endDate);
+    }
+
     let summaryPipeline: any[] = [
-      { $match: { isDeleted: false } },
+      { $match: matchStage },
       {
         $lookup: {
           from: "suppliers",
@@ -340,17 +401,23 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
         },
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
+      // ✅ Move $ifNull to $addFields (before grouping)
+      {
+        $addFields: {
+          computedSupplierName: {
+            $ifNull: [
+              "$supplier.companyName",
+              "$supplier.contactInformation.companyName",
+              "$supplier.contactInformation.primaryContactName",
+              "N/A"
+            ]
+          }
+        }
+      },
       {
         $group: {
           _id: "$supplier._id",
-          supplierName: { 
-  $ifNull: [
-    "$supplier.companyName", 
-    "$supplier.contactInformation.companyName",
-    "$supplier.contactInformation.primaryContactName",
-    "N/A"
-  ] 
-},
+          supplierName: { $first: "$computedSupplierName" },   // ✅ $first works
           totalOrders: { $sum: 1 },
           totalQuantityPurchased: { $sum: { $sum: "$items.quantity" } },
           totalPurchaseAmount: { $sum: "$total" },
@@ -359,14 +426,7 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
       },
       {
         $project: {
-          supplierName: { 
-  $ifNull: [
-    "$supplier.companyName", 
-    "$supplier.contactInformation.companyName",
-    "$supplier.contactInformation.primaryContactName",
-    "N/A"
-  ] 
-},
+          supplierName: 1,
           totalOrders: 1,
           totalQuantityPurchased: 1,
           totalPurchaseAmount: 1,
@@ -377,18 +437,8 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
       },
     ];
 
-    // Date range filter
-    if (options.startDate || options.endDate) {
-      const dateMatch: any = {};
-      if (options.startDate) dateMatch.$gte = new Date(options.startDate);
-      if (options.endDate) dateMatch.$lte = new Date(options.endDate);
-      summaryPipeline.unshift({ $match: { orderDate: dateMatch } });
-    }
-
-    // Apply column filters
     let filteredPipeline = applyFilters([...summaryPipeline], options);
 
-    // ---------- Chart pipeline: top 5 suppliers by purchase amount ----------
     const chartPipeline: any[] = [
       ...summaryPipeline,
       { $sort: { totalPurchaseAmount: -1 as const } },
@@ -401,7 +451,6 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
       },
     ];
 
-    // Execute main query (with pagination) and chart in parallel
     const [mainResult, chartResult] = await Promise.all([
       PurchaseOrder.aggregate([
         ...filteredPipeline,
@@ -435,8 +484,6 @@ export const getPurchaseSummaryReport = async (req: Request, res: Response) => {
       avgPurchaseValue: 0,
       topSupplier: "N/A",
     };
-
-    // Derive topSupplier from chart data (already sorted)
     if (chartResult && chartResult.length > 0) {
       kpis.topSupplier = chartResult[0].name;
     }
