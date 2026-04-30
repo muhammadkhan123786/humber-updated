@@ -432,9 +432,6 @@
 //   }
 // };
 
-
-
-
 import { Request, Response } from "express";
 import { ProductModal } from "../../models/product.models";
 import { PurchaseOrder } from "../../models/purchaseOrder.model";
@@ -443,7 +440,6 @@ import { applyFilters } from "../../utils/filterBuilder";
 import { mapColumnFilters } from "../../utils/reports/fieldMapper";
 import { PipelineStage } from "mongoose";
 
-// Field maps for financial reports (frontend field → MongoDB field)
 const COST_ANALYSIS_FIELD_MAP: Record<string, string> = {
   productName: "productName",
   sku: "sku",
@@ -451,21 +447,6 @@ const COST_ANALYSIS_FIELD_MAP: Record<string, string> = {
   stockValue: "stockValue",
 };
 
-const PROFIT_LOSS_FIELD_MAP: Record<string, string> = {
-  purchaseDate: "purchaseDate",
-  supplier: "supplierName",      // mapped to computed field after lookup
-  product: "product",
-  totalCost: "totalCost",
-};
-
-const BUDGET_VS_ACTUAL_FIELD_MAP: Record<string, string> = {
-  category: "category",
-  status: "status",
-};
-
-// ----------------------------------------------------------------------
-// 1. Cost Analysis Report (inventory valuation by product)
-// ----------------------------------------------------------------------
 export const getCostAnalysisReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
@@ -475,11 +456,26 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // Base aggregation pipeline
+    // ---------- Main aggregation (unwinds attributes and first pricing) ----------
     let pipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       { $unwind: "$attributes" },
-      { $unwind: "$attributes.pricing" },
+      {
+        $addFields: {
+          firstPricing: { $arrayElemAt: ["$attributes.pricing", 0] }
+        }
+      },
+      { $unwind: { path: "$firstPricing", preserveNullAndEmptyArrays: true } },
+      // Lookup warehouse using attributes.stock.warehouseId
+      {
+        $lookup: {
+          from: "warehouses",
+          localField: "attributes.stock.warehouseId",
+          foreignField: "_id",
+          as: "warehouseInfo"
+        }
+      },
+      { $unwind: { path: "$warehouseInfo", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: "categories",
@@ -491,15 +487,16 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
-          productName: 1,
+          productName: "$productName",
           sku: "$attributes.sku",
           category: "$category.categoryName",
           currentStock: "$attributes.stock.stockQuantity",
-          unitCost: "$attributes.pricing.costPrice",
+          unitCost: "$firstPricing.costPrice",
           stockValue: {
-            $multiply: ["$attributes.stock.stockQuantity", "$attributes.pricing.costPrice"],
+            $multiply: ["$attributes.stock.stockQuantity", "$firstPricing.costPrice"]
           },
-        },
+          warehouse: { $ifNull: ["$warehouseInfo.name", "N/A"] }  // assuming warehouse schema has a "name" field
+        }
       },
       {
         $project: {
@@ -509,17 +506,16 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
           currentStock: 1,
           unitCost: 1,
           stockValue: 1,
-          warehouse: { $literal: "Main Warehouse" },
-        },
-      },
+          warehouse: 1
+        }
+      }
     ];
 
-    // Date filter (if any) – using createdAt or any date field; adjust if needed
+    // Date filter (using createdAt – adjust if needed)
     if (options.startDate || options.endDate) {
       pipeline.unshift({ $match: { createdAt: dateFilter } } as PipelineStage);
     }
 
-    // Apply dynamic column filters (productName, sku, category, stockValue)
     pipeline = applyFilters(pipeline, options);
 
     // Chart: stock value by category
@@ -528,15 +524,15 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
       {
         $group: {
           _id: "$category",
-          Value: { $sum: "$stockValue" },
-        },
+          Value: { $sum: "$stockValue" }
+        }
       },
       {
         $project: {
           name: { $ifNull: ["$_id", "Uncategorized"] },
-          Value: { $round: ["$Value", 0] },
-        },
-      },
+          Value: { $round: ["$Value", 0] }
+        }
+      }
     ];
 
     const [mainResult, chartResult] = await Promise.all([
@@ -552,36 +548,25 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
                   _id: null,
                   totalInventoryValue: { $sum: "$stockValue" },
                   totalProductsInStock: { $sum: 1 },
-                  averageProductCost: { $avg: "$unitCost" },
-                  highestValueProduct: { $max: "$stockValue" },
-                },
-              },
+                  averageProductCost: { $avg: "$unitCost" }
+                }
+              }
             ],
-          },
-        },
+            highestValueProduct: [
+              { $sort: { stockValue: -1 } },
+              { $limit: 1 },
+              { $project: { productName: 1, _id: 0 } }
+            ]
+          }
+        }
       ]),
-      ProductModal.aggregate(chartPipeline),
+      ProductModal.aggregate(chartPipeline)
     ]);
 
-    const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [] };
+    const data = mainResult[0] || { paginated: [], totalCount: [], kpis: [], highestValueProduct: [] };
     const total = data.totalCount[0]?.count || 0;
-    let kpis = data.kpis[0] || {
-      totalInventoryValue: 0,
-      totalProductsInStock: 0,
-      averageProductCost: 0,
-      highestValueProduct: 0,
-    };
-
-    // Fetch the product name for highest value product
-    if (kpis.highestValueProduct) {
-      const highest = await ProductModal.aggregate([
-        ...pipeline,
-        { $sort: { stockValue: -1 } },
-        { $limit: 1 },
-        { $project: { productName: 1 } },
-      ]);
-      if (highest[0]) kpis.highestValueProduct = highest[0].productName;
-    }
+    const kpis = data.kpis[0] || { totalInventoryValue: 0, totalProductsInStock: 0, averageProductCost: 0 };
+    const highestProduct = data.highestValueProduct[0] || { productName: "N/A" };
 
     res.json({
       rows: data.paginated,
@@ -592,9 +577,9 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
         totalInventoryValue: kpis.totalInventoryValue,
         totalProductsInStock: kpis.totalProductsInStock,
         averageProductCost: kpis.averageProductCost,
-        highestValueProduct: kpis.highestValueProduct || "N/A",
+        highestValueProduct: highestProduct.productName
       },
-      chart: chartResult,
+      chart: chartResult
     });
   } catch (error) {
     console.error("Cost analysis error:", error);
@@ -605,6 +590,13 @@ export const getCostAnalysisReport = async (req: Request, res: Response) => {
 // ----------------------------------------------------------------------
 // 2. Profit & Loss Report (with supplier name fix)
 // ----------------------------------------------------------------------
+const PROFIT_LOSS_FIELD_MAP: Record<string, string> = {
+  purchaseDate: "purchaseDate",
+  supplier: "supplierName",      // mapped after $addFields
+  product: "product",            // will be mapped to $items.productName
+  totalCost: "totalCost",
+};
+
 export const getProfitLossReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
@@ -614,7 +606,6 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
     if (options.startDate) dateFilter.$gte = new Date(options.startDate);
     if (options.endDate) dateFilter.$lte = new Date(options.endDate);
 
-    // Base pipeline with proper supplier name extraction
     let basePipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       {
@@ -627,6 +618,19 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       },
       { $unwind: { path: "$supplier", preserveNullAndEmptyArrays: true } },
       { $unwind: "$items" },
+      // ✅ Lookup product details using productId (convert to ObjectId)
+      {
+        $lookup: {
+          from: "products",
+          let: { prodId: "$items.productId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$prodId" }] } } },
+            { $project: { productName: 1 } }
+          ],
+          as: "productInfo",
+        },
+      },
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
       {
         $addFields: {
           supplierName: {
@@ -637,30 +641,39 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
               "N/A",
             ],
           },
+          // Use product name from product master if available, otherwise fallback to PO item's productName
+          finalProduct: {
+            $ifNull: ["$productInfo.productName", "$items.productName", "Unknown Product"]
+          },
+          // Compute totalCost = quantity × unitPrice if items.totalPrice is missing/zero
+          computedTotalCost: {
+            $cond: [
+              { $eq: [{ $ifNull: ["$items.totalPrice", 0] }, 0] },
+              { $multiply: ["$items.quantity", "$items.unitPrice"] },
+              "$items.totalPrice"
+            ]
+          }
         },
       },
       {
         $project: {
           purchaseDate: "$orderDate",
           poNumber: "$orderNumber",
-          supplier: "$supplierName",           // ✅ mapped to 'supplier' field
-          product: "$items.productName",
+          supplier: "$supplierName",
+          product: "$finalProduct",
           quantity: "$items.quantity",
           unitCost: "$items.unitPrice",
-          totalCost: "$items.totalPrice",
+          totalCost: "$computedTotalCost",
         },
       },
     ];
 
-    // Date range filter (as first stage)
     if (options.startDate || options.endDate) {
       basePipeline.unshift({ $match: { orderDate: dateFilter } } as PipelineStage);
     }
 
-    // Apply dynamic column filters (supplier, product, totalCost, purchaseDate)
     basePipeline = applyFilters(basePipeline, options);
 
-    // Chart pipeline: monthly COGS and dummy revenue
     const chartPipeline: PipelineStage[] = [
       { $match: { isDeleted: false } },
       ...(options.startDate || options.endDate
@@ -729,57 +742,152 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
   }
 };
 
+
 // ----------------------------------------------------------------------
 // 3. Budget vs Actual Report (static but now with proper filter)
 // ----------------------------------------------------------------------
+
+
+const BUDGET_VS_ACTUAL_FIELD_MAP: Record<string, string> = {
+  category: "category",
+  status: "status",
+};
+
+// Optional: define a Budget model if you have one
+// import { Budget } from "../../models/budget.model";
+
 export const getBudgetVsActualReport = async (req: Request, res: Response) => {
   try {
     let options = buildQueryOptions(req);
     options = mapColumnFilters(options, BUDGET_VS_ACTUAL_FIELD_MAP);
 
-    // Static data (replace with real collection later)
-    const staticRows = [
-      ["Electronics", "$3.2M", "$3.45M", "+$250K", "Over"],
-      ["Furniture", "$1.5M", "$1.48M", "-$20K", "Under"],
-      ["Accessories", "$1.0M", "$1.12M", "+$120K", "Over"],
-      ["Marketing", "$800K", "$750K", "-$50K", "Under"],
+    const dateFilter: any = {};
+    if (options.startDate) dateFilter.$gte = new Date(options.startDate);
+    if (options.endDate) dateFilter.$lte = new Date(options.endDate);
+
+    // ---------- 1. Aggregate actual spend by category ----------
+    // This pipeline:
+    // - Joins purchase order items with products to get categoryId
+    // - Joins categories to get categoryName
+    // - Groups by category, sums total spent
+    const actualPipeline = [
+      { $match: { isDeleted: false, ...(Object.keys(dateFilter).length && { orderDate: dateFilter }) } },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          let: { productId: "$items.productId" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$_id", { $toObjectId: "$$productId" }] } } },
+            { $project: { categoryId: 1 } }
+          ],
+          as: "productInfo"
+        }
+      },
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productInfo.categoryId",
+          foreignField: "_id",
+          as: "categoryInfo"
+        }
+      },
+      { $unwind: { path: "$categoryInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $ifNull: ["$categoryInfo.categoryName", "Uncategorized"] },
+          actualAmount: { $sum: "$items.totalPrice" }
+        }
+      },
+      { $project: { category: "$_id", actualAmount: 1, _id: 0 } }
     ];
 
-    // Apply category filter if provided
-    let filteredRows = staticRows;
+    const actualData = await PurchaseOrder.aggregate(actualPipeline);
+
+    // ---------- 2. Get budget data (if Budget collection exists) ----------
+    let budgets: Record<string, number> = {};
+    const BUDGET_MULTIPLIER = 1.1; // fallback – use 10% above actual
+
+    // Try to fetch from Budget model (uncomment when you have the model)
+    /*
+    try {
+      const budgetDocs = await Budget.find({});
+      for (const doc of budgetDocs) {
+        budgets[doc.category] = doc.amount;
+      }
+    } catch (err) {
+      console.warn("Budget collection not found – using fallback multiplier");
+    }
+    */
+
+    // ---------- 3. Build rows ----------
+    const rowsData = actualData.map(actual => {
+      const budgetValue = budgets[actual.category] || actual.actualAmount * BUDGET_MULTIPLIER;
+      const variance = actual.actualAmount - budgetValue;
+      const variancePercent = ((variance / budgetValue) * 100).toFixed(1);
+      const status = variance >= 0 ? "Over" : "Under";
+
+      return {
+        category: actual.category,
+        budget: budgetValue,
+        actual: actual.actualAmount,
+        variance,
+        variancePercent: parseFloat(variancePercent),
+        status
+      };
+    });
+
+    // ---------- 4. Apply filters (category, status) ----------
+    let filteredRows = rowsData;
     if (options.columnFilters?.category) {
       const filterVal = options.columnFilters.category.toLowerCase();
-      filteredRows = staticRows.filter(row => row[0].toLowerCase().includes(filterVal));
+      filteredRows = filteredRows.filter(row => row.category.toLowerCase().includes(filterVal));
     }
-
-    // Apply status filter if provided
     if (options.columnFilters?.status) {
       const filterVal = options.columnFilters.status.toLowerCase();
-      filteredRows = filteredRows.filter(row => row[4].toLowerCase().includes(filterVal));
+      filteredRows = filteredRows.filter(row => row.status.toLowerCase() === filterVal);
     }
 
+    // ---------- 5. Format for output (pagination handled in memory) ----------
     const total = filteredRows.length;
-    const paginatedRows = filteredRows.slice(options.skip, options.skip + options.limit);
+    const paginatedRows = filteredRows
+      .slice(options.skip, options.skip + options.limit)
+      .map(row => [
+        row.category,
+        `$${(row.budget / 1_000_000).toFixed(1)}M`,
+        `$${(row.actual / 1_000_000).toFixed(1)}M`,
+        `${row.variance >= 0 ? "+" : ""}$${(Math.abs(row.variance) / 1_000_000).toFixed(1)}M (${Math.abs(row.variancePercent)}%)`,
+        row.status
+      ]);
 
-    // Chart data (static, but could be dynamic)
-    const chartData = [
-      { name: "Electronics", Budget: 3200, Actual: 3450 },
-      { name: "Furniture", Budget: 1500, Actual: 1480 },
-      { name: "Accessories", Budget: 1000, Actual: 1120 },
-      { name: "Marketing", Budget: 800, Actual: 750 },
-    ];
+    const headers = ["Category", "Budget", "Actual", "Variance", "Status"];
+
+    // Chart data (numeric values in thousands)
+    const chartData = filteredRows.map(row => ({
+      name: row.category,
+      Budget: row.budget / 1_000_000,
+      Actual: row.actual / 1_000_000
+    }));
+
+    // ---------- 6. KPIs ----------
+    const totalBudget = filteredRows.reduce((sum, r) => sum + r.budget, 0);
+    const totalActual = filteredRows.reduce((sum, r) => sum + r.actual, 0);
+    const budgetVariance = totalBudget === 0 ? 0 : ((totalActual - totalBudget) / totalBudget * 100).toFixed(1);
+    const underBudgetCount = filteredRows.filter(r => r.status === "Under").length;
+    const underBudgetPercent = total === 0 ? 0 : Math.round((underBudgetCount / total) * 100);
 
     res.json({
       rows: paginatedRows,
-      headers: ["Category", "Budget", "Actual", "Variance", "Status"],
+      headers,
       total,
       page: options.page,
       totalPages: Math.ceil(total / options.limit),
       kpis: {
-        budgetVariance: "+8.2%",
-        underBudget: "64%",
+        budgetVariance: `${budgetVariance}%`,
+        underBudget: `${underBudgetPercent}%`
       },
-      chart: chartData,
+      chart: chartData
     });
   } catch (error) {
     console.error("Budget vs actual error:", error);
