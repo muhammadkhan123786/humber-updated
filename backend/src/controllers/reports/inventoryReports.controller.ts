@@ -154,7 +154,7 @@ export const getStockSummaryReport = async (req: Request, res: Response) => {
       {
         $group: {
           _id: { $month: "$orderDate" },
-          month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+          month: { $first: { $dateToString: { format: "%m", date: "$orderDate" } } },
           Purchased: { $sum: "$items.quantity" },
         },
       },

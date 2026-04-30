@@ -682,7 +682,7 @@ export const getProfitLossReport = async (req: Request, res: Response) => {
       {
         $group: {
           _id: { $month: "$orderDate" },
-          month: { $first: { $dateToString: { format: "%b", date: "$orderDate" } } },
+          month: { $first: { $dateToString: { format: "%m", date: "$orderDate" } } },
           totalCost: { $sum: "$total" },
         },
       },

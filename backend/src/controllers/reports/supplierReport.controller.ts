@@ -578,7 +578,7 @@ export const getSupplierPriceHistoryReport = async (req: Request, res: Response)
               productName: "$prodInfo.productName",
             },
             monthName: {
-              $first: { $dateToString: { format: "%b", date: "$orderDate" } },
+              $first: { $dateToString: { format: "%m", date: "$orderDate" } },
             },
             avgPrice: { $avg: "$items.unitPrice" },
           },
