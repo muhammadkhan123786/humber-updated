@@ -1,16 +1,13 @@
 // components/reports/ProfessionalTable/index.tsx
 "use client";
 
-import React, { useState, useMemo} from "react";
+import React, { useState, useMemo } from "react";
 import { LayoutGrid } from "lucide-react";
 import { ProfessionalTableProps } from "./types";
 import { TableToolbar } from "./TableToolbar";
 import { FiltersPanel } from "./FiltersPanel";
 import { TableHeader } from "./TableHeader";
 import { TablePagination } from "./TablePagination";
-
-// Helper: page button style (used inside pagination)
-// Already defined in TablePagination component
 
 export function ProfessionalTable({
   headers = [],
@@ -35,16 +32,28 @@ export function ProfessionalTable({
   isExporting = false,
   isFetching = false,
   filtersConfig = [],
-  
 }: ProfessionalTableProps) {
-  // Local UI state
+  // ========== Helper: Date formatting ==========
+  const formatDate = (isoString: string) => {
+    if (!isoString) return "";
+    try {
+      const date = new Date(isoString);
+      if (isNaN(date.getTime())) return isoString;
+      // Returns YYYY-MM-DD (adjust format as needed)
+      return date.toLocaleDateString("en-CA");
+    } catch {
+      return isoString;
+    }
+  };
+
+  // ========== Local UI state ==========
   const [visibleColumns, setVisibleColumns] = useState<boolean[]>(() => headers.map(() => true));
   const [showFilters, setShowFilters] = useState(false);
   const [compactView, setCompactView] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: number; direction: "asc" | "desc" } | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
-  // Sorting
+  // ========== Sorting ==========
   const sortedRows = useMemo(() => {
     if (!sortConfig || !rows.length) return rows;
     return [...rows].sort((a, b) => {
@@ -68,7 +77,7 @@ export function ProfessionalTable({
     }));
   };
 
-  // Row selection
+  // ========== Row selection ==========
   const toggleRow = (i: number) => {
     const next = new Set(selectedRows);
     next.has(i) ? next.delete(i) : next.add(i);
@@ -85,7 +94,7 @@ export function ProfessionalTable({
 
   const selectAllChecked = sortedRows.length > 0 && selectedRows.size === sortedRows.length;
 
-  // Filters
+  // ========== Filters ==========
   const hasActiveFilters =
     propSearch !== "" ||
     Object.keys(columnFilters).length > 0 ||
@@ -98,11 +107,13 @@ export function ProfessionalTable({
     onClearAllFilters?.();
   };
 
-  // Cell renderer
+  // ========== Cell renderer with date formatting ==========
   const renderCell = (value: any, colIndex: number) => {
     const str = String(value ?? "");
+    
+    // 1. Status badge
     const isStatus = statusStyles[str];
-    if (isStatus)
+    if (isStatus) {
       return (
         <span
           style={{
@@ -130,7 +141,22 @@ export function ProfessionalTable({
           {str}
         </span>
       );
-    if (colIndex === 0 && typeof value === "string" && /[-/]/.test(value))
+    }
+
+    // 2. Date detection & formatting
+    const looksLikeDate =
+      typeof value === "string" &&
+      (headers[colIndex]?.toLowerCase().includes("date") ||
+        /^\d{4}-\d{2}-\d{2}T/.test(value));
+    if (looksLikeDate) {
+      const formatted = formatDate(value);
+      return (
+        <span style={{ fontFamily: "monospace", fontSize: "11px" }}>{formatted}</span>
+      );
+    }
+
+    // 3. SKU pattern (first column, contains dash or slash)
+    if (colIndex === 0 && typeof value === "string" && /[-/]/.test(value)) {
       return (
         <span
           style={{
@@ -146,20 +172,31 @@ export function ProfessionalTable({
           {str}
         </span>
       );
-    if (typeof value === "string" && (value.startsWith("$") || /[KM]/.test(value)))
+    }
+
+    // 4. Currency / money values
+    if (typeof value === "string" && (value.startsWith("$") || /[KM]/.test(value))) {
       return (
-        <span style={{ color: "#059669", fontWeight: 600, fontFamily: "monospace" }}>{str}</span>
+        <span style={{ color: "#059669", fontWeight: 600, fontFamily: "monospace" }}>
+          {str}
+        </span>
       );
-    if (typeof value === "number" || /^\d+$/.test(str))
+    }
+
+    // 5. Numbers
+    if (typeof value === "number" || /^\d+$/.test(str)) {
       return (
         <span style={{ fontFamily: "monospace", fontWeight: 500, color: "#334155" }}>
           {typeof value === "number" ? value.toLocaleString() : str}
         </span>
       );
+    }
+
+    // 6. Default text
     return <span style={{ color: "#374151" }}>{str || "—"}</span>;
   };
 
-  // Empty state
+  // ========== Empty state ==========
   if (!headers.length) {
     return (
       <div
@@ -177,7 +214,7 @@ export function ProfessionalTable({
     );
   }
 
-  // Generate row selection bar (optional)
+  // Selection bar component (optional)
   const SelectionBar = () => {
     if (selectedRows.size === 0) return null;
     return (
@@ -210,6 +247,7 @@ export function ProfessionalTable({
     );
   };
 
+  // ========== JSX ==========
   return (
     <div
       style={{
@@ -252,7 +290,13 @@ export function ProfessionalTable({
       {/* <SelectionBar /> */}
 
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: compactView ? 11 : 12 }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            fontSize: compactView ? 11 : 12,
+          }}
+        >
           <TableHeader
             headers={headers}
             visibleColumns={visibleColumns}
@@ -281,13 +325,19 @@ export function ProfessionalTable({
                     background: selectedRows.has(rIdx) ? accentLight : "transparent",
                   }}
                   onMouseEnter={(e) => {
-                    if (!selectedRows.has(rIdx)) e.currentTarget.style.background = "#fafcff";
+                    if (!selectedRows.has(rIdx))
+                      e.currentTarget.style.background = "#fafcff";
                   }}
                   onMouseLeave={(e) => {
                     if (!selectedRows.has(rIdx)) e.currentTarget.style.background = "";
                   }}
                 >
-                  <td style={{ padding: compactView ? "8px 12px" : "10px 16px", textAlign: "center" }}>
+                  <td
+                    style={{
+                      padding: compactView ? "8px 12px" : "10px 16px",
+                      textAlign: "center",
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={selectedRows.has(rIdx)}
@@ -298,7 +348,12 @@ export function ProfessionalTable({
                   {row.map(
                     (cell, cIdx) =>
                       visibleColumns[cIdx] && (
-                        <td key={cIdx} style={{ padding: compactView ? "8px 12px" : "10px 16px" }}>
+                        <td
+                          key={cIdx}
+                          style={{
+                            padding: compactView ? "8px 12px" : "10px 16px",
+                          }}
+                        >
                           {renderCell(cell, cIdx)}
                         </td>
                       )

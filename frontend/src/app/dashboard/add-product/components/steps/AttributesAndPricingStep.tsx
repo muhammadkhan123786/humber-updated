@@ -260,8 +260,8 @@ export function AttributesAndPricingStep({
   const hasDynamicFields = attributes && attributes.length > 0;
   const currencySymbol = '£';
 
-  const { data: templates } = useFormActions<MarketplaceTemplate>(
-    "/marketplace", "marketplaceTemplates", "MarketplaceTemplates"
+  const { data: templates } = useFormActions<any>(
+    "/marketplace-templates", "marketplaceTemplates", "MarketplaceTemplates"
   );
 
   console.log("templates", templates)
@@ -614,8 +614,10 @@ export function AttributesAndPricingStep({
                     </p>
                   </div>
 
+
                   {/* Marketplace selector */}
-                  {!showPricingForm && templates && templates.length > 0 && (
+                  {/* {!showPricingForm && templates && templates.length > 0 */}
+                  {!showPricingForm && (
                     <div className="mb-4">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Select Marketplace to Add Pricing
@@ -645,11 +647,11 @@ export function AttributesAndPricingStep({
                               <SelectItem key={template._id} value={template._id}>
                                 <div className="flex items-center gap-3 py-1">
                                   {template.name.icon?.icon ? (
-                                    <Image src={template.name.icon.icon} alt={template.name.name} width={20} height={20} className="object-contain rounded" />
+                                    <Image src={template.icon.icon} alt={template.name.name} width={20} height={20} className="object-contain rounded" />
                                   ) : (
                                     <Store className="h-5 w-5 text-gray-400" />
                                   )}
-                                  <span className="font-medium">{template.name.name}</span>
+                                  <span className="font-medium">{template.name}</span>
                                 </div>
                               </SelectItem>
                             ))}
