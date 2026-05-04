@@ -1,17 +1,14 @@
 // components/system-users/user-types/types.ts
-export interface UserType {
-  id: string;
-  name: string;
+export interface UserTypeFormData {
+  title: string;          // matches your existing "title" field in the card
   description: string;
   isActive: boolean;
-  color?: string;
-  icon?: string;
-  createdAt?: string;
 }
 
-// For form submission (same as UserType without id)
-export interface UserTypeFormData {
-  name: string;
-  description: string;
-  isActive: boolean;
-}   
+// For the list page (optional – you already have a similar type)
+export interface UserType extends UserTypeFormData {
+  id: string;
+  userCount?: number;     // from your grid
+  constraints?: string[];
+  roles?: string[];
+}

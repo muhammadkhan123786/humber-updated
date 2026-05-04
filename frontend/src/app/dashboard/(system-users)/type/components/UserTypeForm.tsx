@@ -6,24 +6,21 @@ import { Input } from '@/components/form/Input';
 import { UserTypeFormData } from '../types';
 
 export default function UserTypeForm() {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext<UserTypeFormData>();
+  const { register, formState: { errors } } = useFormContext<UserTypeFormData>();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div>
         <label className="text-sm font-medium text-gray-700 mb-1 block">
-          Name *
+          Type Name *
         </label>
         <Input
-          {...register('name')}
-          placeholder="e.g., Customer, Partner, VIP"
+          {...register('title', { required: 'Name is required' })}
+          placeholder="e.g., Admin, Manager, Customer"
           className="w-full"
         />
-        {errors.name && (
-          <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+        {errors.title && (
+          <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>
         )}
       </div>
 
@@ -32,8 +29,8 @@ export default function UserTypeForm() {
           Description *
         </label>
         <textarea
-          {...register('description')}
-          rows={3}
+          {...register('description', { required: 'Description is required' })}
+          rows={4}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
           placeholder="Describe the purpose of this user type..."
         />
