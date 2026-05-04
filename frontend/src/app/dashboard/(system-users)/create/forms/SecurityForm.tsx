@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/form/Card
 import { Input } from '@/components/form/Input';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { CreateUserFormValues } from '../types';
+import { CreateUserFormValues } from '../schema/userSchema';
 
 export default function SecurityForm() {
   const { register, formState: { errors } } = useFormContext<CreateUserFormValues>();

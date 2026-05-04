@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/form/Card
 import { Input } from '@/components/form/Input';
 import { Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { CreateUserFormValues } from '../types';
+import { CreateUserFormValues } from '../schema/userSchema';
 
 export default function AccessPeriodForm() {
   const { register, control, formState: { errors } } = useFormContext<CreateUserFormValues>();

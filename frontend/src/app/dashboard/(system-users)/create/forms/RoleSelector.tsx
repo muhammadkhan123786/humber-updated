@@ -3,8 +3,8 @@ import { useFormContext } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/form/Card';
 import { Shield, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion'
-import { ROLES, CreateUserFormValues } from '../types';
-
+import { ROLES } from '../types';
+import { CreateUserFormValues } from '../schema/userSchema';
 export default function RoleSelector() {
   const { setValue, watch, formState: { errors } } = useFormContext<CreateUserFormValues>();
   const selectedRole = watch('role');

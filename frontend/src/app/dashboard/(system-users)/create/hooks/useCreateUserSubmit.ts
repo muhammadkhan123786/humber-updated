@@ -2,7 +2,7 @@
 'use client'
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { CreateUserFormValues } from '../types';
+import { CreateUserFormValues } from '../schema/userSchema';
 
 export function useCreateUserSubmit() {
   const router = useRouter();
