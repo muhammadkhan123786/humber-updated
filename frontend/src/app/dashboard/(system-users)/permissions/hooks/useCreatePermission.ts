@@ -16,7 +16,7 @@ export function useCreatePermission() {
     await new Promise(resolve => setTimeout(resolve, 800));
 
     toast.success('Permission created successfully');
-    router.push('/system-users/permissions');
+    router.push('/dashboard/Permissions');
     setIsSubmitting(false);
   };
 
