@@ -42,7 +42,7 @@ export default function CreateUserTypePage() {
         className="flex items-center justify-between flex-wrap gap-4"
       >
         <div className="flex items-center gap-3">
-          <Link href="/system-users/user-types">
+          <Link href="/dashboard/user-type">
             <Button variant="ghost" size="sm" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -82,7 +82,7 @@ export default function CreateUserTypePage() {
             transition={{ delay: 0.4 }}
             className="flex justify-end gap-3"
           >
-            <Link href="/system-users/user-types">
+            <Link href="/dashboard/user-type">
               <Button type="button" variant="outline" className="gap-2" disabled={isSubmitting}>
                 <X className="h-4 w-4" />
                 Cancel

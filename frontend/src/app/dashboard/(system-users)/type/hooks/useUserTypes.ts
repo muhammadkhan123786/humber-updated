@@ -16,7 +16,7 @@ export function useCreateUserType() {
     await new Promise(resolve => setTimeout(resolve, 800)); // simulate network
 
     toast.success('User type created successfully');
-    router.push('/system-users/user-types'); // back to list
+    router.push('/dashboard/user-type'); // back to list
     setIsSubmitting(false);
   };
 
