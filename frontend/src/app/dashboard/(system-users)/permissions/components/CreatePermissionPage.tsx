@@ -4,7 +4,6 @@
 import Link from 'next/link';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/form/CustomButton';
 import { ArrowLeft, Save, X } from 'lucide-react';
@@ -13,38 +12,13 @@ import PermissionActionsSelector from './PermissionActionsSelector';
 import PermissionSummarySidebar from './PermissionSummarySidebar';
 import { useCreatePermission } from '../hooks/useCreatePermission';
 import { PermissionFormData, PermissionActions } from '../types';
-
-// Zod schema for validation
-const schema = z.object({
-  name: z.string().min(1, 'Permission name is required'),
-  description: z.string().min(1, 'Description is required'),
-  module: z.string().min(1, 'Please select a module'),
-  customModuleName: z.string().optional(),
-  actions: z.object({
-    view: z.boolean(),
-    create: z.boolean(),
-    edit: z.boolean(),
-    delete: z.boolean(),
-    export: z.boolean(),
-  }).refine(data => Object.values(data).some(v => v), {
-    message: 'At least one action must be enabled',
-    path: ['actions'],
-  }),
-}).refine(data => {
-  if (data.module === 'custom') {
-    return !!data.customModuleName?.trim();
-  }
-  return true;
-}, {
-  message: 'Custom module name is required',
-  path: ['customModuleName'],
-});
+import { perssmissionSchema, CreatePermissionsFormValues } from "../schema/PremissionsSchema"
 
 export default function CreatePermissionPage() {
   const { submit, isSubmitting } = useCreatePermission();
 
-  const methods = useForm<PermissionFormData>({
-    resolver: zodResolver(schema),
+  const methods = useForm<CreatePermissionsFormValues>({
+    resolver: zodResolver(perssmissionSchema),
     defaultValues: {
       name: '',
       description: '',

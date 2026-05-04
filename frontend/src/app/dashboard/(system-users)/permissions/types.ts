@@ -10,7 +10,7 @@ export interface PermissionActions {
 export interface PermissionFormData {
   name: string;
   description: string;
-  module: string;          // selected module name or custom
+  module: string | undefined;          
   isCustomModule?: boolean;
   customModuleName?: string;
   actions: PermissionActions;
