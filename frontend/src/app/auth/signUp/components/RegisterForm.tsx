@@ -31,7 +31,7 @@ function FormInput({
   placeholder?: string;
   required?: boolean;
   readOnly?: boolean;
-  icon?: React.ElementType;
+  icon?: React.ElementType | null;
 }) {
   const { register, formState: { errors } } = useFormContext<RegisterFormValues>();
   const error = errors[name];
