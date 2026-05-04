@@ -76,7 +76,7 @@ export function useCreateRole() {
     // await axios.post('/api/roles', formData);
     await new Promise((resolve) => setTimeout(resolve, 800));
     toast.success('Role created successfully');
-    router.push('/system-users/roles');
+    router.push('/dashboard/User-roles');
     setIsSubmitting(false);
   };
 
