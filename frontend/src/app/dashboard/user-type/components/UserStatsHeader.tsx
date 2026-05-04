@@ -1,5 +1,7 @@
+"use clinet"
 import React from "react";
 import { Users, CheckCircle, UserPlus, ArrowLeft, Plus } from "lucide-react";
+import Link from 'next/link';
 
 const UserStatsHeader = () => {
   const stats = [
@@ -47,10 +49,10 @@ const UserStatsHeader = () => {
           </div>
         </div>
 
-        <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md shadow-blue-200">
+        <Link href={"/dashboard/type"} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all shadow-md shadow-blue-200">
           <Plus size={18} />
           Create User Type
-        </button>
+        </Link>
       </div>
       <div className="grid grid-cols-1 my-2 md:grid-cols-3 gap-6">
         {stats.map((stat, index) => (

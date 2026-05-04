@@ -7,6 +7,7 @@ import {
   Settings,
   UserPlus,
 } from "lucide-react";
+import Link from 'next/link'
 
 const SystemUsersDashboard = () => {
   const stats = [
@@ -65,10 +66,13 @@ const SystemUsersDashboard = () => {
             <Settings size={18} className="text-gray-500" />
             User Types
           </button>
+          <Link href={'/dashboard/create'}>
+         
           <button className="flex items-center gap-2 px-5 py-2 bg-linear-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-100 hover:opacity-90 transition-all active:scale-95">
             <UserPlus size={18} />
             Add New User
           </button>
+           </Link>
         </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

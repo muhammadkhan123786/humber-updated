@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Download,
 } from "lucide-react";
+import Link from 'next/link'
 
 const PermissionsManager: React.FC = () => {
   const stats = [
@@ -70,10 +71,10 @@ const PermissionsManager: React.FC = () => {
             <Download size={16} />
             Export
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 rounded-xl text-sm font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
+          <Link href={"/dashboard/permissions"} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 rounded-xl text-sm font-semibold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
             <Plus size={16} />
             Add Permission
-          </button>
+          </Link>
         </div>
       </div>
 
