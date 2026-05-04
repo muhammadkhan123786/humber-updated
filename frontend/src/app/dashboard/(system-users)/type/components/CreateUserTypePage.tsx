@@ -5,31 +5,29 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
 import { motion } from 'framer-motion';
 import { Button } from '@/components/form/CustomButton';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import UserTypeForm from './UserTypeForm';
 import UserTypeSidebar from './UserTypeSidebar';
 import { useCreateUserType } from '../hooks/useUserTypes';
-import { UserTypeFormData } from '../types';
 
-const schema = z.object({
-  title: z.string().min(1, 'Name is required'),
-  description: z.string().min(1, 'Description is required'),
-  isActive: z.boolean().default(true),
-});
+import { typeSchema ,CreateTypeFormValues } from "../schema/typeSchema"
+
+
+
 
 export default function CreateUserTypePage() {
   const router = useRouter();
   const { submit, isSubmitting } = useCreateUserType();
 
-  const methods = useForm<UserTypeFormData>({
-    resolver: zodResolver(schema),
+  const methods = useForm<CreateTypeFormValues>({
+    resolver: zodResolver(typeSchema),
     defaultValues: { title: '', description: '', isActive: true },
   });
 
-  const onSubmit = async (data: UserTypeFormData) => {
+  const onSubmit = async (data: CreateTypeFormValues) => {
     await submit(data);
   };
 
