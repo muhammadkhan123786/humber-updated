@@ -99,7 +99,7 @@ export default function RegisterForm() {
   useGooglePlacesAutocomplete(setValue, isGoogleMapsLoaded);
 
   const onSubmit = async (data: RegisterFormValues) => {
-    console.log("✅ Raw form data:", data); // Should be full object
+    
 
     // Build FormData
     const formData = new FormData();
@@ -109,21 +109,10 @@ export default function RegisterForm() {
       }
     }
 
-    // Append logo file (if selected)
-    const logoInput = document.getElementById('logo') as HTMLInputElement;
-    if (logoInput?.files?.[0]) {
-      formData.append('logo', logoInput.files[0]);
-      console.log("📸 Logo file appended");
-    } else {
-      console.log("⚠️ No logo file selected");
-    }
-
-    // Debug: log FormData entries
-    for (const pair of formData.entries()) {
-      console.log(pair[0], pair[1]);
-    }
+  
 
     try {
+    
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/register/shop`, {
         method: 'POST',
         body: formData,
