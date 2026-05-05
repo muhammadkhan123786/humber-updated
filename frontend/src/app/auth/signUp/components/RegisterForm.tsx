@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
-import { useForm, FormProvider, useFormContext  } from 'react-hook-form';
+import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Upload, ShieldCheck, Zap, CheckCircle, Lock } from 'lucide-react';
+import { Eye, EyeOff, Upload, ShieldCheck, Zap, CheckCircle, Lock, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { registerSchema, RegisterFormValues } from '../schema/registerSchema';
@@ -13,15 +13,14 @@ import { useGooglePlacesAutocomplete } from '../hooks/useGooglePlacesAutocomplet
 import useGoogleMapLoad from '@/hooks/useGoogleMapLoad';
 import { useModal } from '@/hooks/useModal';
 import RegisterSuccess from '@/components/RegisterSuccess';
-import onyxtech from '@/assets/onyxtech.png';
 
-// Reusable input component (styled consistently)
+// ---------- Reusable Input Component ----------
 function FormInput({
   label,
   name,
   type = 'text',
   placeholder,
-  required,
+  required = false,
   readOnly = false,
   icon: Icon,
 }: {
@@ -64,6 +63,7 @@ function FormInput({
   );
 }
 
+// ---------- Main Component ----------
 export default function RegisterForm() {
   const { openModal } = useModal();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -94,21 +94,33 @@ export default function RegisterForm() {
   });
 
   const { setValue, handleSubmit, formState: { isSubmitting } } = methods;
-  const { inputRef } = useGooglePlacesAutocomplete(setValue, isGoogleMapsLoaded);
+
+  // Google Places Autocomplete
+  useGooglePlacesAutocomplete(setValue, isGoogleMapsLoaded);
 
   const onSubmit = async (data: RegisterFormValues) => {
+    console.log("✅ Raw form data:", data); // Should be full object
+
     // Build FormData
     const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && value !== null && value !== '') {
         formData.append(key, String(value));
       }
-    });
+    }
 
-    // Append logo file
+    // Append logo file (if selected)
     const logoInput = document.getElementById('logo') as HTMLInputElement;
     if (logoInput?.files?.[0]) {
       formData.append('logo', logoInput.files[0]);
+      console.log("📸 Logo file appended");
+    } else {
+      console.log("⚠️ No logo file selected");
+    }
+
+    // Debug: log FormData entries
+    for (const pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
     }
 
     try {
@@ -116,11 +128,15 @@ export default function RegisterForm() {
         method: 'POST',
         body: formData,
       });
+
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Registration failed');
+
       openModal(<RegisterSuccess />);
+      methods.reset(); // optional: clear form after success
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Registration error:", error);
+      toast.error(error.message || "Registration failed. Please try again.");
     }
   };
 
@@ -140,7 +156,7 @@ export default function RegisterForm() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl w-full bg-white rounded-2xl shadow-2xl shadow-black/20 overflow-hidden">
         <div className="flex flex-col lg:flex-row">
-          {/* Left decorative panel (hidden on mobile) */}
+          {/* Left decorative panel (unchanged) */}
           <div className="hidden md:flex flex-col justify-center md:w-1/2 p-8 lg:p-12 bg-gradient-to-br from-gray-50 to-gray-100">
             <div className="mb-8">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#9810FA] to-[#4F39F6] flex items-center justify-center shadow-lg">
@@ -182,12 +198,12 @@ export default function RegisterForm() {
             <FormProvider {...methods}>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormInput label="First Name" name="firstName" placeholder="John" required icon={null} />
+                  <FormInput label="First Name" name="firstName" placeholder="John" required />
                   <FormInput label="Middle Name" name="middleName" placeholder="Middle" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput label="Last Name" name="lastName" placeholder="Doe" />
-                  <FormInput label="Email Id" name="emailId" type="email" placeholder="you@example.com" required icon={null} />
+                  <FormInput label="Email Id" name="emailId" type="email" placeholder="you@example.com" required />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput label="Shop Name" name="companyName" placeholder="Your Garage" required />
@@ -203,12 +219,18 @@ export default function RegisterForm() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Address <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="address"
-                    type="text"
-                    placeholder="Start typing your address..."
-                    className="w-full px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                  />
+                  <div className="relative">
+                    <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="address"
+                      type="text"
+                      placeholder="Start typing your address..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                      onChange={(e) => setValue('companyAddress', e.target.value)}
+                    />
+                  </div>
                   {methods.formState.errors.companyAddress && (
                     <p className="text-red-500 text-xs mt-1">{methods.formState.errors.companyAddress.message}</p>
                   )}
@@ -223,65 +245,62 @@ export default function RegisterForm() {
                   <FormInput label="Longitude" name="longitude" readOnly />
                 </div>
 
-                {/* Password fields with toggle */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  {/* Password Field */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Password <span className="text-red-500">*</span>
-    </label>
-    <div className="relative">
-      {/* Left icon for consistency */}
-      <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
-        <Lock className="w-5 h-5 text-gray-400" />
-      </div>
-      <input
-        type={showPassword ? 'text' : 'password'}
-        {...methods.register('password')}
-        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-        placeholder="Enter password"
-      />
-      <button
-        type="button"
-        onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 inset-y-0 flex items-center text-gray-400 hover:text-gray-600 transition"
-      >
-        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-      </button>
-    </div>
-    {methods.formState.errors.password && (
-      <p className="text-red-500 text-xs mt-1">{methods.formState.errors.password.message}</p>
-    )}
-  </div>
+                {/* Password fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
+                        <Lock className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        {...methods.register('password')}
+                        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        placeholder="Enter password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 inset-y-0 flex items-center text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {methods.formState.errors.password && (
+                      <p className="text-red-500 text-xs mt-1">{methods.formState.errors.password.message}</p>
+                    )}
+                  </div>
 
-  {/* Confirm Password Field */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Confirm Password <span className="text-red-500">*</span>
-    </label>
-    <div className="relative">
-      <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
-        <Lock className="w-5 h-5 text-gray-400" />
-      </div>
-      <input
-        type={showConfirmPassword ? 'text' : 'password'}
-        {...methods.register('confirmPassword')}
-        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-        placeholder="Confirm password"
-      />
-      <button
-        type="button"
-        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-        className="absolute right-3 inset-y-0 flex items-center text-gray-400 hover:text-gray-600 transition"
-      >
-        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-      </button>
-    </div>
-    {methods.formState.errors.confirmPassword && (
-      <p className="text-red-500 text-xs mt-1">{methods.formState.errors.confirmPassword.message}</p>
-    )}
-  </div>
-</div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Confirm Password <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute left-3 inset-y-0 flex items-center pointer-events-none">
+                        <Lock className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        {...methods.register('confirmPassword')}
+                        className="w-full pl-10 pr-10 py-2.5 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        placeholder="Confirm password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 inset-y-0 flex items-center text-gray-400 hover:text-gray-600"
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                    {methods.formState.errors.confirmPassword && (
+                      <p className="text-red-500 text-xs mt-1">{methods.formState.errors.confirmPassword.message}</p>
+                    )}
+                  </div>
+                </div>
 
                 {/* Logo Upload */}
                 <div>

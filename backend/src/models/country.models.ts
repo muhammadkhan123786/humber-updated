@@ -6,7 +6,7 @@ import { ICountry } from "../../../common/Country.interface";
 export type countryDoc = ICountry<Types.ObjectId> & Document;
 
 const countrySchema = new Schema<countryDoc>({
-    userId: { type: Types.ObjectId, ref: "User", required: true },
+    userId: { type: Types.ObjectId, ref: "User", required: false },
     countryName: { type: String, required: true },
     isActive: { type: Boolean, required: true, default: true },
     isDeleted: { type: Boolean, required: true, default: false },
