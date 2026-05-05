@@ -1,42 +1,48 @@
-import { Schema, model, Document } from 'mongoose';
-
-export type Roles = 'Admin' | 'Technician' | 'Customer' | 'Driver';
-
+import { Schema, model, Document } from "mongoose";
+import bcrypt from "bcrypt";
+export type Roles = "Admin" | "Technician" | "Customer" | "Driver";
 
 export interface IUser extends Document {
-    email: string;
-    password?: string;
-    role: Roles;
-    isActive: boolean;
-    isDeleted: boolean;
-    emailToken?: string;
-    emailTokenExpires?: Date;
-    createdAt?: Date;
-    updatedAt?: Date;
+  email: string;
+  password?: string;
+  role: Roles;
+  isActive: boolean;
+  isDeleted: boolean;
+  emailToken?: string;
+  emailTokenExpires?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const userSchema = new Schema<IUser>(
-    {
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            lowercase: true,
-            trim: true,
-        },
-        password: { type: String },
-        role: {
-            type: String,
-            enum: ['Admin', 'Technician', 'Customer', 'Driver'],
-            required: true,
-            default: 'Admin', // optional default
-        },
-        emailToken: { type: String },
-        emailTokenExpires: { type: Date },
-        isActive: { type: Boolean, default: false },
-        isDeleted: { type: Boolean, default: false },
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    { timestamps: true }
+    password: { type: String },
+    role: {
+      type: String,
+      enum: ["Admin", "Technician", "Customer", "Driver"],
+      required: true,
+      default: "Admin", // optional default
+    },
+    emailToken: { type: String },
+    emailTokenExpires: { type: Date },
+    isActive: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false },
+  },
+  { timestamps: true },
 );
 
-export const User = model<IUser>('User', userSchema);
+userSchema.pre("save", async function (next: any) {
+  if (!this.isModified("password")) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+export const User = model<IUser>("User", userSchema);
