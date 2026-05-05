@@ -77,8 +77,6 @@ import otpRouter from "./routes/otp-routes/mobile.otp.routes";
 import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
 import partsRouter from "./routes/master-data-routes/parts.routes";
 import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
-
-//  Muzamil Hassan start
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
 import grnRoutes from "./routes/grn.routes";
 import goodsReturnRoutes from "./routes/goodsReturn.routes";
@@ -88,10 +86,7 @@ import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
 import supplierLedgrRoutes from "./routes/ledger.routes";
 import paymentRoutes from "./routes/payment.routes";
-
 import aiTemplateRoutes from "./routes/aiTemplate.routes"
-
-// Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
