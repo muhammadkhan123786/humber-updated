@@ -1,13 +1,13 @@
 // routes/user.routes.ts
 import { Router } from "express";
-import {  
-     getAllUsers, 
-    getUserStats, 
-    toggleUserLock, 
-    getUserById,
-    createUserByAdmin  } from "../controllers/user.controller";
+import {
+  getAllUsers,
+  getUserStats,
+  toggleUserLock,
+  getUserById,
+  createUserByAdmin,
+} from "../controllers/user.controller";
 import { adminProtecter } from "../middleware/auth.middleware";
-
 
 const userRouter = Router();
 
