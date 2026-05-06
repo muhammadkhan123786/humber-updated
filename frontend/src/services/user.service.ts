@@ -51,11 +51,14 @@ export const userService = {
     // Add to existing userService
 getUserById: async (userId: string) => {
     const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    console.log("userId", userId);
+    const response = await fetch(`${API_BASE_URL}/users/id/${userId}`, {
         headers: {
             Authorization: `Bearer ${token}`,
         },
     });
+
+    console.log("response",response);
     return response.json();
 },
 };

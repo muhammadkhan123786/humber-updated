@@ -17,7 +17,7 @@ userRouter.use(adminProtecter);
 // User management routes
 userRouter.get("/stats", getUserStats);
 userRouter.get("/", getAllUsers);
-userRouter.get("/:id", getUserById);
+userRouter.get("/id/:id", getUserById);
 userRouter.post("/", createUserByAdmin);
 userRouter.patch("/:id/lock", toggleUserLock);
 

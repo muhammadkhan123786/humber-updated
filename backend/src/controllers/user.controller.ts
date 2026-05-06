@@ -3,6 +3,29 @@ import { Request, Response } from "express";
 import { User } from "../models/user.models";
 import { AuthRequest } from "../middleware/auth.middleware";
 
+
+// ✅ Get single user by ID
+export const getUserById = async (req: AuthRequest, res: Response) => {
+        try {
+        const { id } = req.params;
+        const adminShopId = req.shopId;
+
+        console.log("id  getUserById", id);
+        console.log("adminShopId  getUserById", adminShopId);
+
+        const user = await User.findOne({ _id: id, shopId: adminShopId, isDeleted: false }).select("-password");
+        
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({ user });
+    } catch (error: any) {
+        console.error("Get user error:", error);
+        return res.status(500).json({ message: "Failed to fetch user" });
+    }
+};
+
 export const createUserByAdmin = async (req: AuthRequest, res: Response) => {
     try {
         const {
@@ -204,21 +227,3 @@ export const toggleUserLock = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// ✅ Get single user by ID
-export const getUserById = async (req: AuthRequest, res: Response) => {
-    try {
-        const { id } = req.params;
-        const adminShopId = req.shopId;
-
-        const user = await User.findOne({ _id: id, shopId: adminShopId, isDeleted: false }).select("-password");
-        
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        return res.status(200).json({ user });
-    } catch (error: any) {
-        console.error("Get user error:", error);
-        return res.status(500).json({ message: "Failed to fetch user" });
-    }
-};
