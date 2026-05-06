@@ -17,6 +17,7 @@ export interface IUser extends Document {
   username?: string;
   phone?: string;
   department?: string;
+  isLocked?: boolean;
 }
 
 const userSchema = new Schema<IUser>(
@@ -34,6 +35,7 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
+    isLocked: { type: Boolean, default: false },
     fullName: { type: String },
     username: { type: String, unique: true, sparse: true },
     phone: { type: String },
