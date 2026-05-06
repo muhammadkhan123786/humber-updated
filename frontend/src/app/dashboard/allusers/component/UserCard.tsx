@@ -246,7 +246,7 @@ import {
     Mail, Phone, Briefcase, Clock, Shield, Eye, Lock, Unlock,
     Calendar, Check, Users, SquarePen, Loader2
 } from "lucide-react";
-import { userService } from "../services/user.service";
+import { userService } from "../../../../services/user.service";
 import { toast } from "sonner";
 
 interface User {

@@ -111,7 +111,7 @@
 import { useEffect, useState } from "react";
 import { Users, CheckCircle2, Lock, Shield, ShieldCheck, Settings, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { userService } from "../services/user.service";
+import { userService } from "../../../../services/user.service";
 
 export default function SystemUsersDashboard() {
     const [stats, setStats] = useState({
