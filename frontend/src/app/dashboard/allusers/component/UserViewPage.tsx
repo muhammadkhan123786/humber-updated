@@ -65,7 +65,7 @@ export default function UserViewPage({ userId }: UserViewPageProps) {
         setLoading(true);
         try {
             const response = await userService.getUserById(userId);
-            console.log("response", response);
+            
             if (response.user) {
                 setUser(response.user);
             } else {
