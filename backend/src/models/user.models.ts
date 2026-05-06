@@ -18,6 +18,8 @@ export interface IUser extends Document {
   phone?: string;
   department?: string;
   isLocked?: boolean;
+  lockedUntil?: Date;   // optional: for temporary locks
+  lastLoginAt?: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -51,6 +53,8 @@ const userSchema = new Schema<IUser>(
     emailTokenExpires: { type: Date },
     isActive: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
+    lockedUntil: { type: Date },
+   lastLoginAt: { type: Date },
   },
   { timestamps: true },
 );
