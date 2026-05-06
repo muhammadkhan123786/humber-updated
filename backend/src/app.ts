@@ -138,7 +138,9 @@ import supplierReportsRoutes from "./routes/reports/supplierReport.routes";
 import exportRoutes from "./routes/reports/reportExport.routes";
 import dashboardReportsRoutes from "./routes/reports/reportsDashboard.routes";
 import financialReportsRoutes from "./routes/reports/financialReports.routes";
-import mockeReportRoutes from "./routes/reports/mockReports.routes"
+import mockeReportRoutes from "./routes/reports/mockReports.routes";
+import userRouter from "./routes/user.routes";
+
 
 // Create express app
 const app: Application = express();
@@ -796,7 +798,7 @@ app.use(`${process.env.API_PREFIX}/reports/dashboard`, dashboardReportsRoutes);
 app.use(`${process.env.API_PREFIX}/reports/financial`, financialReportsRoutes);
 
 app.use(`${process.env.API_PREFIX}/reports`, mockeReportRoutes);
-
+app.use(`${process.env.API_PREFIX}/users`, userRouter);
 
 
 

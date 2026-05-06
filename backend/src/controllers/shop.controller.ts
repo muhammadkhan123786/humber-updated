@@ -138,7 +138,9 @@ export const registerShopDetails = async (req: Request, res: Response) => {
       },
     ]);
     const shop = createdShop[0];
-
+    
+    newUser.shopId = shop._id;
+    await newUser.save();
     // Success
     return res.status(201).json({
       message: "Shop registered successfully",

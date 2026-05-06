@@ -1,4 +1,4 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 import bcrypt from "bcrypt";
 export type Roles = "Admin" | "Technician" | "Customer" | "Driver";
 
@@ -10,12 +10,23 @@ export interface IUser extends Document {
   isDeleted: boolean;
   emailToken?: string;
   emailTokenExpires?: Date;
+  shopId: Types.ObjectId;
   createdAt?: Date;
   updatedAt?: Date;
+  fullName?: string;
+  username?: string;
+  phone?: string;
+  department?: string;
 }
 
 const userSchema = new Schema<IUser>(
   {
+    shopId: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+      required: false,
+      index: true,
+    },
     email: {
       type: String,
       required: true,
@@ -23,6 +34,10 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
+    fullName: { type: String },
+    username: { type: String, unique: true, sparse: true },
+    phone: { type: String },
+    department: { type: String },
     password: { type: String },
     role: {
       type: String,
