@@ -77,8 +77,6 @@ import otpRouter from "./routes/otp-routes/mobile.otp.routes";
 import ticketDecisionRouter from "./routes/master-data-routes/ticket.decision.routes";
 import partsRouter from "./routes/master-data-routes/parts.routes";
 import insuranceCompaniesRouter from "./routes/master-data-routes/insurance.companies.routes";
-
-//  Muzamil Hassan start
 import purchaseOrderRoutes from "./routes/purchaseOrder.routes";
 import grnRoutes from "./routes/grn.routes";
 import goodsReturnRoutes from "./routes/goodsReturn.routes";
@@ -88,10 +86,7 @@ import marketplaceTemplateRoutes from "./routes/marketplace.template.routes";
 import marketplaceRoute from "./routes/marketplace-routes/marketplace.routes";
 import supplierLedgrRoutes from "./routes/ledger.routes";
 import paymentRoutes from "./routes/payment.routes";
-
 import aiTemplateRoutes from "./routes/aiTemplate.routes"
-
-// Muzamil Hassan End
 import uploadRoutes from "./routes/upload.routes";
 import technicianRouter from "./routes/technician.routes";
 import technicianDashboardRouter from "./routes/technician-dashboard/technician.tickets.routes";
@@ -143,7 +138,9 @@ import supplierReportsRoutes from "./routes/reports/supplierReport.routes";
 import exportRoutes from "./routes/reports/reportExport.routes";
 import dashboardReportsRoutes from "./routes/reports/reportsDashboard.routes";
 import financialReportsRoutes from "./routes/reports/financialReports.routes";
-import mockeReportRoutes from "./routes/reports/mockReports.routes"
+import mockeReportRoutes from "./routes/reports/mockReports.routes";
+import userRouter from "./routes/user.routes";
+
 
 // Create express app
 const app: Application = express();
@@ -801,7 +798,7 @@ app.use(`${process.env.API_PREFIX}/reports/dashboard`, dashboardReportsRoutes);
 app.use(`${process.env.API_PREFIX}/reports/financial`, financialReportsRoutes);
 
 app.use(`${process.env.API_PREFIX}/reports`, mockeReportRoutes);
-
+app.use(`${process.env.API_PREFIX}/users`, userRouter);
 
 
 

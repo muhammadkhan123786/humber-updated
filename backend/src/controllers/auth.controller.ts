@@ -12,6 +12,7 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
 
     try {
         const { emailId, password, confirmPassword, role } = req.body;
+        console.log("body", )
         // Check if user exists
         const existingUser = await User.findOne({ email: emailId });
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
@@ -32,6 +33,9 @@ export const userRegister = async (req: Request, res: Response, next: NextFuncti
             isActive: true,
             isDeleted: false,
         });
+
+        console.log("user", user);
+        console.log("userId", user._id)
 
         // Pass _id to next middleware
         req.body.userId = user._id;

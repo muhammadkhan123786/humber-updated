@@ -8,7 +8,8 @@ export interface AuthRequest extends Request {
     user?: any;
     role?: Roles;
     technician?: any
-    technicianId?: string
+    technicianId?: string;
+    shopId?: string;
 }
 
 export interface TechnicianAuthRequest extends Request {
@@ -28,7 +29,15 @@ export const adminProtecter = async (
 
         let userId: string | null = null;
         let role: Roles | null = null;
+console.log("userId", userId);
 
+console.log("role", role);
+
+        //   const fullUser = await User.findById(userId).select("shopId role isActive isDeleted");
+        // console.log("fullUser", fullUser)
+        // if (!fullUser || fullUser.isDeleted || !fullUser.isActive) {
+        //     return res.status(401).json({ message: "User not found or inactive" });
+        // }
         /* ===================================================
            ✅ 1. MOBILE FLOW (adminId)
         ==================================================== */
@@ -36,7 +45,7 @@ export const adminProtecter = async (
         const adminId =
             req.body?.adminId ||
             (req.headers["x-admin-id"] as string | undefined);
-
+console.log("adminId", adminId)
         if (adminId) {
             const mobileUser = await User.findById(adminId)
                 .select("_id role isDeleted");
@@ -49,6 +58,8 @@ export const adminProtecter = async (
 
             userId = mobileUser._id.toString();
             role = mobileUser.role as Roles;
+            req.shopId = mobileUser.shopId?.toString();
+            
         }
 
         /* ===================================================
@@ -66,13 +77,21 @@ export const adminProtecter = async (
                 });
             }
 
-            const decoded = jwt.verify(
-                token,
-                process.env.JWT_SECRET as string
-            ) as { id: string; role: Roles };
-
-            userId = decoded.id;
+           const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET as string
+    ) as { userId: string; role: Roles };
+ console.log("Full decoded object:", decoded);
+            userId = decoded.userId;
             role = decoded.role;
+            console.log("decoded.id", decoded.userId);
+            console.log("decoded.role", decoded.role)
+            const user = await User.findById(userId).select("shopId isActive isDeleted");
+            console.log("user", user);
+            if (!user || user.isDeleted || !user.isActive) {
+                return res.status(401).json({ message: "User not found or inactive" });
+            }
+            req.shopId = user.shopId?.toString(); 
         }
 
         /* ===================================================
@@ -91,7 +110,9 @@ export const adminProtecter = async (
 
         req.user = { id: userId };
         req.role = role;
+        //  req.shopId = fullUser.shopId?.toString(); 
 
+       
         /* ===================================================
            🔐 ROLE GUARD
         ==================================================== */

@@ -14,6 +14,8 @@ const shopUpload = createUploader([
 
 const shopRouter = Router();
 
-shopRouter.post('/shop', shopUpload, userRegister, registerShopDetails)
+shopRouter.post('/shop', shopUpload,  registerShopDetails)
+
+
 
 export default shopRouter;
